@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import io.cdap.cdap.master.environment.k8s.PodInfo;
+import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillSpecification;
@@ -25,6 +27,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.URI;
+import java.util.Collections;
 
 /**
  * Tests for {@link KubeTwillPreparer}.
@@ -57,8 +60,15 @@ public class KubeTwillPreparerTest {
       .anyOrder()
       .build();
 
+    PodInfo podInfo = new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
+                                  "test-name-file.txt", "test-pod-uid", "test-uid-file.txt",
+                                  "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
+                                  "test-pod-service-account", "test-pod-runtime-class",
+                                  Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",
+                                  Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
+                                  "test-pod-image-pull-policy");
     KubeTwillPreparer preparer = new KubeTwillPreparer(null, null, "default",
-                                                       null, twillSpecification, null, null,
+                                                       podInfo, twillSpecification, null, null,
                                                        null, null, null);
 
     // test catching main runnable depends on itself

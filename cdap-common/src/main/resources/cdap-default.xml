@@ -3470,6 +3470,14 @@
   </property>
 
   <property>
+    <name>preview.runner.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for preview runner containers.
+    </description>
+  </property>
+
+  <property>
     <name>preview.runner.artifact.localizer.enabled</name>
     <value>false</value>
     <description>
@@ -4848,6 +4856,14 @@
     </description>
   </property>
 
+  <property>
+    <name>task.worker.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for task worker containers.
+    </description>
+  </property>
+
   <!-- System pods Configuration  -->
   <property>
     <name>system.worker.pool.enable</name>
@@ -4958,6 +4974,22 @@
     <value>1</value>
     <description>
       The number of boss threads for the artifact localizer.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for artifact localizer containers.
+    </description>
+  </property>
+
+  <property>
+    <name>file.localizer.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for file localizer containers.
     </description>
   </property>
 

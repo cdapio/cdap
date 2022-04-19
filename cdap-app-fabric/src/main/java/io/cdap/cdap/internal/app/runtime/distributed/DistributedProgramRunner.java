@@ -47,6 +47,7 @@ import io.cdap.cdap.common.twill.TwillAppLifecycleEventHandler;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.program.LauncherUtils;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -279,8 +280,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         twillPreparer.withConfiguration(twillConfigs);
 
         // Setup per runnable configurations
+        Set<String> runnables = new HashSet<>();
         for (Map.Entry<String, RunnableDefinition> entry : launchConfig.getRunnables().entrySet()) {
           String runnable = entry.getKey();
+          runnables.add(runnable);
           RunnableDefinition runnableDefinition = entry.getValue();
           if (runnableDefinition.getMaxRetries() != null) {
             twillPreparer.withMaxRetries(runnable, runnableDefinition.getMaxRetries());
@@ -321,6 +324,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         if (!Strings.isNullOrEmpty(jvmOpts)) {
           twillPreparer.addJVMOptions(jvmOpts);
         }
+
+        // Overwrite JVM options if specified
+        LauncherUtils.overrideJVMOpts(cConf, twillPreparer, runnables);
 
         if (logbackURI != null) {
           twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
