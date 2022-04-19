@@ -201,6 +201,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
   private static final Pattern NAMESPACE_LABEL_PATTERN = Pattern.compile("(k8s\\.namespace)=\"(.*)\"");
+  private static final Pattern KUBE_NAMESPACE_PATTERN = Pattern.compile("[a-z0-9]([-a-z0-9]*[a-z0-9])?");
 
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
@@ -410,6 +411,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     if (namespace == null || namespace.isEmpty()) {
       throw new IOException(String.format("Cannot create Kubernetes namespace for %s because no name was provided",
                                           cdapNamespace));
+    }
+    // Kubernetes namespace must be a lowercase RFC 1123 label, consisting of lower case alphanumeric characters or '-'
+    // and must start and end with an alphanumeric character
+    if (!KUBE_NAMESPACE_PATTERN.matcher(namespace).matches()) {
+      throw new IOException(String.format("%s does not meet Kubernetes naming standards", namespace));
     }
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
