@@ -16,7 +16,8 @@
 
 package io.cdap.cdap.messaging.subscriber;
 
-import com.google.common.collect.AbstractIterator;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.PeekingIterator;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.ImmutablePair;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
@@ -133,7 +135,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   @Nullable
   @Override
-  protected String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception {
+  protected String processMessages(PeekingIterator<ImmutablePair<String, T>> messages) throws Exception {
     MessageTrackingIterator iterator;
 
     // Process the notifications and record the message id of where the processing is up to.
@@ -144,61 +146,64 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
                                                                                               timeBoundMillis);
       MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
       processMessages(context, trackingIterator);
-      String lastMessageId = trackingIterator.getLastMessageId();
-
-      // Persist the message id of the last message being consumed from the iterator
-      if (lastMessageId != null) {
-        storeMessageId(context, lastMessageId);
+      ImmutablePair<String, T> lastConsumer = trackingIterator.getLastComputedMessage();
+      if (lastConsumer != null) {
+        storeMessageId(context,  lastConsumer.getFirst());
       }
       return trackingIterator;
     }, Exception.class);
 
-    return iterator.getLastMessageId();
+    return iterator.getLastComputedMessage() != null ? iterator.getLastComputedMessage().getFirst() : null;
   }
 
   /**
    * An {@link Iterator} that remembers the message id that has been consumed up to.
    */
-  private final class MessageTrackingIterator extends AbstractIterator<ImmutablePair<String, T>> {
+  @VisibleForTesting
+  public final class MessageTrackingIterator implements Iterator<ImmutablePair<String, T>> {
 
-    private final Iterator<ImmutablePair<String, T>> messages;
-    private String lastMessageId;
+    private final PeekingIterator<ImmutablePair<String, T>> messages;
     private int consumedCount;
-    private boolean shouldEnd;
+    private ImmutablePair<String, T> lastComputedMessage;
 
-    MessageTrackingIterator(Iterator<ImmutablePair<String, T>> messages) {
+    public MessageTrackingIterator(PeekingIterator<ImmutablePair<String, T>> messages) {
       this.messages = messages;
       this.consumedCount = 0;
-      this.shouldEnd = false;
-    }
-
-    @Override
-    protected ImmutablePair<String, T> computeNext() {
-      if (shouldEnd || !messages.hasNext()) {
-        return endOfData();
-      }
-
-      ImmutablePair<String, T> message = messages.next();
-      if (shouldRunInSeparateTx(message)) {
-        // if we should process this message in a separate tx and we've already processed other messages,
-        // pretend we've gone through all messages already. The next time we try to process a batch of messages,
-        // this expensive one will be the first message.
-        if (consumedCount > 0) {
-          LOG.debug("Ending message batch early to process {} in a separate tx", message.getSecond());
-          return endOfData();
-        }
-        // if we should process this message in a separate tx and we haven't processed any messages yet,
-        // remember that we should pretend this iterator only had one element in it
-        shouldEnd = true;
-      }
-      consumedCount++;
-      lastMessageId = message.getFirst();
-      return message;
+      this.lastComputedMessage = null;
     }
 
     @Nullable
-    String getLastMessageId() {
-      return lastMessageId;
+    ImmutablePair<String, T>  getLastComputedMessage() {
+      return lastComputedMessage;
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (!messages.hasNext()) {
+        return false;
+      }
+
+      ImmutablePair<String, T> message = messages.peek();
+      if (shouldRunInSeparateTx(message) && consumedCount > 0) {
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public ImmutablePair<String, T> next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      ImmutablePair<String, T> message = messages.next();
+      consumedCount++;
+      lastComputedMessage = message;
+      return message;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
     }
   }
 }
