@@ -51,6 +51,7 @@ import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.provision.task.DeprovisionTask;
 import io.cdap.cdap.internal.provision.task.ProvisionTask;
 import io.cdap.cdap.internal.provision.task.ProvisioningTask;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -521,11 +522,15 @@ public class ProvisioningService extends AbstractIdleService {
     contextExecutor.allowCoreThreadTimeOut(true);
     this.contextExecutor = contextExecutor;
 
-    Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
+    Map<String, Provisioner> provisioners = new HashMap<>(provisionerProvider.loadProvisioners());
     Map<String, ProvisionerConfig> provisionerConfigs =
       provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
     LOG.debug("Provisioners = {}", provisioners);
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
+    // Remove the tethering provisioner if tethering is disabled
+    if (!cConf.getBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED)) {
+      provisioners.remove(TetheringProvisioner.TETHERING_NAME);
+    }
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
       String provisionerName = provisionerEntry.getKey();
       Provisioner provisioner = provisionerEntry.getValue();
