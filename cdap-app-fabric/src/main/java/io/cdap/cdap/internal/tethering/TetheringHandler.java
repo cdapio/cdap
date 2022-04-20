@@ -19,11 +19,18 @@ package io.cdap.cdap.internal.tethering;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
@@ -35,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -53,16 +61,19 @@ public class TetheringHandler extends AbstractHttpHandler {
   private final TetheringStore store;
   private final MessagingService messagingService;
   private final String topicPrefix;
+  private final ProfileService profileService;
 
   // Connection timeout in seconds.
   private int connectionTimeout;
 
   @Inject
-  TetheringHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService) {
+  TetheringHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
+                   ProfileService profileService) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
     this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    this.profileService = profileService;
   }
 
   @Override
@@ -101,10 +112,24 @@ public class TetheringHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/tethering/connections/{peer}")
   public void deleteTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws PeerNotFoundException, IOException {
+    throws NotFoundException, IOException, BadRequestException {
+    boolean tetheringServerEnabled = cConf.getBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED);
+    if (tetheringServerEnabled) {
+      // Fail deletion if there are any profiles using this tethering
+      List<Profile> tetheringProfiles = profileService.getProfiles(
+        TetheringProvisioner.TETHERING_NAME,
+        new ProvisionerPropertyValue(TetheringConf.TETHERED_INSTANCE_PROPERTY, peer, true));
+      if (!tetheringProfiles.isEmpty()) {
+        throw new BadRequestException(String.format("Cannot delete tethering as it's in use by compute profiles: %s." +
+                                                      " Delete these profiles before deleting this tethering.",
+                                                    tetheringProfiles.stream().map(Profile::getName)
+                                                      .collect(Collectors.toList())));
+      }
+    }
+
     store.deletePeer(peer);
     // Remove per-peer tethering topic if we're running on the server
-    if (cConf.getBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED)) {
+    if (tetheringServerEnabled) {
       TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                                   topicPrefix + peer);
       try {

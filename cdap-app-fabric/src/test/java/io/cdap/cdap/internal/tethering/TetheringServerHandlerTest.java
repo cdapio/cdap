@@ -30,8 +30,12 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.MethodNotAllowedException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -39,10 +43,14 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -51,8 +59,12 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
@@ -86,6 +98,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -102,6 +115,7 @@ public class TetheringServerHandlerTest {
   private static final long REQUEST_TIME = System.currentTimeMillis();
   private static TetheringStore tetheringStore;
   private static MessagingService messagingService;
+  private static ProfileService profileService;
   private static CConfiguration cConf;
   private static Injector injector;
   private static TransactionManager txManager;
@@ -141,6 +155,8 @@ public class TetheringServerHandlerTest {
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           expose(MetricsCollectionService.class);
+          bind(MetricsSystemClient.class).toInstance(new NoOpMetricsSystemClient());
+          expose(MetricsSystemClient.class);
         }
       });
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
@@ -148,6 +164,7 @@ public class TetheringServerHandlerTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
+    profileService = injector.getInstance(ProfileService.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
   }
@@ -181,7 +198,7 @@ public class TetheringServerHandlerTest {
         new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TetheringServerHandler(cConf, tetheringStore, messagingService, contextAccessEnforcer),
-        new TetheringHandler(cConf, tetheringStore, messagingService)).build();
+        new TetheringHandler(cConf, tetheringStore, messagingService, profileService)).build();
     service.start();
     config = ClientConfig.builder()
       .setConnectionConfig(
@@ -387,6 +404,57 @@ public class TetheringServerHandlerTest {
 
     // Delete tethering
     deleteTethering();
+  }
+
+  @Test
+  public void testDeleteTetheringWhileUsedInProfile()
+    throws IOException, MethodNotAllowedException, NotFoundException, ProfileConflictException {
+    // Create tethering
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
+
+    // User accepts tethering
+    acceptTethering();
+
+    // Create a profile that uses this tethering
+    createTetheringProfile("tethering_profile", "xyz");
+
+    // Tethering deletion should fail because a profile is using this tethering
+    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
+                                              config.resolveURL("tethering/connections/xyz")).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
+
+    // Delete the profile
+    deleteTetheringProfile("tethering_profile");
+
+    // Create another tethering profile that's associated with a different peer
+    createTetheringProfile("profile2", "another_peer");
+
+    // Tethering should be deleted successfully
+    deleteTethering();
+
+    // Delete the other profile
+    deleteTetheringProfile("profile2");
+  }
+
+  private void createTetheringProfile(String profileName, String peer) throws MethodNotAllowedException {
+    List<ProvisionerPropertyValue> provisionerProperties = new ArrayList<>();
+    provisionerProperties.add(new ProvisionerPropertyValue(TetheringConf.TETHERED_INSTANCE_PROPERTY, peer,
+                                                           true));
+    provisionerProperties.add(new ProvisionerPropertyValue(TetheringConf.TETHERED_NAMESPACE_PROPERTY, "default",
+                                                           true));
+
+    ProvisionerInfo provisionerInfo = new ProvisionerInfo(TetheringProvisioner.TETHERING_NAME, provisionerProperties);
+    Profile profile = new Profile(profileName, "label", "desc", provisionerInfo);
+    ProfileId profileId = NamespaceId.DEFAULT.profile(profileName);
+    profileService.saveProfile(profileId, profile);
+  }
+
+  private void deleteTetheringProfile(String profileName)
+    throws MethodNotAllowedException, NotFoundException, ProfileConflictException {
+    ProfileId profileId = NamespaceId.DEFAULT.profile(profileName);
+    profileService.disableProfile(profileId);
+    profileService.deleteProfile(profileId);
   }
 
   private void expectTetheringControlResponse(String peerName, HttpResponseStatus status) throws IOException {
