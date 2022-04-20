@@ -157,7 +157,7 @@ public class NettyRouter extends AbstractIdleService {
   }
 
   @Override
-  protected Executor executor(final State state) {
+  protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
     return runnable -> {
       Thread t = new Thread(runnable, String.format("NettyRouter-%d", id.incrementAndGet()));

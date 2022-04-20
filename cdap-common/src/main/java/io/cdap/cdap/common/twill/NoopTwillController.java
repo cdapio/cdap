@@ -169,4 +169,9 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   public void kill() {
     terminate();
   }
+
+  @Override
+  public Throwable failureCause() {
+    return null;
+  }
 }

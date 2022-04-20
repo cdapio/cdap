@@ -143,6 +143,11 @@ public class KafkaClientModule extends PrivateModule {
           }
           return Futures.immediateFuture(State.TERMINATED);
         }
+
+        @Override
+        public Throwable failureCause() {
+          return null;
+        }
       };
     }
   }
