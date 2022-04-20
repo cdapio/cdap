@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 import kafka.producer.Partitioner;
 import kafka.utils.VerifiableProperties;
 
+import java.nio.charset.Charset;
+
 /**
  * A simple partitioner based on String keys.
  */
@@ -46,6 +48,6 @@ public final class StringPartitioner implements Partitioner {
 
   @Override
   public int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % this.numPartitions;
+    return Math.abs(Hashing.md5().hashString(key.toString(), Charset.defaultCharset()).asInt()) % this.numPartitions;
   }
 }

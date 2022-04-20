@@ -97,7 +97,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     Assert.assertEquals(1, stringPartitioner.partition(LOGGING_CONTEXT_KAFKA.getLogPartition(), -1));
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
@@ -152,7 +152,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
   @AfterClass
   public static void cleanUp() throws Exception {
     InMemoryTableService.reset();
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
   @Test

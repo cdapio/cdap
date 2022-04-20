@@ -59,10 +59,10 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
   @Test
   public void persistMetricsTests() throws Exception {
 
-    injector.getInstance(TransactionManager.class).startAndWait();
+    injector.getInstance(TransactionManager.class).startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
-    injector.getInstance(DatasetOpExecutorService.class).startAndWait();
-    injector.getInstance(DatasetService.class).startAndWait();
+    injector.getInstance(DatasetOpExecutorService.class).startAsync().awaitRunning();
+    injector.getInstance(DatasetService.class).startAsync().awaitRunning();
 
     Set<Integer> partitions = IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM))
       .boxed().collect(Collectors.toSet());
@@ -97,7 +97,7 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
                                                     injector.getInstance(DatumReaderFactory.class), metricStore,
                                                     injector.getInstance(MetricsWriterProvider.class),
                                                     partitions, new NoopMetricsContext(), 50, 0);
-      messagingMetricsProcessorManagerService.startAndWait();
+      messagingMetricsProcessorManagerService.startAsync().awaitRunning();
 
       // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore
       Tasks.waitFor(51, () -> metricStore.getAllCounterAndGaugeMetrics().size(), 15,
@@ -130,7 +130,7 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
       metricStore.deleteAll();
       expected.clear();
       // Stop messagingMetricsProcessorManagerService
-      messagingMetricsProcessorManagerService.stopAndWait();
+      messagingMetricsProcessorManagerService.stopAsync().awaitTerminated();
     }
   }
 

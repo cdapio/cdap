@@ -73,7 +73,7 @@ public class LogBufferRecoveryServiceTest {
       config, checkpointManager, 0);
 
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // write directly to log buffer
     LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
@@ -86,12 +86,12 @@ public class LogBufferRecoveryServiceTest {
     LogBufferRecoveryService service = new LogBufferRecoveryService(ImmutableList.of(pipeline),
                                                                     ImmutableList.of(checkpointManager),
                                                                     absolutePath, 2, new AtomicBoolean(true));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    service.stopAndWait();
-    pipeline.stopAndWait();
+    service.stopAsync().awaitTerminated();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 

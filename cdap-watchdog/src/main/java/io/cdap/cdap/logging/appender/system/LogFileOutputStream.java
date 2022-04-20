@@ -71,8 +71,8 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
       this.createTime = createTime;
       this.fileSize = 0;
     } catch (IOException e) {
-      Closeables.closeQuietly(outputStream);
-      Closeables.closeQuietly(dataFileWriter);
+      Closeables.close(outputStream, true);
+      Closeables.close(dataFileWriter, true);
       throw e;
     }
   }

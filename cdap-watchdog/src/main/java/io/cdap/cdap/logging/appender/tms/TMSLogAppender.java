@@ -36,6 +36,7 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,8 +67,9 @@ public class TMSLogAppender extends LogAppender {
   @Override
   public void start() {
     TMSLogPublisher publisher = new TMSLogPublisher(cConf, messagingService);
-    Optional.ofNullable(tmsLogPublisher.getAndSet(publisher)).ifPresent(TMSLogPublisher::stopAndWait);
-    publisher.startAndWait();
+    // TODO stopAsync and wait
+    Optional.ofNullable(tmsLogPublisher.getAndSet(publisher)).ifPresent(TMSLogPublisher::stopAsync);
+    publisher.startAsync().awaitRunning();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -75,7 +77,8 @@ public class TMSLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(TMSLogPublisher::stopAndWait);
+    // TODO stopAsync and wait
+    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(TMSLogPublisher::stopAsync);
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -95,7 +98,7 @@ public class TMSLogAppender extends LogAppender {
   // in Standalone
   @VisibleForTesting
   static int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashString(key.toString(), Charset.defaultCharset()).asInt()) % numPartitions;
   }
 
   /**

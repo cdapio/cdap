@@ -75,7 +75,7 @@ public class AggregatedMetricsCollectionServiceTest {
       }
     };
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     // non-empty tags.
     final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
@@ -140,7 +140,7 @@ public class AggregatedMetricsCollectionServiceTest {
       metricsContext.gauge(GAUGE_METRIC, 0);
       verifyCounterMetricsValue(published, ImmutableMap.of(6, ImmutableMap.of(GAUGE_METRIC, 0L)));
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 
@@ -212,7 +212,7 @@ public class AggregatedMetricsCollectionServiceTest {
       }
     };
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     // non-empty tags.
     final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
@@ -246,7 +246,7 @@ public class AggregatedMetricsCollectionServiceTest {
       verifyDistribtionMetricValues(published, 2, 4);
 
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 

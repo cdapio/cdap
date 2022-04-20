@@ -43,7 +43,7 @@ public class OTelMetricsCollectionServiceTest {
 
     OTelMetricsCollectionService service = new OTelMetricsCollectionService();
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     // non-empty tags.
     final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
@@ -60,7 +60,7 @@ public class OTelMetricsCollectionServiceTest {
       service.getContext(EMPTY_TAGS).increment(METRIC, 4);
 
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 }

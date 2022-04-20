@@ -83,7 +83,7 @@ public abstract class MetricsTestBase {
     injector = Guice.createInjector(getModules());
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     metricValueType = TypeToken.of(MetricValues.class);
     schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
@@ -94,7 +94,7 @@ public abstract class MetricsTestBase {
   @After
   public void stop() {
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 

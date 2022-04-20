@@ -19,8 +19,6 @@ package io.cdap.cdap.logging.logbuffer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -53,7 +51,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -96,7 +93,7 @@ public class LogBufferService extends AbstractIdleService {
     // load log pipelines
     List<LogBufferProcessorPipeline> bufferPipelines = loadLogPipelines();
     // start all the log pipelines
-    validateAllFutures(Iterables.transform(pipelines, Service::start));
+    validateAllFutures(Iterables.transform(pipelines, Service::startAsync));
 
     // recovery service and http handler will send log events to log pipelines. In order to avoid deleting file while
     // reading them in recovery service, we will pass in an atomic boolean will be set to true by recovery service
@@ -104,7 +101,7 @@ public class LogBufferService extends AbstractIdleService {
     AtomicBoolean startCleanup = new AtomicBoolean(false);
     // start log recovery service to recover all the pending logs.
     recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers, startCleanup);
-    recoveryService.startAndWait();
+    recoveryService.startAsync().awaitRunning();
 
     // create concurrent writer
     ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines,
@@ -143,23 +140,15 @@ public class LogBufferService extends AbstractIdleService {
   /**
    * Blocks and validates all the given futures completed successfully.
    */
-  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures) throws Exception {
-    // The get call shouldn't throw exception. It just block until all futures completed.
-    Futures.successfulAsList(futures).get();
+  private void validateAllFutures(Iterable<? extends Service> futures) throws Exception {
 
     // Iterates all futures to make sure all of them completed successfully
     Throwable exception = null;
-    for (ListenableFuture<?> future : futures) {
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        if (exception == null) {
-          exception = e.getCause();
-        } else {
-          exception.addSuppressed(e.getCause());
-        }
-      }
+    for (Service future : futures) {
+      future.awaitRunning();
     }
+
+    // TODO retrieve failure cause
   }
 
   /**
@@ -217,9 +206,9 @@ public class LogBufferService extends AbstractIdleService {
       httpService.stop();
     }
     if (recoveryService != null) {
-      recoveryService.stopAndWait();
+      recoveryService.stopAsync().awaitTerminated();
     }
     // Stops all pipeline
-    validateAllFutures(Iterables.transform(pipelines, Service::stop));
+    validateAllFutures(Iterables.transform(pipelines, Service::stopAsync));
   }
 }
