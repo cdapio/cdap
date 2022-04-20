@@ -143,6 +143,11 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
       public long getNumRows() {
         return 1;
       }
+
+      @Override
+      public Map<String, Long> getMetrics() {
+        return Collections.singletonMap("additional_metric_consume", 123L);
+      }
     };
   }
 

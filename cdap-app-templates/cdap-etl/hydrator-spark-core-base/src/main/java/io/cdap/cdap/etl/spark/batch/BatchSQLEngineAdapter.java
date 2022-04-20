@@ -56,6 +56,7 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.engine.SQLEngineJob;
 import io.cdap.cdap.etl.engine.SQLEngineJobKey;
 import io.cdap.cdap.etl.engine.SQLEngineJobType;
+import io.cdap.cdap.etl.engine.SQLEngineJobTypeMetric;
 import io.cdap.cdap.etl.engine.SQLEngineWriteJobKey;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
@@ -98,20 +99,24 @@ import javax.annotation.Nullable;
  */
 public class BatchSQLEngineAdapter implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(BatchSQLEngineAdapter.class);
+  private static final String METRIC_FORMAT = "pushdown.%s.%s";
 
   private final JavaSparkExecutionContext sec;
   private final JavaSparkContext jsc;
   private final SQLContext sqlContext;
+  private final String pluginName;
   private final SQLEngine<?, ?, ?, ?> sqlEngine;
   private final Metrics metrics;
   private final Map<String, StageStatisticsCollector> statsCollectors;
   private final ExecutorService executorService;
   private final Map<SQLEngineJobKey, SQLEngineJob<?>> jobs;
 
-  public BatchSQLEngineAdapter(SQLEngine<?, ?, ?, ?> sqlEngine,
+  public BatchSQLEngineAdapter(String pluginName,
+                               SQLEngine<?, ?, ?, ?> sqlEngine,
                                JavaSparkExecutionContext sec,
                                JavaSparkContext jsc,
                                Map<String, StageStatisticsCollector> statsCollectors) {
+    this.pluginName = pluginName;
     this.sqlEngine = sqlEngine;
     this.sec = sec;
     this.jsc = jsc;
@@ -166,9 +171,14 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     Runnable pushTask = () -> {
       try {
+        // Execute push operation for dataset
         LOG.debug("Starting push for dataset '{}'", datasetName);
         SQLDataset result = pushInternal(datasetName, schema, collection);
-        LOG.debug("Started push for dataset '{}'", datasetName);
+        LOG.debug("Completed push for dataset '{}'", datasetName);
+
+        // Log number of records being pushed into metrics
+        metrics.countLong(String.format(METRIC_FORMAT, pluginName, Constants.Metrics.RECORDS_PUSH),
+                          result.getNumRows());
         future.complete(result);
       } catch (Throwable t) {
         future.completeExceptionally(t);
@@ -244,9 +254,17 @@ public class BatchSQLEngineAdapter implements Closeable {
     Runnable pullTask = () -> {
       try {
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
+        // Wait for previous job to complete
         waitForJobAndThrowException(job);
-        JavaRDD<T> result = pullInternal(job.waitFor());
+
+        // Execute pull operation for the supplied dataset
+        SQLDataset sqlDataset = job.get();
+        JavaRDD<T> result = pullInternal(sqlDataset);
         LOG.debug("Started pull for dataset '{}'", job.getDatasetName());
+
+        // Log number of records being pulled into metrics
+        metrics.countLong(String.format(METRIC_FORMAT, pluginName, Constants.Metrics.RECORDS_PULL),
+                          sqlDataset.getNumRows());
         future.complete(result);
       } catch (Throwable t) {
         future.completeExceptionally(t);
@@ -513,6 +531,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     // Count output rows and complete future.
     countRecordsOut(joinDataset, statisticsCollector, stageMetrics);
+    countExecutionStage(SQLEngineJobTypeMetric.JOIN);
     return joinDataset;
   }
 
@@ -647,6 +666,21 @@ public class BatchSQLEngineAdapter implements Closeable {
       stageStatisticsCollector.incrementInputRecordCount(numRows);
     }
     countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_IN, numRows);
+    metrics.countLong(String.format(METRIC_FORMAT, pluginName, Constants.Metrics.RECORDS_IN), numRows);
+  }
+
+  /**
+   * Method to increment count of stages executed in the SQL engine.
+   */
+  private void countExecutionStage(SQLEngineJobTypeMetric metric) {
+    // Add metric for stage type
+    String stageTypeCount = Constants.Metrics.STAGES_COUNT_PREFIX + metric.getType();
+
+    // increment global executed stage count
+    metrics.count(String.format(METRIC_FORMAT, pluginName, Constants.Metrics.STAGES_COUNT), 1);
+
+    // increment count by stage type
+    metrics.count(String.format(METRIC_FORMAT, pluginName, stageTypeCount), 1);
   }
 
   /**
@@ -660,6 +694,7 @@ public class BatchSQLEngineAdapter implements Closeable {
                                @Nullable StageStatisticsCollector stageStatisticsCollector,
                                StageMetrics stageMetrics) {
     countRecordsOut(dataset.getNumRows(), stageStatisticsCollector, stageMetrics);
+    countDatasetMetrics(dataset);
   }
 
   /**
@@ -677,6 +712,39 @@ public class BatchSQLEngineAdapter implements Closeable {
       stageStatisticsCollector.incrementOutputRecordCount(numRows);
     }
     countStageMetrics(stageMetrics, Constants.Metrics.RECORDS_OUT, numRows);
+    metrics.countLong(String.format(METRIC_FORMAT, pluginName, Constants.Metrics.RECORDS_OUT), numRows);
+  }
+
+  /**
+   * Count additional metrics for the supplied {@link SQLDataset}
+   * @param dataset dataset to log metrics for.
+   */
+  private void countDatasetMetrics(SQLDataset dataset) {
+    countMetrics(dataset.getMetrics());
+  }
+
+  /**
+   * Count additional metrics for the supplied {@link SQLWriteResult}
+   * @param result write result to log metrics for.
+   */
+  private void countWriteResultMetrics(SQLWriteResult result) {
+    countMetrics(result.getMetrics());
+  }
+
+  /**
+   * Aggregate all metrics for a map containing metric keys and metric values
+   * @param jobMetrics map containing all metrics to aggregate.
+   */
+  private void countMetrics(Map<String, Long> jobMetrics) {
+    for (Map.Entry<String, Long> entry: jobMetrics.entrySet()) {
+      // Skip null values
+      if (entry.getKey() ==  null || entry.getValue() == null) {
+        continue;
+      }
+
+      // Metrics get prefixed with "pushdown.<the_plugin_name>." before logging
+      metrics.countLong(String.format(METRIC_FORMAT, pluginName, entry.getKey()), entry.getValue());
+    }
   }
 
   /**
@@ -775,6 +843,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
       // Count output records
       countRecordsOut(transformed, statisticsCollector, stageMetrics);
+      countExecutionStage(SQLEngineJobTypeMetric.TRANSFORM);
 
       return transformed;
     }));
@@ -807,6 +876,8 @@ public class BatchSQLEngineAdapter implements Closeable {
 
         countRecordsIn(writeResult.getNumRecords(), statisticsCollector, stageMetrics);
         countRecordsOut(writeResult.getNumRecords(), statisticsCollector, stageMetrics);
+        countExecutionStage(SQLEngineJobTypeMetric.WRITE);
+        countWriteResultMetrics(writeResult);
       }
 
       return writeResult.isSuccessful();
@@ -814,11 +885,11 @@ public class BatchSQLEngineAdapter implements Closeable {
   }
 
   /**
-   * Executes a task based o provided {@link Supplier}. This returns a {@link CompletableFuture} with the result of
-   * the execution of the supplied task.
+   * Executes a task based o provided {@link Supplier}. This returns a {@link CompletableFuture} with the result of the
+   * execution of the supplied task.
    *
    * @param supplier task to execute.
-   * @param <T> Output type for this job
+   * @param <T>      Output type for this job
    * @return {@link CompletableFuture} with the output for the execution of this task.
    */
   public <T> CompletableFuture<T> submitTask(Supplier<T> supplier) {
@@ -826,8 +897,8 @@ public class BatchSQLEngineAdapter implements Closeable {
   }
 
   /**
-   * Thread factory for SQL Engine Tasks. This thread factory ensures the parent context's classloader gets passed
-   * into the child threads.
+   * Thread factory for SQL Engine Tasks. This thread factory ensures the parent context's classloader gets passed into
+   * the child threads.
    */
   private class SQLEngineAdapterThreadFactory implements ThreadFactory {
     private final AtomicLong threadCounter;

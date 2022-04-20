@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +14,23 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.engine.sql.dataset;
-
-import java.util.Collections;
-import java.util.Map;
+package io.cdap.cdap.etl.engine;
 
 /**
- * Represents a dataset that resides in a SQL engine outside of spark.
+ * Enum used to specify metrics for SQL engine job types
  */
-public interface SQLDataset extends SQLDatasetDescription {
+public enum SQLEngineJobTypeMetric {
+  JOIN("join"),
+  TRANSFORM("transform"),
+  WRITE("join");
 
-  /**
-   * Get the number of rows stored in this dataset.
-   */
-  long getNumRows();
+  private final String type;
 
-  /**
-   * Returns additional metrics that should be logged for this dataset.
-   */
-  default Map<String, Long> getMetrics() {
-    return Collections.emptyMap();
+  SQLEngineJobTypeMetric(String type) {
+    this.type = type;
   }
 
+  public String getType() {
+    return this.type;
+  }
 }

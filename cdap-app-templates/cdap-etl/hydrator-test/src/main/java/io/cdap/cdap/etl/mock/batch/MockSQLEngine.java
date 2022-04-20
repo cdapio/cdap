@@ -47,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -135,6 +136,11 @@ public class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object
       @Override
       public long getNumRows() {
         return 1;
+      }
+
+      @Override
+      public Map<String, Long> getMetrics() {
+        return Collections.singletonMap("additional_metric_join", 123L);
       }
     };
   }
