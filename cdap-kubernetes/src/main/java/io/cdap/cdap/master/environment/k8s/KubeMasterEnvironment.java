@@ -141,6 +141,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_CONFIGS_PREFIX = "spark.kubernetes";
   private static final String SPARK_KUBERNETES_DRIVER_LABEL_PREFIX = "spark.kubernetes.driver.label.";
   private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
+  private static final String SPARK_KUBERNETES_NAMESPACE_LABEL = "spark.kubernetes.namespace";
   @VisibleForTesting
   static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
   @VisibleForTesting
@@ -391,6 +392,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                      getDriverPodTemplate(podInfo, sparkSubmitContext).getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, getExecutorPodTemplateFile().getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
+    sparkConfMap.put(SPARK_KUBERNETES_NAMESPACE_LABEL, podInfo.getNamespace());
 
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
@@ -489,6 +491,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         Matcher namespaceMatcher = NAMESPACE_LABEL_PATTERN.matcher(line);
         if (namespaceMatcher.matches()) {
           namespace = namespaceMatcher.group(2);
+          podLabels.put(namespaceMatcher.group(1), namespaceMatcher.group(2));
         }
         line = reader.readLine();
       }
