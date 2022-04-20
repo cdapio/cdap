@@ -18,6 +18,8 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import io.cdap.cdap.app.store.Store;
@@ -30,13 +32,16 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -60,17 +65,21 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
   private final long terminateTimeBufferSecs;
   private final int numThreads;
   private ExecutorService executorService;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService) {
-    this(cConf, store, runtimeService, cConf.getInt(Constants.AppFabric.PROGRAM_TERMINATOR_TX_BATCH_SIZE),
+  ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService,
+                                 MetricsCollectionService metricsCollectionService) {
+    this(cConf, store, runtimeService, metricsCollectionService,
+         cConf.getInt(Constants.AppFabric.PROGRAM_TERMINATOR_TX_BATCH_SIZE),
          cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATOR_INTERVAL_SECS),
          cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATE_TIME_BUFFER_SECS));
   }
 
   @VisibleForTesting
   ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService,
-                                 int txBatchSize, long specifiedIntervalSecs, long terminateTimeBufferSecs) {
+                                 MetricsCollectionService metricsCollectionService, int txBatchSize,
+                                 long specifiedIntervalSecs, long terminateTimeBufferSecs) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.store = store;
     this.runtimeService = runtimeService;
@@ -83,6 +92,7 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
     this.intervalMillis = TimeUnit.SECONDS.toMillis(specifiedIntervalSecs);
     this.terminateTimeBufferSecs = terminateTimeBufferSecs;
     this.numThreads = cConf.getInt(Constants.AppFabric.PROGRAM_KILL_THREADS);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -153,6 +163,7 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
             LOG.info("Forcing the termination of program run {} as it should have stopped at {} ",
                      programRunId, record.getTerminateTs());
             runtimeInfo.getController().kill();
+            emitForceTerminatedRunsMetric(programRunId, record);
           });
         }
       }
@@ -169,5 +180,31 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
       Long terminateTime = record.getTerminateTs();
       return terminateTime != null && terminateTime <= currentTimeInSecs;
     };
+  }
+
+  private void emitForceTerminatedRunsMetric(ProgramRunId programRunId, RunRecordDetail recordedRunRecord) {
+    Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
+                                                                       recordedRunRecord.getSystemArgs());
+    Map<String, String> additionalTags = new HashMap<>();
+    // don't want to add the tag if it is not present otherwise it will result in NPE
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.PROVISIONER,
+                                   provisioner -> SystemArguments.getProfileProvisioner(
+                                     recordedRunRecord.getSystemArgs()));
+    profile.ifPresent(profileId -> {
+      emitProfileMetrics(programRunId, profileId, additionalTags);
+    });
+  }
+
+  private void emitProfileMetrics(ProgramRunId programRunId, ProfileId profileId,
+                                  Map<String, String> additionalTags) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .putAll(additionalTags)
+      .build();
+    metricsCollectionService.getContext(tags).increment(Constants.Metrics.Program.PROGRAM_FORCE_TERMINATED_RUNS, 1L);
   }
 }
