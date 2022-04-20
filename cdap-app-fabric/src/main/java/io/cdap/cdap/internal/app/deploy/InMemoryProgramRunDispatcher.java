@@ -66,7 +66,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.proto.id.ArtifactId;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.common.http.HttpRequestConfig;
@@ -422,10 +421,6 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       try {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
         String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
-        if (peer != null) {
-          String peerNamespace = options.getArguments().getOption(ProgramOptionConstants.PEER_NAMESPACE);
-          artifactId = Artifacts.toProtoArtifactId(new NamespaceId(peerNamespace), plugin.getArtifactId());
-        }
         ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
         copyArtifact(artifactId, artifactDetail, destFile, isDistributed, peer != null);
       } catch (ArtifactNotFoundException e) {
