@@ -139,6 +139,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
+  private static final String JAVA_OPTS_KEY = "OPTS";
+  private static final String JAVA_OPTS_DELIM = " ";
+  private static final String FILE_LOCALIZER_JVM_OPTS = "master.environment.k8s.file.localizer.container.jvm.opts";
+  private static final String FILE_LOCALIZER_DEFAULT_JVM_OPTS = "-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError";
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
@@ -161,6 +165,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final Map<String, V1SecurityContext> containerSecurityContexts;
   private final Map<String, Set<String>> readonlyDisks;
   private final Map<String, Map<String, String>> runnableConfigs;
+  private final Map<String, StringBuilder> runnableJVMOptions;
 
   private String schedulerQueue;
   private String mainRunnableName;
@@ -198,6 +203,17 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.containerSecurityContexts = new HashMap<>();
     this.readonlyDisks = new HashMap<>();
     this.runnableConfigs = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
+    // Convert inherited JVM options from pod info.
+    List<V1EnvVar> inheritedEnvVars = podInfo.getContainerEnvironments();
+    Optional<V1EnvVar> javaOptsEnvVar = inheritedEnvVars == null ? Optional.empty()
+      : inheritedEnvVars.stream().filter(i -> JAVA_OPTS_KEY.equals(i.getName())).findFirst();
+    this.runnableJVMOptions = runnables.stream().collect(Collectors.toMap(r -> r, r -> {
+      StringBuilder builder = new StringBuilder();
+      if (javaOptsEnvVar.isPresent()) {
+        builder.append(javaOptsEnvVar.get().getValue());
+      }
+      return builder;
+    }));
   }
 
   @Override
@@ -370,11 +386,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public TwillPreparer setJVMOptions(String runnableName, String options) {
+    runnableJVMOptions.put(runnableName, new StringBuilder(options));
     return this;
   }
 
   @Override
   public TwillPreparer addJVMOptions(String options) {
+    for (String runnable : runnableJVMOptions.keySet()) {
+      runnableJVMOptions.get(runnable).append(JAVA_OPTS_DELIM).append(options);
+    }
     return this;
   }
 
@@ -951,9 +971,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
       .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
     // Add all environments of the the main runnable for the init container.
-    if (environments.get(mainRuntimeSpec.getName()) != null) {
-      initContainerEnvirons.putAll(environments.get(mainRuntimeSpec.getName()));
+    if (environments.get(runnableName) != null) {
+      initContainerEnvirons.putAll(environments.get(runnableName));
     }
+    // Add JVM options to environment.
+    initContainerEnvirons.put(JAVA_OPTS_KEY, masterEnvContext.getConfigurations()
+      .getOrDefault(FILE_LOCALIZER_JVM_OPTS, FILE_LOCALIZER_DEFAULT_JVM_OPTS));
+
     V1PodSpecBuilder podSpecBuilder = new V1PodSpecBuilder();
     if (schedulerQueue != null) {
       podSpecBuilder = podSpecBuilder.withPriorityClassName(schedulerQueue);
@@ -961,6 +985,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     if (serviceAccountName == null) {
       serviceAccountName = podInfo.getServiceAccountName();
     }
+
     return podSpecBuilder
       .withServiceAccountName(serviceAccountName)
       .withRuntimeClassName(podInfo.getRuntimeClassName())
@@ -986,7 +1011,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     List<V1Container> containers = new ArrayList<>();
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
-    environs.putAll(environments.get(mainRuntimeSpec.getName()));
+    String runnableName = mainRuntimeSpec.getName();
+    environs.putAll(environments.get(runnableName));
+    // Add JVM options to environment.
+    environs.put(JAVA_OPTS_KEY, runnableJVMOptions.get(runnableName).toString());
 
     List<V1VolumeMount> mounts;
 
@@ -1001,6 +1029,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       RuntimeSpecification spec = runtimeSpecs.get(name);
       // Add all environments for the runnable
       environs.putAll(environments.get(name));
+      // Add JVM options to environment.
+      environs.put(JAVA_OPTS_KEY, runnableJVMOptions.get(name).toString());
       mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
                                      createResourceRequirements(spec.getResourceSpecification()),

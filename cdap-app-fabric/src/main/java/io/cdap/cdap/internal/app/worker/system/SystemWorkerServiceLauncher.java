@@ -165,6 +165,10 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
                                                                                               secretPath));
           }
 
+          // Set JVM options for system worker
+          twillPreparer.setJVMOptions(SystemWorkerTwillRunnable.class.getSimpleName(),
+                                      cConf.get(Constants.SystemWorker.CONTAINER_JVM_OPTS));
+
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
           activeController.onRunning(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);
           activeController.onTerminated(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);

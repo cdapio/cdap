@@ -217,6 +217,7 @@ public final class Constants {
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+    public static final String PROGRAM_JVM_OPTS_PREFIX = "app.program.jvm.opts.";
     public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
     public static final String STREAMING_BATCH_SIZE = "app.streaming.batch.size";
     public static final String EXEC_THREADS = "app.exec.threads";
@@ -407,6 +408,7 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MULTIPLIER = "preview.runner.container.memory.multiplier";
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
+    public static final String CONTAINER_JVM_OPTS = "preview.runner.container.jvm.opts";
 
     public static final String ARTIFACT_LOCALIZER_ENABLED = "preview.runner.artifact.localizer.enabled";
   }
@@ -453,6 +455,7 @@ public final class Constants {
     public static final String CONTAINER_RUN_AS_USER = "task.worker.container.run.as.user";
     public static final String CONTAINER_RUN_AS_GROUP = "task.worker.container.run.as.group";
     public static final String CONTAINER_DISK_READONLY = "task.worker.container.disk.readonly";
+    public static final String CONTAINER_JVM_OPTS = "task.worker.container.jvm.opts";
 
     /**
      * Task worker http handler configuration
@@ -475,6 +478,7 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MB = "system.worker.container.memory.mb";
     public static final String CONTAINER_CORES = "system.worker.container.num.cores";
     public static final String CONTAINER_COUNT = "system.worker.container.count";
+    public static final String CONTAINER_JVM_OPTS = "system.worker.container.jvm.opts";
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
     public static final String CLEANUP_EXECUTOR_SERVICE_BINDING = "cleanup.executor.service";
     public static final String CLEANUP_THREADS = "system.worker.cleanup.threads";
@@ -504,6 +508,7 @@ public final class Constants {
      */
     public static final String CONTAINER_MEMORY_MB = "artifact.localizer.container.memory.mb";
     public static final String CONTAINER_CORES = "artifact.localizer.container.num.cores";
+    public static final String CONTAINER_JVM_OPTS = "artifact.localizer.container.jvm.opts";
 
     /**
      * Artifact localizer http handler configuration
