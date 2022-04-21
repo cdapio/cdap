@@ -74,9 +74,6 @@ class ConstraintCheckerService extends AbstractIdleService {
   private ListeningExecutorService taskExecutorService;
   private volatile boolean stopping;
   private MetricsCollectionService metricsCollectionService;
-  private static final Map<String, String> METRICS_CONTEXT = ImmutableMap.of(
-    Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
-    Constants.Metrics.Tag.COMPONENT, "constraintchecker");
 
   @Inject
   ConstraintCheckerService(Store store,
@@ -282,14 +279,17 @@ class ConstraintCheckerService extends AbstractIdleService {
 
       try {
         taskRunner.launch(job);
-        emitScheduleJobSuccessAndLatencyMetric(job);
+        emitScheduleJobSuccessAndLatencyMetric(job.getSchedule().getScheduleId().getApplication(),
+                                               job.getSchedule().getName(), job.getCreationTime());
       } catch (ConflictException e) {
         LOG.error("Skip job {} because it was rejected while launching: {}", job.getJobKey(), e.getMessage());
-        emitScheduleJobFailureMetric();
+        emitScheduleJobFailureMetric(job.getSchedule().getScheduleId().getApplication(),
+                                     job.getSchedule().getName());
       } catch (Exception e) {
         LOG.error("Skip launching job {} because the program {} encountered an exception while launching.",
                   job.getJobKey(), job.getSchedule().getProgramId(), e);
-        emitScheduleJobFailureMetric();
+        emitScheduleJobFailureMetric(job.getSchedule().getScheduleId().getApplication(),
+                                     job.getSchedule().getName());
       }
       // this should not have a conflict, because any updates to the job will first check to make sure that
       // it is not PENDING_LAUNCH
@@ -322,25 +322,32 @@ class ConstraintCheckerService extends AbstractIdleService {
       return satisfiedState;
     }
 
-    private void emitScheduleJobSuccessAndLatencyMetric(Job job) {
+    private void emitScheduleJobSuccessAndLatencyMetric(String application, String schedule, long jobCreationTime) {
       if (metricsCollectionService == null) {
         return;
       }
-      MetricsContext collector = metricsCollectionService.getContext(METRICS_CONTEXT);
-      collector.increment("schedulejob.success", 1);
+      MetricsContext collector = metricsCollectionService.getContext(getContext(application, schedule));
+      collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_SUCCESS, 1);
 
       long currTime = System.currentTimeMillis();
-      long createdTime = job.getCreationTime();
-      long latency = currTime - createdTime;
-      collector.event("schedulejob.latency", latency);
+      long latency = currTime - jobCreationTime;
+      collector.event(Constants.Metrics.ScheduledJob.SCHEDULE_LATENCY, latency);
     }
 
-    private void emitScheduleJobFailureMetric() {
+    private void emitScheduleJobFailureMetric(String application, String schedule) {
       if (metricsCollectionService == null) {
         return;
       }
-      MetricsContext collector = metricsCollectionService.getContext(METRICS_CONTEXT);
-      collector.increment("schedulejob.failure", 1);
+      MetricsContext collector = metricsCollectionService.getContext(getContext(application, schedule));
+      collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_FAILURE, 1);
+    }
+
+    private Map<String, String> getContext(String application, String schedule) {
+      return ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.APP, application,
+        Constants.Metrics.Tag.COMPONENT, "constraintchecker",
+        Constants.Metrics.Tag.SCHEDULE, schedule);
     }
   }
 }
