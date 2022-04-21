@@ -21,7 +21,6 @@ import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.common.conf.Constants;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -38,7 +37,7 @@ public class OTelMetricsCollectionServiceTest {
   private static final String METRIC = "metric";
 
   @Test
-  public void testPublish() throws InterruptedException, IOException {
+  public void testPublish() throws Exception {
     final BlockingQueue<MetricValues> published = new LinkedBlockingQueue<>();
 
     OTelMetricsCollectionService service = new OTelMetricsCollectionService();
@@ -60,6 +59,7 @@ public class OTelMetricsCollectionServiceTest {
       service.getContext(EMPTY_TAGS).increment(METRIC, 4);
 
     } finally {
+      service.shutDown();
       service.stopAsync().awaitTerminated();
     }
   }

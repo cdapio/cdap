@@ -33,6 +33,7 @@ import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.MeterProvider;
 import io.opentelemetry.api.metrics.ObservableDoubleGauge;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
+import io.opentelemetry.sdk.metrics.export.MetricReader;
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
 import javafx.util.Pair;
 
@@ -48,6 +49,7 @@ public class OTelMetricsCollectionService extends AbstractExecutionThreadService
   MetricExporter cloudMonitoringExporter;
   MeterProvider provider;
   Meter meter;
+  MetricReader reader;
 
   private final LoadingCache<Map<String, String>, MetricsContext> collectors;
   private final LoadingCache<Map<String, String>, LoadingCache<String, Pair<Attributes, Object>>> emitters;
@@ -67,9 +69,10 @@ public class OTelMetricsCollectionService extends AbstractExecutionThreadService
 
     // TODO: move this to metricscontext and do it per resource
     // Now set up PeriodicMetricReader to use this Exporter
+
+    // reader = ;
     provider = SdkMeterProvider.builder()
-            .registerMetricReader(
-                    PeriodicMetricReader.create(cloudMonitoringExporter))
+            .registerMetricReader(PeriodicMetricReader.newMetricReaderFactory(cloudMonitoringExporter))
             .build();
 
     meter = provider.meterBuilder("cdf").build();
@@ -108,6 +111,10 @@ public class OTelMetricsCollectionService extends AbstractExecutionThreadService
   @Override
   protected void shutDown() throws Exception {
     // Flush the metrics when shutting down.
+
+    // reader.flush();
+
+    cloudMonitoringExporter.flush();
     cloudMonitoringExporter.shutdown();
   }
 
