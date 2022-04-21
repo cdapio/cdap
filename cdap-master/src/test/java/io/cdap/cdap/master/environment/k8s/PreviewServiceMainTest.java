@@ -18,15 +18,24 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.environment.app.PreviewTestApp;
 import io.cdap.cdap.master.environment.app.PreviewTestAppWithPlugin;
 import io.cdap.cdap.master.environment.plugin.ConstantCallable;
@@ -39,6 +48,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -46,7 +56,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * Unit test for {@link PreviewServiceMain}.
@@ -68,6 +81,11 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
 
   private static final Type ARTIFACT_SUMMARY_LIST = new TypeToken<List<ArtifactSummary>>() { }.getType();
 
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private static ArtifactLocalizerService artifactLocalizerService;
+
   @After
   public void after() throws IOException {
     deleteAllArtifact();
@@ -75,14 +93,21 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
 
   @BeforeClass
   public static void initPreviewService() throws Exception {
-    // Start the preview service main, which will use its own local datadir, thus should fetch artifact location
-    // from appFabric when running a preview
+    // Start the artifact localizer service using a temporary folder.
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
+    Injector injector = ArtifactLocalizerTwillRunnable.createInjector(cConf, new Configuration());
+    artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    artifactLocalizerService.startAndWait();
+    // Start the preview service main, which will use its own local datadir and fetch artifacts from app-fabric via
+    // the artifact localizer service.
     startService(PreviewServiceMain.class);
   }
 
   @AfterClass
   public static void afterPreviewService() throws Exception {
     stopService(PreviewServiceMain.class);
+    artifactLocalizerService.stopAndWait();
   }
 
   @Test
@@ -261,5 +286,31 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
    */
   private HttpRequestConfig getHttpRequestConfig() {
     return new HttpRequestConfig(0, 0, false);
+  }
+
+  private static class NoOpArtifactManager implements ArtifactManager {
+    @Override
+    public List<ArtifactInfo> listArtifacts() throws IOException, AccessException {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public List<ArtifactInfo> listArtifacts(String namespace) throws IOException, AccessException {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
+      return null;
+    }
+
+    @Override
+    public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
+      return null;
+    }
   }
 }

@@ -167,8 +167,6 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             hConf.writeXml(writer);
           }
 
-          Boolean artifactLocalizerEnabled = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED);
-
           ResourceSpecification runnerResourceSpec = ResourceSpecification.Builder.with()
             .setVirtualCores(cConf.getInt(Constants.Preview.CONTAINER_CORES))
             .setMemory(cConf.getInt(Constants.Preview.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
@@ -176,19 +174,16 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             .build();
 
           Optional<ResourceSpecification> artifactLocalizerResourceSpec = Optional.empty();
-          if (artifactLocalizerEnabled) {
-            artifactLocalizerResourceSpec = Optional.of(
-              ResourceSpecification.Builder.with()
-                .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
-                .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
-                           ResourceSpecification.SizeUnit.MEGA)
-                .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
-                .build());
-          }
+          artifactLocalizerResourceSpec = Optional.of(
+            ResourceSpecification.Builder.with()
+              .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
+              .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
+                         ResourceSpecification.SizeUnit.MEGA)
+              .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+              .build());
 
-          LOG.info("Starting preview runners with {} instances and artifactLocalizer {}",
-                   runnerResourceSpec.getInstances(),
-                   artifactLocalizerEnabled ? "enabled" : "disabled");
+          LOG.info("Starting preview runners with {} instances and artifactLocalizer enabled",
+                   runnerResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
             new PreviewRunnerTwillApplication(cConfPath.toUri(),
@@ -201,11 +196,9 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           }
 
           if (twillPreparer instanceof DependentTwillPreparer) {
-            if (artifactLocalizerEnabled) {
-              twillPreparer = ((DependentTwillPreparer) twillPreparer)
-                .dependentRunnableNames(PreviewRunnerTwillRunnable.class.getSimpleName(),
-                                        ArtifactLocalizerTwillRunnable.class.getSimpleName());
-            }
+            twillPreparer = ((DependentTwillPreparer) twillPreparer)
+              .dependentRunnableNames(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                                      ArtifactLocalizerTwillRunnable.class.getSimpleName());
           }
 
           if (twillPreparer instanceof StatefulTwillPreparer) {
@@ -225,16 +218,15 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                 .withSecurityContext(PreviewRunnerTwillRunnable.class.getSimpleName(), securityContext);
             }
 
-            if (artifactLocalizerEnabled) {
-              // Mount secret in ArtifactLocalizer sidecar which only runs trusted code,
-              // so requests originated by ArtifactLocalizer can run with system identity when internal auth
-              // is enabled.
-              String secretName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
-              String secretPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
-              twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
-                                new SecretDisk(secretName, secretPath));
-            }
+            // Mount secret in ArtifactLocalizer sidecar which only runs trusted code,
+            // so requests originated by ArtifactLocalizer can run with system identity when internal auth
+            // is enabled.
+            String artifactLocalizerSecretName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
+            String artifactLocalizerSecretPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+              .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
+                              new SecretDisk(artifactLocalizerSecretName, artifactLocalizerSecretPath));
+            // Mount worker secrets as configured in CConf
             if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);

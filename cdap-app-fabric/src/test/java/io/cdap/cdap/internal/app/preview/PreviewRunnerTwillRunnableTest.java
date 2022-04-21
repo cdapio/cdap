@@ -21,6 +21,7 @@ import io.cdap.cdap.app.preview.DefaultPreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
@@ -31,8 +32,22 @@ import org.junit.Test;
 public class PreviewRunnerTwillRunnableTest {
 
   @Test
-  public void testInjector() {
-    Injector injector = PreviewRunnerTwillRunnable.createInjector(CConfiguration.create(), new Configuration(),
+  public void testNoSQLInjector() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+    Injector injector = PreviewRunnerTwillRunnable.createInjector(cConf, new Configuration(),
+                                                                  new PreviewRequestPollerInfo(0, "testuid"));
+    DefaultPreviewRunnerManager defaultPreviewRunnerManager = (DefaultPreviewRunnerManager) injector
+      .getInstance(PreviewRunnerManager.class);
+    Injector previewInjector = defaultPreviewRunnerManager.createPreviewInjector();
+    previewInjector.getInstance(PreviewRunner.class);
+  }
+
+  @Test
+  public void testPostgresQLInjector() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
+    Injector injector = PreviewRunnerTwillRunnable.createInjector(cConf, new Configuration(),
                                                                   new PreviewRequestPollerInfo(0, "testuid"));
     DefaultPreviewRunnerManager defaultPreviewRunnerManager = (DefaultPreviewRunnerManager) injector
       .getInstance(PreviewRunnerManager.class);
