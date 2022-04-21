@@ -52,9 +52,6 @@ public class DefaultSchedulerService {
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskPublisher taskPublisher;
     private final MetricsCollectionService metricsCollectionService;
-    private static final Map<String, String> METRICS_CONTEXT = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
-      Constants.Metrics.Tag.COMPONENT, "quartzscheduledjob");
 
     ScheduledJob(MessagingService messagingService, TopicId topicId,
                  MetricsCollectionService metricsCollectionService) {
@@ -96,17 +93,22 @@ public class DefaultSchedulerService {
         // Do not remove this log line. The exception at higher level gets caught by the quartz scheduler and is not
         // logged in cdap master logs making it hard to debug issues.
         LOG.warn("Error while publishing notification for schedule {}. {}", scheduleId, t);
-        emitScheduleJobFailureMetric();
+        emitScheduleJobFailureMetric(scheduleId.getApplication(), scheduleId.getSchedule());
         throw new JobExecutionException(t.getMessage(), t.getCause(), false);
       }
     }
 
-    private void emitScheduleJobFailureMetric() {
+    private void emitScheduleJobFailureMetric(String application, String schedule) {
       if (metricsCollectionService == null) {
         return;
       }
-      MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_CONTEXT);
-      metricsContext.increment("schedulejob.failure", 1);
+      Map<String, String> tags = ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.COMPONENT, "quartzscheduledjob",
+        Constants.Metrics.Tag.APP, application,
+        Constants.Metrics.Tag.SCHEDULE, schedule);
+      MetricsContext metricsContext = metricsCollectionService.getContext(tags);
+      metricsContext.increment(Constants.Metrics.ScheduledJob.SCHEDULE_FAILURE, 1);
     }
   }
 }

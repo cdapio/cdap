@@ -211,23 +211,23 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       try {
         jobQueue.addNotification(record, notification);
       } catch (Exception e) {
-        emitScheduleJobNotificationFailureMetrics();
+        emitScheduleJobNotificationFailureMetrics(record.getSchedule().getScheduleId().getApplication(),
+                                                  record.getSchedule().getScheduleId().getSchedule());
         throw e;
       }
     }
 
-    private void emitScheduleJobNotificationFailureMetrics() {
+    private void emitScheduleJobNotificationFailureMetrics(String application, String schedule) {
       if (metricsCollectionService == null) {
         return;
       }
-      MetricsContext collector = metricsCollectionService.getContext(getContext());
-      collector.increment("schedulejob.notification.failure", 1);
-    }
-
-    private Map<String, String> getContext() {
-      return ImmutableMap.of(
+      Map<String, String> tags = ImmutableMap.of(
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
-        Constants.Metrics.Tag.COMPONENT, "schedulenotification");
+        Constants.Metrics.Tag.COMPONENT, "schedulenotification",
+        Constants.Metrics.Tag.APP, application,
+        Constants.Metrics.Tag.SCHEDULE, schedule);
+      MetricsContext collector = metricsCollectionService.getContext(tags);
+      collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_NOTIFICATION_FAILURE, 1);
     }
   }
 
