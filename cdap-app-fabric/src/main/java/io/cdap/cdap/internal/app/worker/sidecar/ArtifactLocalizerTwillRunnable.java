@@ -87,7 +87,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     List<Module> modules = new ArrayList<>();
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
