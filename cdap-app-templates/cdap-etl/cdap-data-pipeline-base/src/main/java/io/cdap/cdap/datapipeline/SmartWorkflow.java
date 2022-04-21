@@ -39,6 +39,7 @@ import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.NodeValue;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.datapipeline.service.PipelineTriggers;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.AlertPublisherContext;
@@ -69,7 +70,6 @@ import io.cdap.cdap.etl.batch.connector.ConnectorSource;
 import io.cdap.cdap.etl.batch.connector.MultiConnectorSource;
 import io.cdap.cdap.etl.batch.customaction.PipelineAction;
 import io.cdap.cdap.etl.batch.mapreduce.ETLMapReduce;
-import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAlertPublisherContext;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
@@ -88,12 +88,11 @@ import io.cdap.cdap.etl.planner.DisjointConnectionsException;
 import io.cdap.cdap.etl.planner.PipelinePlan;
 import io.cdap.cdap.etl.planner.PipelinePlanner;
 import io.cdap.cdap.etl.proto.Connection;
-import io.cdap.cdap.etl.proto.v2.ArgumentMapping;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
-import io.cdap.cdap.etl.proto.v2.PluginPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.batch.ETLSpark;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -130,7 +129,6 @@ public class SmartWorkflow extends AbstractWorkflow {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter()).create();
   private static final Type STAGE_DATASET_MAP = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
   private static final Type STAGE_OPERATIONS_MAP = new TypeToken<Map<String, List<FieldOperation>>>() { }.getType();
 
   private final ApplicationConfigurer applicationConfigurer;
@@ -285,8 +283,7 @@ public class SmartWorkflow extends AbstractWorkflow {
           for (String source : dag.getSources()) {
             subDagConnections.add(new Connection(dummyNode, source));
           }
-          Deque<String> subDagBFS = new LinkedList<>();
-          subDagBFS.addAll(dag.getSources());
+          Deque<String> subDagBFS = new LinkedList<>(dag.getSources());
 
           while (subDagBFS.peek() != null) {
             String node = subDagBFS.poll();
@@ -383,7 +380,7 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   private void updateTokenWithTriggeringProperties(TriggeringScheduleInfo scheduleInfo,
                                                    TriggeringPropertyMapping propertiesMapping,
-                                                   WorkflowToken token) {
+                                                   WorkflowContext context) {
     List<ProgramStatusTriggerInfo> programStatusTriggerInfos = new ArrayList<>();
     for (TriggerInfo info : scheduleInfo.getTriggerInfos()) {
       if (info instanceof ProgramStatusTriggerInfo) {
@@ -394,63 +391,24 @@ public class SmartWorkflow extends AbstractWorkflow {
     if (programStatusTriggerInfos.isEmpty()) {
       return;
     }
-    // Currently only expecting one trigger in a schedule
-    ProgramStatusTriggerInfo triggerInfo = programStatusTriggerInfos.get(0);
-    BasicArguments triggeringArguments = new BasicArguments(triggerInfo.getWorkflowToken(),
-                                                            triggerInfo.getRuntimeArguments());
-    // Get the value of every triggering pipeline arguments specified in the propertiesMapping and update newRuntimeArgs
-    List<ArgumentMapping> argumentMappings = propertiesMapping.getArguments();
-    for (ArgumentMapping mapping : argumentMappings) {
-      String sourceKey = mapping.getSource();
-      if (sourceKey == null) {
-        LOG.warn("The name of argument from the triggering pipeline cannot be null, " +
-                   "skip this argument mapping: '{}'.", mapping);
-        continue;
+
+    Map<String, String> propertiesMappings = new HashMap<>();
+    if (Feature.PIPELINE_COMPOSITE_TRIGGERS.isEnabled(context)) {
+      // Iterate all triggers and match pipeline ID info
+      for (ProgramStatusTriggerInfo triggerInfo : programStatusTriggerInfos) {
+        PipelineTriggers.addSchedulePropertiesMapping(
+          propertiesMappings, triggerInfo, propertiesMapping, true);
       }
-      String value = triggeringArguments.get(sourceKey);
-      if (value == null) {
-        LOG.warn("Runtime argument '{}' is not found in run '{}' of the triggering pipeline '{}' " +
-                   "in namespace '{}' ",
-                 sourceKey, triggerInfo.getRunId(), triggerInfo.getApplicationName(),
-                 triggerInfo.getNamespace());
-        continue;
-      }
-      // Use the argument name in the triggering pipeline if target is not specified
-      String targetKey = mapping.getTarget() == null ? sourceKey : mapping.getTarget();
-      token.put(targetKey, value);
+    } else {
+      // Only expecting one trigger in a program_status schedule
+      PipelineTriggers.addSchedulePropertiesMapping(
+        propertiesMappings, programStatusTriggerInfos.get(0), propertiesMapping, false);
     }
-    // Get the resolved plugin properties map from triggering pipeline's workflow token in triggeringArguments
-    Map<String, Map<String, String>> resolvedProperties =
-      GSON.fromJson(triggeringArguments.get(RESOLVED_PLUGIN_PROPERTIES_MAP), STAGE_PROPERTIES_MAP);
-    for (PluginPropertyMapping mapping : propertiesMapping.getPluginProperties()) {
-      String stageName = mapping.getStageName();
-      if (stageName == null) {
-        LOG.warn("The name of the stage cannot be null in plugin property mapping, skip this mapping: '{}'.", mapping);
-        continue;
-      }
-      Map<String, String> pluginProperties = resolvedProperties.get(stageName);
-      if (pluginProperties == null) {
-        LOG.warn("No plugin properties can be found with stage name '{}' in triggering pipeline '{}' " +
-                   "in namespace '{}' ", mapping.getStageName(), triggerInfo.getApplicationName(),
-                 triggerInfo.getNamespace());
-        continue;
-      }
-      String sourceKey = mapping.getSource();
-      if (sourceKey == null) {
-        LOG.warn("The name of argument from the triggering pipeline cannot be null, " +
-                   "skip this argument mapping: '{}'.", mapping);
-        continue;
-      }
-      String value = pluginProperties.get(sourceKey);
-      if (value == null) {
-        LOG.warn("No property with name '{}' can be found in plugin '{}' of the triggering pipeline '{}' " +
-                   "in namespace '{}' ", sourceKey, stageName, triggerInfo.getApplicationName(),
-                 triggerInfo.getNamespace());
-        continue;
-      }
-      // Use the argument name in the triggering pipeline if target is not specified
-      String targetKey = mapping.getTarget() == null ? sourceKey : mapping.getTarget();
-      token.put(targetKey, value);
+
+    // Add the arguments mapping to context token
+    WorkflowToken token = context.getToken();
+    for (String key : propertiesMappings.keySet()) {
+      token.put(key, propertiesMappings.get(key));
     }
   }
 
@@ -464,7 +422,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       if (propertiesMappingString != null) {
         TriggeringPropertyMapping propertiesMapping =
           GSON.fromJson(propertiesMappingString, TriggeringPropertyMapping.class);
-        updateTokenWithTriggeringProperties(scheduleInfo, propertiesMapping, context.getToken());
+        updateTokenWithTriggeringProperties(scheduleInfo, propertiesMapping, context);
       }
     }
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
