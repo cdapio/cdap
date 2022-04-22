@@ -4906,6 +4906,14 @@
   </property>
 
   <property>
+    <name>system.worker.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for system worker containers.
+    </description>
+  </property>
+
+  <property>
     <name>system.worker.bind.address</name>
     <value>0.0.0.0</value>
     <description>
