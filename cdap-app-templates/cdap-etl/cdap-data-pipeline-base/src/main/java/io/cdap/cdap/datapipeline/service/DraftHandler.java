@@ -72,7 +72,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
   }
 
   /**
-   * Returns a list of drafts associated with a namespace and the current user
+   * Returns a list of drafts associated with a namespace.
    */
   @GET
   @Path(API_VERSION + "/contexts/{context}/drafts/")
@@ -90,8 +90,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
       }
 
       SortRequest sortRequest = new SortRequest(sortBy, sortOrder);
-      String userId = request.getUserId();
-      userId = userId == null ? "" : userId;
+      String userId = "";
       responder.sendJson(draftService.listDrafts(namespace, userId, includeConfig, sortRequest, filter));
     });
   }
@@ -105,8 +104,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
                        @PathParam("context") String namespaceName,
                        @PathParam("draft") String draftId) {
     respond(namespaceName, responder, (namespace) -> {
-      String userId = request.getUserId();
-      userId = userId == null ? "" : userId;
+      String userId = "";
       DraftId id = new DraftId(namespace, draftId, userId);
       responder.sendJson(draftService.getDraft(id));
     });
@@ -126,8 +124,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
 
       String requestStr = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       DraftStoreRequest<ETLConfig> draftStoreRequest = deserializeDraftStoreRequest(requestStr);
-      String userId = request.getUserId();
-      userId = userId == null ? "" : userId;
+      String userId = "";
       DraftId id = new DraftId(namespace, draftId, userId);
       draftService.writeDraft(id, draftStoreRequest);
 
@@ -145,8 +142,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
                           @PathParam("draft") String draftId) {
     contextAccessEnforcer.enforce(new NamespaceId(namespaceName), StandardPermission.UPDATE);
     respond(namespaceName, responder, (namespace) -> {
-      String userId = request.getUserId();
-      userId = userId == null ? "" : userId;
+      String userId = "";
       DraftId id = new DraftId(namespace, draftId, userId);
 
       draftService.deleteDraft(id);
