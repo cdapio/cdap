@@ -200,7 +200,6 @@ public class DefaultMetricStore implements MetricStore {
     aggs.put(BY_SCHEDULE, new DefaultAggregation(
         ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
             Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE),
-        // i.e. for components only
         ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
             Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.SCHEDULE)));
 
