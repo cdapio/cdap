@@ -331,7 +331,7 @@ class ConstraintCheckerService extends AbstractIdleService {
 
       long currTime = System.currentTimeMillis();
       long latency = currTime - jobCreationTime;
-      collector.event(Constants.Metrics.ScheduledJob.SCHEDULE_LATENCY, latency);
+      collector.gauge(Constants.Metrics.ScheduledJob.SCHEDULE_LATENCY, latency);
     }
 
     private void emitScheduleJobFailureMetric(String application, String schedule) {
