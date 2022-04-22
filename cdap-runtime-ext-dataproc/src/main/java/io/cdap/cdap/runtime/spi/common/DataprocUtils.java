@@ -83,7 +83,7 @@ public final class DataprocUtils {
       boolean addedToDelete = false;
       for (Blob blob : blobs.iterateAll()) {
         LOG.trace("Added path to be deleted {}", blob.getName());
-        batch.delete(blob.getBlobId());
+        batch.delete(blob.getBlobId(), Storage.BlobSourceOption.generationMatch());
         addedToDelete = true;
       }
 
