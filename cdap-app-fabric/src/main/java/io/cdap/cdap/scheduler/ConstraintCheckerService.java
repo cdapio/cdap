@@ -326,7 +326,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       if (metricsCollectionService == null) {
         return;
       }
-      MetricsContext collector = metricsCollectionService.getContext(getContext(application, schedule));
+      MetricsContext collector = metricsCollectionService.getContext(getScheduleJobMetricsContext(application, schedule));
       collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_SUCCESS, 1);
 
       long currTime = System.currentTimeMillis();
@@ -338,11 +338,11 @@ class ConstraintCheckerService extends AbstractIdleService {
       if (metricsCollectionService == null) {
         return;
       }
-      MetricsContext collector = metricsCollectionService.getContext(getContext(application, schedule));
+      MetricsContext collector = metricsCollectionService.getContext(getScheduleJobMetricsContext(application, schedule));
       collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_FAILURE, 1);
     }
 
-    private Map<String, String> getContext(String application, String schedule) {
+    private Map<String, String> getScheduleJobMetricsContext(String application, String schedule) {
       return ImmutableMap.of(
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
         Constants.Metrics.Tag.APP, application,
