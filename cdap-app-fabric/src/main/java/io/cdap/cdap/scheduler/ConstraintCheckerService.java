@@ -336,6 +336,7 @@ class ConstraintCheckerService extends AbstractIdleService {
 
     private void emitScheduleJobFailureMetric(String application, String schedule) {
       if (metricsCollectionService == null) {
+        LOG.debug("Unable to emit Schedule Job Failure Metrics for Application {} and Schedule {}", application, schedule);
         return;
       }
       MetricsContext collector = metricsCollectionService.getContext(getScheduleJobMetricsContext(application, schedule));
