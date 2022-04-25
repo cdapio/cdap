@@ -67,7 +67,8 @@ import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec.Port;
 import io.cdap.cdap.etl.spark.batch.SQLBackedCollection;
-import io.cdap.cdap.etl.spark.batch.WrappedSQLEngineCollection;
+import io.cdap.cdap.etl.spark.batch.FutureCollection;
+import io.cdap.cdap.etl.spark.batch.WrappableCollection;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
 import io.cdap.cdap.etl.spark.function.BatchSinkFunction;
 import io.cdap.cdap.etl.spark.function.ErrorPassFilter;
@@ -229,6 +230,13 @@ public abstract class SparkPipelineRunner {
         SparkCollection<Object> inputRecords = port == null ?
           emittedRecords.get(inputStageName).outputRecords :
           emittedRecords.get(inputStageName).outputPortRecords.get(port);
+
+        // Resolve a Future Spark Collection if needed before further processing. This allows us to determine if a
+        // future collection is either a SQLBackedCollection or a SparkCollection before proceeding.
+        if (inputRecords instanceof FutureCollection) {
+          inputRecords = ((FutureCollection<Object>) inputRecords).resolve();
+        }
+
         inputDataCollections.put(inputStageName, inputRecords);
       }
 
@@ -1001,15 +1009,13 @@ public abstract class SparkPipelineRunner {
    * @param collection Collection to use.
    * @return Instance of a spark collection with RecordInfo attached to output records.
    */
-  private SparkCollection<RecordInfo<Object>> mapToRecordInfoCollection(String stageName,
-                                                                        SparkCollection<Object> collection) {
-    // For SQLEngineCollection or WrappedSparkCollection, we wrap the collection in order to not force a
-    // premature/unnecessary pull operation from the SQL engine.
-    if (collection instanceof SQLBackedCollection) {
-      return new WrappedSQLEngineCollection<>((SQLBackedCollection<Object>) collection,
-                                              (c) -> c.map(new RecordInfoWrapper<>(stageName)));
+  protected SparkCollection<RecordInfo<Object>> mapToRecordInfoCollection(String stageName,
+                                                                          SparkCollection<Object> collection) {
+    // For WrappableCollection, we wrap the collection in order to delay mapping operation
+    if (collection instanceof WrappableCollection) {
+      return (SparkCollection<RecordInfo<Object>>) ((WrappableCollection<Object>) collection)
+        .wrap((c) -> c.map(new RecordInfoWrapper<>(stageName)));
     }
-
     return collection.map(new RecordInfoWrapper<>(stageName));
   }
 
@@ -1061,9 +1067,9 @@ public abstract class SparkPipelineRunner {
                                                     @Nullable String port) {
     // Port filtering can only be applied to SQL Backed Collections when there is no output port specified.
     // This is due to the fact that records need to be present in Spark to apply this filtering operation.
-    if (port == null && stageData instanceof SQLBackedCollection) {
-      return new WrappedSQLEngineCollection<>((SQLBackedCollection<RecordInfo<Object>>) stageData,
-                                              (c) -> c.flatMap(stageSpec, new OutputPassFilter<>(port)));
+    if (port == null && stageData instanceof WrappableCollection) {
+      return (SparkCollection<Object>) ((WrappableCollection<RecordInfo<Object>>) stageData)
+        .wrap((c) -> c.flatMap(stageSpec, new OutputPassFilter<>(port)));
     }
 
     return stageData.flatMap(stageSpec, new OutputPassFilter<>(port));

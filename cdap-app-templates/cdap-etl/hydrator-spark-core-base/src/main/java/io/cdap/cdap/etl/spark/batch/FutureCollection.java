@@ -14,15 +14,20 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.engine;
+package io.cdap.cdap.etl.spark.batch;
+
+import io.cdap.cdap.etl.spark.SparkCollection;
 
 /**
- * Types for SQl Engine Jobs.
+ * Interface to denote collections where the underlying Spark collection is generated lazily and might not be
+ * available until later.
+ *
+ * @param <T> type of elements in the spark collection
  */
-public enum SQLEngineJobType {
-  PUSH,
-  PULL,
-  EXECUTE,
-  READ,
-  WRITE
+public interface FutureCollection<T> extends SparkCollection<T> {
+  /**
+   * Method used to resolve the underlying future collection once it's needed for further processing
+   * @return the finalized Spark Collection represented by this collection
+   */
+  SparkCollection<T> resolve();
 }

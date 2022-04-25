@@ -16,25 +16,17 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import io.cdap.cdap.etl.api.batch.SparkCompute;
-import io.cdap.cdap.etl.api.batch.SparkSink;
-import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.PhaseSpec;
-import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
-import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * SQLEngineBackedCollection that wraps another SQLEngineBackedCollection in order to delay the execution of a
@@ -44,30 +36,22 @@ import javax.annotation.Nullable;
  * @param <T> Type of the wrapped collection records.
  * @param <U> Type of the output collection records.
  */
-public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> {
-  private final java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper;
+public class WrappedSQLEngineCollection<T, U>
+  extends WrappedCollection<T, U>
+  implements SQLBackedCollection<U>, WrappableCollection<U> {
   private final SQLBackedCollection<T> wrapped;
-  private SparkCollection<U> unwrapped;
 
   public WrappedSQLEngineCollection(SQLBackedCollection<T> wrapped,
                                     java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper) {
+    super(wrapped, mapper);
     this.wrapped = wrapped;
-    this.mapper = mapper;
-  }
-
-  private SparkCollection<U> unwrap() {
-    if (unwrapped == null) {
-      unwrapped = mapper.apply(wrapped);
-    }
-
-    return unwrapped;
   }
 
   /**
    * Executes an operation on the underlying collection and then wraps it in the same mapper for this collection.
    *
-   * This is useful when executing multiple operations in sequence where we need to delegate the operation to the
-   * underlying SQL engine and keep delaying the pull operation.
+   * This is useful when executing multiple operations in sequence where we need to delegate an operation to the
+   * underlying implementation
    *
    * By calling this over all wrapped collections, we will eventually reach an instance of a
    * {@link SQLEngineCollection} where the actual operation will take place.
@@ -75,71 +59,28 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
    * @param remapper function used to re-map the underlying collection.
    * @return SQL Backed collection after re-mapping the underlying colleciton and re-adding the mapper.
    */
-  private SparkCollection<U> rewrap(
+  protected SparkCollection<U> rewrap(
     java.util.function.Function<SparkCollection<T>, SparkCollection<T>> remapper) {
     return new WrappedSQLEngineCollection<>((SQLBackedCollection<T>) remapper.apply(wrapped), mapper);
   }
 
   @Override
-  public <C> C getUnderlying() {
-    return unwrap().getUnderlying();
+  public boolean tryStoreDirect(StageSpec stageSpec) {
+    return wrapped.tryStoreDirect(stageSpec);
   }
 
   @Override
-  public SparkCollection<U> cache() {
-    return unwrap().cache();
+  public Set<String> tryMultiStoreDirect(PhaseSpec phaseSpec, Set<String> sinks) {
+    return wrapped.tryMultiStoreDirect(phaseSpec, sinks);
   }
 
-  @Override
-  public SparkCollection<U> union(SparkCollection<U> other) {
-    return unwrap().union(other);
-  }
-
-  @Override
-  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
-    return unwrap().transform(stageSpec, collector);
-  }
-
-  @Override
-  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
-                                                                  StageStatisticsCollector collector) {
-    return unwrap().transform(stageSpec, collector);
-  }
-
-  @Override
-  public <U1> SparkCollection<U1> map(Function<U, U1> function) {
-    return unwrap().map(function);
-  }
-
-  @Override
-  public <U1> SparkCollection<U1> flatMap(StageSpec stageSpec, FlatMapFunction<U, U1> function) {
-    return unwrap().flatMap(stageSpec, function);
-  }
-
-  @Override
-  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec,
-                                                       @Nullable Integer partitions,
-                                                       StageStatisticsCollector collector) {
-    return unwrap().aggregate(stageSpec, partitions, collector);
-  }
-
-  @Override
-  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec,
-                                                             @Nullable Integer partitions,
-                                                             StageStatisticsCollector collector) {
-    return unwrap().reduceAggregate(stageSpec, partitions, collector);
-  }
-
-  @Override
-  public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<U, K, V> function) {
-    return unwrap().flatMapToPair(function);
-  }
-
-  @Override
-  public <U1> SparkCollection<U1> compute(StageSpec stageSpec, SparkCompute<U, U1> compute) throws Exception {
-    return unwrap().compute(stageSpec, compute);
-  }
-
+  /**
+   * Handle logic to store directly to the Sink stage if the sink supports this behavior.
+   *
+   * @param stageSpec stage spec
+   * @param sinkFunction sync function to use
+   * @return Runnable that can be used to execute this store task.
+   */
   @Override
   public Runnable createStoreTask(StageSpec stageSpec,
                                   PairFlatMapFunction<U, Object, Object> sinkFunction) {
@@ -157,16 +98,15 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
     };
   }
 
-  @Override
-  public boolean tryStoreDirect(StageSpec stageSpec) {
-    return wrapped.tryStoreDirect(stageSpec);
-  }
-
-  @Override
-  public Set<String> tryMultiStoreDirect(PhaseSpec phaseSpec, Set<String> sinks) {
-    return wrapped.tryMultiStoreDirect(phaseSpec, sinks);
-  }
-
+  /**
+   * Handle logic to store directly to the multiple sinks if this behavior is supported by the sinks.
+   *
+   * @param phaseSpec phase spec
+   * @param group set containing all stages in the group
+   * @param sinks set containing all sinks in the group
+   * @param collectors map containing all stats collectors
+   * @return runnable that can be used to execute this multi store operation
+   */
   @Override
   public Runnable createMultiStoreTask(PhaseSpec phaseSpec,
                                        Set<String> group,
@@ -198,24 +138,6 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   }
 
   @Override
-  public Runnable createStoreTask(StageSpec stageSpec,
-                                  SparkSink<U> sink) throws Exception {
-    return unwrap().createStoreTask(stageSpec, sink);
-  }
-
-  @Override
-  public void publishAlerts(StageSpec stageSpec,
-                            StageStatisticsCollector collector) throws Exception {
-    unwrap().publishAlerts(stageSpec, collector);
-  }
-
-  @Override
-  public SparkCollection<U> window(StageSpec stageSpec,
-                                   Windower windower) {
-    return unwrap().window(stageSpec, windower);
-  }
-
-  @Override
   public SparkCollection<U> join(JoinRequest joinRequest) {
     return rewrap(c -> c.join(joinRequest));
   }
@@ -223,5 +145,11 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   @Override
   public SparkCollection<U> join(JoinExpressionRequest joinExpressionRequest) {
     return rewrap(c -> c.join(joinExpressionRequest));
+  }
+
+  @Override
+  @SuppressWarnings("raw,unchecked")
+  public WrappedCollection<U, ?> wrap(java.util.function.Function<SparkCollection<U>, SparkCollection<?>> mapper) {
+    return new WrappedSQLEngineCollection(this, mapper);
   }
 }
