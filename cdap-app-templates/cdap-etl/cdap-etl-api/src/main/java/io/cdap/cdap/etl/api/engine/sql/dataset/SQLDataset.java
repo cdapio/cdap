@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,5 +25,13 @@ public interface SQLDataset extends SQLDatasetDescription {
    * Get the number of rows stored in this dataset.
    */
   long getNumRows();
+
+  /**
+   * Method to determine if this SQL dataset is a valid dataset that is correctly pushed into the SQL engine
+   * @return boolean specifying if this stage is pushed into the SQL engine
+   */
+  default boolean isValid() {
+    return true;
+  }
 
 }

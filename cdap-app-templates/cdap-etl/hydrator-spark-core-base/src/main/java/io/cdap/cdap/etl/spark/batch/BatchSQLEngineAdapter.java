@@ -26,6 +26,7 @@ import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineInput;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.api.engine.sql.capability.PullCapability;
 import io.cdap.cdap.etl.api.engine.sql.capability.PushCapability;
@@ -39,6 +40,8 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLReadRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLReadResult;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
@@ -259,6 +262,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     Runnable pullTask = () -> {
       try {
+        getDatasetForStage(job.getDatasetName());
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
         // Wait for previous job to complete
         waitForJobAndThrowException(job);
@@ -346,17 +350,9 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return boolean detailing if the collection exists or not.
    */
   public boolean exists(String datasetName) {
-    SQLEngineJobKey joinStagePushKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.PUSH);
-    if (jobs.containsKey(joinStagePushKey)) {
-      return true;
-    }
+    SQLDataset dataset = getDatasetForStage(datasetName);
 
-    SQLEngineJobKey joinStageExecKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.EXECUTE);
-    if (jobs.containsKey(joinStageExecKey)) {
-      return true;
-    }
-
-    return false;
+    return dataset != null;
   }
 
   /**
@@ -502,10 +498,27 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return
    */
   private SQLDataset getDatasetForStage(String stageName) {
-    // Wait for the previous push or execute jobs to complete
+    // Wait for the previous read, push or execute job to complete.
+    SQLEngineJobKey readJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.READ);
     SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.PUSH);
     SQLEngineJobKey execJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.EXECUTE);
 
+    // Check if the read job was successful. If so, return this dataset
+    // Otherwise, this stage will be pushed using the standard push workflow.
+    if (jobs.containsKey(readJobKey)) {
+      SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(readJobKey);
+      waitForJobAndThrowException(job);
+      SQLDataset readDataset = job.waitFor();
+
+      // If the read dataset is invalid, this stage could not be read directly.
+      // This stage might have still been pushed using the standard push workflow, so we check next.
+      if (readDataset.isValid()) {
+        return readDataset;
+      }
+    }
+
+    // Check if this is a push or execution job.
+    // If no job is found, thrown an exception.
     if (jobs.containsKey(pushJobKey)) {
       SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
       waitForJobAndThrowException(job);
@@ -826,6 +839,39 @@ public class BatchSQLEngineAdapter implements Closeable {
 
       return transformed;
     }));
+  }
+
+  /**
+   * Try to read input from the SQLEngineInput registered by the source
+   *
+   * @param datasetName    dataset to read
+   * @param sqlEngineInput input instance created by this engine
+   * @return {@link SQLEngineJob<SQLDataset>} representing the records read from the source. The underlying
+   * {@link SQLDataset} will be invalid if the read operation is not successful
+   */
+  public SQLEngineJob<SQLDataset> read(String datasetName, SQLEngineInput sqlEngineInput) {
+    SQLEngineJobKey readJobKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.READ);
+    // Run read job
+    return runJob(readJobKey, () -> {
+      LOG.debug("Attempting read for dataset {} from {}", datasetName, sqlEngineInput);
+      SQLReadResult readResult = sqlEngine.read(new SQLReadRequest(datasetName, sqlEngineInput));
+      LOG.debug("Read dataset {} from {} was {}",
+                datasetName,
+                sqlEngineInput,
+                readResult.isSuccessful() ? "completed" : "refused");
+
+      // If the result was successful, add stage metrics.
+      if (readResult.isSuccessful()) {
+        DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, datasetName);
+        StageStatisticsCollector statisticsCollector = statsCollectors.get(datasetName);
+
+        countRecordsIn(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
+        countRecordsOut(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
+      }
+
+      // Return the SQLDataset instance from the read result.
+      return readResult.getSqlDataset();
+    });
   }
 
   /**
