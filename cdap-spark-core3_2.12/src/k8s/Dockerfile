@@ -42,7 +42,13 @@ USER root
 # for the Spark job jar
 RUN apt-get update && \
   apt-get -y install curl && \
-  curl -L -o /opt/cdap/cdap-spark-core/lib/gcs-connector-hadoop2-latest.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-hadoop2-latest.jar && \
+  curl -L -o /opt/cdap/cdap-spark-core/lib/gcs-connector-hadoop2-2.2.5.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-hadoop2-2.2.5.jar && \
+  # start aws dependency
+  curl -L -o /opt/cdap/cdap-spark-core/lib/hadoop-aws-2.9.2.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/2.9.2/hadoop-aws-2.9.2.jar && \
+  curl -L -o /opt/cdap/cdap-spark-core/lib/aws-java-sdk-bundle-1.11.199.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.199/aws-java-sdk-bundle-1.11.199.jar && \
+  curl -L -o /opt/cdap/cdap-spark-core/lib/jets3t-0.9.4.jar  https://repo1.maven.org/maven2/net/java/dev/jets3t/jets3t/0.9.4/jets3t-0.9.4.jar && \
+  curl -L -o /opt/cdap/cdap-spark-core/lib/commons-lang-2.6.jar  https://repo1.maven.org/maven2/commons-lang/commons-lang/2.6/commons-lang-2.6.jar && \
+  # end aws dependency
   ln -s /opt/cdap/cdap-spark-core/io.cdap.cdap.cdap-spark-core3_2.12-${cdap_version}.jar /opt/cdap/cdap-spark-core/cdap-spark-core.jar && \
   mkdir -p /etc/cdap/conf
 USER ${spark_uid}
