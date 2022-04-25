@@ -33,6 +33,8 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLReadRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLReadResult;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
@@ -170,11 +172,21 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   /**
    * Consume a {@link SQLWriteRequest} and write this output into the SQL engine if possible
    * @param writeRequest write request to consume
-   * @return true if the write request could be consumed, false otherwise
+   * @return {@link SQLWriteResult} containing information about the write operation
    * @throws SQLEngineException if the write process fails unexpectedly.
    */
   default SQLWriteResult write(SQLWriteRequest writeRequest) throws SQLEngineException {
     return SQLWriteResult.unsupported(writeRequest.getDatasetName());
+  }
+
+  /**
+   * Consume a {@link SQLReadRequest} and read this input into the SQL engine if possible
+   * @param readRequest read request to consume
+   * @return {@link SQLReadResult} containing information about the read operation
+   * @throws SQLEngineException if the read process fails unexpectedly.
+   */
+  default SQLReadResult read(SQLReadRequest readRequest) throws SQLEngineException {
+    return SQLReadResult.unsupported(readRequest.getDatasetName());
   }
 
   /**

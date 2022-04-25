@@ -35,7 +35,14 @@ public abstract class Input {
   private String alias;
   private String namespace;
 
-  private Input(String name) {
+  /**
+   * no args contructor for GSON
+   */
+  private Input() {
+    this.name = null;
+  }
+
+  protected Input(String name) {
     this.name = name;
   }
 
@@ -185,7 +192,7 @@ public abstract class Input {
 
     private final InputFormatProvider inputFormatProvider;
 
-    private InputFormatProviderInput(String name, InputFormatProvider inputFormatProvider) {
+    InputFormatProviderInput(String name, InputFormatProvider inputFormatProvider) {
       super(name);
       this.inputFormatProvider = inputFormatProvider;
     }
