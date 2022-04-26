@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
 
+import io.cdap.cdap.proto.id.EntityId;
+
 import java.util.Map;
 
 /**
@@ -39,6 +41,7 @@ public class TetheringConf {
   public static TetheringConf fromProperties(Map<String, String> properties) {
     String tetheredInstanceName = getString(properties, TETHERED_INSTANCE_PROPERTY);
     String tetheredNamespace = getString(properties, TETHERED_NAMESPACE_PROPERTY);
+    EntityId.ensureValidNamespace(tetheredNamespace);
     return new TetheringConf(tetheredInstanceName, tetheredNamespace);
   }
 
