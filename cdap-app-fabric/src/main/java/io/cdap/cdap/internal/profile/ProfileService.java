@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -86,6 +87,23 @@ public class ProfileService {
     return TransactionRunners.run(transactionRunner, context -> {
       return ProfileStore.get(context).getProfile(profileId);
     }, NotFoundException.class);
+  }
+
+  /**
+   * Get list of profiles for a provisioner and its property value from the profile store
+   *
+   * @param provisioner the name of the provisioner
+   * @param propertyValue the property value
+   * @return the profiles with the given provisioner name and containing the specified property value
+   */
+  public List<Profile> getProfiles(String provisioner,
+                                   ProvisionerPropertyValue propertyValue) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return ProfileStore.get(context).getProfiles().stream()
+        .filter(p -> p.getProvisioner().getName().equals(provisioner))
+        .filter(p -> p.getProvisioner().getProperties().contains(propertyValue))
+        .collect(Collectors.toList());
+    });
   }
 
   /**

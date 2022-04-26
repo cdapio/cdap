@@ -112,6 +112,24 @@ public class ProfileStore {
   }
 
   /**
+   * Get all profiles in all namespaces
+   * NOTE: This is an expensive query, use with caution.
+   *
+   * @return the list of all profiles
+   */
+  public List<Profile> getProfiles() throws IOException {
+    List<Profile> profiles = new ArrayList<>();
+    try (CloseableIterator<StructuredRow> iterator =
+           profileTable.scan(Range.all(), Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        profiles.add(GSON.fromJson(iterator.next().getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD),
+                                   Profile.class));
+      }
+    }
+    return profiles;
+  }
+
+  /**
    * Save the profile to the profile store. By default the profile status will be enabled.
    *
    * @param profileId the id of the profile to save
