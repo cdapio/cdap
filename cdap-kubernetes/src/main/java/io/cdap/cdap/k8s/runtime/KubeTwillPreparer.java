@@ -700,6 +700,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
         LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job." , e.getResponseBody());
       } else {
+        LOG.error("Failed to create kubernetes job: {}", e.getResponseBody());
         throw e;
       }
     }
