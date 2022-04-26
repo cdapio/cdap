@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.etl.api.engine.sql;
 
-import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.SQLEngineContext;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -63,7 +63,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
-  extends PipelineConfigurable, SubmitterLifecycle<RuntimeContext> {
+  extends PipelineConfigurable, SubmitterLifecycle<SQLEngineContext> {
 
   /**
    * Creates an Output Format Provided that can be used to push records into a SQL Engine.
