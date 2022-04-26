@@ -193,8 +193,19 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to create namespace '%s'", namespace.getNamespace()), t);
-      // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
-      deleteNamespaceMeta(metadata.getNamespaceId());
+      try {
+        resourceDeleter.get().deleteResources(metadata);
+      } catch (Exception e) {
+        LOG.error(String.format("Failed to delete resources for namespace '%s'", namespace.getNamespace()), e);
+        t.addSuppressed(e);
+      }
+      try {
+        // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
+        deleteNamespaceMeta(metadata.getNamespaceId());
+      } catch (Exception e) {
+        LOG.error(String.format("Failed to delete metadata for namespace '%s'", namespace.getNamespace()), e);
+        t.addSuppressed(e);
+      }
       throw new NamespaceCannotBeCreatedException(namespace, t);
     }
     emitNamespaceCountMetric();
