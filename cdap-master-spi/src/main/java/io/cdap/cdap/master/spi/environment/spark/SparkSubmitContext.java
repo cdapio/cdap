@@ -24,12 +24,24 @@ import java.util.Map;
  */
 public class SparkSubmitContext {
   private final Map<String, SparkLocalizeResource> localizeResources;
+  private final Map<String, String> config;
 
-  public SparkSubmitContext(Map<String, SparkLocalizeResource> localizeResources) {
+  public SparkSubmitContext(Map<String, SparkLocalizeResource> localizeResources, Map<String, String> config) {
     this.localizeResources = Collections.unmodifiableMap(new HashMap<>(localizeResources));
+    this.config = Collections.unmodifiableMap(new HashMap<>(config));
   }
 
   public Map<String, SparkLocalizeResource> getLocalizeResources() {
     return localizeResources;
+  }
+
+  /**
+   * Return the set of configuration properties for the Spark job. These are the settings that come from the execution
+   * namespace's configuration.
+   *
+   * @return configuration properties for the Spark job
+   */
+  public Map<String, String> getConfig() {
+    return config;
   }
 }
