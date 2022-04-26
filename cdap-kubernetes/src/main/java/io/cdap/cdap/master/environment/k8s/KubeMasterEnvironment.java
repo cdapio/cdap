@@ -25,6 +25,7 @@ import io.cdap.cdap.k8s.common.LocalFileProvider;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.identity.GCPWorkloadIdentityCredential;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
+import io.cdap.cdap.k8s.util.KubeUtil;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -39,7 +40,7 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
-import io.kubernetes.client.openapi.models.V1ClusterRoleBindingList;
+import io.kubernetes.client.openapi.models.V1ClusterRoleBindingBuilder;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
 import io.kubernetes.client.openapi.models.V1ConfigMapProjection;
@@ -63,11 +64,12 @@ import io.kubernetes.client.openapi.models.V1ProjectedVolumeSource;
 import io.kubernetes.client.openapi.models.V1ResourceQuota;
 import io.kubernetes.client.openapi.models.V1ResourceQuotaSpec;
 import io.kubernetes.client.openapi.models.V1RoleBinding;
-import io.kubernetes.client.openapi.models.V1RoleBindingList;
+import io.kubernetes.client.openapi.models.V1RoleBindingBuilder;
+import io.kubernetes.client.openapi.models.V1RoleRefBuilder;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1ServiceAccountTokenProjection;
-import io.kubernetes.client.openapi.models.V1Subject;
+import io.kubernetes.client.openapi.models.V1SubjectBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.openapi.models.V1VolumeProjection;
@@ -146,8 +148,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
   @VisibleForTesting
   static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
+  private static final String SPARK_KUBERNETES_DRIVER_SERVICE_ACCOUNT
+    = "spark.kubernetes.authenticate.driver.serviceAccountName";
+  private static final String SPARK_KUBERNETES_EXECUTOR_SERVICE_ACCOUNT
+    = "spark.kubernetes.authenticate.executor.serviceAccountName";
   private static final String SPARK_KUBERNETES_METRICS_PROPERTIES_CONF = "spark.metrics.conf";
-  private static final String SPARK_SERVICE_ACCOUNT_NAME = "spark";
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
@@ -181,6 +186,31 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String WORKLOAD_IDENTITY_CREDENTIAL_GSA_SOURCE_PATH = WORKLOAD_IDENTITY_CREDENTIAL_DIR + "/" +
     WORKLOAD_IDENTITY_CONFIGMAP_FILE;
 
+  // Workload Launcher Constants
+  /**
+   * The ClusterRole which defines the permissions required by the workload pod for the namespace in which it is
+   * running, e.g. pod, deployment, and statefulset creation permissions. The CDAP system service account must be
+   * assigned this role at the cluster level.
+   */
+  private static final String WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME
+    = "master.environment.k8s.workload.launcher.namespace.role.name";
+  /**
+   * The ClusterRole which defines the permissions required by the workload pod across all namespaces, e.g. service get
+   * and list permissions for DiscoveryService. The CDAP system service account must be assigned this role at the
+   * cluster level.
+   */
+  private static final String WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME
+    = "master.environment.k8s.workload.launcher.cluster.role.name";
+  private static final String DEFAULT_WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME = "cdap-workload-launcher";
+  private static final String DEFAULT_WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME = "cdap-cluster-workload-launcher";
+  private static final String WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME
+    = "cdap-workload-launcher-namespace-role-binding";
+  private static final String WORKLOAD_LAUNCHER_CLUSTER_ROLE_BINDING_FORMAT
+    = "cdap-workload-launcher-cluster-role-binding-%s";
+  private static final String RBAC_V1_API_GROUP = "rbac.authorization.k8s.io";
+  private static final String CLUSTER_ROLE_KIND = "ClusterRole";
+  private static final String SERVICE_ACCOUNT_KIND = "ServiceAccount";
+
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
   private static final String DEFAULT_CONTAINER_LABEL = "cdap.container";
@@ -203,7 +233,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
   private static final Pattern NAMESPACE_LABEL_PATTERN = Pattern.compile("(k8s\\.namespace)=\"(.*)\"");
-  private static final Pattern KUBE_NAMESPACE_PATTERN = Pattern.compile("[a-z0-9]([-a-z0-9]*[a-z0-9])?");
 
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
@@ -226,6 +255,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String workloadIdentityPool;
   private String workloadIdentityProvider;
   private long workloadIdentityServiceAccountTokenTTLSeconds;
+  private String workloadLauncherRoleNameForNamespace;
+  private String workloadLauncherRoleNameForCluster;
 
   public KubeMasterEnvironment() {
     gson = new Gson();
@@ -270,6 +301,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                                          missingConfig));
       }
     }
+
+    workloadLauncherRoleNameForNamespace = conf.getOrDefault(WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME,
+                                                             DEFAULT_WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME);
+    workloadLauncherRoleNameForCluster = conf.getOrDefault(WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME,
+                                                           DEFAULT_WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME);
 
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
     // Currently we don't support more than one instance per system service, hence set it to "1".
@@ -394,6 +430,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
     sparkConfMap.put(SPARK_KUBERNETES_NAMESPACE_LABEL, podInfo.getNamespace());
 
+    // Set spark service account for both driver and executor to be inherited from app-fabric. Since the service account
+    // is created by CDAP specifically for the namespace, it is granted reduced permissions.
+    // TODO(CDAP-19149): Cleanup strong coupling currently present in CDAP service accounts to avoid copying.
+    String workloadServiceAccountName = podInfo.getServiceAccountName();
+    sparkConfMap.put(SPARK_KUBERNETES_DRIVER_SERVICE_ACCOUNT, workloadServiceAccountName);
+    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_SERVICE_ACCOUNT, workloadServiceAccountName);
+
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
 
@@ -417,14 +460,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     // Kubernetes namespace must be a lowercase RFC 1123 label, consisting of lower case alphanumeric characters or '-'
     // and must start and end with an alphanumeric character
-    if (!KUBE_NAMESPACE_PATTERN.matcher(namespace).matches()) {
-      throw new IOException(String.format("%s does not meet Kubernetes naming standards", namespace));
-    }
+    KubeUtil.validateRFC1123LabelName(namespace);
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
     copyVolumes(namespace, cdapNamespace);
-    copyServiceAccount(namespace, cdapNamespace, podInfo.getServiceAccountName());
-    copyServiceAccount(namespace, cdapNamespace, SPARK_SERVICE_ACCOUNT_NAME);
+    createWorkloadServiceAccount(namespace, cdapNamespace);
     if (workloadIdentityEnabled) {
       String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
       if (workloadIdentityServiceAccountEmail != null && !workloadIdentityServiceAccountEmail.isEmpty()) {
@@ -853,7 +893,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                                                       null, null, null);
           V1ConfigMap configMap = new V1ConfigMap().data(existingMap.getData())
             .metadata(new V1ObjectMeta().name(configMapName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
-          coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
+          try {
+            coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
+          } catch (ApiException e) {
+            if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+              throw e;
+            }
+            LOG.warn("The configmap already exists '{}:{}' : {}. Ignoring creation of the configmap.", namespace,
+                     configMapName, e.getResponseBody());
+          }
           LOG.debug("Created configMap {} in Kubernetes namespace {}", configMapName, namespace);
         }
 
@@ -863,7 +911,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                                                    null, null, null);
           V1Secret secret = new V1Secret().data(existingSecret.getData()).type(existingSecret.getType())
             .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+          try {
           coreV1Api.createNamespacedSecret(namespace, secret, null, null, null);
+          } catch (ApiException e) {
+            if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+              throw e;
+            }
+            LOG.warn("The secret '{}:{}' already exists : {}. Ignoring creation of the secret.", namespace,
+                     secret.getMetadata().getName(), e.getResponseBody());
+          }
           LOG.debug("Created secret {} in Kubernetes namespace {}", secretName, namespace);
         }
       }
@@ -874,47 +930,106 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   /**
-   * Copy service account into the new namespace for deployments created via the KubeTwillRunnerService
+   * Create service account and role bindings required for workload pod.
    * TODO: (CDAP-18956) improve this logic to be for each pipeline run
    */
-  private void copyServiceAccount(String namespace, String cdapNamespace, String accountName) throws IOException {
+  private void createWorkloadServiceAccount(String namespace, String cdapNamespace) throws IOException {
     try {
-      V1ServiceAccount serviceAccount = new V1ServiceAccount()
-        .metadata(new V1ObjectMeta().name(accountName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
-      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null);
-      LOG.info("Created serviceAccount {} in Kubernetes namespace {}", accountName, namespace);
+      // Create service account for workload pod
+      // TODO(CDAP-19149): Cleanup strong coupling currently present in CDAP service accounts to avoid copying.
+      String serviceAccountName = podInfo.getServiceAccountName();
+      createServiceAccount(namespace, cdapNamespace, serviceAccountName);
 
-      // filter through the rolebindings associated with the service account
-      V1RoleBindingList roleBindings = rbacV1Api.listNamespacedRoleBinding(podInfo.getNamespace(), null, null, null,
-                                                                           null, null, null, null, null, null, null);
-      for (V1RoleBinding rb : roleBindings.getItems()) {
-        if (rb.getSubjects() != null && rb.getSubjects().stream().anyMatch(s -> s.getName().equals(accountName))) {
-          String roleBindingName = rb.getMetadata().getName();
-          V1RoleBinding roleBinding = new V1RoleBinding().roleRef(rb.getRoleRef())
-            .addSubjectsItem(new V1Subject().kind("ServiceAccount").name(accountName).namespace(namespace))
-            .metadata(new V1ObjectMeta().name(roleBindingName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
-          rbacV1Api.createNamespacedRoleBinding(namespace, roleBinding, null, null, null);
-          LOG.info("Created role binding {} in Kubernetes namespace {}", roleBindingName, namespace);
-        }
-      }
-      // add service account to the clusterrolebindings to access resources across namespaces
-      V1ClusterRoleBindingList clusterroleBindings = rbacV1Api.listClusterRoleBinding(null, null, null, null, null,
-                                                                                      null, null, null, null, null);
-      for (V1ClusterRoleBinding crb : clusterroleBindings.getItems()) {
-        if (crb.getSubjects() != null && crb.getSubjects().stream().anyMatch(s -> s.getName().equals(accountName))) {
-          String roleBindingName = crb.getMetadata().getName();
-          V1ClusterRoleBinding clusterRoleBinding = new V1ClusterRoleBinding().roleRef(crb.getRoleRef())
-            .subjects(crb.getSubjects())
-            .addSubjectsItem(new V1Subject().kind("ServiceAccount").name(accountName).namespace(namespace))
-            .metadata(new V1ObjectMeta().name(roleBindingName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
-          rbacV1Api.replaceClusterRoleBinding(roleBindingName, clusterRoleBinding, null, null, null);
-          LOG.info("Updated cluster role binding {}", roleBindingName);
-        }
-      }
+      // Create namespace-specific role-binding for the workload service account
+      createNamespacedRoleBinding(WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME, CLUSTER_ROLE_KIND,
+                                  workloadLauncherRoleNameForNamespace, namespace, serviceAccountName, cdapNamespace);
+
+      // Create cluster-wide role-binding for the workload service account
+      String workloadLauncherClusterRoleBindingName = String.format(WORKLOAD_LAUNCHER_CLUSTER_ROLE_BINDING_FORMAT,
+                                                                    namespace);
+      createClusterRoleBinding(workloadLauncherClusterRoleBindingName, workloadLauncherRoleNameForCluster, namespace,
+                               serviceAccountName, cdapNamespace);
+
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating service account or role binding. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
     }
+  }
+
+  private void createServiceAccount(String namespace, String cdapNamespace, String serviceAccountName)
+    throws ApiException {
+    V1ServiceAccount serviceAccount = new V1ServiceAccount()
+      .metadata(new V1ObjectMeta().name(serviceAccountName)
+                  .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    try {
+      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null);
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+        throw e;
+      }
+      LOG.warn("The service account '{}:{}' already exists : {}. Ignoring creation of the service account.", namespace,
+               serviceAccountName, e.getResponseBody());
+    }
+    LOG.info("Created serviceAccount {} in Kubernetes namespace {}", serviceAccountName, namespace);
+  }
+
+  private void createNamespacedRoleBinding(String bindingName, String roleKind, String roleName, String namespace,
+                                           String serviceAccountName, String cdapNamespace) throws ApiException {
+    KubeUtil.validatePathSegmentName(bindingName);
+    V1RoleBinding namespaceWorkloadLauncherBinding = new V1RoleBindingBuilder()
+      .withMetadata(new V1ObjectMetaBuilder()
+                      .withNamespace(namespace)
+                      .withName(bindingName)
+                      .build().putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace))
+      .withRoleRef(new V1RoleRefBuilder()
+                     .withApiGroup(RBAC_V1_API_GROUP)
+                     .withKind(roleKind)
+                     .withName(roleName).build())
+      .withSubjects(new V1SubjectBuilder()
+                      .withKind(SERVICE_ACCOUNT_KIND)
+                      .withName(serviceAccountName).build())
+      .build();
+    try {
+      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding, null, null, null);
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+        throw e;
+      }
+      LOG.warn("The role binding '{}:{}' already exists : {}. Ignoring creation of the role binding.", namespace,
+               bindingName, e.getResponseBody());
+    }
+
+    LOG.info("Created namespace role binding '{}' in k8s namespace '{}' for service account '{}'",
+             bindingName, serviceAccountName, serviceAccountName);
+  }
+
+  private void createClusterRoleBinding(String bindingName, String roleName, String serviceAccountNamespace,
+                                        String serviceAccountName, String cdapNamespace) throws ApiException {
+    KubeUtil.validatePathSegmentName(bindingName);
+    V1ClusterRoleBinding clusterWorkloadLauncherBinding = new V1ClusterRoleBindingBuilder()
+      .withMetadata(new V1ObjectMetaBuilder()
+                      .withName(bindingName).build().putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace))
+      .withRoleRef(new V1RoleRefBuilder()
+                     .withApiGroup(RBAC_V1_API_GROUP)
+                     .withKind(CLUSTER_ROLE_KIND)
+                     .withName(roleName).build())
+      .withSubjects(new V1SubjectBuilder()
+                      .withKind(SERVICE_ACCOUNT_KIND)
+                      .withNamespace(serviceAccountNamespace)
+                      .withName(serviceAccountName).build())
+      .build();
+    try {
+      rbacV1Api.createClusterRoleBinding(clusterWorkloadLauncherBinding, null, null, null);
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+        throw e;
+      }
+      LOG.warn("The cluster role binding '{}' already exists : {}. Ignoring creation of the cluster role binding.",
+               bindingName, e.getResponseBody());
+    }
+
+    LOG.info("Created cluster role binding '{}' for service account '{}' in k8s namespace '{}'", bindingName,
+             serviceAccountName, serviceAccountNamespace);
   }
 
   /**
