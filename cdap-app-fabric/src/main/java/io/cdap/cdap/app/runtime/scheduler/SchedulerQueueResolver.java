@@ -18,15 +18,12 @@ package io.cdap.cdap.app.runtime.scheduler;
 
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 
-import java.io.IOException;
 import javax.annotation.Nullable;
 
 
@@ -36,16 +33,14 @@ import javax.annotation.Nullable;
 public class SchedulerQueueResolver {
   private final String defaultQueue;
   private final String systemQueue;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   /**
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
   @Inject
-  public SchedulerQueueResolver(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
+  public SchedulerQueueResolver(CConfiguration cConf) {
     this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.systemQueue = cConf.get(Constants.Service.SCHEDULER_QUEUE, "");
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -58,21 +53,13 @@ public class SchedulerQueueResolver {
   /**
    * Get queue at namespace level if it is empty returns the default queue.
    *
-   * @param namespaceId NamespaceId
+   * @param meta NamespaceMeta
    * @return schedule queue at namespace level or default queue.
    */
   @Nullable
-  public String getQueue(NamespaceId namespaceId) throws IOException, NamespaceNotFoundException {
-    if (namespaceId.equals(NamespaceId.SYSTEM)) {
+  public String getQueue(@Nullable NamespaceMeta meta) {
+    if (meta != null && meta.getNamespaceId().equals(NamespaceId.SYSTEM)) {
       return systemQueue;
-    }
-    NamespaceMeta meta;
-    try {
-      meta = namespaceQueryAdmin.get(namespaceId);
-    } catch (NamespaceNotFoundException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new IOException(e);
     }
     if (meta != null) {
       NamespaceConfig config = meta.getConfig();

@@ -43,6 +43,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
@@ -232,7 +233,8 @@ public class TetheringClientHandlerTest {
                                                       injector.getInstance(ProgramRunRecordFetcher.class),
                                                       injector.getInstance(RemoteAuthenticator.class),
                                                       injector.getInstance(LocationFactory.class),
-                                                      injector.getInstance(ProvisionerNotifier.class));
+                                                      injector.getInstance(ProvisionerNotifier.class),
+                                                      injector.getInstance(NamespaceQueryAdmin.class));
     Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
   }
 

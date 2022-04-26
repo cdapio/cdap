@@ -194,7 +194,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
+    this.schedulerQueueResolver = new SchedulerQueueResolver(cConf);
     this.previewsDir = previewsDir;
     this.credentialsDir = credentialsDir;
     this.metastoreClientLocal = new ThreadLocal<>();
@@ -1283,15 +1283,25 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private Map<String, String> doStartSession(@Nullable NamespaceId namespace,
                                              @Nullable Map<String, String> additionalSessionConf)
-    throws IOException, ExploreException, NamespaceNotFoundException {
+    throws ExploreException, IOException, NamespaceNotFoundException {
 
     Map<String, String> sessionConf = new HashMap<>();
 
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
-                                              : schedulerQueueResolver.getDefaultQueue();
+    NamespaceMeta namespaceMeta = null;
+    if (namespace != null) {
+      try {
+        namespaceMeta = namespaceQueryAdmin.get(namespace);
+      } catch (NamespaceNotFoundException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new IOException(e);
+      }
+    }
+    String schedulerQueue = namespaceMeta != null ?
+      schedulerQueueResolver.getQueue(namespaceMeta) : schedulerQueueResolver.getDefaultQueue();
 
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
       sessionConf.put(JobContext.QUEUE_NAME, schedulerQueue);

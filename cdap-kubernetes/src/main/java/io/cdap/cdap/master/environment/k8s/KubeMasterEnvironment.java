@@ -138,12 +138,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_NAME_FILE = "master.environment.k8s.pod.name.file";
   private static final String POD_UID_FILE = "master.environment.k8s.pod.uid.file";
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
+  private static final String POD_NAMESPACE_FILE = "master.environment.k8s.pod.namespace.file";
   private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
   private static final String SPARK_CONFIGS_PREFIX = "spark.kubernetes";
   private static final String SPARK_KUBERNETES_DRIVER_LABEL_PREFIX = "spark.kubernetes.driver.label.";
   private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
-  private static final String SPARK_KUBERNETES_NAMESPACE_LABEL = "spark.kubernetes.namespace";
+  private static final String SPARK_KUBERNETES_NAMESPACE = "spark.kubernetes.namespace";
   @VisibleForTesting
   static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
   @VisibleForTesting
@@ -217,6 +218,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
   private static final String DEFAULT_POD_NAME_FILE = "pod.name";
   private static final String DEFAULT_POD_UID_FILE = "pod.uid";
+  private static final String DEFAULT_POD_NAMESPACE_FILE = "pod.namespace";
   private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
   private static final long DEFAULT_POD_KILLER_DELAY_MILLIS = TimeUnit.HOURS.toMillis(1L);
 
@@ -243,6 +245,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private File podLabelsFile;
   private File podNameFile;
   private File podUidFile;
+  private File podNamespaceFile;
   // In memory state for holding configmap name. Used to delete this configmap upon master environment destroy.
   private String configMapName;
   private CoreV1Api coreV1Api;
@@ -273,6 +276,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
     podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
     podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
+    podNamespaceFile = new File(podInfoDir, conf.getOrDefault(POD_NAMESPACE_FILE, DEFAULT_POD_NAMESPACE_FILE));
     namespaceCreationEnabled = Boolean.parseBoolean(conf.get(NAMESPACE_CREATION_ENABLED));
     workloadIdentityEnabled = Boolean.parseBoolean(conf.get(WORKLOAD_IDENTITY_ENABLED));
     if (workloadIdentityEnabled) {
@@ -428,7 +432,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                      getDriverPodTemplate(podInfo, sparkSubmitContext).getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, getExecutorPodTemplateFile().getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
-    sparkConfMap.put(SPARK_KUBERNETES_NAMESPACE_LABEL, podInfo.getNamespace());
+
+    Map<String, String> submitConfigs = sparkSubmitContext.getConfig();
+    String executionNamespace = submitConfigs.getOrDefault(NAMESPACE_PROPERTY, podInfo.getNamespace());
+    sparkConfMap.put(SPARK_KUBERNETES_NAMESPACE, executionNamespace);
 
     // Set spark service account for both driver and executor to be inherited from app-fabric. Since the service account
     // is created by CDAP specifically for the namespace, it is granted reduced permissions.
@@ -512,11 +519,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   private PodInfo createPodInfo(Map<String, String> conf) throws IOException, ApiException {
-    String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
+    String systemNamespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
 
     if (!podInfoDir.isDirectory()) {
       throw new IllegalArgumentException(String.format("%s is not a directory.", podInfoDir.getAbsolutePath()));
     }
+    String namespace = podNamespaceFile.exists() ?
+      Files.lines(podNamespaceFile.toPath()).findFirst().orElse(null) : systemNamespace;
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     Map<String, String> podLabels = new HashMap<>();
@@ -587,7 +596,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String serviceAccountName = pod.getSpec().getServiceAccountName();
     String runtimeClassName = pod.getSpec().getRuntimeClassName();
     return new PodInfo(podName, podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
-                       podNameFile.getName(), podUid, podUidFile.getName(), namespace, podLabels, ownerReferences,
+                       podNameFile.getName(), podUid, podUidFile.getName(), podNamespaceFile.getName(),
+                       namespace, podLabels, ownerReferences,
                        serviceAccountName, runtimeClassName,
                        volumes, containerLabelName, container.getImage(), mounts,
                        envs == null ? Collections.emptyList() : envs, pod.getSpec().getSecurityContext(),
@@ -714,6 +724,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
           - fieldRef:
               fieldPath: metadata.uid
             path: pod.uid
+          - fieldRef:
+              fieldPath: metadata.namespace
+            path: pod.namespace
         name: podinfo
      */
     V1PodSpecBuilder v1PodSpecBuilder = new V1PodSpecBuilder();
@@ -728,9 +741,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     V1DownwardAPIVolumeFile uidFile = new V1DownwardAPIVolumeFile()
       .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.uid"))
       .path(podUidFile.getName());
+    V1DownwardAPIVolumeFile namespaceFile = new V1DownwardAPIVolumeFile()
+      .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.namespace"))
+      .path(podNamespaceFile.getName());
     V1DownwardAPIVolumeSource podinfoVolume = new V1DownwardAPIVolumeSource()
       .defaultMode(420)
-      .items(Arrays.asList(labelsFile, nameFile, uidFile));
+      .items(Arrays.asList(labelsFile, nameFile, uidFile, namespaceFile));
     String podInfoVolumeName = "podinfo";
     volumes.add(new V1Volume().downwardAPI(podinfoVolume).name(podInfoVolumeName));
 
@@ -1202,6 +1218,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setPodNameFile(File podNameFile) {
     this.podNameFile = podNameFile;
+  }
+
+  @VisibleForTesting
+  void setPodNamespaceFile(File podNamespaceFile) {
+    this.podNamespaceFile = podNamespaceFile;
   }
 
   @VisibleForTesting

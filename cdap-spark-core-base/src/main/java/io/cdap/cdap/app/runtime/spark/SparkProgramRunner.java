@@ -215,7 +215,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       // If MasterEnvironment is not available, use non-master env spark submitters
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
       if (masterEnv != null && cConf.getBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, true)) {
-        submitter = new MasterEnvironmentSparkSubmitter(cConf, locationFactory, host, runtimeContext, masterEnv);
+        submitter = new MasterEnvironmentSparkSubmitter(cConf, locationFactory, host, runtimeContext,
+                                                        masterEnv, options);
       } else {
         submitter = isLocal
           ? new LocalSparkSubmitter()
