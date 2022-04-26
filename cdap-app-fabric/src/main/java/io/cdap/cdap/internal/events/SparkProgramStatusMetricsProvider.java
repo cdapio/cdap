@@ -43,8 +43,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -71,29 +73,29 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
   }
 
   @Override
-  public ExecutionMetrics retrieveMetrics(ProgramRunId runId) {
+  public ExecutionMetrics[] retrieveMetrics(ProgramRunId runId) {
     if (!runId.getType().equals(ProgramType.SPARK)) {
-      return ExecutionMetrics.emptyMetrics();
+      return new ExecutionMetrics[]{ExecutionMetrics.emptyMetrics()};
     }
     String runIdStr = runId.getRun();
     String sparkHistoricBaseURL = cConf.get(Constants.Spark.SPARK_METRICS_PROVIDER_HOST);
     String applicationsURL = String.format("%s%s?minEndDate=%s", sparkHistoricBaseURL,
                                            sparkApplicationsEndpoint, generateMaxTerminationDateParam());
     return Retries.supplyWithRetries(() -> {
-      ExecutionMetrics metrics;
+      ExecutionMetrics[] metrics;
       HttpResponse applicationResponse;
       try {
         applicationResponse = doGet(applicationsURL);
         String attemptId = extractAttemptId(applicationResponse.getResponseBodyAsString(), runIdStr);
         if (Objects.nonNull(attemptId) && !attemptId.isEmpty()) {
           HttpResponse stagesResponse;
-          String stagesURL = String.format("%s/%s/%s/%s/stages", sparkHistoricBaseURL,
-                                           sparkApplicationsEndpoint, runIdStr, attemptId);
+          String stagesURL = String.format("%s%s/%s/%s/stages", sparkHistoricBaseURL, sparkApplicationsEndpoint,
+                                           runIdStr, attemptId);
           stagesResponse = doGet(stagesURL);
           metrics = extractMetrics(stagesResponse.getResponseBodyAsString());
           if (Objects.isNull(metrics)) {
             logger.error("Error during metrics extraction");
-            return ExecutionMetrics.emptyMetrics();
+            return new ExecutionMetrics[]{};
           } else {
             return metrics;
           }
@@ -104,7 +106,8 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
         logger.warn("Error retrieving application response", e);
         throw new RetryableException(e);
       }
-    }, RetryStrategies.fromConfiguration(this.cConf, Constants.Spark.SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX));
+    }, RetryStrategies.fromConfiguration(this.cConf, Constants.Spark.SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX),
+                                     t -> t instanceof RetryableException);
   }
 
   private HttpResponse doGet(String url) throws IOException {
@@ -131,16 +134,17 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
   }
 
   @VisibleForTesting
-  protected ExecutionMetrics extractMetrics(String responseBody) {
+  protected ExecutionMetrics[] extractMetrics(String responseBody) {
     SparkApplicationsStagesResponse[] stagesResponse = gson.fromJson(responseBody,
                                                                      SparkApplicationsStagesResponse[].class);
-    return Arrays.stream(stagesResponse).filter(stage -> "COMPLETE".equals(stage.getStatus()))
-      .map(stage -> new ExecutionMetrics(
-        stage.getInputRecords(),
-        stage.getOutputRecords(),
-        stage.getInputBytes(),
-        stage.getOutputBytes()
-      )).findFirst().orElseGet(ExecutionMetrics::emptyMetrics);
+    List<ExecutionMetrics> metrics = Arrays.stream(stagesResponse).filter(stage -> "COMPLETE".equals(stage.getStatus()))
+      .map(stage ->
+             new ExecutionMetrics(stage.getStageId(), stage.getInputRecords(), stage.getOutputRecords(),
+                                  stage.getInputBytes(), stage.getOutputBytes(), stage.getShuffleReadRecords(),
+                                  stage.getShuffleReadBytes(), stage.getShuffleWriteRecords(),
+                                  stage.getShuffleWriteBytes())
+      ).collect(Collectors.toList());
+    return metrics.toArray(new ExecutionMetrics[metrics.size()]);
   }
 
   private String generateMaxTerminationDateParam() {

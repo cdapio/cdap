@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.events;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -38,7 +39,7 @@ public class ProgramStatusEventDetails {
   @Nullable
   private final String error;
   @Nullable
-  private final ExecutionMetrics pipelineMetrics;
+  private final ExecutionMetrics[] pipelineMetrics;
   @Nullable
   private final String workflowId;
 
@@ -46,7 +47,7 @@ public class ProgramStatusEventDetails {
                                     String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
                                     @Nullable String error,
-                                    @Nullable ExecutionMetrics pipelineMetrics,
+                                    @Nullable ExecutionMetrics[] pipelineMetrics,
                                     @Nullable String workflowId) {
     this.runID = runID;
     this.programName = programName;
@@ -74,11 +75,11 @@ public class ProgramStatusEventDetails {
       ", applicationName='" + applicationName + '\'' +
       ", namespace='" + namespace + '\'' +
       ", status='" + status + '\'' +
-      ", eventTime=" + eventTime + '\'' +
-      ", userArgs=" + userArgs + '\'' +
-      ", systemArgs=" + systemArgs + '\'' +
+      ", eventTime=" + eventTime +
+      ", userArgs=" + userArgs +
+      ", systemArgs=" + systemArgs +
       ", error='" + error + '\'' +
-      ", pipelineMetrics=" + pipelineMetrics + '\'' +
+      ", pipelineMetrics=" + Arrays.toString(pipelineMetrics) +
       ", workflowId='" + workflowId + '\'' +
       '}';
   }
@@ -96,7 +97,7 @@ public class ProgramStatusEventDetails {
     private Map<String, String> systemArgs;
     private String error;
     private String workflowId;
-    private ExecutionMetrics pipelineMetrics;
+    private ExecutionMetrics[] pipelineMetrics;
 
     Builder(String runID, String applicationName, String programName, String namespace, String status, long eventTime) {
       this.runID = runID;
@@ -125,7 +126,7 @@ public class ProgramStatusEventDetails {
       return this;
     }
 
-    public Builder withPipelineMetrics(ExecutionMetrics pipelineMetrics) {
+    public Builder withPipelineMetrics(ExecutionMetrics[] pipelineMetrics) {
       this.pipelineMetrics = pipelineMetrics;
       return this;
     }
