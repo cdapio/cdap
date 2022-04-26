@@ -30,5 +30,5 @@ public interface MetricsProvider {
    *
    * @param runId The {@link ProgramRunId} which references this execution.
    */
-  ExecutionMetrics retrieveMetrics(ProgramRunId runId);
+  ExecutionMetrics[] retrieveMetrics(ProgramRunId runId);
 }
