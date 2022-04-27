@@ -34,15 +34,12 @@ public class TetheringLaunchMessage {
   private final Map<String, String> cConfEntries;
   // Namespace to run program on
   private final String runtimeNamespace;
-  // Namespace of the peer that initiated the program run
-  private final String peerNamespace;
 
   private TetheringLaunchMessage(Map<String, byte[]> localizeFiles, Map<String, String> cConfEntries,
-                                 String runtimeNamespace, String peerNamespace) {
+                                 String runtimeNamespace) {
     this.localizeFiles = localizeFiles;
     this.cConfEntries = cConfEntries;
     this.runtimeNamespace = runtimeNamespace;
-    this.peerNamespace = peerNamespace;
   }
 
   public Map<String, byte[]> getFiles() {
@@ -57,17 +54,12 @@ public class TetheringLaunchMessage {
     return runtimeNamespace;
   }
 
-  public String getPeerNamespace() {
-    return peerNamespace;
-  }
-
   @Override
   public String toString() {
     return "TetheringLaunchMessage{" +
       "localizeFiles='" + localizeFiles + '\'' +
       ", cConfEntries=" + cConfEntries +
       ", runtimeNamespace=" + runtimeNamespace +
-      ", peerNamespace=" + peerNamespace +
       '}';
   }
 
@@ -83,8 +75,7 @@ public class TetheringLaunchMessage {
     TetheringLaunchMessage that = (TetheringLaunchMessage) o;
     return Objects.equals(localizeFiles, that.localizeFiles) &&
       Objects.equals(cConfEntries, that.cConfEntries) &&
-      Objects.equals(runtimeNamespace, that.runtimeNamespace) &&
-      Objects.equals(peerNamespace, that.peerNamespace);
+      Objects.equals(runtimeNamespace, that.runtimeNamespace);
   }
 
   @Override
@@ -100,7 +91,6 @@ public class TetheringLaunchMessage {
     private final Map<String, byte[]> localizeFiles = new HashMap<>();
     private final Map<String, String> cConfEntries = new HashMap<>();
     private String runtimeNamespace;
-    private String peerNamespace;
 
     public Builder addFileNames(String fileName) {
       this.fileNames.add(fileName);
@@ -119,16 +109,12 @@ public class TetheringLaunchMessage {
       this.runtimeNamespace = runtimeNamespace;
     }
 
-    public void addPeerNamespace(String peerNamespace) {
-      this.peerNamespace = peerNamespace;
-    }
-
     public Set<String> getFileNames() {
       return fileNames;
     }
 
     public TetheringLaunchMessage build() {
-      return new TetheringLaunchMessage(localizeFiles, cConfEntries, runtimeNamespace, peerNamespace);
+      return new TetheringLaunchMessage(localizeFiles, cConfEntries, runtimeNamespace);
     }
   }
 }

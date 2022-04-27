@@ -155,10 +155,9 @@ public final class ProgramOptionConstants {
   public static final String PEER_NAME = "peer";
 
   /**
-   * Option for name of tethered peer namespace, if any, that has initiated the program run. This is needed for
-   * artifact fetching
+   * Option for name of the runtime namespace for the tethered program run.
    */
-  public static final String PEER_NAMESPACE = "peerNamespace";
+  public static final String RUNTIME_NAMESPACE = "runtimeNamespace";
 
   /**
    * Option for a URI to a directory containing additional resources needed for the program run. This is needed for

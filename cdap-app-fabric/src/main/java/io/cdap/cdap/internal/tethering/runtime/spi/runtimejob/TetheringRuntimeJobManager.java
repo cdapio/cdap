@@ -192,7 +192,6 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     }
 
     builder.addRuntimeNamespace(tetheredNamespace);
-    builder.addPeerNamespace(runtimeJobInfo.getProgramRunInfo().getNamespace());
     return builder.build();
   }
 
