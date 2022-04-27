@@ -69,7 +69,7 @@ public class TetheringRuntimeJobManagerTest {
 
   private static final Gson GSON = new GsonBuilder().create();
   private static final String TETHERED_INSTANCE_NAME = "other-instance";
-  private static final String TETHERED_NAMESPACE_NAME = "other-namespace";
+  private static final String TETHERED_NAMESPACE_NAME = "other_namespace";
   private static final Map<String, String> PROPERTIES = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
                                                                         TETHERED_INSTANCE_NAME,
                                                                         TetheringConf.TETHERED_NAMESPACE_PROPERTY,
@@ -150,5 +150,15 @@ public class TetheringRuntimeJobManagerTest {
       uncompressedContents = IOUtils.toString(inputStream);
     }
     Assert.assertEquals(fileContents, uncompressedContents);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testConfValidation() {
+    Map<String, String> properties = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
+                                                     "my-instance",
+                                                     TetheringConf.TETHERED_NAMESPACE_PROPERTY,
+                                                     "invalid-ns");
+    // Validation should fail as namespace can only contain alphanumeric characters or _
+    TetheringConf.fromProperties(properties);
   }
 }

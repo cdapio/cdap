@@ -27,6 +27,7 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -39,10 +40,12 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher;
+import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
@@ -108,6 +111,7 @@ public class TetheringClientHandlerTest {
   private static TetheringStore tetheringStore;
   private static Injector injector;
   private static TransactionManager txManager;
+  private static ProfileService profileService;
 
   private NettyHttpService serverService;
   private ClientConfig serverConfig;
@@ -147,12 +151,14 @@ public class TetheringClientHandlerTest {
           expose(ProgramStateWriter.class);
           bind(ProgramRunRecordFetcher.class).to(StoreProgramRunRecordFetcher.class).in(Scopes.SINGLETON);
           expose(ProgramRunRecordFetcher.class);
+          bind(MetricsSystemClient.class).toInstance(new NoOpMetricsSystemClient());
+          expose(MetricsSystemClient.class);
         }
       });
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-
+    profileService = injector.getInstance(ProfileService.class);
   }
 
   @AfterClass
@@ -196,7 +202,7 @@ public class TetheringClientHandlerTest {
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client",
                                                       new NoOpMetricsCollectionService())
       .setHttpHandlers(new TetheringClientHandler(tetheringStore, contextAccessEnforcer),
-                       new TetheringHandler(cConf, tetheringStore, messagingService))
+                       new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
       .build();
     clientService.start();
     clientConfig = ClientConfig.builder()

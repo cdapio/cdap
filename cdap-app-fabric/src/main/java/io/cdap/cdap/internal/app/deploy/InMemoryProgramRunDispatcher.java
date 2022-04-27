@@ -69,6 +69,7 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -168,8 +169,13 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     if (peer != null) {
       // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
       String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3, peer);
+      // Set longer timeouts because we fetch from remote appfabric the first time we get an artifact. Subsequent
+      // reads are served by the cache.
+      HttpRequestConfig requestConfig = new HttpRequestConfig(600000,
+                                                              600000,
+                                                              false);
       RemoteClient client = remoteClientFactory.createRemoteClient(Constants.Service.ARTIFACT_CACHE_SERVICE,
-                                                                   RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
+                                                                   requestConfig,
                                                                    basePath);
       RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(locationFactory,
                                                                                                    client);
