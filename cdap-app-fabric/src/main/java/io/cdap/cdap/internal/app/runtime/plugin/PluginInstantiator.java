@@ -103,6 +103,7 @@ public class PluginInstantiator implements Closeable {
     .put("short", short.class)
     .put("string", String.class)
     .build();
+  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final LoadingCache<ClassLoaderKey, PluginClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
@@ -110,6 +111,7 @@ public class PluginInstantiator implements Closeable {
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
   private final boolean ownedParentClassLoader;
+  private final Gson gson;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
     this(cConf, parentClassLoader, pluginDir, true);
@@ -128,6 +130,8 @@ public class PluginInstantiator implements Closeable {
       .build(new ClassLoaderCacheLoader());
     this.parentClassLoader = filterClassloader ? PluginClassLoader.createParent(parentClassLoader) : parentClassLoader;
     this.ownedParentClassLoader = filterClassloader;
+    // Don't use a static Gson object to avoid caching of classloader, which can cause classloader leakage.
+    this.gson = new GsonBuilder().setFieldNamingStrategy(new PluginFieldNamingStrategy()).create();
   }
 
   /**
@@ -316,6 +320,28 @@ public class PluginInstantiator implements Closeable {
                                                       .setEscaping(field.isMacroEscapingEnabled())
                                                       .build());
           macroParser.parse(propertyValue);
+
+          // if the field is a nested field and it has macro in it, there are two scenarios:
+          // 1. the field itself needs to get evaluated, for example, ${conn(test)}
+          // 2. the field itself is already a map json string, but some field inside the map is a macro, for example,
+          //    secure macros.
+          if (!field.getChildren().isEmpty() && trackingMacroEvaluator.hasMacro()) {
+            try {
+              Map<String, String> childMap = gson.fromJson(propertyValue, MAP_STRING_TYPE);
+              // if this is already a map, this is scenario 2, we need to get the default value for the field
+              // one by one depending on if there is a macro in it
+              trackingMacroEvaluator.reset();
+              Map<String, String> substitutedChildMap = new HashMap<>();
+              childMap.forEach((name, value) -> {
+                macroParser.parse(value);
+                substitutedChildMap.put(name, getOriginalOrDefaultValue(
+                  value, name, pluginPropertyFieldMap.get(name).getType(), trackingMacroEvaluator));
+              });
+              propertyValue = gson.toJson(substitutedChildMap);
+            } catch (JsonSyntaxException e) {
+              // this is scenario 1, just continue
+            }
+          }
           propertyValue = getOriginalOrDefaultValue(propertyValue, property.getKey(), field.getType(),
                                                     trackingMacroEvaluator);
         } else {
@@ -367,18 +393,40 @@ public class PluginInstantiator implements Closeable {
                                                       .build());
           macroParser.parse(macroValue);
           if (trackingMacroEvaluator.hasMacro()) {
-            if (!pluginField.getChildren().isEmpty()) {
-              macroFields.addAll(pluginField.getChildren());
-            }
             macroFields.add(pluginEntry.getKey());
             trackingMacroEvaluator.reset();
+
+            if (pluginField.getChildren().isEmpty()) {
+              continue;
+            }
+
+            // if the field is a nested field and it has macro in it, there are two scenarios:
+            // 1. the field itself needs to get evaluated, for example, ${conn(test)}
+            // 2. the field itself is already a map json string, but some field inside the map is a macro, for example,
+            //    secure macros.
+            try {
+              Map<String, String> childMap = gson.fromJson(macroValue, MAP_STRING_TYPE);
+              // if this is already a map, this is scenario 2, we need to check the fields one by one
+              macroFields.remove(pluginEntry.getKey());
+              childMap.forEach((name, value) -> {
+                if (value != null) {
+                  macroParser.parse(value);
+                  if (trackingMacroEvaluator.hasMacro()) {
+                    macroFields.add(name);
+                  }
+                  trackingMacroEvaluator.reset();
+                }
+              });
+            } catch (JsonSyntaxException e) {
+              // this is scenario 1, then mark all the fields inside the field as macro
+              macroFields.addAll(pluginField.getChildren());
+            }
           }
         }
       }
     }
     return macroFields;
   }
-
 
   /**
    * Creates a new plugin instance and optionally setup the {@link PluginConfig} field.
