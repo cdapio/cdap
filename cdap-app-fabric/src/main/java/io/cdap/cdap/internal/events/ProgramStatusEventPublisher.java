@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -116,7 +117,6 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) {
-    List<ProgramStatusEvent> programStatusEvents = new ArrayList<>();
     long publishTime = System.currentTimeMillis();
     messages.forEachRemaining(message -> {
       Notification notification = message.getSecond();
@@ -144,36 +144,48 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
                     RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
       String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
       String sysArgsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-      Type argsMapType = new TypeToken<Map<String, String>>() { }.getType();
+      Type argsMapType = new TypeToken<Map<String, String>>() {
+      }.getType();
       builder = builder
         .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
         .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
       if (programRunStatus.isEndState()) {
-        builder = populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId);
+        populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId, publishTime);
+      } else {
+        writeInEventWriters(builder, publishTime);
       }
-      ProgramStatusEventDetails programStatusEventDetails = builder.build();
-      ProgramStatusEvent programStatusEvent = new ProgramStatusEvent(publishTime, EVENT_VERSION,
-                                                                     instanceName,
-                                                                     projectName, programStatusEventDetails);
-      programStatusEvents.add(programStatusEvent);
     });
+  }
 
-    this.eventWriters.forEach(eventWriter -> eventWriter.write(programStatusEvents));
+  private void writeInEventWriters(ProgramStatusEventDetails.Builder builder, long publishTime) {
+    ProgramStatusEventDetails programStatusEventDetails = builder.build();
+    ProgramStatusEvent programStatusEvent = new ProgramStatusEvent(publishTime, EVENT_VERSION,
+                                                                   instanceName,
+                                                                   projectName, programStatusEventDetails);
+    List<ProgramStatusEvent> listProgramStatus = new ArrayList<>();
+    listProgramStatus.add(programStatusEvent);
+    this.eventWriters.forEach(eventWriter -> eventWriter.write(listProgramStatus));
   }
 
   private boolean shouldPublish(ProgramRunId programRunId) {
     return !NamespaceId.SYSTEM.equals(programRunId.getNamespaceId());
   }
 
-  private ProgramStatusEventDetails.Builder populateErrorDetailsAndMetrics(
-    ProgramStatusEventDetails.Builder builder, Map<String, String> properties,
-    ProgramRunStatus status, ProgramRunId runId) {
+  private void populateErrorDetailsAndMetrics(final ProgramStatusEventDetails.Builder builder,
+                                              Map<String, String> properties,
+                                              ProgramRunStatus status, ProgramRunId runId, long publishTime) {
     if (properties.containsKey(ProgramOptionConstants.PROGRAM_ERROR)) {
-      builder = builder.withError(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
+      ProgramStatusEventDetails.Builder newBuilder =
+        builder.withError(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
+      writeInEventWriters(newBuilder, publishTime);
+      return;
     }
     if (status.isEndState()) {
-      builder = builder.withPipelineMetrics(metricsProvider.retrieveMetrics(runId));
+      CompletableFuture.supplyAsync(() -> metricsProvider.retrieveMetrics(runId))
+        .thenAccept(metrics -> {
+          ProgramStatusEventDetails.Builder newBuilder = builder.withPipelineMetrics(metrics);
+          writeInEventWriters(newBuilder, publishTime);
+        });
     }
-    return builder;
   }
 }
