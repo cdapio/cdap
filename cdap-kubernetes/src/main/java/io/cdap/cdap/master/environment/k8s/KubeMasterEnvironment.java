@@ -146,6 +146,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   static final String SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE = "spark.kubernetes.executor.podTemplateFile";
   private static final String SPARK_KUBERNETES_METRICS_PROPERTIES_CONF = "spark.metrics.conf";
+  private static final String SPARK_SERVICE_ACCOUNT_NAME = "spark";
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
@@ -419,7 +420,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
-    copyVolumesAndServiceAccount(namespace, cdapNamespace);
+    copyVolumes(namespace, cdapNamespace);
+    copyServiceAccount(namespace, cdapNamespace, podInfo.getServiceAccountName());
+    copyServiceAccount(namespace, cdapNamespace, SPARK_SERVICE_ACCOUNT_NAME);
     if (workloadIdentityEnabled) {
       String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
       if (workloadIdentityServiceAccountEmail != null && !workloadIdentityServiceAccountEmail.isEmpty()) {
@@ -835,10 +838,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   /**
-   * Copy volumes and service account into the new namespace for deployments created via the KubeTwillRunnerService
+   * Copy volumes into the new namespace for deployments created via the KubeTwillRunnerService
    * TODO: (CDAP-18956) improve this logic to be for each pipeline run
    */
-  private void copyVolumesAndServiceAccount(String namespace, String cdapNamespace) throws IOException {
+  private void copyVolumes(String namespace, String cdapNamespace) throws IOException {
     try {
       for (V1Volume volume : podInfo.getVolumes()) {
         if (volume.getConfigMap() != null) {
@@ -865,8 +868,14 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       throw new IOException("Error occurred while copying volumes. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
     }
+  }
+
+  /**
+   * Copy service account into the new namespace for deployments created via the KubeTwillRunnerService
+   * TODO: (CDAP-18956) improve this logic to be for each pipeline run
+   */
+  private void copyServiceAccount(String namespace, String cdapNamespace, String accountName) throws IOException {
     try {
-      String accountName = podInfo.getServiceAccountName();
       V1ServiceAccount serviceAccount = new V1ServiceAccount()
         .metadata(new V1ObjectMeta().name(accountName).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
       coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null);
