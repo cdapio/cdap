@@ -99,11 +99,6 @@ public class DefaultSchedulerService {
     }
 
     private void emitScheduleJobFailureMetric(String application, String schedule) {
-      if (metricsCollectionService == null) {
-        LOG.debug("Unable to emit Schedule Job Failure Metrics for Application {} and Schedule {}",
-                  application, schedule);
-        return;
-      }
       Map<String, String> tags = ImmutableMap.of(
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
         Constants.Metrics.Tag.COMPONENT, "quartzscheduledjob",

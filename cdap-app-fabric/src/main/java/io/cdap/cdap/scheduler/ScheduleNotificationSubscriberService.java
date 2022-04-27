@@ -218,11 +218,6 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     }
 
     private void emitScheduleJobNotificationFailureMetrics(String application, String schedule) {
-      if (metricsCollectionService == null) {
-        LOG.debug("Unable to emit Schedule Job Notification Failure Metrics for Application {} and Schedule {}",
-                  application, schedule);
-        return;
-      }
       Map<String, String> tags = ImmutableMap.of(
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
         Constants.Metrics.Tag.COMPONENT, "schedulenotification",
