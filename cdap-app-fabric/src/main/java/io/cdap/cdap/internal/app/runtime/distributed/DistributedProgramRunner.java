@@ -364,7 +364,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           .setClassLoader(MainClassLoader.class.getName());
 
         // Add namespace details
-        twillPreparer.withConfiguration(getNamespaceConfigs(program.getNamespaceId()));
+        if (options.getArguments().hasOption(ProgramOptionConstants.RUNTIME_NAMESPACE)) {
+          String runtimeNamespace = options.getArguments().getOption(ProgramOptionConstants.RUNTIME_NAMESPACE);
+          twillPreparer.withConfiguration(getNamespaceConfigs(runtimeNamespace));
+        } else {
+          twillPreparer.withConfiguration(getNamespaceConfigs(program.getNamespaceId()));
+        }
 
         TwillController twillController;
         // Change the context classloader to the combine classloader of this ProgramRunner and
