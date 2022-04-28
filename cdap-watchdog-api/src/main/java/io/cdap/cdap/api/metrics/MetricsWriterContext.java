@@ -25,6 +25,12 @@ import java.util.Map;
  */
 public interface MetricsWriterContext {
 
+  //TODO -  Remove this after the latest jar is published
+  /**
+   * CDAP version label
+   */
+  String CDAP_VERSION = "cdap.version";
+
   /**
    * Properties are derived from the CDAP configuration. Configuration file path will be
    * added as an entry in the  properties.
