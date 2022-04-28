@@ -36,8 +36,17 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.internal.tethering.NamespaceAllocation;
+import io.cdap.cdap.internal.tethering.PeerAlreadyExistsException;
+import io.cdap.cdap.internal.tethering.PeerInfo;
+import io.cdap.cdap.internal.tethering.PeerMetadata;
 import io.cdap.cdap.internal.tethering.TetheringControlMessage;
+import io.cdap.cdap.internal.tethering.TetheringStatus;
+import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -45,7 +54,11 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.store.StoreDefinition;
 import org.apache.commons.io.IOUtils;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.junit.AfterClass;
@@ -79,12 +92,15 @@ public class TetheringRuntimeJobManagerTest {
   private static MessagingService messagingService;
   private static TetheringRuntimeJobManager runtimeJobManager;
   private static TopicId topicId;
+  private static TransactionManager txManager;
+  private static TetheringStore tetheringStore;
+  private static TetheringProvisioner tetheringProvisioner;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @BeforeClass
-  public static void setUp() throws IOException, TopicAlreadyExistsException {
+  public static void setUp() throws IOException, TopicAlreadyExistsException, PeerAlreadyExistsException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Tethering.TOPIC_PREFIX, "prefix-");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
@@ -94,27 +110,46 @@ public class TetheringRuntimeJobManagerTest {
       new LocalLocationModule(),
       new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
+      new StorageModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       });
+    // Define all StructuredTable before starting any services that need StructuredTable
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
 
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    tetheringStore = injector.getInstance(TetheringStore.class);
+    PeerMetadata metadata = new PeerMetadata(Collections.singletonList(new NamespaceAllocation(TETHERED_NAMESPACE_NAME,
+                                                                                               null,
+                                                                                               null)),
+                                             Collections.emptyMap(), null);
+    PeerInfo peerInfo = new PeerInfo(TETHERED_INSTANCE_NAME, null, TetheringStatus.ACCEPTED,
+                                     metadata, System.currentTimeMillis());
+    tetheringStore.addPeer(peerInfo);
     TetheringConf conf = TetheringConf.fromProperties(PROPERTIES);
     topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                           cConf.get(Constants.Tethering.TOPIC_PREFIX) + TETHERED_INSTANCE_NAME);
     messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
     messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
     runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService);
+    tetheringProvisioner = injector.getInstance(TetheringProvisioner.class);
   }
 
   @AfterClass
   public static void tearDown() throws TopicNotFoundException, IOException {
+    if (txManager != null) {
+      txManager.stopAndWait();
+    }
     messagingService.deleteTopic(topicId);
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
@@ -153,12 +188,32 @@ public class TetheringRuntimeJobManagerTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConfValidation() {
+  public void testValidateInvalidNamespace() {
     Map<String, String> properties = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
                                                      "my-instance",
                                                      TetheringConf.TETHERED_NAMESPACE_PROPERTY,
                                                      "invalid-ns");
     // Validation should fail as namespace can only contain alphanumeric characters or _
-    TetheringConf.fromProperties(properties);
+    tetheringProvisioner.validateProperties(properties);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateNamespaceNotFound() {
+    Map<String, String> properties = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
+                                                     TETHERED_INSTANCE_NAME,
+                                                     TetheringConf.TETHERED_NAMESPACE_PROPERTY,
+                                                     "default");
+    // Validation should fail because default namespace is not associated with the tethering
+    tetheringProvisioner.validateProperties(properties);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidatePeerNotFound() {
+    Map<String, String> properties = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
+                                                     "unknown_peer",
+                                                     TetheringConf.TETHERED_NAMESPACE_PROPERTY,
+                                                     TETHERED_NAMESPACE_NAME);
+    // Validation should fail because the peer is not tethered
+    tetheringProvisioner.validateProperties(properties);
   }
 }

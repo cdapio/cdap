@@ -37,10 +37,12 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
@@ -50,7 +52,9 @@ import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
@@ -112,6 +116,7 @@ public class TetheringClientHandlerTest {
   private static Injector injector;
   private static TransactionManager txManager;
   private static ProfileService profileService;
+  private static NamespaceAdmin namespaceAdmin;
 
   private NettyHttpService serverService;
   private ClientConfig serverConfig;
@@ -141,6 +146,7 @@ public class TetheringClientHandlerTest {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new NamespaceAdminTestModule(),
       new LocalLocationModule(),
       new PrivateModule() {
         @Override
@@ -159,10 +165,17 @@ public class TetheringClientHandlerTest {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     profileService = injector.getInstance(ProfileService.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_1).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_2).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_3).build());
   }
 
   @AfterClass
   public static void teardown() throws Exception {
+    namespaceAdmin.delete(new NamespaceId(NAMESPACE_1));
+    namespaceAdmin.delete(new NamespaceId(NAMESPACE_2));
+    namespaceAdmin.delete(new NamespaceId(NAMESPACE_3));
     if (txManager != null) {
       txManager.stopAndWait();
     }
@@ -201,7 +214,7 @@ public class TetheringClientHandlerTest {
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client",
                                                       new NoOpMetricsCollectionService())
-      .setHttpHandlers(new TetheringClientHandler(tetheringStore, contextAccessEnforcer),
+      .setHttpHandlers(new TetheringClientHandler(tetheringStore, contextAccessEnforcer, namespaceAdmin),
                        new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
       .build();
     clientService.start();
@@ -415,6 +428,22 @@ public class TetheringClientHandlerTest {
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
     response = HttpRequests.execute(builder.build());
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+  }
+
+  @Test
+  public void testInvalidNamespace() throws IOException {
+    List<NamespaceAllocation> namespaces = Collections.singletonList(new NamespaceAllocation("foo", null, null));
+    TetheringCreationRequest tetheringRequest = new TetheringCreationRequest(SERVER_INSTANCE,
+                                                                             serverConfig.getConnectionConfig()
+                                                                               .getURI().toString(),
+                                                                             namespaces,
+                                                                             Collections.emptyMap(),
+                                                                             DESCRIPTION);
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+      .withBody(GSON.toJson(tetheringRequest));
+
+    HttpResponse response = HttpRequests.execute(builder.build());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
   }
 
   private void deleteTethering(String instance) throws IOException {
