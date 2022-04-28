@@ -69,6 +69,7 @@ public class LevelDBTableService implements AutoCloseable {
   private boolean compressionEnabled;
   private int blockSize;
   private long cacheSize;
+  private int cacheSizeFiles;
   private Duration compactionInterval;
   private int compactionLevelMin;
   private int compactionLevelMax;
@@ -109,6 +110,7 @@ public class LevelDBTableService implements AutoCloseable {
     compressionEnabled = config.getBoolean(Constants.CFG_DATA_LEVELDB_COMPRESSION_ENABLED);
     blockSize = config.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
+    cacheSizeFiles = config.getInt(Constants.CFG_DATA_LEVELDB_CACHESIZE_FILES);
     writeOptions = new WriteOptions().sync(config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC,
                                                              Constants.DEFAULT_DATA_LEVELDB_FSYNC));
     compactionInterval = Duration.ofSeconds(config.getLong(Constants.CFG_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS,
@@ -317,6 +319,7 @@ public class LevelDBTableService implements AutoCloseable {
     options.compressionType(compressionEnabled ? CompressionType.SNAPPY : CompressionType.NONE);
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
+    options.maxOpenFiles(cacheSizeFiles + Constants.DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET);
 
     // unfortunately, with the java version of leveldb, with createIfMissing set to false, factory.open will
     // see that there is no table and throw an exception, but it wont clean up after itself and will leave a
@@ -341,6 +344,7 @@ public class LevelDBTableService implements AutoCloseable {
     options.compressionType(compressionEnabled ? CompressionType.SNAPPY : CompressionType.NONE);
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
+    options.maxOpenFiles(cacheSizeFiles + Constants.DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET);
 
     DB db = factory.open(new File(dbPath), options);
     tables.put(name, db);

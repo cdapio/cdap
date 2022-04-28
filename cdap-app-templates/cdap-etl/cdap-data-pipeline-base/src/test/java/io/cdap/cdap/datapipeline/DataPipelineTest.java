@@ -105,6 +105,7 @@ import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.PluginPropertyMapping;
+import io.cdap.cdap.etl.proto.v2.TriggeringPipelineId;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -625,8 +626,17 @@ public class DataPipelineTest extends HydratorTestBase {
 
     String defaultNamespace = NamespaceId.DEFAULT.getNamespace();
     // Use properties from the triggering pipeline as values for runtime argument key1, key2
+    ArgumentMapping key1MappingWithId = new ArgumentMapping(
+      key1Mapping.getSource(),
+      key1Mapping.getTarget(),
+      new TriggeringPipelineId(defaultNamespace, triggeringPipelineName));
+    PluginPropertyMapping key2MappingWithId = new PluginPropertyMapping(
+      key2Mapping.getStageName(),
+      key2Mapping.getSource(),
+      key2Mapping.getTarget(),
+      new TriggeringPipelineId(defaultNamespace, triggeringPipelineName));
     TriggeringPropertyMapping propertyMapping =
-      new TriggeringPropertyMapping(ImmutableList.of(key1Mapping), ImmutableList.of(key2Mapping));
+      new TriggeringPropertyMapping(ImmutableList.of(key1MappingWithId), ImmutableList.of(key2MappingWithId));
     ProgramStatusTrigger completeTrigger =
       new ProgramStatusTrigger(new WorkflowId(defaultNamespace, triggeringPipelineName, SmartWorkflow.NAME),
                                ImmutableSet.of(ProgramStatus.COMPLETED));

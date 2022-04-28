@@ -217,6 +217,7 @@ public final class Constants {
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+    public static final String PROGRAM_JVM_OPTS_PREFIX = "app.program.jvm.opts.";
     public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
     public static final String STREAMING_BATCH_SIZE = "app.streaming.batch.size";
     public static final String EXEC_THREADS = "app.exec.threads";
@@ -407,6 +408,7 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MULTIPLIER = "preview.runner.container.memory.multiplier";
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
+    public static final String CONTAINER_JVM_OPTS = "preview.runner.container.jvm.opts";
 
     public static final String ARTIFACT_LOCALIZER_ENABLED = "preview.runner.artifact.localizer.enabled";
   }
@@ -453,6 +455,7 @@ public final class Constants {
     public static final String CONTAINER_RUN_AS_USER = "task.worker.container.run.as.user";
     public static final String CONTAINER_RUN_AS_GROUP = "task.worker.container.run.as.group";
     public static final String CONTAINER_DISK_READONLY = "task.worker.container.disk.readonly";
+    public static final String CONTAINER_JVM_OPTS = "task.worker.container.jvm.opts";
 
     /**
      * Task worker http handler configuration
@@ -475,6 +478,7 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MB = "system.worker.container.memory.mb";
     public static final String CONTAINER_CORES = "system.worker.container.num.cores";
     public static final String CONTAINER_COUNT = "system.worker.container.count";
+    public static final String CONTAINER_JVM_OPTS = "system.worker.container.jvm.opts";
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
     public static final String CLEANUP_EXECUTOR_SERVICE_BINDING = "cleanup.executor.service";
     public static final String CLEANUP_THREADS = "system.worker.cleanup.threads";
@@ -504,6 +508,7 @@ public final class Constants {
      */
     public static final String CONTAINER_MEMORY_MB = "artifact.localizer.container.memory.mb";
     public static final String CONTAINER_CORES = "artifact.localizer.container.num.cores";
+    public static final String CONTAINER_JVM_OPTS = "artifact.localizer.container.jvm.opts";
 
     /**
      * Artifact localizer http handler configuration
@@ -1000,10 +1005,12 @@ public final class Constants {
       public static final String PROGRAM_FAILED_RUNS = "program.failed.runs";
       public static final String PROGRAM_KILLED_RUNS = "program.killed.runs";
       public static final String PROGRAM_REJECTED_RUNS = "program.rejected.runs";
+      public static final String PROGRAM_FORCE_TERMINATED_RUNS = "program.force.terminated.runs";
       public static final String PROGRAM_NODE_MINUTES = "program.node.minutes";
       public static final String PROGRAM_PROVISIONING_DELAY_SECONDS = "program.provisioning.delay.seconds";
       public static final String PROGRAM_STARTING_DELAY_SECONDS = "program.starting.delay.seconds";
       public static final String RUN_TIME_SECONDS = "program.run.seconds";
+      public static final String PROGRAM_STOPPING_DELAY_SECONDS = "program.stopping.delay.seconds";
       public static final String APPLICATION_COUNT = "application.count";
       public static final String NAMESPACE_COUNT = "namespace.count";
       public static final String APPLICATION_PLUGIN_COUNT = "application.plugin.count";
@@ -1576,6 +1583,7 @@ public final class Constants {
   public static final String CFG_DATA_LEVELDB_COMPRESSION_ENABLED = "data.local.storage.compression.enabled";
   public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.storage.blocksize";
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
+  public static final String CFG_DATA_LEVELDB_CACHESIZE_FILES = "data.local.storage.cachesize.files";
   public static final String CFG_DATA_LEVELDB_FSYNC = "data.local.storage.fsync";
   public static final String CFG_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS =
     "data.local.storage.compaction.interval.seconds";
@@ -1594,6 +1602,13 @@ public final class Constants {
   public static final long DEFAULT_DATA_LEVELDB_COMPACTION_INTERVAL_SECONDS = 3600 * 24 * 7L;
   public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MIN = 0;
   public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MAX = 4;
+
+  /**
+   * LevelDB substracts 10 from maxOpenFiles configuration to calculate table cache size.
+   * This constant allows us to convert it back
+   * @see org.iq80.leveldb.impl.DbImpl#DbImpl
+   */
+  public static final int DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET = 10;
 
   /**
    * Used for upgrade and backwards compatability

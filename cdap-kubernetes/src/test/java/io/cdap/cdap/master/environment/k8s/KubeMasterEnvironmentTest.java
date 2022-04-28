@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.common.TemporaryLocalFileProvider;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
@@ -52,6 +53,7 @@ import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.mockito.Matchers.eq;
@@ -153,6 +155,21 @@ public class KubeMasterEnvironmentTest {
     thrown.expectMessage(String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
                                        KUBE_NAMESPACE, CDAP_NAMESPACE));
     kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
+  }
+
+  @Test
+  public void testOnNamespaceCreationWithBadKubeName() throws Exception {
+    Set<String> badKubeNames = ImmutableSet.of(CDAP_NAMESPACE, "UPPERCASE", "special*char", "-badstart", "badend-");
+    Map<String, String> properties = new HashMap<>();
+    for (String kubeName : badKubeNames) {
+      try {
+        properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, kubeName);
+        kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
+        Assert.fail(String.format("%s does not meet Kubernetes naming standards", kubeName));
+      } catch (IOException e) {
+        // ignore
+      }
+    }
   }
 
   @Test

@@ -203,6 +203,12 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             }
           }
 
+          // Set JVM options for task worker and artifact localizer
+          twillPreparer.setJVMOptions(TaskWorkerTwillRunnable.class.getSimpleName(),
+                                      cConf.get(Constants.TaskWorker.CONTAINER_JVM_OPTS));
+          twillPreparer.setJVMOptions(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
+                                      cConf.get(Constants.ArtifactLocalizer.CONTAINER_JVM_OPTS));
+
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
           activeController.onRunning(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);
           activeController.onTerminated(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);

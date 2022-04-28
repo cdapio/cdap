@@ -308,6 +308,10 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
           LOG.trace("Got stop_program from {}", peerInfo.getName());
           publishStopProgram(Bytes.toString(controlMessage.getPayload()));
           break;
+        case KILL_PROGRAM:
+          LOG.trace("Got kill_program from {}", peerInfo.getName());
+          publishKillProgram(Bytes.toString(controlMessage.getPayload()));
+          break;
       }
     }
 
@@ -341,8 +345,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                                                      ApplicationSpecification.class);
     ProgramOptions programOpts = GSON.fromJson(files.get(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
                                                ProgramOptions.class);
-    ProgramId programId = new ProgramId(message.getRuntimeNamespace(), programOpts.getProgramId().getApplication(),
-                                        programOpts.getProgramId().getType(), programOpts.getProgramId().getProgram());
+    ProgramId programId = programOpts.getProgramId();
     ProgramRunId programRunId = programId.run(programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
@@ -360,9 +363,9 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     // Remove the plugin artifact archive argument from options and let the program runner recreate it
     systemArgs.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
     systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
-    systemArgs.put(ProgramOptionConstants.PEER_NAMESPACE, message.getPeerNamespace());
+    systemArgs.put(ProgramOptionConstants.RUNTIME_NAMESPACE, message.getRuntimeNamespace());
     systemArgs.put(ProgramOptionConstants.PROGRAM_RESOURCE_URI, programDir.toURI().toString());
-    systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ON_PREMISE.name());
+    systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name());
     SystemArguments.addProfileArgs(systemArgs, Profile.NATIVE);
     ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
                                                           programOpts.getUserArguments());
@@ -375,8 +378,20 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(), programRunInfo.getApplication(),
                                                  ProgramType.valueOf(programRunInfo.getProgramType()),
                                                  programRunInfo.getProgram(), programRunInfo.getRun());
-    programStateWriter.killed(programRunId);
+    // Do a graceful stop without a timeout. ProgramStopSubscriberService on the tethered peer will send a kill if the
+    // graceful shutdown time is exceeded.
+    programStateWriter.stop(programRunId, Integer.MAX_VALUE);
     LOG.debug("Published program stop message for run {}", programRunInfo.getRun());
+  }
+
+  private void publishKillProgram(String stopPayload) {
+    ProgramRunInfo programRunInfo = GSON.fromJson(stopPayload, ProgramRunInfo.class);
+    ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(), programRunInfo.getApplication(),
+                                                 ProgramType.valueOf(programRunInfo.getProgramType()),
+                                                 programRunInfo.getProgram(), programRunInfo.getRun());
+    // Kill the program
+    programStateWriter.stop(programRunId, 0);
+    LOG.debug("Published program kill message for run {}", programRunInfo.getRun());
   }
 
   /**

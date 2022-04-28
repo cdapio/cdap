@@ -51,6 +51,7 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -177,18 +178,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   @Override
   public void start() {
-    try {
-      // Use local directory for caching generated jar files
-      Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                       cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
-      cachePath = Files.createTempDirectory(tempDir, "runner.cache");
-      locationCache = new BasicLocationCache(Locations.toLocation(cachePath));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
-                                                 Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
+    doInitialize();
     long startMillis = System.currentTimeMillis();
     scheduler.execute(new Runnable() {
       @Override
@@ -201,6 +191,21 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         initializeControllers(startMillis);
       }
     });
+  }
+
+  final void doInitialize() {
+    try {
+      // Use local directory for caching generated jar files
+      Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                       cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
+      cachePath = Files.createTempDirectory(tempDir, "runner.cache");
+      locationCache = new BasicLocationCache(Locations.toLocation(cachePath));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
+                                                 Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
   }
 
   @Override
@@ -516,6 +521,27 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
   }
 
+  protected void monitorController(ProgramRunId programRunId, CompletableFuture<Void> startupTaskCompletion,
+                                RemoteExecutionTwillController controller,
+                                RemoteExecutionService remoteExecutionService) {
+    startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+
+    // On this controller termination, make sure it is removed from the controllers map and have resources released.
+    controller.onTerminated(() -> {
+      if (controllers.remove(programRunId, controller)) {
+        controller.complete();
+      }
+    }, scheduler);
+  }
+
+  protected void addController(ProgramRunId programRunId, RemoteExecutionTwillController controller) {
+    controllers.put(programRunId, controller);
+  }
+
+  protected RemoteExecutionTwillController getController(ProgramRunId programRunId) {
+    return controllers.get(programRunId);
+  }
+
   private final class ControllerFactory implements TwillControllerFactory {
 
     private final ProgramRunId programRunId;
@@ -531,7 +557,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       // Make sure we don't run the startup task and create controller if there is already one existed.
       controllersLock.lock();
       try {
-        RemoteExecutionTwillController controller = controllers.get(programRunId);
+        RemoteExecutionTwillController controller = getController(programRunId);
         if (controller != null) {
           return controller;
         }
@@ -600,7 +626,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         }
 
         LOG.debug("Created controller for program run {}", programRunId);
-        controllers.put(programRunId, controller);
+        addController(programRunId, controller);
         return controller;
       } finally {
         controllersLock.unlock();
@@ -617,19 +643,23 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       RemoteExecutionService remoteExecutionService = createRemoteExecutionService(programRunId, programOpts,
                                                                                    processController);
 
+      // TODO: (CDAP-19047) rework the contract here to be cleaner instead of implementation specific
+      // If this is a tethered run, the RemoteProcessController needs to be used to gracefully stop the run
+      // Otherwise, stopping is handled by the RuntimeClient to have the program shut itself down,
+      // so the RemoteProcessController doesn't need to explicit stop anything
+      Map<String, String> systemArguments = programOpts.getArguments().asMap();
+      String provisionerName = SystemArguments.getProfileProvisioner(systemArguments);
+      String peerName = systemArguments.get(ProgramOptionConstants.PEER_NAME);
+      boolean useControllerToStop = TetheringProvisioner.TETHERING_NAME.equals(provisionerName) &&
+        peerName == null;
       // Create the controller and start the runtime monitor when the startup task completed successfully.
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(cConf, programRunId,
                                                                                      startupTaskCompletion,
                                                                                      processController,
-                                                                                     scheduler, remoteExecutionService);
-      startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+                                                                                     scheduler, remoteExecutionService,
+                                                                                     useControllerToStop);
 
-      // On this controller termination, make sure it is removed from the controllers map and have resources released.
-      controller.onTerminated(() -> {
-        if (controllers.remove(programRunId, controller)) {
-          controller.complete();
-        }
-      }, scheduler);
+      monitorController(programRunId, startupTaskCompletion, controller, remoteExecutionService);
       return controller;
     }
 

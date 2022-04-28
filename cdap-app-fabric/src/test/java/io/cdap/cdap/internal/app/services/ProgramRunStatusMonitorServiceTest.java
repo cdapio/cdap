@@ -19,6 +19,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
@@ -27,6 +33,8 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -44,7 +52,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -58,13 +70,16 @@ import javax.annotation.Nullable;
  * Unit test for {@link ProgramRunStatusMonitorService}
  */
 public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
+  private static final String SYSTEM_METRIC_PREFIX = "system.";
   private static Store store;
   private static CConfiguration cConf;
+  private static MetricsCollectionService metricsCollectionService;
 
   @BeforeClass
   public static void setup() {
     store = getInjector().getInstance(DefaultStore.class);
     cConf = getInjector().getInstance(CConfiguration.class);
+    metricsCollectionService = getInjector().getInstance(MetricsCollectionService.class);
   }
 
   @After
@@ -73,7 +88,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testStoppingProgramsBeyondTerminateTimeAreKilled() throws InterruptedException {
+  public void testStoppingProgramsBeyondTerminateTimeAreKilled() throws Exception {
     AtomicInteger sourceId = new AtomicInteger(0);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     // set up a workflow for a program in Stopping state
@@ -98,11 +113,40 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
+      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
     programRunStatusMonitorService.startAndWait();
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     latch.await(10, TimeUnit.SECONDS);
+    MetricStore metricStore = getInjector().getInstance(MetricStore.class);
+    ProfileId myProfile = NamespaceId.SYSTEM.profile("native");
+    Tasks.waitFor(true, () -> getMetric(metricStore, wfId, myProfile, new HashMap<>(),
+                               SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_FORCE_TERMINATED_RUNS) > 0,
+                  10, TimeUnit.SECONDS);
+    metricStore.deleteAll();
+  }
+
+  private long getMetric(MetricStore metricStore, ProgramRunId programRunId, ProfileId profileId,
+                         Map<String, String> additionalTags, String metricName) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .putAll(additionalTags)
+      .build();
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                tags, new ArrayList<>());
+    Collection<MetricTimeSeries> result = metricStore.query(query);
+    if (result.isEmpty()) {
+      return 0;
+    }
+    List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+    if (timeValues.isEmpty()) {
+      return 0;
+    }
+    return timeValues.get(0).getValue();
   }
 
   @Test
@@ -133,7 +177,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
+      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
     Assert.assertEquals(1, latch.getCount());
     Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }
@@ -163,7 +207,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
+      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
     Assert.assertEquals(1, latch.getCount());
     Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }
@@ -194,7 +238,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, 5, 3, 2);
+      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
     Assert.assertEquals(1, latch.getCount());
     Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }

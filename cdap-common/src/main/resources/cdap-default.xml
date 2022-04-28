@@ -913,7 +913,19 @@
     <name>data.local.storage.cachesize</name>
     <value>104857600</value>
     <description>
-      Cache size in bytes for data fabric when in CDAP Local Sandbox
+      Cache size in bytes for data fabric when in CDAP Local Sandbox.
+      Note that this value is only used by LevelDB in the JNI mode, in java mode please use
+      data.local.storage.cachesize.files to control LevelDB cache
+    </description>
+  </property>
+
+  <property>
+    <name>data.local.storage.cachesize.files</name>
+    <value>200</value>
+    <description>
+      Cache size in number of open files when in CDAP Local Sandbox.
+      Note that this value is only used by LevelDB in java mode, in JNI mode please use
+      data.local.storage.cachesize to control LevelDB cache
     </description>
   </property>
 
@@ -3458,6 +3470,14 @@
   </property>
 
   <property>
+    <name>preview.runner.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for preview runner containers.
+    </description>
+  </property>
+
+  <property>
     <name>preview.runner.artifact.localizer.enabled</name>
     <value>false</value>
     <description>
@@ -4836,6 +4856,14 @@
     </description>
   </property>
 
+  <property>
+    <name>task.worker.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for task worker containers.
+    </description>
+  </property>
+
   <!-- System pods Configuration  -->
   <property>
     <name>system.worker.pool.enable</name>
@@ -4874,6 +4902,14 @@
     <value>400</value>
     <description>
       Memory in megabytes for each system worker.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for system worker containers.
     </description>
   </property>
 
@@ -4946,6 +4982,22 @@
     <value>1</value>
     <description>
       The number of boss threads for the artifact localizer.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for artifact localizer containers.
+    </description>
+  </property>
+
+  <property>
+    <name>file.localizer.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for file localizer containers.
     </description>
   </property>
 
@@ -5212,10 +5264,10 @@
   </property>
 
   <property>
-    <name>feature.pipeline.triggers.conditional.and.enabled</name>
+    <name>feature.pipeline.composite.triggers.enabled</name>
     <value>false</value>
     <description>
-      Enables configuring AND or OR trigger groups for a pipeline.
+      Enables configuring composite AND/OR triggers for a pipeline schedule.
     </description>
   </property>
 
