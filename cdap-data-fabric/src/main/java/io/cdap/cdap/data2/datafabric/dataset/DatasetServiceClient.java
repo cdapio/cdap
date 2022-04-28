@@ -113,7 +113,12 @@ public class DatasetServiceClient {
                                                          instanceName, response));
     }
 
-    return GSON.fromJson(response.getResponseBodyAsString(), DatasetMeta.class);
+    try {
+      return GSON.fromJson(response.getResponseBodyAsString(), DatasetMeta.class);
+    } catch (Exception e) {
+      LOG.error("Error decoding response from dataset service: {}", response.getResponseBodyAsString(), e);
+      throw e;
+    }
   }
 
   Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException, UnauthorizedException {

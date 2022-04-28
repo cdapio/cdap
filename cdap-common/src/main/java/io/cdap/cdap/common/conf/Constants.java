@@ -1996,5 +1996,6 @@ public final class Constants {
     public static final String PORT = "artifact.cache.bind.port";
     public static final String BOSS_THREADS = "artifact.cache.boss.threads";
     public static final String WORKER_THREADS = "artifact.cache.worker.threads";
+    public static final String USE_RELATIVE_LOCATION = "artifact.cache.use.relative.location";
   }
 }

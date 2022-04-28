@@ -274,7 +274,12 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       if (!programJarLocation.isDirectory()) {
         File targetFile = new File(tempDir, "program.jar");
         try {
-          programJarLocation = Locations.toLocation(Locations.linkOrCopyOverwrite(programJarLocation, targetFile));
+          Id.Namespace namespace = Id.Namespace.from(programDescriptor.getProgramId().getNamespace());
+          Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
+          try (InputStream is = artifactRepository.newInputStream(artifactId)) {
+            Files.copy(is, targetFile.toPath());
+          }
+          programJarLocation = Locations.toLocation(targetFile);
         } catch (FileAlreadyExistsException ex) {
           LOG.warn("Program file {} already exists and can not be replaced.", targetFile.getAbsolutePath());
         }

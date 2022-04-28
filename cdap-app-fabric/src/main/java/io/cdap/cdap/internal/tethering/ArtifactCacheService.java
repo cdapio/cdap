@@ -62,7 +62,7 @@ public class ArtifactCacheService extends AbstractIdleService {
                               CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
     httpService = commonNettyHttpServiceFactory.builder("artifact.cache")
-      .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store, remoteAuthenticator))
+      .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cConf, cache, store, remoteAuthenticator))
       .setHost(cConf.get(Constants.ArtifactCache.ADDRESS))
       .setPort(cConf.getInt(Constants.ArtifactCache.PORT))
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactCache.BOSS_THREADS))

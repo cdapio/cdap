@@ -53,7 +53,6 @@ import javax.net.ssl.HttpsURLConnection;
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
-
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
 
   private final InternalAuthenticator internalAuthenticator;

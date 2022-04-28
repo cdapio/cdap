@@ -18,7 +18,7 @@
 # This should be run from the CDAP base directory.
 # Before creating the image, cdap-spark-core and cdap-kubernetes must be built:
 #
-# mvn package -P dist -pl cdap-spark-core3_2.12,cdap-kubernetes -am -DskipTests
+# mvn package -P dist -pl cdap-spark-core3_2.12,cdap-kubernetes,cdap-authenticator-ext-gcp -am -DskipTests
 #
 # Then build the image:
 #
@@ -55,6 +55,8 @@ USER ${spark_uid}
 
 # copy k8s master environment spi for service discovery
 COPY cdap-kubernetes/target/libexec /opt/cdap/master/ext/environments/k8s
+# copy gcp auth extension for tethered runs
+COPY cdap-authenticator-ext-gcp/target/libexec /opt/cdap/master/ext/authenticators/gcp-remote-authenticator 
 
 # modified version of the Spark entrypoint that calls the CDAP SparkContainerLauncher
 COPY cdap-spark-core3_2.12/src/k8s/entrypoint.sh /opt/cdap/cdap-spark-core/entrypoint.sh

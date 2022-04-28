@@ -165,6 +165,8 @@ public final class RuntimeMonitors {
                                                   Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_NAME_PREFIX,
                                                   provisioner);
     }
+    LOG.error("ashau - runtime monitor type = {}. using remote authenticator name key {}",
+              runtimeMonitorType, remoteAuthenticatorNameKey);
     return RemoteAuthenticatorModules.getDefaultModule(remoteAuthenticatorNameKey);
   }
 }

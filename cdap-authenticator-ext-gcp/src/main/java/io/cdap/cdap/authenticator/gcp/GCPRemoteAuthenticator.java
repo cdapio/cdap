@@ -21,6 +21,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Date;
@@ -32,7 +34,7 @@ import javax.annotation.Nullable;
  * For additional information, see https://google.aip.dev/auth/4110.
  */
 public class GCPRemoteAuthenticator implements RemoteAuthenticator {
-
+  private static final Logger LOG = LoggerFactory.getLogger(GCPRemoteAuthenticator.class);
   public static final String GCP_REMOTE_AUTHENTICATOR_NAME = "gcp-remote-authenticator";
 
   private final GoogleCredentials googleCredentials;

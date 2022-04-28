@@ -302,7 +302,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
           break;
         case START_PROGRAM:
           LOG.trace("Got start_program from {}", peerInfo.getName());
-          publishStartProgram(Bytes.toString(controlMessage.getPayload()), peerInfo.getName());
+          publishStartProgram(Bytes.toString(controlMessage.getPayload()), peerInfo);
           break;
         case STOP_PROGRAM:
           LOG.trace("Got stop_program from {}", peerInfo.getName());
@@ -326,7 +326,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
    * Use these files to start the program through ProgramStateWriter.
    * Save the rest of the files into a temp dir (to be loaded when the Program is created in DistributedProgramRunner).
    */
-  private void publishStartProgram(String runPayload, String peerName) throws IOException {
+  private void publishStartProgram(String runPayload, PeerInfo peerInfo) throws IOException {
     TetheringLaunchMessage message = GSON.fromJson(runPayload, TetheringLaunchMessage.class);
 
     CConfiguration cConfCopy = CConfiguration.copy(cConf);
@@ -362,7 +362,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     Map<String, String> systemArgs = new HashMap<>(programOpts.getArguments().asMap());
     // Remove the plugin artifact archive argument from options and let the program runner recreate it
     systemArgs.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
-    systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
+    systemArgs.put(ProgramOptionConstants.PEER_NAME, peerInfo.getName());
     systemArgs.put(ProgramOptionConstants.RUNTIME_NAMESPACE, message.getRuntimeNamespace());
     systemArgs.put(ProgramOptionConstants.PROGRAM_RESOURCE_URI, programDir.toURI().toString());
     systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name());

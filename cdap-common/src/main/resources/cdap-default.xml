@@ -4023,6 +4023,14 @@
     </description>
   </property>
 
+  <property>
+    <name>artifact.cache.use.relative.location</name>
+    <value>false</value>
+    <description>
+      Whether to strip the scheme and host of a location URI before passing it back to the client.
+    </description>
+  </property>
+
   <!-- Router Configuration -->
 
   <property>
