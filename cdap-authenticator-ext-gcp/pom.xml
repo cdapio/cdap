@@ -31,6 +31,7 @@
 
   <properties>
     <gcpoauth2.version>1.5.3</gcpoauth2.version>
+    <guava.version>31.1-jre</guava.version>
   </properties>
 
   <dependencies>
@@ -52,6 +53,11 @@
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
       <version>${gcpoauth2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
     </dependency>
 
     <!-- Test Dependencies -->
