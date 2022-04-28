@@ -204,6 +204,8 @@ public class DefaultMetricStore implements MetricStore {
         ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
             Constants.Metrics.Tag.COMPONENT, Constants.Metrics.Tag.SCHEDULE)));
     */
+
+    
     AGGREGATIONS = Collections.unmodifiableMap(aggs);
   }
 
