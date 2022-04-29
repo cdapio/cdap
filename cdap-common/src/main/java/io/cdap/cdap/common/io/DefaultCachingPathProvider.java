@@ -59,14 +59,14 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
         }
         try {
           Files.deleteIfExists(path);
-          LOG.debug("Removed cache file {}", path);
+          LOG.trace("Removed cache file {}", path);
         } catch (IOException e) {
           LOG.warn("Failed to delete cache file {}. An unused file may left behind.", path, e);
         }
         // Try to delete the parent directory. We ignore the failure as it can happen if the directory is not empty.
         try {
           if (Files.deleteIfExists(path.getParent())) {
-            LOG.debug("Removed cache directory {}", path.getParent());
+            LOG.trace("Removed cache directory {}", path.getParent());
           }
         } catch (IOException e) {
           LOG.trace("Failed to delete directory {}", path.getParent(), e);
@@ -134,7 +134,7 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
         long lastModified = Long.parseLong(fileName.substring(0, idx));
 
         cache.put(new CacheKey(fileName, lastModified), file.toPath());
-        LOG.debug("Populate cache with {}", file);
+        LOG.trace("Populate cache with {}", file);
       }
     }
   }
