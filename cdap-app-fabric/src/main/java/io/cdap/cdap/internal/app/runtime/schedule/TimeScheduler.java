@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
@@ -79,15 +80,17 @@ public final class TimeScheduler {
   private ListeningExecutorService taskExecutorService;
   private boolean schedulerStarted;
   private final TopicId topicId;
+  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, MessagingService messagingService,
-                CConfiguration cConf) {
+                CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
     this.schedulerSupplier = schedulerSupplier;
     this.messagingService = messagingService;
     this.scheduler = null;
     this.schedulerStarted = false;
     this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC));
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   void init() throws SchedulerException {
@@ -387,7 +390,7 @@ public final class TimeScheduler {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(messagingService, topicId);
+          return new DefaultSchedulerService.ScheduledJob(messagingService, topicId, metricsCollectionService);
         } else {
           try {
             return jobClass.newInstance();
