@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.spi.events;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 /**
  * Metric details model for a single pipeline execution.
@@ -114,12 +114,12 @@ public class ExecutionMetrics {
     return inputRows == that.inputRows && outputRows == that.outputRows && inputBytes == that.inputBytes
       && outputBytes == that.outputBytes && shuffleReadRecords == that.shuffleReadRecords
       && shuffleReadBytes == that.shuffleReadBytes && shuffleWriteRecords == that.shuffleWriteRecords
-      && shuffleWriteBytes == that.shuffleWriteBytes && Objects.equal(stageId, that.stageId);
+      && shuffleWriteBytes == that.shuffleWriteBytes && Objects.equals(stageId, that.stageId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(stageId, inputRows, outputRows, inputBytes, outputBytes,
-                            shuffleReadRecords, shuffleReadBytes, shuffleWriteRecords, shuffleWriteBytes);
+    return Objects.hash(stageId, inputRows, outputRows, inputBytes, outputBytes,
+                     shuffleReadRecords, shuffleReadBytes, shuffleWriteRecords, shuffleWriteBytes);
   }
 }
