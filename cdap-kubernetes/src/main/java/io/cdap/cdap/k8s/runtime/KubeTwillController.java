@@ -78,6 +78,7 @@ class KubeTwillController implements ExtendedTwillController {
 
   private volatile boolean isStopped;
   private volatile V1JobStatus jobStatus;
+  private volatile boolean jobTimedOut;
 
   KubeTwillController(String kubeNamespace, RunId runId, DiscoveryServiceClient discoveryServiceClient,
                       ApiClient apiClient, Type resourceType, V1ObjectMeta meta,
@@ -317,6 +318,10 @@ class KubeTwillController implements ExtendedTwillController {
     }
     try {
       awaitTerminated();
+      // If jobTimedOut is true, this means the kubernetes job failed to start within the timeout
+      if (jobTimedOut) {
+        return TerminationStatus.FAILED;
+      }
       // If isStopped is true, this means the kubernetes submitted job was not found. This could happen if the job
       // was submitted and then deleted before getting status/before issuing delete.
       if (isStopped) {
@@ -341,6 +346,15 @@ class KubeTwillController implements ExtendedTwillController {
    */
   public void setJobStatus(V1JobStatus jobStatus) {
     this.jobStatus = jobStatus;
+  }
+
+  /**
+   * Requests to terminate the job when it times out
+   * @return a {@link Future} that represents the termination of the service.
+   */
+  public Future<? extends ServiceController> terminateOnTimeout() {
+    this.jobTimedOut = true;
+    return terminate();
   }
 
   /**
@@ -543,7 +557,11 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
     if (jobStatus == null) {
-      isStopped = true;
+      if (jobTimedOut) {
+        LOG.warn("Job {} timed out", name);
+      } else {
+        isStopped = true;
+      }
       resultFuture.complete(name);
     } else if (jobStatus.getFailed() != null) {
       // If job has failed, mark future as failed. Else mark it as succeeded.
