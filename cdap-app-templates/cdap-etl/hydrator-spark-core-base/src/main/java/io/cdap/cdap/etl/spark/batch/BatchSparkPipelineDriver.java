@@ -217,7 +217,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                                     sec.getNamespace());
           Object instance = pluginInstantiator.newPluginInstance(sqlEngineStage,
                                                                  macroEvaluator);
-          sqlEngineAdapter = new BatchSQLEngineAdapter((SQLEngine<?, ?, ?, ?>) instance,
+          sqlEngineAdapter = new BatchSQLEngineAdapter(phaseSpec.getSQLEngineStageSpec().getPlugin().getName(),
+                                                       (SQLEngine<?, ?, ?, ?>) instance,
                                                        sec,
                                                        jsc,
                                                        collectors);

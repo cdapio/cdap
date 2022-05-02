@@ -22,7 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.SQLEngineContext;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -89,12 +89,12 @@ public class MockSQLEngineWithCapabilities extends BatchSQLEngine<Object, Object
   }
 
   @Override
-  public void prepareRun(RuntimeContext context) throws Exception {
+  public void prepareRun(SQLEngineContext context) throws Exception {
     calledPrepareRun = true;
   }
 
   @Override
-  public void onRunFinish(boolean succeeded, RuntimeContext context) {
+  public void onRunFinish(boolean succeeded, SQLEngineContext context) {
     calledOnRunFinish = true;
   }
 
