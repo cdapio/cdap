@@ -481,7 +481,7 @@ public class AbstractProgramRuntimeServiceTest {
     @Override
     protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                     ProgramDescriptor programDescriptor,
-                                    ArtifactDetail artifactDetail, File tempDir) {
+                                    ArtifactDetail artifactDetail, File tempDir, boolean isTethered) {
       if (program == null) {
         throw new IllegalArgumentException("No program is available");
       }

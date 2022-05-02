@@ -46,6 +46,13 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
     this.locationURI = location.toURI();
   }
 
+  public ArtifactDescriptor(String namespace, ArtifactId artifactId, URI locationURI) {
+    this.namespace = namespace;
+    this.artifactId = artifactId;
+    this.location = null;
+    this.locationURI = locationURI;
+  }
+
   public String getNamespace() {
     return namespace;
   }
@@ -63,6 +70,7 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
    * get location of artifact
    *
    * @return {@link Location} of artifact
+   * @deprecated This will be removed in CDAP-19150
    */
   public Location getLocation() {
     return location;

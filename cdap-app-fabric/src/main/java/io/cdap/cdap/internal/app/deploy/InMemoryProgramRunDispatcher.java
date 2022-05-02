@@ -218,7 +218,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                                                              isDistributed);
 
     // Create and run the program
-    Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail, tempDir);
+    Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
+                                              tempDir, tetheredRun);
     programRunDispatcherInfo.getCleanUpTask().set(createCleanupTask(tempDir, runner, executableProgram));
     return runner.run(executableProgram, optionsWithPlugins);
   }
@@ -265,18 +266,30 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
    */
   protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                   ProgramDescriptor programDescriptor, ArtifactDetail artifactDetail,
-                                  final File tempDir) throws IOException {
+                                  File tempDir, boolean isTetheredRun) throws IOException {
 
+    // TODO: (CDAP-19150) remove Location usage from ArtifactDetail
     Location programJarLocation = artifactDetail.getDescriptor().getLocation();
     ClassLoaderFolder classLoaderFolder;
     try {
       // If the program jar is not a directory, take a snapshot of the jar file to avoid mutation.
       if (!programJarLocation.isDirectory()) {
         File targetFile = new File(tempDir, "program.jar");
-        try {
-          programJarLocation = Locations.toLocation(Locations.linkOrCopyOverwrite(programJarLocation, targetFile));
-        } catch (FileAlreadyExistsException ex) {
-          LOG.warn("Program file {} already exists and can not be replaced.", targetFile.getAbsolutePath());
+        if (isTetheredRun) {
+          // This hack is here because the program jar won't actually exist in a tethered run
+          // TODO: (CDAP-19150) remove hack once Location is removed form ArtifactDetail
+          Id.Namespace namespace = Id.Namespace.from(programDescriptor.getProgramId().getNamespace());
+          Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
+          try (InputStream is = artifactRepository.newInputStream(artifactId)) {
+            Files.copy(is, targetFile.toPath());
+          }
+          programJarLocation = Locations.toLocation(targetFile);
+        } else {
+          try {
+            programJarLocation = Locations.toLocation(Locations.linkOrCopyOverwrite(programJarLocation, targetFile));
+          } catch (FileAlreadyExistsException ex) {
+            LOG.warn("Program file {} already exists and can not be replaced.", targetFile.getAbsolutePath());
+          }
         }
       }
       // Unpack the JAR file
