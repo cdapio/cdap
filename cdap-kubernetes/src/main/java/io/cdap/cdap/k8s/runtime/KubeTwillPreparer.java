@@ -694,7 +694,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .endSpec()
       .build();
     try {
-      batchV1Api.createNamespacedJob(programRuntimeNamespace, job, "true", null, null);
+      job = batchV1Api.createNamespacedJob(programRuntimeNamespace, job, "true", null, null);
       LOG.debug("Created Job {} in Kubernetes.", metadata.getName());
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
