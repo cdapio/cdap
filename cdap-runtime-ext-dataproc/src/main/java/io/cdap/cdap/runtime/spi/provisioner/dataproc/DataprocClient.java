@@ -780,6 +780,26 @@ class DataprocClient implements AutoCloseable {
   }
 
   /**
+   * Get image version for the specified cluster. This information will not be present if the cluster could not be
+   * found, or the cluster specification doesn't contain this information
+   *
+   * @param name the cluster name
+   * @return the cluster image version if available.
+   * @throws RetryableProvisionException if there was a non 4xx error code returned
+   */
+  Optional<String> getClusterImageVersion(String name)
+    throws RetryableProvisionException {
+    Optional<Cluster> clusterOptional = getDataprocCluster(name);
+    if (!clusterOptional.isPresent()) {
+      return Optional.empty();
+    }
+
+    Cluster cluster = clusterOptional.get();
+    SoftwareConfig softwareConfig = cluster.getConfig().getSoftwareConfig();
+    return Optional.ofNullable(softwareConfig.getImageVersion());
+  }
+
+  /**
    * Converts dataproc cluster object into provisioner one. This version does not throw checked exceptions and
    * can be used as a {@link java.util.function.Function}.
    * @param cluster dataproc cluster object
