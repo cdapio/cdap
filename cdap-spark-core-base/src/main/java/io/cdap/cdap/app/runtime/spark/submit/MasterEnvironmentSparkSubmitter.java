@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark.submit;
 
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
@@ -47,6 +48,7 @@ import java.util.Map;
  */
 public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   private final SparkExecutionService sparkExecutionService;
+  private final SparkRuntimeContext runtimeContext;
   private final MasterEnvironment masterEnv;
   private SparkConfig sparkConfig;
   private List<LocalizeResource> resources;
@@ -61,6 +63,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
     this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);
+    this.runtimeContext = runtimeContext;
     this.masterEnv = masterEnv;
     this.cConf = cConf;
   }
@@ -137,7 +140,10 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
 
   private SparkConfig generateOrGetSparkConfig() throws Exception {
     if (sparkConfig == null) {
-      sparkConfig = masterEnv.generateSparkSubmitConfig(new SparkSubmitContext(getLocalizeResources(resources)));
+      SparkSpecification spec = runtimeContext.getSparkSpecification();
+      sparkConfig = masterEnv.generateSparkSubmitConfig(
+        new SparkSubmitContext(getLocalizeResources(resources), spec.getDriverResources().getVirtualCores(),
+                               spec.getExecutorResources().getVirtualCores()));
     }
     return sparkConfig;
   }

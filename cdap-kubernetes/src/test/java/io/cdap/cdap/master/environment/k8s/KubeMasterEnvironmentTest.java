@@ -399,7 +399,7 @@ public class KubeMasterEnvironmentTest {
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
 
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap());
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), 1, 1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
 

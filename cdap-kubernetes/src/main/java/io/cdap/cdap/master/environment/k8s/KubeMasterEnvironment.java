@@ -151,6 +151,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
   private static final String NAMESPACE_CREATION_ENABLED = "master.environment.k8s.namespace.creation.enabled";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
+  private static final String SPARK_DRIVER_POD_CPU_REQUEST = "spark.kubernetes.driver.request.cores";
+  private static final String SPARK_DRIVER_POD_CPU_LIMIT = "spark.kubernetes.driver.limit.cores";
+  private static final String SPARK_EXECUTOR_POD_CPU_REQUEST = "spark.kubernetes.executor.request.cores";
+  private static final String SPARK_EXECUTOR_POD_CPU_LIMIT = "spark.kubernetes.executor.limit.cores";
+
+  private static final String PROGRAM_CPU_MULTIPLIER = "program.k8s.container.cpu.multiplier";
+  private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
 
   // Workload Identity Constants
   private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
@@ -223,6 +230,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String workloadIdentityPool;
   private String workloadIdentityProvider;
   private long workloadIdentityServiceAccountTokenTTLSeconds;
+  private String programCpuMultiplier;
 
   public KubeMasterEnvironment() {
     gson = new Gson();
@@ -283,6 +291,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String namespace = podInfo.getNamespace();
     String cdapNamespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
     additionalSparkConfs = getSparkConfigurations(conf);
+    programCpuMultiplier = conf.getOrDefault(PROGRAM_CPU_MULTIPLIER, DEFAULT_PROGRAM_CPU_MULTIPLIER);
 
     // Get the instance label to setup prefix for K8s services
     String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
@@ -389,6 +398,19 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                      getDriverPodTemplate(podInfo, sparkSubmitContext).getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, getExecutorPodTemplateFile().getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
+
+    // Add spark driver and executor pod cpu limits: https://spark.apache.org/docs/latest/running-on-kubernetes.html
+    // We are not adding memory limits because it will be same as what is requested by spark driver and executor pods.
+    // On spark on kubernetes, currently there is no way to override memory limits:
+    // https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/issues/783
+    sparkConfMap.put(SPARK_DRIVER_POD_CPU_REQUEST,
+                     (int) (sparkSubmitContext.getDriverVirtualCores() * 1000 *
+                       Float.parseFloat(programCpuMultiplier)) + "m");
+    sparkConfMap.put(SPARK_DRIVER_POD_CPU_LIMIT, sparkSubmitContext.getDriverVirtualCores() * 1000 + "m");
+    sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_REQUEST,
+                     (int) (sparkSubmitContext.getExecutorVirtualCores() * 1000 *
+                       Float.parseFloat(programCpuMultiplier)) + "m");
+    sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_LIMIT, sparkSubmitContext.getExecutorVirtualCores() * 1000 + "m");
 
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
@@ -629,7 +651,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private File serializePodTemplate(V1Pod v1Pod) throws IOException {
     // Uses a relative path to create the Spark driver and executor template files.
-    File templateFile = localFileProvider.getWritableFileRef(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
+    File templateFile = localFileProvider.getWritableFileRef(POD_TEMPLATE_FILE_NAME + UUID.randomUUID());
     String podTemplateYaml = Yaml.dump(v1Pod);
     try (FileWriter writer = new FileWriter(templateFile)) {
       writer.write(podTemplateYaml);
@@ -637,7 +659,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       // should not happen
       throw new IOException("Exception while writing pod spec to temp file.", e);
     }
-    LOG.trace("Pod template: {}", podTemplateYaml);
+    LOG.info("Pod template: {}", podTemplateYaml);
     return templateFile;
   }
 
