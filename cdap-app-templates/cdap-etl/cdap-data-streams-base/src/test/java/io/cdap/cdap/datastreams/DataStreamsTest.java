@@ -1367,6 +1367,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("filter2", "sink5")
       .setProperties(Collections.singletonMap(io.cdap.cdap.etl.common.Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG,
                                               "false"))
+      .setBatchInterval("5s")
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
