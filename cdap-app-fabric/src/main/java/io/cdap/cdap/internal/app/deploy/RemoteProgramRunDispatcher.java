@@ -35,6 +35,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric.RemoteExecution;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -51,6 +52,7 @@ import io.cdap.cdap.internal.app.worker.ProgramRunDispatcherTask;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
@@ -93,8 +95,12 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     this.remoteProgramRunnerFactory = remoteProgramRunnerFactory;
     // TODO(CDAP-18964): Get rid of type casting.
     this.remoteTwillRunnerService = (RemoteExecutionTwillRunnerService) twillRunnerService;
+    int connectTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
+    int readTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_READ_TIMEOUT_MS);
+    HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
-                                                     remoteClientFactory, RemoteTaskExecutor.Type.SYSTEM_WORKER);
+                                                     remoteClientFactory, RemoteTaskExecutor.Type.SYSTEM_WORKER,
+                                                     httpRequestConfig);
   }
 
   @Override

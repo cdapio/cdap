@@ -36,6 +36,7 @@ import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -73,11 +74,17 @@ public class RemoteTaskExecutor {
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                             RemoteClientFactory remoteClientFactory, Type workerType) {
+    this(cConf, metricsCollectionService, remoteClientFactory, workerType, new DefaultHttpRequestConfig(false));
+  }
+
+  public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
+                            RemoteClientFactory remoteClientFactory, Type workerType,
+                            HttpRequestConfig httpRequestConfig) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
     String serviceName = workerType == Type.TASK_WORKER ?
       Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
-                                                               new DefaultHttpRequestConfig(false),
+                                                               httpRequestConfig,
                                                                Constants.Gateway.INTERNAL_API_VERSION_3);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
     this.metricsCollectionService = metricsCollectionService;
