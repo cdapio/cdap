@@ -166,7 +166,7 @@ public class KubeMasterEnvironmentTest {
         properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, kubeName);
         kubeMasterEnvironment.onNamespaceCreation(CDAP_NAMESPACE, properties);
         Assert.fail(String.format("%s does not meet Kubernetes naming standards", kubeName));
-      } catch (IOException e) {
+      } catch (IllegalArgumentException e) {
         // ignore
       }
     }
