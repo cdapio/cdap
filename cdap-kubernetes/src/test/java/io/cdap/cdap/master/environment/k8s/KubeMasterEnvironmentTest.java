@@ -109,6 +109,7 @@ public class KubeMasterEnvironmentTest {
                                                  Collections.emptyList(), "container-label-name", "container-image",
                                                  Collections.emptyList(), Collections.emptyList(), null,
                                                  "image-pull-policy"));
+    kubeMasterEnvironment.setProgramCpuMultiplier("1");
   }
 
   @Test
@@ -413,7 +414,7 @@ public class KubeMasterEnvironmentTest {
     Map<String, String> config = new HashMap<>();
     String ns = "some-ns";
     config.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, ns);
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), config);
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), config, 1, 1);
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
     Assert.assertEquals(ns, sparkConfig.getConfigs().get("spark.kubernetes.namespace"));
   }
@@ -428,7 +429,8 @@ public class KubeMasterEnvironmentTest {
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
 
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), Collections.emptyMap());
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(),
+                                                                   Collections.emptyMap(), 1, 1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
 

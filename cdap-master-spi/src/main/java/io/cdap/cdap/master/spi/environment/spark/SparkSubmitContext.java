@@ -25,10 +25,15 @@ import java.util.Map;
 public class SparkSubmitContext {
   private final Map<String, SparkLocalizeResource> localizeResources;
   private final Map<String, String> config;
+  private final int driverVirtualCores;
+  private final int executorVirtualCores;
 
-  public SparkSubmitContext(Map<String, SparkLocalizeResource> localizeResources, Map<String, String> config) {
+  public SparkSubmitContext(Map<String, SparkLocalizeResource> localizeResources, Map<String, String> config,
+                            int driverVirtualCores, int executorVirtualCores) {
     this.localizeResources = Collections.unmodifiableMap(new HashMap<>(localizeResources));
     this.config = Collections.unmodifiableMap(new HashMap<>(config));
+    this.driverVirtualCores = driverVirtualCores;
+    this.executorVirtualCores = executorVirtualCores;
   }
 
   public Map<String, SparkLocalizeResource> getLocalizeResources() {
@@ -43,5 +48,13 @@ public class SparkSubmitContext {
    */
   public Map<String, String> getConfig() {
     return config;
+  }
+
+  public int getDriverVirtualCores() {
+    return driverVirtualCores;
+  }
+
+  public int getExecutorVirtualCores() {
+    return executorVirtualCores;
   }
 }
