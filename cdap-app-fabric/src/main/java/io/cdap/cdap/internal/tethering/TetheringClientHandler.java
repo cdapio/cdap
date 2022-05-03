@@ -17,8 +17,11 @@
 package io.cdap.cdap.internal.tethering;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
@@ -41,11 +44,14 @@ public class TetheringClientHandler extends AbstractHttpHandler {
 
   private final TetheringStore store;
   private final ContextAccessEnforcer contextAccessEnforcer;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  TetheringClientHandler(TetheringStore store, ContextAccessEnforcer contextAccessEnforcer) {
+  TetheringClientHandler(TetheringStore store, ContextAccessEnforcer contextAccessEnforcer,
+                         NamespaceQueryAdmin namespaceQueryAdmin) {
     this.store = store;
     this.contextAccessEnforcer = contextAccessEnforcer;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -58,11 +64,21 @@ public class TetheringClientHandler extends AbstractHttpHandler {
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringCreationRequest tetheringCreationRequest = GSON.fromJson(content, TetheringCreationRequest.class);
     List<NamespaceAllocation> namespaces = tetheringCreationRequest.getNamespaceAllocations();
+    validateNamespaces(namespaces);
     PeerMetadata peerMetadata = new PeerMetadata(namespaces, tetheringCreationRequest.getMetadata(),
                                                  tetheringCreationRequest.getDescription());
     PeerInfo peerInfo = new PeerInfo(tetheringCreationRequest.getPeer(), tetheringCreationRequest.getEndpoint(),
                                      TetheringStatus.PENDING, peerMetadata, System.currentTimeMillis());
     store.addPeer(peerInfo);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private void validateNamespaces(List<NamespaceAllocation> namespaceAllocations) throws Exception {
+    for (NamespaceAllocation namespaceAllocation : namespaceAllocations) {
+      NamespaceId namespaceId = new NamespaceId(namespaceAllocation.getNamespace());
+      if (!namespaceQueryAdmin.exists(namespaceId)) {
+        throw new NamespaceNotFoundException(namespaceId);
+      }
+    }
   }
 }

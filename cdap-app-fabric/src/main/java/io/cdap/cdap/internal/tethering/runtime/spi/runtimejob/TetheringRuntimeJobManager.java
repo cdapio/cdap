@@ -85,8 +85,9 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
-    LOG.debug("Launching run {} with following configurations: tethered instance name {}, tethered namespace {}.",
-              runInfo.getRun(), tetheredInstanceName, tetheredNamespace);
+    LOG.debug("Launching program run {} with following configurations: " +
+                "tethered instance name {}, tethered namespace {}.",
+              runInfo, tetheredInstanceName, tetheredNamespace);
     byte[] payload = Bytes.toBytes(GSON.toJson(createLaunchPayload(runtimeJobInfo)));
     TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM, payload);
     publishToControlChannel(message);
@@ -114,8 +115,9 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     if (status.isTerminated()) {
       return;
     }
-    LOG.debug("Stopping run {} with following configurations: tethered instance name {}, tethered namespace {}.",
-              programRunInfo.getRun(), tetheredInstanceName, tetheredNamespace);
+    LOG.debug("Stopping program run {} with following configurations: " +
+                "tethered instance name {}, tethered namespace {}.",
+              programRunInfo, tetheredInstanceName, tetheredNamespace);
     TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
                                                                     TetheringControlMessage.Type.STOP_PROGRAM);
     publishToControlChannel(message);
@@ -131,8 +133,8 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     if (status.isTerminated()) {
       return;
     }
-    LOG.debug("Killing run {} with following configurations: tethered instance name {}, tethered namespace {}.",
-              programRunInfo.getRun(), tetheredInstanceName, tetheredNamespace);
+    LOG.debug("Killing program run {} with following configurations: tethered instance name {}, tethered namespace {}.",
+              programRunInfo, tetheredInstanceName, tetheredNamespace);
     TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
                                                                     TetheringControlMessage.Type.KILL_PROGRAM);
     publishToControlChannel(message);
@@ -200,15 +202,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
    */
   private TetheringControlMessage createProgramTerminatePayload(ProgramRunInfo programRunInfo,
                                                                 TetheringControlMessage.Type messageType) {
-    ProgramRunInfo stopPayload = new ProgramRunInfo.Builder()
-      .setNamespace(tetheredNamespace)
-      .setApplication(programRunInfo.getApplication())
-      .setVersion(programRunInfo.getVersion())
-      .setProgramType(programRunInfo.getProgramType())
-      .setProgram(programRunInfo.getProgram())
-      .setRun(programRunInfo.getRun())
-      .build();
-    byte[] payload = Bytes.toBytes(GSON.toJson(stopPayload));
+    byte[] payload = Bytes.toBytes(GSON.toJson(programRunInfo));
     return new TetheringControlMessage(messageType, payload);
   }
 }
