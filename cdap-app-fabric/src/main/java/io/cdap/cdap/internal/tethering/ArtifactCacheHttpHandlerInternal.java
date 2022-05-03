@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -28,6 +29,9 @@ import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -58,8 +62,10 @@ import javax.ws.rs.core.MediaType;
 
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
-                                                                         new BasicThrowableCodec()).create();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
   private final ArtifactCache cache;
   private final TetheringStore tetheringStore;
   private final RemoteAuthenticator remoteAuthenticator;
@@ -113,8 +119,27 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
                                namespace, artifactName, artifactVersion);
     io.cdap.common.http.HttpRequest req = remoteClient.requestBuilder(HttpMethod.GET, url).build();
     HttpResponse response = remoteClient.execute(req);
-    responder.sendString(HttpResponseStatus.valueOf(response.getResponseCode()),
-                         response.getResponseBodyAsString(StandardCharsets.UTF_8));
+    String responseBody = response.getResponseBodyAsString(StandardCharsets.UTF_8);
+    int responseCode = response.getResponseCode();
+    // this is a hack used when we know the Location will not actually be used,
+    // but we need to avoid issues due to the scheme being incompatible.
+    // For example, the incoming location is of the form gs://bucket/path/to/artifact whereas the client
+    // is configured with a LocationFactory that expects an 'hdfs' scheme.
+    // TODO: (CDAP-19150) remove this once Location is removed from ArtifactDescriptor
+    if (responseCode / 100 == 2) {
+      ArtifactDetail originalDetail = GSON.fromJson(responseBody, ArtifactDetail.class);
+      ArtifactDescriptor originalDescriptor = originalDetail.getDescriptor();
+      URI uri = originalDescriptor.getLocationURI();
+      if (uri.getScheme() != null) {
+        uri = URI.create(uri.getPath());
+      }
+      ArtifactDescriptor modifiedDescriptor = new ArtifactDescriptor(originalDescriptor.getNamespace(),
+                                                                     originalDescriptor.getArtifactId(),
+                                                                     uri);
+      ArtifactDetail modifiedDetail = new ArtifactDetail(modifiedDescriptor, originalDetail.getMeta());
+      responseBody = GSON.toJson(modifiedDetail);
+    }
+    responder.sendString(HttpResponseStatus.valueOf(responseCode), responseBody);
   }
 
   /**
