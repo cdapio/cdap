@@ -265,7 +265,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
               liveInfo.getApplicationName(), runId, timeout, timeoutUnit);
 
     // Schedule to terminate the controller in the timeout time.
-    Future<?> terminationFuture = monitorScheduler.schedule(controller::terminate, timeout, timeoutUnit);
+    Future<?> terminationFuture = monitorScheduler.schedule(controller::terminateOnTimeout, timeout, timeoutUnit);
 
     // This future is for transferring the cancel watch to the change listener
     CompletableFuture<Cancellable> cancellableFuture = new CompletableFuture<>();

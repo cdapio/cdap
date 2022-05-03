@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.namespace;
 
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
+import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -26,6 +27,11 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.tethering.NamespaceAllocation;
+import io.cdap.cdap.internal.tethering.PeerInfo;
+import io.cdap.cdap.internal.tethering.PeerMetadata;
+import io.cdap.cdap.internal.tethering.TetheringStatus;
+import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -35,6 +41,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
@@ -45,6 +52,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static NamespaceAdmin namespaceAdmin;
   private static LocationFactory baseLocationFactory;
   private static NamespacePathLocator namespacePathLocator;
+  private static TetheringStore tetheringStore;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -58,6 +66,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     baseLocationFactory = getInjector().getInstance(LocationFactory.class);
     namespacePathLocator =
       getInjector().getInstance(NamespacePathLocator.class);
+    tetheringStore = getInjector().getInstance(TetheringStore.class);
   }
 
   @Test
@@ -147,6 +156,40 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // Verify NotFoundException's contents as well, instead of just checking namespaceService.exists = false
     verifyNotFound(namespaceId);
+  }
+
+  @Test
+  public void testNamespaceUsedInTethering() throws Exception {
+    // Create 2 namespaces
+    String namespace1 = "namespace1";
+    NamespaceId namespaceId1 = new NamespaceId(namespace1);
+    String namespace2 = "namespace2";
+    NamespaceId namespaceId2 = new NamespaceId(namespace2);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
+
+    // namespace2 is used in a tethering connection, but namespace1 is not
+    PeerMetadata metadata = new PeerMetadata(Collections.singletonList(new NamespaceAllocation(namespace2,
+                                                                                               null,
+                                                                                               null)),
+                                                                       Collections.emptyMap(), null);
+    PeerInfo peerInfo = new PeerInfo("peer", null, TetheringStatus.ACCEPTED, metadata, 0);
+    tetheringStore.addPeer(peerInfo);
+
+    // Deletion of namespace1 should be successful
+    namespaceAdmin.delete(namespaceId1);
+
+    // Deletion of namespace2 should fail as it's associated with a tethering connection
+    try {
+      namespaceAdmin.delete(namespaceId2);
+      Assert.fail();
+    } catch (NamespaceCannotBeDeletedException e) {
+      // expected
+    }
+
+    // Deletion of namespace2 should succeed after the tethering is deleted
+    tetheringStore.deletePeer("peer");
+    namespaceAdmin.delete(namespaceId2);
   }
 
   @Test

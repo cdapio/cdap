@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
+import io.cdap.cdap.internal.tethering.PeerInfo;
+import io.cdap.cdap.internal.tethering.PeerNotFoundException;
+import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.internal.tethering.runtime.spi.runtimejob.TetheringRuntimeJobManager;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -31,6 +34,7 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +52,7 @@ public class TetheringProvisioner implements Provisioner {
     "Runs programs on an existing tethered CDAP instance. Does not provision any resources.");
 
   private MessagingService messagingService;
+  private TetheringStore tetheringStore;
 
   /**
    * Using method injection instead of constructor injection because {@link ServiceLoader} (used by
@@ -59,6 +64,12 @@ public class TetheringProvisioner implements Provisioner {
     this.messagingService = messagingService;
   }
 
+  @Inject
+  @SuppressWarnings("unused")
+  void setTetheringStore(TetheringStore tetheringStore) {
+    this.tetheringStore = tetheringStore;
+  }
+
   @Override
   public ProvisionerSpecification getSpec() {
     return SPEC;
@@ -68,6 +79,21 @@ public class TetheringProvisioner implements Provisioner {
   public void validateProperties(Map<String, String> properties) {
     // Creates the TetheringConf for validation
     TetheringConf.fromProperties(properties);
+    String peer = properties.get(TetheringConf.TETHERED_INSTANCE_PROPERTY);
+    String namespace = properties.get(TetheringConf.TETHERED_NAMESPACE_PROPERTY);
+    PeerInfo peerInfo;
+    try {
+      peerInfo = tetheringStore.getPeer(peer);
+    } catch (PeerNotFoundException e) {
+      throw new IllegalArgumentException(String.format("%s is not a tethered peer", peer));
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Failed to get peer information", e);
+    }
+    if (peerInfo.getMetadata().getNamespaceAllocations().stream()
+      .noneMatch(n -> n.getNamespace().equals(namespace))) {
+      throw new IllegalArgumentException(String.format("Namespace %s is not provided by tethered peer %s",
+                                                       namespace, peer));
+    }
   }
 
   @Override

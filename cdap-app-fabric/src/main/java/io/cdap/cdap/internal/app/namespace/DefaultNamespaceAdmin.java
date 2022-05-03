@@ -39,6 +39,8 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.security.AuthEnforce;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.tethering.PeerInfo;
+import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceConfig;
@@ -67,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -90,6 +93,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Impersonator impersonator;
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
   private final String masterShortUserName;
+  private final TetheringStore tetheringStore;
 
   @Inject
   @VisibleForTesting
@@ -101,7 +105,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
                                CConfiguration cConf,
                                Impersonator impersonator, AccessEnforcer accessEnforcer,
-                               AuthenticationContext authenticationContext) {
+                               AuthenticationContext authenticationContext,
+                               TetheringStore tetheringStore) {
     this.resourceDeleter = resourceDeleter;
     this.nsStore = nsStore;
     this.store = store;
@@ -118,6 +123,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       }
     });
     this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
+    this.tetheringStore = tetheringStore;
   }
 
   /**
@@ -291,6 +297,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                                   String.format("Some programs are currently running in namespace " +
                                                                   "'%s', please stop them before deleting namespace",
                                                                 namespaceId));
+    }
+
+    List<String> tetheredPeers = getTetheredPeersUsingNamespace(namespaceId);
+    if (!tetheredPeers.isEmpty()) {
+      throw new NamespaceCannotBeDeletedException(namespaceId,
+                                                  String.format("Namespace '%s' is used in tethering connections " +
+                                                                  "with peers: %s. Delete tethering connections " +
+                                                                  "before deleting the namespace",
+                                                                namespaceId,
+                                                                tetheredPeers));
     }
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
@@ -499,6 +515,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
   private boolean checkProgramsRunning(final NamespaceId namespaceId) {
     return !store.getActiveRuns(namespaceId).isEmpty();
+  }
+
+  private List<String> getTetheredPeersUsingNamespace(NamespaceId namespaceId) throws IOException {
+    return tetheringStore.getPeers()
+      .stream()
+      .filter(p -> p.getMetadata().getNamespaceAllocations().stream().
+        anyMatch(na -> na.getNamespace().equals(namespaceId.getNamespace())))
+      .map(PeerInfo::getName)
+      .collect(Collectors.toList());
   }
 
   /**

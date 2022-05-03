@@ -302,7 +302,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
           break;
         case START_PROGRAM:
           LOG.trace("Got start_program from {}", peerInfo.getName());
-          publishStartProgram(Bytes.toString(controlMessage.getPayload()), peerInfo.getName());
+          publishStartProgram(Bytes.toString(controlMessage.getPayload()), peerInfo);
           break;
         case STOP_PROGRAM:
           LOG.trace("Got stop_program from {}", peerInfo.getName());
@@ -326,7 +326,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
    * Use these files to start the program through ProgramStateWriter.
    * Save the rest of the files into a temp dir (to be loaded when the Program is created in DistributedProgramRunner).
    */
-  private void publishStartProgram(String runPayload, String peerName) throws IOException {
+  private void publishStartProgram(String runPayload, PeerInfo peerInfo) throws IOException {
     TetheringLaunchMessage message = GSON.fromJson(runPayload, TetheringLaunchMessage.class);
 
     CConfiguration cConfCopy = CConfiguration.copy(cConf);
@@ -362,7 +362,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     Map<String, String> systemArgs = new HashMap<>(programOpts.getArguments().asMap());
     // Remove the plugin artifact archive argument from options and let the program runner recreate it
     systemArgs.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
-    systemArgs.put(ProgramOptionConstants.PEER_NAME, peerName);
+    systemArgs.put(ProgramOptionConstants.PEER_NAME, peerInfo.getName());
     systemArgs.put(ProgramOptionConstants.RUNTIME_NAMESPACE, message.getRuntimeNamespace());
     systemArgs.put(ProgramOptionConstants.PROGRAM_RESOURCE_URI, programDir.toURI().toString());
     systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name());
@@ -370,7 +370,17 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
                                                           programOpts.getUserArguments());
     provisionerNotifier.provisioning(programRunId, updatedOpts, programDescriptor, "");
-    LOG.debug("Published program start message for run {}", programRunId.getRun());
+    LOG.debug("Published program start message for program run {}", programRunId);
+    // Check if the peer is allowed to run programs on the namespace specified in the launch message
+    // We first publish the PROVISIONING message to ensure that the run record is created.
+    if (peerInfo.getMetadata().getNamespaceAllocations().stream()
+      .noneMatch(n -> n.getNamespace().equals(message.getRuntimeNamespace()))) {
+      LOG.warn("Namespace {} is not in the peer namespaces for peer {}",
+               message.getRuntimeNamespace(), peerInfo.getName());
+      programStateWriter.error(programRunId,
+                               new IllegalArgumentException(String.format("Cannot run program on namespace %s",
+                                                                          message.getRuntimeNamespace())));
+    }
   }
 
   private void publishStopProgram(String stopPayload) {
@@ -381,7 +391,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     // Do a graceful stop without a timeout. ProgramStopSubscriberService on the tethered peer will send a kill if the
     // graceful shutdown time is exceeded.
     programStateWriter.stop(programRunId, Integer.MAX_VALUE);
-    LOG.debug("Published program stop message for run {}", programRunInfo.getRun());
+    LOG.debug("Published program stop message for program run {}", programRunId);
   }
 
   private void publishKillProgram(String stopPayload) {
@@ -391,7 +401,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                                                  programRunInfo.getProgram(), programRunInfo.getRun());
     // Kill the program
     programStateWriter.stop(programRunId, 0);
-    LOG.debug("Published program kill message for run {}", programRunInfo.getRun());
+    LOG.debug("Published program kill message for program run {}", programRunId);
   }
 
   /**
