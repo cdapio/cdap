@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark.submit;
 
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
@@ -49,6 +50,7 @@ import java.util.Map;
  */
 public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   private final SparkExecutionService sparkExecutionService;
+  private final SparkRuntimeContext runtimeContext;
   private final MasterEnvironment masterEnv;
   private SparkConfig sparkConfig;
   private List<LocalizeResource> resources;
@@ -65,6 +67,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
     this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);
+    this.runtimeContext = runtimeContext;
     this.masterEnv = masterEnv;
     this.cConf = cConf;
     this.namespaceConfig = SystemArguments.getNamespaceConfigs(options.getArguments().asMap());
@@ -142,7 +145,10 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
 
   private SparkConfig generateOrGetSparkConfig() throws Exception {
     if (sparkConfig == null) {
-      SparkSubmitContext context = new SparkSubmitContext(getLocalizeResources(resources), namespaceConfig);
+      SparkSpecification spec = runtimeContext.getSparkSpecification();
+      SparkSubmitContext context = new SparkSubmitContext(getLocalizeResources(resources), namespaceConfig,
+                                                          spec.getDriverResources().getVirtualCores(),
+                                                          spec.getExecutorResources().getVirtualCores());
       sparkConfig = masterEnv.generateSparkSubmitConfig(context);
     }
     return sparkConfig;
