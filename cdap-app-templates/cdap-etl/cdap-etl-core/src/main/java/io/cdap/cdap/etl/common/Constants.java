@@ -72,9 +72,13 @@ public final class Constants {
     public static final String RECORDS_OUT = "records.out";
     public static final String RECORDS_ERROR = "records.error";
     public static final String RECORDS_ALERT = "records.alert";
+    public static final String RECORDS_PUSH = "records.push";
+    public static final String RECORDS_PULL = "records.pull";
     public static final String AGG_GROUPS = "aggregator.groups";
     public static final String JOIN_KEYS = "joiner.keys";
     public static final String DRAFT_COUNT = "draft.count";
+    public static final String STAGES_COUNT = "stages.count";
+    public static final String STAGES_COUNT_PREFIX = STAGES_COUNT + ".";
 
     public static final class Connection {
       public static final String CONNECTION_COUNT = "connections.count";
