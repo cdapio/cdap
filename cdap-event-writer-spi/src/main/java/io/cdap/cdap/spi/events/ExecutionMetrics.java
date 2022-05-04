@@ -23,20 +23,32 @@ import com.google.common.base.Objects;
  */
 public class ExecutionMetrics {
 
+  private final String stageId;
   private final int inputRows;
   private final int outputRows;
   private final long inputBytes;
   private final long outputBytes;
+  private final int shuffleReadRecords;
+  private final long shuffleReadBytes;
+  private final int shuffleWriteRecords;
+  private final long shuffleWriteBytes;
 
-  public ExecutionMetrics(int inputRows, int outputRows, long inputBytes, long outputBytes) {
+  public ExecutionMetrics(String stageId, int inputRows, int outputRows, long inputBytes, long outputBytes,
+                          int shuffleReadRecords, long shuffleReadBytes, int shuffleWriteRecords,
+                          long shuffleWriteBytes) {
+    this.stageId = stageId;
     this.inputRows = inputRows;
     this.outputRows = outputRows;
     this.inputBytes = inputBytes;
     this.outputBytes = outputBytes;
+    this.shuffleReadRecords = shuffleReadRecords;
+    this.shuffleReadBytes = shuffleReadBytes;
+    this.shuffleWriteRecords = shuffleWriteRecords;
+    this.shuffleWriteBytes = shuffleWriteBytes;
   }
 
   public static ExecutionMetrics emptyMetrics() {
-    return new ExecutionMetrics(0, 0, 0, 0);
+    return new ExecutionMetrics("0", 0, 0, 0, 0, 0, 0, 0, 0);
   }
 
   public int getInputRows() {
@@ -55,6 +67,41 @@ public class ExecutionMetrics {
     return outputBytes;
   }
 
+  public String getStageId() {
+    return stageId;
+  }
+
+  public int getShuffleReadRecords() {
+    return shuffleReadRecords;
+  }
+
+  public long getShuffleReadBytes() {
+    return shuffleReadBytes;
+  }
+
+  public int getShuffleWriteRecords() {
+    return shuffleWriteRecords;
+  }
+
+  public long getShuffleWriteBytes() {
+    return shuffleWriteBytes;
+  }
+
+  @Override
+  public String toString() {
+    return "ExecutionMetrics{" +
+      "stageId='" + stageId + '\'' +
+      ", inputRows=" + inputRows +
+      ", outputRows=" + outputRows +
+      ", inputBytes=" + inputBytes +
+      ", outputBytes=" + outputBytes +
+      ", shuffleReadRecords=" + shuffleReadRecords +
+      ", shuffleReadBytes=" + shuffleReadBytes +
+      ", shuffleWriteRecords=" + shuffleWriteRecords +
+      ", shuffleWriteBytes=" + shuffleWriteBytes +
+      '}';
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -64,12 +111,15 @@ public class ExecutionMetrics {
       return false;
     }
     ExecutionMetrics that = (ExecutionMetrics) o;
-    return inputRows == that.inputRows && outputRows == that.outputRows
-      && inputBytes == that.inputBytes && outputBytes == that.outputBytes;
+    return inputRows == that.inputRows && outputRows == that.outputRows && inputBytes == that.inputBytes
+      && outputBytes == that.outputBytes && shuffleReadRecords == that.shuffleReadRecords
+      && shuffleReadBytes == that.shuffleReadBytes && shuffleWriteRecords == that.shuffleWriteRecords
+      && shuffleWriteBytes == that.shuffleWriteBytes && Objects.equal(stageId, that.stageId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(inputRows, outputRows, inputBytes, outputBytes);
+    return Objects.hashCode(stageId, inputRows, outputRows, inputBytes, outputBytes,
+                            shuffleReadRecords, shuffleReadBytes, shuffleWriteRecords, shuffleWriteBytes);
   }
 }

@@ -38,6 +38,7 @@ public class SparkProgramStatusMetricsProviderTest {
   private final String mockedAttemptId = "1";
   private final String mockedApplicationJson = "mocked_spark_applications_response.json";
   private final String mockedStagesJson = "mocked_spark_stages_response.json";
+  private final String mockedStagesSeveralStagesJson = "mocked_spark_stages_response_several_stages.json";
 
   @BeforeClass
   public static void setupClass() throws IOException {
@@ -55,8 +56,15 @@ public class SparkProgramStatusMetricsProviderTest {
   @Test
   public void testExtractMetrics() {
     String responseStr = loadMockedResponseAsString(mockedStagesJson);
-    ExecutionMetrics metrics = metricsProvider.extractMetrics(responseStr);
-    Assert.assertEquals(metrics, getMockedMetrics());
+    ExecutionMetrics[] metrics = metricsProvider.extractMetrics(responseStr);
+    Assert.assertArrayEquals(metrics, getMockedMetrics());
+  }
+
+  @Test
+  public void testExtractMetricsSeveralStages() {
+    String responseStr = loadMockedResponseAsString(mockedStagesSeveralStagesJson);
+    ExecutionMetrics[] metrics = metricsProvider.extractMetrics(responseStr);
+    Assert.assertArrayEquals(metrics, getMockedMetricsSeveralStages());
   }
 
   private String loadMockedResponseAsString(String mockedFile) {
@@ -67,12 +75,26 @@ public class SparkProgramStatusMetricsProviderTest {
       .lines().collect(Collectors.joining(System.lineSeparator()));
   }
 
-  private ExecutionMetrics getMockedMetrics() {
-    return new ExecutionMetrics(
-      10195,
-      22,
-      6046096,
-      6237
-    );
+  private ExecutionMetrics[] getMockedMetrics() {
+    return new ExecutionMetrics[]{
+      new ExecutionMetrics(
+        "0",
+        10195,
+        22,
+        6046096,
+        6237,
+        0,
+        0,
+        0,
+        0
+      )};
+  }
+
+  private ExecutionMetrics[] getMockedMetricsSeveralStages() {
+    return new ExecutionMetrics[]{
+      new ExecutionMetrics("4", 0, 1354, 0, 275330, 2324, 285592, 0, 0),
+      new ExecutionMetrics("1", 1162, 0, 132206, 0, 0, 0, 1162, 142796),
+      new ExecutionMetrics("0", 1162, 0, 132206, 0, 0, 0, 1162, 142796)
+    };
   }
 }
