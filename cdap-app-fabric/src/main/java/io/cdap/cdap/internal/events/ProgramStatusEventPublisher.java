@@ -37,6 +37,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.events.EventWriter;
 import io.cdap.cdap.spi.events.ProgramStatusEvent;
 import io.cdap.cdap.spi.events.ProgramStatusEventDetails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -53,6 +55,8 @@ import javax.annotation.Nullable;
  */
 public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberService
   implements EventPublisher {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EventPublishManager.class);
 
   private static final String SUBSCRIBER_NAME = "program_status_event_publisher";
   private static final Gson GSON = new Gson();
@@ -87,7 +91,11 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
     this.eventWriters.forEach(eventWriter -> {
       DefaultEventWriterContext eventWriterContext = new DefaultEventWriterContext(cConf,
                                                                                    eventWriter.getID());
-      eventWriter.initialize(eventWriterContext);
+      try {
+        eventWriter.initialize(eventWriterContext);
+      } catch (Throwable e) {
+        LOG.error("Error initializing event writer {}: {}", eventWriter.getID(), e.getMessage());
+      }
     });
   }
 
@@ -99,6 +107,11 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   @Override
   public void stopPublish() {
     this.stop();
+  }
+
+  @Override
+  public String getID() {
+    return "ProgramStatusEventPublisher";
   }
 
   @Nullable
