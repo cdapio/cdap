@@ -116,6 +116,10 @@ the License.
           <groupId>com.fasterxml.jackson.module</groupId>
           <artifactId>jackson-module-scala_2.10</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>commons-collections</groupId>
+          <artifactId>commons-collections</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
