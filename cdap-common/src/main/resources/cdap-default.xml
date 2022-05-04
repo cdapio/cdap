@@ -4946,6 +4946,22 @@
   </property>
 
   <property>
+    <name>system.worker.http.client.read.timeout.ms</name>
+    <value>300000</value>
+    <description>
+      Read timeout in milliseconds for system worker HTTP requests.
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.http.client.connection.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Connection timeout in milliseconds for system worker HTTP requests.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.localizer.container.num.cores</name>
     <value>1</value>
     <description>
