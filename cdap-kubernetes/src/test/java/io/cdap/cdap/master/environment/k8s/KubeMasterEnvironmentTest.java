@@ -100,9 +100,11 @@ public class KubeMasterEnvironmentTest {
     kubeMasterEnvironment.setPodLabelsFile(dummyFile);
     kubeMasterEnvironment.setPodNameFile(dummyFile);
     kubeMasterEnvironment.setPodUidFile(dummyFile);
+    kubeMasterEnvironment.setPodNamespaceFile(dummyFile);
     kubeMasterEnvironment.setPodInfo(new PodInfo("pod-info", "pod-info-dir", dummyFile.getAbsolutePath(),
                                                  dummyFile.getAbsolutePath(), UUID.randomUUID().toString(),
-                                                 dummyFile.getAbsolutePath(), KUBE_NAMESPACE, Collections.emptyMap(),
+                                                 dummyFile.getAbsolutePath(), dummyFile.getAbsolutePath(),
+                                                 KUBE_NAMESPACE, Collections.emptyMap(),
                                                  Collections.emptyList(), "service-account", "runtime-class",
                                                  Collections.emptyList(), "container-label-name", "container-image",
                                                  Collections.emptyList(), Collections.emptyList(), null,
@@ -407,6 +409,16 @@ public class KubeMasterEnvironmentTest {
   }
 
   @Test
+  public void testGenerateSparkConfigWithNamespace() throws Exception {
+    Map<String, String> config = new HashMap<>();
+    String ns = "some-ns";
+    config.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, ns);
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), config);
+    SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    Assert.assertEquals(ns, sparkConfig.getConfigs().get("spark.kubernetes.namespace"));
+  }
+
+  @Test
   public void testGenerateSparkConfigWithWorkloadIdentityEnabled() throws Exception {
     String workloadIdentityPool = "test-workload-pool";
     String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
@@ -416,7 +428,7 @@ public class KubeMasterEnvironmentTest {
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
 
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap());
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), Collections.emptyMap());
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
 

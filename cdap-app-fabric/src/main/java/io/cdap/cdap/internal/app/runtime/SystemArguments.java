@@ -26,6 +26,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -97,6 +98,8 @@ public final class SystemArguments {
   // Runtime arguments for remote execution monitor type. Can be "ssh" or "url".
   public static final String RUNTIME_MONITOR_TYPE = "system.runtime.monitor.type";
 
+  public static final String NAMESPACE_CONFIG_PREFIX = "system.namespace.config.";
+
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
    * {@link #LOG_LEVEL} + {@code .}, with the remaining part of the key as the logger name, with the argument value
@@ -144,6 +147,38 @@ public final class SystemArguments {
    */
   public static void setTransactionTimeout(Map<String, String> args, int timeout) {
     args.put(TRANSACTION_TIMEOUT, String.valueOf(timeout));
+  }
+
+  /**
+   * Set arguments from the namespace config. These will be prefixed to prevent clashes, and can be extracted out
+   * using {@link #getNamespaceConfigs(Map)} (Map)}.
+   *
+   * @param args arguments to add the namespace configs to
+   * @param namespaceConfig the namespace config
+   */
+  public static void addNamespaceConfigs(Map<String, String> args, NamespaceConfig namespaceConfig) {
+    for (Map.Entry<String, String> entry : namespaceConfig.getConfigs().entrySet()) {
+      args.put(NAMESPACE_CONFIG_PREFIX + entry.getKey(), entry.getValue());
+    }
+  }
+
+  /**
+   * Fetch namespace configs that were set by {@link #addNamespaceConfigs(Map, NamespaceConfig)}.
+   *
+   * @param args system arguments containing the namespace configs
+   * @return namespace configs
+   */
+  public static Map<String, String> getNamespaceConfigs(Map<String, String> args) {
+    Map<String, String> result = new HashMap<>();
+    // add namespace configs
+    for (Map.Entry<String, String> entry : args.entrySet()) {
+      String key = entry.getKey();
+      String val = entry.getValue();
+      if (key.startsWith(NAMESPACE_CONFIG_PREFIX)) {
+        result.put(key.substring(NAMESPACE_CONFIG_PREFIX.length()), val);
+      }
+    }
+    return result;
   }
 
   /**

@@ -61,7 +61,7 @@ public class KubeTwillPreparerTest {
       .build();
 
     PodInfo podInfo = new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
-                                  "test-name-file.txt", "test-pod-uid", "test-uid-file.txt",
+                                  "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
                                   "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
                                   "test-pod-service-account", "test-pod-runtime-class",
                                   Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",

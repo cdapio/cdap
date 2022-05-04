@@ -17,11 +17,13 @@
 package io.cdap.cdap.app.runtime.spark.submit;
 
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -51,18 +53,21 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   private SparkConfig sparkConfig;
   private List<LocalizeResource> resources;
   private final CConfiguration cConf;
+  private final Map<String, String> namespaceConfig;
 
   /**
    * Master environment spark submitter constructor.
    */
   public MasterEnvironmentSparkSubmitter(CConfiguration cConf, LocationFactory locationFactory, String hostname,
-                                         SparkRuntimeContext runtimeContext, MasterEnvironment masterEnv) {
+                                         SparkRuntimeContext runtimeContext, MasterEnvironment masterEnv,
+                                         ProgramOptions options) {
     ProgramRunId programRunId = runtimeContext.getProgram().getId().run(runtimeContext.getRunId().getId());
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
     this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);
     this.masterEnv = masterEnv;
     this.cConf = cConf;
+    this.namespaceConfig = SystemArguments.getNamespaceConfigs(options.getArguments().asMap());
   }
 
   @Override
@@ -137,7 +142,8 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
 
   private SparkConfig generateOrGetSparkConfig() throws Exception {
     if (sparkConfig == null) {
-      sparkConfig = masterEnv.generateSparkSubmitConfig(new SparkSubmitContext(getLocalizeResources(resources)));
+      SparkSubmitContext context = new SparkSubmitContext(getLocalizeResources(resources), namespaceConfig);
+      sparkConfig = masterEnv.generateSparkSubmitConfig(context);
     }
     return sparkConfig;
   }
