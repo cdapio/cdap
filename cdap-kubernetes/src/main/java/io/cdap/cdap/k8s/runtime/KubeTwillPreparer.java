@@ -1142,6 +1142,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           .addItemsItem(new V1DownwardAPIVolumeFile()
                           .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.uid"))
                           .path(podInfo.getUidFile()))
+          .addItemsItem(new V1DownwardAPIVolumeFile()
+                          .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.namespace"))
+                          .path(podInfo.getNamespaceFile()))
       );
   }
 

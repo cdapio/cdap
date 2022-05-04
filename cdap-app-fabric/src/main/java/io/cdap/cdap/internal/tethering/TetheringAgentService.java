@@ -33,6 +33,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -50,6 +51,7 @@ import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
@@ -115,6 +117,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   private final RemoteAuthenticator remoteAuthenticator;
   private final LocationFactory locationFactory;
   private final ProvisionerNotifier provisionerNotifier;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final String programUpdateTopic;
   private final int programUpdateFetchSize;
   private String lastProgramUpdateMessageId;
@@ -127,7 +130,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                         ProgramRunRecordFetcher programRunRecordFetcher,
                         @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator,
                         LocationFactory locationFactory,
-                        ProvisionerNotifier provisionerNotifier) {
+                        ProvisionerNotifier provisionerNotifier,
+                        NamespaceQueryAdmin namespaceQueryAdmin) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL, 10L));
     this.cConf = cConf;
@@ -141,6 +145,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     this.remoteAuthenticator = remoteAuthenticator;
     this.locationFactory = locationFactory;
     this.provisionerNotifier = provisionerNotifier;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.programUpdateTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.programUpdateFetchSize = cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE);
   }
@@ -367,8 +372,21 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     systemArgs.put(ProgramOptionConstants.PROGRAM_RESOURCE_URI, programDir.toURI().toString());
     systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name());
     SystemArguments.addProfileArgs(systemArgs, Profile.NATIVE);
+
+    // add namespace configs, which can contain things like the k8s namespace to execute in.
+    Exception namespaceLookupFailure = null;
+    try {
+      NamespaceMeta namespaceMeta = namespaceQueryAdmin.get(NamespaceId.fromString(message.getRuntimeNamespace()));
+      SystemArguments.addNamespaceConfigs(systemArgs, namespaceMeta.getConfig());
+    } catch (Exception e) {
+      // can happen if the namespace doesn't exist for some reason, or for transient issues.
+      namespaceLookupFailure = e;
+    }
+
     ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
                                                           programOpts.getUserArguments());
+    // Even if there was a failure earlier, need to send a provisioning message to make sure the run record is added.
+    // Then send a failed message to fail the run.
     provisionerNotifier.provisioning(programRunId, updatedOpts, programDescriptor, "");
     LOG.debug("Published program start message for program run {}", programRunId);
     // Check if the peer is allowed to run programs on the namespace specified in the launch message
@@ -380,6 +398,9 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       programStateWriter.error(programRunId,
                                new IllegalArgumentException(String.format("Cannot run program on namespace %s",
                                                                           message.getRuntimeNamespace())));
+    } else if (namespaceLookupFailure != null) {
+      programStateWriter.error(programRunId, namespaceLookupFailure);
+      LOG.debug("Published program failed message for run {}", programRunId.getRun());
     }
   }
 

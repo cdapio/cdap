@@ -37,6 +37,7 @@ public final class PodInfo {
   private final String podInfoDir;
   private final String labelsFile;
   private final String nameFile;
+  private final String namespaceFile;
   private final String uid;
   private final String uidFile;
   private final String namespace;
@@ -52,7 +53,8 @@ public final class PodInfo {
   private final V1PodSecurityContext securityContext;
   private final String imagePullPolicy;
 
-  public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid, String uidFile,
+  public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid,
+                 String uidFile, String namespaceFile,
                  String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
                  String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
                  String containerImage, List<V1VolumeMount> containerVolumeMounts,
@@ -61,6 +63,7 @@ public final class PodInfo {
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
     this.nameFile = nameFile;
+    this.namespaceFile = namespaceFile;
     this.uid = uid;
     this.uidFile = uidFile;
     this.namespace = namespace;
@@ -99,6 +102,10 @@ public final class PodInfo {
 
   public String getUidFile() {
     return uidFile;
+  }
+
+  public String getNamespaceFile() {
+    return namespaceFile;
   }
 
   public String getNamespace() {
