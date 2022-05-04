@@ -965,8 +965,17 @@ public abstract class SparkPipelineRunner {
    * will be called on stages in topological order, where any parent that is a joiner will be included in the
    * provided shufflers set.
    */
-  private boolean shouldCache(Dag dag, String stageName, Set<String> branchers, Set<String> shufflers) {
+  private boolean shouldCache(Dag dag,
+                              String stageName,
+                              Set<String> branchers,
+                              Set<String> shufflers,
+                              SparkCollection<RecordInfo<Object>> stageData) {
     if (!branchers.contains(stageName) || shufflers.contains(stageName)) {
+      return false;
+    }
+
+    // Skip caching for SQL engine collections
+    if (stageData instanceof SQLBackedCollection) {
       return false;
     }
 
@@ -1004,7 +1013,7 @@ public abstract class SparkPipelineRunner {
                                             boolean hasErrors, boolean hasAlerts) {
     builder.setRawData(stageData);
 
-    if (shouldCache(dag, stageSpec.getName(), branchers, shufflers)) {
+    if (shouldCache(dag, stageSpec.getName(), branchers, shufflers, stageData)) {
       stageData = stageData.cache();
     }
 
