@@ -21,6 +21,8 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.events.EventWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,8 @@ import java.util.Set;
  * EventPublishManager is responsible for starting all the event publish manager threads
  */
 public class EventPublishManager extends AbstractIdleService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EventPublishManager.class);
 
   private final boolean publishEnabled;
   private final Set<EventPublisher> eventPublishers;
@@ -51,6 +55,10 @@ public class EventPublishManager extends AbstractIdleService {
       // Loading the event writers from provider
       Map<String, EventWriter> eventWriterMap = this.eventWriterProvider.loadEventWriters();
       // Initialize the event publisher with all the event writers provided by provider
+      if (eventWriterMap.values().isEmpty()) {
+        LOG.info("Event publisher {} not initialized due to no event writer found.", eventPublisher.getID());
+        return;
+      }
       eventPublisher.initialize(eventWriterMap.values());
       eventPublisher.startPublish();
     });
