@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -99,12 +100,14 @@ public class NettyRouter extends AbstractIdleService {
   private Cancellable serverCancellable;
 
   private ScheduledExecutorService scheduledExecutorService;
+  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   public NettyRouter(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
                      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
                      UserIdentityExtractor userIdentityExtractor,
-                     DiscoveryServiceClient discoveryServiceClient) {
+                     DiscoveryServiceClient discoveryServiceClient,
+                     MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS);
@@ -120,6 +123,7 @@ public class NettyRouter extends AbstractIdleService {
     this.port = sslEnabled
       ? cConf.getInt(Constants.Router.ROUTER_SSL_PORT)
       : cConf.getInt(Constants.Router.ROUTER_PORT);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -227,7 +231,8 @@ public class NettyRouter extends AbstractIdleService {
           // Always let the client to continue sending the request body after the authentication passed
           pipeline.addLast("expect-continue", new HttpServerExpectContinueHandler());
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
-          pipeline.addLast("http-request-handler", new HttpRequestRouter(cConf, serviceLookup));
+          pipeline.addLast("http-request-handler",
+                           new HttpRequestRouter(cConf, serviceLookup, metricsCollectionService));
         }
       });
   }

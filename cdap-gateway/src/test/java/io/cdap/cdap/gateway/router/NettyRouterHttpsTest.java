@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
@@ -177,7 +178,8 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
         new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup()),
-                        new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient);
+                        new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
+                        new NoOpMetricsCollectionService());
       router.startAndWait();
     }
 
