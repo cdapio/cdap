@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 
 /**
@@ -30,11 +31,14 @@ public class SparkConfig {
   private final String master;
   private final URI sparkJobFile;
   private final Map<String, String> configs;
+  private final CompletableFuture<Boolean> statusFuture;
 
-  public SparkConfig(String master, URI sparkJobFile, Map<String, String> configs) {
+  public SparkConfig(String master, URI sparkJobFile, Map<String, String> configs,
+                     CompletableFuture<Boolean> statusFuture) {
     this.master = master;
     this.sparkJobFile = sparkJobFile;
     this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
+    this.statusFuture = statusFuture;
   }
 
   /**
@@ -59,5 +63,12 @@ public class SparkConfig {
    */
   public Map<String, String> getConfigs() {
     return configs;
+  }
+
+  /**
+   * Returns spark driver status future.
+   */
+  public CompletableFuture<Boolean> getStatusFuture() {
+    return statusFuture;
   }
 }

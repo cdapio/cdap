@@ -109,7 +109,11 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
         try {
           String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
           submit(runtimeContext, submitArgs);
-          onCompleted(true);
+          boolean state = hasSparkDriverSucceeded();
+          if (!state) {
+            throw new Exception("Spark driver returned error state");
+          }
+          onCompleted(state);
           resultFuture.set(result);
         } catch (Throwable t) {
           onCompleted(false);
@@ -178,6 +182,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   @Nullable
   protected URI getJobFile() throws Exception {
     return null;
+  }
+
+  /**
+   * Returns true if spark driver has succeeded.
+   */
+  protected boolean hasSparkDriverSucceeded() throws Exception {
+    return true;
   }
 
   /**
