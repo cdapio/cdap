@@ -426,12 +426,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public List<NamespaceMeta> list() throws Exception {
     List<NamespaceMeta> namespaces = nsStore.list();
-    final Principal principal = authenticationContext.getPrincipal();
-
-    //noinspection ConstantConditions
-    return AuthorizationUtil.isVisible(namespaces, accessEnforcer, principal,
-                                       NamespaceMeta::getNamespaceId,
-                                       input -> principal.getName().equals(input.getConfig().getPrincipal()));
+    return namespaces;
+//    final Principal principal = authenticationContext.getPrincipal();
+//
+//    //noinspection ConstantConditions
+//    return AuthorizationUtil.isVisible(namespaces, accessEnforcer, principal,
+//                                       NamespaceMeta::getNamespaceId,
+//                                       input -> principal.getName().equals(input.getConfig().getPrincipal()));
   }
 
   /**

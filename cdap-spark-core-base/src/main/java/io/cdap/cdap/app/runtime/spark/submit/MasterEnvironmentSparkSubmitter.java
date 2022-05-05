@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Master environment spark submitter.
@@ -138,6 +139,16 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     } else {
       sparkExecutionService.shutdownNow();
     }
+  }
+
+  @Override
+  protected boolean hasSparkDriverSucceeded() {
+    try {
+      return generateOrGetSparkConfig().getStatusFuture().get(30, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      new Exception("Exception while getting spark driver status.");
+    }
+    return false;
   }
 
   private SparkConfig generateOrGetSparkConfig() throws Exception {
