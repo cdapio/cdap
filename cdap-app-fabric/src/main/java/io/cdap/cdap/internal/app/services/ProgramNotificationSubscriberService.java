@@ -637,8 +637,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
-                                                AppMetadataStore appMetadataStore,
-                                                StructuredTableContext context) throws IOException {
+                                                AppMetadataStore appMetadataStore, StructuredTableContext context)
+                                                throws IOException, InterruptedException {
     Map<String, String> properties = notification.getProperties();
 
     ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
