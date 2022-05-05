@@ -94,6 +94,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -130,6 +131,8 @@ public class ProvisioningService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private ExecutorService contextExecutor;
+
+  private final CountDownLatch initializeLatch = new CountDownLatch(1);
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
@@ -333,7 +336,9 @@ public class ProvisioningService extends AbstractIdleService {
    * @param context context for the transaction
    * @return runnable that will actually execute the cluster provisioning
    */
-  public Runnable provision(ProvisionRequest provisionRequest, StructuredTableContext context) throws IOException {
+  public Runnable provision(ProvisionRequest provisionRequest, StructuredTableContext context) throws IOException,
+    InterruptedException {
+    initializeLatch.await(120, TimeUnit.SECONDS);
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
     Map<String, String> args = programOptions.getArguments().asMap();
@@ -408,14 +413,16 @@ public class ProvisioningService extends AbstractIdleService {
    * @param context context for the transaction
    * @return runnable that will actually execute the cluster deprovisioning
    */
-  public Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context) throws IOException {
+  public Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context) throws IOException,
+    InterruptedException {
     return deprovision(programRunId, context, taskStateCleanup);
   }
 
   // This is visible for testing, where we may not want to delete the task information after it completes
   @VisibleForTesting
   Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context,
-                       Consumer<ProgramRunId> taskCleanup) throws IOException {
+                       Consumer<ProgramRunId> taskCleanup) throws IOException, InterruptedException {
+    initializeLatch.await(120, TimeUnit.SECONDS);
     // look up information for the corresponding provision operation
     ProvisioningTaskInfo existing =
       provisionerStore.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
@@ -551,6 +558,7 @@ public class ProvisioningService extends AbstractIdleService {
                                                          config.getIcon(), config.isBeta()));
     }
     provisionerInfo.set(new ProvisionerInfo(provisioners, details));
+    initializeLatch.countDown();
   }
 
   /**
