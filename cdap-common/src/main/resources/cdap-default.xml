@@ -5288,6 +5288,22 @@
   </property>
 
   <property>
+    <name>feature.pushdown.transformation.groupby.enabled</name>
+    <value>true</value>
+    <description>
+      Enables group by transformation in pushdown execution.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.pushdown.transformation.deduplicate.enabled</name>
+    <value>true</value>
+    <description>
+      Enables deduplicate transformation in pushdown execution.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
