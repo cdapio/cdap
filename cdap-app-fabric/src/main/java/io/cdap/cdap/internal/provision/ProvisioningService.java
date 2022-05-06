@@ -131,7 +131,8 @@ public class ProvisioningService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private ExecutorService contextExecutor;
-
+  // Using this latch to ensure that the `initializeProvisionersAndExecutors` is completed before provision/deprovision
+  // methods are called from other services.  
   private final CountDownLatch initializeLatch = new CountDownLatch(1);
 
   @Inject
