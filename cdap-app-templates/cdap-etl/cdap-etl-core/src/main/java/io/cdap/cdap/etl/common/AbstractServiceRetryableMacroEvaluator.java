@@ -90,15 +90,14 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
           delay = (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier + 1)));
           delay = Math.min(delay, RETRY_MAX_DELAY_MILLIS);
         } catch (IOException e) {
-          throw new RuntimeException("Failed to evaluate the macro function '" + functionName
-                                       + "' with args " + Arrays.asList(args), e);
+          throw new InvalidMacroException(e);
         }
       }
     } catch (InterruptedException e) {
-      throw new RuntimeException("Thread interrupted while trying to evaluate the macro function '" + functionName
+      throw new RuntimeException("Thread interrupted while trying to evaluate the value for '" + functionName
                                    + "' with args " + Arrays.asList(args), e);
     }
-    throw new IllegalStateException("Timed out when trying to evaluate the macro function '" + functionName
+    throw new IllegalStateException("Timed out when trying to evaluate the value for '" + functionName
                                       + "' with args " + Arrays.asList(args));
   }
 
