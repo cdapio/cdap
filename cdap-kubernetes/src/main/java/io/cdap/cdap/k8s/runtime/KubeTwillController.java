@@ -532,22 +532,33 @@ class KubeTwillController implements ExtendedTwillController {
    * Cleans up the resources for deployment and stateful set and returns the future.
    */
   private CompletableFuture<KubeTwillController> cleanupResources(int gracePeriodSeconds) {
-    CompletableFuture<KubeTwillController> resultFuture;
-    CompletionStage<String> completionStage;
-    resultFuture = new CompletableFuture<>();
     // delete the resource
-    completionStage = deleteResource(gracePeriodSeconds);
-    completionStage.whenComplete((name, t) -> {
-      if (t != null) {
-        resultFuture.completeExceptionally(t);
-      } else {
-        resultFuture.complete(KubeTwillController.this);
-      }
-    });
+    CompletionStage<String> completionStage = deleteResource(gracePeriodSeconds);
     // If the deletion was successful, reflect the status into the completion future
-    // If the deletion was failed, don't change the completion state so that caller can retry
-    resultFuture.thenAccept(completion::complete);
-    return resultFuture;
+    if (V1Job.class.equals(resourceType)) {
+      // Change the completion state based on if the job succeeded or failed. If the resource deletion fails, still
+      // change the completion state because KubeJobCleaner will do cleanup
+      completionStage.whenComplete((name, t) -> {
+        if (t != null) {
+          completion.completeExceptionally(t);
+        } else {
+          completion.complete(KubeTwillController.this);
+        }
+      });
+      return completion;
+    } else {
+      // If the deployment/statefulSet deletion was failed, don't change the completion state so that caller can retry
+      CompletableFuture<KubeTwillController> resultFuture = new CompletableFuture<>();
+      completionStage.whenComplete((name, t) -> {
+        if (t != null) {
+          resultFuture.completeExceptionally(t);
+        } else {
+          resultFuture.complete(KubeTwillController.this);
+        }
+      });
+      resultFuture.thenAccept(completion::complete);
+      return resultFuture;
+    }
   }
 
   /**
