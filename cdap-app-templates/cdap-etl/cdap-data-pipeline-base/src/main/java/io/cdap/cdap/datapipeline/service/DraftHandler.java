@@ -124,6 +124,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
 
       String requestStr = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       DraftStoreRequest<ETLConfig> draftStoreRequest = deserializeDraftStoreRequest(requestStr);
+      // Expose draft to all users within the same namespace.
       String userId = "";
       DraftId id = new DraftId(namespace, draftId, userId);
       draftService.writeDraft(id, draftStoreRequest);
