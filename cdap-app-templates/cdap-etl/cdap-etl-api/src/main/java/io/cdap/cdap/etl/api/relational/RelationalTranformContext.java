@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 
 import java.util.Set;
 
@@ -24,7 +25,7 @@ import java.util.Set;
  * This interface provides sql engine, input relation(s) and a way to set tranformation results to
  * a {@link RelationalTransform#transform(RelationalTranformContext)} call
  */
-public interface RelationalTranformContext {
+public interface RelationalTranformContext extends FeatureFlagsProvider {
   /**
    *
    * @return relational engine to be used for tranformation
