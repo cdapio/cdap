@@ -752,7 +752,7 @@ public class BatchSQLEngineAdapter implements Closeable {
       e -> sqlEngine.getRelation(new SQLRelationDefinition(e.getKey(), stageSpec.getInputSchemas().get(e.getKey())))
     ));
     BasicRelationalTransformContext pluginContext = new BasicRelationalTransformContext(
-      getSQLRelationalEngine(), inputRelations, stageSpec.getInputSchemas(), stageSpec.getOutputSchema());
+      getSQLRelationalEngine(), inputRelations, stageSpec.getInputSchemas(), stageSpec.getOutputSchema(), ctx);
     if (!transform.transform(pluginContext)) {
       //Plugin was not able to do relational tranform with this engine
       return Optional.empty();

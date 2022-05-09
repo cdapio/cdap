@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.Relation;
 import io.cdap.cdap.etl.api.relational.RelationalTranformContext;
@@ -33,17 +34,20 @@ public class BasicRelationalTransformContext implements RelationalTranformContex
   private final Map<String, Relation> inputMap;
   private final Map<String, Schema> inputSchemas;
   private final Schema outputSchema;
+  private final FeatureFlagsProvider featureFlagsProvider;
   private Relation outputRelation;
 
 
   public BasicRelationalTransformContext(Engine engine,
                                          Map<String, Relation> inputMap,
                                          Map<String, Schema> inputSchemas,
-                                         Schema outputSchema) {
+                                         Schema outputSchema,
+                                         FeatureFlagsProvider featureFlagsProvider) {
     this.engine = engine;
     this.inputMap = inputMap;
     this.inputSchemas = inputSchemas;
     this.outputSchema = outputSchema;
+    this.featureFlagsProvider = featureFlagsProvider;
   }
 
   @Override
@@ -79,6 +83,11 @@ public class BasicRelationalTransformContext implements RelationalTranformContex
   @Override
   public void setOutputRelation(String portName, Relation outputDataSet) {
     throw new UnsupportedOperationException("Only single output is supported");
+  }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return this.featureFlagsProvider.isFeatureEnabled(name);
   }
 
   public Relation getOutputRelation() {
