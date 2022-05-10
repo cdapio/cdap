@@ -65,6 +65,7 @@ import io.cdap.cdap.etl.common.plugin.PluginWrapper;
 import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec.Port;
 import io.cdap.cdap.etl.spark.batch.SQLBackedCollection;
 import io.cdap.cdap.etl.spark.batch.WrappedSQLEngineCollection;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
@@ -546,7 +547,12 @@ public abstract class SparkPipelineRunner {
       Map<String, Schema> inputSchemas = new HashMap<>();
       for (String inputStageName : pipelinePhase.getStageInputs(stageName)) {
         StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
-        inputSchemas.put(inputStageName, inputStageSpec.getOutputSchema());
+        Port outputPort = inputStageSpec.getOutputPorts().get(stageName);
+        if (outputPort == null) {
+          inputSchemas.put(inputStageName, null);
+        } else {
+          inputSchemas.put(inputStageName, outputPort.getSchema());
+        }
       }
       FailureCollector failureCollector = new LoggingFailureCollector(stageName, inputSchemas);
       AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(inputSchemas, failureCollector);
