@@ -38,7 +38,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
 
   private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
   private static final Credential EMPTY_USER_CREDENTIAL = new Credential("CDAP-empty-user-credential",
-                                                                         Credential.CredentialType.INTERNAL);
+                                                                         Credential.CredentialType.EXTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
 
   private final boolean internalAuthEnabled;

@@ -121,9 +121,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
       Credential credential = getUserCredential(userIdentityPair);
 
-      // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
-      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true) &&
-        credential != null) {
+      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL) && credential != null) {
         request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN,
                               String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
       }
