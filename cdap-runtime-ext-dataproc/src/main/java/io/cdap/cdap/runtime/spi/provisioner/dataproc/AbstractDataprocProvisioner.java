@@ -21,6 +21,8 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.runtime.spi.VersionInfo;
+import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -43,6 +45,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -58,6 +62,9 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   private static final String BUCKET = "bucket";
   // Keys for looking up system properties
   private static final String LABELS_PROPERTY = "labels";
+  private static final Pattern SIMPLE_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)$");
+  private static final Pattern CLUSTER_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)-.*");
+  protected static final VersionInfo DATAPROC_1_5_VERSION = new DataprocImageVersion("1.5");
   public static final String LABEL_VERSON = "cdap-version";
   public static final String LABEL_PROFILE = "cdap-profile";
   public static final String LABEL_REUSE_KEY = "cdap-reuse-key";
@@ -270,5 +277,28 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       projectId = getSystemContext().getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, projectId);
     }
     return projectId;
+  }
+
+  @Nullable
+  protected VersionInfo extractVersion(String imageVersion) {
+    try {
+      // Test simple version numbers (e.g. 1.3 1.5 2.0)
+      Matcher simpleVersionMatcher = SIMPLE_VERSION_PATTERN.matcher(imageVersion);
+      if (simpleVersionMatcher.matches()) {
+        String version = simpleVersionMatcher.group(1);
+        return new DataprocImageVersion(version);
+      }
+
+      // Test dataproc versions (e.g. 2.0.37-debian10)
+      Matcher clusterVersionMatcher = CLUSTER_VERSION_PATTERN.matcher(imageVersion);
+      if (clusterVersionMatcher.matches()) {
+        String version = clusterVersionMatcher.group(1);
+        return new DataprocImageVersion(version);
+      }
+    } catch (IllegalArgumentException iae) {
+      LOG.warn("Unable to determine dataproc image version for image version string {}", imageVersion, iae);
+    }
+
+    return null;
   }
 }

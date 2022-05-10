@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -170,6 +171,18 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         imageDescription = imageVersion;
       }
 
+      // Check dataproc cluster version if a custom image is not being used
+      if (conf.getCustomImageUri() == null) {
+        // Determine cluster version and fail if version is smaller than 1.5
+        VersionInfo comparableImageVersion = extractVersion(imageVersion);
+        if (comparableImageVersion == null) {
+          LOG.warn("Unable to extract Dataproc version from string '{}'.", imageVersion);
+        } else if (DATAPROC_1_5_VERSION.compareTo(comparableImageVersion) > 0) {
+          throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.");
+        }
+      }
+
+
       // Reload system context properties and get system labels
       Map<String, String> labels = new HashMap<>();
       labels.putAll(getSystemLabels());
@@ -315,20 +328,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   String getImageVersion(ProvisionerContext context, DataprocConf conf) {
     String imageVersion = conf.getImageVersion();
     if (imageVersion == null) {
-      switch (context.getSparkCompat()) {
-        case SPARK3_2_12:
-          imageVersion = "2.0";
-          break;
-        case SPARK2_2_11:
-        default:
-          if (context.getAppCDAPVersionInfo() == null ||
-            context.getAppCDAPVersionInfo().compareTo(SPARK3_CDAP_DEFAULT) < 0) {
-            imageVersion = "1.3";
-          } else {
-            imageVersion = "2.0";
-          }
-          break;
-      }
+      // Dataproc 2.0 is the default version from 6.7 and later
+      imageVersion = "2.0";
     }
     return imageVersion;
   }

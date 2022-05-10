@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.VersionInfo;
+import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
@@ -249,7 +251,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     context.setSparkCompat(SparkCompat.SPARK2_2_11);
-    Assert.assertEquals("1.3", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     context.setAppCDAPVersionInfo(new MockVersionInfo("6.5"));
@@ -257,7 +259,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     context.setAppCDAPVersionInfo(new MockVersionInfo("6.4"));
-    Assert.assertEquals("1.3", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     //Doublecheck we still get 2.0 for Spark 3 even with CDAP 6.4
@@ -288,7 +290,7 @@ public class DataprocProvisionerTest {
 
     Mockito.when(dataprocClient.getCluster("cdap-app-runId")).thenReturn(Optional.empty());
     Mockito.when(dataprocClient.createCluster(Mockito.eq("cdap-app-runId"),
-                                              Mockito.eq("1.3"),
+                                              Mockito.eq("2.0"),
                                               addedLabelsCaptor.capture(),
                                               Mockito.eq(false)))
       .thenReturn(ClusterOperationMetadata.getDefaultInstance());
@@ -361,6 +363,61 @@ public class DataprocProvisionerTest {
       Mockito.eq(Collections.singleton(AbstractDataprocProvisioner.LABEL_RUN_KEY)));
     Assert.assertEquals(Collections.singleton(AbstractDataprocProvisioner.LABEL_REUSE_UNTIL),
                         addedLabelsCaptor.getValue().keySet());
+  }
+
+  @Test
+  public void testVersionComparison() {
+    VersionInfo v0 = new DataprocImageVersion("0");
+    VersionInfo v1 = new DataprocImageVersion("1");
+    VersionInfo v1debian = new DataprocImageVersion("1-debian");
+    VersionInfo v1dot4 = new DataprocImageVersion("1.4");
+    VersionInfo v1dot4dot99 = new DataprocImageVersion("1.4.99");
+    VersionInfo v1dot5 = new DataprocImageVersion("1.5");
+    VersionInfo v1dot5debian = new DataprocImageVersion("1.5-debian");
+    VersionInfo v1dot5dot0 = new DataprocImageVersion("1.5.0");
+    VersionInfo v1dot5dot0debian = new DataprocImageVersion("1.5.0-debian");
+    VersionInfo v1dot5dot0dot0 = new DataprocImageVersion("1.5.0.0");
+    VersionInfo v1dot5dot1 = new DataprocImageVersion("1.5.1");
+    VersionInfo v1dot6 = new DataprocImageVersion("1.6");
+    VersionInfo v2 = new DataprocImageVersion("2");
+    VersionInfo v2debian = new DataprocImageVersion("2-debian");
+    VersionInfo v2dot0 = new DataprocImageVersion("2.0");
+
+    Assert.assertTrue(v1dot5.compareTo(v0) > 0);
+    Assert.assertTrue(v1dot5.compareTo(v1) > 0);
+    Assert.assertTrue(v1dot5.compareTo(v1debian) > 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot4) > 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot4dot99) > 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot5) == 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot5debian) == 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot5dot0) == 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot5dot0debian) == 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot5dot0dot0) == 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot5dot1) < 0);
+    Assert.assertTrue(v1dot5.compareTo(v1dot6) < 0);
+    Assert.assertTrue(v1dot5.compareTo(v2) < 0);
+    Assert.assertTrue(v1dot5.compareTo(v2debian) < 0);
+    Assert.assertTrue(v1dot5.compareTo(v2dot0) < 0);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNullDataprocImageVersion() {
+    VersionInfo nullVersion = new DataprocImageVersion(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyDataprocImageVersion() {
+    VersionInfo emptyVersion = new DataprocImageVersion("");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidSegmentDataprocImageVersion() {
+    VersionInfo emptyVersion = new DataprocImageVersion("1.2.3..6");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidDataprocImageVersion() {
+    VersionInfo emptyVersion = new DataprocImageVersion("abcd");
   }
 
 }
