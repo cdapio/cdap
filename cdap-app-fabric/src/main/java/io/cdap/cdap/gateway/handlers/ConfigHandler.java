@@ -20,6 +20,9 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -41,16 +44,19 @@ public class ConfigHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new Gson();
   private final ConfigService configService;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  public ConfigHandler(ConfigService configService) {
+  public ConfigHandler(ConfigService configService, ContextAccessEnforcer contextAccessEnforcer) {
     this.configService = configService;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @Path("/config/cdap")
   @GET
   public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                          @DefaultValue("json") @QueryParam("format") String format) throws IOException {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getCConf()));
     } else if ("xml".equals(format)) {
@@ -65,6 +71,7 @@ public class ConfigHandler extends AbstractHttpHandler {
   @GET
   public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                           @DefaultValue("json") @QueryParam("format") String format) throws IOException {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getHConf()));
     } else if ("xml".equals(format)) {
