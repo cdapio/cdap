@@ -4684,8 +4684,9 @@
   </property>
 
   <property>
-    <name>event.publish.enabled</name>
+    <name>feature.event.publish.enabled</name>
     <value>false</value>
+    <final>false</final>
     <description>
       Enable event publish in CDAP
     </description>

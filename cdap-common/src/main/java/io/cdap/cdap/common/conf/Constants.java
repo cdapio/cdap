@@ -1873,8 +1873,6 @@ public final class Constants {
 
     public static final String PROJECT_NAME = "event.project.name";
 
-    public static final String PUBLISH_ENABLED = "event.publish.enabled";
-
     public static final String EVENTS_WRITER_PREFIX = "event.writer";
 
     public static final String EVENTS_WRITER_EXTENSIONS_DIR = "events.writer.extensions.dir";

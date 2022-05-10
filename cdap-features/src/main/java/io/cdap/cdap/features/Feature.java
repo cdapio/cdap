@@ -27,6 +27,7 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
  */
 public enum Feature {
   REPLICATION_TRANSFORMATIONS("6.6.0"),
+  EVENT_PUBLISH("6.7.0", false),
   PUSHDOWN_TRANSFORMATION_GROUPBY("6.8.0"),
   PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.8.0");
 
