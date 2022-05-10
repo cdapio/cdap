@@ -223,7 +223,10 @@ public class BatchSQLEngineAdapter implements Closeable {
           .map(r -> DataFrames.toRow(r, sparkSchema));
         Dataset<Row> ds = sqlContext.createDataFrame(rowRDD, sparkSchema);
         RecordCollection recordCollection = new SparkRecordCollectionImpl(ds);
-        return consumer.consume(recordCollection);
+        // Consume records and collect metrics
+        SQLDataset pushedDataset =  consumer.consume(recordCollection);
+        countExecutionStage(SQLEngineJobTypeMetric.SPARK_PUSH);
+        return pushedDataset;
       }
     }
 
@@ -234,6 +237,7 @@ public class BatchSQLEngineAdapter implements Closeable {
     JavaPairRDD<?, ?> pairRdd =
       ((JavaRDD) collection.getUnderlying()).flatMapToPair(new TransformToPairFunction<>(pushDataset.toKeyValue()));
     RDDUtils.saveUsingOutputFormat(pushDataset, pairRdd);
+    countExecutionStage(SQLEngineJobTypeMetric.PUSH);
     return pushDataset;
   }
 
@@ -305,9 +309,11 @@ public class BatchSQLEngineAdapter implements Closeable {
         // If the collection that got generarted is not an instance of a SparkRecordCollection, skip.
         if (recordCollection instanceof SparkRecordCollection) {
           Schema schema = dataset.getSchema();
-          return (JavaRDD<T>) ((SparkRecordCollection) recordCollection).getDataFrame()
+          JavaRDD<T> rdd = (JavaRDD<T>) ((SparkRecordCollection) recordCollection).getDataFrame()
             .javaRDD()
             .map(r -> DataFrames.fromRow((Row) r, schema));
+          countExecutionStage(SQLEngineJobTypeMetric.SPARK_PULL);
+          return rdd;
         }
       }
     }
@@ -320,10 +326,12 @@ public class BatchSQLEngineAdapter implements Closeable {
                                                    getClass().getClassLoader());
     JavaPairRDD pairRDD = RDDUtils.readUsingInputFormat(jsc, sqlPullDataset, classLoader, Object.class,
                                                         Object.class);
-    return pairRDD.flatMap(new TransformFromPairFunction(sqlPullDataset.fromKeyValue()))
+    JavaRDD<T> rdd = pairRDD.flatMap(new TransformFromPairFunction(sqlPullDataset.fromKeyValue()))
       .map(f -> {
         return f;
       });
+    countExecutionStage(SQLEngineJobTypeMetric.PULL);
+    return rdd;
   }
 
   /**
