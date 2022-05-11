@@ -273,6 +273,7 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
     // Set a reasonable timeout for the watch.
     client.setReadTimeout((int) TimeUnit.MINUTES.toMillis(5));
 
+    LOG.warn("Create DynamicKubernetesApi: {}, {}, {}, {}", group, version, plurals, client);
     DynamicKubernetesApi api = new DynamicKubernetesApi(group, version, plurals, client);
 
     // Watch for the changes in number of instances.
