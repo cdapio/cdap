@@ -94,6 +94,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -555,8 +556,8 @@ public class ProgramLifecycleService {
         throw e;
       }
 
-      LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
-               authenticationContext.getPrincipal().getName(), userArgs);
+      LOG.info("Attempt to run {} program {} as user {} with arguments {} by userId {}", programId.getType(),
+               programId.getProgram(), authenticationContext.getPrincipal().getName(), userArgs, decodeUserId(userId));
 
       provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
       done = true;
@@ -774,7 +775,8 @@ public class ProgramLifecycleService {
                                                     workflowRunId));
       }
       // send a message to stop the program run
-      LOG.info("Issuing a program stop request with a timeout value of {} secs", gracefulShutdownSecs);
+      LOG.info("Issuing a program stop request with a timeout value of {} secs by userId {}", gracefulShutdownSecs,
+               decodeUserId(SecurityRequestContext.getUserId()));
       programStateWriter.stop(activeRunId, gracefulShutdownSecs);
     }
 
@@ -1169,5 +1171,16 @@ public class ProgramLifecycleService {
       KerberosPrincipalId kid = new KerberosPrincipalId(principal);
       accessEnforcer.enforce(kid, authenticationContext.getPrincipal(), AccessPermission.IMPERSONATE);
     }
+  }
+
+  private  String decodeUserId(String encodedUserId) {
+    String decodedUserId = "emptyUserId";
+    try {
+      byte[] decodedBytes = Base64.getDecoder().decode(encodedUserId);
+      decodedUserId = new String(decodedBytes);
+    } catch (Exception e) {
+      LOG.debug("Failed to decode userId {} with exception {}", encodedUserId, e);
+    }
+    return decodedUserId;
   }
 }
