@@ -98,7 +98,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     this.serviceLookup = serviceLookup;
     this.messageSenders = new HashMap<>();
     this.metricsCollectionService = metricsCollectionService;
-    emitMetricsEnabled = Feature.ROUTER_METRICS.isEnabled(new DefaultFeatureFlagsProvider(cConf));
+    this.emitMetricsEnabled = Feature.ROUTER_METRICS.isEnabled(new DefaultFeatureFlagsProvider(cConf));
   }
 
   @Override
