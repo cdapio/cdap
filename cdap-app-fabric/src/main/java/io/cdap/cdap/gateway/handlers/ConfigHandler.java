@@ -56,7 +56,7 @@ public class ConfigHandler extends AbstractHttpHandler {
   @GET
   public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                          @DefaultValue("json") @QueryParam("format") String format) throws IOException {
-    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getCConf()));
     } else if ("xml".equals(format)) {
@@ -71,7 +71,7 @@ public class ConfigHandler extends AbstractHttpHandler {
   @GET
   public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                           @DefaultValue("json") @QueryParam("format") String format) throws IOException {
-    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getHConf()));
     } else if ("xml".equals(format)) {
