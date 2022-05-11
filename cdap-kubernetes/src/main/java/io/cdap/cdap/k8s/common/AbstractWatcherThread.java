@@ -163,7 +163,8 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
           // if connection to the API server is lost or the watch is closed
           LOG.trace("Exception raised when watching for changes in resource of type {}", resourceType, e);
         } else {
-          LOG.warn("Exception raised when watching for changes in resource of type {}", resourceType, e);
+          LOG.warn(String.format("Exception raised when watching for changes in resource of type %s", resourceType),
+                   e);
         }
 
         // Clear watch so that a new only will be created in next iteration.
