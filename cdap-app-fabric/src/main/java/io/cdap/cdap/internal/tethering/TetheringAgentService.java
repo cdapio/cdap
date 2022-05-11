@@ -376,7 +376,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     // add namespace configs, which can contain things like the k8s namespace to execute in.
     Exception namespaceLookupFailure = null;
     try {
-      NamespaceMeta namespaceMeta = namespaceQueryAdmin.get(NamespaceId.fromString(message.getRuntimeNamespace()));
+      NamespaceMeta namespaceMeta = namespaceQueryAdmin.get(new NamespaceId(message.getRuntimeNamespace()));
       SystemArguments.addNamespaceConfigs(systemArgs, namespaceMeta.getConfig());
     } catch (Exception e) {
       // can happen if the namespace doesn't exist for some reason, or for transient issues.

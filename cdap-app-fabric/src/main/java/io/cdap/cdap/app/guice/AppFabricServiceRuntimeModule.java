@@ -37,6 +37,7 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
@@ -281,7 +282,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
-                               bind(RemoteProgramRunDispatcher.class).in(Scopes.SINGLETON);
+                               bind(ProgramRunDispatcher.class).to(RemoteProgramRunDispatcher.class)
+                                 .in(Scopes.SINGLETON);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,

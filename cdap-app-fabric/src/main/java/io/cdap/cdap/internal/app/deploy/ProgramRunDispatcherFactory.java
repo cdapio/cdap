@@ -34,7 +34,7 @@ public class ProgramRunDispatcherFactory {
   private final InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher;
   private final boolean workerPoolEnabled;
   private final Set<ProgramType> remoteDispatchProgramTypes;
-  private RemoteProgramRunDispatcher remoteProgramRunDispatcher;
+  private ProgramRunDispatcher remoteProgramRunDispatcher;
 
   @Inject
   public ProgramRunDispatcherFactory(CConfiguration cConf, InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher) {
@@ -57,8 +57,8 @@ public class ProgramRunDispatcherFactory {
    * For unit tests, RemoteProgramRunDispatcher would not be set.
    */
   @Inject(optional = true)
-  public void setRemoteProgramRunDispatcher(RemoteProgramRunDispatcher remoteProgramRunDispatcher) {
-    this.remoteProgramRunDispatcher = remoteProgramRunDispatcher;
+  public void setRemoteProgramRunDispatcher(ProgramRunDispatcher programRunDispatcher) {
+    this.remoteProgramRunDispatcher = programRunDispatcher;
   }
 
   public ProgramRunDispatcher getProgramRunDispatcher(ProgramType type) {

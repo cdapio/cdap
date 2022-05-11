@@ -4684,8 +4684,9 @@
   </property>
 
   <property>
-    <name>event.publish.enabled</name>
+    <name>feature.event.publish.enabled</name>
     <value>false</value>
+    <final>false</final>
     <description>
       Enable event publish in CDAP
     </description>
@@ -5284,6 +5285,22 @@
     <value>false</value>
     <description>
       Enables configuring composite AND/OR triggers for a pipeline schedule.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.pushdown.transformation.groupby.enabled</name>
+    <value>true</value>
+    <description>
+      Enables group by transformation in pushdown execution.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.pushdown.transformation.deduplicate.enabled</name>
+    <value>true</value>
+    <description>
+      Enables deduplicate transformation in pushdown execution.
     </description>
   </property>
 

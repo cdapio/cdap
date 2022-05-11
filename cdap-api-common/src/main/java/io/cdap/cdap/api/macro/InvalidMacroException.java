@@ -28,4 +28,8 @@ public class InvalidMacroException extends RuntimeException {
     super(message, cause);
   }
 
+  public InvalidMacroException(Throwable cause) {
+    super(cause);
+  }
+
 }

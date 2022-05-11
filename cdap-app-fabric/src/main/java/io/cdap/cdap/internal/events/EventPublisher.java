@@ -42,4 +42,9 @@ public interface EventPublisher {
    * Stop publish , when system is shutting down
    */
   void stopPublish();
+
+  /**
+   * Return ID of the Event Publisher.
+   */
+  String getID();
 }
