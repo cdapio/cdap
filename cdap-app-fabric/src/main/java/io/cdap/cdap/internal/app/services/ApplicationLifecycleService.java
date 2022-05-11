@@ -100,6 +100,7 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.slf4j.Logger;
@@ -992,6 +993,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
                                            applicationWithPrograms.getSpecification());
+    LOG.info("Successfully deployed app {} in namespace {} by user {}", appName, namespaceId,
+             SecurityRequestContext.getUserId());
     return applicationWithPrograms;
   }
 

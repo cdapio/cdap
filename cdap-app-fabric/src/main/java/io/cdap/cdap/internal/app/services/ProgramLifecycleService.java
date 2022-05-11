@@ -555,8 +555,8 @@ public class ProgramLifecycleService {
         throw e;
       }
 
-      LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
-               authenticationContext.getPrincipal().getName(), userArgs);
+      LOG.info("Attempt to run {} program {} as user {} with arguments {} by userId {}", programId.getType(),
+               programId.getProgram(), authenticationContext.getPrincipal().getName(), userArgs, userId);
 
       provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
       done = true;
@@ -774,7 +774,8 @@ public class ProgramLifecycleService {
                                                     workflowRunId));
       }
       // send a message to stop the program run
-      LOG.info("Issuing a program stop request with a timeout value of {} secs", gracefulShutdownSecs);
+      LOG.info("Issuing a program stop request with a timeout value of {} secs by userId {}", gracefulShutdownSecs,
+               SecurityRequestContext.getUserId());
       programStateWriter.stop(activeRunId, gracefulShutdownSecs);
     }
 
