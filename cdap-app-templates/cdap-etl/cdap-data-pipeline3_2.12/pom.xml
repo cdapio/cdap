@@ -117,6 +117,12 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.12</artifactId>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -127,6 +133,10 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-mllib_2.12</artifactId>
       <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.apache.spark</groupId>
           <artifactId>spark-streaming_2.12</artifactId>
