@@ -208,6 +208,12 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT),
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
+    aggs.put(BY_ONLY_COMPONENT, new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+                       Constants.Metrics.Tag.URI),
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+                       Constants.Metrics.Tag.URI)));
+
     AGGREGATIONS = Collections.unmodifiableMap(aggs);
   }
 

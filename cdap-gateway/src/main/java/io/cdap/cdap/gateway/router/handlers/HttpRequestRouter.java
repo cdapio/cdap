@@ -256,20 +256,10 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   private Map<String, String> getContext(String uri, String component) {
-    //TODO: Ignore the uris for which we dont want metrics
-    //we will get handler and method info depending on the URI
-    //its WIP - maybe maintain a map? or reuse existing info - RouterPathLookup.java
-    //OR do we even need handler and method tags?
-    //Can we even get handler and method tags? - meaning that mapping is down somewhere downstream
-    //and no way of getting these tags here
-    //Do we consider what kind of failure?
-    String handler = "xyz";
-    String method = "abc";
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
       Constants.Metrics.Tag.COMPONENT, component,
-      Constants.Metrics.Tag.HANDLER, handler,
-      Constants.Metrics.Tag.METHOD, method);
+      Constants.Metrics.Tag.URI, uri);
   }
 
   /**
