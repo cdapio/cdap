@@ -30,7 +30,8 @@ public enum Feature {
   EVENT_PUBLISH("6.7.0", false),
   PIPELINE_COMPOSITE_TRIGGERS("6.8.0"),
   PUSHDOWN_TRANSFORMATION_GROUPBY("6.8.0"),
-  PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.8.0");
+  PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.8.0"),
+  ROUTER_METRICS("6.8.0", false);
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;

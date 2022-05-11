@@ -24,7 +24,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.Channels;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.router.RouterServiceLookup;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.netty.bootstrap.Bootstrap;
@@ -88,6 +90,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   private MessageSender currentMessageSender;
   private ChannelFutureListener failureResponseListener;
   private MetricsCollectionService metricsCollectionService;
+  private final boolean emitMetricsEnabled;
 
   public HttpRequestRouter(CConfiguration cConf, RouterServiceLookup serviceLookup,
                            MetricsCollectionService metricsCollectionService) {
@@ -95,6 +98,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     this.serviceLookup = serviceLookup;
     this.messageSenders = new HashMap<>();
     this.metricsCollectionService = metricsCollectionService;
+    emitMetricsEnabled = Feature.ROUTER_METRICS.isEnabled(new DefaultFeatureFlagsProvider(cConf));
   }
 
   @Override
@@ -244,12 +248,18 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   private void emitSuccessMetrics(HttpRequest httpRequest, Discoverable discoverable) {
+    if (!emitMetricsEnabled) {
+      return;
+    }
     MetricsContext metricsContext = metricsCollectionService.getContext(getContext(httpRequest.uri(),
                                                                                    discoverable.getName()));
     metricsContext.increment("router.success", 1);
   }
 
   private void emitFailureMetrics(HttpRequest httpRequest, Discoverable discoverable) {
+    if (!emitMetricsEnabled) {
+      return;
+    }
     MetricsContext metricsContext = metricsCollectionService.getContext(getContext(httpRequest.uri(),
                                                                                    discoverable.getName()));
     metricsContext.increment("router.failure", 1);
