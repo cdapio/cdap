@@ -144,6 +144,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String FILE_LOCALIZER_JVM_OPTS = "master.environment.k8s.file.localizer.container.jvm.opts";
   private static final String FILE_LOCALIZER_DEFAULT_JVM_OPTS = "-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError";
 
+  private static final String PROGRAM_CPU_MULTIPLIER = "program.k8s.container.cpu.multiplier";
+  private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
+  private static final String PROGRAM_MEMORY_MULTIPLIER = "program.k8s.container.memory.multiplier";
+  private static final String DEFAULT_PROGRAM_MEMORY_MULTIPLIER = "0.5";
+
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
   private final BatchV1Api batchV1Api;
@@ -172,8 +177,6 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private Set<String> dependentRunnableNames;
   private String serviceAccountName;
   private String programRuntimeNamespace;
-  private String programRuntimeNamespaceCpuLimit;
-  private String programRuntimeNamespaceMemoryLimit;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -332,12 +335,6 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   public TwillPreparer withConfiguration(Map<String, String> config) {
     if (config.containsKey(KubeMasterEnvironment.NAMESPACE_PROPERTY)) {
       programRuntimeNamespace = config.get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
-    }
-    if (config.containsKey(KubeMasterEnvironment.NAMESPACE_CPU_LIMIT_PROPERTY)) {
-      programRuntimeNamespaceCpuLimit = config.get(KubeMasterEnvironment.NAMESPACE_CPU_LIMIT_PROPERTY);
-    }
-    if (config.containsKey(KubeMasterEnvironment.NAMESPACE_MEMORY_LIMIT_PROPERTY)) {
-      programRuntimeNamespaceMemoryLimit = config.get(KubeMasterEnvironment.NAMESPACE_MEMORY_LIMIT_PROPERTY);
     }
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
@@ -688,7 +685,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withBackoffLimit(0)
         .withNewTemplate()
           .withMetadata(metadata)
-          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs, "Never",
+          .withSpec(createPodSpec(V1Job.class, runtimeConfigLocation, runtimeSpecs, "Never",
                                   Collections.singletonList(KubeMasterEnvironment.DISABLE_POD_DELETION)))
         .endTemplate()
       .endSpec()
@@ -752,7 +749,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withReplicas(replicas)
         .withNewTemplate()
           .withMetadata(metadata)
-          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
+          .withSpec(createPodSpec(V1Deployment.class, runtimeConfigLocation, runtimeSpecs))
         .endTemplate()
       .endSpec()
       .build();
@@ -776,7 +773,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .addAllToVolumeClaimTemplates(disks.stream().map(this::createPVC).collect(Collectors.toList()))
         .withNewTemplate()
           .withMetadata(metadata)
-          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs,
+          .withSpec(createPodSpec(V1StatefulSet.class, runtimeConfigLocation, runtimeSpecs,
                                   disks.stream().map(this::createDiskMount).toArray(V1VolumeMount[]::new)))
         .endTemplate()
       .endSpec()
@@ -922,26 +919,30 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   /**
    * Creates a {@link V1PodSpec} for specifying pod information for running the given runnable.
    *
+   * @param resourceType resource type for which pod spec needs to be created
    * @param runtimeConfigLocation the {@link Location} containing the runtime config archive
    * @param runtimeSpecs the specification for the {@link TwillRunnable} and its resources requirements
    * @param extraMounts volumes to be mounted
    * @return a {@link V1PodSpec}
    */
-  private V1PodSpec createPodSpec(Location runtimeConfigLocation, Map<String, RuntimeSpecification> runtimeSpecs,
+  private V1PodSpec createPodSpec(Type resourceType, Location runtimeConfigLocation,
+                                  Map<String, RuntimeSpecification> runtimeSpecs,
                                   V1VolumeMount... extraMounts) {
-    return createPodSpec(runtimeConfigLocation, runtimeSpecs, "Always", new ArrayList<>(), extraMounts);
+    return createPodSpec(resourceType, runtimeConfigLocation, runtimeSpecs, "Always", new ArrayList<>(), extraMounts);
   }
 
   /**
    * Creates a {@link V1PodSpec} for specifying pod information for running the given runnable.
    *
+   * @param resourceType resource type for which pod spec needs to be created
    * @param runtimeConfigLocation the {@link Location} containing the runtime config archive
    * @param runtimeSpecs the specification for the {@link TwillRunnable} and its resources requirements
    * @param restartPolicy pod restart policy
    * @param extraMounts volumes to be mounted
    * @return a {@link V1PodSpec}
    */
-  private V1PodSpec createPodSpec(Location runtimeConfigLocation, Map<String, RuntimeSpecification> runtimeSpecs,
+  private V1PodSpec createPodSpec(Type resourceType, Location runtimeConfigLocation,
+                                  Map<String, RuntimeSpecification> runtimeSpecs,
                                   String restartPolicy, List<String> args, V1VolumeMount... extraMounts) {
     String workDir = "/workDir-" + twillRunId.getId();
 
@@ -950,7 +951,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
     V1ResourceRequirements initContainerResourceRequirements =
-      createResourceRequirements(mainRuntimeSpec.getResourceSpecification());
+      createResourceRequirements(resourceType, mainRuntimeSpec.getResourceSpecification());
 
     // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
     List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
@@ -998,14 +999,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
                                           initContainerVolumeMounts, initContainerEnvirons, FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           mainRuntimeSpec.getName()))
-      .withContainers(createContainers(runtimeSpecs, workDir, containerVolumeMounts, args))
+      .withContainers(createContainers(resourceType, runtimeSpecs, workDir, containerVolumeMounts, args))
       .withSecurityContext(podInfo.getSecurityContext())
       .withRestartPolicy(restartPolicy)
       .build();
   }
 
-  private List<V1Container> createContainers(Map<String, RuntimeSpecification> runtimeSpecs, String workDir,
-                                             List<V1VolumeMount> volumeMounts, List<String> args) {
+  private List<V1Container> createContainers(Type resourceType, Map<String, RuntimeSpecification> runtimeSpecs,
+                                             String workDir, List<V1VolumeMount> volumeMounts, List<String> args) {
     // Setup the container environment. Inherit everything from the current pod.
     Map<String, String> environs = podInfo.getContainerEnvironments().stream()
       .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
@@ -1021,7 +1022,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     mounts = addSecreteVolMountIfNeeded(mainRuntimeSpec, volumeMounts);
     containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(), podInfo.getImagePullPolicy(),
-                                   workDir, createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
+                                   workDir,
+                                   createResourceRequirements(resourceType, mainRuntimeSpec.getResourceSpecification()),
                                    mounts, environs, KubeTwillLauncher.class,
                                    Stream.concat(Stream.of(mainRuntimeSpec.getName()), args.stream())
                                      .toArray(String[]::new)));
@@ -1034,7 +1036,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       environs.put(JAVA_OPTS_KEY, runnableJVMOptions.get(name).toString());
       mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
-                                     createResourceRequirements(spec.getResourceSpecification()),
+                                     createResourceRequirements(resourceType, spec.getResourceSpecification()),
                                      mounts, environs, KubeTwillLauncher.class,
                                      Stream.concat(Stream.of(name), args.stream()).toArray(String[]::new)));
     }
@@ -1106,23 +1108,43 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Creates a {@link V1ResourceRequirements} based on the given {@link ResourceSpecification}. If the namespace has a
    * resource quota, the objects must also specify resource limits.
    */
-  private V1ResourceRequirements createResourceRequirements(ResourceSpecification resourceSpec) {
+  private V1ResourceRequirements createResourceRequirements(Type resourceType, ResourceSpecification resourceSpec) {
     Map<String, String> cConf = masterEnvContext.getConfigurations();
     float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
     float memoryMultiplier = Float.parseFloat(cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
+
+    V1ResourceRequirementsBuilder requirementsBuilder = new V1ResourceRequirementsBuilder();
+
+    // Use separate multiplier for user pods
+    if (resourceType == V1Job.class) {
+      // For job type use program multipliers.
+      cpuMultiplier = Float.parseFloat(cConf.getOrDefault(PROGRAM_CPU_MULTIPLIER, DEFAULT_PROGRAM_CPU_MULTIPLIER));
+      memoryMultiplier = Float.parseFloat(
+        cConf.getOrDefault(PROGRAM_MEMORY_MULTIPLIER, DEFAULT_PROGRAM_MEMORY_MULTIPLIER));
+
+      if (!(cpuMultiplier > 0 && cpuMultiplier <= 1)) {
+        throw new RuntimeException(
+          String.format("CPU multiplier %f should be greater than 0 and less than or equal to 1.", cpuMultiplier));
+      }
+      if (!(memoryMultiplier > 0 && memoryMultiplier <= 1)) {
+        throw new RuntimeException(
+          String.format("Memory multiplier %f should be greater than 0 " +
+                          "and less than or equal to 1.", memoryMultiplier));
+      }
+
+      requirementsBuilder
+        .addToLimits("cpu", new Quantity(String.format("%dm", resourceSpec.getVirtualCores() * 1000)))
+        .addToLimits("memory", new Quantity(String.format("%dMi", resourceSpec.getMemorySize())));
+    }
+
     int cpuToRequest = (int) (resourceSpec.getVirtualCores() * 1000 * cpuMultiplier);
     int memoryToRequest = (int) (resourceSpec.getMemorySize() * memoryMultiplier);
 
-    V1ResourceRequirementsBuilder resourceRequirementsBuilder = new V1ResourceRequirementsBuilder()
-      .addToRequests("cpu", new Quantity(String.format("%dm", cpuToRequest)))
+    requirementsBuilder.addToRequests("cpu", new Quantity(String.format("%dm", cpuToRequest)))
       .addToRequests("memory", new Quantity(String.format("%dMi", memoryToRequest)));
-    if (programRuntimeNamespaceCpuLimit != null && !programRuntimeNamespaceCpuLimit.isEmpty()) {
-      resourceRequirementsBuilder.addToLimits("cpu", new Quantity(programRuntimeNamespaceCpuLimit));
-    }
-    if (programRuntimeNamespaceMemoryLimit != null && !programRuntimeNamespaceMemoryLimit.isEmpty()) {
-      resourceRequirementsBuilder.addToLimits("memory", new Quantity(programRuntimeNamespaceMemoryLimit));
-    }
-    return resourceRequirementsBuilder.build();
+
+    return requirementsBuilder.build();
+
   }
 
   /**

@@ -19,8 +19,11 @@ package io.cdap.cdap.internal.events;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.spi.events.EventWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +33,8 @@ import java.util.Set;
  */
 public class EventPublishManager extends AbstractIdleService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(EventPublishManager.class);
+
   private final boolean publishEnabled;
   private final Set<EventPublisher> eventPublishers;
   private final EventWriterProvider eventWriterProvider;
@@ -37,7 +42,7 @@ public class EventPublishManager extends AbstractIdleService {
   @Inject
   EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers,
                       EventWriterProvider eventWriterProvider) {
-    this.publishEnabled = cConf.getBoolean(Constants.Event.PUBLISH_ENABLED);
+    this.publishEnabled =  Feature.EVENT_PUBLISH.isEnabled(new DefaultFeatureFlagsProvider(cConf));
     this.eventPublishers = eventPublishers;
     this.eventWriterProvider = eventWriterProvider;
   }
@@ -51,6 +56,10 @@ public class EventPublishManager extends AbstractIdleService {
       // Loading the event writers from provider
       Map<String, EventWriter> eventWriterMap = this.eventWriterProvider.loadEventWriters();
       // Initialize the event publisher with all the event writers provided by provider
+      if (eventWriterMap.values().isEmpty()) {
+        LOG.info("Event publisher {} not initialized due to no event writer found.", eventPublisher.getID());
+        return;
+      }
       eventPublisher.initialize(eventWriterMap.values());
       eventPublisher.startPublish();
     });

@@ -159,6 +159,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
   private static final String NAMESPACE_CREATION_ENABLED = "master.environment.k8s.namespace.creation.enabled";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
+  private static final String SPARK_DRIVER_POD_CPU_REQUEST = "spark.kubernetes.driver.request.cores";
+  private static final String SPARK_DRIVER_POD_CPU_LIMIT = "spark.kubernetes.driver.limit.cores";
+  private static final String SPARK_EXECUTOR_POD_CPU_REQUEST = "spark.kubernetes.executor.request.cores";
+  private static final String SPARK_EXECUTOR_POD_CPU_LIMIT = "spark.kubernetes.executor.limit.cores";
+
+  private static final String PROGRAM_CPU_MULTIPLIER = "program.k8s.container.cpu.multiplier";
+  private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
 
   // Workload Identity Constants
   private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
@@ -260,6 +267,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private long workloadIdentityServiceAccountTokenTTLSeconds;
   private String workloadLauncherRoleNameForNamespace;
   private String workloadLauncherRoleNameForCluster;
+  private String programCpuMultiplier;
 
   public KubeMasterEnvironment() {
     gson = new Gson();
@@ -326,6 +334,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String namespace = podInfo.getNamespace();
     String cdapNamespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
     additionalSparkConfs = getSparkConfigurations(conf);
+    programCpuMultiplier = conf.getOrDefault(PROGRAM_CPU_MULTIPLIER, DEFAULT_PROGRAM_CPU_MULTIPLIER);
 
     // Get the instance label to setup prefix for K8s services
     String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
@@ -443,6 +452,22 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String workloadServiceAccountName = podInfo.getServiceAccountName();
     sparkConfMap.put(SPARK_KUBERNETES_DRIVER_SERVICE_ACCOUNT, workloadServiceAccountName);
     sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_SERVICE_ACCOUNT, workloadServiceAccountName);
+
+    // Add spark driver and executor pod cpu limits: https://spark.apache.org/docs/latest/running-on-kubernetes.html
+    // We are not adding memory limits because it will be same as what is requested by spark driver and executor pods.
+    // On spark on kubernetes, currently there is no way to override memory limits:
+    // https://github.com/GoogleCloudPlatform/spark-on-k8s-operator/issues/783
+    int driverCpuRequested =
+      (int) (sparkSubmitContext.getDriverVirtualCores() * 1000 * Float.parseFloat(programCpuMultiplier));
+    int driverCpuLimit = sparkSubmitContext.getDriverVirtualCores() * 1000;
+    int executorCpuRequested =
+      (int) (sparkSubmitContext.getExecutorVirtualCores() * 1000 * Float.parseFloat(programCpuMultiplier));
+    int executorCpuLimit = sparkSubmitContext.getExecutorVirtualCores() * 1000;
+
+    sparkConfMap.put(SPARK_DRIVER_POD_CPU_REQUEST, String.format("%dm", driverCpuRequested));
+    sparkConfMap.put(SPARK_DRIVER_POD_CPU_LIMIT, String.format("%dm", driverCpuLimit));
+    sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_REQUEST, String.format("%dm", executorCpuRequested));
+    sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_LIMIT, String.format("%dm", executorCpuLimit));
 
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
@@ -691,7 +716,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private File serializePodTemplate(V1Pod v1Pod) throws IOException {
     // Uses a relative path to create the Spark driver and executor template files.
-    File templateFile = localFileProvider.getWritableFileRef(POD_TEMPLATE_FILE_NAME + UUID.randomUUID().toString());
+    File templateFile = localFileProvider.getWritableFileRef(POD_TEMPLATE_FILE_NAME + UUID.randomUUID());
     String podTemplateYaml = Yaml.dump(v1Pod);
     try (FileWriter writer = new FileWriter(templateFile)) {
       writer.write(podTemplateYaml);
@@ -1150,6 +1175,22 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
   }
 
+  /**
+   * Validates resource requests and limits so that limit is not lower than request.
+   */
+  private void validateResources(int driverCpuRequested, int driverCpuLimit,
+                                 int executorCpuRequested, int executorCpuLimit) throws Exception {
+    if (driverCpuLimit < driverCpuRequested) {
+      throw new Exception(String.format("CPU limits %d for spark driver pod is lower than requested cpu %d",
+                                        driverCpuLimit, driverCpuRequested));
+    }
+
+    if (executorCpuLimit < executorCpuRequested) {
+      throw new Exception(String.format("CPU limits %d for spark executor pod is lower than requested cpu %d",
+                                        executorCpuLimit, executorCpuRequested));
+    }
+  }
+
   @VisibleForTesting
   void setCoreV1Api(CoreV1Api coreV1Api) {
     this.coreV1Api = coreV1Api;
@@ -1228,5 +1269,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setPodUidFile(File podUidFile) {
     this.podUidFile = podUidFile;
+  }
+
+  @VisibleForTesting
+  void setProgramCpuMultiplier(String programCpuMultiplier) {
+    this.programCpuMultiplier = programCpuMultiplier;
   }
 }
