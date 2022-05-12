@@ -368,6 +368,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     // Remove the plugin artifact archive argument from options and let the program runner recreate it
     systemArgs.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
     systemArgs.put(ProgramOptionConstants.PEER_NAME, peerInfo.getName());
+    systemArgs.put(ProgramOptionConstants.PEER_ENDPOINT, peerInfo.getEndpoint());
     systemArgs.put(ProgramOptionConstants.RUNTIME_NAMESPACE, message.getRuntimeNamespace());
     systemArgs.put(ProgramOptionConstants.PROGRAM_RESOURCE_URI, programDir.toURI().toString());
     systemArgs.put(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name());
