@@ -84,6 +84,22 @@ public class ProgramStatusEventDetails {
       '}';
   }
 
+  public String getNamespace() {
+    return namespace;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public String getProgramName() {
+    return programName;
+  }
+
+  public String getApplicationName() {
+    return applicationName;
+  }
+
   public static class Builder {
 
     private final String runID;
