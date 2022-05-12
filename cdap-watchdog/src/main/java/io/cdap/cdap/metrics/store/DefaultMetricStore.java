@@ -87,6 +87,7 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_COMPONENT = "component";
   private static final String BY_SCHEDULE = "schedule";
   private static final String BY_ONLY_COMPONENT = "only_component";
+  private static final String BY_URI = "uri";
   private static final Map<String, AggregationAlias> AGGREGATIONS_ALIAS_DIMENSIONS =
     ImmutableMap.of(BY_WORKFLOW,
                     new AggregationAlias(ImmutableMap.of(Constants.Metrics.Tag.RUN_ID,
@@ -203,12 +204,13 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE),
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
                        Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE)));
-
+    
+    //added this one to workaround of bug CDAP-19267
     aggs.put(BY_ONLY_COMPONENT, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT),
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
-    aggs.put(BY_ONLY_COMPONENT, new DefaultAggregation(
+    aggs.put(BY_URI, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
                        Constants.Metrics.Tag.URI),
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
