@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.events;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -43,7 +44,7 @@ public class SparkProgramStatusMetricsProviderTest {
   @BeforeClass
   public static void setupClass() throws IOException {
     CConfiguration cConf = CConfiguration.create();
-    metricsProvider = new SparkProgramStatusMetricsProvider(cConf);
+    metricsProvider = new SparkProgramStatusMetricsProvider(cConf, new NoOpMetricsCollectionService());
   }
 
   @Test
