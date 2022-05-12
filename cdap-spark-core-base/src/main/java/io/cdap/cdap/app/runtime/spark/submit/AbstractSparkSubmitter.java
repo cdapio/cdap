@@ -105,11 +105,15 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     executor.submit(new Runnable() {
       @Override
       public void run() {
-        List<String> extraArgs = beforeSubmit();
         try {
+          List<String> extraArgs = beforeSubmit();
           String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
           submit(runtimeContext, submitArgs);
-          onCompleted(true);
+          boolean state = waitForFinish();
+          if (!state) {
+            throw new Exception("Spark driver returned error state");
+          }
+          onCompleted(state);
           resultFuture.set(result);
         } catch (Throwable t) {
           onCompleted(false);
@@ -141,7 +145,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    *
    * @return list of extra arguments to pass to {@link SparkSubmit}.
    */
-  protected List<String> beforeSubmit() {
+  protected List<String> beforeSubmit() throws Exception {
     return Collections.emptyList();
   }
 
@@ -178,6 +182,13 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   @Nullable
   protected URI getJobFile() throws Exception {
     return null;
+  }
+
+  /**
+   * Returns true if spark driver has succeeded.
+   */
+  protected boolean waitForFinish() throws Exception {
+    return true;
   }
 
   /**
