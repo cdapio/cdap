@@ -1026,6 +1026,14 @@ public final class Constants {
     }
 
     /**
+     * Program event publish
+     */
+    public static final class ProgramEvent {
+      public static final String PUBLISHED_COUNT = "program.event.published.count";
+      public static final String SPARK_METRICS_FETCH_LATENCY_MS = "program.event.spark.metrics.fetch.latency.millis";
+    }
+
+    /**
      * Preview metrics
      */
     public static final class Preview {
