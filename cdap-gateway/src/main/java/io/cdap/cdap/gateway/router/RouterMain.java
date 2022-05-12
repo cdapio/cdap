@@ -28,7 +28,10 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -132,7 +135,8 @@ public class RouterMain extends DaemonMain {
       new RouterModules().getDistributedModules(),
       CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new ExternalAuthenticationModule(),
-      new IOModule()
+      new IOModule(),
+      new MetricsClientRuntimeModule().getDistributedModules()
     );
   }
 }
