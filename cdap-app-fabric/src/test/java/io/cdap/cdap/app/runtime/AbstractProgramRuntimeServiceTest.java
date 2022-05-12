@@ -29,6 +29,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
@@ -42,6 +43,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -63,6 +65,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -276,7 +279,8 @@ public class AbstractProgramRuntimeServiceTest {
       discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     InMemoryProgramRunDispatcher launchDispatcher =
-      new TestProgramRunDispatcher(cConf, runnerFactory, program, locationFactory, remoteClientFactory);
+      new TestProgramRunDispatcher(cConf, runnerFactory, program, locationFactory,
+                                   remoteClientFactory, true);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null, launchDispatcher);
     runtimeService.startAndWait();
     try {
@@ -470,12 +474,21 @@ public class AbstractProgramRuntimeServiceTest {
   private static class TestProgramRunDispatcher extends InMemoryProgramRunDispatcher {
 
     private final Program program;
+    private final boolean tetheredRun;
 
     public TestProgramRunDispatcher(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                     Program program, LocationFactory locationFactory,
                                     RemoteClientFactory remoteClientFactory) {
-      super(cConf, programRunnerFactory, null, null, locationFactory, remoteClientFactory, null);
+      this(cConf, programRunnerFactory, program, locationFactory, remoteClientFactory, false);
+    }
+
+    public TestProgramRunDispatcher(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                    Program program, LocationFactory locationFactory,
+                                    RemoteClientFactory remoteClientFactory,
+                                    boolean tetheredRun) {
+      super(cConf, programRunnerFactory, null, locationFactory, remoteClientFactory, null, null);
       this.program = program;
+      this.tetheredRun = tetheredRun;
     }
 
     @Override
@@ -495,6 +508,20 @@ public class AbstractProgramRuntimeServiceTest {
       return new ArtifactDetail(new ArtifactDescriptor(NamespaceId.DEFAULT.getNamespace(),
                                                        id, Locations.toLocation(TEMP_FOLDER.newFile())),
                                 new ArtifactMeta(ArtifactClasses.builder().build()));
+    }
+
+    @Override
+    protected void downloadArtifact(Id.Artifact artifactId, Path target) {
+    }
+
+    @Override
+    protected ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail, ProgramId programId,
+                                                         ArtifactId artifactId, ApplicationSpecification appSpec,
+                                                         ProgramOptions options, PluginFinder pluginFinder,
+                                                         RemoteClientFactory factory)
+      throws ExecutionException, InterruptedException, TimeoutException {
+      return tetheredRun ? appSpec : super.regenerateAppSpec(artifactDetail, programId, artifactId,
+                                                             appSpec, options, pluginFinder, factory);
     }
   }
 }
