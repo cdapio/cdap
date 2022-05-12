@@ -151,77 +151,78 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
   @Override
   public ProgramController dispatchProgram(ProgramRunDispatcherInfo programRunDispatcherInfo) throws Exception {
-    RunId runId = programRunDispatcherInfo.getRunId();
-    LOG.debug("Preparing to dispatch program run: {}", runId);
-    ProgramDescriptor programDescriptor = programRunDispatcherInfo.getProgramDescriptor();
-    ProgramOptions options = programRunDispatcherInfo.getProgramOptions();
-    boolean isDistributed = programRunDispatcherInfo.isDistributed();
-    ProgramId programId = programDescriptor.getProgramId();
-    ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
-    boolean tetheredRun = options.getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
-    ProgramRunnerFactory progRunnerFactory = programRunnerFactory;
-    if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
-      progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
-        .orElseThrow(UnsupportedOperationException::new);
-    }
-    String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
-    if (peer != null) {
-      // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
-      String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3, peer);
-      // Set longer timeouts because we fetch from remote appfabric the first time we get an artifact. Subsequent
-      // reads are served by the cache.
-      HttpRequestConfig requestConfig = new HttpRequestConfig(600000,
-                                                              600000,
-                                                              false);
-      RemoteClient client = remoteClientFactory.createRemoteClient(Constants.Service.ARTIFACT_CACHE_SERVICE,
-                                                                   requestConfig,
-                                                                   basePath);
-      RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(locationFactory,
-                                                                                                   client);
-      artifactRepository = new RemoteArtifactRepository(cConf, artifactRepositoryReader, progRunnerFactory);
-    }
-
-    // Creates the ProgramRunner based on the cluster mode
-    ProgramRunner runner = progRunnerFactory.create(programId.getType());
-    File tempDir = createTempDirectory(programId, runId);
-
-    // Get the artifact details and save it into the program options.
-    ArtifactId artifactId = programDescriptor.getArtifactId();
-    ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-    ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
-    ProgramDescriptor newProgramDescriptor = programDescriptor;
-
-    boolean isPreview =
-      Boolean.parseBoolean(options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
-    // do the app spec regeneration if the mode is on premise, for isolated mode, the regeneration
-    // is done on the runtime environment before the program launch
-    // for preview we already have a resolved app spec, so no need to regenerate the app spec again
-    if (!isPreview && appSpec != null && ClusterMode.ON_PREMISE.equals(clusterMode)) {
-      try {
-        ApplicationSpecification generatedAppSpec =
-          regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, options);
-        appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
-        newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
-      } catch (Exception e) {
-        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId);
-      }
-    }
-
-    ProgramOptions runtimeProgramOptions =
-      updateProgramOptions(artifactId, programId, options, runId, clusterMode,
-                           Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null),
-                           isDistributed);
-
-    // Take a snapshot of all the plugin artifacts used by the program
-    ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
-                                                             newProgramDescriptor.getApplicationSpecification(),
-                                                             isDistributed);
-
-    // Create and run the program
-    Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
-                                              tempDir, tetheredRun);
-    programRunDispatcherInfo.getCleanUpTask().set(createCleanupTask(tempDir, runner, executableProgram));
-    return runner.run(executableProgram, optionsWithPlugins);
+    throw new RuntimeException("Unexpected error");
+//    RunId runId = programRunDispatcherInfo.getRunId();
+//    LOG.debug("Preparing to dispatch program run: {}", runId);
+//    ProgramDescriptor programDescriptor = programRunDispatcherInfo.getProgramDescriptor();
+//    ProgramOptions options = programRunDispatcherInfo.getProgramOptions();
+//    boolean isDistributed = programRunDispatcherInfo.isDistributed();
+//    ProgramId programId = programDescriptor.getProgramId();
+//    ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
+//    boolean tetheredRun = options.getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
+//    ProgramRunnerFactory progRunnerFactory = programRunnerFactory;
+//    if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
+//      progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
+//        .orElseThrow(UnsupportedOperationException::new);
+//    }
+//    String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
+//    if (peer != null) {
+//      // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
+//      String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3, peer);
+//      // Set longer timeouts because we fetch from remote appfabric the first time we get an artifact. Subsequent
+//      // reads are served by the cache.
+//      HttpRequestConfig requestConfig = new HttpRequestConfig(600000,
+//                                                              600000,
+//                                                              false);
+//      RemoteClient client = remoteClientFactory.createRemoteClient(Constants.Service.ARTIFACT_CACHE_SERVICE,
+//                                                                   requestConfig,
+//                                                                   basePath);
+//      RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(locationFactory,
+//                                                                                                   client);
+//      artifactRepository = new RemoteArtifactRepository(cConf, artifactRepositoryReader, progRunnerFactory);
+//    }
+//
+//    // Creates the ProgramRunner based on the cluster mode
+//    ProgramRunner runner = progRunnerFactory.create(programId.getType());
+//    File tempDir = createTempDirectory(programId, runId);
+//
+//    // Get the artifact details and save it into the program options.
+//    ArtifactId artifactId = programDescriptor.getArtifactId();
+//    ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+//    ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
+//    ProgramDescriptor newProgramDescriptor = programDescriptor;
+//
+//    boolean isPreview =
+//      Boolean.parseBoolean(options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
+//    // do the app spec regeneration if the mode is on premise, for isolated mode, the regeneration
+//    // is done on the runtime environment before the program launch
+//    // for preview we already have a resolved app spec, so no need to regenerate the app spec again
+//    if (!isPreview && appSpec != null && ClusterMode.ON_PREMISE.equals(clusterMode)) {
+//      try {
+//        ApplicationSpecification generatedAppSpec =
+//          regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, options);
+//        appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
+//        newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
+//      } catch (Exception e) {
+//        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId);
+//      }
+//    }
+//
+//    ProgramOptions runtimeProgramOptions =
+//      updateProgramOptions(artifactId, programId, options, runId, clusterMode,
+//                           Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null),
+//                           isDistributed);
+//
+//    // Take a snapshot of all the plugin artifacts used by the program
+//    ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
+//                                                             newProgramDescriptor.getApplicationSpecification(),
+//                                                             isDistributed);
+//
+//    // Create and run the program
+//    Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
+//                                              tempDir, tetheredRun);
+//    programRunDispatcherInfo.getCleanUpTask().set(createCleanupTask(tempDir, runner, executableProgram));
+//    return runner.run(executableProgram, optionsWithPlugins);
   }
 
   /**
