@@ -20,6 +20,7 @@ package io.cdap.cdap.etl.proto.v2.spec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
@@ -162,6 +163,10 @@ public class PipelineSpec {
       ", properties=" + properties +
       ", engine=" + engine +
       "}";
+  }
+
+  public boolean isPreviewEnabled(RuntimeContext context) {
+    return stages.isEmpty() || context.getDataTracer(stages.iterator().next().getName()).isEnabled();
   }
 
   /**

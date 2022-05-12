@@ -59,7 +59,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
     this.sec = sec;
     this.jsc = jsc;
     this.admin = sec.getAdmin();
-    this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(sec);
   }
 
   @Override

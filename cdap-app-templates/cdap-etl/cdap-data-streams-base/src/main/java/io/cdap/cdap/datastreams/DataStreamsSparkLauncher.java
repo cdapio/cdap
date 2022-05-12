@@ -98,8 +98,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
 
     SparkConf sparkConf = new SparkConf();
     // we do not do checkpointing during preview. Skip enabling write-ahead logs in that case to avoid spark exception
-    boolean isPreviewEnabled =
-      spec.getStages().isEmpty() || context.getDataTracer(spec.getStages().iterator().next().getName()).isEnabled();
+    boolean isPreviewEnabled = spec.isPreviewEnabled(context);
     if (!isPreviewEnabled) {
       // required spark configs to prevent data loss during real-time pipeline upgrades
       sparkConf.set("spark.streaming.receiver.writeAheadLog.enable", "true");

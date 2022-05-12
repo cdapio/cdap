@@ -42,6 +42,7 @@ import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
+import io.cdap.cdap.etl.mock.condition.MockCondition;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.ExceptionTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
@@ -575,6 +576,74 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     // Check the sink table is not created in the real space.
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
+  }
+
+  @Test
+  public void testPreviewFailedRunWithCondition() throws Exception {
+    testPreviewFailedRunWithCondition(Engine.MAPREDUCE);
+    testPreviewFailedRunWithCondition(Engine.SPARK);
+  }
+
+  private void testPreviewFailedRunWithCondition(Engine engine) throws Exception {
+    PreviewManager previewManager = getPreviewManager();
+
+    String sourceTableName = "singleInput";
+    String trueSink = "trueSink-" + engine;
+    String falseSink = "falseSink-" + engine;
+    String conditionTableName = "condition-" + engine;
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     * source --> condition --> trueSink
+     *              |
+     *              |-------> falseSink
+     *
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceTableName, schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
+      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition", conditionTableName)))
+      .addConnection("source", "condition")
+      .addConnection("condition", "trueSink", true)
+      .addConnection("condition", "falseSink", false)
+      .setEngine(engine)
+      .setNumOfRecordsPreview(100)
+      .build();
+
+
+    // Construct the preview config with the program name and program type
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.<String, String>emptyMap(), 10);
+
+    // Create the table for the mock source
+    addDatasetInstance(Table.class.getName(), sourceTableName,
+                       DatasetProperties.of(ImmutableMap.of("schema", schema.toString())));
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceTableName));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig, previewConfig);
+
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+
+    Tasks.waitFor(PreviewStatus.Status.RUN_FAILED, new Callable<PreviewStatus.Status>() {
+      @Override
+      public PreviewStatus.Status call() throws Exception {
+        PreviewStatus status = previewManager.getStatus(previewId);
+        return status == null ? null : status.getStatus();
+      }
+    }, 5, TimeUnit.MINUTES);
+
+    // Wait for the preview status go into FAILED.
+
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
   }
 

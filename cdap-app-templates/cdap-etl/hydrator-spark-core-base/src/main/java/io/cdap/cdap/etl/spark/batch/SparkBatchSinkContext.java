@@ -44,14 +44,14 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
                                PipelineRuntime pipelineRuntime, DatasetContext datasetContext, StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, datasetContext, sparkContext.getAdmin());
     this.sinkFactory = sinkFactory;
-    this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(sparkContext);
   }
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, JavaSparkExecutionContext sec,
                                DatasetContext datasetContext, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, datasetContext, sec.getAdmin());
     this.sinkFactory = sinkFactory;
-    this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(sec);
   }
 
   @Override

@@ -67,7 +67,7 @@ public class MapReduceBatchContext extends AbstractBatchContext
     this.mrContext = context;
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();
-    this.isPreviewEnabled = context.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(context);
     this.connectorDatasets = Collections.unmodifiableSet(connectorDatasets);
   }
 
