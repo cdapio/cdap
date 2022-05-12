@@ -52,7 +52,7 @@ public class ConfigHandlerAuthorizationTest {
 
   @BeforeClass
   public static void setup() {
-    StandardPermission[] requiredPermissions = new StandardPermission[] {StandardPermission.UPDATE};
+    StandardPermission[] requiredPermissions = new StandardPermission[] {StandardPermission.GET};
 
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
