@@ -23,14 +23,10 @@ import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Requirements;
-import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
-import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
-import io.cdap.cdap.app.runtime.ProgramControllerCreator;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
@@ -41,25 +37,17 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
-import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
-import io.cdap.cdap.internal.app.worker.ProgramRunDispatcherTask;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 /**
  * Implementation of {@link ProgramRunDispatcher} which enables Program-run execution to take place remotely (E.g.- in
@@ -105,43 +93,44 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
 
   @Override
   public ProgramController dispatchProgram(ProgramRunDispatcherInfo programRunDispatcherInfo) throws Exception {
-    RunId runId = programRunDispatcherInfo.getRunId();
-    LOG.debug("Dispatching Program Run operation for Run ID: {}", runId.getId());
-    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ProgramRunDispatcherTask.class.getName())
-      .withParam(GSON.toJson(programRunDispatcherInfo)).build();
-    remoteTaskExecutor.runTask(request);
-    ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
-    ProgramRunId programRunId = programId.run(runId);
-    ProgramRunner runner =
-      (ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions()) == ClusterMode.ON_PREMISE
-        ? programRunnerFactory
-        : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)).create(
-        programId.getType());
-    if (!(runner instanceof ProgramControllerCreator)) {
-      String msg = String.format("Program %s with runid %s uses an unsupported controller for remote dispatching.",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
-      throw new UnsupportedOperationException(msg);
-    }
-
-    RunRecordDetail runRecordDetail = store.getRun(programRunId);
-    if (runRecordDetail == null) {
-      String msg = String.format("Could not find run record for Program %s with runid %s",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
-      throw new IllegalStateException(msg);
-    }
-    TwillController twillController = remoteTwillRunnerService.createTwillControllerFromRunRecord(runRecordDetail);
-    ProgramController programController = null;
-    if (twillController != null) {
-      programController = ((ProgramControllerCreator) runner).createProgramController(programRunId, twillController);
-    }
-    if (programController == null) {
-      String msg = String.format("Unable to create controller for Program %s with runid %s",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
-      throw new Exception(msg);
-    }
-    return programController;
+    throw new RuntimeException("Unexpected error");
+//    RunId runId = programRunDispatcherInfo.getRunId();
+//    LOG.debug("Dispatching Program Run operation for Run ID: {}", runId.getId());
+//    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ProgramRunDispatcherTask.class.getName())
+//      .withParam(GSON.toJson(programRunDispatcherInfo)).build();
+//    remoteTaskExecutor.runTask(request);
+//    ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
+//    ProgramRunId programRunId = programId.run(runId);
+//    ProgramRunner runner =
+//      (ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions()) == ClusterMode.ON_PREMISE
+//        ? programRunnerFactory
+//        : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)).create(
+//        programId.getType());
+//    if (!(runner instanceof ProgramControllerCreator)) {
+//      String msg = String.format("Program %s with runid %s uses an unsupported controller for remote dispatching.",
+//                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
+//                                 programRunDispatcherInfo.getRunId());
+//      throw new UnsupportedOperationException(msg);
+//    }
+//
+//    RunRecordDetail runRecordDetail = store.getRun(programRunId);
+//    if (runRecordDetail == null) {
+//      String msg = String.format("Could not find run record for Program %s with runid %s",
+//                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
+//                                 programRunDispatcherInfo.getRunId());
+//      throw new IllegalStateException(msg);
+//    }
+//    TwillController twillController = remoteTwillRunnerService.createTwillControllerFromRunRecord(runRecordDetail);
+//    ProgramController programController = null;
+//    if (twillController != null) {
+//      programController = ((ProgramControllerCreator) runner).createProgramController(programRunId, twillController);
+//    }
+//    if (programController == null) {
+//      String msg = String.format("Unable to create controller for Program %s with runid %s",
+//                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
+//                                 programRunDispatcherInfo.getRunId());
+//      throw new Exception(msg);
+//    }
+//    return programController;
   }
 }
