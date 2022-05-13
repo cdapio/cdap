@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Information about a cluster node.
@@ -30,7 +31,7 @@ public class Node {
   private final long createTime;
   private final Map<String, String> properties;
 
-  public Node(String id, Type type, String ipAddress, long createTime, Map<String, String> properties) {
+  public Node(String id, Type type, @Nullable String ipAddress, long createTime, Map<String, String> properties) {
     this.id = id;
     this.type = type;
     this.ipAddress = ipAddress;
@@ -46,6 +47,7 @@ public class Node {
     return type;
   }
 
+  @Nullable
   public String getIpAddress() {
     return ipAddress;
   }

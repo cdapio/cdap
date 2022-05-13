@@ -19,7 +19,6 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -134,7 +133,6 @@ final class DataprocConf {
   private final boolean stackdriverMonitoringEnabled;
   private final boolean componentGatewayEnabled;
   private final boolean skipDelete;
-  private final SSHPublicKey publicKey;
   private final Map<String, String> clusterProperties;
 
   private final Map<String, String> clusterMetaData;
@@ -160,22 +158,6 @@ final class DataprocConf {
   private final int computeReadTimeout;
   private final int computeConnectionTimeout;
 
-  DataprocConf(DataprocConf conf, String network, String subnet) {
-    this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
-         conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB, conf.masterDiskType,
-         conf.masterMachineType, conf.workerNumNodes, conf.secondaryWorkerNumNodes, conf.workerCPUs,
-         conf.workerMemoryMB, conf.workerDiskGB, conf.workerDiskType, conf.workerMachineType,
-         conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
-         conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
-         conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.componentGatewayEnabled, conf.skipDelete, conf.publicKey, conf.imageVersion, conf.customImageUri,
-         conf.clusterMetaData, conf.clusterLabels, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
-         conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes, conf.tokenEndpoint,
-         conf.secureBootEnabled, conf.vTpmEnabled, conf.integrityMonitoringEnabled, conf.clusterReuseEnabled,
-         conf.clusterReuseThresholdMinutes, conf.clusterReuseKey, conf.enablePredefinedAutoScaling,
-         conf.computeReadTimeout, conf.computeConnectionTimeout, conf.rootUrl);
-  }
-
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB,
@@ -186,7 +168,7 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable, boolean skipDelete,
-                       @Nullable SSHPublicKey publicKey, @Nullable String imageVersion,
+                       @Nullable String imageVersion,
                        @Nullable String customImageUri,
                        @Nullable Map<String, String> clusterMetaData,
                        @Nullable Map<String, String> clusterLabels, List<String> networkTags,
@@ -232,7 +214,6 @@ final class DataprocConf {
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.componentGatewayEnabled = componentGatewayEnable;
     this.skipDelete = skipDelete;
-    this.publicKey = publicKey;
     this.imageVersion = imageVersion;
     this.customImageUri = customImageUri;
     this.clusterMetaData = clusterMetaData;
@@ -390,11 +371,6 @@ final class DataprocConf {
     return skipDelete;
   }
 
-  @Nullable
-  SSHPublicKey getPublicKey() {
-    return publicKey;
-  }
-
   Map<String, String> getClusterMetaData() {
     return clusterMetaData;
   }
@@ -524,16 +500,6 @@ final class DataprocConf {
    * @throws IllegalArgumentException if it is an invalid config
    */
   static DataprocConf create(Map<String, String> properties) {
-    return create(properties, null);
-  }
-
-  /**
-   * Create the conf from a property map while also performing validation.
-   *
-   * @param publicKey an optional {@link SSHPublicKey} for the configuration
-   * @throws IllegalArgumentException if it is an invalid config
-   */
-  static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       String endPoint = getString(properties, TOKEN_ENDPOINT_KEY);
@@ -717,7 +683,7 @@ final class DataprocConf {
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
                             componentGatewayEnabled, skipDelete,
-                            publicKey, imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
+                            imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
