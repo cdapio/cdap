@@ -37,6 +37,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ public class DataprocClientTest {
   @Mock
   private ClusterControllerClient clusterControllerClientMock;
 
+  private DataprocClientFactory clientFactory;
   private Compute.Networks.List listMock;
   private DataprocConf dataprocConf;
 
@@ -61,13 +63,10 @@ public class DataprocClientTest {
     properties.put("accountKey", "{ \"type\": \"test\"}");
     properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
     properties.put("zone", "us-test1-c");
-    dataprocConf = DataprocConf.create(properties, null);
+    dataprocConf = DataprocConf.create(properties);
 
-    PowerMockito.spy(DataprocClient.class);
-    PowerMockito.doReturn(clusterControllerClientMock)
-      .when(DataprocClient.class, "getClusterControllerClient", Mockito.any());
-    PowerMockito.doReturn(computeMock)
-      .when(DataprocClient.class, "getCompute", Mockito.any());
+    clientFactory = (conf, requireSSH, sshPublicKey) ->
+      new SSHDataprocClient(dataprocConf, clusterControllerClientMock, computeMock);
 
     Compute.Networks networksMock = Mockito.mock(Compute.Networks.class);
     listMock = Mockito.mock(Compute.Networks.List.class);
@@ -79,7 +78,8 @@ public class DataprocClientTest {
   @Test(expected = RetryableProvisionException.class)
   public void testReadTimeOutThrowsRetryableException() throws Exception {
     Mockito.when(listMock.execute()).thenThrow(SocketTimeoutException.class);
-    DataprocClient.fromConf(dataprocConf);
+    DataprocClient client = clientFactory.create(dataprocConf);
+    client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
   }
 
   @Test(expected = RetryableProvisionException.class)
@@ -100,7 +100,8 @@ public class DataprocClientTest {
     GoogleJsonResponseException gError = new GoogleJsonResponseException(builder, googleJsonError);
 
     Mockito.when(listMock.execute()).thenThrow(gError);
-    DataprocClient.fromConf(dataprocConf);
+    DataprocClient client = clientFactory.create(dataprocConf);
+    client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
   }
 
   @Test(expected = GoogleJsonResponseException.class)
@@ -121,7 +122,8 @@ public class DataprocClientTest {
     GoogleJsonResponseException gError = new GoogleJsonResponseException(builder, googleJsonError);
 
     Mockito.when(listMock.execute()).thenThrow(gError);
-    DataprocClient.fromConf(dataprocConf);
+    DataprocClient client = clientFactory.create(dataprocConf);
+    client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
   }
 
 
@@ -135,8 +137,7 @@ public class DataprocClientTest {
                                                                Mockito.anyString()))
       .thenThrow(e);
 
-    DataprocClient.fromConf(dataprocConf, false)
-      .getClusters(null, new HashMap<>());
+    clientFactory.create(dataprocConf).getClusters(null, new HashMap<>());
   }
 
 
@@ -149,7 +150,6 @@ public class DataprocClientTest {
                                                                Mockito.anyString()))
       .thenThrow(e);
 
-    DataprocClient.fromConf(dataprocConf, false)
-      .getClusters(null, new HashMap<>());
+    clientFactory.create(dataprocConf).getClusters(null, new HashMap<>());
   }
 }
