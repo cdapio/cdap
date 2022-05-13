@@ -457,7 +457,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       DataprocConf.IMAGE_VERSION,
       DataprocConf.CLUSTER_META_DATA,
       DataprocConf.SERVICE_ACCOUNT,
-      DataprocConf.CLUSTER_IDLE_TTL_MINUTES
+      DataprocConf.CLUSTER_IDLE_TTL_MINUTES,
+      DataprocConf.CLUSTER_REUSE_THRESHOLD_MINUTES
     ).contains(property);
   }
 
