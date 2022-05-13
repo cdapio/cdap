@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
 import io.cdap.cdap.internal.tethering.PeerInfo;
 import io.cdap.cdap.internal.tethering.PeerNotFoundException;
+import io.cdap.cdap.internal.tethering.TetheringStatus;
 import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.internal.tethering.runtime.spi.runtimejob.TetheringRuntimeJobManager;
 import io.cdap.cdap.messaging.MessagingService;
@@ -93,6 +94,9 @@ public class TetheringProvisioner implements Provisioner {
       .noneMatch(n -> n.getNamespace().equals(namespace))) {
       throw new IllegalArgumentException(String.format("Namespace %s is not provided by tethered peer %s",
                                                        namespace, peer));
+    }
+    if (!peerInfo.getTetheringStatus().equals(TetheringStatus.ACCEPTED)) {
+      throw new IllegalArgumentException(String.format("Connection to tethered peer %s must first be accepted", peer));
     }
   }
 
