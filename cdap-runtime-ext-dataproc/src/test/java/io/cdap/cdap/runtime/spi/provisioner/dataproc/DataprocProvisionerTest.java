@@ -25,7 +25,6 @@ import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
-import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,11 +33,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,16 +58,16 @@ public class DataprocProvisionerTest {
   private DataprocClient dataprocClient;
   @Mock
   private Cluster cluster, cluster2;
-  @Spy
-  private DataprocProvisioner provisioner = new DataprocProvisioner();
+
+  private DataprocProvisioner provisioner;
   @Captor
   private ArgumentCaptor<Map<String, String>> addedLabelsCaptor;
 
   MockProvisionerContext context = new MockProvisionerContext();
 
   @Before
-  public void init() throws IOException, GeneralSecurityException, RetryableProvisionException {
-    Mockito.doReturn(dataprocClient).when(provisioner).getClient(Mockito.any());
+  public void init() {
+    provisioner = new DataprocProvisioner((conf, requireSSH, sshPublicKey) -> dataprocClient);
     MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
 
     //default system properties defined by DataprocProvisioner
@@ -292,7 +288,8 @@ public class DataprocProvisionerTest {
     Mockito.when(dataprocClient.createCluster(Mockito.eq("cdap-app-runId"),
                                               Mockito.eq("2.0"),
                                               addedLabelsCaptor.capture(),
-                                              Mockito.eq(false)))
+                                              Mockito.eq(false),
+                                              Mockito.any()))
       .thenReturn(ClusterOperationMetadata.getDefaultInstance());
     Cluster expectedCluster = new Cluster(
       "cdap-app-runId", ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
