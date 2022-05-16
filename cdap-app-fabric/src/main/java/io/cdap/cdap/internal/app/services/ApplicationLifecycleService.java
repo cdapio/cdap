@@ -1115,15 +1115,4 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     return builder.build();
   }
-
-  public String decodeUserId(AuthenticationContext authenticationContext) {
-    String decodedUserId = "emptyUserId";
-    try {
-      byte[] decodedBytes = Base64.getDecoder().decode(authenticationContext.getPrincipal().getName());
-      decodedUserId = new String(decodedBytes);
-    } catch (Exception e) {
-      LOG.debug("Failed to decode userId with exception {}", e);
-    }
-    return decodedUserId;
-  }
 }
