@@ -159,6 +159,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
         sparkConf.set(property.getKey(), property.getValue());
       }
     }
+    LOG.info("---all the configs - '{}'---", sparkConf.getAll());
     context.setSparkConf(sparkConf);
 
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
