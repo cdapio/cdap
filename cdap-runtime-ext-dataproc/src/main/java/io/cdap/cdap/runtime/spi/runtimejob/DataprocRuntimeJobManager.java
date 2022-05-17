@@ -33,14 +33,12 @@ import com.google.cloud.dataproc.v1beta2.JobReference;
 import com.google.cloud.dataproc.v1beta2.JobStatus;
 import com.google.cloud.dataproc.v1beta2.ListJobsRequest;
 import com.google.cloud.dataproc.v1beta2.SubmitJobRequest;
-import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
-import com.google.cloud.storage.StorageRetryStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -58,7 +56,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
@@ -139,12 +136,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
 
       // instantiate a gcs client
-      this.storageClient = client = StorageOptions.newBuilder()
-        .setStorageRetryStrategy(StorageRetryStrategy.getDefaultStorageRetryStrategy())
-        .setProjectId(projectId)
-        .setCredentials(credentials)
-        .build()
-        .getService();
+      this.storageClient = client = StorageOptions.newBuilder().setProjectId(projectId)
+        .setCredentials(credentials).build().getService();
     }
     return client;
   }
@@ -327,54 +320,24 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private LocalFile uploadFile(String bucket, String targetFilePath,
                                LocalFile localFile) throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
-    String contentType = "application/octet-stream";
-    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
-    Storage storage = getStorageClient();
-    boolean preConditionFailure = false;
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
+
 
     LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{} ", localFile.getSize(), localFile.getURI(),
               bucket, targetFilePath);
-    Bucket bucketObj = storage.get(bucket);
+    Bucket bucketObj = getStorageClient().get(bucket);
     if (bucketObj != null) {
       LOG.debug("File's Location type : {} and Location : {}. ", bucketObj.getLocationType(), bucketObj.getLocation());
     }
-    try {
-      uploadFileUtil(localFile.getURI(), storage, blobInfo, Storage.BlobWriteOption.doesNotExist());
-    } catch (StorageException e) {
-      if (e.getCode() == HttpURLConnection.HTTP_PRECON_FAILED) {
-        // Precondition fails means the blob already exists, most likely happens due to retries
-        // https://cloud.google.com/storage/docs/request-preconditions#special-case
-        // Overwrite the file
-        preConditionFailure = true;
-        Blob blob = storage.get(blobId);
-        BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
-        uploadFileUtil(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
-      } else {
-        throw e;
-      }
+    try (InputStream inputStream = openStream(localFile.getURI());
+         WriteChannel writer = getStorageClient().writer(blobInfo)) {
+      ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
     }
-    if (preConditionFailure) {
-      LOG.debug("File : {} already exists which can happen due to retries, the file was overwritten",
-                localFile.getURI());
-    } else {
-      LOG.debug("Successfully Uploaded file : {}.", localFile.getURI());
-    }
+    LOG.debug("Successfully Uploaded file : {}.", localFile.getURI());
 
     return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                 localFile.getLastModified(), localFile.getSize(),
                                 localFile.isArchive(), localFile.getPattern());
-  }
-
-  /**
-   *
-   * Uploads the file to GCS bucket.
-   */
-  private void uploadFileUtil(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
-                              Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
-    try (InputStream inputStream = openStream(localFileUri);
-         WriteChannel writer = storage.writer(blobInfo, blobWriteOptions)) {
-      ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
-    }
   }
 
   /**
