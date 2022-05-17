@@ -342,9 +342,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                                              DEFAULT_WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME);
     workloadLauncherRoleNameForCluster = conf.getOrDefault(WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME,
                                                            DEFAULT_WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME);
-    // Validate cluster roles exist.
-    validateClusterRole(workloadLauncherRoleNameForNamespace);
-    validateClusterRole(workloadLauncherRoleNameForCluster);
+    // Validate cluster roles exist if namespace creation is enabled.
+    if (namespaceCreationEnabled) {
+      validateClusterRole(workloadLauncherRoleNameForNamespace);
+      validateClusterRole(workloadLauncherRoleNameForCluster);
+    }
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
