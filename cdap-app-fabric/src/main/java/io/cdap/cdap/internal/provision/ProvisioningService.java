@@ -416,6 +416,7 @@ public class ProvisioningService extends AbstractIdleService {
    */
   public Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context) throws IOException,
     InterruptedException {
+    LOG.info("---Deprovisioning called on program ---");
     return deprovision(programRunId, context, taskStateCleanup);
   }
 
@@ -427,6 +428,7 @@ public class ProvisioningService extends AbstractIdleService {
     // look up information for the corresponding provision operation
     ProvisioningTaskInfo existing =
       provisionerStore.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
+    LOG.info("---Inside deprovisioning. Existing task info - '{}' ---", existing);
     if (existing == null) {
       runWithProgramLogging(programRunId, Collections.emptyMap(),
                             () -> LOG.error("No task state found while deprovisioning the cluster. "
@@ -462,7 +464,7 @@ public class ProvisioningService extends AbstractIdleService {
                                                                          existing.getCluster());
     ProvisionerTable provisionerTable = new ProvisionerTable(context);
     provisionerTable.putTaskInfo(provisioningTaskInfo);
-
+    LOG.info("---Creating deprovisioning task task info - '{}' ---", provisioningTaskInfo);
     return createDeprovisionTask(provisioningTaskInfo, provisioner, taskCleanup);
   }
 

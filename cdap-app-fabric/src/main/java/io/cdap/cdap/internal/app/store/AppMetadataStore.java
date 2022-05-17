@@ -1015,6 +1015,7 @@ public class AppMetadataStore {
   public RunRecordDetail recordProgramStopping(ProgramRunId programRunId, byte[] sourceId, long stoppingTsSecs,
                                                long terminateTsSecs) throws IOException {
     RunRecordDetail existing = getRun(programRunId);
+    LOG.info("---Existing run record - '{}'---", existing);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.STOPPING);
@@ -1043,6 +1044,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
+    LOG.info("---Updated run record - '{}'---", meta);
     LOG.trace("Recorded {} for program {}", ProgramRunStatus.STOPPING, programRunId);
     return meta;
   }

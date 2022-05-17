@@ -297,7 +297,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     if (clusterStatus == null) {
       return result;
     }
-
+    LOG.info("---Cluster status to be handled - {}---", clusterStatus);
     handleClusterEvent(programRunId, clusterStatus, notification,
                        messageIdBytes, appMetadataStore, context).ifPresent(result::add);
     return result;
@@ -415,8 +415,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           return;
         }
         long terminateTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.TERMINATE_TIME);
+
         recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTsSecs,
                                                                    terminateTsSecs);
+        LOG.info("---Recorded run record - '{}'---", recordedRunRecord);
         writeToHeartBeatTable(recordedRunRecord, stoppingTsSecs, programHeartbeatTable);
         break;
       case COMPLETED:
@@ -695,6 +697,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // If we skipped recording the run status, that means this was a duplicate message,
         // or an invalid state transition. In both cases, we should not try to deprovision the cluster.
         if (recordedMeta != null) {
+          LOG.info("---Processing deprovisioning---");
           return Optional.of(provisioningService.deprovision(programRunId, context));
         }
         break;
