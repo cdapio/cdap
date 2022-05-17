@@ -172,14 +172,22 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     jssc.start();
 
     boolean stopped = false;
-    try {
-      // most programs will just keep running forever.
-      // however, when CDAP stops the program, we get an interrupted exception.
-      // at that point, we need to call stop on jssc, otherwise the program will hang and never stop.
-      stopped = jssc.awaitTerminationOrTimeout(Long.MAX_VALUE);
-    } finally {
-      if (!stopped) {
-        jssc.stop(true, pipelineSpec.isStopGracefully());
+    while (!stopped) {
+      try {
+        LOG.info("calling awaitTerminationOrTimeout");
+        // most programs will just keep running forever.
+        // however, when CDAP stops the program, we get an interrupted exception.
+        // at that point, we need to call stop on jssc, otherwise the program will hang and never stop.
+        stopped = jssc.awaitTerminationOrTimeout(Long.MAX_VALUE);
+        if (stopped) {
+          LOG.info("confirmed! The streaming context is stopped. Exiting application...");
+        } else {
+          LOG.info("Streaming App is still running. Timeout...");
+        }
+      } finally {
+        if (!stopped) {
+          jssc.stop(true, pipelineSpec.isStopGracefully());
+        }
       }
     }
 
