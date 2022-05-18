@@ -84,6 +84,7 @@ class RemoteExecutionTwillController implements TwillController {
     this.started = startupCompletionStage.thenApply(o -> RemoteExecutionTwillController.this);
     this.terminateOnServiceStop = true;
     this.started.exceptionally(throwable -> {
+      LOG.info("Complete on start with exception {}", programRunId, throwable);
       completion.completeExceptionally(throwable);
       return RemoteExecutionTwillController.this;
     });
@@ -91,6 +92,7 @@ class RemoteExecutionTwillController implements TwillController {
       @Override
       public void terminated(Service.State from) {
         if (terminateOnServiceStop) {
+          LOG.info("Complete on service stop {}", programRunId);
           completion.complete(RemoteExecutionTwillController.this);
         }
       }
@@ -98,6 +100,7 @@ class RemoteExecutionTwillController implements TwillController {
       @Override
       public void failed(Service.State from, Throwable failure) {
         if (terminateOnServiceStop) {
+          LOG.info("Complete on service failed {}", programRunId, failure);
           completion.completeExceptionally(failure);
         }
       }

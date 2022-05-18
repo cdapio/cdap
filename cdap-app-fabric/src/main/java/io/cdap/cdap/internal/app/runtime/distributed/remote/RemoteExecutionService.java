@@ -71,6 +71,12 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
     // no-op
   }
 
+  @Override
+  protected void doShutdown() throws Exception {
+    LOG.info("Do shutdown called: {}", programRunId);
+    super.doShutdown();
+  }
+
   final ProgramRunId getProgramRunId() {
     return programRunId;
   }
@@ -86,11 +92,13 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
       if (!processController.isRunning() && ++notRunningCount > 1) {
         LOG.debug("Program {} is not running", programRunId);
         programStateWriter.error(programRunId, new IllegalStateException("Program terminated " + programRunId));
+        LOG.info("Calling stop on {}", programRunId);
         stop();
         return 0;
       }
       nextCheckRunningMillis = now + pollTimeMillis * 10;
     }
+    LOG.info("Next poll time {}", pollTimeMillis);
     return pollTimeMillis;
   }
 
