@@ -274,6 +274,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
           @Override
           public void completed() {
             LOG.info("---inside completed---");
+            System.out.println("Inside completed");
             programCompletion.complete(ProgramController.State.COMPLETED);
           }
 
@@ -281,12 +282,17 @@ public class DefaultRuntimeJob implements RuntimeJob {
           public void killed() {
             // Write an extra state to make sure there is always a terminal state even
             // if the program application run failed to write out the state.
+            LOG.info("---inside killed---");
+            System.out.println("Inside killed");
             programStateWriter.killed(programRunId);
             programCompletion.complete(ProgramController.State.KILLED);
           }
 
           @Override
           public void error(Throwable cause) {
+            LOG.info("---inside error---", cause);
+            System.out.println("Inside error");
+
             // Write an extra state to make sure there is always a terminal state even
             // if the program application run failed to write out the state.
             programStateWriter.error(programRunId, cause);
@@ -295,11 +301,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
         }, Threads.SAME_THREAD_EXECUTOR);
 
         if (stopRequested) {
+          LOG.info("---stop requested yes---");
           controller.stop();
         }
 
         // Block on the completion
         programCompletion.get();
+        LOG.info("Program completed");
       } finally {
         if (programRunner instanceof Closeable) {
           Closeables.closeQuietly((Closeable) programRunner);
@@ -320,6 +328,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       }
       throw t;
     } finally {
+      LOG.info("Finally reached");
       stopCoreServices(coreServices, logAppenderInitializer);
       ProxySelector.setDefault(oldProxySelector);
       Authenticator.setDefault(null);
