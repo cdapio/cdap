@@ -528,6 +528,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
     // On this controller termination, make sure it is removed from the controllers map and have resources released.
     controller.onTerminated(() -> {
+      LOG.info("Remote twill controller transited to terminated state {}", programRunId);
       if (controllers.remove(programRunId, controller)) {
         controller.complete();
       }
