@@ -155,16 +155,20 @@ class RemoteExecutionTwillController implements TwillController {
 
     CompletableFuture<TwillController> result = completion.thenApply(r -> r);
     scheduler.execute(() -> {
+      LOG.info("Terminate called {}", programRunId);
       try {
         if (terminateWithController) {
+          LOG.info("Remote process controller terminate called {}", programRunId);
           remoteProcessController.terminate();
         }
         // Poll for completion
         scheduler.schedule(new Runnable() {
           @Override
           public void run() {
+            LOG.info("Scheduled process run check {}", programRunId);
             try {
               if (!remoteProcessController.isRunning()) {
+                LOG.info("Remote process completed {}", programRunId);
                 completion.complete(RemoteExecutionTwillController.this);
                 return;
               }
@@ -172,6 +176,7 @@ class RemoteExecutionTwillController implements TwillController {
               // Schedule to check again
               scheduler.schedule(this, pollCompletedMillis, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
+              LOG.info("Remote process completed with exception {}", programRunId, e);
               result.completeExceptionally(e);
             }
           }
@@ -180,6 +185,7 @@ class RemoteExecutionTwillController implements TwillController {
       } catch (Exception e) {
         // Only fail the result future. We have to keep the terminationFuture to be not completed so that the
         // caller can retry termination.
+        LOG.info("Result completed with exception {}", programRunId, e);
         result.completeExceptionally(e);
       }
     });

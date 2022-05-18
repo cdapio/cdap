@@ -266,11 +266,14 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+        LOG.info("---before on program stop requested is set---");
         runtimeClientService.onProgramStopRequested(controller::stop);
+        LOG.info("---after on program stop requested is set---");
 
         controller.addListener(new AbstractListener() {
           @Override
           public void completed() {
+            LOG.info("---inside completed---");
             programCompletion.complete(ProgramController.State.COMPLETED);
           }
 
