@@ -171,12 +171,12 @@
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-exec</artifactId>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-collections</groupId>
-          <artifactId>commons-collections</artifactId>
-        </exclusion>
-      </exclusions>
+<!--      <exclusions>-->
+<!--        <exclusion>-->
+<!--          <groupId>commons-collections</groupId>-->
+<!--          <artifactId>commons-collections</artifactId>-->
+<!--        </exclusion>-->
+<!--      </exclusions>-->
     </dependency>
 
   </dependencies>
