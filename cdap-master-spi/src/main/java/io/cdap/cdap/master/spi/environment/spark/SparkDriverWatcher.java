@@ -14,28 +14,22 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.engine;
+package io.cdap.cdap.master.spi.environment.spark;
+
+import java.util.concurrent.Future;
 
 /**
- * Enum used to specify metrics for SQL engine job types
+ * Watches spark driver status.
  */
-public enum SQLEngineJobTypeMetric {
-  JOIN("join"),
-  TRANSFORM("transform"),
-  PUSH("push"),
-  PULL("pull"),
-  SPARK_PUSH("spark_push"),
-  SPARK_PULL("spark_pull"),
-  READ("read"),
-  WRITE("write");
+public interface SparkDriverWatcher extends AutoCloseable {
 
-  private final String type;
+  /**
+   * Initialize spark driver watcher.
+   */
+  void initialize();
 
-  SQLEngineJobTypeMetric(String type) {
-    this.type = type;
-  }
-
-  public String getType() {
-    return this.type;
-  }
+  /**
+   * Returns future providing status of spark driver. It returns true, if spark driver succeeds, otherwise failure.
+   */
+  Future<Boolean> waitForFinish();
 }

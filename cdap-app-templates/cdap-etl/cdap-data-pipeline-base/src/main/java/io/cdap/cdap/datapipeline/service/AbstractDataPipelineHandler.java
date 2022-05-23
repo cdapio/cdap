@@ -22,6 +22,7 @@ import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
@@ -65,7 +66,7 @@ public class AbstractDataPipelineHandler extends AbstractSystemHttpServiceHandle
 
     try {
       callable.respond(namespaceSummary);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | ValidationException e) {
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage());
     } catch (JsonSyntaxException e) {
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());

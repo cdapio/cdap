@@ -30,11 +30,14 @@ public class SparkConfig {
   private final String master;
   private final URI sparkJobFile;
   private final Map<String, String> configs;
+  private final SparkDriverWatcher sparkDriverWatcher;
 
-  public SparkConfig(String master, URI sparkJobFile, Map<String, String> configs) {
+  public SparkConfig(String master, URI sparkJobFile, Map<String, String> configs,
+                     SparkDriverWatcher sparkDriverWatcher) {
     this.master = master;
     this.sparkJobFile = sparkJobFile;
     this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
+    this.sparkDriverWatcher = sparkDriverWatcher;
   }
 
   /**
@@ -59,5 +62,12 @@ public class SparkConfig {
    */
   public Map<String, String> getConfigs() {
     return configs;
+  }
+
+  /**
+   * Returns driver watcher thread
+   */
+  public SparkDriverWatcher getSparkDriverWatcher() {
+    return sparkDriverWatcher;
   }
 }

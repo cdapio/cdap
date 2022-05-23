@@ -155,6 +155,11 @@ public final class ProgramOptionConstants {
   public static final String PEER_NAME = "peer";
 
   /**
+   * Option for url of tethered peer, if any, that has initiated the program run
+   */
+  public static final String PEER_ENDPOINT = "peerEndpoint";
+
+  /**
    * Option for name of the runtime namespace for the tethered program run.
    */
   public static final String RUNTIME_NAMESPACE = "runtimeNamespace";

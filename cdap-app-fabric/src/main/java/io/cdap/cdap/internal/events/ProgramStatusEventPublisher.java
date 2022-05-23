@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -61,19 +62,21 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   private static final String SUBSCRIBER_NAME = "program_status_event_publisher";
   private static final Gson GSON = new Gson();
   private static final String EVENT_VERSION = "v1";
+  private static final String PROGRAM_STATUS_EVENT_PUBLISHER = "program.status.event.publisher";
   private final String instanceName;
   private final String projectName;
   private final CConfiguration cConf;
   private final MetricsProvider metricsProvider;
   private Collection<EventWriter> eventWriters;
+  private MetricsCollectionService metricsCollectionService;
 
   @Inject
-  protected ProgramStatusEventPublisher(String name, CConfiguration cConf,
+  protected ProgramStatusEventPublisher(CConfiguration cConf,
                                         MessagingService messagingService,
                                         MetricsCollectionService metricsCollectionService,
                                         TransactionRunner transactionRunner,
                                         MetricsProvider metricsProvider) {
-    super(name, cConf,
+    super(PROGRAM_STATUS_EVENT_PUBLISHER, cConf,
           cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
           cConf.getInt(Constants.Event.PROGRAM_STATUS_FETCH_SIZE),
           cConf.getInt(Constants.Event.PROGRAM_STATUS_POLL_INTERVAL_SECONDS), messagingService,
@@ -83,6 +86,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
     this.instanceName = cConf.get(Constants.Event.INSTANCE_NAME);
     this.projectName = cConf.get(Constants.Event.PROJECT_NAME);
     this.metricsProvider = metricsProvider;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -130,7 +134,6 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) {
-    long publishTime = System.currentTimeMillis();
     messages.forEachRemaining(message -> {
       Notification notification = message.getSecond();
       if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
@@ -163,21 +166,32 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
         .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
         .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
       if (programRunStatus.isEndState()) {
-        populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId, publishTime);
+        populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId);
       } else {
-        writeInEventWriters(builder, publishTime);
+        writeInEventWriters(builder);
       }
     });
   }
 
-  private void writeInEventWriters(ProgramStatusEventDetails.Builder builder, long publishTime) {
+  private void writeInEventWriters(ProgramStatusEventDetails.Builder builder) {
+    long publishTime = System.currentTimeMillis();
     ProgramStatusEventDetails programStatusEventDetails = builder.build();
     ProgramStatusEvent programStatusEvent = new ProgramStatusEvent(publishTime, EVENT_VERSION,
                                                                    instanceName,
                                                                    projectName, programStatusEventDetails);
     List<ProgramStatusEvent> listProgramStatus = new ArrayList<>();
     listProgramStatus.add(programStatusEvent);
+    emitMetrics(programStatusEvent);
     this.eventWriters.forEach(eventWriter -> eventWriter.write(listProgramStatus));
+  }
+
+  private void emitMetrics(ProgramStatusEvent programStatusEvent) {
+    Map<String, String> metricTags = new HashMap<>();
+    metricTags.put(Constants.Metrics.Tag.NAMESPACE, programStatusEvent.getEventDetails().getNamespace());
+    metricTags.put(Constants.Metrics.Tag.STATUS, programStatusEvent.getEventDetails().getStatus());
+    metricTags.put(Constants.Metrics.Tag.PROGRAM, programStatusEvent.getEventDetails().getProgramName());
+    metricTags.put(Constants.Metrics.Tag.APP, programStatusEvent.getEventDetails().getApplicationName());
+    metricsCollectionService.getContext(metricTags).increment(Constants.Metrics.ProgramEvent.PUBLISHED_COUNT, 1L);
   }
 
   private boolean shouldPublish(ProgramRunId programRunId) {
@@ -186,18 +200,18 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
 
   private void populateErrorDetailsAndMetrics(final ProgramStatusEventDetails.Builder builder,
                                               Map<String, String> properties,
-                                              ProgramRunStatus status, ProgramRunId runId, long publishTime) {
+                                              ProgramRunStatus status, ProgramRunId runId) {
     if (properties.containsKey(ProgramOptionConstants.PROGRAM_ERROR)) {
       ProgramStatusEventDetails.Builder newBuilder =
         builder.withError(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
-      writeInEventWriters(newBuilder, publishTime);
+      writeInEventWriters(newBuilder);
       return;
     }
     if (status.isEndState()) {
       CompletableFuture.supplyAsync(() -> metricsProvider.retrieveMetrics(runId))
         .thenAccept(metrics -> {
           ProgramStatusEventDetails.Builder newBuilder = builder.withPipelineMetrics(metrics);
-          writeInEventWriters(newBuilder, publishTime);
+          writeInEventWriters(newBuilder);
         });
     }
   }
