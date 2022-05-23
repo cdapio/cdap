@@ -16,6 +16,7 @@
 package io.cdap.cdap.api.metrics;
 
 import java.util.Arrays;
+import javax.annotation.Nullable;
 
 /**
  * Carries the "raw" emitted metric data point: metric name, type, and value
@@ -40,10 +41,13 @@ public class MetricValue {
    */
   public static final int NUM_FINITE_BUCKETS = Long.SIZE - 2;
 
+  @Nullable
   private final long[] bucketCounts;
 
+  @Nullable
   private final long bucketMask;
 
+  @Nullable
   private final double sum;
 
   public MetricValue (String name, MetricType type, long value) {
