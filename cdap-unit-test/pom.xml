@@ -100,12 +100,12 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-spark-core2_2.11</artifactId>
       <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-      </exclusions>
+<!--      <exclusions>-->
+<!--        <exclusion>-->
+<!--          <groupId>com.fasterxml.jackson.core</groupId>-->
+<!--          <artifactId>jackson-databind</artifactId>-->
+<!--        </exclusion>-->
+<!--      </exclusions>-->
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
