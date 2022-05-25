@@ -30,8 +30,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.jmx.JMXMetricsCollectorFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.TokenManager;
-import io.cdap.cdap.security.impersonation.SecurityUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -80,11 +78,6 @@ public class SystemMetricsExporterServiceMain extends AbstractServiceMain<Enviro
                              MasterEnvironment masterEnv,
                              MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
-      services.add(injector.getInstance(TokenManager.class));
-    }
-
     Map<String, String> conf = masterEnvContext.getConfigurations();
     Map<String, String> metricTags = filterByKeyPrefix(
       conf, MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX);
