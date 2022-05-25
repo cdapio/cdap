@@ -53,6 +53,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
@@ -193,6 +194,9 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      services.add(injector.getInstance(TokenManager.class));
+    }
     addServices(injector, services, closeableResources, masterEnv, masterEnvContext, options);
 
     // Optionally get the storage provider. It is for destroy() method to close it on shutdown.

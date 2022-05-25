@@ -46,12 +46,10 @@ import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
-import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
@@ -117,10 +115,6 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
-    }
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
-      services.add(injector.getInstance(TokenManager.class));
     }
 
     // Add a service just for closing MetadataStorage to release resource.

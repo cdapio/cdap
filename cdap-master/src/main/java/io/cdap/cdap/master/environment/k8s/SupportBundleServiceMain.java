@@ -33,9 +33,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.support.guice.SupportBundleServiceModule;
 import io.cdap.cdap.support.services.SupportBundleInternalService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -85,11 +83,6 @@ public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOpt
       Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
-    }
-
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
-      services.add(injector.getInstance(TokenManager.class));
     }
   }
 
