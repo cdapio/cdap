@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.etl.proto.v2.spec;
 
+import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -170,6 +171,10 @@ public class StageSpec implements Serializable {
       ", processTimingEnabled=" + processTimingEnabled +
       ", maxPreviewRecords=" + maxPreviewRecords +
       '}';
+  }
+
+  public boolean isPreviewEnabled(RuntimeContext context) {
+    return context.getDataTracer(name).isEnabled();
   }
 
   public static Builder builder(String name, PluginSpec plugin) {

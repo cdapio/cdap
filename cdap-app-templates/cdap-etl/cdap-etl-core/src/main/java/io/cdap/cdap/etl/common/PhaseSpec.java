@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.etl.common;
 
+import io.cdap.cdap.api.RuntimeContext;
+
 import java.io.Serializable;
 import java.util.Map;
 
@@ -57,4 +59,8 @@ public class PhaseSpec implements Serializable {
   public Map<String, String> getConnectorDatasets() {
     return connectorDatasets;
   }
-}
+
+  public boolean isPreviewEnabled(RuntimeContext context) {
+    return phase.size() == 0
+      || context.getDataTracer(phase.iterator().next().getName()).isEnabled();
+  }}
