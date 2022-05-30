@@ -47,7 +47,7 @@ public class SparkBatchSourceContext extends SparkSubmitterContext implements Ba
       createCopy(stageSpec, sparkContext.getDataTracer(stageSpec.getName()).getMaximumTracedRecords(),
           sparkContext.getDataTracer(stageSpec.getName()).isEnabled()));
     this.sourceFactory = sourceFactory;
-    this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(sparkContext);
   }
 
   @Override

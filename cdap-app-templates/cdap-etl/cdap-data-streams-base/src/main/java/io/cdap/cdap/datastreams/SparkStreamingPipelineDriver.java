@@ -96,8 +96,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       .build();
 
     boolean checkpointsDisabled = pipelineSpec.isCheckpointsDisabled();
-    boolean isPreviewEnabled =
-      stageSpecs.isEmpty() || sec.getDataTracer(stageSpecs.iterator().next().getName()).isEnabled();
+    boolean isPreviewEnabled = pipelineSpec.isPreviewEnabled(sec);
 
     String checkpointDir = null;
     JavaSparkContext context = null;
