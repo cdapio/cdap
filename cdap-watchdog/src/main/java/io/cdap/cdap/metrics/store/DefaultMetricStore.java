@@ -204,7 +204,7 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE),
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
                        Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE)));
-    
+
     //added this one to workaround of bug CDAP-19267
     aggs.put(BY_ONLY_COMPONENT, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT),
