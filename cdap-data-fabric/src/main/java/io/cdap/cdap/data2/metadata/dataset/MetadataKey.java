@@ -133,10 +133,10 @@ class MetadataKey {
     for (MetadataEntity.KeyValue keyValue : metadataEntity) {
       // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
       // if it is a versioned entity then ignore the version
-      if (MetadataUtil.isVersionedEntityType(metadataEntity.getType()) &&
-        keyValue.getKey().equalsIgnoreCase(MetadataEntity.VERSION)) {
-        continue;
-      }
+//      if (MetadataUtil.isVersionedEntityType(metadataEntity.getType()) &&
+//        keyValue.getKey().equalsIgnoreCase(MetadataEntity.VERSION)) {
+//        continue;
+//      }
       builder.add(keyValue.getKey());
       builder.add(keyValue.getValue());
     }

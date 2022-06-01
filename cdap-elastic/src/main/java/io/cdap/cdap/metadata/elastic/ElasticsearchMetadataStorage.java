@@ -1227,10 +1227,10 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     for (MetadataEntity.KeyValue kv : entity) {
       // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
       // if it is a versioned entity then ignore the version
-      if (MetadataUtil.isVersionedEntityType(entity.getType()) &&
-        MetadataEntity.VERSION.equalsIgnoreCase(kv.getKey())) {
-        continue;
-      }
+//      if (MetadataUtil.isVersionedEntityType(entity.getType()) &&
+//        MetadataEntity.VERSION.equalsIgnoreCase(kv.getKey())) {
+//        continue;
+//      }
       builder.append(sep).append(kv.getKey()).append('=').append(kv.getValue());
       sep = ',';
     }
