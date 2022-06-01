@@ -90,14 +90,18 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   @Override
   public int compareTo(ArtifactId other) {
-    int cmp = getScope().compareTo(other.getScope());
+    int cmp = getName().compareTo(other.getName());
     if (cmp != 0) {
       return cmp;
     }
-    cmp = getName().compareTo(other.getName());
+    cmp = getVersion().compareTo(other.getVersion());
     if (cmp != 0) {
       return cmp;
     }
-    return getVersion().compareTo(other.getVersion());
+
+    if (getScope().equals(other.getScope())) {
+      return 0;
+    }
+    return getScope().equals(ArtifactScope.USER) ? 1 : -1;
   }
 }

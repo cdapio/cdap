@@ -58,9 +58,7 @@ public class ArtifactSelector extends PluginSelector {
 
     for (Map.Entry<ArtifactId, PluginClass> entry : pluginMap.descendingMap().entrySet()) {
       ArtifactId artifactId = entry.getKey();
-      if ((scope == null || artifactId.getScope().equals(scope)) &&
-        (name == null || artifactId.getName().equals(name)) &&
-        (range == null || range.versionIsInRange(artifactId.getVersion()))) {
+      if ((name == null || artifactId.getName().equals(name))) {
         return entry;
       }
     }

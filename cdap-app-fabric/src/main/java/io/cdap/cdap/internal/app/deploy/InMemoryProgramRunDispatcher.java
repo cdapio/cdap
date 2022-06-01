@@ -28,6 +28,9 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.deploy.ConfigResponse;
@@ -72,6 +75,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteIsolatedPluginFinder;
 import io.cdap.cdap.internal.tethering.NoOpDiscoveryServiceClient;
 import io.cdap.cdap.internal.tethering.TetheringAgentService;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -206,6 +210,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     // Get the artifact details and save it into the program options.
     ArtifactId artifactId = programDescriptor.getArtifactId();
     ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+    artifactId = new ArtifactId(artifactDetail.getDescriptor().getNamespace(),
+                                artifactDetail.getDescriptor().getArtifactId().getName(),
+                                artifactDetail.getDescriptor().getArtifactId().getVersion().getVersion());
+    LOG.error("Yaojie - using artifact {} with version {} for app", artifactId.getArtifact(), artifactId.getVersion());
     ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
     ProgramDescriptor newProgramDescriptor = programDescriptor;
     ProgramOptions updatedOptions = options;
@@ -275,6 +283,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       updatedOptions = createPluginSnapshot(updatedOptions, programId, tempDir,
                                             newProgramDescriptor.getApplicationSpecification(),
                                             isDistributed);
+      Map<String, Plugin> plugins = newProgramDescriptor.getApplicationSpecification().getPlugins();
+      plugins.forEach((key, value) -> LOG.error("Yaojie - using artifact {} with version {} for plugin {} with type {}",
+                                                value.getArtifactId().getName(), value.getArtifactId().getVersion(),
+                                                value.getPluginClass().getName(), value.getPluginClass().getType()));
     }
 
     // Create and run the program
@@ -372,7 +384,11 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
-    return artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+    ArtifactVersionRange versionRange = new ArtifactVersionRange(new ArtifactVersion("0.0.0"), true,
+                                                                 new ArtifactVersion("10.0.0"), true);
+    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifactDetails(
+      new ArtifactRange(artifactId.getNamespace(), artifactId.getArtifact(), versionRange), 1, ArtifactSortOrder.DESC);
+    return artifactDetails.get(0);
   }
 
   /**
