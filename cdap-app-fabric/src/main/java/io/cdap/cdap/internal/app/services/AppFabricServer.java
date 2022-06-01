@@ -87,6 +87,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
   private final EventPublishManager eventPublishManager;
+  private final AppUpgradeService appUpgradeService;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -117,7 +118,8 @@ public class AppFabricServer extends AbstractIdleService {
                          TransactionRunner transactionRunner,
                          EventPublishManager eventPublishManager,
                          RunRecordMonitorService runRecordCounterService,
-                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                         AppUpgradeService appUpgradeService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -141,6 +143,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.eventPublishManager = eventPublishManager;
     this.runRecordCounterService = runRecordCounterService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
+    this.appUpgradeService = appUpgradeService;
   }
 
   /**
@@ -163,7 +166,8 @@ public class AppFabricServer extends AbstractIdleService {
         programRunStatusMonitorService.start(),
         coreSchedulerService.start(),
         eventPublishManager.start(),
-        runRecordCounterService.start()
+        runRecordCounterService.start(),
+        appUpgradeService.start()
       )
     ).get();
 
@@ -218,6 +222,7 @@ public class AppFabricServer extends AbstractIdleService {
     provisioningService.stopAndWait();
     eventPublishManager.stopAndWait();
     runRecordCounterService.stopAndWait();
+    appUpgradeService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
