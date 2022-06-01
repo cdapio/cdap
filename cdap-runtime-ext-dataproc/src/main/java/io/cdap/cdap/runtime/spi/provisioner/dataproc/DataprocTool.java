@@ -56,8 +56,7 @@ public class DataprocTool {
       .addOption(new Option("k", "serviceAccountKey", true, "Google cloud service account key (json format)."))
       .addOption(new Option("p", "project", true, "Google cloud project id."))
       .addOption(new Option("c", "configFile", true, "File all provisioner settings as a json object."))
-      .addOption(new Option("i", "imageVersion", true, "The image version for the cluster. Defaults to 2.0."))
-      .addOption(new Option("l", "lookupNetwork", false, "Whether to lookup network information about the cluster."))
+      .addOption(new Option("i", "imageVersion", true, "The image version for the cluster. Defaults to 1.2."))
       .addOption(new Option("n", "name", true, "Name of the cluster."));
 
     CommandLineParser parser = new BasicParser();
@@ -106,14 +105,12 @@ public class DataprocTool {
       conf = DataprocConf.create(properties);
     }
 
-    String imageVersion = commandLine.hasOption('i') ? commandLine.getOptionValue('i') : "2.0";
+    String imageVersion = commandLine.hasOption('i') ? commandLine.getOptionValue('i') : "1.2";
 
     String name = commandLine.getOptionValue('n');
-    DataprocClientFactory clientFactory = new DefaultDataprocClientFactory(new GoogleComputeFactory());
-    try (DataprocClient client = clientFactory.create(conf, commandLine.hasOption('l'), null)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf)) {
       if (PROVISION.equalsIgnoreCase(command)) {
-        ClusterOperationMetadata createOp = client.createCluster(name, imageVersion, Collections.emptyMap(), false,
-                                                                 null);
+        ClusterOperationMetadata createOp = client.createCluster(name, imageVersion, Collections.emptyMap(), false);
         System.out.println(GSON.toJson(createOp));
       } else if (DETAILS.equalsIgnoreCase(command)) {
         Optional<Cluster> cluster = client.getCluster(name);

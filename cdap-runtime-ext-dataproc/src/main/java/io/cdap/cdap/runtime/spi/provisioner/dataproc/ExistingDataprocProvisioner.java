@@ -50,7 +50,6 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
   private static final String CLUSTER_NAME = "clusterName";
   private static final String SSH_USER = "sshUser";
   private static final String SSH_KEY = "sshKey";
-  private static final DataprocClientFactory CLIENT_FACTORY = new DefaultDataprocClientFactory();
 
   public ExistingDataprocProvisioner() {
     super(SPEC);
@@ -91,7 +90,7 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
     }
 
     String clusterName = contextProperties.get(CLUSTER_NAME);
-    try (DataprocClient client = CLIENT_FACTORY.create(conf)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf, false)) {
       try {
         client.updateClusterLabels(clusterName, getSystemLabels());
       } catch (DataprocRuntimeException e) {

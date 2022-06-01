@@ -32,10 +32,11 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -63,20 +64,15 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   private static final Pattern NETWORK_TAGS_PATTERN = Pattern.compile(("^[a-z][a-z0-9-]{0,62}$"));
 
+  //First version spark 3 is default one
+  private static final String SPARK3_CDAP_DEFAULT = "6.5";
+
   //A lock to use for cluster reuse
   private static final String REUSE_LOCK = "reuse";
 
-  private final DataprocClientFactory clientFactory;
-
   @SuppressWarnings("WeakerAccess")
   public DataprocProvisioner() {
-    this(new DefaultDataprocClientFactory(new GoogleComputeFactory()));
-  }
-
-  @VisibleForTesting
-  DataprocProvisioner(DataprocClientFactory clientFactory) {
     super(SPEC);
-    this.clientFactory = clientFactory;
   }
 
   @Override
@@ -139,8 +135,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
                DataprocConf.PREDEFINED_AUTOSCALE_ENABLED);
     }
 
-    SSHPublicKey sshPublicKey = null;
-    if (shouldUseSSH(context, conf)) {
+    if (context.getRuntimeMonitorType() == RuntimeMonitorType.SSH || !conf.isRuntimeJobManagerEnabled()) {
       // Generates and set the ssh key if it does not have one.
       // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
       SSHContext sshContext = context.getSSHContext();
@@ -150,11 +145,11 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
           sshKeyPair = sshContext.generate("cdap");
           sshContext.setSSHKeyPair(sshKeyPair);
         }
-        sshPublicKey = sshKeyPair.getPublicKey();
+        conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
       }
     }
 
-    try (DataprocClient client = clientFactory.create(conf, sshPublicKey != null, sshPublicKey)) {
+    try (DataprocClient client = getClient(conf)) {
       Cluster reused = tryReuseCluster(client, context, conf);
       if (reused != null) {
         DataprocUtils.emitMetric(context, conf.getRegion(),
@@ -198,7 +193,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
       boolean privateInstance = Boolean.parseBoolean(getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
-                                                                          labels, privateInstance, sshPublicKey);
+                                                                          labels, privateInstance);
       int numWarnings = createOperationMeta.getWarningsCount();
       if (numWarnings > 0) {
         LOG.warn("Encountered {} warning{} while creating Dataproc cluster:\n{}",
@@ -238,7 +233,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    */
   @Nullable
   private Cluster tryReuseCluster(DataprocClient client, ProvisionerContext context, DataprocConf conf)
-    throws RetryableProvisionException {
+    throws RetryableProvisionException, IOException {
     if (!isReuseSupported(conf)) {
       LOG.debug("Not checking cluster reuse, enabled: {}, skip delete: {}, idle ttl: {}, reuse threshold: {}",
                 conf.isClusterReuseEnabled(), conf.isSkipDelete(), conf.getIdleTTLMinutes(),
@@ -257,7 +252,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         LOG.debug("Found allocated cluster {}", cluster.getName());
         return cluster;
       } else {
-        LOG.debug("Preallocated cluster {} has expired, will find a new one", cluster.getName());
+        LOG.debug("Preallocated cluster {} has expired, will find a new one");
         //Let's remove the reuse label to ensure new cluster will be picked up by findCluster
         try {
           client.updateClusterLabels(cluster.getName(), Collections.emptyMap(), Collections.singleton(LABEL_RUN_KEY));
@@ -284,7 +279,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
       Optional<Cluster> cluster = client.getClusters(ClusterStatus.RUNNING, filter, clientCluster -> {
         //Verify reuse label
-        long reuseUntil = Long.parseLong(clientCluster.getLabelsOrDefault(LABEL_REUSE_UNTIL, "0"));
+        long reuseUntil = Long.valueOf(clientCluster.getLabelsOrDefault(LABEL_REUSE_UNTIL, "0"));
         long now = System.currentTimeMillis();
         if (reuseUntil < now) {
           LOG.debug("Skipping expired cluster {}, reuse until {} is before now {}",
@@ -350,7 +345,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       return ClusterStatus.NOT_EXISTS;
     }
 
-    try (DataprocClient client = clientFactory.create(conf)) {
+    try (DataprocClient client = getClient(conf)) {
       status = client.getClusterStatus(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.clusterStatus.response.count");
@@ -366,7 +361,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = cluster.getName();
-    try (DataprocClient client = clientFactory.create(conf, shouldUseSSH(context, conf), null)) {
+    try (DataprocClient client = getClient(conf)) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.clusterDetail.response.count");
@@ -384,7 +379,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       return;
     }
     String clusterName = cluster.getName();
-    try (DataprocClient client = clientFactory.create(conf)) {
+    try (DataprocClient client = getClient(conf)) {
       if (isReuseSupported(conf)) {
         long reuseUntil = System.currentTimeMillis() +
           TimeUnit.MINUTES.toMillis(conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
@@ -413,12 +408,18 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterKey = getRunKey(context);
     if (isReuseSupported(conf)) {
-      try (DataprocClient client = clientFactory.create(conf)) {
+      try (DataprocClient client = getClient(conf)) {
         Optional<Cluster> allocatedCluster = findCluster(clusterKey, client);
         return allocatedCluster.map(Cluster::getName).orElse(clusterKey);
       }
     }
     return clusterKey;
+  }
+
+  @VisibleForTesting
+  protected DataprocClient getClient(DataprocConf conf) throws IOException, GeneralSecurityException,
+    RetryableProvisionException {
+    return DataprocClient.fromConf(conf);
   }
 
   private Optional<Cluster> findCluster(String clusterKey, DataprocClient client)
@@ -505,10 +506,6 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
-  }
-
-  private boolean shouldUseSSH(ProvisionerContext context, DataprocConf conf) {
-    return context.getRuntimeMonitorType() == RuntimeMonitorType.SSH || !conf.isRuntimeJobManagerEnabled();
   }
 
   private boolean isAutoscalingFieldsValid(DataprocConf conf, Map<String, String> properties) {
