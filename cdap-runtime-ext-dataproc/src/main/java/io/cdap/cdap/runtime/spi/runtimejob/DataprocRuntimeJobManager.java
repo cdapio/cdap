@@ -188,7 +188,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runInfo.getRun());
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
+      long step1 = System.currentTimeMillis();
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
+
+      long step2 = System.currentTimeMillis();
+      LOG.error(">>>>> step1 (build twill jar and launcher jar took : {}", step2 - step1);
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
@@ -202,8 +206,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         uploadedFiles.add(uploadFuture.get());
       }
 
+
+      long step3 = System.currentTimeMillis();
+      LOG.error(">>>>> step2 upload files took : {}", step3 - step2);
+      for (LocalFile f : uploadedFiles) {
+        LOG.error(">>>>> uploaded file path : {}", f.getURI().toString());
+      }
       // step 3: build the hadoop job request to be submitted to dataproc
       SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
+
+      long step4 = System.currentTimeMillis();
+      LOG.error(">>>>> step3 building hadoop job took : {}", step4 - step3);
 
       // step 4: submit hadoop job to dataproc
       try {
