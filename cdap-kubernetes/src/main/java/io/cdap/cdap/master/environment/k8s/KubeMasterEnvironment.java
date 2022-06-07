@@ -129,6 +129,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
 
   public static final String SECURITY_CONFIG_NAME = "cdap-security";
+  public static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
   private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
@@ -177,7 +178,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
 
   // Workload Identity Constants
-  private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   private static final String WORKLOAD_IDENTITY_ENABLED = "master.environment.k8s.workload.identity.enabled";
   private static final String WORKLOAD_IDENTITY_POOL = "master.environment.k8s.workload.identity.pool";
   @VisibleForTesting
