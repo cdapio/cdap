@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.tethering;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -28,7 +29,9 @@ import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.elasticsearch.common.Strings;
 
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.inject.Inject;
@@ -67,6 +70,7 @@ public class TetheringClientHandler extends AbstractHttpHandler {
     validateNamespaces(namespaces);
     PeerMetadata peerMetadata = new PeerMetadata(namespaces, tetheringCreationRequest.getMetadata(),
                                                  tetheringCreationRequest.getDescription());
+    validateEndpoint(tetheringCreationRequest.getEndpoint());
     PeerInfo peerInfo = new PeerInfo(tetheringCreationRequest.getPeer(), tetheringCreationRequest.getEndpoint(),
                                      TetheringStatus.PENDING, peerMetadata, System.currentTimeMillis());
     store.addPeer(peerInfo);
@@ -79,6 +83,17 @@ public class TetheringClientHandler extends AbstractHttpHandler {
       if (!namespaceQueryAdmin.exists(namespaceId)) {
         throw new NamespaceNotFoundException(namespaceId);
       }
+    }
+  }
+
+  private void validateEndpoint(String endpoint) throws BadRequestException {
+    if (Strings.isNullOrEmpty(endpoint)) {
+      throw new BadRequestException("Endpoint must be specified");
+    }
+    try {
+      new URL(endpoint).toURI();
+    } catch (Exception e) {
+      throw new BadRequestException(String.format("Endpoint %s is not a valid URI: %s", endpoint, e.getMessage()), e);
     }
   }
 }
