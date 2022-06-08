@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -63,7 +64,7 @@ public class TetheringControlMessage {
 
     TetheringControlMessage that = (TetheringControlMessage) o;
     return Objects.equals(type, that.type) &&
-      Objects.equals(payload, that.payload);
+      Arrays.equals(payload, that.payload);
   }
 
   @Override

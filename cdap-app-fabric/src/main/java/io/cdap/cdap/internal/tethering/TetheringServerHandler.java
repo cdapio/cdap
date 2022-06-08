@@ -114,8 +114,9 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     MessageFetcher fetcher = messagingContext.getMessageFetcher();
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(), topicPrefix + peer);
     String lastMessageId = messageId;
+    int batchSize = cConf.getInt(Constants.Tethering.CONTROL_MESSAGE_BATCH_SIZE);
     try (CloseableIterator<Message> iterator =
-           fetcher.fetch(topic.getNamespace(), topic.getTopic(), 1, messageId)) {
+           fetcher.fetch(topic.getNamespace(), topic.getTopic(), batchSize, messageId)) {
       while (iterator.hasNext()) {
         Message message = iterator.next();
         TetheringControlMessage controlMessage = GSON.fromJson(message.getPayloadAsString(StandardCharsets.UTF_8),
