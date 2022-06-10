@@ -21,7 +21,7 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.status.Status;
-import ch.qos.logback.core.status.StatusChecker;
+import ch.qos.logback.core.status.StatusUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provider;
@@ -196,7 +196,7 @@ public class LogPipelineLoader {
     configurator.doConfigure(configURL);
 
     // Check if the configuration has any error in it.
-    if (!new StatusChecker(context).isErrorFree(Status.ERROR)) {
+    if (!new StatusUtil(context).isErrorFree(Status.ERROR)) {
       Throwable failureCause = null;
       List<Status> errors = new ArrayList<>();
       for (Status status : context.getStatusManager().getCopyOfStatusList()) {
@@ -251,7 +251,7 @@ public class LogPipelineLoader {
     // defined in the logback xml.
     for (String key : keys) {
       context.putProperty(key, cConf.get(key));
-      cConf.set(key, configurator.getExecutionContext().subst("${" + key + "}"));
+      cConf.set(key, configurator.getInterpretationContext().subst("${" + key + "}"));
     }
 
     return cConf;

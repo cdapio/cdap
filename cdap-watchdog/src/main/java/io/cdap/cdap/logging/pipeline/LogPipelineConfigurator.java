@@ -25,8 +25,8 @@ import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.joran.action.Action;
 import ch.qos.logback.core.joran.action.ActionConst;
 import ch.qos.logback.core.joran.spi.ActionException;
+import ch.qos.logback.core.joran.spi.ElementSelector;
 import ch.qos.logback.core.joran.spi.InterpretationContext;
-import ch.qos.logback.core.joran.spi.Pattern;
 import ch.qos.logback.core.joran.spi.RuleStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Syncable;
@@ -53,8 +53,8 @@ public class LogPipelineConfigurator extends JoranConfigurator {
   protected void buildInterpreter() {
     super.buildInterpreter();
     RuleStore ruleStore = interpreter.getRuleStore();
-    ruleStore.addRule(new Pattern("configuration/contextName"), new ContextConfigAction(cConf));
-    ruleStore.addRule(new Pattern("configuration/appender"), new WrapAppenderAction<ILoggingEvent>());
+    ruleStore.addRule(new ElementSelector("configuration/contextName"), new ContextConfigAction(cConf));
+    ruleStore.addRule(new ElementSelector("configuration/appender"), new WrapAppenderAction<ILoggingEvent>());
   }
 
   /**
