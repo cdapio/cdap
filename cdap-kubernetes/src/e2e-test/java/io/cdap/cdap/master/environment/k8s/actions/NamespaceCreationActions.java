@@ -21,7 +21,7 @@ import io.cdap.e2e.utils.ElementHelper;
 import io.cdap.e2e.utils.SeleniumHelper;
 
 /**
- * Namespace creation related actions
+ * Namespace creation related actions.
  */
 public class NamespaceCreationActions {
 

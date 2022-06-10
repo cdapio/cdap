@@ -34,9 +34,11 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Namespace creation related steps definitions
+ * Namespace creation related steps definitions.
  */
 public class KubernetesNamespaceCreation implements CdfHelper {
+
+  private static final int WAIT_TIME_MS = 3000;
 
   private static CoreV1Api coreV1Api;
 
@@ -78,8 +80,10 @@ public class KubernetesNamespaceCreation implements CdfHelper {
   }
 
   @Then("Finish namespace creation")
-  public static void finishNamespaceCreation() {
+  public static void finishNamespaceCreation() throws InterruptedException {
     NamespaceCreationActions.clickFinishButton();
+    // add delay to wait for Kubernetes actions to complete
+    Thread.sleep(WAIT_TIME_MS);
   }
 
   @Then("Verify Kubernetes namespace {string} exists")
