@@ -26,8 +26,10 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
@@ -48,7 +50,9 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
@@ -69,6 +73,7 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -404,6 +409,68 @@ public class TetheringServerHandlerTest {
 
     // Delete tethering
     deleteTethering();
+  }
+
+  @Test
+  public void testControlResponses() throws Exception {
+    // Create and accept tethering
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
+    acceptTethering();
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
+
+    // Queue up a couple of messages for the peer
+    MessagePublisher publisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
+    String topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    String topic = topicPrefix + "xyz";
+    TetheringLaunchMessage launchMessage = new TetheringLaunchMessage.Builder()
+      .addFileNames(DistributedProgramRunner.LOGBACK_FILE_NAME)
+      .addFileNames(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME)
+      .addFileNames(DistributedProgramRunner.APP_SPEC_FILE_NAME)
+      .addRuntimeNamespace("default")
+      .build();
+    TetheringControlMessage message1 = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM,
+                                                                   Bytes.toBytes(GSON.toJson(launchMessage)));
+    publisher.publish(NamespaceId.SYSTEM.getNamespace(), topic, GSON.toJson(message1));
+    ProgramRunInfo programRunInfo = new ProgramRunInfo.Builder()
+      .setNamespace("ns")
+      .setApplication("app")
+      .setVersion("1.0")
+      .setProgramType("workflow")
+      .setProgram("program")
+      .setRun("runId")
+      .build();
+    TetheringControlMessage message2 = new TetheringControlMessage(TetheringControlMessage.Type.STOP_PROGRAM,
+                                                                   Bytes.toBytes(GSON.toJson(programRunInfo)));
+    publisher.publish(NamespaceId.SYSTEM.getNamespace(), topic, GSON.toJson(message2));
+
+    // Poll the server
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/controlchannels/xyz"))
+      .withBody(GSON.toJson(new TetheringControlChannelRequest(null, null)));
+
+    // Response should contain 2 messages
+    HttpResponse response = HttpRequests.execute(builder.build());
+    TetheringControlResponse[] controlResponses = GSON.fromJson(response.getResponseBodyAsString(),
+                                                                TetheringControlResponse[].class);
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    Assert.assertEquals(2, controlResponses.length);
+    Assert.assertEquals(message1, controlResponses[0].getControlMessage());
+    Assert.assertEquals(message2, controlResponses[1].getControlMessage());
+
+    // Poll again with lastMessageId set to id of last message received from the server
+    String lastMessageId = controlResponses[1].getLastMessageId();
+    builder = HttpRequest.builder(HttpMethod.POST,
+                                  config.resolveURL("tethering/controlchannels/xyz"))
+      .withBody(GSON.toJson(new TetheringControlChannelRequest(lastMessageId, null)));
+
+    // There should be no more messages queued up for this client, so we should just get a keepalive.
+    response = HttpRequests.execute(builder.build());
+    controlResponses = GSON.fromJson(response.getResponseBodyAsString(),
+                                     TetheringControlResponse[].class);
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    Assert.assertEquals(1, controlResponses.length);
+    Assert.assertEquals(TetheringControlMessage.Type.KEEPALIVE, controlResponses[0].getControlMessage().getType());
+    Assert.assertEquals(lastMessageId, controlResponses[0].getLastMessageId());
   }
 
   @Test

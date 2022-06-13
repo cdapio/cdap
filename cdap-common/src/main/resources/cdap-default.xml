@@ -5249,6 +5249,14 @@
   </property>
 
   <property>
+    <name>tethering.control.message.batch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of control messages sent by tethering server in response to poll.
+    </description>
+  </property>
+
+  <property>
     <name>jmx.metrics.collector.poll.interval.secs</name>
     <value>60</value>
     <description>
