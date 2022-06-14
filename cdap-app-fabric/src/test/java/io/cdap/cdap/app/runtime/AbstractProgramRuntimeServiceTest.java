@@ -43,6 +43,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
@@ -502,7 +503,8 @@ public class AbstractProgramRuntimeServiceTest {
     }
 
     @Override
-    protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException {
+    protected ArtifactDetail getArtifactDetail(ArtifactId artifactId, ArtifactRepository artifactRepository)
+      throws IOException {
       io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
         "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
       return new ArtifactDetail(new ArtifactDescriptor(NamespaceId.DEFAULT.getNamespace(),
@@ -511,17 +513,19 @@ public class AbstractProgramRuntimeServiceTest {
     }
 
     @Override
-    protected void downloadArtifact(Id.Artifact artifactId, Path target) {
+    protected void downloadArtifact(Id.Artifact artifactId, Path target, ArtifactRepository artifactRepository) {
     }
 
     @Override
     protected ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail, ProgramId programId,
                                                          ArtifactId artifactId, ApplicationSpecification appSpec,
                                                          ProgramOptions options, PluginFinder pluginFinder,
-                                                         RemoteClientFactory factory)
+                                                         RemoteClientFactory factory,
+                                                         ArtifactRepository artifactRepository)
       throws ExecutionException, InterruptedException, TimeoutException {
       return tetheredRun ? appSpec : super.regenerateAppSpec(artifactDetail, programId, artifactId,
-                                                             appSpec, options, pluginFinder, factory);
+                                                             appSpec, options, pluginFinder, factory,
+                                                             artifactRepository);
     }
   }
 }
