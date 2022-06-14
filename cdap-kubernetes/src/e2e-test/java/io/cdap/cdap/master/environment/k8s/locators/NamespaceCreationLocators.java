@@ -21,7 +21,7 @@ import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.How;
 
 /**
- * Namespace creation related locators
+ * Namespace creation related locators.
  */
 public class NamespaceCreationLocators {
 
