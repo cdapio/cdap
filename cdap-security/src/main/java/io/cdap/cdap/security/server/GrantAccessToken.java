@@ -71,7 +71,10 @@ public class GrantAccessToken {
    * Initialize the TokenManager.
    */
   public void init() {
-    tokenManager.start();
+    // TokenManager may have already been started in AbstractServiceMain if internal auth is enabled.
+    if (!tokenManager.isRunning()) {
+      tokenManager.start();
+    }
   }
 
   /**
