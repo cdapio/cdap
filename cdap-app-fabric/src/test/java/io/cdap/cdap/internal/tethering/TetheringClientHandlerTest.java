@@ -448,6 +448,35 @@ public class TetheringClientHandlerTest {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
   }
 
+  @Test
+  public void testInvalidEndpoint() throws Exception {
+    TetheringCreationRequest tetheringRequest = new TetheringCreationRequest("instance",
+                                                                             "invalid_endpoint",
+                                                                             Collections.emptyList(),
+                                                                             Collections.emptyMap(),
+                                                                             "");
+    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+      .withBody(GSON.toJson(tetheringRequest))
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
+  }
+
+  @Test
+  public void testNullEndpoint() throws Exception {
+    TetheringCreationRequest tetheringRequest = new TetheringCreationRequest("instance",
+                                                                             null,
+                                                                             Collections.emptyList(),
+                                                                             Collections.emptyMap(),
+                                                                             "");
+    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+      .withBody(GSON.toJson(tetheringRequest))
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
+  }
+
+
   private void deleteTethering(String instance) throws IOException {
     HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
                                               clientConfig.resolveURL("tethering/connections/" + instance))

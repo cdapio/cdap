@@ -97,16 +97,19 @@ public class TetheringLaunchMessage {
       return this;
     }
 
-    public void addLocalizeFiles(String fileName, byte[] fileContents) {
+    public Builder addLocalizeFiles(String fileName, byte[] fileContents) {
       this.localizeFiles.put(fileName, fileContents);
+      return this;
     }
 
-    public void addCConfEntries(Map<String, String> entries) {
+    public Builder addCConfEntries(Map<String, String> entries) {
       this.cConfEntries.putAll(entries);
+      return this;
     }
 
-    public void addRuntimeNamespace(String runtimeNamespace) {
+    public Builder addRuntimeNamespace(String runtimeNamespace) {
       this.runtimeNamespace = runtimeNamespace;
+      return this;
     }
 
     public Set<String> getFileNames() {

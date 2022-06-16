@@ -124,8 +124,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private final LocationFactory locationFactory;
   private final RemoteClientFactory remoteClientFactory;
   private final PluginFinder pluginFinder;
+  private final ArtifactRepository noAuthArtifactRepository;
   private RemoteAuthenticator remoteAuthenticator;
-  private ArtifactRepository artifactRepository;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private String hostname;
 
@@ -141,7 +141,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     this.impersonator = impersonator;
     this.locationFactory = locationFactory;
     this.remoteClientFactory = remoteClientFactory;
-    this.artifactRepository = artifactRepository;
+    this.noAuthArtifactRepository = artifactRepository;
     this.pluginFinder = pluginFinder;
   }
 
@@ -182,6 +182,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
         .orElseThrow(UnsupportedOperationException::new);
     }
+    ArtifactRepository artifactRepository = noAuthArtifactRepository;
     String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
     if (peer != null) {
       // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
@@ -205,7 +206,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     // Get the artifact details and save it into the program options.
     ArtifactId artifactId = programDescriptor.getArtifactId();
-    ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+    ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
     ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
     ProgramDescriptor newProgramDescriptor = programDescriptor;
     ProgramOptions updatedOptions = options;
@@ -217,7 +218,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       // Take a snapshot of all the plugin artifacts used by the program
       updatedOptions = createPluginSnapshot(updatedOptions, programId, tempDir,
                                             newProgramDescriptor.getApplicationSpecification(),
-                                            isDistributed);
+                                            isDistributed, artifactRepository);
       // Download the program jar into the target directory
       // This hack is here because the program jar won't actually exist in a tethered run
       // TODO: (CDAP-19150) remove hack once Location is removed form ArtifactDetail
@@ -225,7 +226,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       Id.Artifact aId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
       File targetFile = new File(tempDir, "program.jar");
       Path target = targetFile.toPath();
-      downloadArtifact(aId, target);
+      downloadArtifact(aId, target, artifactRepository);
       Location location = Locations.toLocation(target);
       ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactDetail.getDescriptor().getNamespace(),
                                                              artifactDetail.getDescriptor().getArtifactId(),
@@ -257,7 +258,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       }
       try {
         ApplicationSpecification generatedAppSpec =
-          regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, updatedOptions, pf, factory);
+          regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, updatedOptions, pf, factory,
+                            artifactRepository);
         appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
         newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
       } catch (Exception e) {
@@ -274,7 +276,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       // PLUGIN_DIR program option is set in createPluginSnapshot(). This option is read while regenerating app spec.
       updatedOptions = createPluginSnapshot(updatedOptions, programId, tempDir,
                                             newProgramDescriptor.getApplicationSpecification(),
-                                            isDistributed);
+                                            isDistributed, artifactRepository);
     }
 
     // Create and run the program
@@ -293,7 +295,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   protected ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail, ProgramId programId,
                                                        ArtifactId artifactId, ApplicationSpecification existingAppSpec,
                                                        ProgramOptions options, PluginFinder pluginFinder,
-                                                       RemoteClientFactory factory)
+                                                       RemoteClientFactory factory,
+                                                       ArtifactRepository artifactRepository)
     throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
@@ -326,7 +329,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   /**
    * Downloads the artifact to the given path.
    */
-  protected void downloadArtifact(Id.Artifact artifactId, Path target) throws NotFoundException, IOException {
+  protected void downloadArtifact(Id.Artifact artifactId, Path target, ArtifactRepository artifactRepository)
+    throws NotFoundException, IOException {
     try (InputStream is = artifactRepository.newInputStream(artifactId)) {
       Files.copy(is, target);
     }
@@ -371,7 +375,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
   }
 
-  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
+  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId, ArtifactRepository artifactRepository)
+    throws Exception {
     return artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
   }
 
@@ -481,7 +486,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
    */
   private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
                                               @Nullable ApplicationSpecification appSpec,
-                                              boolean isDistributed) throws Exception {
+                                              boolean isDistributed, ArtifactRepository artifactRepository)
+    throws Exception {
     // appSpec is null in an unit test
     if (appSpec == null) {
       return options;
@@ -500,8 +506,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       try {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
         String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
-        ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-        copyArtifact(artifactId, artifactDetail, destFile, isDistributed, peer != null);
+        ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
+        copyArtifact(artifactId, artifactDetail, destFile, artifactRepository, isDistributed, peer != null);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
@@ -522,7 +528,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
    * @throws IOException if the copying failed
    */
   private void copyArtifact(ArtifactId artifactId, ArtifactDetail artifactDetail, File targetFile,
-                            boolean isDistributed, boolean isTetheredPeer) throws Exception {
+                            ArtifactRepository artifactRepository, boolean isDistributed, boolean isTetheredPeer)
+    throws Exception {
     if (isTetheredPeer) {
       try (InputStream in = artifactRepository.newInputStream(Id.Artifact.fromEntityId(artifactId))) {
         copyArtifact(artifactId, targetFile, isDistributed, () -> {
