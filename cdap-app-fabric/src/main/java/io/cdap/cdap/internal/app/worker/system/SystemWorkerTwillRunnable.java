@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
@@ -194,6 +195,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+    LOG.debug("Master Env: {}", masterEnv);
+    LOG.debug("Env: {}", new Gson().toJson(masterEnv));
 
     if (masterEnv == null) {
       modules.add(new ZKClientModule());
