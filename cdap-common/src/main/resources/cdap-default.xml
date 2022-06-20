@@ -5368,4 +5368,10 @@
       Health Check HTTP service bind port; if 0, binds to a random port
     </description>
   </property>
+
+  <property>
+    <name>test.property.replace</name>
+    <value>${test.property.replace.value}</value>
+    <final>true</final>
+  </property>
 </configuration>

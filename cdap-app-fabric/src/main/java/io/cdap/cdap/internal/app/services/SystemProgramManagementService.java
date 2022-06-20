@@ -62,6 +62,7 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
     this.programsEnabled = new AtomicReference<>();
+    LOG.info("Cconf value for test.property.replace is {}", cConf.get("test.property.replace"));
   }
 
   /**
