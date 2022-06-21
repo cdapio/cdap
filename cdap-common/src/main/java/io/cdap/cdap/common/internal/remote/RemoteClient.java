@@ -20,6 +20,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
+import io.cdap.cdap.api.retry.Idempotency;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -124,6 +126,37 @@ public class RemoteClient {
       }
     } catch (ConnectException e) {
       throw new ServiceUnavailableException(discoverableServiceName, e);
+    }
+  }
+
+  /**
+   * Perform the request, returning the response. Wraps exceptions from {@link RemoteClient#execute(HttpRequest)} into
+   * {@link RetryableException} that are retryable for idempotent operations.
+   *
+   * @param request the request to perform
+   * @param idempotency the type of idempotency
+   * @return the response
+   * @throws IOException if there was an IOException while performing the non-idempotent request
+   */
+  public HttpResponse execute(HttpRequest request, Idempotency idempotency) throws IOException {
+    switch (idempotency) {
+      case IDEMPOTENT:
+        return executeIdempotent(request);
+      case AUTO:
+        HttpMethod method = request.getMethod();
+        if (method == HttpMethod.GET || method == HttpMethod.PUT || method == HttpMethod.DELETE) {
+          return executeIdempotent(request);
+        } // fall through
+      default:
+        return execute(request);
+    }
+  }
+
+  private HttpResponse executeIdempotent(HttpRequest request) {
+    try {
+      return execute(request);
+    } catch (IOException e) {
+      throw new RetryableException(e);
     }
   }
 
