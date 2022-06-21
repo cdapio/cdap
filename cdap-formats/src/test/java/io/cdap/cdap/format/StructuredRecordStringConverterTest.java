@@ -63,11 +63,11 @@ public class StructuredRecordStringConverterTest {
       Schema.Field.of("double", Schema.arrayOf(Schema.of(Schema.Type.DOUBLE))),
       Schema.Field.of("bool", Schema.arrayOf(Schema.of(Schema.Type.BOOLEAN))));
     StructuredRecord expected = StructuredRecord.builder(arraysSchema)
-      .set("int", new int[]{ Integer.MIN_VALUE, 0, Integer.MAX_VALUE })
-      .set("long", new long[] { Long.MIN_VALUE, 0L, Long.MAX_VALUE })
-      .set("float", new float[] { Float.MIN_VALUE, 0f, Float.MAX_VALUE })
-      .set("double", new double[] { Double.MIN_VALUE, 0d, Double.MAX_VALUE })
-      .set("bool", new boolean[] { false, true })
+      .set("int", new int[]{Integer.MIN_VALUE, 0, Integer.MAX_VALUE})
+      .set("long", new long[]{Long.MIN_VALUE, 0L, Long.MAX_VALUE})
+      .set("float", new float[]{Float.MIN_VALUE, 0f, Float.MAX_VALUE})
+      .set("double", new double[]{Double.MIN_VALUE, 0d, Double.MAX_VALUE})
+      .set("bool", new boolean[]{false, true})
       .build();
     String recordOfJson = StructuredRecordStringConverter.toJsonString(expected);
     StructuredRecord actual = StructuredRecordStringConverter.fromJsonString(recordOfJson, arraysSchema);
@@ -86,9 +86,9 @@ public class StructuredRecordStringConverterTest {
   }
 
   @Test
-  public void testNullableBytes() throws Exception {
+  public void testNullableBytesJson() throws Exception {
     Schema s = Schema.recordOf("nullableBytes", Schema.Field.of("b", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
-    byte[] bytes = new byte[] { 0, 1, 2 };
+    byte[] bytes = new byte[]{0, 1, 2};
 
     StructuredRecord byteBuf = StructuredRecord.builder(s).set("b", ByteBuffer.wrap(bytes)).build();
     StructuredRecord byteArr = StructuredRecord.builder(s).set("b", bytes).build();
@@ -96,14 +96,42 @@ public class StructuredRecordStringConverterTest {
 
     String encoded = StructuredRecordStringConverter.toJsonString(byteBuf);
     StructuredRecord decoded = StructuredRecordStringConverter.fromJsonString(encoded, s);
+    Assert.assertEquals("{\"b\":[0,1,2]}", encoded);
     Assert.assertArrayEquals(Bytes.toBytes((ByteBuffer) decoded.get("b")), bytes);
 
     encoded = StructuredRecordStringConverter.toJsonString(byteArr);
     decoded = StructuredRecordStringConverter.fromJsonString(encoded, s);
+    Assert.assertEquals("{\"b\":[0,1,2]}", encoded);
     Assert.assertArrayEquals(Bytes.toBytes((ByteBuffer) decoded.get("b")), bytes);
 
     encoded = StructuredRecordStringConverter.toJsonString(nullRec);
+    Assert.assertEquals("{\"b\":null}", encoded);
     decoded = StructuredRecordStringConverter.fromJsonString(encoded, s);
+    Assert.assertNull(decoded.get("b"));
+  }
+
+  @Test
+  public void testNullableBytesDelimited() throws Exception {
+    Schema s = Schema.recordOf("nullableBytes", Schema.Field.of("b", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
+    byte[] bytes = new byte[]{0, 1, 2};
+
+    StructuredRecord byteBuf = StructuredRecord.builder(s).set("b", ByteBuffer.wrap(bytes)).build();
+    StructuredRecord byteArr = StructuredRecord.builder(s).set("b", bytes).build();
+    StructuredRecord nullRec = StructuredRecord.builder(s).build();
+
+    String encoded = StructuredRecordStringConverter.toDelimitedString(byteBuf, ",");
+    StructuredRecord decoded = StructuredRecordStringConverter.fromDelimitedString(encoded, ",", s);
+    Assert.assertEquals("AAEC", encoded);
+    Assert.assertEquals(decoded.get("b"), ByteBuffer.wrap(bytes));
+
+    encoded = StructuredRecordStringConverter.toDelimitedString(byteArr, ",");
+    decoded = StructuredRecordStringConverter.fromDelimitedString(encoded, ",", s);
+    Assert.assertEquals("AAEC", encoded);
+    Assert.assertArrayEquals(((ByteBuffer) decoded.get("b")).array(), bytes);
+
+    encoded = StructuredRecordStringConverter.toDelimitedString(nullRec, ",");
+    Assert.assertEquals("", encoded);
+    decoded = StructuredRecordStringConverter.fromDelimitedString(encoded, ",", s);
     Assert.assertNull(decoded.get("b"));
   }
 
@@ -235,14 +263,24 @@ public class StructuredRecordStringConverterTest {
 
   @Test
   public void testDecimalLogicalTypeConversion() throws Exception {
-    Schema dateSchema = Schema.recordOf("decimal", Schema.Field.of("d", Schema.nullableOf(Schema.decimalOf(3, 2))));
+    Schema dateSchema = Schema.recordOf("decimal",
+                                        Schema.Field.of("d",
+                                                        Schema.nullableOf(Schema.decimalOf(18, 7))));
     StructuredRecord record = StructuredRecord.builder(dateSchema)
-      .setDecimal("d", new BigDecimal(new BigInteger("111"), 2)).build();
+      .setDecimal("d", new BigDecimal(new BigInteger("123456789123456789"), 7)).build();
 
     String jsonOfRecord = StructuredRecordStringConverter.toJsonString(record);
     StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
 
+    Assert.assertEquals("{\"d\":12345678912.3456789}", jsonOfRecord);
     Assert.assertEquals(record.getDecimal("d"), recordOfJson.getDecimal("d"));
+
+    String delimitedStringOfRecord = StructuredRecordStringConverter.toDelimitedString(record, ",");
+    StructuredRecord recordOfDelimitedString =
+      StructuredRecordStringConverter.fromDelimitedString(delimitedStringOfRecord, ",", dateSchema);
+
+    Assert.assertEquals("12345678912.3456789", delimitedStringOfRecord);
+    Assert.assertEquals(record.getDecimal("d"), recordOfDelimitedString.getDecimal("d"));
   }
 
   @Test

@@ -49,7 +49,7 @@ public class StructuredRecordDatumReader implements DatumReader<StructuredRecord
    * @return The decoded value
    * @throws IOException If failed to decode
    */
-  protected final Object decode(Decoder decoder, Schema schema) throws IOException {
+  protected Object decode(Decoder decoder, Schema schema) throws IOException {
     switch (schema.getType()) {
       case NULL:
         decoder.readNull();
