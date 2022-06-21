@@ -141,7 +141,7 @@ public class TetheringRuntimeJobManagerTest {
                           cConf.get(Constants.Tethering.TOPIC_PREFIX) + TETHERED_INSTANCE_NAME);
     messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
     messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
-    runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService);
+    runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore);
     tetheringProvisioner = injector.getInstance(TetheringProvisioner.class);
   }
 
@@ -199,21 +199,20 @@ public class TetheringRuntimeJobManagerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateNamespaceNotFound() {
-    Map<String, String> properties = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
-                                                     TETHERED_INSTANCE_NAME,
-                                                     TetheringConf.TETHERED_NAMESPACE_PROPERTY,
-                                                     "default");
     // Validation should fail because default namespace is not associated with the tethering
-    tetheringProvisioner.validateProperties(properties);
+    runtimeJobManager.checkTetheredConnection(TETHERED_INSTANCE_NAME, "default");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidatePeerNotFound() {
-    Map<String, String> properties = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
-                                                     "unknown_peer",
-                                                     TetheringConf.TETHERED_NAMESPACE_PROPERTY,
-                                                     TETHERED_NAMESPACE_NAME);
     // Validation should fail because the peer is not tethered
-    tetheringProvisioner.validateProperties(properties);
+    runtimeJobManager.checkTetheredConnection("unknown_peer", TETHERED_INSTANCE_NAME);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateConnectionStatus() throws IOException {
+    tetheringStore.updatePeerStatusAndTimestamp(TETHERED_INSTANCE_NAME, TetheringStatus.PENDING);
+    // Validation should fail because the tethering status is not yet accepted
+    runtimeJobManager.checkTetheredConnection(TETHERED_INSTANCE_NAME, TETHERED_INSTANCE_NAME);
   }
 }
