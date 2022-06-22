@@ -28,12 +28,17 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * RemoteTwillModule provides ImpersonatedTwillRunnerService which has RemoteExecutionTwillRunnerService as its
  * delegate.
  */
 public class RemoteTwillModule extends AbstractModule {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerTwillRunnable.class);
+
   @Override
   protected void configure() {
     Key<TwillRunnerService> twillRunnerServiceKey = Key.get(TwillRunnerService.class,
@@ -54,11 +59,14 @@ public class RemoteTwillModule extends AbstractModule {
     TwillRunnerServiceProvider(Configuration hConf, Impersonator impersonator,
                                TokenSecureStoreRenewer secureStoreRenewer,
                                @Constants.AppFabric.RemoteExecution TwillRunnerService
-                                 remoteExecutionTwillRunnerService) {
+                                 remoteExecutionTwillRunnerService,
+                               TwillRunnerService twillRunnerService) {
       this.hConf = hConf;
       this.impersonator = impersonator;
       this.secureStoreRenewer = secureStoreRenewer;
       this.remoteExecutionTwillRunnerService = remoteExecutionTwillRunnerService;
+      LOG.debug("RETRS: {}", remoteExecutionTwillRunnerService);
+      LOG.debug("TRS: {}", twillRunnerService);
     }
 
     @Override

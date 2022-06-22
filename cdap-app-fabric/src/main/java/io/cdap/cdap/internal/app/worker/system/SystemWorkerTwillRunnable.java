@@ -195,9 +195,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-    LOG.debug("Master Env: {}", masterEnv);
-    LOG.debug("Env: {}", new Gson().toJson(masterEnv));
-
     if (masterEnv == null) {
       modules.add(new ZKClientModule());
       modules.add(new ZKDiscoveryModule());
