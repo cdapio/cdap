@@ -44,8 +44,8 @@ public class RemoteTwillModule extends AbstractModule {
     Key<TwillRunnerService> twillRunnerServiceKey = Key.get(TwillRunnerService.class,
                                                             Constants.AppFabric.ProgramRunner.class);
     bind(twillRunnerServiceKey).toProvider(TwillRunnerServiceProvider.class).in(Scopes.SINGLETON);
-    bind(TwillRunner.class).to(twillRunnerServiceKey);
-    bind(TwillRunnerService.class).to(twillRunnerServiceKey);
+//    bind(TwillRunner.class).to(twillRunnerServiceKey);
+//    bind(TwillRunnerService.class).to(twillRunnerServiceKey);
   }
 
   static final class TwillRunnerServiceProvider implements Provider<TwillRunnerService> {
