@@ -26,7 +26,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
