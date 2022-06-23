@@ -169,6 +169,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
   @Override
   public ProgramController dispatchProgram(ProgramRunDispatcherInfo programRunDispatcherInfo) throws Exception {
+    long start = System.currentTimeMillis();
     RunId runId = programRunDispatcherInfo.getRunId();
     LOG.debug("Preparing to dispatch program run: {}", runId);
     ProgramDescriptor programDescriptor = programRunDispatcherInfo.getProgramDescriptor();
@@ -280,6 +281,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     }
 
     // Create and run the program
+    LOG.error(">>>> Phase 1 dispatchProgram : {}", System.currentTimeMillis() - start);
     Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
                                               tempDir, tetheredRun);
     programRunDispatcherInfo.getCleanUpTask().set(createCleanupTask(tempDir, runner, executableProgram));
@@ -363,9 +365,11 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         }
       }
       // Unpack the JAR file
+      long start = System.currentTimeMillis();
       classLoaderFolder = BundleJarUtil
         .prepareClassLoaderFolder(programJarLocation,
                                   () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());
+      LOG.error(">>>> createProgram BundleJarUtil {}", System.currentTimeMillis() - start);
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception e) {

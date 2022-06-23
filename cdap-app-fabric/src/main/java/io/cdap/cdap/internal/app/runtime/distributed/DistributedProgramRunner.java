@@ -176,6 +176,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   @Override
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
+    long start = System.currentTimeMillis();
     validateOptions(program, oldOptions);
 
     CConfiguration cConf = CConfiguration.copy(this.cConf);
@@ -243,7 +244,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                               options, ProgramOptions.class,
                               File.createTempFile("program.options", ".json", tempDir))));
 
+      LOG.error(">>> before callable {}", System.currentTimeMillis() - start);
       Callable<ProgramController> callable = () -> {
+        long start2 = System.currentTimeMillis();
         ProgramTwillApplication twillApplication = new ProgramTwillApplication(
           programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
           localizeResources, createEventHandler(cConf, programRunId, options));
@@ -369,6 +372,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           DistributedProgramRunner.this.getClass().getClassLoader(),
           extraDependencies.stream().map(Class::getClassLoader)::iterator));
         try {
+          LOG.error(">>> inside callable : {}", System.currentTimeMillis() - start2);
           twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                 TimeUnit.SECONDS);
 

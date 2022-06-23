@@ -120,6 +120,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     this.projectId = clusterInfo.getProjectId();
     this.region = clusterInfo.getRegion();
     this.bucket = clusterInfo.getBucket();
+    LOG.error(">>> bucket name is {}" + bucket);
     this.labels = clusterInfo.getLabels();
   }
 
@@ -188,7 +189,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runInfo.getRun());
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
+      long start = System.currentTimeMillis();
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
+      LOG.error(">>> DataprocRuntimeJobManager.step 1 {}", System.currentTimeMillis() - start);
+      start = System.currentTimeMillis();
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
@@ -201,9 +205,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       for (Future<LocalFile> uploadFuture : uploadFutures) {
         uploadedFiles.add(uploadFuture.get());
       }
+      LOG.error(">>> DataprocRuntimeJobManager.step 2 {}", System.currentTimeMillis() - start);
 
       // step 3: build the hadoop job request to be submitted to dataproc
+      start = System.currentTimeMillis();
       SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
+      LOG.error(">>> DataprocRuntimeJobManager.step 3 {}", System.currentTimeMillis() - start);
 
       // step 4: submit hadoop job to dataproc
       try {
@@ -312,12 +319,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                                File tempDir) throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(tempDir);
     List<LocalFile> localFiles = new ArrayList<>(runtimeLocalFiles);
-    localFiles.add(DataprocJarUtil.getTwillJar(locationFactory));
-    localFiles.add(DataprocJarUtil.getLauncherJar(locationFactory));
 
+    long start = System.currentTimeMillis();
+    localFiles.add(DataprocJarUtil.getTwillJar(locationFactory));
+    LOG.error(">>>> twilljar takes {}", System.currentTimeMillis() - start);
+    start = System.currentTimeMillis();
+    localFiles.add(DataprocJarUtil.getLauncherJar(locationFactory));
+    LOG.error(">>>> launcher.jar takes {}", System.currentTimeMillis() - start);
+    start = System.currentTimeMillis();
     // Sort files in descending order by size so that we upload concurrently large files first.
     localFiles.sort(Comparator.comparingLong(LocalFile::getSize).reversed());
-
+    LOG.error(">>>> sort takes {}", System.currentTimeMillis() - start);
     return localFiles;
   }
 
