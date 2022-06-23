@@ -43,7 +43,9 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.api.LocalFile;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +53,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,9 +80,10 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   private final MessagePublisher messagePublisher;
   private final TetheringStore tetheringStore;
   private final TopicId topicId;
+  private final LocationFactory locationFactory;
 
   public TetheringRuntimeJobManager(TetheringConf conf, CConfiguration cConf, MessagingService messagingService,
-                                    TetheringStore tetheringStore) {
+                                    TetheringStore tetheringStore, LocationFactory locationFactory) {
     this.tetheredInstanceName = conf.getTetheredInstanceName();
     this.tetheredNamespace = conf.getTetheredNamespace();
     this.cConf = cConf;
@@ -87,6 +91,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     this.tetheringStore = tetheringStore;
     this.topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                                cConf.get(Constants.Tethering.TOPIC_PREFIX) + tetheredInstanceName);
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -164,18 +169,30 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   }
 
   /**
-   * Use GZIPOutputStream to compress the LocalFile
+   * Use GZIPOutputStream to compress the LocalFile. First attempts to read from location factory; if the file does
+   * not exist in the location factory base path, attempts to read from local disk.
    */
   @VisibleForTesting
   byte[] getLocalFileAsCompressedBytes(LocalFile localFile) throws IOException {
-    File file = new File(localFile.getURI());
+    LOG.trace("Compressing local file with name '{}' and URI '{}'", localFile.getName(), localFile.getURI());
+    InputStream in;
+    // Determine whether to read from local file or location factory based on file scheme.
+    if (locationFactory.getHomeLocation().toURI().getScheme().equals(localFile.getURI().getScheme())) {
+      in = locationFactory.create(localFile.getURI()).getInputStream();
+    } else {
+      in = new FileInputStream(new File(localFile.getURI()));
+    }
     byte[] buffer = new byte[1024 * 500]; // use 500kb buffer
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try (GZIPOutputStream os = new GZIPOutputStream(baos); FileInputStream fis = new FileInputStream(file)) {
-      int length;
-      while ((length = fis.read(buffer)) > 0) {
-        os.write(buffer, 0, length);
+    try {
+      try (GZIPOutputStream os = new GZIPOutputStream(baos)) {
+        int length;
+        while ((length = in.read(buffer)) > 0) {
+          os.write(buffer, 0, length);
+        }
       }
+    } finally {
+      in.close();
     }
     return baos.toByteArray();
   }
@@ -207,6 +224,10 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
       .addFileNames(DistributedProgramRunner.LOGBACK_FILE_NAME)
       .addFileNames(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME)
       .addFileNames(DistributedProgramRunner.APP_SPEC_FILE_NAME);
+
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      builder.addFileNames(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+    }
 
     Collection<? extends LocalFile> localFiles = runtimeJobInfo.getLocalizeFiles();
     for (String fileName : builder.getFileNames()) {

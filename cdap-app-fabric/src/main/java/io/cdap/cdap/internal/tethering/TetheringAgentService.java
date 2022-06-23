@@ -363,6 +363,12 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     try (OutputStream os = programDir.append(DistributedProgramRunner.TETHER_CONF_FILE_NAME).getOutputStream()) {
       cConfCopy.writeXml(os);
     }
+    if (files.containsKey(Constants.Security.Authentication.RUNTIME_TOKEN_FILE)) {
+      try (OutputStream os = programDir
+        .append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE).getOutputStream()) {
+        os.write(files.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE).getBytes(StandardCharsets.UTF_8));
+      }
+    }
 
     Map<String, String> systemArgs = new HashMap<>(programOpts.getArguments().asMap());
     // Remove the plugin artifact archive argument from options and let the program runner recreate it
