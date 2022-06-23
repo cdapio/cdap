@@ -20,8 +20,6 @@ import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -49,13 +47,12 @@ public interface ValidatingInputFormat extends InputFormatProvider {
    * Try to detect the schema from some input data.
    *
    * @param context format context
-   * @param dataStream supplier for opening an input stream containing sample data. It is the responsibility of this
-   *                   method to close any InputStreams that it opens.
+   * @param inputFiles files to sample from in order to detect schema.
    * @return the detected schema, or null if the schema could not be detected.
    * @throws IOException if there was an issue opening or reading the data.
    */
   @Nullable
-  default Schema detectSchema(FormatContext context, Supplier<InputStream> dataStream) throws IOException {
-    return null;
+  default Schema detectSchema(FormatContext context, InputFiles inputFiles) throws IOException {
+    return getSchema(context);
   }
 }
