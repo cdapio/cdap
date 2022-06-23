@@ -31,6 +31,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -50,6 +51,7 @@ public class TetheringProvisioner implements Provisioner {
 
   private MessagingService messagingService;
   private TetheringStore tetheringStore;
+  private LocationFactory locationFactory;
 
   /**
    * Using method injection instead of constructor injection because {@link ServiceLoader} (used by
@@ -65,6 +67,12 @@ public class TetheringProvisioner implements Provisioner {
   @SuppressWarnings("unused")
   void setTetheringStore(TetheringStore tetheringStore) {
     this.tetheringStore = tetheringStore;
+  }
+
+  @Inject
+  @SuppressWarnings("unused")
+  void setLocationFactory(LocationFactory locationFactory) {
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -118,6 +126,6 @@ public class TetheringProvisioner implements Provisioner {
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     TetheringConf conf = TetheringConf.fromProperties(context.getProperties());
     CConfiguration cConf = CConfiguration.create();
-    return Optional.of(new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore));
+    return Optional.of(new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore, locationFactory));
   }
 }
