@@ -250,6 +250,17 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           localizeResources.add(new LocalizeResource(logbackJar, true));
         }
 
+        // Localize the runtime token if there is one. This happens only in tethered mode.
+        File runtimeToken = new File(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+        if (runtimeToken.exists() && !runtimeToken.isDirectory()) {
+          LOG.debug("Localizing runtime token...");
+          localizeResources.add(new LocalizeResource(runtimeToken));
+        } else if (runtimeToken.isDirectory()) {
+          LOG.error("Expected runtime token to be a file, instead found a directory");
+        } else {
+          LOG.debug("No runtime token file found, skipping runtime token localization...");
+        }
+
         // Localize all the files from user resources
         List<File> files = copyUserResources(context.getLocalizeResources(), tempDir);
         for (File file : files) {

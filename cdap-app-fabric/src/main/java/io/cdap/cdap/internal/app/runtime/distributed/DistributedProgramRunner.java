@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -223,6 +224,11 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       if (logbackURI != null) {
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
+      }
+
+      // For runs from a tethered instance, copy over peer runtime token if it exists.
+      if (oldOptions.getArguments().hasOption(ProgramOptionConstants.PEER_NAME)) {
+        copyRuntimeToken(locationFactory, oldOptions.getArguments(), tempDir, localizeResources);
       }
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
@@ -800,5 +806,22 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     }
 
     return dependencies;
+  }
+
+  @VisibleForTesting
+  static void copyRuntimeToken(LocationFactory locationFactory, Arguments args, File tempDir,
+                               Map<String, LocalizeResource> localizeResources) throws IOException {
+    File runtimeTokenFile = File.createTempFile("runtime-tether", ".token", tempDir);
+    Location location = locationFactory.create(URI.create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI)))
+      .append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+    if (!location.exists()) {
+      return;
+    }
+    try (InputStream is = location.getInputStream()) {
+      Files.copy(is, runtimeTokenFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      LOG.debug("Copied {} to {}", Constants.Security.Authentication.RUNTIME_TOKEN_FILE, runtimeTokenFile);
+    }
+    localizeResources.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
+                          new LocalizeResource(runtimeTokenFile.toURI(), false));
   }
 }
