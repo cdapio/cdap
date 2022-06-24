@@ -26,6 +26,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AuthenticationMode;
@@ -136,7 +137,8 @@ public class AuthServerAnnounceTest {
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup()),
-                        validator, userIdentityExtractor, discoveryServiceClient);
+                        validator, userIdentityExtractor, discoveryServiceClient,
+                        new NoOpMetricsCollectionService());
       router.startAndWait();
     }
 

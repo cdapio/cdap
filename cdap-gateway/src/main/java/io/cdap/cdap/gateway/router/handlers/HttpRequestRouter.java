@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.router.handlers;
 
+import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.HandlerException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,6 +26,7 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.Channels;
 import io.cdap.cdap.gateway.router.RouterServiceLookup;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -83,11 +87,17 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   private int inflightRequests;
   private MessageSender currentMessageSender;
   private ChannelFutureListener failureResponseListener;
+  private MetricsCollectionService metricsCollectionService;
+  private final boolean emitMetricsEnabled;
 
-  public HttpRequestRouter(CConfiguration cConf, RouterServiceLookup serviceLookup) {
+  public HttpRequestRouter(CConfiguration cConf, RouterServiceLookup serviceLookup,
+                           MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.serviceLookup = serviceLookup;
     this.messageSenders = new HashMap<>();
+    this.metricsCollectionService = metricsCollectionService;
+    //this.emitMetricsEnabled = Feature.ROUTER_METRICS.isEnabled(new DefaultFeatureFlagsProvider(cConf));
+    this.emitMetricsEnabled = true;
   }
 
   @Override
@@ -118,19 +128,22 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         // Disable read until sending of this request object is completed successfully
         // This is for handling the initial connection delay
         inboundChannel.config().setAutoRead(false);
+        Discoverable discoverable = getDiscoverable(request);
         writeCompletedListener = new ChannelFutureListener() {
           @Override
           public void operationComplete(ChannelFuture future) throws Exception {
             if (future.isSuccess()) {
               inboundChannel.config().setAutoRead(true);
+              emitSuccessMetrics(request, discoverable);
             } else {
               getFailureResponseListener(inboundChannel).operationComplete(future);
+              emitFailureMetrics(request, discoverable);
             }
           }
         };
 
         currentMessageSender = getMessageSender(
-          inboundChannel, getDiscoverable(request)
+          inboundChannel, discoverable
         );
       }
 
@@ -231,6 +244,31 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
                                  "No discoverable found for request " + getRequestLine(httpRequest));
     }
     return discoverable;
+  }
+
+  private void emitSuccessMetrics(HttpRequest httpRequest, Discoverable discoverable) {
+    if (!emitMetricsEnabled) {
+      return;
+    }
+    MetricsContext metricsContext = metricsCollectionService.getContext(getContext(httpRequest.uri(),
+                                                                                   discoverable.getName()));
+    metricsContext.increment("router.success", 1);
+  }
+
+  private void emitFailureMetrics(HttpRequest httpRequest, Discoverable discoverable) {
+    if (!emitMetricsEnabled) {
+      return;
+    }
+    MetricsContext metricsContext = metricsCollectionService.getContext(getContext(httpRequest.uri(),
+                                                                                   discoverable.getName()));
+    metricsContext.increment("router.failure", 1);
+  }
+
+  private Map<String, String> getContext(String uri, String component) {
+    return ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+      Constants.Metrics.Tag.COMPONENT, component,
+      Constants.Metrics.Tag.URI, uri);
   }
 
   /**

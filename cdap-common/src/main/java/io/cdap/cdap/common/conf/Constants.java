@@ -947,6 +947,9 @@ public final class Constants {
 
       //For scheduler
       public static final String SCHEDULE = "sch";
+
+      //For router
+      public static final String URI = "uri";
     }
 
     /**

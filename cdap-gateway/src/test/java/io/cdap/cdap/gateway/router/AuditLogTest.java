@@ -28,6 +28,7 @@ import com.google.common.io.ByteStreams;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.security.auth.TokenValidator;
@@ -98,7 +99,8 @@ public class AuditLogTest {
 
     TokenValidator successValidator = new SuccessTokenValidator();
     router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup, successValidator,
-                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
+                             new NoOpMetricsCollectionService());
     router.startAndWait();
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new TestHandler()).build();

@@ -5368,4 +5368,13 @@
       Health Check HTTP service bind port; if 0, binds to a random port
     </description>
   </property>
+
+  <property>
+    <name>feature.router.metrics.enabled</name>
+    <value>false</value>
+    <final>false</final>
+    <description>
+      Enable router metrics in CDAP
+    </description>
+  </property>
 </configuration>

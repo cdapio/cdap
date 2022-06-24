@@ -38,6 +38,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
@@ -549,7 +550,8 @@ public abstract class NettyRouterTestBase {
     NettyRouter router1 = new NettyRouter(cConfSpy1, SConfiguration.create(), InetAddress.getLoopbackAddress(),
                                           new RouterServiceLookup(cConfSpy1, discoveryService, new RouterPathLookup()),
                                           successValidator,
-                                          new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+                                          new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
+                                          new NoOpMetricsCollectionService());
     router1.startAndWait();
 
     // Configure router with config-reloading time set to 0
@@ -559,7 +561,8 @@ public abstract class NettyRouterTestBase {
     NettyRouter router2 = new NettyRouter(cConfSpy2, SConfiguration.create(), InetAddress.getLoopbackAddress(),
                                           new RouterServiceLookup(cConfSpy2, discoveryService, new RouterPathLookup()),
                                           successValidator,
-                                          new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+                                          new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
+                                          new NoOpMetricsCollectionService());
     router2.startAndWait();
 
     // Wait sometime for cConf to reload
