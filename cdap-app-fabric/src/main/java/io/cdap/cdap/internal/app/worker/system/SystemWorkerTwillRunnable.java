@@ -25,6 +25,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
@@ -132,7 +133,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         expose(KeyManager.class);
       }
     };
-    modules.add(new RemoteTwillModule());
+//    modules.add(new RemoteTwillModule());
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new IOModule());
@@ -205,9 +206,12 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       modules.add(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(TwillRunnerService.class).toProvider(
-            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
-          bind(TwillRunner.class).to(TwillRunnerService.class);
+          Key<TwillRunnerService> twillRunnerServiceKey = Key.get(TwillRunnerService.class,
+                                                                  Constants.AppFabric.ProgramRunner.class);
+          bind(twillRunnerServiceKey)
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
+          bind(TwillRunnerService.class).to(twillRunnerServiceKey);
+          bind(TwillRunner.class).to(twillRunnerServiceKey);
           bind(DiscoveryService.class)
             .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)

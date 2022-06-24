@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -71,9 +72,9 @@ public class RemoteTwillModule extends AbstractModule {
 
     @Override
     public TwillRunnerService get() {
-      return twillRunnerService;
-//      return new ImpersonatedTwillRunnerService(hConf, twillRunnerService,
-//                                                impersonator, secureStoreRenewer);
+//      return twillRunnerService;
+      return new ImpersonatedTwillRunnerService(hConf, twillRunnerService,
+                                                impersonator, secureStoreRenewer);
     }
   }
 }
