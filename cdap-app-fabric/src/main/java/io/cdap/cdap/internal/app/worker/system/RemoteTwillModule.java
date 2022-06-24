@@ -21,13 +21,19 @@ import com.google.inject.Inject;
 import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.ImpersonatedTwillRunnerService;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
+
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * RemoteTwillModule provides ImpersonatedTwillRunnerService which has RemoteExecutionTwillRunnerService as its
@@ -48,23 +54,33 @@ public class RemoteTwillModule extends AbstractModule {
     private final Configuration hConf;
     private final Impersonator impersonator;
     private final TokenSecureStoreRenewer secureStoreRenewer;
+    private final ClusterMode clusterMode;
     private final TwillRunnerService remoteExecutionTwillRunnerService;
 
     @Inject
     TwillRunnerServiceProvider(Configuration hConf, Impersonator impersonator,
                                TokenSecureStoreRenewer secureStoreRenewer,
+                               ClusterMode clusterMode,
                                @Constants.AppFabric.RemoteExecution TwillRunnerService
                                  remoteExecutionTwillRunnerService) {
       this.hConf = hConf;
       this.impersonator = impersonator;
       this.secureStoreRenewer = secureStoreRenewer;
+      this.clusterMode = clusterMode;
       this.remoteExecutionTwillRunnerService = remoteExecutionTwillRunnerService;
     }
 
     @Override
     public TwillRunnerService get() {
-      return new ImpersonatedTwillRunnerService(hConf, remoteExecutionTwillRunnerService,
-                                                impersonator, secureStoreRenewer);
+      TwillRunnerService twillRunnerService;
+      if (ClusterMode.ON_PREMISE.equals(clusterMode)) {
+        MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+        twillRunnerService = Optional.ofNullable(masterEnv).map(MasterEnvironment::getTwillRunnerSupplier)
+          .map(Supplier::get).orElse(null);
+      } else {
+        twillRunnerService = remoteExecutionTwillRunnerService;
+      }
+      return new ImpersonatedTwillRunnerService(hConf, twillRunnerService, impersonator, secureStoreRenewer);
     }
   }
 }
