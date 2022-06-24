@@ -97,6 +97,16 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     }
 
     SparkConf sparkConf = new SparkConf();
+    // we do not do checkpointing during preview. Skip enabling write-ahead logs in that case to avoid spark exception
+    boolean isPreviewEnabled = spec.isPreviewEnabled(context);
+    if (!isPreviewEnabled) {
+      // required spark configs to prevent data loss during real-time pipeline upgrades
+      sparkConf.set("spark.streaming.receiver.writeAheadLog.enable", "true");
+      sparkConf.set("spark.streaming.receiver.writeAheadLog.closeFileAfterWrite", "true");
+      sparkConf.set("spark.streaming.driver.writeAheadLog.closeFileAfterWrite", "true");
+      sparkConf.set("spark.streaming.receiver.writeAheadLog.rollingIntervalSecs", String.valueOf(0));
+      sparkConf.set("spark.streaming.driver.writeAheadLog.rollingIntervalSecs", String.valueOf(0));
+    }
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
     sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
@@ -137,6 +147,14 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
             "Number of spark executors was set to invalid value " + property.getValue(), e);
         }
       } else {
+        sparkConf.set(property.getKey(), property.getValue());
+      }
+      if ("spark.streaming.receiver.writeAheadLog.enable".equals(property.getKey())) {
+        boolean isWriteAheadLogEnabled = Boolean.parseBoolean(property.getValue());
+        if (spec.isCheckpointsDisabled() && isWriteAheadLogEnabled) {
+          throw new IllegalArgumentException(
+            "Checkpointing should be enabled when write-ahead logs are enabled for the pipeline.");
+        }
         sparkConf.set(property.getKey(), property.getValue());
       }
     }

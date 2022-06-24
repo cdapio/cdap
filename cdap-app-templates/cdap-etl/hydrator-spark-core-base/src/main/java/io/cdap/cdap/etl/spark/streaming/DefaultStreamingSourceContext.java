@@ -46,7 +46,7 @@ public class DefaultStreamingSourceContext extends AbstractBatchContext implemen
                                        DatasetContext datasetContext, JavaSparkExecutionContext sec) {
     super(pipelineRuntime, stageSpec, datasetContext, sec.getAdmin());
     this.sec = sec;
-    this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(sec);
   }
 
   @Override

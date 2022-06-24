@@ -30,12 +30,15 @@ import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
+import io.cdap.cdap.master.spi.environment.spark.SparkDriverWatcher;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -44,18 +47,21 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Master environment spark submitter.
  */
 public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
+  private static final Logger LOG = LoggerFactory.getLogger(MasterEnvironmentSparkSubmitter.class);
   private final SparkExecutionService sparkExecutionService;
   private final SparkRuntimeContext runtimeContext;
   private final MasterEnvironment masterEnv;
-  private SparkConfig sparkConfig;
-  private List<LocalizeResource> resources;
   private final CConfiguration cConf;
   private final Map<String, String> namespaceConfig;
+  private SparkConfig sparkConfig;
+  private List<LocalizeResource> resources;
+  private SparkDriverWatcher sparkDriverWatcher;
 
   /**
    * Master environment spark submitter constructor.
@@ -109,7 +115,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected List<String> beforeSubmit() {
+  protected List<String> beforeSubmit() throws Exception {
     sparkExecutionService.startAndWait();
     InetSocketAddress socketAddress = sparkExecutionService.getBindAddress();
     // use ip instead of hostname, as some environments (like kubernetes) don't work properly with hostname
@@ -124,6 +130,10 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
       SparkRuntimeEnv.setProperty(SparkConfig.DRIVER_ENV_PREFIX + "ARTIFACT_FECTHER_URI",
                                   artifactFetcherUri);
     }
+
+    sparkDriverWatcher = generateOrGetSparkConfig().getSparkDriverWatcher();
+    sparkDriverWatcher.initialize();
+
     return Collections.emptyList();
   }
 
@@ -141,6 +151,16 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     } else {
       sparkExecutionService.shutdownNow();
     }
+    try {
+      sparkDriverWatcher.close();
+    } catch (Exception e) {
+      LOG.error("Error while closing spark driver watcher thread.", e);
+    }
+  }
+
+  @Override
+  protected boolean waitForFinish() throws Exception {
+    return sparkDriverWatcher.waitForFinish().get(10, TimeUnit.MINUTES);
   }
 
   private SparkConfig generateOrGetSparkConfig() throws Exception {

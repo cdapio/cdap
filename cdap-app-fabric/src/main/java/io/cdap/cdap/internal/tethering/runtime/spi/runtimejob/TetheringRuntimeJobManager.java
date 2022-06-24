@@ -26,7 +26,11 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
+import io.cdap.cdap.internal.tethering.PeerInfo;
+import io.cdap.cdap.internal.tethering.PeerNotFoundException;
 import io.cdap.cdap.internal.tethering.TetheringControlMessage;
+import io.cdap.cdap.internal.tethering.TetheringStatus;
+import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
@@ -71,13 +75,16 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   private final String tetheredNamespace;
   private final CConfiguration cConf;
   private final MessagePublisher messagePublisher;
+  private final TetheringStore tetheringStore;
   private final TopicId topicId;
 
-  public TetheringRuntimeJobManager(TetheringConf conf, CConfiguration cConf, MessagingService messagingService) {
+  public TetheringRuntimeJobManager(TetheringConf conf, CConfiguration cConf, MessagingService messagingService,
+                                    TetheringStore tetheringStore) {
     this.tetheredInstanceName = conf.getTetheredInstanceName();
     this.tetheredNamespace = conf.getTetheredNamespace();
     this.cConf = cConf;
     this.messagePublisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
+    this.tetheringStore = tetheringStore;
     this.topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                                cConf.get(Constants.Tethering.TOPIC_PREFIX) + tetheredInstanceName);
   }
@@ -88,6 +95,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     LOG.debug("Launching program run {} with following configurations: " +
                 "tethered instance name {}, tethered namespace {}.",
               runInfo, tetheredInstanceName, tetheredNamespace);
+    checkTetheredConnection(tetheredInstanceName, tetheredNamespace);
     byte[] payload = Bytes.toBytes(GSON.toJson(createLaunchPayload(runtimeJobInfo)));
     TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM, payload);
     publishToControlChannel(message);
@@ -170,6 +178,25 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
       }
     }
     return baos.toByteArray();
+  }
+
+  @VisibleForTesting
+  void checkTetheredConnection(String peer, String namespace) throws IllegalArgumentException {
+    PeerInfo peerInfo;
+    try {
+      peerInfo = tetheringStore.getPeer(peer);
+    } catch (PeerNotFoundException e) {
+      throw new IllegalArgumentException(String.format("%s is not a tethered peer", peer));
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Failed to get peer information", e);
+    }
+    if (peerInfo.getMetadata().getNamespaceAllocations().stream().noneMatch(n -> n.getNamespace().equals(namespace))) {
+      throw new IllegalArgumentException(String.format("Namespace %s is not provided by tethered peer %s",
+                                                       namespace, peer));
+    }
+    if (!peerInfo.getTetheringStatus().equals(TetheringStatus.ACCEPTED)) {
+      throw new IllegalArgumentException(String.format("Connection to tethered peer %s must first be accepted", peer));
+    }
   }
 
   /**

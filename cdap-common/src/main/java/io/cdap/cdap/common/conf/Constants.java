@@ -1032,6 +1032,14 @@ public final class Constants {
     }
 
     /**
+     * Program event publish
+     */
+    public static final class ProgramEvent {
+      public static final String PUBLISHED_COUNT = "program.event.published.count";
+      public static final String SPARK_METRICS_FETCH_LATENCY_MS = "program.event.spark.metrics.fetch.latency.millis";
+    }
+
+    /**
      * Preview metrics
      */
     public static final class Preview {
@@ -1995,6 +2003,11 @@ public final class Constants {
      */
     public static final String CONNECTION_TIMEOUT_SECONDS = "tethering.connection.timeout.seconds";
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
+
+    /**
+     * Maximum number of control messages sent by tethering server on poll.
+     */
+    public static final String CONTROL_MESSAGE_BATCH_SIZE = "tethering.control.message.batch.size";
 
     public static final String CLIENT_AUTHENTICATOR_NAME = "tethering.client.authenticator.name";
   }

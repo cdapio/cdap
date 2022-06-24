@@ -427,6 +427,16 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
                          BatchPipelineSpec.class);
+
+    if (spec.isPreviewEnabled(context)) {
+      for (StageSpec stageSpec : spec.getStages()) {
+        String pluginType = stageSpec.getPluginType();
+        if (pluginType.equals(Condition.PLUGIN_TYPE)) {
+          throw new IllegalArgumentException("Can not run pipeline with condition plugins in preview mode.");
+        }
+      }
+    }
+
     if (spec.getEngine() == Engine.MAPREDUCE) {
       WRAPPERLOGGER.warn("Pipeline '{}' is using Mapreduce engine which is planned to be deprecated. " +
                            "Please use Spark engine.", context.getApplicationSpecification().getName());

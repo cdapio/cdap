@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SystemWorker;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -53,6 +54,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
+import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -60,11 +62,9 @@ import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
-import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
@@ -114,6 +114,9 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       new OperationalStatsModule(),
       getDataFabricModule(),
       new DFSLocationModule(),
+      // Used in InMemoryProgramRunDispatcher
+      RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+                                                  Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -135,10 +138,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
                              MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
-      services.add(injector.getInstance(TokenManager.class));
-    }
-
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));

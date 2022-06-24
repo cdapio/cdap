@@ -43,9 +43,11 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
@@ -60,14 +62,20 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteIsolatedPluginFinder;
+import io.cdap.cdap.internal.tethering.NoOpDiscoveryServiceClient;
+import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
@@ -80,8 +88,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -111,26 +121,28 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private final CConfiguration cConf;
   private final Impersonator impersonator;
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ConfiguratorFactory configuratorFactory;
   private final LocationFactory locationFactory;
   private final RemoteClientFactory remoteClientFactory;
-  private ArtifactRepository artifactRepository;
+  private final PluginFinder pluginFinder;
+  private final ArtifactRepository noAuthArtifactRepository;
+  private RemoteAuthenticator remoteAuthenticator;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private String hostname;
 
   @Inject
   public InMemoryProgramRunDispatcher(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                      ConfiguratorFactory configuratorFactory, Impersonator impersonator,
+                                      Impersonator impersonator,
                                       LocationFactory locationFactory, RemoteClientFactory remoteClientFactory,
                                       @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                        ArtifactRepository artifactRepository) {
+                                        ArtifactRepository artifactRepository,
+                                      PluginFinder pluginFinder) {
     this.cConf = cConf;
     this.programRunnerFactory = programRunnerFactory;
-    this.configuratorFactory = configuratorFactory;
     this.impersonator = impersonator;
     this.locationFactory = locationFactory;
     this.remoteClientFactory = remoteClientFactory;
-    this.artifactRepository = artifactRepository;
+    this.noAuthArtifactRepository = artifactRepository;
+    this.pluginFinder = pluginFinder;
   }
 
   /**
@@ -149,6 +161,12 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     }
   }
 
+  @Inject(optional = true)
+  public void setRemoteAuthenticator(@Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
+                                       RemoteAuthenticator remoteAuthenticator) {
+    this.remoteAuthenticator = remoteAuthenticator;
+  }
+
   @Override
   public ProgramController dispatchProgram(ProgramRunDispatcherInfo programRunDispatcherInfo) throws Exception {
     RunId runId = programRunDispatcherInfo.getRunId();
@@ -164,6 +182,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
         .orElseThrow(UnsupportedOperationException::new);
     }
+    ArtifactRepository artifactRepository = noAuthArtifactRepository;
     String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
     if (peer != null) {
       // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
@@ -187,52 +206,97 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     // Get the artifact details and save it into the program options.
     ArtifactId artifactId = programDescriptor.getArtifactId();
-    ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+    ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
     ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
     ProgramDescriptor newProgramDescriptor = programDescriptor;
+    ProgramOptions updatedOptions = options;
+    if (tetheredRun) {
+      updatedOptions = updateProgramOptions(artifactId, programId, options, runId, clusterMode,
+                                            Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
+                                                               null),
+                                            isDistributed);
+      // Take a snapshot of all the plugin artifacts used by the program
+      updatedOptions = createPluginSnapshot(updatedOptions, programId, tempDir,
+                                            newProgramDescriptor.getApplicationSpecification(),
+                                            isDistributed, artifactRepository);
+      // Download the program jar into the target directory
+      // This hack is here because the program jar won't actually exist in a tethered run
+      // TODO: (CDAP-19150) remove hack once Location is removed form ArtifactDetail
+      Id.Namespace namespace = Id.Namespace.from(programDescriptor.getProgramId().getNamespace());
+      Id.Artifact aId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
+      File targetFile = new File(tempDir, "program.jar");
+      Path target = targetFile.toPath();
+      downloadArtifact(aId, target, artifactRepository);
+      Location location = Locations.toLocation(target);
+      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactDetail.getDescriptor().getNamespace(),
+                                                             artifactDetail.getDescriptor().getArtifactId(),
+                                                             location);
+      artifactDetail = new ArtifactDetail(descriptor, artifactDetail.getMeta());
+    }
 
     boolean isPreview =
       Boolean.parseBoolean(options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
-    // do the app spec regeneration if the mode is on premise, for isolated mode, the regeneration
-    // is done on the runtime environment before the program launch
-    // for preview we already have a resolved app spec, so no need to regenerate the app spec again
-    if (!isPreview && appSpec != null && ClusterMode.ON_PREMISE.equals(clusterMode)) {
+    // Do the app spec regeneration if the mode is on premise or if it's a tethered run.
+    // For non-tethered run in isolated mode, the regeneration is done on the runtime environment before the program
+    // launch. For preview we already have a resolved app spec, so no need to regenerate the app spec again
+    if (!isPreview && appSpec != null &&
+      (ClusterMode.ON_PREMISE.equals(clusterMode) || tetheredRun)) {
+      RemoteClientFactory factory = remoteClientFactory;
+
+      PluginFinder pf = pluginFinder;
+      if (tetheredRun) {
+        // Configure remote client to talk to the specified tethered peer endpoint.
+        // For example, if the peer endpoint is https://my.host.com/api and a remote client is created with
+        // basePath = /v3, then some/path should resolve to https://my.host.com/api/v3/some/path.
+        String peerEndpoint = options.getArguments().getOption(ProgramOptionConstants.PEER_ENDPOINT);
+        String pathPrefix = new URI(peerEndpoint).getPath();
+        factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(peerEndpoint),
+                                          new NoOpInternalAuthenticator(),
+                                          remoteAuthenticator, pathPrefix);
+        pf = new RemoteIsolatedPluginFinder(locationFactory, factory,
+                                            tempDir.getAbsolutePath());
+      }
       try {
         ApplicationSpecification generatedAppSpec =
-          regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, options);
+          regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, updatedOptions, pf, factory,
+                            artifactRepository);
         appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
         newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
       } catch (Exception e) {
-        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId);
+        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId, e);
       }
     }
 
-    ProgramOptions runtimeProgramOptions =
-      updateProgramOptions(artifactId, programId, options, runId, clusterMode,
-                           Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null),
-                           isDistributed);
-
-    // Take a snapshot of all the plugin artifacts used by the program
-    ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
-                                                             newProgramDescriptor.getApplicationSpecification(),
-                                                             isDistributed);
+    if (!tetheredRun) {
+      updatedOptions = updateProgramOptions(artifactId, programId, options, runId, clusterMode,
+                                            Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
+                                                               null),
+                                            isDistributed);
+      // Take a snapshot of plugin artifacts. In the tethered case, we did this before regenerating app spec because
+      // PLUGIN_DIR program option is set in createPluginSnapshot(). This option is read while regenerating app spec.
+      updatedOptions = createPluginSnapshot(updatedOptions, programId, tempDir,
+                                            newProgramDescriptor.getApplicationSpecification(),
+                                            isDistributed, artifactRepository);
+    }
 
     // Create and run the program
     Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
                                               tempDir, tetheredRun);
     programRunDispatcherInfo.getCleanUpTask().set(createCleanupTask(tempDir, runner, executableProgram));
-    return runner.run(executableProgram, optionsWithPlugins);
+    return runner.run(executableProgram, updatedOptions);
   }
 
   /**
    * Regenerates the app spec before the program start
-   *
+   *  TODO(CDAP-19275): Consolidate appspec regeneration logic - on_premise, tethered and runs on Dataproc.
    * @return the regenerated app spec, or null if there is any exception generating the app spec.
    */
   @Nullable
-  private ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail, ProgramId programId,
-                                                     ArtifactId artifactId, ApplicationSpecification existingAppSpec,
-                                                     ProgramOptions options)
+  protected ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail, ProgramId programId,
+                                                       ArtifactId artifactId, ApplicationSpecification existingAppSpec,
+                                                       ProgramOptions options, PluginFinder pluginFinder,
+                                                       RemoteClientFactory factory,
+                                                       ArtifactRepository artifactRepository)
     throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
@@ -248,7 +312,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                             existingAppSpec.getConfiguration(), null, false,
                             new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
                                                          options.getArguments().asMap()));
-    Configurator configurator = this.configuratorFactory.create(deploymentInfo);
+    Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator, artifactRepository,
+                                                         factory, deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
     ConfigResponse response = future.get(120, TimeUnit.SECONDS);
 
@@ -259,6 +324,16 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       }
     }
     return null;
+  }
+
+  /**
+   * Downloads the artifact to the given path.
+   */
+  protected void downloadArtifact(Id.Artifact artifactId, Path target, ArtifactRepository artifactRepository)
+    throws NotFoundException, IOException {
+    try (InputStream is = artifactRepository.newInputStream(artifactId)) {
+      Files.copy(is, target);
+    }
   }
 
   /**
@@ -278,11 +353,6 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         if (isTetheredRun) {
           // This hack is here because the program jar won't actually exist in a tethered run
           // TODO: (CDAP-19150) remove hack once Location is removed form ArtifactDetail
-          Id.Namespace namespace = Id.Namespace.from(programDescriptor.getProgramId().getNamespace());
-          Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
-          try (InputStream is = artifactRepository.newInputStream(artifactId)) {
-            Files.copy(is, targetFile.toPath());
-          }
           programJarLocation = Locations.toLocation(targetFile);
         } else {
           try {
@@ -305,7 +375,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
   }
 
-  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
+  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId, ArtifactRepository artifactRepository)
+    throws Exception {
     return artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
   }
 
@@ -415,7 +486,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
    */
   private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
                                               @Nullable ApplicationSpecification appSpec,
-                                              boolean isDistributed) throws Exception {
+                                              boolean isDistributed, ArtifactRepository artifactRepository)
+    throws Exception {
     // appSpec is null in an unit test
     if (appSpec == null) {
       return options;
@@ -434,8 +506,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       try {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
         String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
-        ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
-        copyArtifact(artifactId, artifactDetail, destFile, isDistributed, peer != null);
+        ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
+        copyArtifact(artifactId, artifactDetail, destFile, artifactRepository, isDistributed, peer != null);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
@@ -456,7 +528,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
    * @throws IOException if the copying failed
    */
   private void copyArtifact(ArtifactId artifactId, ArtifactDetail artifactDetail, File targetFile,
-                            boolean isDistributed, boolean isTetheredPeer) throws Exception {
+                            ArtifactRepository artifactRepository, boolean isDistributed, boolean isTetheredPeer)
+    throws Exception {
     if (isTetheredPeer) {
       try (InputStream in = artifactRepository.newInputStream(Id.Artifact.fromEntityId(artifactId))) {
         copyArtifact(artifactId, targetFile, isDistributed, () -> {

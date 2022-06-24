@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -109,8 +110,7 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
     ProgramRunId programRunId;
     ProgramRunStatus programRunStatus;
     try {
-      programRunId = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID),
-                                                ProgramRunId.class);
+      programRunId = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID), ProgramRunId.class);
       if (programRunId == null) {
         throw new IllegalArgumentException("Missing program run id from notification");
       }
@@ -152,11 +152,8 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         break;
       case STOPPING:
         store.recordProgramStopping(programRunId, sourceId,
-                                    Optional.ofNullable(properties.get(ProgramOptionConstants.STOPPING_TIME))
-                                      .map(Long::parseLong).orElse(System.currentTimeMillis()),
-                                    Optional.ofNullable(properties.get(
-                                      ProgramOptionConstants.TERMINATE_TIME))
-                                      .map(Long::parseLong).orElse(Long.MAX_VALUE));
+                                    getTimeSeconds(properties, ProgramOptionConstants.STOPPING_TIME, Long.MAX_VALUE),
+                                    getTimeSeconds(properties, ProgramOptionConstants.TERMINATE_TIME, Long.MAX_VALUE));
         break;
       case RESUMING:
         store.recordProgramResumed(programRunId, sourceId,
@@ -193,5 +190,18 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
    */
   private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
     return AppMetadataStore.create(context);
+  }
+
+  /**
+   * Returns timestamp in seconds from the given option key in the property map. It assumes the timestamp
+   * stored in the property is in milliseconds.
+   *
+   * @param properties the property map to get the value from
+   * @param option the name of the property
+   * @param defaultValue the default value to return if there is no such property.
+   */
+  private long getTimeSeconds(Map<String, String> properties, String option, long defaultValue) {
+    String timeString = properties.get(option);
+    return (timeString == null) ? defaultValue : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
   }
 }

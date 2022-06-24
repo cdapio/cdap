@@ -217,7 +217,16 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       batchV1Api = new BatchV1Api(apiClient);
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
-      addAndStartResourceWatchers(kubeNamespace);
+      Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
+        V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
+        V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
+        V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector)
+      );
+      typeMap.values().forEach(watcher -> {
+        watcher.addListener(new AppResourceChangeListener<>());
+        watcher.start();
+      });
+      resourceWatchers.put(kubeNamespace, typeMap);
 
       // start job cleaner service
       jobCleanerService =
@@ -236,24 +245,6 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       typeMap.values().forEach(AbstractWatcherThread::close);
     });
     monitorScheduler.shutdownNow();
-  }
-
-  /**
-   * Create and start resource watchers for the given Kubernetes namespace
-   */
-  private void addAndStartResourceWatchers(String namespace) {
-    if (!resourceWatchers.containsKey(namespace)) {
-      LOG.info("Adding resource watchers for namespace {}", namespace);
-      Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
-        V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(namespace, selector),
-        V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(namespace, selector),
-        V1Job.class, AppResourceWatcherThread.createJobWatcher(namespace, selector));
-      typeMap.values().forEach(watcher -> {
-        watcher.addListener(new AppResourceChangeListener<>());
-        watcher.start();
-      });
-      resourceWatchers.put(namespace, typeMap);
-    }
   }
 
   /**
@@ -623,10 +614,23 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       }
       String namespace = meta.getNamespace();
       // If it is newly added controller, monitor it.
-      addAndStartResourceWatchers(namespace);
+      if (!resourceWatchers.containsKey(namespace)) {
+        addAndStartJobWatcher(namespace);
+      }
       return monitorController(this, timeout, timeoutUnit, controller,
                                resourceWatchers.get(namespace).get(resourceType),
                                resourceType, controller.getStartedFuture());
+    }
+
+    /**
+     * Create and start job watcher for the given Kubernetes namespace
+     */
+    private void addAndStartJobWatcher(String namespace) {
+      LOG.info("Adding job watcher for namespace {}", namespace);
+      AppResourceWatcherThread<?> watcherThread = AppResourceWatcherThread.createJobWatcher(namespace, selector);
+      watcherThread.addListener(new AppResourceChangeListener<>());
+      watcherThread.start();
+      resourceWatchers.put(namespace, ImmutableMap.of(V1Job.class, watcherThread));
     }
 
     /**

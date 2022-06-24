@@ -92,6 +92,12 @@
     <groupId>org.apache.hbase</groupId>
     <artifactId>hbase-server</artifactId>
     <version>${hbase12cdh570.version}</version>
+    <exclusions>
+      <exclusion>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+      </exclusion>
+    </exclusions>
   </dependency>
     <dependency>
       <groupId>junit</groupId>
