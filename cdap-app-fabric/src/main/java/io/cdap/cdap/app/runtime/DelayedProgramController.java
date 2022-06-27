@@ -108,6 +108,11 @@ public final class DelayedProgramController implements ProgramController, Delega
   @Override
   public State getState() {
     try {
+      if (!delegateFuture.isDone()) {
+        // In order to avoid waiting for delegateFuture to complete before returning its state, we can return the
+        // state right away.
+        return State.STARTING;
+      }
       return Uninterruptibles.getUninterruptibly(delegateFuture).getState();
     } catch (ExecutionException e) {
       throw new RuntimeException(e);
