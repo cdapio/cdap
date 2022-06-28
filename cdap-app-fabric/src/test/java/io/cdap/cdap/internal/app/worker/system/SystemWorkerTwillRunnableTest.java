@@ -69,7 +69,8 @@ public class SystemWorkerTwillRunnableTest {
 
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     SystemWorkerTwillRunnable systemWorkerTwillRunnable = new SystemWorkerTwillRunnable(
-      temporaryCConfFile.getAbsolutePath(), temporaryHConfFile.getAbsolutePath(), temporarySConfFile.getAbsolutePath()) {
+      temporaryCConfFile.getAbsolutePath(), temporaryHConfFile.getAbsolutePath(),
+      temporarySConfFile.getAbsolutePath()) {
       @Override
       ClusterMode getClusterMode() {
         return ClusterMode.ISOLATED;
