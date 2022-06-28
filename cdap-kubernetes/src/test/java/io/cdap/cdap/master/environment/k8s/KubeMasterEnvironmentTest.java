@@ -88,7 +88,6 @@ public class KubeMasterEnvironmentTest {
     kubeMasterEnvironment = new KubeMasterEnvironment();
     kubeMasterEnvironment.setCoreV1Api(coreV1Api);
     kubeMasterEnvironment.setRbacV1Api(rbacV1Api);
-    kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setLocalFileProvider(new TemporaryLocalFileProvider(temporaryFolder));
     KubeMasterPathProvider mockKubeMasterPathProvider = mock(KubeMasterPathProvider.class);
     when(mockKubeMasterPathProvider.getMasterPath()).thenReturn("https://127.0.0.1:443");
@@ -243,7 +242,6 @@ public class KubeMasterEnvironmentTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
                    workloadIdentityGCPServiceAccount);
-    kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
@@ -270,7 +268,6 @@ public class KubeMasterEnvironmentTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
                    workloadIdentityGCPServiceAccount);
-    kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
@@ -299,7 +296,6 @@ public class KubeMasterEnvironmentTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
                    workloadIdentityGCPServiceAccount);
-    kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
@@ -322,7 +318,6 @@ public class KubeMasterEnvironmentTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     properties.put(KubeMasterEnvironment.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
                    workloadIdentityGCPServiceAccount);
-    kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);
@@ -343,7 +338,6 @@ public class KubeMasterEnvironmentTest {
       "memberships/test-cluster";
     Map<String, String> properties = new HashMap<>();
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
-    kubeMasterEnvironment.setNamespaceCreationEnabled();
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityProvider(workloadIdentityProvider);

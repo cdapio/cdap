@@ -94,6 +94,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
   private final String masterShortUserName;
   private final TetheringStore tetheringStore;
+  private final CConfiguration cConf;
 
   @Inject
   @VisibleForTesting
@@ -103,8 +104,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                MetricsCollectionService metricsCollectionService,
                                Provider<NamespaceResourceDeleter> resourceDeleter,
                                Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
-                               CConfiguration cConf,
-                               Impersonator impersonator, AccessEnforcer accessEnforcer,
+                               CConfiguration cConf, Impersonator impersonator, AccessEnforcer accessEnforcer,
                                AuthenticationContext authenticationContext,
                                TetheringStore tetheringStore) {
     this.resourceDeleter = resourceDeleter;
@@ -124,6 +124,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     });
     this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.tetheringStore = tetheringStore;
+    this.cConf = cConf;
   }
 
   /**
@@ -194,7 +195,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
       // if needed, run master environment specific logic
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-      if (masterEnv != null) {
+      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED) && masterEnv != null) {
         masterEnv.onNamespaceCreation(namespace.getNamespace(), metadata.getConfig().getConfigs());
       }
     } catch (Throwable t) {
@@ -313,7 +314,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     try {
       // if needed, run master environment specific logic if it is a non-default namespace (see below for more info)
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-      if (masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
+      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)
+        && masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
         masterEnv.onNamespaceDeletion(namespaceId.getNamespace(), namespaceMeta.getConfig().getConfigs());
       }
 
