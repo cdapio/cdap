@@ -168,7 +168,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_TEMPLATE_FILE_NAME = "podTemplate-";
   private static final String CDAP_LOCALIZE_FILES_PATH = "/etc/cdap/localizefiles";
   private static final String CDAP_CONFIG_MAP_PREFIX = "cdap-compressed-files-";
-  private static final String NAMESPACE_CREATION_ENABLED = "master.environment.k8s.namespace.creation.enabled";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String SPARK_DRIVER_POD_CPU_REQUEST = "spark.kubernetes.driver.request.cores";
   private static final String SPARK_DRIVER_POD_CPU_LIMIT = "spark.kubernetes.driver.limit.cores";
@@ -274,7 +273,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String configMapName;
   private CoreV1Api coreV1Api;
   private RbacAuthorizationV1Api rbacV1Api;
-  private boolean namespaceCreationEnabled;
   private KubeMasterPathProvider kubeMasterPathProvider;
   private LocalFileProvider localFileProvider;
   private final Gson gson;
@@ -303,7 +301,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
     podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
     podNamespaceFile = new File(podInfoDir, conf.getOrDefault(POD_NAMESPACE_FILE, DEFAULT_POD_NAMESPACE_FILE));
-    namespaceCreationEnabled = Boolean.parseBoolean(conf.get(NAMESPACE_CREATION_ENABLED));
     workloadIdentityEnabled = Boolean.parseBoolean(conf.get(WORKLOAD_IDENTITY_ENABLED));
     if (workloadIdentityEnabled) {
       // Validate all workload identity configurations are set
@@ -500,10 +497,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public void onNamespaceCreation(String cdapNamespace, Map<String, String> properties) throws Exception {
-    // check if namespace creation is enabled from master config or if cdapNamespace is a bootstrap namespace
-    if (!namespaceCreationEnabled || NamespaceId.isReserved(cdapNamespace)) {
+    if (NamespaceId.isReserved(cdapNamespace)) {
       return;
     }
+
     String namespace = properties.get(NAMESPACE_PROPERTY);
     if (namespace == null || namespace.isEmpty()) {
       throw new IOException(String.format("Cannot create Kubernetes namespace for %s because no name was provided",
@@ -527,7 +524,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public void onNamespaceDeletion(String cdapNamespace, Map<String, String> properties) throws Exception {
     String namespace = properties.get(NAMESPACE_PROPERTY);
-    if (namespaceCreationEnabled && namespace != null && !namespace.isEmpty()) {
+    if (namespace != null && !namespace.isEmpty()) {
       deleteKubeNamespace(namespace, cdapNamespace);
     }
   }
@@ -1331,11 +1328,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setRbacV1Api(RbacAuthorizationV1Api rbacV1Api) {
     this.rbacV1Api = rbacV1Api;
-  }
-
-  @VisibleForTesting
-  void setNamespaceCreationEnabled() {
-    this.namespaceCreationEnabled = true;
   }
 
   @VisibleForTesting

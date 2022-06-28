@@ -178,6 +178,14 @@
   </property>
 
   <property>
+    <name>namespaces.creation.hook.enabled</name>
+    <value>true</value>
+    <description>
+      Whether to invoke a master environment-specific method hook upon namespace creation.
+    </description>
+  </property>
+
+  <property>
     <name>root.namespace</name>
     <value>cdap</value>
     <description>

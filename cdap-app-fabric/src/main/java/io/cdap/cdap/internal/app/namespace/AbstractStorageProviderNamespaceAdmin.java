@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
 
 /**
@@ -136,12 +135,9 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     } else {
       // no namespace custom location was provided one must be created by cdap
       namespaceHome = namespacePathLocator.get(namespaceMeta);
-      if (namespaceHome.exists()) {
-        throw new FileAlreadyExistsException(null, null,
-                                             String.format("Directory '%s' for '%s' already exists.",
-                                                           namespaceHome, namespaceId));
+      if (!namespaceHome.exists()) {
+        createdHome = createNamespaceDir(namespaceHome, "home", namespaceId);
       }
-      createdHome = createNamespaceDir(namespaceHome, "home", namespaceId);
     }
     Location dataLoc = namespaceHome.append(Constants.Dataset.DEFAULT_DATA_DIR); // data/
     Location tempLoc = namespaceHome.append(cConf.get(Constants.AppFabric.TEMP_DIR)); // tmp/
@@ -174,8 +170,12 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
         }
       }
       // create all the directories with default permissions
-      createdData = createNamespaceDir(dataLoc, "data", namespaceId);
-      createdTemp = createNamespaceDir(tempLoc, "temp", namespaceId);
+      if (!dataLoc.exists()) {
+        createdData = createNamespaceDir(dataLoc, "data", namespaceId);
+      }
+      if (!tempLoc.exists()) {
+        createdTemp = createNamespaceDir(tempLoc, "temp", namespaceId);
+      }
 
       // in secure mode, if a group name was configured, then that group must be able to write inside subdirs:
       // set all these directories to be owned and group writable by the configured group.
