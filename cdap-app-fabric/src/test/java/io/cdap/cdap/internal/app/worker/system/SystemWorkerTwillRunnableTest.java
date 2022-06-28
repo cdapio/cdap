@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.worker.system;
 
 import com.google.inject.Injector;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -39,7 +40,13 @@ public class SystemWorkerTwillRunnableTest {
   @Test
   public void testInjector() {
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
-    Injector injector = SystemWorkerTwillRunnable
+    SystemWorkerTwillRunnable systemWorkerTwillRunnable = new SystemWorkerTwillRunnable() {
+      @Override
+      ClusterMode getClusterMode() {
+        return ClusterMode.ISOLATED;
+      }
+    };
+    Injector injector = systemWorkerTwillRunnable
       .createInjector(CConfiguration.create(), new Configuration(), SConfiguration.create());
     injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.SYSTEM, RetryStrategies.noRetry());
   }
@@ -62,7 +69,12 @@ public class SystemWorkerTwillRunnableTest {
 
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     SystemWorkerTwillRunnable systemWorkerTwillRunnable = new SystemWorkerTwillRunnable(
-      temporaryCConfFile.getAbsolutePath(), temporaryHConfFile.getAbsolutePath(), temporarySConfFile.getAbsolutePath());
+      temporaryCConfFile.getAbsolutePath(), temporaryHConfFile.getAbsolutePath(), temporarySConfFile.getAbsolutePath()) {
+      @Override
+      ClusterMode getClusterMode() {
+        return ClusterMode.ISOLATED;
+      }
+    };
     systemWorkerTwillRunnable.doInitialize();
   }
 }

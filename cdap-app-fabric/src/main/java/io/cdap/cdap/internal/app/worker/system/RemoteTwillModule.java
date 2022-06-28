@@ -40,6 +40,13 @@ import java.util.function.Supplier;
  * delegate.
  */
 public class RemoteTwillModule extends AbstractModule {
+
+  private static ClusterMode clusterMode;
+
+  public RemoteTwillModule(ClusterMode mode) {
+    clusterMode = mode;
+  }
+
   @Override
   protected void configure() {
     Key<TwillRunnerService> twillRunnerServiceKey = Key.get(TwillRunnerService.class,
@@ -54,19 +61,16 @@ public class RemoteTwillModule extends AbstractModule {
     private final Configuration hConf;
     private final Impersonator impersonator;
     private final TokenSecureStoreRenewer secureStoreRenewer;
-    private final ClusterMode clusterMode;
     private final TwillRunnerService remoteExecutionTwillRunnerService;
 
     @Inject
     TwillRunnerServiceProvider(Configuration hConf, Impersonator impersonator,
                                TokenSecureStoreRenewer secureStoreRenewer,
-                               ClusterMode clusterMode,
                                @Constants.AppFabric.RemoteExecution TwillRunnerService
                                  remoteExecutionTwillRunnerService) {
       this.hConf = hConf;
       this.impersonator = impersonator;
       this.secureStoreRenewer = secureStoreRenewer;
-      this.clusterMode = clusterMode;
       this.remoteExecutionTwillRunnerService = remoteExecutionTwillRunnerService;
     }
 
@@ -76,7 +80,8 @@ public class RemoteTwillModule extends AbstractModule {
       if (ClusterMode.ON_PREMISE.equals(clusterMode)) {
         MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
         twillRunnerService = Optional.ofNullable(masterEnv).map(MasterEnvironment::getTwillRunnerSupplier)
-          .map(Supplier::get).orElse(null);
+          .map(Supplier::get)
+          .orElseThrow(() -> new UnsupportedOperationException("TwillRunnerService not found for this clusterMode"));
       } else {
         twillRunnerService = remoteExecutionTwillRunnerService;
       }
