@@ -138,6 +138,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                                       PluginFinder pluginFinder) {
     this.cConf = cConf;
     this.programRunnerFactory = programRunnerFactory;
+    LOG.error(">>>>> programRunnerFactory type is " + programRunnerFactory.getClass().toString());
+    LOG.error(">>>>> programRunnerFactory reference is " + programRunnerFactory);
     this.impersonator = impersonator;
     this.locationFactory = locationFactory;
     this.remoteClientFactory = remoteClientFactory;
@@ -152,6 +154,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   @Inject(optional = true)
   public void setRemoteProgramRunnerFactory(@Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
     this.remoteProgramRunnerFactory = runnerFactory;
+    LOG.error(">>>>> remoteProgramRunnerFactory reference is " + remoteProgramRunnerFactory);
   }
 
   @Inject(optional = true)
@@ -182,6 +185,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
         .orElseThrow(UnsupportedOperationException::new);
     }
+    LOG.error(">>>>> progRunnerFactory reference is " + progRunnerFactory);
     ArtifactRepository artifactRepository = noAuthArtifactRepository;
     String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
     if (peer != null) {

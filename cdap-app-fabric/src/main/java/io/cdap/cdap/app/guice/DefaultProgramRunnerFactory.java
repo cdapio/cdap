@@ -31,6 +31,7 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
@@ -69,6 +70,14 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
     this.mode = mode;
     this.runtimeProviderLoader = runtimeProviderLoader;
     this.programStateWriter = programStateWriter;
+    LOG.error("Begin DefaultProgramRunnerFactory constructor " + this);
+    for (Provider<ProgramRunner> p : defaultRunnerProviders.values()) {
+      if (p.get() instanceof DistributedWorkflowProgramRunner) {
+        DistributedWorkflowProgramRunner r = (DistributedWorkflowProgramRunner) p.get();
+        LOG.error(">>> twill runner class is" + r.getTwillRunner().getClass());
+      }
+    }
+    LOG.error("End DefaultProgramRunnerFactory constructor " + this);
   }
 
   @Inject(optional = true)

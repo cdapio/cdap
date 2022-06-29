@@ -62,8 +62,6 @@ import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.FireAndForgetTwillRunnerService;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -83,6 +81,8 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -130,7 +130,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         expose(KeyManager.class);
       }
     };
-    modules.add(new RemoteTwillModule());
+//    modules.add(new RemoteTwillModule());
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new IOModule());
@@ -163,15 +163,16 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
           }
         }, new DistributedArtifactManagerModule()),
-      Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
-        .with(new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(RemoteExecutionTwillRunnerService.class)
-              .to(FireAndForgetTwillRunnerService.class)
-              .in(Scopes.SINGLETON);
-          }
-        }),
+      new ProgramRunnerRuntimeModule().getDistributedModules(true),
+//      Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
+//        .with(new AbstractModule() {
+//          @Override
+//          protected void configure() {
+//            bind(RemoteExecutionTwillRunnerService.class)
+//              .to(FireAndForgetTwillRunnerService.class)
+//              .in(Scopes.SINGLETON);
+//          }
+//        }),
       new SecureStoreClientModule(),
       new AbstractModule() {
         @Override
@@ -211,6 +212,14 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         }
       });
       modules.add(new RemoteLogAppenderModule());
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(TwillRunnerService.class).toProvider(
+            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
+          bind(TwillRunner.class).to(TwillRunnerService.class);
+        }
+      });
 
       if (coreSecurityModule.requiresZKClient()) {
         modules.add(new ZKClientModule());

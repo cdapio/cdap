@@ -801,4 +801,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
     return dependencies;
   }
+
+  public TwillRunner getTwillRunner() {
+    return twillRunner;
+  }
 }
