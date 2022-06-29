@@ -463,7 +463,9 @@ public final class SparkPackageUtils {
     Location frameworkDir = locationFactory.create("/framework/spark");
     Location frameworkLocation = frameworkDir.append(archiveName);
 
-    if (!frameworkLocation.exists()) {
+    //createNew is an Atomic operation and returns false if the file already exists. So incase of race condition
+    //only 1 process will enter this block, rest will get `false` for createNew
+    if (frameworkLocation.createNew("644")) {
       File archive = new File(tempDir, archiveName);
       try {
         try (ZipOutputStream zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(archive)))) {
@@ -476,9 +478,7 @@ public final class SparkPackageUtils {
         }
 
         // Upload spark archive to the framework location
-        frameworkDir.mkdirs("755");
-
-        try (OutputStream os = frameworkLocation.getOutputStream("644")) {
+        try (OutputStream os = frameworkLocation.getOutputStream()) {
           Files.copy(archive.toPath(), os);
         }
       } finally {
