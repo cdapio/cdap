@@ -21,8 +21,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
@@ -34,11 +32,8 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
-import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.app.runtime.Arguments;
-import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -65,14 +60,8 @@ import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
-import io.cdap.cdap.internal.app.runtime.BasicArguments;
-import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
-import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
-import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.FireAndForgetTwillRunnerService;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -102,16 +91,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -125,11 +108,6 @@ import java.util.concurrent.Executors;
 public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerTwillRunnable.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .registerTypeAdapter(org.apache.twill.internal.Arguments.class, new org.apache.twill.internal.json.ArgumentsCodec())
-    .create();
 
   private SystemWorkerService systemWorker;
   private LogAppenderInitializer logAppenderInitializer;
@@ -157,8 +135,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         expose(KeyManager.class);
       }
     };
-    ClusterMode clusterMode = getClusterMode();
-    modules.add(new RemoteTwillModule(clusterMode));
+//    modules.add(new RemoteTwillModule());
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new IOModule());
@@ -246,57 +223,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     }
 
     return Guice.createInjector(modules);
-  }
-
-  ClusterMode getClusterMode() {
-    try {
-      ProgramOptions programOptions = createProgramOptions(new File(getContext().getApplicationArguments()[0]));
-      Arguments systemArgs = programOptions.getArguments();
-      return systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
-        ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
-        : ClusterMode.ON_PREMISE;
-    } catch (Exception e) {
-      LOG.error("Exception while setting ClusterMode in SystemWorker", e);
-      return ClusterMode.ISOLATED;
-    }
-  }
-
-  /**
-   * Creates a {@link ProgramOptions} by deserializing the given json file.
-   */
-  private ProgramOptions createProgramOptions(File programOptionsFile) throws IOException {
-    ProgramOptions original = readJsonFile(programOptionsFile, ProgramOptions.class);
-
-    // Overwrite them with environmental information
-    Map<String, String> arguments = new HashMap<>(original.getArguments().asMap());
-    arguments.putAll(getExtraSystemArguments());
-
-    // Use the name passed in by the constructor as the program name to construct the ProgramId
-    return new SimpleProgramOptions(original.getProgramId(), new BasicArguments(arguments),
-                                    original.getUserArguments(), original.isDebug());
-  }
-
-  /**
-   * Reads the content of the given file and decode it as json.
-   */
-  private <U> U readJsonFile(File file, Class<U> type) throws IOException {
-    try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-      return GSON.fromJson(reader, type);
-    }
-  }
-
-  /**
-   * Returns a set of extra system arguments that will be available through the {@link ProgramOptions#getArguments()}
-   * for the program execution.
-   */
-  private Map<String, String> getExtraSystemArguments() {
-    Map<String, String> args = new HashMap<>();
-    TwillContext context = getContext();
-    args.put(ProgramOptionConstants.INSTANCE_ID, context == null ? "0" : Integer.toString(context.getInstanceId()));
-    args.put(ProgramOptionConstants.INSTANCES, context == null ? "1" : Integer.toString(context.getInstanceCount()));
-    args.put(ProgramOptionConstants.TWILL_RUN_ID, context.getApplicationRunId().getId());
-    args.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
-    return args;
   }
 
   @Override

@@ -28,6 +28,7 @@ import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -36,12 +37,16 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
+import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.worker.system.RemoteTwillModule;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.twill.api.RunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -50,6 +55,8 @@ import java.util.concurrent.ExecutorService;
  * Implementation of {@link RunnableTask} to execute Program-run operation in a system worker.
  */
 public class ProgramRunDispatcherTask implements RunnableTask {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunDispatcherTask.class);
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -75,7 +82,11 @@ public class ProgramRunDispatcherTask implements RunnableTask {
   public void run(RunnableTaskContext context) throws Exception {
     ProgramRunDispatcherInfo programRunDispatcherInfo =
       GSON.fromJson(context.getParam(), ProgramRunDispatcherInfo.class);
-    ProgramRunDispatcher dispatcher = injector.getInstance(InMemoryProgramRunDispatcher.class);
+    LOG.debug("Main Injector: {}", injector);
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions());
+    Injector childInjector = injector.createChildInjector(new RemoteTwillModule(clusterMode));
+    LOG.debug("Child Injector: {}", childInjector);
+    ProgramRunDispatcher dispatcher = childInjector.getInstance(InMemoryProgramRunDispatcher.class);
     ProgramController programController = dispatcher.dispatchProgram(programRunDispatcherInfo);
     if (Objects.isNull(programController)) {
       String msg = String.format("Unable to dispatch Program %s with runid %s",
