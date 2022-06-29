@@ -32,6 +32,7 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -83,8 +84,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
-import org.apache.twill.api.TwillRunner;
-import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -137,7 +136,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         expose(KeyManager.class);
       }
     };
-//    modules.add(new RemoteTwillModule());
+    modules.add(new RemoteTwillModule(ClusterMode.ISOLATED));
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new IOModule());
@@ -195,7 +194,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         protected void configure() {
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
           bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-          bind(TwillRunner.class).to(TwillRunnerService.class);
         }
       }
     ));
