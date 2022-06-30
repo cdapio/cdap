@@ -62,6 +62,8 @@ import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.FireAndForgetTwillRunnerService;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -163,16 +165,16 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
           }
         }, new DistributedArtifactManagerModule()),
-      new ProgramRunnerRuntimeModule().getDistributedModules(true),
-//      Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
-//        .with(new AbstractModule() {
-//          @Override
-//          protected void configure() {
-//            bind(RemoteExecutionTwillRunnerService.class)
-//              .to(FireAndForgetTwillRunnerService.class)
-//              .in(Scopes.SINGLETON);
-//          }
-//        }),
+//      new ProgramRunnerRuntimeModule().getDistributedModules(true),
+      Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(RemoteExecutionTwillRunnerService.class)
+              .to(FireAndForgetTwillRunnerService.class)
+              .in(Scopes.SINGLETON);
+          }
+        }),
       new SecureStoreClientModule(),
       new AbstractModule() {
         @Override
