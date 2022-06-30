@@ -29,6 +29,7 @@ import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1JobList;
 import io.kubernetes.client.openapi.models.V1JobStatus;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
@@ -270,6 +271,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    */
   private <T> KubeTwillController monitorController(KubeLiveInfo liveInfo, long timeout,
                                                     TimeUnit timeoutUnit, KubeTwillController controller,
+                                                    String namespace,
                                                     AppResourceWatcherThread<T> watcher, Type resourceType,
                                                     CompletableFuture<Void> startupTaskCompletion) {
     String runId = controller.getRunId().getId();
@@ -282,6 +284,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
     // This future is for transferring the cancel watch to the change listener
     CompletableFuture<Cancellable> cancellableFuture = new CompletableFuture<>();
+
+    // This future is for transferring the job monitor task cancel to the change listener
+    CompletableFuture<Future<?>> wrappedFuture = new CompletableFuture<>();
 
     // Listen to resource changes. If the resource represented by the controller has all replicas ready, cancel
     // the terminationFuture. If the resource is deleted, also cancel the terminationFuture, and also terminate
@@ -311,13 +316,66 @@ public class KubeTwillRunnerService implements TwillRunnerService {
             startupTaskCompletion.complete(null);
             // Cancel the scheduled termination
             terminationFuture.cancel(false);
+            // Start the job monitor if we haven't already done so.
+            // This is a workaround for CDAP-19134 - sometimes the watch doesn't get triggered on job completion.
+            if (!wrappedFuture.isDone()) {
+              Future<?> future = Executors.newSingleThreadScheduledExecutor(
+                  Threads.createDaemonThreadFactory(String.format("job-monitor-%s", runId)))
+                .submit(() -> {
+                  boolean terminateController = false;
+                  while (true) {
+                    try {
+                      V1JobList jobList = batchV1Api.listNamespacedJob(namespace, null, null, null, null,
+                                                                       RUN_ID_LABEL + "=" + runId, null, null,
+                                                                       null, null, null);
+                      if (jobList.getItems().size() == 0) {
+                        // Job doesn't exist, terminate the job controller.
+                        LOG.warn("Job does not exist, terminating controller");
+                        terminateController = true;
+                      }
+                    } catch (ApiException ex) {
+                      if (ex.getCode() == 404) {
+                        LOG.warn("Job not found, terminating controller");
+                        // Job doesn't exist, terminate the job controller.
+                        terminateController = true;
+                      } else if (ex.getCause() instanceof InterruptedException) {
+                        return;
+                      } else {
+                        LOG.warn("Failed to list job", ex);
+                      }
+                    }
+                    if (terminateController) {
+                      // Cancel the watch
+                      try {
+                        Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+                      } catch (ExecutionException e) {
+                        // This will never happen
+                      }
+                      // terminate the job controller
+                      controller.terminate();
+                      return;
+                    } else {
+                      try {
+                        TimeUnit.MINUTES.sleep(1);
+                      } catch (InterruptedException e) {
+                        return;
+                      }
+                    }
+                  }
+                });
+              wrappedFuture.complete(future);
+            }
           }
 
           // If job is in terminal state - success/failure - we consider it as complete.
           if (isJobComplete((V1Job) resource)) {
-            // Cancel the watch
             try {
+              // Cancel the watch
               Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+              // Cancel the job monitor
+              if (wrappedFuture.isDone()) {
+                Uninterruptibles.getUninterruptibly(wrappedFuture).cancel(true);
+              }
             } catch (ExecutionException e) {
               // This will never happen
             }
@@ -352,9 +410,13 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         if (runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           // Cancel the scheduled termination
           terminationFuture.cancel(false);
-          // Cancel the watch
           try {
+            // Cancel the watch
             Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            // Cancel the job monitor
+            if (resourceType.equals(V1Job.class) && wrappedFuture.isDone()) {
+              Uninterruptibles.getUninterruptibly(wrappedFuture).cancel(true);
+            }
           } catch (ExecutionException e) {
             // This will never happen
           }
@@ -625,6 +687,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       // If it is newly added controller, monitor it.
       addAndStartResourceWatchers(namespace);
       return monitorController(this, timeout, timeoutUnit, controller,
+                               namespace,
                                resourceWatchers.get(namespace).get(resourceType),
                                resourceType, controller.getStartedFuture());
     }
