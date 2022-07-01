@@ -131,8 +131,10 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     }
     TwillControllerCreator twillControllerCreator = twillControllerCreatorFactory.create(clusterMode);
     TwillController twillController = twillControllerCreator.createTwillControllerFromRunRecord(runRecordDetail);
+    LOG.debug("TwillController created: {}", twillController);
     ProgramController programController = null;
     if (twillController != null) {
+      LOG.debug("ProgramRunner used: {}", runner);
       programController = ((ProgramControllerCreator) runner).createProgramController(programRunId, twillController);
     }
     if (programController == null) {
