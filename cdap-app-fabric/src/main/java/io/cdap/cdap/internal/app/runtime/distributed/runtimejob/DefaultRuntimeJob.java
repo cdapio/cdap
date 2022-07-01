@@ -158,6 +158,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultRuntimeJob.class);
   private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+  private static final long STOP_PROPAGATION_DELAY_SECS = 30L;
 
   private static final Gson GSON =
     ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -266,7 +267,20 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
-        runtimeClientService.onProgramStopRequested(controller::stop);
+        runtimeClientService.onProgramStopRequested(terminateTs -> {
+          long timeout = TimeUnit.SECONDS.toMillis(terminateTs - STOP_PROPAGATION_DELAY_SECS)
+            - System.currentTimeMillis();
+
+          if (timeout < 0) {
+            // If the timeout is smaller than the propagation delay, use the propagation delay as timeout
+            // to give the remote process some time to shutdown
+            LOG.debug("Terminating program run {} short timeout {} seconds", programRunId, STOP_PROPAGATION_DELAY_SECS);
+            controller.stop(STOP_PROPAGATION_DELAY_SECS, TimeUnit.SECONDS);
+          } else {
+            LOG.debug("Terminating program run {} with timeout {} ms", programRunId, timeout);
+            controller.stop(timeout, TimeUnit.MILLISECONDS);
+          }
+        });
 
         controller.addListener(new AbstractListener() {
           @Override

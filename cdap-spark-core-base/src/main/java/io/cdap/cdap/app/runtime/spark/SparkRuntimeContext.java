@@ -75,6 +75,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   // since outside of this class, the spark classloader is wrapped with a WeakReferenceDelegatorClassLoader
   @SuppressWarnings("unused")
   private SparkClassLoader sparkClassLoader;
+  private volatile Long terminationTime;
 
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
                       CConfiguration cConf, String hostname, TransactionSystemClient txClient,
@@ -152,6 +153,33 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public String getHostname() {
     return hostname;
+  }
+
+  /**
+   * Sets the timestamp for termination. The value must be {@code >= 0}.
+   *
+   * @param timestamp timestamp in milliseconds
+   */
+  public void setTerminationTime(long timestamp) {
+    if (timestamp < 0) {
+      throw new IllegalArgumentException("Graceful termination timeout must be >= 0");
+    }
+    this.terminationTime = timestamp;
+  }
+
+  /**
+   * Gets the graceful termination time.
+   *
+   * @return the timeout in milliseconds
+   * @throws IllegalStateException if the timeout was not set by the {@link #setGracefulTerminationTimeout(long)}
+   * before calling this method
+   */
+  public long getTerminationTime() {
+    Long timestamp = terminationTime;
+    if (timestamp == null) {
+      throw new IllegalStateException("Termination time is not available");
+    }
+    return timestamp;
   }
 
   private static SparkSpecification getSparkSpecification(Program program) {

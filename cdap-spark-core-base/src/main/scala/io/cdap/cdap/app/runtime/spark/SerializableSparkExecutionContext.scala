@@ -102,6 +102,8 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def getLogicalStartTime = delegate.getLogicalStartTime
 
+  override def getTerminationTime = delegate.getTerminationTime
+
   override def getSpecification = delegate.getSpecification
 
   override def readExternal(in: ObjectInput) = {

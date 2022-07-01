@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Interface to provide abstraction for submitting a Spark program to
@@ -40,12 +41,13 @@ public interface SparkSubmitter {
    * @param jobFile location of the job file required by the framework
    * @param result object instance to be available through the returned {@link ListenableFuture} when it completes
    * @param <V> Type of the result object
-   * @return An {@link ListenableFuture} that will be completed when the job finished. If the job execution failed,
+   * @return An {@link SparkJobFuture} that will be completed when the job finished. If the job execution failed,
    *         the future will also be failed with the cause wrapped inside an {@link ExecutionException}
-   *         when {@link ListenableFuture#get} is called. If {@link ListenableFuture#cancel(boolean)} is called,
-   *         the running job will be terminated immediately.
+   *         when {@link SparkJobFuture#get} is called. If {@link SparkJobFuture#cancel(boolean)} is called,
+   *         the running job will be terminated immediately. To terminate the job gracefully with a timeout, use
+   *         {@link SparkJobFuture#cancel(long, TimeUnit)}
    * @throws Exception if there is error while submitting the spark job
    */
-  <V> ListenableFuture<V> submit(SparkRuntimeContext runtimeContext, Map<String, String> configs,
+  <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext, Map<String, String> configs,
                                  List<LocalizeResource> resources, URI jobFile, V result) throws Exception;
 }

@@ -744,7 +744,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private long getTimeSeconds(Map<String, String> properties, String option) {
     String timeString = properties.get(option);
-    return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
+    return (timeString == null) ? -1L : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
   }
 
   /**

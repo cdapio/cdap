@@ -39,7 +39,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
-import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -123,7 +122,7 @@ public class RuntimeClientServerTest {
         @Override
         protected void bindRequestValidator() {
           bind(RuntimeRequestValidator.class).toInstance(
-            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.STOPPING, null));
+            (programRunId, request) -> new ProgramRunInfo(Long.MAX_VALUE));
         }
 
         @Override
@@ -224,7 +223,7 @@ public class RuntimeClientServerTest {
   @Test
   public void testFutureIsNotBlockingWhenValueIsSet() throws Exception {
     CountDownLatch countDownLatch = new CountDownLatch(1);
-    runtimeClient.onProgramStopRequested(() -> countDownLatch.countDown());
+    runtimeClient.onProgramStopRequested(terminateTs -> countDownLatch.countDown());
     // Now call sendMessages which will set the future
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
     TopicId topicId = NamespaceId.SYSTEM.topic("topic");

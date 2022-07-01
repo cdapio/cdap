@@ -28,17 +28,41 @@ import java.util.Objects;
  */
 public class SparkCommand implements Command {
 
+  private static final String STOP = "stop";
+  private static final String TERMINATE_TS = "terminateTs";
+
   /**
-   * Command for stopping the spark execution.
+   * Creates a SparkCommand for stopping the spark execution.
+   *
+   * @param terminateTs the termination timestamp in seconds
    */
-  public static final SparkCommand STOP = new SparkCommand("stop");
+  public static SparkCommand createStop(long terminateTs) {
+    if (terminateTs < 0L) {
+      throw new IllegalArgumentException("Timeout seconds must be >= 0");
+    }
+    return new SparkCommand(STOP, Collections.singletonMap(TERMINATE_TS, Long.toString(terminateTs)));
+  }
+
+  /**
+   * Returns {@code true} if the given command is a stop command.
+   */
+  public static boolean isStop(SparkCommand command) {
+    return STOP.equals(command.getCommand());
+  }
+
+  /**
+   * Gets the termination timestamp in seconds from the STOP command.
+   */
+  public static long getTerminateTs(SparkCommand command) {
+    String timeoutSeconds = command.getOptions().get(TERMINATE_TS);
+    if (timeoutSeconds == null) {
+      throw new IllegalStateException("The SparkCommand doesn't have the '" + TERMINATE_TS + "' option");
+    }
+    return Long.parseLong(timeoutSeconds);
+  }
 
   private final String command;
   private final Map<String, String> options;
-
-  public SparkCommand(String command) {
-    this(command, Collections.<String, String>emptyMap());
-  }
 
   public SparkCommand(String command, Map<String, String> options) {
     this.command = command;
@@ -71,5 +95,13 @@ public class SparkCommand implements Command {
   @Override
   public int hashCode() {
     return Objects.hash(command, options);
+  }
+
+  @Override
+  public String toString() {
+    return "SparkCommand{" +
+      "command='" + command + '\'' +
+      ", options=" + options +
+      '}';
   }
 }

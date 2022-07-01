@@ -91,6 +91,8 @@ object SparkMainWrapper {
         case cls =>
           getMainMethod(cls).invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
       }
+
+      LOG.info("Spark main returned {}", userSparkClass)
       executionContext.waitForSparkHttpService()
 
       completion.completed()

@@ -29,7 +29,8 @@ public enum Feature {
   REPLICATION_TRANSFORMATIONS("6.6.0"),
   EVENT_PUBLISH("6.7.0", false),
   PUSHDOWN_TRANSFORMATION_GROUPBY("6.7.0"),
-  PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.7.0");
+  PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.7.0"),
+  STREAMING_PIPELINE_CHECKPOINT_DELETION("6.7.1");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;

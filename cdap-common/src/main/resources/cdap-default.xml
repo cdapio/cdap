@@ -481,15 +481,6 @@
   </property>
 
   <property>
-    <name>app.program.stop.timeout.secs</name>
-    <value>180</value>
-    <description>
-      Time in seconds for which we will wait for a program to stop on its own
-      before force terminating it.
-    </description>
-  </property>
-
-  <property>
     <name>user.program.launch.disabled</name>
     <value>false</value>
     <description>Allows users to disable program launches on CDAP cluster.
@@ -5301,6 +5292,14 @@
     <value>true</value>
     <description>
       Enables deduplicate transformation in pushdown execution.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.streaming.pipeline.checkpoint.deletion.enabled</name>
+    <value>false</value>
+    <description>
+      Enables auto deletion of streaming pipeline checkpoint on successful graceful shutdown
     </description>
   </property>
 

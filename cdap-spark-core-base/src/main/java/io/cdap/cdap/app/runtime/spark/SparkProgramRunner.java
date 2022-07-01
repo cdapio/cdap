@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -224,10 +223,10 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                           options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       }
 
-      Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter, locationFactory, isLocal,
-                                                            fieldLineageWriter, masterEnv,
-                                                            commonNettyHttpServiceFactory);
+      SparkRuntimeService sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
+                                                                        runtimeContext, submitter, locationFactory,
+                                                                        isLocal, fieldLineageWriter, masterEnv,
+                                                                        commonNettyHttpServiceFactory);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);

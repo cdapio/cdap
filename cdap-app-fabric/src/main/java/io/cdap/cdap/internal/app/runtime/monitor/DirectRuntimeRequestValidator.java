@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A {@link RuntimeRequestValidator} implementation that reads from the runtime table directly.
@@ -70,7 +69,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     this.authenticationContext = authenticationContext;
 
     // Configure the cache with expiry the poll time.
-    // This helps reducing the actual lookup for a burst of requests within one poll interval,
+    // This helps reduce the actual lookup for a burst of requests within one poll interval,
     // but not to keep it too long so that data becomes stale.
     long pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.programRunsCache = CacheBuilder.newBuilder()
@@ -104,7 +103,6 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     return programRunInfo;
   }
 
-  @Nullable
   private Optional<ProgramRunInfo> getRunRecordStatusForProgramsInNonEndState(ProgramRunId programRunId)
     throws IOException, UnauthorizedException {
     try {
@@ -128,10 +126,13 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
 
   private Optional<ProgramRunInfo> getValidRunRecordStatus(RunRecordDetail runRecord) {
     ProgramRunStatus programRunStatus = runRecord.getStatus();
-    return Optional.of(programRunStatus == ProgramRunStatus.STOPPING
-                         ? new ProgramRunInfo(programRunStatus, String.valueOf(runRecord.getStoppingTs() +
-                                                                                 runRecord.getTerminateTs()))
-                         : new ProgramRunInfo(programRunStatus, null));
+    if (programRunStatus != ProgramRunStatus.STOPPING) {
+      return Optional.of(new ProgramRunInfo(programRunStatus));
+    }
+
+    // For stopping state, encode the termination timestamp in seconds
+    long terminateTs = Optional.ofNullable(runRecord.getTerminateTs()).orElse(Long.MAX_VALUE);
+    return Optional.of(new ProgramRunInfo(terminateTs));
   }
 
   /**
