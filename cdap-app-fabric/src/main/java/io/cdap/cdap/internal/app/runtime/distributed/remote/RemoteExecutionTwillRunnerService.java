@@ -26,6 +26,7 @@ import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.runtime.TwillControllerCreator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -129,7 +130,8 @@ import javax.annotation.Nullable;
  * A {@link TwillRunnerService} implementations that uses ssh to launch and monitor
  * {@link TwillApplication} with a single {@link TwillRunnable}.
  */
-public class RemoteExecutionTwillRunnerService implements TwillRunnerService, ProgramCompletionNotifier {
+public class RemoteExecutionTwillRunnerService implements
+  TwillRunnerService, ProgramCompletionNotifier, TwillControllerCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillRunnerService.class);
   private static final Gson GSON = new Gson();
