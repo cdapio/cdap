@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +32,7 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
   private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
 
   @Override
-  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) throws Exception {
+  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
     // Use at least two threads for Spark Streaming
     String masterArg = "local[2]";
 
@@ -47,7 +48,7 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected void triggerShutdown() {
+  protected void triggerShutdown(long timeout, TimeUnit timeoutTimeUnit) {
     // We just stop the SparkMainWrapper directly. Through the SparkClassLoader, we make sure that Spark
     // sees the same SparkMainWrapper class as this one
     SparkMainWrapper.stop();

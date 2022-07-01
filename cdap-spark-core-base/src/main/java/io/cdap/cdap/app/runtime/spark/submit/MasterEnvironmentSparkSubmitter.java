@@ -138,9 +138,10 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected void triggerShutdown() {
+  protected void triggerShutdown(long timeout, TimeUnit timeoutTimeUnit) {
     // Just stop the execution service and block on that.
     // It will wait until the "completed" call from the Spark driver.
+    sparkExecutionService.setShutdownWaitSeconds(timeoutTimeUnit.toSeconds(timeout));
     sparkExecutionService.stopAndWait();
   }
 

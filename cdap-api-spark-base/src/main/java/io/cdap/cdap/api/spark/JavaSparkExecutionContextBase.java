@@ -68,6 +68,16 @@ public abstract class JavaSparkExecutionContextBase implements SchedulableProgra
   public abstract long getLogicalStartTime();
 
   /**
+   * Returns the termination time of this Spark job as timestamp in milliseconds.
+   * The termination time is the time where this Spark job will be forced to termination
+   * The value is only available when stop was requested on this Spark job.
+   *
+   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
+   * @throws IllegalStateException if stop was not requested
+   */
+  public abstract long getTerminationTime();
+
+  /**
    * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be
    * passed in Spark program's closures.
    *

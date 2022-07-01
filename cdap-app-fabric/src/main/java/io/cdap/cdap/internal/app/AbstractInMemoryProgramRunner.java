@@ -212,8 +212,8 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       lock.lock();
       try {
         changeInstances(command.get("runnable"),
-                        Integer.valueOf(command.get("newInstances")),
-                        Integer.valueOf(command.get("oldInstances")));
+                        Integer.parseInt(command.get("newInstances")),
+                        Integer.parseInt(command.get("oldInstances")));
       } catch (Throwable t) {
         LOG.error(String.format("Fail to change instances: %s", command), t);
         throw t;

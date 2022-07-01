@@ -125,7 +125,7 @@ public class RuntimeClientServiceTest {
         @Override
         protected void bindRequestValidator() {
           bind(RuntimeRequestValidator.class).toInstance(
-            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.COMPLETED, null));
+            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.COMPLETED));
         }
 
         @Override

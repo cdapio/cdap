@@ -45,8 +45,8 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
     Map<String, String> command = (Map<String, String>) value;
     try {
       changeInstances(command.get("runnable"),
-                      Integer.valueOf(command.get("newInstances")),
-                      Integer.valueOf(command.get("oldInstances")));
+                      Integer.parseInt(command.get("newInstances")),
+                      Integer.parseInt(command.get("oldInstances")));
     } catch (Throwable t) {
       LOG.error(String.format("Failed to change instances: %s", command), t);
       throw t;

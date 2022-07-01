@@ -323,7 +323,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return null;
       }
       if (gracefulShutdownSecs.isEmpty()) {
-        return Integer.parseInt(String.valueOf(Integer.MAX_VALUE));
+        return Integer.MAX_VALUE;
       }
       int gracefulShutdownSecsInt = Integer.parseInt(gracefulShutdownSecs);
       if (gracefulShutdownSecsInt < 0) {

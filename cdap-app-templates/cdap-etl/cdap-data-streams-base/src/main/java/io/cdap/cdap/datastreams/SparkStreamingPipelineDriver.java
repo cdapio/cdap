@@ -50,6 +50,7 @@ import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.streaming.SparkStreamingPreparer;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -57,16 +58,22 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function0;
+import org.apache.spark.streaming.Checkpoint;
+import org.apache.spark.streaming.CheckpointReader;
 import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.StreamingContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.spark.streaming.scheduler.ReceiverTracker;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -76,6 +83,12 @@ import javax.annotation.Nullable;
 public class SparkStreamingPipelineDriver implements JavaSparkMain {
   private static final Logger LOG = LoggerFactory.getLogger(SparkStreamingPipelineDriver.class);
   private static final String DEFAULT_CHECKPOINT_DATASET_NAME = "defaultCheckpointDataset";
+  private static final String SPARK_GRACEFUL_STOP_TIMEOUT = "spark.streaming.gracefulStopTimeout";
+
+  // Overhead in milliseconds that Spark needs for graceful shutdown besides the job processing.
+  // This helps to calculate a more accurate timeout for Spark gracefulStopTimeout
+  private static final long GRACEFUL_SHUTDOWN_OVERHEAD = TimeUnit.MINUTES.toMillis(3L);
+
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -176,12 +189,60 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       // however, when CDAP stops the program, we get an interrupted exception.
       // at that point, we need to call stop on jssc, otherwise the program will hang and never stop.
       stopped = jssc.awaitTerminationOrTimeout(Long.MAX_VALUE);
+    } catch (InterruptedException e) {
+      // Catch the interrupted exception to clear the interrupted flag on the thread.
+      // Interrupt is issued to break the await so that we can shutdown the program gracefully.
     } finally {
       if (!stopped) {
-        jssc.stop(true, pipelineSpec.isStopGracefully());
+        long terminationTimeout = 0L;
+        try {
+          long terminationTime = sec.getTerminationTime();
+
+          // By default, Spark set graceful stop timeout to be 10 * batch_interval.
+          // However, time required for graceful shutdown should be closer to a batch_interval plus overhead,
+          // assuming unprocessed data can be processed in an interval.
+          terminationTimeout = terminationTime - System.currentTimeMillis() - GRACEFUL_SHUTDOWN_OVERHEAD;
+          if (terminationTimeout >= pipelineSpec.getBatchIntervalMillis()) {
+            LOG.debug("Setting spark stop timeout to {} ms", terminationTimeout);
+            jssc.ssc().conf().set(SPARK_GRACEFUL_STOP_TIMEOUT, terminationTimeout + "ms");
+          } else {
+            // Skip graceful shutdown as there won't be enough time
+            terminationTimeout = 0L;
+          }
+
+        } catch (IllegalStateException e) {
+          // This shouldn't happen, but catch it in case there is future bug introduced.
+          LOG.warn("Unexpected exception due to termination timeout is unavailable", e);
+        }
+
+        if (terminationTimeout <= 0 || !pipelineSpec.isStopGracefully()) {
+          LOG.info("Terminate the streaming job immediately due to {}.",
+                   pipelineSpec.isStopGracefully() ? "not enough time till termination" : "configuration");
+          jssc.stop(true, false);
+        } else {
+          jssc.stop(true, true);
+
+          // After stopping the streaming context, checks if all received data has been processed.
+          // If yes, we can clearup the checkpoint directory.
+          if (Feature.STREAMING_PIPELINE_CHECKPOINT_DELETION.isEnabled(sec)
+            && !pipelineSpec.isCheckpointsDisabled()
+            && checkpointDir != null) {
+            if (areAllBlocksProcessed(jssc, pipelineSpec, checkpointDir)) {
+              LOG.info("All blocks processed. Deleting checkpoint directory {}", checkpointDir);
+              try {
+                FileSystem fs = FileSystem.get(jssc.sparkContext().hadoopConfiguration());
+                fs.delete(new Path(checkpointDir), true);
+                LOG.info("Checkpoint directory {} deleted", checkpointDir);
+              } catch (Exception e) {
+                LOG.warn("Failed to delete checkpoint directory {}", checkpointDir, e);
+              }
+            } else {
+              LOG.info("There are unprocessed records in the checkpoint directory {}", checkpointDir);
+            }
+          }
+        }
       }
     }
-
   }
 
   private JavaStreamingContext run(DataStreamsPipelineSpec pipelineSpec,
@@ -247,5 +308,47 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
   private boolean ensureDirExists(FileSystem fileSystem, Path dir) throws IOException {
     return fileSystem.isDirectory(dir) || fileSystem.mkdirs(dir) || fileSystem.isDirectory(dir);
+  }
+
+  /**
+   * Reports if all data blocks stored in the checkpoint generated by receivers are processed.
+   *
+   * @param jssc the spark streaming context for the streaming process
+   * @param pipelineSpec the specification of the pipeline
+   * @param checkpointDir the checkpoint directory configured for the pipeline
+   * @return {@code true} if all data blocks are processed; {@code false} otherwise
+   */
+  private boolean areAllBlocksProcessed(JavaStreamingContext jssc,
+                                        DataStreamsPipelineSpec pipelineSpec,
+                                        String checkpointDir) {
+    try {
+      Option<Checkpoint> checkpointOption = CheckpointReader.read(checkpointDir);
+
+      // If there is no checkpoint file, it could be no micro-batch job was executed at all.
+      // To keep it safe, assuming there is unprocessed data.
+      if (checkpointOption.isEmpty()) {
+        return false;
+      }
+
+      Checkpoint checkpoint = checkpointOption.get();
+      LOG.debug("Last checkpoint time is {}", checkpoint.checkpointTime());
+
+      // This is a package private constructor in scala, but visible in Java
+      // We have to use it to explicitly passing in the Checkpoint information without starting the context
+      StreamingContext ssc = new StreamingContext(jssc.ssc().sparkContext(), checkpoint,
+                                                  Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
+
+      ReceiverTracker receiverTracker = new ReceiverTracker(ssc, true);
+      try {
+        return !receiverTracker.hasUnallocatedBlocks();
+      } finally {
+        receiverTracker.stop(false);
+      }
+
+    } catch (Throwable t) {
+      LOG.warn("Failed to read receiver metadata. Assuming there is unprocessed data.", t);
+    }
+
+    return false;
   }
 }
