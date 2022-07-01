@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.LongConsumer;
 import java.util.zip.GZIPOutputStream;
 import javax.ws.rs.core.MediaType;
 
@@ -64,7 +65,7 @@ public class RuntimeClient {
 
   private final boolean compression;
   private final RemoteClient remoteClient;
-  private final CompletableFuture<Void> stopFuture;
+  private final CompletableFuture<Long> stopFuture;
 
   @Inject
   public RuntimeClient(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
@@ -123,9 +124,9 @@ public class RuntimeClient {
 
       throwIfError(programRunId, urlConn);
       try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
-        ProgramRunInfo responseBody = GSON.fromJson(reader, ProgramRunInfo.class);
-        if (responseBody.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
-          stopFuture.complete(null);
+        ProgramRunInfo programRunInfo = GSON.fromJson(reader, ProgramRunInfo.class);
+        if (programRunInfo.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
+          stopFuture.complete(programRunInfo.getTerminateTimestamp());
         }
       }
     } finally {
@@ -134,16 +135,17 @@ public class RuntimeClient {
   }
 
   /**
-   * Accepts a runnable that runs in a daemon thread
-   * @param stopper Runnable that runs in a daemon thread
+   * Sets the consumer to run on the program being requested to stop.
+   *
+   * @param stopper A {@link LongConsumer} that will be executed in a daemon thread,
+   *                with the termination timestamp in seconds as the argument
    */
-  public void onProgramStopRequested(Runnable stopper) {
-    stopFuture.thenRunAsync(stopper,
-                           command -> {
-                             Thread t = new Thread(command, "stop-program");
-                             t.setDaemon(true);
-                             t.start();
-                           });
+  public void onProgramStopRequested(LongConsumer stopper) {
+    stopFuture.thenAcceptAsync(stopper::accept, command -> {
+      Thread t = new Thread(command, "stop-program");
+      t.setDaemon(true);
+      t.start();
+    });
   }
 
   /**

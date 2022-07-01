@@ -294,6 +294,11 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
 
       @Override
+      public ListenableFuture<ProgramController> stop(long timeout, TimeUnit timeoutUnit) {
+        return null;
+      }
+
+      @Override
       public void kill() {
         latch.countDown();
       }

@@ -29,21 +29,18 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * A {@link SparkSubmitter} to submit Spark job that runs on cluster.
  */
 public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkSubmitter.class);
 
   private final Configuration hConf;
   private final String schedulerQueueName;
@@ -67,7 +64,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected Map<String, String> generateSubmitConf() throws Exception {
+  protected Map<String, String> generateSubmitConf() {
     Map<String, String> config = new HashMap<>();
     if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
       config.put("spark.yarn.queue", schedulerQueueName);
@@ -111,9 +108,10 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected void triggerShutdown() {
+  protected void triggerShutdown(long timeout, TimeUnit timeoutTimeUnit) {
     // Just stop the execution service and block on that.
     // It will wait until the "completed" call from the Spark driver.
+    sparkExecutionService.setShutdownWaitSeconds(timeoutTimeUnit.toSeconds(timeout));
     sparkExecutionService.stopAndWait();
   }
 

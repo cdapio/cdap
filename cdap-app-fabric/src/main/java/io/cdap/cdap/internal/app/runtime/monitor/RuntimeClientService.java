@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.LongConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -146,9 +147,9 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   /**
    * Accepts a Runnable and passes it to RuntimeClient
-   * @param stopper a Runnable
+   * @param stopper a {@link LongConsumer} with the termination timestamp in seconds as the argument
    */
-  public void onProgramStopRequested(Runnable stopper) {
+  public void onProgramStopRequested(LongConsumer stopper) {
     runtimeClient.onProgramStopRequested(stopper);
   }
 

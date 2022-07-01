@@ -125,10 +125,11 @@ public class SparkExecutionServiceTest {
       ListenableFuture<Service.State> stopFuture = service.stop();
 
       // Expect some future heartbeats will receive the STOP command
-      Tasks.waitFor(SparkCommand.STOP, new Callable<SparkCommand>() {
+      Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
-        public SparkCommand call() throws Exception {
-          return client.heartbeat(null);
+        public Boolean call() throws Exception {
+          SparkCommand command = client.heartbeat(null);
+          return command != null && SparkCommand.isStop(client.heartbeat(null));
         }
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 

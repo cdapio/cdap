@@ -19,18 +19,16 @@ package io.cdap.cdap.app.runtime.spark.submit;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import org.apache.spark.deploy.SparkSubmit;
@@ -45,8 +43,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 
@@ -57,44 +54,36 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkSubmitter.class);
 
-  // Filter for getting archive resources only
-  private static final Predicate<LocalizeResource> ARCHIVE_FILTER = new Predicate<LocalizeResource>() {
-    @Override
-    public boolean apply(LocalizeResource input) {
-      return input.isArchive();
-    }
-  };
-
   // Transforms LocalizeResource to URI string
-  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH = new Function<LocalizeResource, String>() {
-    @Override
-    public String apply(LocalizeResource input) {
-      return input.getURI().toString();
-    }
-  };
+  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH = input -> input.getURI().toString();
 
   @Override
-  public final <V> ListenableFuture<V> submit(final SparkRuntimeContext runtimeContext,
-                                              Map<String, String> configs, List<LocalizeResource> resources,
-                                              URI jobFile, final V result) throws Exception {
-    final SparkSpecification spec = runtimeContext.getSparkSpecification();
+  public final <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext,
+                                            Map<String, String> configs, List<LocalizeResource> resources,
+                                            URI jobFile, final V result) throws Exception {
+    SparkSpecification spec = runtimeContext.getSparkSpecification();
 
-    final List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
+    List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
 
     // Spark submit is called from this executor
     // Use an executor to simplify logic that is needed to interrupt the running thread on stopping
-    final ExecutorService executor = Executors.newSingleThreadExecutor(
+    ExecutorService executor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder()
         .setNameFormat("spark-submitter-" + spec.getName() + "-" + runtimeContext.getRunId())
         .build());
 
     // Latch for the Spark job completion
-    final CountDownLatch completion = new CountDownLatch(1);
-    final SparkJobFuture<V> resultFuture = new SparkJobFuture<V>(runtimeContext) {
+    CountDownLatch completion = new CountDownLatch(1);
+    long defaultTimeoutMillis = TimeUnit.SECONDS.toMillis(
+      runtimeContext.getCConfiguration().getLong(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS));
+
+    AbstractSparkJobFuture<V> resultFuture = new AbstractSparkJobFuture<V>(defaultTimeoutMillis) {
       @Override
-      protected void cancelTask() {
+      protected void onCancel(long timeout, TimeUnit timeoutTimeUnit) {
+        runtimeContext.setTerminationTime(System.currentTimeMillis() + timeoutTimeUnit.toMillis(timeout));
+
         // Try to shutdown the running spark job.
-        triggerShutdown();
+        triggerShutdown(timeout, timeoutTimeUnit);
 
         // Wait for the Spark-Submit returns
         Uninterruptibles.awaitUninterruptibly(completion);
@@ -102,25 +91,22 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     };
 
     // Submit the Spark job
-    executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          List<String> extraArgs = beforeSubmit();
-          String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
-          submit(runtimeContext, submitArgs);
-          boolean state = waitForFinish();
-          if (!state) {
-            throw new Exception("Spark driver returned error state");
-          }
-          onCompleted(state);
-          resultFuture.set(result);
-        } catch (Throwable t) {
-          onCompleted(false);
-          resultFuture.setException(t);
-        } finally {
-          completion.countDown();
+    executor.submit(() -> {
+      try {
+        List<String> extraArgs = beforeSubmit();
+        String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
+        submit(runtimeContext, submitArgs);
+        boolean state = waitForFinish();
+        if (!state) {
+          throw new Exception("Spark driver returned error state");
         }
+        onCompleted(state);
+        resultFuture.complete(result);
+      } catch (Throwable t) {
+        onCompleted(false);
+        resultFuture.completeExceptionally(t);
+      } finally {
+        completion.countDown();
       }
     });
     // Shutdown the executor right after submit since the thread is only used for one submission.
@@ -138,7 +124,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   /**
    * Invoked for stopping the Spark job explicitly.
    */
-  protected abstract void triggerShutdown();
+  protected abstract void triggerShutdown(long timeout, TimeUnit timeoutTimeUnit);
 
   /**
    * Called before submitting the Spark job.
@@ -165,14 +151,14 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * Returns iterable of archives from list of localize resources.
    */
   protected Iterable<LocalizeResource> getArchives(List<LocalizeResource> localizeResources) {
-    return Iterables.filter(localizeResources, ARCHIVE_FILTER);
+    return Iterables.filter(localizeResources, LocalizeResource::isArchive);
   }
 
   /**
    * Returns iterable of archives from list of localize resources.
    */
   protected Iterable<LocalizeResource> getFiles(List<LocalizeResource> localizeResources) {
-    return Iterables.filter(localizeResources, Predicates.not(ARCHIVE_FILTER));
+    return Iterables.filter(localizeResources, Predicates.not(LocalizeResource::isArchive));
   }
 
   /**
@@ -278,75 +264,5 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     }
 
     return builder.build();
-  }
-
-  /**
-   * A {@link Future} implementation for representing a Spark job execution, which allows cancelling the job through
-   * the {@link #cancel(boolean)} method. When the job execution is completed, the {@link #set(Object)} should be
-   * called for successful execution, or call the {@link #setException(Throwable)} for failure. To terminate the
-   * job execution while it is running, call the {@link #cancel(boolean)} method. Sub-classes should override the
-   * {@link #cancelTask()} method for cancelling the execution and the state of this {@link Future} will change
-   * to cancelled after the {@link #cancelTask()} call returns.
-   *
-   * @param <V> type of object returned by the {@link #get()} method.
-   */
-  private abstract static class SparkJobFuture<V> extends AbstractFuture<V> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SparkJobFuture.class);
-    private final AtomicBoolean done;
-    private final SparkRuntimeContext context;
-
-    protected SparkJobFuture(SparkRuntimeContext context) {
-      this.done = new AtomicBoolean();
-      this.context = context;
-    }
-
-    @Override
-    protected boolean set(V value) {
-      if (done.compareAndSet(false, true)) {
-        return super.set(value);
-      }
-      return false;
-    }
-
-    @Override
-    protected boolean setException(Throwable throwable) {
-      if (done.compareAndSet(false, true)) {
-        return super.setException(throwable);
-      }
-      return false;
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      if (!done.compareAndSet(false, true)) {
-        return false;
-      }
-
-      try {
-        cancelTask();
-        return super.cancel(mayInterruptIfRunning);
-      } catch (Throwable t) {
-        // Only log and reset state, but not propagate since Future.cancel() doesn't expect exception to be thrown.
-        LOG.warn("Failed to cancel Spark execution for {}.", context, t);
-        done.set(false);
-        return false;
-      }
-    }
-
-
-    @Override
-    protected final void interruptTask() {
-      // Final it so that it cannot be overridden. This method gets call after the Future state changed
-      // to cancel, hence cannot have the caller block until cancellation is done.
-    }
-
-    /**
-     * Will be called to cancel an executing task. Sub-class can override this method to provide
-     * custom cancellation logic. This method will be called before the future changed to cancelled state.
-     */
-    protected void cancelTask() {
-      // no-op
-    }
   }
 }
