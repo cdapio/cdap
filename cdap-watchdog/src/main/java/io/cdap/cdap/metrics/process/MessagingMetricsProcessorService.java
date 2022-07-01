@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
  */
 public class MessagingMetricsProcessorService extends AbstractExecutionThreadService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorManagerService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorService.class);
   // Log the metrics processing progress no more than once per minute.
   private static final Logger PROGRESS_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
 
