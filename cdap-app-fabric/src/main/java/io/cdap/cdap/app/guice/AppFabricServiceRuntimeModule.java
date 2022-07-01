@@ -43,6 +43,7 @@ import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.runtime.KubeTwillControllerCreator;
+import io.cdap.cdap.app.runtime.RemoteTwillControllerCreator;
 import io.cdap.cdap.app.runtime.TwillControllerCreator;
 import io.cdap.cdap.app.runtime.TwillControllerCreatorFactory;
 import io.cdap.cdap.app.store.Store;
@@ -100,7 +101,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import io.cdap.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
@@ -432,8 +432,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       MapBinder<ClusterMode, TwillControllerCreator> twillControllerCreatorBinder =
         MapBinder.newMapBinder(binder(), ClusterMode.class, TwillControllerCreator.class);
       twillControllerCreatorBinder.addBinding(ClusterMode.ON_PREMISE).to(KubeTwillControllerCreator.class);
-      twillControllerCreatorBinder.addBinding(ClusterMode.ISOLATED).to(Key.get(RemoteExecutionTwillRunnerService.class,
-                                                                               AppFabric.RemoteExecution.class));
+      twillControllerCreatorBinder.addBinding(ClusterMode.ISOLATED).to(RemoteTwillControllerCreator.class);
     }
 
     @Provides
