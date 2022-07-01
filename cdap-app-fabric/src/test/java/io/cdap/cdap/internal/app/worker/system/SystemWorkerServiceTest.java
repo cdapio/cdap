@@ -108,6 +108,7 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
                                                             cConf, metricsCollectionService),
                                                           injector.getInstance(FileBasedKeyManager.class),
                                                           new NoopTwillRunnerService(),
+                                                          new NoopTwillRunnerService(),
                                                           getInjector().getInstance(ProvisioningService.class),
                                                           Guice.createInjector(new RunnableTaskModule(cConf)));
     service.startAndWait();

@@ -257,6 +257,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_ROLE_LABEL = "spark-role";
   private static final String SPARK_DRIVER_LABEL_VALUE = "driver";
   private static final String CDAP_CONTAINER_LABEL = "cdap.container";
+  private static final String TWILL_RUNNER_SERVICE_MONITOR_DISABLE = "kube.twill.runner.service.monitor.disable";
 
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
@@ -392,11 +393,21 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
+    String twillRunnables = context.getConfigurations().get(TWILL_RUNNER_SERVICE_MONITOR_DISABLE);
+    boolean enableMonitor = true;
+    if (twillRunnables != null && podLabels != null) {
+      for (String twillRunnable : twillRunnables.split(",")) {
+        if (podLabels.containsKey("cdap.container") && podLabels.get("cdap.container").equals(twillRunnable)) {
+          enableMonitor = false;
+        }
+      }
+    }
     twillRunner = new KubeTwillRunnerService(context, namespace, discoveryService,
                                              podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName),
                                              Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, "60")),
-                                             Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, "1000")));
+                                             Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, "1000")),
+                                             enableMonitor);
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
