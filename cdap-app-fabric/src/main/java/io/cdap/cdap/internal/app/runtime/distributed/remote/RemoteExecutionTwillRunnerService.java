@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.RetryableException;
-import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
