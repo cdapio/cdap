@@ -205,7 +205,7 @@ public class RemoteExecutionTwillRunnerService implements
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-
+    LOG.debug("RETRS initialised!!");
     scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
                                                  Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
   }
