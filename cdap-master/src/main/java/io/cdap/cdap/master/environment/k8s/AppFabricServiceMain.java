@@ -23,17 +23,11 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
-import io.cdap.cdap.app.guice.ClusterMode;
-import io.cdap.cdap.app.guice.DefaultTwillControllerCreatorFactory;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.app.runtime.KubeTwillControllerCreator;
-import io.cdap.cdap.app.runtime.TwillControllerCreator;
-import io.cdap.cdap.app.runtime.TwillControllerCreatorFactory;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -57,7 +51,6 @@ import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
@@ -134,16 +127,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
           // TODO (CDAP-14677): find a better way to inject metadata publisher
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
           bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-        }
-      },
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(TwillControllerCreatorFactory.class).to(DefaultTwillControllerCreatorFactory.class);
-          MapBinder<ClusterMode, TwillControllerCreator> twillControllerCreatorBinder =
-            MapBinder.newMapBinder(binder(), ClusterMode.class, TwillControllerCreator.class);
-          twillControllerCreatorBinder.addBinding(ClusterMode.ON_PREMISE).to(KubeTwillControllerCreator.class);
-          twillControllerCreatorBinder.addBinding(ClusterMode.ISOLATED).to(RemoteExecutionTwillRunnerService.class);
         }
       }
     );
