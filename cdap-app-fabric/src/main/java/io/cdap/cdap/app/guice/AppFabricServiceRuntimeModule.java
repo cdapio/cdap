@@ -432,7 +432,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       MapBinder<ClusterMode, TwillControllerCreator> twillControllerCreatorBinder =
         MapBinder.newMapBinder(binder(), ClusterMode.class, TwillControllerCreator.class);
       twillControllerCreatorBinder.addBinding(ClusterMode.ON_PREMISE).to(KubeTwillControllerCreator.class);
-      twillControllerCreatorBinder.addBinding(ClusterMode.ISOLATED).to(RemoteExecutionTwillRunnerService.class);
+      twillControllerCreatorBinder.addBinding(ClusterMode.ISOLATED).to(Key.get(RemoteExecutionTwillRunnerService.class,
+                                                                               AppFabric.RemoteExecution.class));
     }
 
     @Provides
