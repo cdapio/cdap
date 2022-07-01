@@ -303,6 +303,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
+        ArtifactDetail artifactDetail = noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+        LOG.error("wyzhang: createPluginSnapshot: copyArtifact {} to {}", artifactDetail, destFile.getAbsoluteFile());
         copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)), destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
