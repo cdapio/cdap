@@ -237,6 +237,7 @@ public final class Locations {
     URI uri = location.toURI();
     if ("file".equals(uri.getScheme())) {
       try {
+        LOG.error("wyzhang: linkOrCopy: createLink from {} to {}", Paths.get(uri), targetPath.getParent());
         Files.createLink(targetPath.toPath(), Paths.get(uri));
         return targetPath;
       } catch (Exception e) {
@@ -245,6 +246,7 @@ public final class Locations {
     }
     if (location instanceof LinkableLocation) {
       try {
+        LOG.error("wyzhang: linkOrCopy: try to link due to linkable location");
         if (((LinkableLocation) location).tryLink(targetPath.toPath())) {
           return targetPath;
         }
@@ -252,7 +254,7 @@ public final class Locations {
         // Ignore. Fallback to copy
       }
     }
-
+    LOG.error("wyzhang: linkOrCopy: Files.copy from {} to {}", location.toURI(), targetPath);
     try (InputStream is = location.getInputStream()) {
       Files.copy(is, targetPath.toPath());
     }

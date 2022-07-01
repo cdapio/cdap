@@ -507,6 +507,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
         String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
         ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
+        LOG.error("wyzhang: createPluginSnapshot: copyArtifact {} to {}", artifactDetail, destFile.getAbsoluteFile());
         copyArtifact(artifactId, artifactDetail, destFile, artifactRepository, isDistributed, peer != null);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
