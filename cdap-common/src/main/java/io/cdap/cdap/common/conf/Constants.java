@@ -246,6 +246,7 @@ public final class Constants {
     public static final String SPARK_COMPAT = "app.program.spark.compat";
     public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
     public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
+    public static final String TWILL_CONTROLLER_START_SECONDS = "program.twill.controller.start.seconds";
     public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";
     public static final String YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL =
       "app.program.yarn.attempt.failures.validity.interval";
@@ -482,6 +483,7 @@ public final class Constants {
     public static final String DISPATCH_PROGRAM_TYPES = "system.worker.dispatch.program.types";
     public static final String HTTP_CLIENT_READ_TIMEOUT_MS = "system.worker.http.client.read.timeout.ms";
     public static final String HTTP_CLIENT_CONNECTION_TIMEOUT_MS = "system.worker.http.client.connection.timeout.ms";
+    public static final String TWILL_CONTROLLER_START_SECONDS = "system.worker.program.twill.controller.start.seconds";
 
     /**
      * System worker http handler configuration
