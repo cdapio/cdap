@@ -173,6 +173,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       liveInfoLock.lock();
       try {
         KubeTwillController controller = createKubeTwillController(spec.getName(), runId, resourceType, meta);
+        LOG.debug("Monitor enabled: {}", enableMonitor);
         if (!enableMonitor) {
           //since monitor is disabled, we fire and forget
           return controller;
