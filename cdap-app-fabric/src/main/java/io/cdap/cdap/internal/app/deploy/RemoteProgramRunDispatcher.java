@@ -109,6 +109,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ProgramRunDispatcherTask.class.getName())
       .withParam(GSON.toJson(programRunDispatcherInfo)).build();
     remoteTaskExecutor.runTask(request);
+    LOG.debug("Dispatch complete for Run ID: {}", runId.getId());
     ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(runId);
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions());
