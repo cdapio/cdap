@@ -2094,6 +2094,15 @@
   <!-- Master Configuration -->
 
   <property>
+    <name>kube.twill.runner.service.monitor.disable</name>
+    <value>SystemWorkerTwillRunnable</value>
+    <description>
+      Comma separated list of Twill Runnable classes which start KubeTwillRunnerService, but wants its monitoring to
+      be disabled.
+    </description>
+  </property>
+
+  <property>
     <name>hbase.client.retries.number</name>
     <value>2</value>
     <description>
