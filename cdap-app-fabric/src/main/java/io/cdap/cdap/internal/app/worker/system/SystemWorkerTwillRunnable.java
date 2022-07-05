@@ -83,6 +83,8 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -130,7 +132,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         expose(KeyManager.class);
       }
     };
-    modules.add(new RemoteTwillModule());
+
     modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new IOModule());
@@ -211,6 +213,14 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         }
       });
       modules.add(new RemoteLogAppenderModule());
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(TwillRunnerService.class).toProvider(
+            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
+          bind(TwillRunner.class).to(TwillRunnerService.class);
+        }
+      });
 
       if (coreSecurityModule.requiresZKClient()) {
         modules.add(new ZKClientModule());
@@ -281,6 +291,10 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
     // Overwrite the app fabric temp directory with the task worker temp directory
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, cConf.get(Constants.SystemWorker.LOCAL_DATA_DIR));
+
+    // We replace TWILL_CONTROLLER_START_SECONDS value with the one specific for system worker
+    cConf.set(Constants.AppFabric.TWILL_CONTROLLER_START_SECONDS,
+              cConf.get(Constants.SystemWorker.TWILL_CONTROLLER_START_SECONDS));
 
     Configuration hConf = new Configuration();
     hConf.clear();

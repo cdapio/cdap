@@ -378,11 +378,18 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                 TimeUnit.SECONDS);
 
-          // Block on the twill controller until it is in running state or terminated (due to failure)
-          CountDownLatch latch = new CountDownLatch(1);
-          twillController.onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
-          twillController.onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
-          latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
+          /**
+           * Block on the twill controller until it is in running state or terminated (due to failure).
+           * If TWILL_CONTROLLER_START_SECONDS is set to zero, it means that we do not want to wait for twill
+           * controller to go into running or terminated state. The reason is that monitoring will be happening
+           * somewhere else.
+           */
+          if (cConf.getLong(Constants.AppFabric.TWILL_CONTROLLER_START_SECONDS) > 0) {
+            CountDownLatch latch = new CountDownLatch(1);
+            twillController.onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+            twillController.onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+            latch.await(cConf.getLong(Constants.AppFabric.TWILL_CONTROLLER_START_SECONDS), TimeUnit.SECONDS);
+          }
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }

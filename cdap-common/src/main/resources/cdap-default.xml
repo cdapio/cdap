@@ -541,6 +541,15 @@
   </property>
 
   <property>
+    <name>program.twill.controller.start.seconds</name>
+    <value>${app.program.max.start.seconds}</value>
+    <description>
+      Upon starting a program, the amount of time to wait for a program twill controller to either go into
+      running or termination before returning.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.max.stop.seconds</name>
     <value>300</value>
     <description>
@@ -2091,6 +2100,15 @@
 
 
   <!-- Master Configuration -->
+
+  <property>
+    <name>twill.runner.service.monitor.disable</name>
+    <value>SystemWorkerTwillRunnable</value>
+    <description>
+      Comma separated list of Twill Runnable classes which start KubeTwillRunnerService, but wants its monitoring to
+      be disabled.
+    </description>
+  </property>
 
   <property>
     <name>hbase.client.retries.number</name>
@@ -4853,6 +4871,16 @@
   </property>
 
   <!-- System pods Configuration  -->
+  <property>
+    <name>system.worker.program.twill.controller.start.seconds</name>
+    <value>${app.program.max.start.seconds}</value>
+    <description>
+      Sets value of app.program.twill.controller.start.seconds in system workers.
+      This value should only be changed in hybrid setups.
+      (TODO) CDAP-19405 to remove the need for this configuration
+    </description>
+  </property>
+
   <property>
     <name>system.worker.pool.enable</name>
     <value>false</value>
