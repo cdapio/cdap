@@ -42,6 +42,8 @@ import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.twill.api.RunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -62,6 +64,7 @@ public class ProgramRunDispatcherTask implements RunnableTask {
 
   private final Injector injector;
   private final ExecutorService executorService;
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunDispatcherTask.class);
 
   @Inject
   ProgramRunDispatcherTask(Injector injector,
@@ -77,6 +80,7 @@ public class ProgramRunDispatcherTask implements RunnableTask {
       GSON.fromJson(context.getParam(), ProgramRunDispatcherInfo.class);
     ProgramRunDispatcher dispatcher = injector.getInstance(InMemoryProgramRunDispatcher.class);
     ProgramController programController = dispatcher.dispatchProgram(programRunDispatcherInfo);
+    LOG.debug("Pipeline launched with programController: {}", programController);
     if (Objects.isNull(programController)) {
       String msg = String.format("Unable to dispatch Program %s with runid %s",
                                  programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
