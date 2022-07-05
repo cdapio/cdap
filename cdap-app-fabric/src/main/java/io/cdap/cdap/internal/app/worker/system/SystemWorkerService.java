@@ -114,6 +114,7 @@ public class SystemWorkerService extends AbstractIdleService {
     LOG.debug("Shutting down SystemWorkerService");
     keyManager.stop();
     twillRunnerService.stop();
+    remoteTwillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
     LOG.debug("Shutting down SystemWorkerService has completed");
