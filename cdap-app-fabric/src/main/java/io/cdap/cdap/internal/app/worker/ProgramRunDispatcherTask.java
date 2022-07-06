@@ -90,5 +90,6 @@ public class ProgramRunDispatcherTask implements RunnableTask {
     // Result doesn't matter since we just need an HTTP 200 response or an exception in case of an error(handled above).
     context.writeResult(new byte[0]);
     executorService.submit(programRunDispatcherInfo.getCleanUpTask().get());
+    LOG.debug("ProgramRunDispatcherTask complete!");
   }
 }

@@ -131,6 +131,12 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
       throw new IllegalStateException(msg);
     }
     TwillControllerCreator twillControllerCreator = twillControllerCreatorFactory.create(clusterMode);
+    LOG.debug("RunRecordDetail: {}", runRecordDetail);
+    try {
+      LOG.debug("RunRecordDetail json: {}", GSON.toJson(runRecordDetail));
+    } catch (Exception e) {
+      LOG.error("Error", e);
+    }
     TwillController twillController = twillControllerCreator.createTwillControllerFromRunRecord(runRecordDetail);
     LOG.debug("TwillController created: {}", twillController);
     ProgramController programController = null;
