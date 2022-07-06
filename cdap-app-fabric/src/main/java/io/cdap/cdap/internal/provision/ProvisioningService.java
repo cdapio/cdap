@@ -397,6 +397,7 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    LOG.debug("Provisioner during getRuntimeJobManager: {}", provisioner);
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
     ProvisionerContext context = createContext(cConf, programOptions, programRunId, user, properties, null);
@@ -519,6 +520,7 @@ public class ProvisioningService extends AbstractIdleService {
    * will be removed. Loaded provisioners will be initialized.
    */
   public void initializeProvisionersAndExecutors() {
+    LOG.debug("Init Provisioners!");
     this.taskExecutor = new KeyedExecutor<>(
         Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
             Threads.createDaemonThreadFactory("provisioning-task-%d")));

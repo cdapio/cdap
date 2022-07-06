@@ -374,8 +374,11 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           LOG.debug("TwillController created at DistributedProgramRunner: {}", twillController);
           // Block on the twill controller until it is in running state or terminated (due to failure)
           CountDownLatch latch = new CountDownLatch(1);
+          LOG.debug("1");
           twillController.onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+          LOG.debug("2");
           twillController.onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+          LOG.debug("3");
           latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
           LOG.debug("Program Run complete!");
         } finally {
