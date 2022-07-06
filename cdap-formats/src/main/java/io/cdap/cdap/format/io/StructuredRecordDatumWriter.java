@@ -255,6 +255,18 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
   }
 
   /**
+   * Encode a number
+   *
+   * @param encoder encoder
+   * @param number value to encode
+   * @throws IOException if failed to encode
+   * @throws UnsupportedOperationException if not implemented
+   */
+  protected void encodeNumber(Encoder encoder, Number number) throws IOException {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  /**
    * Encodes a union value. This method will write out the index of the matching schema in the union schema,
    * followed by encoding the value.
    * Sub-class can override this to have different behavior.

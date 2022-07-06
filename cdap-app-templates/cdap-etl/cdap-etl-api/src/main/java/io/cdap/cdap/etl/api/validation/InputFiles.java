@@ -14,23 +14,13 @@
  *  the License.
  */
 
-package io.cdap.cdap.runtime.spi.provisioner.dataproc;
-
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import javax.annotation.Nullable;
+package io.cdap.cdap.etl.api.validation;
 
 /**
- * Creates DataprocClients.
+ * A collection of input files to read for schema detection.
+ *
+ * This interface exists in case the API needs to be extended to add more information.
  */
-public interface DataprocClientFactory {
+public interface InputFiles extends Iterable<InputFile> {
 
-  default DataprocClient create(DataprocConf conf) throws GeneralSecurityException, IOException {
-    return create(conf, false, null);
-  }
-
-  DataprocClient create(DataprocConf conf, boolean requireSSH,
-                        @Nullable SSHPublicKey sshPublicKey) throws IOException, GeneralSecurityException;
 }

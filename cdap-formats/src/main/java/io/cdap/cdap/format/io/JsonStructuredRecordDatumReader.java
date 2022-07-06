@@ -22,8 +22,10 @@ import com.google.gson.stream.JsonToken;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.Decoder;
+import io.cdap.cdap.format.utils.FormatUtils;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -52,6 +54,12 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
       .build()
   );
 
+  private static final Map<Schema.LogicalType, JsonToken> LOGICAL_SCHEMA_TO_JSON_TYPE = new EnumMap<>(
+      ImmutableMap.<Schema.LogicalType, JsonToken>builder()
+      .put(Schema.LogicalType.DECIMAL, JsonToken.NUMBER)
+      .build()
+  );
+
   private final boolean fieldNameIgnoreCase;
 
   /**
@@ -77,6 +85,17 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
     }
 
     return super.read(decoder, sourceSchema);
+  }
+
+  @Override
+  protected Object decode(Decoder decoder, Schema schema) throws IOException {
+    Schema.LogicalType logicalType = schema.getLogicalType();
+
+    if (logicalType == Schema.LogicalType.DECIMAL) {
+      return decodeDecimal(decoder, schema);
+    }
+
+    return super.decode(decoder, schema);
   }
 
   @Override
@@ -149,10 +168,19 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
       if (SCHEMA_TO_JSON_TYPE.get(schema.getType()) == token) {
         return decode(decoder, schema);
       }
+      if (LOGICAL_SCHEMA_TO_JSON_TYPE.get(schema.getLogicalType()) == token) {
+        return decode(decoder, schema);
+      }
     }
 
     throw new IOException(String.format("No matching schema found for union type: %s for token: %s", unionSchema,
                                         token));
+  }
+
+  protected ByteBuffer decodeDecimal(Decoder decoder, Schema decimalSchema) throws IOException {
+    JsonReader jsonReader = getJsonReader(decoder);
+    String strVal = jsonReader.nextString();
+    return ByteBuffer.wrap(FormatUtils.parseDecimal(decimalSchema, strVal).unscaledValue().toByteArray());
   }
 
   private JsonReader getJsonReader(Decoder decoder) {

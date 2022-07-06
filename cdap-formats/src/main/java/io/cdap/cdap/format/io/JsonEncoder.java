@@ -21,6 +21,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Encoder;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 
 /**
@@ -108,5 +109,56 @@ public final class JsonEncoder implements Encoder {
       writeBytes(buf, 0, buf.length);
     }
     return this;
+  }
+
+  @Override
+  public Encoder writeNumber(Number number) throws IOException {
+    // Wrap BigDecimal values so the output is always generated as the plain string value,
+    if (number instanceof BigDecimal) {
+      number = BigDecimalWrapper.wrap((BigDecimal) number);
+    }
+
+    jsonWriter.value(number);
+    return this;
+  }
+
+  /**
+   * Wrapper used to ensure that BigDecimals are generated as plain values (with no scientific notation).
+   */
+  private static class BigDecimalWrapper extends Number {
+    BigDecimal wrapped;
+
+    protected static BigDecimalWrapper wrap(BigDecimal value) {
+      return new BigDecimalWrapper(value);
+    }
+
+    protected BigDecimalWrapper(BigDecimal wrapped) {
+      this.wrapped = wrapped;
+    }
+
+    @Override
+    public String toString() {
+      return wrapped.toPlainString();
+    }
+
+    @Override
+    public int intValue() {
+      return wrapped.intValue();
+    }
+
+    @Override
+    public long longValue() {
+      return wrapped.longValue();
+    }
+
+    @Override
+    public float floatValue() {
+      return wrapped.floatValue();
+    }
+
+    @Override
+    public double doubleValue() {
+      return wrapped.doubleValue();
+    }
   }
 }

@@ -30,7 +30,10 @@ import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metrics.process.loader.MetricsWriterProvider;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +45,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class MessagingMetricsProcessorManagerService extends AbstractIdleService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorManagerService.class);
+  private static final String METRICSWRITERS = "metricswriters";
   private final List<MessagingMetricsProcessorService> metricsProcessorServices;
   private final List<MetricsWriter> metricsWriters;
   private final CConfiguration cConf;
@@ -112,7 +117,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
       this.metricsWriters.add(writer);
       DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
                                                                                          cConf, writer.getID());
-      writer.initialize(metricsWriterContext);
+      initializeMetricWriter(writer, metricsWriterContext);
     }
 
     String processorKey = String.format("metrics.processor.%s", instanceId);
@@ -136,6 +141,30 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
 
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
       processorService.startAndWait();
+    }
+  }
+
+  @VisibleForTesting
+  void initializeMetricWriter(MetricsWriter writer,
+                              DefaultMetricsWriterContext metricsWriterContext) throws Exception {
+    File baseDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), METRICSWRITERS);
+    File initStateFile = new File(baseDir, writer.getID());
+    try {
+      writer.initialize(metricsWriterContext);
+      if (!initStateFile.exists()) {
+        baseDir.mkdirs();
+        boolean result = initStateFile.createNewFile();
+        LOG.info("Initialization for metric writer {} succeeded. Result of creating initStateFile {} is {}.",
+                 writer.getID(), initStateFile.getName(), result);
+      }
+    } catch (Exception e) {
+      //enforce at least one correct initialization
+      if (!initStateFile.exists()) {
+        throw new Exception(
+          "Initialization for metric writer " + writer.getID() + " failed. Please fix the errors to proceed.", e);
+      } else {
+        LOG.error("Initialization for metric writer {} failed. Recheck the configuration.", writer.getID(), e);
+      }
     }
   }
 

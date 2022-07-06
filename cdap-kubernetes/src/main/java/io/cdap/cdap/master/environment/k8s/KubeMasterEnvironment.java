@@ -129,6 +129,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
 
   public static final String SECURITY_CONFIG_NAME = "cdap-security";
+  public static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
   private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
@@ -177,7 +178,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
 
   // Workload Identity Constants
-  private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   private static final String WORKLOAD_IDENTITY_ENABLED = "master.environment.k8s.workload.identity.enabled";
   private static final String WORKLOAD_IDENTITY_POOL = "master.environment.k8s.workload.identity.pool";
   @VisibleForTesting
@@ -329,6 +329,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       }
     }
 
+    workloadLauncherRoleNameForNamespace = conf.getOrDefault(WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME,
+                                                             DEFAULT_WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME);
+    workloadLauncherRoleNameForCluster = conf.getOrDefault(WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME,
+                                                           DEFAULT_WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME);
+
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
     // Currently we don't support more than one instance per system service, hence set it to "1".
     conf.put(MASTER_MAX_INSTANCES, "1");
@@ -337,17 +342,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     coreV1Api = new CoreV1Api(Config.defaultClient());
     rbacV1Api = new RbacAuthorizationV1Api(Config.defaultClient());
-
-    workloadLauncherRoleNameForNamespace = conf.getOrDefault(WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME,
-                                                             DEFAULT_WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME);
-    workloadLauncherRoleNameForCluster = conf.getOrDefault(WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME,
-                                                           DEFAULT_WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME);
-    // Validate cluster roles exist if namespace creation is enabled.
-    if (namespaceCreationEnabled) {
-      validateClusterRole(workloadLauncherRoleNameForNamespace);
-      validateClusterRole(workloadLauncherRoleNameForCluster);
-    }
-
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
     Map<String, String> podLabels = podInfo.getLabels();
@@ -404,18 +398,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                              Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, "60")),
                                              Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, "1000")));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
-  }
-
-  private void validateClusterRole(String roleName) throws IOException, IllegalArgumentException {
-    try {
-      rbacV1Api.readClusterRole(roleName, null);
-    } catch (ApiException e) {
-      if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new IllegalArgumentException(String.format("ClusterRole '%s' does not exist. Ensure it is created and " +
-                                                           "assigned to the master service account.", roleName), e);
-      }
-      throw new IOException(String.format("Failed to validate cluster role with error: %s", e.getResponseBody()), e);
-    }
   }
 
   @Override
@@ -1078,7 +1060,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     LOG.info("Created namespace role binding '{}' in k8s namespace '{}' for service account '{}'",
-             bindingName, namespace, serviceAccountName);
+             bindingName, serviceAccountName, serviceAccountName);
   }
 
   private void createClusterRoleBinding(String bindingName, String roleName, String serviceAccountNamespace,

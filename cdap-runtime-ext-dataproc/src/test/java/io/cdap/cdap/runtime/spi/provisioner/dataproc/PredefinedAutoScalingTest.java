@@ -49,7 +49,7 @@ public class PredefinedAutoScalingTest {
     properties.put("accountKey", "{ \"type\": \"test\"}");
     properties.put(DataprocConf.PROJECT_ID_KEY, PROJECT);
     properties.put("zone", REGION);
-    dataprocConf = DataprocConf.create(properties);
+    dataprocConf = DataprocConf.create(properties, null);
   }
 
   @Test
