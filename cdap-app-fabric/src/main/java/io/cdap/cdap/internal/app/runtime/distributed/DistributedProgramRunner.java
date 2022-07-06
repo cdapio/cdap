@@ -372,7 +372,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                 TimeUnit.SECONDS);
           LOG.debug("TwillController created at DistributedProgramRunner: {}", twillController);
-          LOG.debug("TwillController json: {}", GSON.toJson(twillController));
+          LOG.debug("TwillController runId: {}", twillController.getRunId().getId());
           // Block on the twill controller until it is in running state or terminated (due to failure)
           CountDownLatch latch = new CountDownLatch(1);
           LOG.debug("1");
