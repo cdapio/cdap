@@ -109,6 +109,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
           GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
       className = getTaskClassName(runnableTaskRequest);
       RunnableTaskContext runnableTaskContext = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
+      LOG.debug("RunnableTaskContext: {}", runnableTaskContext);
       TaskDetails taskDetails = new TaskDetails(true, className, startTime);
       emitMetrics(taskDetails);
       responder.sendContent(HttpResponseStatus.OK,
