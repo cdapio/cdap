@@ -47,6 +47,8 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
   private static final String DELETED = "DELETED";
   // The response type from K8s when a resource was modified
   private static final String MODIFIED = "MODIFIED";
+  // The response type from K8s when there is an error on the watch
+  private static final String ERROR = "ERROR";
 
   private final String namespace;
   private final Random random;
@@ -136,6 +138,10 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
               break;
             case DELETED: {
               resourceDeleted(response.object);
+              break;
+            }
+            case ERROR: {
+              watchError(response.status);
               break;
             }
             default:

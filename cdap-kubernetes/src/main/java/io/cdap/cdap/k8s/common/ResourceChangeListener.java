@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.k8s.common;
 
+import io.kubernetes.client.openapi.models.V1Status;
+
 /**
  * Listener for listening to changes in K8s resources.
  *
@@ -47,6 +49,15 @@ public interface ResourceChangeListener<T> {
    * @param resource the resource being deleted
    */
   default void resourceDeleted(T resource) {
+    // no-op
+  }
+
+  /**
+   * Invoked when there's an error on the watch. Default is a no-op.
+   *
+   * @param status the error status.
+   */
+  default void watchError(V1Status status) {
     // no-op
   }
 }
