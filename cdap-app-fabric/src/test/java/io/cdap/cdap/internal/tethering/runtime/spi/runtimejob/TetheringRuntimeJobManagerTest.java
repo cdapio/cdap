@@ -60,6 +60,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.api.LocalFile;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -141,7 +142,8 @@ public class TetheringRuntimeJobManagerTest {
                           cConf.get(Constants.Tethering.TOPIC_PREFIX) + TETHERED_INSTANCE_NAME);
     messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
     messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
-    runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore);
+    runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore,
+                                                       injector.getInstance(LocationFactory.class));
     tetheringProvisioner = injector.getInstance(TetheringProvisioner.class);
   }
 
