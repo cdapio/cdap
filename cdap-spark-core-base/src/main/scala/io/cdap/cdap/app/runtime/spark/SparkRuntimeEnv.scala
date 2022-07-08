@@ -367,8 +367,9 @@ object SparkRuntimeEnv {
         TimeUnit.MILLISECONDS.sleep(100)
       }
 
-      // Now call BatchedWriteAheadLog.close()
-      batchedWAL.callMethod("close")
+      // Now call BatchedWriteAheadLog.realClose()
+      // This method is created by the SparkClassRewriter
+      batchedWAL.callMethod("realClose")
     })
   }
 

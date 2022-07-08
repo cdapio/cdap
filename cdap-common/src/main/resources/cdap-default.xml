@@ -5296,6 +5296,14 @@
   </property>
 
   <property>
+    <name>feature.streaming.pipeline.checkpoint.deletion.enabled</name>
+    <value>false</value>
+    <description>
+      Enables auto deletion of streaming pipeline checkpoint on successful graceful shutdown
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>

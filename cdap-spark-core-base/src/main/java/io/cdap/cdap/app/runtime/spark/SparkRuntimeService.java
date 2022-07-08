@@ -29,7 +29,6 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramState;
 import io.cdap.cdap.api.ProgramStatus;
@@ -40,6 +39,7 @@ import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import io.cdap.cdap.app.runtime.spark.python.PySparkUtil;
 import io.cdap.cdap.app.runtime.spark.service.ArtifactFetcherService;
+import io.cdap.cdap.app.runtime.spark.submit.SparkJobFuture;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
@@ -108,7 +108,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -128,12 +130,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private static final String CDAP_LAUNCHER_JAR = "cdap-spark-launcher.jar";
   private static final String CDAP_SPARK_JAR = "cdap-spark.jar";
   private static final String CDAP_METRICS_PROPERTIES = "metrics.properties";
-  private static final Function<File, URI> FILE_TO_URI = new Function<File, URI>() {
-    @Override
-    public URI apply(File input) {
-      return input.toURI();
-    }
-  };
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
 
@@ -143,18 +139,18 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final File pluginArchive;
   private final SparkSubmitter sparkSubmitter;
   private final LocationFactory locationFactory;
-  private final AtomicReference<ListenableFuture<RunId>> completion;
+  private final AtomicReference<SparkJobFuture<RunId>> completion;
   private final BasicSparkClientContext context;
   private final boolean isLocal;
   private final ProgramLifecycle<SparkRuntimeContext> programLifecycle;
   private final FieldLineageWriter fieldLineageWriter;
   private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
-
-
-  private Callable<ListenableFuture<RunId>> submitSpark;
-  private Runnable cleanupTask;
   private final MasterEnvironment masterEnv;
+
+  private Callable<SparkJobFuture<RunId>> submitSpark;
+  private Runnable cleanupTask;
   private ArtifactFetcherService artifactFetcherService;
+  private volatile long gracefulTimeoutMillis;
 
   SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
@@ -170,6 +166,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.context = new BasicSparkClientContext(runtimeContext);
     this.isLocal = isLocal;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
+    this.gracefulTimeoutMillis = -1L;
     this.programLifecycle = new ProgramLifecycle<SparkRuntimeContext>() {
       @Override
       public void initialize(SparkRuntimeContext runtimeContext) throws Exception {
@@ -198,7 +195,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     // additional spark job initialization at run-time
-    // This context is for calling initialize and onFinish on the Spark program
+    // This context is for calling initialize and destroy on the Spark program
 
     // Fields injection for the Spark program
     // It has to be done in here instead of in SparkProgramRunner for the @UseDataset injection
@@ -328,12 +325,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         // Localize the spark.jar archive, which contains all CDAP and dependency jars
         File sparkJar = new File(tempDir, CDAP_SPARK_JAR);
-        classpath = joiner.join(Iterables.transform(buildDependencyJar(sparkJar), new Function<String, String>() {
-          @Override
-          public String apply(String name) {
-            return Paths.get("$PWD", CDAP_SPARK_JAR, name).toString();
-          }
-        }));
+        classpath = joiner.join(Iterables.transform(buildDependencyJar(sparkJar),
+                                                    name -> Paths.get("$PWD", CDAP_SPARK_JAR, name).toString()));
         localizeResources.add(new LocalizeResource(sparkJar, true));
 
         // Localize logback if there is one. It is placed at the beginning of the classpath
@@ -355,23 +348,20 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       Iterable<URI> pyFiles = Collections.emptyList();
       if (context.isPySpark()) {
         extraPySparkFiles.add(PySparkUtil.createPySparkLib(tempDir));
-        pyFiles = Iterables.concat(Iterables.transform(extraPySparkFiles, FILE_TO_URI),
+        pyFiles = Iterables.concat(Iterables.transform(extraPySparkFiles, File::toURI),
                                    context.getAdditionalPythonLocations());
       }
 
       final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, classpath,
                                                               context.getLocalizeResources(), isLocal, pyFiles);
-      submitSpark = new Callable<ListenableFuture<RunId>>() {
-        @Override
-        public ListenableFuture<RunId> call() throws Exception {
-          // If stop already requested on this service, don't submit the spark.
-          // This happen when stop() was called whiling starting
-          if (!isRunning()) {
-            return immediateCancelledFuture();
-          }
-          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFile,
-                                       runtimeContext.getRunId());
+      submitSpark = () -> {
+        // If stop already requested on this service, don't submit the spark.
+        // This happen when stop() was called whiling starting
+        if (!isRunning()) {
+          return SparkJobFuture.immeidateCancelled();
         }
+        return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFile,
+                                     runtimeContext.getRunId());
       };
     } catch (Throwable t) {
       cleanupTask.run();
@@ -389,11 +379,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Creates a jar bundle of all required artifacts.
    * @param artifactsPath the local path where artifacts are located.
    * @return Location of the created jar bundle of artifacts.
-   * @throws IOException
+   * @throws IOException if failed to create the bundle jar
    */
   private static Location createBundle(java.nio.file.Path artifactsPath) throws IOException {
     File tmpDir = Files.createTempDir();
-    for (File file : new File(artifactsPath.toFile().toString()).listFiles()) {
+    for (File file : DirUtils.listFiles(artifactsPath.toFile())) {
       if (file.getName().startsWith("unpacked")) {
         // unpacked directory is skipped.
         continue;
@@ -420,7 +410,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    ListenableFuture<RunId> jobCompletion = completion.getAndSet(submitSpark.call());
+    SparkJobFuture<RunId> jobCompletion = completion.getAndSet(submitSpark.call());
     // If the jobCompletion is not null, meaning the stop() was called before the atomic reference "completion" has been
     // updated. This mean the job is cancelled. We also need to cancel the future returned by submitSpark.call().
     if (jobCompletion != null) {
@@ -448,7 +438,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     // Try to get from the submission future to see if the job completed successfully.
-    ListenableFuture<RunId> jobCompletion = completion.get();
+    SparkJobFuture<RunId> jobCompletion = completion.get();
     ProgramState state = new ProgramState(ProgramStatus.COMPLETED, null);
     try {
       jobCompletion.get();
@@ -463,7 +453,13 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     try {
       destroy(state);
     } finally {
-      cleanupTask.run();
+      try {
+        if (artifactFetcherService != null) {
+          artifactFetcherService.stopAndWait();
+        }
+      } finally {
+        cleanupTask.run();
+      }
       LOG.debug("Spark program completed: {}", runtimeContext);
     }
   }
@@ -473,40 +469,52 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     LOG.debug("Stop requested for Spark Program {}", runtimeContext);
     // Replace the completion future with a cancelled one.
     // Also, try to cancel the current completion future if it exists.
-    ListenableFuture<RunId> future = completion.getAndSet(this.<RunId>immediateCancelledFuture());
+    SparkJobFuture<RunId> future = completion.getAndSet(SparkJobFuture.immeidateCancelled());
     if (future != null) {
-      future.cancel(true);
+      if (gracefulTimeoutMillis >= 0L) {
+        future.cancel(gracefulTimeoutMillis, TimeUnit.MILLISECONDS);
+      } else {
+        future.cancel(true);
+      }
     }
+  }
+
+  /**
+   * Stops the Spark job controlled by this service with the given timeout for the Spark job to stop before
+   * forcing it to terminate.
+   *
+   * @param timeout the timeout for force termination of the spark job
+   * @param timeoutUnit the unit for the timeout
+   * @return a future for the shutdown result, regardless of whether this call initiated shutdown.
+   *         Calling {@link ListenableFuture#get} will block until the service has finished shutting
+   *         down, and either returns {@link State#TERMINATED} or throws an
+   *         {@link ExecutionException}. If it has already finished stopping,
+   *         {@link ListenableFuture#get} returns immediately. Cancelling this future has no effect
+   *         on the service.
+   */
+  public ListenableFuture<State> stop(long timeout, TimeUnit timeoutUnit) {
+    gracefulTimeoutMillis = timeoutUnit.toMillis(timeout);
+    return stop();
   }
 
   @Override
   protected Executor executor() {
     // Always execute in new daemon thread.
-    //noinspection NullableProblems
-    return new Executor() {
-      @Override
-      public void execute(final Runnable runnable) {
-        final Thread t = new Thread(new Runnable() {
-
-          @Override
-          public void run() {
-            // note: this sets logging context on the thread level
-            LoggingContextAccessor.setLoggingContext(runtimeContext.getLoggingContext());
-            runnable.run();
-          }
-        });
-        t.setDaemon(true);
-        t.setName("SparkRunner" + runtimeContext.getProgramName());
-        t.start();
-      }
+    return runnable -> {
+      final Thread t = new Thread(() -> {
+        // note: this sets logging context on the thread level
+        LoggingContextAccessor.setLoggingContext(runtimeContext.getLoggingContext());
+        runnable.run();
+      });
+      t.setDaemon(true);
+      t.setName("SparkRunner-" + runtimeContext.getProgramName());
+      t.start();
     };
   }
 
   /**
-   * Calls the {@link Spark#beforeSubmit(SparkClientContext)} for the pre 3.5 Spark programs, calls
-   * the {@link ProgramLifecycle#initialize} otherwise.
+   * Calls the {@link ProgramLifecycle#initialize} of the {@link Spark} program.
    */
-  @SuppressWarnings("unchecked")
   private void initialize() throws Exception {
     context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
 
@@ -525,7 +533,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Calls the destroy or onFinish method of {@link ProgramLifecycle}.
+   * Calls the {@link ProgramLifecycle#destroy()} of the {@link Spark} program.
    */
   private void destroy(final ProgramState state) {
     context.setState(state);
@@ -585,7 +593,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private Map<String, String> createSubmitConfigs(File localDir, @Nullable String metricsConfPath, String classpath,
                                                   Map<String, LocalizeResource> localizedResources,
                                                   boolean localMode,
-                                                  Iterable<URI> pyFiles) throws Exception {
+                                                  Iterable<URI> pyFiles) {
 
     // Setup configs from the default spark conf
     Map<String, String> configs = new HashMap<>(Maps.fromProperties(SparkPackageUtils.getSparkDefaultConf()));
@@ -695,12 +703,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * prepended to the existing value.
    */
   private void prependConfig(Map<String, String> configs, String key, String prepend, String separator) {
-    String existing = configs.get(key);
-    if (existing == null) {
-      configs.put(key, prepend);
-    } else {
-      configs.put(key, prepend + separator + existing);
-    }
+    configs.merge(key, prepend, (a, b) -> b + separator + a);
   }
 
   /**
@@ -1066,15 +1069,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     } catch (Exception e) {
       LOG.warn("Failed to cleanup BeanIntrospector cache, may lead to memory leak in SDK.", e);
     }
-  }
-
-  /**
-   * Creates a {@link ListenableFuture} that is cancelled.
-   */
-  private <V> ListenableFuture<V> immediateCancelledFuture() {
-    SettableFuture<V> future = SettableFuture.create();
-    future.cancel(true);
-    return future;
   }
 
   /**

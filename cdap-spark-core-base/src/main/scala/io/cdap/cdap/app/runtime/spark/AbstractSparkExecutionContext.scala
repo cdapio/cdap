@@ -208,6 +208,8 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   override def getLogicalStartTime: Long = runtimeContext.getLogicalStartTime
 
+  override def getTerminationTime: Long = runtimeContext.getTerminationTime
+
   override def getServiceDiscoverer: ServiceDiscoverer = new SparkServiceDiscoverer(runtimeContext)
 
   override def getMetrics: Metrics = new SparkUserMetrics(runtimeContext)

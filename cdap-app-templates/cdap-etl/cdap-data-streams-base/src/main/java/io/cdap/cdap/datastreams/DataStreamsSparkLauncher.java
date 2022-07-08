@@ -17,6 +17,7 @@
 package io.cdap.cdap.datastreams;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
@@ -32,6 +33,7 @@ import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
@@ -103,10 +105,20 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     if (!isPreviewEnabled) {
       // required spark configs to prevent data loss during real-time pipeline upgrades
       sparkConf.set("spark.streaming.receiver.writeAheadLog.enable", "true");
-      sparkConf.set("spark.streaming.receiver.writeAheadLog.closeFileAfterWrite", "true");
-      sparkConf.set("spark.streaming.driver.writeAheadLog.closeFileAfterWrite", "true");
-      sparkConf.set("spark.streaming.receiver.writeAheadLog.rollingIntervalSecs", String.valueOf(0));
-      sparkConf.set("spark.streaming.driver.writeAheadLog.rollingIntervalSecs", String.valueOf(0));
+
+      String checkpointDir = spec.getCheckpointDirectory();
+      String checkpointScheme = null;
+
+      if (!Strings.isNullOrEmpty(checkpointDir)) {
+        checkpointScheme = new Path(checkpointDir).toUri().getScheme();
+      }
+
+      // For non-local file or HDFS, assuming the FS doesn't support flush (e.g. GCS or S3), hence set
+      // the following configurations
+      if (!"file".equals(checkpointScheme) && !"hdfs".equals(checkpointScheme)) {
+        sparkConf.set("spark.streaming.receiver.writeAheadLog.closeFileAfterWrite", "true");
+        sparkConf.set("spark.streaming.driver.writeAheadLog.closeFileAfterWrite", "true");
+      }
     }
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));

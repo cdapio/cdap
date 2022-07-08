@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.runtime.spark.SparkCredentialsUpdater;
+import io.cdap.cdap.app.runtime.spark.SparkProgramCompletion;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.common.BadRequestException;
@@ -43,6 +44,7 @@ import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -52,11 +54,17 @@ import javax.annotation.Nullable;
  * If runs in secure mode, the service is also responsible for updating the delegation tokens for itself
  * as well as all executors.
  */
-public class SparkDriverService extends AbstractExecutionThreadService {
+public class SparkDriverService extends AbstractExecutionThreadService implements SparkProgramCompletion {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkDriverService.class);
   private static final long HEARTBEAT_INTERVAL_MILLIS = 1000L;
   private static final int MAX_HEARTBEAT_FAILURES = 60;
+
+  private enum CompletionState {
+    COMPLETED,
+    COMPLETED_WITH_EXCEPTION,
+    TIMEOUT
+  }
 
   private final URI baseURI;
   private final SparkExecutionClient client;
@@ -64,9 +72,11 @@ public class SparkDriverService extends AbstractExecutionThreadService {
   private final SparkCredentialsUpdater credentialsUpdater;
   @Nullable
   private final BasicWorkflowToken workflowToken;
+  private final AtomicReference<CompletionState> completionState;
+  private final SparkRuntimeContext runtimeContext;
 
   private Thread runThread;
-  private volatile boolean stopWithoutComplete;
+  private volatile Long terminateTs;
 
   public SparkDriverService(URI baseURI, SparkRuntimeContext runtimeContext) {
     this.baseURI = baseURI;
@@ -74,17 +84,18 @@ public class SparkDriverService extends AbstractExecutionThreadService {
     this.credentialsUpdater = createCredentialsUpdater(runtimeContext.getConfiguration(), client);
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     this.workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
+    this.completionState = new AtomicReference<>();
+    this.runtimeContext = runtimeContext;
   }
 
-  /**
-   * Stops this driver service without sending the "completed" signal. This method is used
-   * when there is exception raise from calling user spark program so that we can still release resources
-   * but without signaling the program is completed, hence allowing the program to have another attempt, based
-   * on the max attempts setting on the spark application.
-   */
-  public void stopWithoutComplete() {
-    stopWithoutComplete = true;
-    stop();
+  @Override
+  public void completed() {
+    completionState.compareAndSet(null, CompletionState.COMPLETED);
+  }
+
+  @Override
+  public void completedWithException(Throwable t) {
+    completionState.compareAndSet(null, CompletionState.COMPLETED_WITH_EXCEPTION);
   }
 
   @Override
@@ -106,19 +117,29 @@ public class SparkDriverService extends AbstractExecutionThreadService {
   protected void run() throws Exception {
     // Performs heartbeat once per heartbeat interval.
     int failureCount = 0;
-    while (isRunning()) {
+    while (completionState.get() == null) {
       try {
-        long nextHeartbeatTime = System.currentTimeMillis() + HEARTBEAT_INTERVAL_MILLIS;
+        long startTime = System.nanoTime();
         heartbeat(client, workflowToken);
         failureCount = 0;
 
-        long sleepTime = nextHeartbeatTime - System.currentTimeMillis();
-        if (isRunning() && sleepTime > 0) {
-          TimeUnit.MILLISECONDS.sleep(sleepTime);
+        long sleepMillis = HEARTBEAT_INTERVAL_MILLIS - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+        if (terminateTs != null) {
+          long maxSleepMillis = TimeUnit.SECONDS.toMillis(terminateTs) - System.currentTimeMillis();
+          sleepMillis = Math.min(sleepMillis, maxSleepMillis);
+
+          // This means terminateTs is reached
+          if (sleepMillis <= 0) {
+            completionState.compareAndSet(null, CompletionState.TIMEOUT);
+            break;
+          }
+        }
+
+        if (sleepMillis > 0) {
+          TimeUnit.MILLISECONDS.sleep(sleepMillis);
         }
       } catch (InterruptedException e) {
         // It's issue on stop. So just continue and let the while loop to handle the condition
-        continue;
       } catch (BadRequestException e) {
         LOG.error("Invalid spark program heartbeat to {}. Terminating the execution.", baseURI, e);
         throw e;
@@ -132,6 +153,12 @@ public class SparkDriverService extends AbstractExecutionThreadService {
         }
       }
     }
+
+    // It is possible that the Spark program is still running beyond the termination timestamp.
+    // There is nothing much can be done besides just terminate this service to release resources
+    // and let the client to kill this job.
+    LOG.debug("Heartbeat loop completed with state '{}' and terminate timestamp '{}'",
+              completionState.get(), terminateTs);
   }
 
   @Override
@@ -143,11 +170,12 @@ public class SparkDriverService extends AbstractExecutionThreadService {
         credentialsUpdater.stopAndWait();
       }
     } finally {
-      if (!stopWithoutComplete) {
+      if (completionState.get() == CompletionState.COMPLETED) {
         client.completed(workflowToken);
       }
     }
-    LOG.info("SparkDriverService stopped.");
+
+    LOG.debug("SparkDriverService completed with program completion state '{}'", completionState.get());
   }
 
   @Override
@@ -159,13 +187,10 @@ public class SparkDriverService extends AbstractExecutionThreadService {
 
   @Override
   protected Executor executor() {
-    return new Executor() {
-      @Override
-      public void execute(Runnable command) {
-        Thread thread = new Thread(command, "SparkDriverService");
-        thread.setDaemon(true);
-        thread.start();
-      }
+    return command -> {
+      Thread thread = new Thread(command, "SparkDriverService");
+      thread.setDaemon(true);
+      thread.start();
     };
   }
 
@@ -214,35 +239,32 @@ public class SparkDriverService extends AbstractExecutionThreadService {
    */
   private Supplier<Credentials> createCredentialsSupplier(final SparkExecutionClient client,
                                                           final Location credentialsDir) {
-    return new Supplier<Credentials>() {
-      @Override
-      public Credentials get() {
-        // Request for the credentials to be written to a temp location
+    return () -> {
+      // Request for the credentials to be written to a temp location
+      try {
+        Location tmpLocation = credentialsDir.append("fetch-credentials-" + UUID.randomUUID() + ".tmp");
         try {
-          Location tmpLocation = credentialsDir.append("fetch-credentials-" + UUID.randomUUID() + ".tmp");
-          try {
-            client.writeCredentials(tmpLocation);
+          client.writeCredentials(tmpLocation);
 
-            // Decode the credentials, update the credentials of the current user and return it
-            try (DataInputStream input = new DataInputStream(tmpLocation.getInputStream())) {
-              Credentials credentials = new Credentials();
-              credentials.readTokenStorageStream(input);
-              UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
-              ugi.addCredentials(credentials);
-              LOG.debug("Credentials updated: {}", credentials.getAllTokens());
+          // Decode the credentials, update the credentials of the current user and return it
+          try (DataInputStream input = new DataInputStream(tmpLocation.getInputStream())) {
+            Credentials credentials = new Credentials();
+            credentials.readTokenStorageStream(input);
+            UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
+            ugi.addCredentials(credentials);
+            LOG.debug("Credentials updated: {}", credentials.getAllTokens());
 
-              // Returns the current user credentials to get updated to all executors.
-              return ugi.getCredentials();
-            }
-          } finally {
-            if (!tmpLocation.delete()) {
-              LOG.warn("Failed to delete temporary location {}", tmpLocation);
-            }
+            // Returns the current user credentials to get updated to all executors.
+            return ugi.getCredentials();
           }
-        } catch (Exception e) {
-          // Just throw it out. The SparkCredentialsUpdater will handle it
-          throw Throwables.propagate(e);
+        } finally {
+          if (!tmpLocation.delete()) {
+            LOG.warn("Failed to delete temporary location {}", tmpLocation);
+          }
         }
+      } catch (Exception e) {
+        // Just throw it out. The SparkCredentialsUpdater will handle it
+        throw Throwables.propagate(e);
       }
     };
   }
@@ -258,8 +280,15 @@ public class SparkDriverService extends AbstractExecutionThreadService {
     if (command == null) {
       return;
     }
-    if (SparkCommand.STOP.equals(command)) {
-      LOG.info("Stop command received from client. Stopping spark program.");
+    if (SparkCommand.isStop(command)) {
+      terminateTs = SparkCommand.getTerminateTs(command);
+      long terminationTimeout = Math.max(0L, TimeUnit.SECONDS.toMillis(terminateTs) - System.currentTimeMillis());
+
+      if (isRunning()) {
+        LOG.info("Received stop request with terminate timestamp {}, which will be reached in {} ms",
+                 terminateTs, terminationTimeout);
+      }
+      runtimeContext.setTerminationTime(TimeUnit.SECONDS.toMillis(terminateTs));
       stop();
     } else {
       LOG.warn("Ignoring unsupported command {}", command);

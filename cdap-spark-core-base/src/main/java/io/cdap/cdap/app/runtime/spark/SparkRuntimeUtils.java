@@ -69,6 +69,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Util class for common functions needed for Spark implementation.
@@ -197,9 +198,18 @@ public final class SparkRuntimeUtils {
     // In local mode, the LocalSparkSubmitter calls the Cancellable.cancel() returned by this method directly
     // (via SparkMainWraper).
     // We use a service listener so that it can handle all cases.
-    final CountDownLatch mainThreadCallLatch = new CountDownLatch(1);
     final CountDownLatch secStopLatch = new CountDownLatch(1);
     driverService.addListener(new ServiceListenerAdapter() {
+
+      @Override
+      public void stopping(Service.State from) {
+        // Interrupt the driver main thread to signal for stopping if the driverService.stop() is not coming from
+        // the main thread.
+        if (Thread.currentThread() != mainThread) {
+          LOG.debug("Issuing interrupt to mainThread '{}' to indicate a stop request.", mainThread.getName());
+          mainThread.interrupt();
+        }
+      }
 
       @Override
       public void terminated(Service.State from) {
@@ -213,15 +223,6 @@ public final class SparkRuntimeUtils {
 
       private void handleStopped() {
         try {
-          // Avoid interrupt/join on the current thread
-          if (Thread.currentThread() != mainThread) {
-            mainThread.interrupt();
-            // If it is spark streaming, wait for the user class call returns from the main thread.
-            if (SparkRuntimeEnv.getStreamingContext().isDefined()) {
-              Uninterruptibles.awaitUninterruptibly(mainThreadCallLatch);
-            }
-          }
-
           // Close the SparkExecutionContext (it will stop all the SparkContext and release all resources)
           if (sec instanceof AutoCloseable) {
             try {
@@ -242,24 +243,28 @@ public final class SparkRuntimeUtils {
     return new SparkProgramCompletion() {
       @Override
       public void completed() {
-        handleCompleted(false);
+        handleCompleted(null);
       }
 
       @Override
       public void completedWithException(Throwable t) {
-        handleCompleted(true);
+        handleCompleted(t);
       }
 
-      private void handleCompleted(boolean failure) {
-        // If the cancel call is from the main thread, it means the calling to user class has been returned,
-        // since it's the last thing that Spark main methhod would do.
+      private void handleCompleted(@Nullable Throwable t) {
+        // If the completed call is from the main thread, it means the calling to user class has been returned,
+        // since it's the last thing that Spark main method would do.
         if (Thread.currentThread() == mainThread) {
-          mainThreadCallLatch.countDown();
           mainThread.setContextClassLoader(oldClassLoader);
         }
 
-        if (failure && driverService instanceof SparkDriverService) {
-          ((SparkDriverService) driverService).stopWithoutComplete();
+        if (driverService instanceof SparkProgramCompletion) {
+          SparkProgramCompletion delegate = (SparkProgramCompletion) driverService;
+          if (t == null) {
+            delegate.completed();
+          } else {
+            delegate.completedWithException(t);
+          }
         } else {
           driverService.stop();
         }
