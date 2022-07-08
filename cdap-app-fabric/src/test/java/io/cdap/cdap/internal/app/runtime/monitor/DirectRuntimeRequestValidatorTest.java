@@ -77,6 +77,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -247,6 +248,8 @@ public class DirectRuntimeRequestValidatorTest {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert the run
+    long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    long terminateTs = now + 300L;
     TransactionRunners.run(txRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
       store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
@@ -255,8 +258,7 @@ public class DirectRuntimeRequestValidatorTest {
       store.recordProgramProvisioned(programRunId, 1, createSourceId(2));
       store.recordProgramStart(programRunId, null, Collections.emptyMap(), createSourceId(3));
       store.recordProgramRunning(programRunId, System.currentTimeMillis(), null, createSourceId(3));
-      store.recordProgramStopping(programRunId, createSourceId(3), System.currentTimeMillis(),
-                                  System.currentTimeMillis() + 1000);
+      store.recordProgramStopping(programRunId, createSourceId(3), now, terminateTs);
     });
 
     // Validation should pass
@@ -267,7 +269,7 @@ public class DirectRuntimeRequestValidatorTest {
       HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
     // After recording the program start in AppMetaDataStore the expected state is Stopping
     Assert.assertEquals(ProgramRunStatus.STOPPING, programRunInfo.getProgramRunStatus());
-    Assert.assertNotNull("Payload isn't null when program status is Stopping", programRunInfo.getPayload());
+    Assert.assertEquals(terminateTs, programRunInfo.getTerminateTimestamp());
   }
 
   private byte[] createSourceId(int value) {

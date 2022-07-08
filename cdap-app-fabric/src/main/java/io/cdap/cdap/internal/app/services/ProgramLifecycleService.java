@@ -149,7 +149,7 @@ public class ProgramLifecycleService {
                           RunRecordMonitorService runRecordMonitorService) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
-    this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.DEFAULT_STOP_TIMEOUT_SECS);
+    this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
     this.userProgramLaunchDisabled = cConf.getBoolean(Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
     this.store = store;
     this.profileService = profileService;

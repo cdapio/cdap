@@ -27,9 +27,6 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 /**
  * A {@link ProgramController} implementation that control a guava Service.
  * The Service must execute Listeners in the order they were added to the Service, otherwise
@@ -39,44 +36,52 @@ import java.util.concurrent.TimeUnit;
 public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramControllerServiceAdapter.class);
-  private static final Logger USERLOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
-                                                           Constants.Logging.USER_LOG_TAG_VALUE);
+  private static final Logger USER_LOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
+                                                            Constants.Logging.USER_LOG_TAG_VALUE);
 
   private final Service service;
-  private final CountDownLatch serviceStoppedLatch;
+  private volatile boolean stopRequested;
 
   public ProgramControllerServiceAdapter(Service service, ProgramRunId programRunId) {
     super(programRunId);
     this.service = service;
-    this.serviceStoppedLatch = new CountDownLatch(1);
     listenToRuntimeState(service);
   }
 
   @Override
-  protected void doSuspend() throws Exception {
-
+  protected void doSuspend() {
+    // no-op
   }
 
   @Override
-  protected void doResume() throws Exception {
-
+  protected void doResume() {
+    // no-op
   }
 
   @Override
   protected void doStop() throws Exception {
-    if (service.state() != Service.State.TERMINATED && service.state() != Service.State.FAILED) {
-      LOG.debug("stopping controller service for program {}.", getProgramRunId());
+    LOG.debug("Stopping controller service for program {}.", getProgramRunId());
+    stopRequested = true;
+    long gracefulTimeoutMillis = getGracefulTimeoutMillis();
+    if (gracefulTimeoutMillis < 0) {
       service.stopAndWait();
-      LOG.debug("stopped controller service for program {}, waiting for it to finish running listener hooks.",
-                getProgramRunId());
-      serviceStoppedLatch.await(30, TimeUnit.SECONDS);
-      LOG.debug("controller service for program {} finished running listener hooks.", getProgramRunId());
+    } else {
+      gracefulStop(gracefulTimeoutMillis);
     }
+    LOG.debug("Controller service for program {} finished running listener hooks.", getProgramRunId());
+  }
+
+  /**
+   * Requests a graceful shutdown of the service with a timeout. Subclass can override this if it supports
+   * graceful termination with timeout.
+   */
+  protected void gracefulStop(long gracefulTimeoutMillis) {
+    service.stopAndWait();
   }
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-
+    // no-op
   }
 
   private void listenToRuntimeState(Service service) {
@@ -90,20 +95,19 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
       public void failed(Service.State from, Throwable failure) {
         Throwable rootCause = Throwables.getRootCause(failure);
         LOG.error("{} Program '{}' failed.", getProgramRunId().getType(), getProgramRunId().getProgram(), failure);
-        USERLOG.error("{} program '{}' failed with error: {}. Please check the system logs for more details.",
-                      getProgramRunId().getType(), getProgramRunId().getProgram(), rootCause.getMessage(), rootCause);
-        serviceStoppedLatch.countDown();
+        USER_LOG.error("{} program '{}' failed with error: {}. Please check the system logs for more details.",
+                       getProgramRunId().getType(), getProgramRunId().getProgram(), rootCause.getMessage(), rootCause);
         error(failure);
       }
 
       @Override
       public void terminated(Service.State from) {
-        serviceStoppedLatch.countDown();
         if (from != Service.State.STOPPING) {
           // Service completed by itself. Simply signal the state change of this controller.
           complete();
-        } else {
-          // Service was killed
+        } else if (!stopRequested) {
+          // Otherwise, if the Service was stopped not through this ProgramController.doStop() method,
+          // call stop() to transit this controller state to KILLED.
           stop();
         }
       }

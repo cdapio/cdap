@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -119,9 +121,9 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
   @Override
   public void resetLogLevels(Set<String> loggerNames, @Nullable String componentName) throws Exception {
     if (componentName == null) {
-      twillController.resetLogLevels(loggerNames.toArray(new String[loggerNames.size()])).get();
+      twillController.resetLogLevels(loggerNames.toArray(new String[0])).get();
     } else {
-      twillController.resetRunnableLogLevels(componentName, loggerNames.toArray(new String[loggerNames.size()])).get();
+      twillController.resetRunnableLogLevels(componentName, loggerNames.toArray(new String[0])).get();
     }
   }
 
@@ -138,7 +140,16 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
   @Override
   protected final void doStop() throws Exception {
     stopRequested = true;
-    Futures.getUnchecked(twillController.terminate());
+    long gracefulTimeoutMillis = getGracefulTimeoutMillis();
+
+    Future<? extends ServiceController> terminateFuture;
+
+    if (gracefulTimeoutMillis >= 0) {
+      terminateFuture = twillController.terminate(gracefulTimeoutMillis, TimeUnit.MILLISECONDS);
+    } else {
+      terminateFuture = twillController.terminate();
+    }
+    Futures.getUnchecked(terminateFuture);
   }
 
   @Override

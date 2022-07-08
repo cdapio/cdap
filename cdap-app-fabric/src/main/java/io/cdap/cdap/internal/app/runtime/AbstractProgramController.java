@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -52,28 +51,25 @@ public abstract class AbstractProgramController implements ProgramController {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramController.class);
 
   private final AtomicReference<State> state;
-  private final ProgramId programId;
   private final ProgramRunId programRunId;
-  private final RunId runId;
   private final Map<ListenerCaller, Cancellable> listeners;
   private final Listener caller;
   private final ExecutorService executor;
-  private final String name;
 
   private Throwable failureCause;
+  private volatile long gracefulTimeoutMillis;
 
   protected AbstractProgramController(ProgramRunId programRunId) {
     this.state = new AtomicReference<>(State.STARTING);
     this.programRunId = programRunId;
-    this.programId = programRunId.getParent();
-    this.runId = RunIds.fromString(programRunId.getRun());
     this.listeners = new HashMap<>();
     this.caller = new MultiListenerCaller();
-    this.name = programId + "-" + runId.getId();
+    this.gracefulTimeoutMillis = -1L;
 
     // Create a single thread executor that doesn't keep core thread and the thread will shutdown when there
     // is no pending task. In this way, we don't need to shutdown the executor since there will be no thread
     // hanging around when it is idle.
+    String name = programRunId.getParent() + "-" + programRunId.getRun();
     this.executor = new ThreadPoolExecutor(0, 1, 0, TimeUnit.SECONDS,
                                            new LinkedBlockingQueue<>(),
                                            new ThreadFactoryBuilder()
@@ -87,15 +83,15 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public RunId getRunId() {
-    return runId;
+    return RunIds.fromString(programRunId.getRun());
   }
 
   @Override
   public final ListenableFuture<ProgramController> suspend() {
-    LOG.trace("Suspend program {}", programId);
+    LOG.trace("Suspend program {}", programRunId);
     if (!state.compareAndSet(State.ALIVE, State.SUSPENDING)) {
       return Futures.immediateFailedFuture(
-        new IllegalStateException("Suspension not allowed for " + programId + " in " + state.get()));
+        new IllegalStateException("Suspension not allowed for " + programRunId + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
@@ -115,10 +111,10 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> resume() {
-    LOG.trace("Resume program {}", programId);
+    LOG.trace("Resume program {}", programRunId);
     if (!state.compareAndSet(State.SUSPENDED, State.RESUMING)) {
       return Futures.immediateFailedFuture(
-        new IllegalStateException("Resumption not allowed for " + name + " in " + state.get()));
+        new IllegalStateException("Resumption not allowed for " + programRunId + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
@@ -137,12 +133,12 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final ListenableFuture<ProgramController> stop() {
-    LOG.trace("Stop program {}", programId);
+    LOG.trace("Stop program {}", programRunId);
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)
       && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
       return Futures.immediateFailedFuture(
-        new IllegalStateException("Stopping not allowed for " + name + " in " + state.get()));
+        new IllegalStateException("Stopping not allowed for " + programRunId + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
@@ -160,8 +156,28 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
+  public final ListenableFuture<ProgramController> stop(long timeout, TimeUnit timeoutUnit) {
+    if (timeout < 0) {
+      throw new IllegalStateException("Stop timeout must be >= 0");
+    }
+
+    LOG.trace("Stop program {} with timeout {}{}", programRunId, timeout, timeoutUnit);
+    this.gracefulTimeoutMillis = timeoutUnit.toMillis(timeout);
+    return stop();
+  }
+
+  @Override
   public void kill() {
     stop();
+  }
+
+  /**
+   * Returns the graceful stop timeout in milliseconds. If it returns a value that is smaller than {@code 0},
+   * if means graceful stop timeout is not defined. It is up to the implementation of the controller to
+   * determine stop timeout.
+   */
+  protected final long getGracefulTimeoutMillis() {
+    return gracefulTimeoutMillis;
   }
 
   /**
@@ -172,11 +188,11 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   protected void complete(final State completionState) {
-    LOG.trace("Program {} completed with state {}", programId, completionState);
+    LOG.trace("Program {} completed with state {}", programRunId, completionState);
     if (!state.compareAndSet(State.STARTING, completionState)
       && !state.compareAndSet(State.ALIVE, completionState)
       && !state.compareAndSet(State.SUSPENDED, completionState)) {
-      LOG.warn("Cannot transit to COMPLETED state from {} state: {}", state.get(), name);
+      LOG.warn("Cannot transit to COMPLETED state from {} state: {}", state.get(), programRunId);
       return;
     }
     executor.execute(() -> {
@@ -185,7 +201,7 @@ public abstract class AbstractProgramController implements ProgramController {
         caller.killed();
       } else if (State.ERROR.equals(completionState)) {
         // mark program as error when its in error state.
-        caller.error(new Exception(String.format("Program %s completed with exception.", programId)));
+        caller.error(new Exception(String.format("Program %s completed with exception.", programRunId)));
       } else {
         caller.completed();
       }
@@ -266,9 +282,9 @@ public abstract class AbstractProgramController implements ProgramController {
    * Children call this method to signal the program is started.
    */
   protected final void started() {
-    LOG.trace("Program {} started", programId);
+    LOG.trace("Program {} started", programRunId);
     if (!state.compareAndSet(State.STARTING, State.ALIVE)) {
-      LOG.debug("Cannot transit to ALIVE state from {} state: {}", state.get(), name);
+      LOG.debug("Cannot transit to ALIVE state from {} state: {}", state.get(), programRunId);
       return;
     }
     executor.execute(() -> {
@@ -291,7 +307,7 @@ public abstract class AbstractProgramController implements ProgramController {
    * @param t The failure cause
    */
   private <V> void error(Throwable t, SettableFuture<V> future) {
-    LOG.trace("Program {} forced to error", programId, t);
+    LOG.trace("Program {} forced to error", programRunId, t);
     failureCause = t;
     state.set(State.ERROR);
     if (future != null) {
