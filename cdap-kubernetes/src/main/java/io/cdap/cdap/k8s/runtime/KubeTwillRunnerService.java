@@ -319,50 +319,48 @@ public class KubeTwillRunnerService implements TwillRunnerService {
             // Start the job monitor if we haven't already done so.
             // This is a workaround for CDAP-19134 - sometimes the watch doesn't get triggered on job completion.
             if (!wrappedFuture.isDone()) {
-              Future<?> future = Executors.newSingleThreadScheduledExecutor(
-                  Threads.createDaemonThreadFactory(String.format("job-monitor-%s", runId)))
-                .submit(() -> {
-                  boolean terminateController = false;
-                  while (true) {
-                    try {
-                      V1JobList jobList = batchV1Api.listNamespacedJob(namespace, null, null, null, null,
-                                                                       RUN_ID_LABEL + "=" + runId, null, null,
-                                                                       null, null, null);
-                      if (jobList.getItems().size() == 0) {
-                        // Job doesn't exist, terminate the job controller.
-                        LOG.warn("Job does not exist, terminating controller");
-                        terminateController = true;
-                      }
-                    } catch (ApiException ex) {
-                      if (ex.getCode() == 404) {
-                        LOG.warn("Job not found, terminating controller");
-                        // Job doesn't exist, terminate the job controller.
-                        terminateController = true;
-                      } else if (ex.getCause() instanceof InterruptedException) {
-                        return;
-                      } else {
-                        LOG.warn("Failed to list job", ex);
-                      }
+              Future<?> future = monitorScheduler.submit(() -> {
+                boolean terminateController = false;
+                while (true) {
+                  try {
+                    V1JobList jobList = batchV1Api.listNamespacedJob(namespace, null, null, null, null,
+                                                                     RUN_ID_LABEL + "=" + runId, null, null,
+                                                                     null, null, null);
+                    if (jobList.getItems().size() == 0) {
+                      // Job doesn't exist, terminate the job controller.
+                      LOG.warn("Job does not exist, terminating controller for run {}", runId);
+                      terminateController = true;
                     }
-                    if (terminateController) {
-                      // Cancel the watch
-                      try {
-                        Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
-                      } catch (ExecutionException e) {
-                        // This will never happen
-                      }
-                      // terminate the job controller
-                      controller.terminate();
+                  } catch (ApiException ex) {
+                    if (ex.getCode() == 404) {
+                      LOG.warn("Job not found, terminating controller for run {}", runId);
+                      // Job doesn't exist, terminate the job controller.
+                      terminateController = true;
+                    } else if (ex.getCause() instanceof InterruptedException) {
                       return;
                     } else {
-                      try {
-                        TimeUnit.MINUTES.sleep(1);
-                      } catch (InterruptedException e) {
-                        return;
-                      }
+                      LOG.warn("Failed to list job for run {}", runId, ex);
                     }
                   }
-                });
+                  if (terminateController) {
+                    // Cancel the watch
+                    try {
+                      Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+                    } catch (ExecutionException e) {
+                      // This will never happen
+                    }
+                    // terminate the job controller
+                    controller.terminate();
+                    return;
+                  } else {
+                    try {
+                      TimeUnit.MINUTES.sleep(1);
+                    } catch (InterruptedException e) {
+                      return;
+                    }
+                  }
+                }
+              });
               wrappedFuture.complete(future);
             }
           }
