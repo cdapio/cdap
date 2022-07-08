@@ -37,6 +37,6 @@ public class KubeTwillControllerCreator implements TwillControllerCreator {
   @Override
   public TwillController createTwillControllerFromRunRecord(RunRecordDetail runRecordDetail) {
     return twillRunnerService.lookup(TwillAppNames.toTwillAppName(runRecordDetail.getProgramRunId().getParent()),
-                                     RunIds.fromString(Objects.requireNonNull(runRecordDetail.getTwillRunId())));
+                                     RunIds.fromString(Objects.requireNonNull(runRecordDetail.getPid())));
   }
 }
