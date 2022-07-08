@@ -183,12 +183,12 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
   }
 
   @Override
-  public void watchError(V1Status status) {
+  public void onError(V1Status status) {
     LOG.trace("Got an error on watch for plural {}, status: {}", plural, status);
     // This happens when the specified resource version is too old, so we reset the resource version and restart
     // the watch.
     resourceVersion = null;
-    listeners.forEach(l -> l.watchError(status));
+    listeners.forEach(l -> l.onError(status));
   }
 
   private ApiClient getApiClient() throws IOException {
@@ -231,8 +231,8 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
       }
 
       @Override
-      public void watchError(V1Status status) {
-        listener.watchError(status);
+      public void onError(V1Status status) {
+        listener.onError(status);
       }
     };
   }

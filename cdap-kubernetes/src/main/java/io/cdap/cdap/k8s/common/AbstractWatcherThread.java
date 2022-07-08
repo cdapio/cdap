@@ -141,7 +141,7 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
               break;
             }
             case ERROR: {
-              watchError(response.status);
+              onError(response.status);
               break;
             }
             default:

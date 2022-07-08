@@ -57,7 +57,7 @@ public interface ResourceChangeListener<T> {
    *
    * @param status the error status.
    */
-  default void watchError(V1Status status) {
+  default void onError(V1Status status) {
     // no-op
   }
 }
