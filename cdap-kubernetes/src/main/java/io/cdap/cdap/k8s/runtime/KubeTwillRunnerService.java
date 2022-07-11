@@ -112,6 +112,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final Map<String, Map<Type, AppResourceWatcherThread<?>>> resourceWatchers;
   private final Map<String, KubeLiveInfo> liveInfos;
   private final Lock liveInfoLock;
+  private final boolean programSubmissionEnabled;
   private final int jobCleanupIntervalMins;
   private final int jobCleanBatchSize;
   private final String selector;
@@ -138,6 +139,10 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     this.resourceWatchers = new HashMap<>();
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
+    Map<String, String> configs = masterEnvContext.getConfigurations();
+    // this key is set to false by CDAP for preview. Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED
+    this.programSubmissionEnabled =
+      Boolean.parseBoolean(configs.getOrDefault("program.submission.master.environment.enabled", "true"));
     this.jobCleanupIntervalMins = jobCleanupIntervalMins;
     this.jobCleanBatchSize = jobCleanBatchSize;
   }
@@ -217,11 +222,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       batchV1Api = new BatchV1Api(apiClient);
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
-      Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
-        V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
-        V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
-        V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector)
-      );
+      Map<Type, AppResourceWatcherThread<?>> typeMap = new HashMap<>();
+      typeMap.put(V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector));
+      typeMap.put(V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector));
+      if (programSubmissionEnabled) {
+        typeMap.put(V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector));
+      }
       typeMap.values().forEach(watcher -> {
         watcher.addListener(new AppResourceChangeListener<>());
         watcher.start();
@@ -229,10 +235,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       resourceWatchers.put(kubeNamespace, typeMap);
 
       // start job cleaner service
-      jobCleanerService =
-        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kube-job-cleaner"));
-      jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(batchV1Api, selector, jobCleanBatchSize),
-                                            10, jobCleanupIntervalMins, TimeUnit.MINUTES);
+      if (programSubmissionEnabled) {
+        jobCleanerService =
+          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kube-job-cleaner"));
+        jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(batchV1Api, selector, jobCleanBatchSize),
+                                              10, jobCleanupIntervalMins, TimeUnit.MINUTES);
+      }
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get Kubernetes API Client", e);
     }
@@ -240,7 +248,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   @Override
   public void stop() {
-    jobCleanerService.shutdownNow();
+    if (jobCleanerService != null) {
+      jobCleanerService.shutdownNow();
+    }
     resourceWatchers.values().forEach(typeMap -> {
       typeMap.values().forEach(AbstractWatcherThread::close);
     });
