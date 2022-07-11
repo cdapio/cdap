@@ -408,8 +408,6 @@ public final class Constants {
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
     public static final String CONTAINER_JVM_OPTS = "preview.runner.container.jvm.opts";
-
-    public static final String ARTIFACT_LOCALIZER_ENABLED = "preview.runner.artifact.localizer.enabled";
   }
 
   /**

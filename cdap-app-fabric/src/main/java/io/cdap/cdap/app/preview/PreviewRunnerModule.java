@@ -29,7 +29,7 @@ import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.security.DefaultSecretStore;
@@ -51,10 +51,7 @@ import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReaderProvider;
-import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReaderWithLocalization;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryWithLocalization;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
@@ -68,7 +65,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;
-import io.cdap.cdap.metadata.PreferencesFetcherProvider;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
@@ -82,6 +78,7 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.store.DefaultOwnerStore;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Provides bindings required to create injector for running preview.
@@ -91,73 +88,47 @@ public class PreviewRunnerModule extends PrivateModule {
   private final AccessEnforcer accessEnforcer;
   private final ContextAccessEnforcer contextAccessEnforcer;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
-  private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
-  private final PluginFinderProvider pluginFinderProvider;
-  private final PreferencesFetcherProvider preferencesFetcherProvider;
   private final MessagingService messagingService;
 
   @Inject
   PreviewRunnerModule(CConfiguration cConf,
-                      ArtifactRepositoryReaderProvider readerProvider,
                       AccessEnforcer accessEnforcer,
                       ContextAccessEnforcer contextAccessEnforcer,
                       ProgramRuntimeProviderLoader programRuntimeProviderLoader,
-                      PluginFinderProvider pluginFinderProvider,
-                      PreferencesFetcherProvider preferencesFetcherProvider,
                       MessagingService messagingService) {
     this.cConf = cConf;
-    this.artifactRepositoryReaderProvider = readerProvider;
     this.accessEnforcer = accessEnforcer;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
-    this.pluginFinderProvider = pluginFinderProvider;
-    this.preferencesFetcherProvider = preferencesFetcherProvider;
     this.messagingService = messagingService;
   }
 
   @Override
   protected void configure() {
-    Boolean artifactLocalizerEnabled = cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED, false);
-
-    if (artifactLocalizerEnabled) {
-      // Use remote implementation to fetch artifact metadata from AppFab.
-      // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
-      bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class);
-      bind(ArtifactRepository.class).to(RemoteArtifactRepositoryWithLocalization.class);
-      expose(ArtifactRepository.class);
-      bind(ArtifactRepository.class)
-        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
-        .to(RemoteArtifactRepositoryWithLocalization.class)
-        .in(Scopes.SINGLETON);
-      expose(ArtifactRepository.class).annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+    // Use remote implementation to fetch artifact metadata from AppFab.
+    // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
+    bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class);
+    bind(ArtifactRepository.class).to(RemoteArtifactRepositoryWithLocalization.class);
+    expose(ArtifactRepository.class);
+    bind(ArtifactRepository.class)
+      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+      .to(RemoteArtifactRepositoryWithLocalization.class)
+      .in(Scopes.SINGLETON);
+    expose(ArtifactRepository.class).annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
 
 
-      // Use remote implementation to fetch plugin metadata from AppFab.
-      // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
-      bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
-      expose(PluginFinder.class);
+    // Use remote implementation to fetch plugin metadata from AppFab.
+    // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
+    bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+    expose(PluginFinder.class);
 
-      // Use remote implementation to fetch preferences from AppFab.
-      bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
-      expose(PreferencesFetcher.class);
-    } else {
-      bind(ArtifactRepositoryReader.class).toProvider(artifactRepositoryReaderProvider);
-      bind(ArtifactRepository.class).to(DefaultArtifactRepository.class);
-      expose(ArtifactRepository.class);
+    // Read artifact locations from disk when using artifact localizer due to shared mounted read-only PD.
+    install(new LocalLocationModule());
+    expose(LocationFactory.class);
 
-      bind(ArtifactRepository.class)
-        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
-        .to(DefaultArtifactRepository.class)
-        .in(Scopes.SINGLETON);
-      expose(ArtifactRepository.class)
-        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
-
-      bind(PluginFinder.class).toProvider(pluginFinderProvider);
-      expose(PluginFinder.class);
-
-      bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
-      expose(PreferencesFetcher.class);
-    }
+    // Use remote implementation to fetch preferences from AppFab.
+    bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
+    expose(PreferencesFetcher.class);
 
     bind(MessagingService.class)
       .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
