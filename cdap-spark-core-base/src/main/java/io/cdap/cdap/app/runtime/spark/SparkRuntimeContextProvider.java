@@ -69,6 +69,8 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
@@ -205,6 +207,13 @@ public final class SparkRuntimeContextProvider {
 
       LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
+
+      // For spark running natively on k8s, we may need to initialize the TokenManager for internal identity.
+      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+        TokenManager tokenManager = injector.getInstance(TokenManager.class);
+        tokenManager.startAndWait();
+      }
+
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
       ProxySelector oldProxySelector = ProxySelector.getDefault();
