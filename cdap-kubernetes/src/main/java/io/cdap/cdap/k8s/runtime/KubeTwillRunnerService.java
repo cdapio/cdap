@@ -116,7 +116,6 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final int jobCleanBatchSize;
   private final String selector;
   private ApiClient apiClient;
-  private BatchV1Api batchV1Api;
   private CoreV1Api coreV1Api;
   private ScheduledExecutorService monitorScheduler;
   private ScheduledExecutorService jobCleanerService;
@@ -214,7 +213,6 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     try {
       apiClient = Config.defaultClient();
       coreV1Api = new CoreV1Api(apiClient);
-      batchV1Api = new BatchV1Api(apiClient);
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
       Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
@@ -231,7 +229,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       // start job cleaner service
       jobCleanerService =
         Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kube-job-cleaner"));
-      jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(batchV1Api, selector, jobCleanBatchSize),
+      jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(new BatchV1Api(apiClient), selector, jobCleanBatchSize),
                                             10, jobCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get Kubernetes API Client", e);
@@ -259,10 +257,10 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    * @param startupTaskCompletion startup task completion
    * @return the controller
    */
-  private <T> KubeTwillController monitorController(KubeLiveInfo liveInfo, long timeout,
-                                                    TimeUnit timeoutUnit, KubeTwillController controller,
-                                                    AppResourceWatcherThread<T> watcher, Type resourceType,
-                                                    CompletableFuture<Void> startupTaskCompletion) {
+  private <T extends KubernetesObject> KubeTwillController monitorController(
+    KubeLiveInfo liveInfo, long timeout, TimeUnit timeoutUnit, KubeTwillController controller,
+    AppResourceWatcherThread<T> watcher, Type resourceType, CompletableFuture<Void> startupTaskCompletion) {
+
     String runId = controller.getRunId().getId();
 
     LOG.debug("Monitoring application {} with run {} starts in {} {}",
@@ -286,10 +284,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
       @Override
       public void resourceModified(T resource) {
-        V1ObjectMeta metadata = getMetadata(resource);
-        if (metadata == null) {
-          return;
-        }
+        V1ObjectMeta metadata = resource.getMetadata();
 
         if (!runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           return;
@@ -334,10 +329,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
       @Override
       public void resourceDeleted(T resource) {
-        V1ObjectMeta metadata = getMetadata(resource);
-        if (metadata == null) {
-          return;
-        }
+        V1ObjectMeta metadata = resource.getMetadata();
 
         // If the run is deleted, terminate the controller right away and cancel the scheduled termination
         if (runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
@@ -395,19 +387,6 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    */
   private Location getApplicationLocation(String name, RunId runId) {
     return masterEnvContext.getLocationFactory().create(String.format("twill/%s/%s", name, runId.getId()));
-  }
-
-  /**
-   * Extracts a {@link V1ObjectMeta} from the given k8s resource or returns {@code null} if the given resource object
-   * doesn't contain metadata.
-   */
-  @Nullable
-  private V1ObjectMeta getMetadata(Object resource) {
-    if (resource instanceof KubernetesObject) {
-      return ((KubernetesObject) resource).getMetadata();
-    }
-    LOG.warn("Failed to extract object metadata from resource {}", resource);
-    return null;
   }
 
   /**
@@ -482,14 +461,11 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    * An {@link ResourceChangeListener} to watch for changes in application resources. It is for refreshing the
    * liveInfos map.
    */
-  private final class AppResourceChangeListener<T> implements ResourceChangeListener<T> {
+  private final class AppResourceChangeListener<T extends KubernetesObject> implements ResourceChangeListener<T> {
 
     @Override
     public void resourceAdded(T resource) {
-      V1ObjectMeta metadata = getMetadata(resource);
-      if (metadata == null) {
-        return;
-      }
+      V1ObjectMeta metadata = resource.getMetadata();
       String appName = metadata.getAnnotations().get(APP_LABEL);
       if (appName == null) {
         // This shouldn't happen. Just to guard against future bug.
@@ -521,10 +497,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
     @Override
     public void resourceDeleted(T resource) {
-      V1ObjectMeta metadata = getMetadata(resource);
-      if (metadata == null) {
-        return;
-      }
+      V1ObjectMeta metadata = resource.getMetadata();
       String appName = metadata.getAnnotations().get(APP_LABEL);
       if (appName == null) {
         // This shouldn't happen. Just to guard against future bug.
