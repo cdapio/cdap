@@ -440,6 +440,14 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   @Override
+  public void syncNamespaceConfigs(Map<String, Map<String, String>> namespaceConfigs) throws ApiException {
+    for (Map<String, String> properties: namespaceConfigs.values()) {
+      String namespace = properties.get(NAMESPACE_PROPERTY);
+      syncConfigMaps(namespace);
+    }
+  }
+
+  @Override
   public MasterEnvironmentRunnable createRunnable(MasterEnvironmentRunnableContext context,
                                                   Class<? extends MasterEnvironmentRunnable> cls) throws Exception {
     return cls.getConstructor(MasterEnvironmentRunnableContext.class, MasterEnvironment.class)
@@ -937,6 +945,22 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating Kubernetes resource quota. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  private void syncConfigMaps(@Nullable String namespace) throws ApiException {
+    for (V1Volume volume : podInfo.getVolumes()) {
+      if (volume.getConfigMap() != null && namespace != null) {
+        String configMapName = volume.getConfigMap().getName();
+        // Sync data from configmap in the system k8s namespace with configmap in this k8s namespace
+        V1ConfigMap systemConfigMap = coreV1Api.readNamespacedConfigMap(configMapName, podInfo.getNamespace(),
+                                                                         null, null, null);
+        V1ConfigMap namespaceConfigMap = coreV1Api.readNamespacedConfigMap(configMapName, namespace,
+                                                                           null, null, null);
+        namespaceConfigMap.setData(systemConfigMap.getData());
+        coreV1Api.replaceNamespacedConfigMap(configMapName, namespace, namespaceConfigMap, null,
+                                             null, null);
+      }
     }
   }
 

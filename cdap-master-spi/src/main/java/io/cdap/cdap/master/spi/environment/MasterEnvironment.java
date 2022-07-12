@@ -112,4 +112,11 @@ public interface MasterEnvironment {
   default void onNamespaceDeletion(String namespace, Map<String, String> properties) throws Exception {
     // no-op by default
   }
+
+  /**
+   * Syncs configs across namespaces. Called when appfabric starts up.
+   */
+  default void syncNamespaceConfigs(Map<String, Map<String, String>> namespaceConfigs) throws Exception {
+    // no-op by default
+  }
 }
