@@ -70,6 +70,7 @@ import io.kubernetes.client.openapi.models.V1RoleBinding;
 import io.kubernetes.client.openapi.models.V1RoleBindingBuilder;
 import io.kubernetes.client.openapi.models.V1RoleRefBuilder;
 import io.kubernetes.client.openapi.models.V1Secret;
+import io.kubernetes.client.openapi.models.V1SecretVolumeSource;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1ServiceAccountTokenProjection;
 import io.kubernetes.client.openapi.models.V1SubjectBuilder;
@@ -102,6 +103,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -283,6 +285,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String workloadLauncherRoleNameForNamespace;
   private String workloadLauncherRoleNameForCluster;
   private String programCpuMultiplier;
+  private List<V1SecretVolumeSource> secretVolumes;
 
   public KubeMasterEnvironment() {
     gson = new Gson();
@@ -653,6 +656,32 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return CUSTOM_VOLUME_PREFIX.stream().anyMatch(name::startsWith);
   }
 
+  /**
+   * Adds secrets from the host pod as volume and volume mounts.
+   * TODO(CDAP-19400): Remove this logic when decoupling privileged and unprivileged workflows.
+   *
+   * @param podInfo Host pod info
+   * @param podSpec Pod specification to mount secret volumes to
+   */
+  private void mountHostSecretVolumes(PodInfo podInfo, V1PodSpec podSpec) {
+    Set<String> secretVolumeNames = new HashSet<>();
+    List<V1VolumeMount> secretVolumeMounts = new ArrayList<>();
+    for (V1Volume volume : podInfo.getVolumes()) {
+      if (volume.getSecret() != null) {
+        secretVolumeNames.add(volume.getName());
+        podSpec.addVolumesItem(volume);
+      }
+    }
+    // Mount volumes to all containers.
+    for (V1VolumeMount volumeMount : podInfo.getContainerVolumeMounts()) {
+      if (secretVolumeNames.contains(volumeMount.getName())) {
+        for (V1Container container : podSpec.getContainers()) {
+          container.addVolumeMountsItem(volumeMount);
+        }
+      }
+    }
+  }
+
   private File getDriverPodTemplate(PodInfo podInfo, SparkSubmitContext sparkSubmitContext) throws Exception {
     V1Pod driverPod = new V1Pod();
     // set owner references for driver pod
@@ -687,14 +716,18 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                           null, null, null);
       this.configMapName = configMapName;
 
-      // Add configmap as a volume to be added to the pod template
+      // Add configmap and secrets as a volume to be added to the pod template
       driverPodSpec.addVolumesItem(new V1Volume().name(configMapName)
                                      .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build()));
-      // Add configmap as a volume mount
+      // Add configmap and secrets as a volume mount
       for (V1Container container : driverPodSpec.getContainers()) {
         container.addVolumeMountsItem(new V1VolumeMount().name(configMapName)
                                         .mountPath(CDAP_LOCALIZE_FILES_PATH).readOnly(true));
       }
+
+      // TODO(CDAP-19400): Remove this logic when decoupling privileged and unprivileged workflows.
+      mountHostSecretVolumes(podInfo, driverPodSpec);
+
       if (workloadIdentityEnabled) {
         setupWorkloadIdentityForPodSpec(driverPodSpec, workloadIdentityPool,
                                         workloadIdentityServiceAccountTokenTTLSeconds);
@@ -722,6 +755,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       container.addVolumeMountsItem(new V1VolumeMount().name(configMapName)
                                       .mountPath(CDAP_LOCALIZE_FILES_PATH).readOnly(true));
     }
+
+    // TODO(CDAP-19400): Remove this logic when decoupling privileged and unprivileged workflows.
+    mountHostSecretVolumes(podInfo, executorPodSpec);
+
     if (workloadIdentityEnabled) {
       setupWorkloadIdentityForPodSpec(executorPodSpec, workloadIdentityPool,
                                       workloadIdentityServiceAccountTokenTTLSeconds);
