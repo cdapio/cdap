@@ -40,8 +40,8 @@ public class TetheringServer implements CdfHelper {
   private static int pendingReqCount;
   private static int establishedConnCount;
 
-  @Given("Connect to tethering server Datafusion project")
-  public static void openTetheringServerProject() throws IOException {
+  @Given("Connect to tethering server Datafusion instance")
+  public static void openTetheringServerInstance() throws IOException {
     HttpURLConnection connection = createConnection("tethering/connections", "GET");
     try {
       verifyConnection(connection);
@@ -153,6 +153,49 @@ public class TetheringServer implements CdfHelper {
     int updatedEstablishedConnCount = TetheringActions.countNumberOfEstablishedConns();
     if (updatedEstablishedConnCount != establishedConnCount - 1) {
       throw new Exception("Failure in pending request deletion.");
+    }
+  }
+
+  @Then("Create compute profile to tethered client")
+  public static void createProfile() throws IOException {
+    String clientName = PluginPropertyUtils.pluginProp("clientName");
+    HttpURLConnection connection = createConnection("profiles/tether-profile", "PUT");
+    connection.setRequestProperty("Content-Type", "application/json");
+    connection.setDoOutput(true);
+    try {
+      String contents = String.format("{\"label\": \"tethering-profile\",\"description\": \"test profile\"," +
+                                        "\"provisioner\": {\"name\": \"tethering\",\"properties\": [{\"name\": " +
+                                        "\"tetheredInstanceName\",\"value\": \"%s\"},{\"name\": " +
+                                        "\"tetheredNamespace\",\"value\": \"default\"}]}}",
+                                      clientName);
+      connection.getOutputStream().write(contents.getBytes(StandardCharsets.UTF_8));
+      verifyConnection(connection);
+    } finally {
+      connection.disconnect();
+    }
+  }
+
+  @Then("Verify compute profile was created successfully")
+  public static void verifyProfile() throws IOException {
+    HttpURLConnection connection = createConnection("profiles/tether-profile", "GET");
+    try {
+      verifyConnection(connection);
+    } finally {
+      connection.disconnect();
+    }
+  }
+
+  @Then("Delete compute profile")
+  public static void deleteProfile() throws IOException {
+    HttpURLConnection connection = createConnection("profiles/tether-profile/disable", "POST");
+    connection.setDoOutput(true);
+    try {
+      connection.getOutputStream().write("".getBytes(StandardCharsets.UTF_8));
+      verifyConnection(connection);
+      connection = createConnection("profiles/tether-profile", "DELETE");
+      verifyConnection(connection);
+    } finally {
+      connection.disconnect();
     }
   }
 

@@ -38,8 +38,8 @@ public class TetheringClient implements CdfHelper {
   private static int pendingReqCount;
   private static int establishedConnCount;
 
-  @Given("Open tethering client Datafusion project")
-  public static void openTetheringClientProject() throws IOException, InterruptedException {
+  @Given("Open tethering client Datafusion instance")
+  public static void openTetheringClientInstance() throws IOException, InterruptedException {
     SeleniumDriver.openPage(PluginPropertyUtils.pluginProp("clientUrl"));
     PageHelper.acceptAlertIfPresent();
     if (!HdfSignInActions.logged()) {
