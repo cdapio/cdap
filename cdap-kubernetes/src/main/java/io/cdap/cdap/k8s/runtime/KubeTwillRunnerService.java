@@ -115,7 +115,11 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final int jobCleanupIntervalMins;
   private final int jobCleanBatchSize;
   private final String selector;
-  private final boolean enableMonitor;
+  /**
+   * If true, all resources in different namespaces are monitored. Otherwise, only the ones that are prepared
+   * by this instance will be monitored.
+   */
+  private final boolean enableGlobalMonitor;
   private ApiClient apiClient;
   private BatchV1Api batchV1Api;
   private CoreV1Api coreV1Api;
@@ -126,7 +130,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
                                 String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
                                 PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
                                 int jobCleanupIntervalMins, int jobCleanBatchSize,
-                                boolean enableMonitor) {
+                                boolean enableGlobalMonitor) {
     this.masterEnvContext = masterEnvContext;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -142,7 +146,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     this.liveInfoLock = new ReentrantLock();
     this.jobCleanupIntervalMins = jobCleanupIntervalMins;
     this.jobCleanBatchSize = jobCleanBatchSize;
-    this.enableMonitor = enableMonitor;
+    this.enableGlobalMonitor = enableGlobalMonitor;
   }
 
   @Override
@@ -173,9 +177,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       liveInfoLock.lock();
       try {
         KubeTwillController controller = createKubeTwillController(spec.getName(), runId, resourceType, meta);
-        if (!enableMonitor) {
-          //since monitor is disabled, we fire and forget
-          return controller;
+        if (!enableGlobalMonitor) {
+          KubeLiveInfo liveInfo = new KubeLiveInfo(resourceType, spec.getName());
+          return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller, meta);
         }
         KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), n -> new KubeLiveInfo(resourceType, n));
         return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller, meta);
@@ -218,16 +222,17 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   @Override
   public void start() {
-    LOG.error("Starting KubeTwillRunnerService with {} monitor", enableMonitor ? "enabled" : "disabled");
+    LOG.error("Starting KubeTwillRunnerService with {} monitor", enableGlobalMonitor ? "enabled" : "disabled");
     try {
       apiClient = Config.defaultClient();
       coreV1Api = new CoreV1Api(apiClient);
       batchV1Api = new BatchV1Api(apiClient);
-      if (!enableMonitor) {
-        return;
-      }
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
+      if (!enableGlobalMonitor) {
+        //since monitor is disabled, we do not need to monitor all resources in different namespaces.
+        return;
+      }
       Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
         V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
         V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
