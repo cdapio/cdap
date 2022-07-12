@@ -224,21 +224,22 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
           jssc.stop(true, true);
 
           // After stopping the streaming context, checks if all received data has been processed.
-          // If yes, we can clearup the checkpoint directory.
-          if (Feature.STREAMING_PIPELINE_CHECKPOINT_DELETION.isEnabled(sec)
-            && !pipelineSpec.isCheckpointsDisabled()
-            && checkpointDir != null) {
+          if (!pipelineSpec.isCheckpointsDisabled() && checkpointDir != null) {
             if (areAllBlocksProcessed(jssc, pipelineSpec, checkpointDir)) {
-              LOG.info("All blocks processed. Deleting checkpoint directory {}", checkpointDir);
+              LOG.info("All receiver blocks are processed in the checkpoint directory {}", checkpointDir);
               try {
-                FileSystem fs = FileSystem.get(jssc.sparkContext().hadoopConfiguration());
-                fs.delete(new Path(checkpointDir), true);
-                LOG.info("Checkpoint directory {} deleted", checkpointDir);
+                // If yes, we can clearup the checkpoint directory.
+                if (Feature.STREAMING_PIPELINE_CHECKPOINT_DELETION.isEnabled(sec)) {
+                  LOG.info("Deleting checkpoint directory {}", checkpointDir);
+                  FileSystem fs = FileSystem.get(jssc.sparkContext().hadoopConfiguration());
+                  fs.delete(new Path(checkpointDir), true);
+                  LOG.info("Checkpoint directory {} deleted", checkpointDir);
+                }
               } catch (Exception e) {
                 LOG.warn("Failed to delete checkpoint directory {}", checkpointDir, e);
               }
             } else {
-              LOG.info("There are unprocessed records in the checkpoint directory {}", checkpointDir);
+              LOG.info("There are unprocessed recevier records in the checkpoint directory {}", checkpointDir);
             }
           }
         }
