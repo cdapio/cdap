@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.k8s.discovery;
 
-import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.kubernetes.client.openapi.ApiClient;
@@ -30,9 +29,7 @@ import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import io.kubernetes.client.util.Config;
-import io.kubernetes.client.util.Watch;
-import io.kubernetes.client.util.Watchable;
-import okhttp3.Call;
+import io.kubernetes.client.util.generic.options.ListOptions;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -42,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -56,7 +52,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -370,7 +365,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     private final Set<String> services;
 
     WatcherThread() {
-      super("kube-discovery-service", namespace);
+      super("kube-discovery-service", namespace, "", "v1", "services");
       this.services = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
@@ -378,24 +373,13 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       // Service name in K8s are prefixed
       // If this is a new service to watch, reset the watch so that the new selector will get pickup.
       if (services.add(namePrefix + name)) {
-        resetWatch();
+        closeWatch();
       }
     }
 
-    @Nullable
     @Override
-    protected String getSelector() {
-      return String.format("%s in (%s)", SERVICE_LABEL, services.stream().collect(Collectors.joining(",")));
-    }
-
-    @Override
-    protected Watchable<V1Service> createWatchable(Type resourceType, String namespace,
-                                                   @Nullable String labelSelector) throws IOException, ApiException {
-      CoreV1Api coreApi = getCoreApi();
-      Call call = coreApi.listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
-                                                    null, null, null, null, true, null);
-      return Watch.createWatch(coreApi.getApiClient(), call, TypeToken.getParameterized(Watch.Response.class,
-                                                                                        resourceType).getType());
+    protected void updateListOptions(ListOptions options) {
+      options.setLabelSelector(String.format("%s in (%s)", SERVICE_LABEL, String.join(",", services)));
     }
 
     @Override

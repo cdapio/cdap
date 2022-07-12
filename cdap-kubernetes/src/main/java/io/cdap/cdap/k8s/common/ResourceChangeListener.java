@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.k8s.common;
 
+import io.kubernetes.client.common.KubernetesObject;
+
 /**
  * Listener for listening to changes in K8s resources.
  *
  * @param <T> type of the resource
  */
-public interface ResourceChangeListener<T> {
+public interface ResourceChangeListener<T extends KubernetesObject> {
 
   /**
    * Invoked when a resource is added. Default is a no-op.
