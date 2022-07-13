@@ -22,6 +22,7 @@ import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillApplication;
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -162,8 +163,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   @Override
   public TwillPreparer prepare(TwillApplication application) {
     TwillSpecification spec = application.configure();
-    RunId runId = RunIds.generate();
-
+    RunId runId;
+    if (application instanceof ExtendedTwillApplication) {
+      runId = RunIds.fromString(((ExtendedTwillApplication) application).getRunId());
+    } else {
+      runId = RunIds.generate();
+    }
     Location appLocation = getApplicationLocation(spec.getName(), runId);
     Map<String, String> labels = new HashMap<>(extraLabels);
     labels.put(RUNNER_LABEL, RUNNER_LABEL_VAL);

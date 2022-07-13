@@ -20,8 +20,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.twill.TwillAppNames;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillApplication;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder;
@@ -36,7 +38,7 @@ import javax.annotation.Nullable;
 /**
  * The {@link TwillApplication} for running programs in distributed mode.
  */
-public final class ProgramTwillApplication implements TwillApplication {
+public final class ProgramTwillApplication implements ExtendedTwillApplication {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramTwillApplication.class);
 
@@ -131,4 +133,8 @@ public final class ProgramTwillApplication implements TwillApplication {
     return moreFile == null ? builder.noLocalFiles() : moreFile.apply();
   }
 
+  @Override
+  public String getRunId() {
+    return programRunId.getRun();
+  }
 }
