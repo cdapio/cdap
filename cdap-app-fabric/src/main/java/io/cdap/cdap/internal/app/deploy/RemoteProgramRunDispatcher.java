@@ -57,7 +57,6 @@ import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 /**
@@ -105,8 +104,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     LOG.debug("Dispatching Program Run operation for Run ID: {}", runId.getId());
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ProgramRunDispatcherTask.class.getName())
       .withParam(GSON.toJson(programRunDispatcherInfo)).build();
-    byte[] result = remoteTaskExecutor.runTask(request);
-    String twillRunId = GSON.fromJson(new String(result, StandardCharsets.UTF_8), String.class);
+    remoteTaskExecutor.runTask(request);
     LOG.debug("Dispatch complete for Run ID: {}", runId.getId());
     ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(runId);
@@ -121,7 +119,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
       throw new UnsupportedOperationException(msg);
     }
     TwillControllerCreator twillControllerCreator = twillControllerCreatorFactory.create(clusterMode);
-    TwillController twillController = twillControllerCreator.createTwillController(programRunId, twillRunId);
+    TwillController twillController = twillControllerCreator.createTwillController(programRunId);
     LOG.debug("TwillController created: {}", twillController);
     ProgramController programController = null;
     if (twillController != null) {

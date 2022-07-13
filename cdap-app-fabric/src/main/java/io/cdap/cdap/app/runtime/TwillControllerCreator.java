@@ -21,5 +21,5 @@ import org.apache.twill.api.TwillController;
 
 public interface TwillControllerCreator {
 
-  TwillController createTwillController(ProgramRunId programRunId, String twillRunId);
+  TwillController createTwillController(ProgramRunId programRunId);
 }

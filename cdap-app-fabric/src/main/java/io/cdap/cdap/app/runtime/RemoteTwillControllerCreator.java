@@ -65,7 +65,7 @@ public class RemoteTwillControllerCreator implements TwillControllerCreator {
   }
 
   @Override
-  public TwillController createTwillController(ProgramRunId programRunId, String twillRunId) {
+  public TwillController createTwillController(ProgramRunId programRunId) {
     RunRecordDetail runRecordDetail = store.getRun(programRunId);
     if (runRecordDetail == null) {
       String msg = String.format("Could not find run record for Program %s with runid %s", programRunId.getProgram(),
