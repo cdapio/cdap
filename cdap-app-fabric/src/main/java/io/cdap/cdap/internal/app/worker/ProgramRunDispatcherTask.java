@@ -40,6 +40,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.runtime.distributed.AbstractTwillProgramController;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -87,6 +88,7 @@ public class ProgramRunDispatcherTask implements RunnableTask {
                                  programRunDispatcherInfo.getRunId());
       throw Throwables.propagate(new Throwable(msg));
     }
+    LOG.debug("TwillControllerId: {}", ((AbstractTwillProgramController) programController).getTwillRunId().getId());
     // Result doesn't matter since we just need an HTTP 200 response or an exception in case of an error(handled above).
     context.writeResult(new byte[0]);
     executorService.submit(programRunDispatcherInfo.getCleanUpTask().get());
