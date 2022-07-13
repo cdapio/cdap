@@ -23,7 +23,6 @@ import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillApplication;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder;
