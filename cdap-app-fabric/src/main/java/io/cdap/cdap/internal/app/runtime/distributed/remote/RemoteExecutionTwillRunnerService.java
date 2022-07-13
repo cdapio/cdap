@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
@@ -499,18 +500,18 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   }
 
   public TwillController createTwillControllerFromRunRecord(RunRecordDetail runRecordDetail) {
-//    Map<String, String> systemArgs = runRecordDetail.getSystemArgs();
-//    try {
-//      ClusterMode clusterMode = ClusterMode.valueOf(systemArgs.getOrDefault(ProgramOptionConstants.CLUSTER_MODE,
-//                                                                            ClusterMode.ON_PREMISE.name()));
-//      if (clusterMode != ClusterMode.ISOLATED) {
-//        LOG.debug("Ignore run {} of non supported cluster mode {}", runRecordDetail.getProgramRunId(), clusterMode);
-//        return null;
-//      }
-//    } catch (IllegalArgumentException e) {
-//      LOG.warn("Ignore run record with an invalid cluster mode", e);
-//      return null;
-//    }
+    Map<String, String> systemArgs = runRecordDetail.getSystemArgs();
+    try {
+      ClusterMode clusterMode = ClusterMode.valueOf(systemArgs.getOrDefault(ProgramOptionConstants.CLUSTER_MODE,
+                                                                            ClusterMode.ON_PREMISE.name()));
+      if (clusterMode != ClusterMode.ISOLATED) {
+        LOG.debug("Ignore run {} of non supported cluster mode {}", runRecordDetail.getProgramRunId(), clusterMode);
+        return null;
+      }
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Ignore run record with an invalid cluster mode", e);
+      return null;
+    }
 
     ProgramOptions programOpts = new SimpleProgramOptions(runRecordDetail.getProgramRunId().getParent(),
                                                           new BasicArguments(runRecordDetail.getSystemArgs()),

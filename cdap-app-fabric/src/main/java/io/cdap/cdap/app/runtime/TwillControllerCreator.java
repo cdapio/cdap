@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.app.runtime;
 
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 
 public interface TwillControllerCreator {
 
-  TwillController createTwillControllerFromRunRecord(RunRecordDetail runRecordDetail);
-
+  TwillController createTwillController(ProgramRunId programRunId, String twillRunId);
 }

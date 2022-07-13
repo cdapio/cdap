@@ -18,7 +18,7 @@ package io.cdap.cdap.app.runtime;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.twill.TwillAppNames;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.internal.RunIds;
@@ -35,8 +35,8 @@ public class KubeTwillControllerCreator implements TwillControllerCreator {
   }
 
   @Override
-  public TwillController createTwillControllerFromRunRecord(RunRecordDetail runRecordDetail) {
-    return twillRunnerService.lookup(TwillAppNames.toTwillAppName(runRecordDetail.getProgramRunId().getParent()),
-                                     RunIds.fromString(Objects.requireNonNull(runRecordDetail.getPid())));
+  public TwillController createTwillController(ProgramRunId programRunId, String twillRunId) {
+    return twillRunnerService.lookup(TwillAppNames.toTwillAppName(programRunId.getParent()),
+                                     RunIds.fromString(Objects.requireNonNull(twillRunId)));
   }
 }

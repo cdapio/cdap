@@ -46,6 +46,7 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
@@ -77,8 +78,8 @@ public class ProgramRunDispatcherTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
-    ProgramRunDispatcherInfo programRunDispatcherInfo =
-      GSON.fromJson(context.getParam(), ProgramRunDispatcherInfo.class);
+    ProgramRunDispatcherInfo programRunDispatcherInfo = GSON.fromJson(context.getParam(),
+                                                                      ProgramRunDispatcherInfo.class);
     ProgramRunDispatcher dispatcher = injector.getInstance(InMemoryProgramRunDispatcher.class);
     ProgramController programController = dispatcher.dispatchProgram(programRunDispatcherInfo);
     LOG.debug("Pipeline launched with programController: {}", programController);
@@ -88,9 +89,10 @@ public class ProgramRunDispatcherTask implements RunnableTask {
                                  programRunDispatcherInfo.getRunId());
       throw Throwables.propagate(new Throwable(msg));
     }
-    LOG.debug("TwillControllerId: {}", ((AbstractTwillProgramController) programController).getTwillRunId().getId());
+    String twillRunId = ((AbstractTwillProgramController) programController).getTwillRunId().getId();
+    LOG.debug("TwillControllerId: {}", twillRunId);
     // Result doesn't matter since we just need an HTTP 200 response or an exception in case of an error(handled above).
-    context.writeResult(new byte[0]);
+    context.writeResult(GSON.toJson(twillRunId).getBytes(StandardCharsets.UTF_8));
     executorService.submit(programRunDispatcherInfo.getCleanUpTask().get());
     LOG.debug("ProgramRunDispatcherTask complete!");
   }

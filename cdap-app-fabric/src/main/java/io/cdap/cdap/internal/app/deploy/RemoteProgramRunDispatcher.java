@@ -34,7 +34,6 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.TwillControllerCreator;
 import io.cdap.cdap.app.runtime.TwillControllerCreatorFactory;
-import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -48,7 +47,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.worker.ProgramRunDispatcherTask;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -59,6 +57,7 @@ import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 /**
@@ -78,7 +77,6 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
-  private final Store store;
   private final ProgramRunnerFactory programRunnerFactory;
   private final RemoteTaskExecutor remoteTaskExecutor;
   private final ProgramRunnerFactory remoteProgramRunnerFactory;
@@ -86,11 +84,10 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
 
   @Inject
   public RemoteProgramRunDispatcher(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                                    RemoteClientFactory remoteClientFactory, Store store,
+                                    RemoteClientFactory remoteClientFactory,
                                     ProgramRunnerFactory programRunnerFactory,
                                     @RemoteExecution ProgramRunnerFactory remoteProgramRunnerFactory,
                                     TwillControllerCreatorFactory twillControllerCreatorFactory) {
-    this.store = store;
     this.programRunnerFactory = programRunnerFactory;
     this.remoteProgramRunnerFactory = remoteProgramRunnerFactory;
     this.twillControllerCreatorFactory = twillControllerCreatorFactory;
@@ -108,7 +105,8 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     LOG.debug("Dispatching Program Run operation for Run ID: {}", runId.getId());
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ProgramRunDispatcherTask.class.getName())
       .withParam(GSON.toJson(programRunDispatcherInfo)).build();
-    remoteTaskExecutor.runTask(request);
+    byte[] result = remoteTaskExecutor.runTask(request);
+    String twillRunId = GSON.fromJson(new String(result, StandardCharsets.UTF_8), String.class);
     LOG.debug("Dispatch complete for Run ID: {}", runId.getId());
     ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(runId);
@@ -122,22 +120,8 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
                                  programRunDispatcherInfo.getRunId());
       throw new UnsupportedOperationException(msg);
     }
-
-    RunRecordDetail runRecordDetail = store.getRun(programRunId);
-    if (runRecordDetail == null) {
-      String msg = String.format("Could not find run record for Program %s with runid %s",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
-      throw new IllegalStateException(msg);
-    }
     TwillControllerCreator twillControllerCreator = twillControllerCreatorFactory.create(clusterMode);
-    LOG.debug("RunRecordDetail: {}", runRecordDetail);
-    try {
-      LOG.debug("RunRecordDetail json: {}", GSON.toJson(runRecordDetail));
-    } catch (Exception e) {
-      LOG.error("Error", e);
-    }
-    TwillController twillController = twillControllerCreator.createTwillControllerFromRunRecord(runRecordDetail);
+    TwillController twillController = twillControllerCreator.createTwillController(programRunId, twillRunId);
     LOG.debug("TwillController created: {}", twillController);
     ProgramController programController = null;
     if (twillController != null) {
