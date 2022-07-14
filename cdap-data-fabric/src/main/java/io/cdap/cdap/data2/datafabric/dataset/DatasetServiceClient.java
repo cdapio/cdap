@@ -22,6 +22,7 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
 import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -306,7 +307,7 @@ public class DatasetServiceClient {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
       LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());
-      HttpResponse response = remoteClient.execute(request);
+      HttpResponse response = remoteClient.execute(request, Idempotency.AUTO);
       LOG.trace("Executed {} {}", request.getMethod(), request.getURL().getPath());
       return response;
     } catch (ServiceUnavailableException e) { // thrown by RemoteClient in case of ConnectException
