@@ -147,15 +147,11 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
 
   @Override
   protected void onCompleted(boolean succeeded) {
-    if (succeeded) {
-      sparkExecutionService.stopAndWait();
-    } else {
-      sparkExecutionService.shutdownNow();
-    }
+    sparkExecutionService.shutdownNow();
     try {
       sparkDriverWatcher.close();
     } catch (Exception e) {
-      LOG.error("Error while closing spark driver watcher thread.", e);
+      LOG.warn("Error while closing spark driver watcher thread.", e);
     }
   }
 
