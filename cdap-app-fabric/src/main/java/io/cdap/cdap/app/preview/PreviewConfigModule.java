@@ -93,6 +93,9 @@ public class PreviewConfigModule extends AbstractModule {
     // Set HDFS namespace to use a writable directory by default
     previewCConf.set(Constants.CFG_HDFS_NAMESPACE, previewDir.toString());
 
+    // Never run master environment-specific hooks on namespace creation as all preview runs happen locally.
+    previewCConf.setBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED, false);
+
     // Setup Hadoop configuration
     previewHConf = new Configuration(hConf);
     previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
