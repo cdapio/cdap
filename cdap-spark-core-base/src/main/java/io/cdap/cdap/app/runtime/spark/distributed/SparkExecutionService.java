@@ -154,8 +154,9 @@ public final class SparkExecutionService extends AbstractIdleService {
 
   /**
    * Shutdown this service without waiting for the `completed` call from the {@link SparkDriverService}.
-   * This method is used when the Spark application is terminated due to error, as there is no guarantees whether
-   * the `completed` call will be received or not.
+   * This method is used when the Spark job is terminated as reported by SparkSubmit.
+   * If the Spark job was terminated normally, the `completed` should been called from the driver service already
+   * prior to this method being called.
    */
   public void shutdownNow() {
     stopLatch.countDown();
