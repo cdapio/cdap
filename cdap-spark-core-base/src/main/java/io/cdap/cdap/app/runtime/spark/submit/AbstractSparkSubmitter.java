@@ -135,6 +135,11 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     return Collections.emptyList();
   }
 
+  /**
+   * Called when the Spark program finished.
+   *
+   * @param succeeded {@code true} to indicate the program completed successfully as reported by SparkSubmit.
+   */
   protected void onCompleted(boolean succeeded) {
     // no-op
   }
