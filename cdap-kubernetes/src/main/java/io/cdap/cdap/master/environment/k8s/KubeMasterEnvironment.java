@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.DefaultLocalFileProvider;
 import io.cdap.cdap.k8s.common.LocalFileProvider;
@@ -78,9 +77,8 @@ import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.openapi.models.V1VolumeProjection;
 import io.kubernetes.client.util.Config;
-import io.kubernetes.client.util.Watch;
-import io.kubernetes.client.util.Watchable;
 import io.kubernetes.client.util.Yaml;
+import io.kubernetes.client.util.generic.options.ListOptions;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -94,7 +92,6 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -118,7 +115,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MasterEnvironment} to provide the environment for running in Kubernetes.
@@ -1255,18 +1251,16 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String labelSelector = labels.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue())
       .collect(Collectors.joining(","));
 
-    return new PodWatcherThread(podInfo.getNamespace(), coreV1Api, labelSelector);
+    return new PodWatcherThread(podInfo.getNamespace(), labelSelector);
   }
 
   private static class PodWatcherThread extends AbstractWatcherThread<V1Pod> implements SparkDriverWatcher {
     private final CompletableFuture<Boolean> podStatusFuture;
-    private final CoreV1Api coreV1Api;
     private final String labelSelector;
 
-    PodWatcherThread(String namespace, CoreV1Api coreV1Api, String labelSelector) {
-      super("kube-pod-watcher", namespace);
+    PodWatcherThread(String namespace, String labelSelector) {
+      super("kube-pod-watcher", namespace, "", "v1", "pods");
       this.podStatusFuture = new CompletableFuture<>();
-      this.coreV1Api = coreV1Api;
       this.labelSelector = labelSelector;
     }
 
@@ -1297,21 +1291,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       podStatusFuture.complete(true);
     }
 
-    @Nullable
     @Override
-    protected String getSelector() {
-      return labelSelector;
-    }
-
-    @Override
-    protected Watchable<V1Pod> createWatchable(Type resourceType, String namespace,
-                                               @Nullable String labelSelector) throws ApiException {
-      return
-        Watch.createWatch(
-          coreV1Api.getApiClient(),
-          coreV1Api.listNamespacedPodCall(
-            namespace, null, null, null, null, labelSelector, 1, null, null, null, true, null),
-          TypeToken.getParameterized(Watch.Response.class, resourceType).getType());
+    protected void updateListOptions(ListOptions options) {
+      options.setLabelSelector(labelSelector);
     }
 
     @Override
