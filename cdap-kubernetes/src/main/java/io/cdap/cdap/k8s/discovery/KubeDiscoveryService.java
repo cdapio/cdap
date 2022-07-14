@@ -107,16 +107,12 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     try {
       CoreV1Api api = getCoreApi();
       while (true) {
-        // First try to create the service
-        if (createV1Service(api, serviceName, discoverable)) {
-          break;
-        }
-
-        // If creation failed, we update the service.
-        // To update, first need to find the service version.
         Optional<V1Service> currentService = getV1Service(api, serviceName, discoverable.getName());
         if (!currentService.isPresent()) {
-          // Loop and try to create again
+          if (createV1Service(api, serviceName, discoverable)) {
+            break;
+          }
+          // Service create encountered a conflict, loop and check for service again
           continue;
         }
 
@@ -271,6 +267,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     } catch (ApiException e) {
       // It means the service already exists. In this case we update the port if it is not the same.
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.debug("Service {} already exists.", serviceName);
         return false;
       }
       throw e;
@@ -287,8 +284,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param discoverable the {@link Discoverable} for updating the service
    * @return {@code true} if the update was successful
    *         {@code false} if the current service version doesn't match with the server, and there is no
-   *         change to the service
-   * @throws ApiException if the update failed that doesn't due to mismatch of current version
+   *         change to the service; or if the service does not exist
+   * @throws ApiException if the update failed for reasons other than mismatch of current version or service not found
    */
   private boolean updateV1Service(CoreV1Api api, V1Service currentService,
                                   Discoverable discoverable) throws ApiException {
@@ -333,7 +330,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       LOG.info("Service updated in kubernetes with name {} and port {}",
                currentService.getMetadata().getName(), port.getPort());
     } catch (ApiException e) {
-      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT || e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         return false;
       }
       throw e;
