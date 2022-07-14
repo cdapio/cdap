@@ -65,7 +65,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
-import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
 import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
@@ -266,13 +265,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         //  preview runners do not have to talk directly to app-fabric for artifacts to prevent hot-spotting.
         bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
         bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
-        // Use artifact localizer client if it is enabled, otherwise use regular RemotePluginFinder
-        if (cConf.getBoolean(Constants.Preview.ARTIFACT_LOCALIZER_ENABLED)) {
-          bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
-          bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
-        } else {
-          bind(PluginFinder.class).to(RemotePluginFinder.class);
-        }
+        // Use artifact localizer client
+        bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+        bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
         // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         // Need ProgramRunnerFactory for the RemoteArtifactRepository

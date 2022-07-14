@@ -35,7 +35,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
@@ -177,7 +176,6 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       new AuthenticationContextModules().getMasterWorkerModule(),
       new PreviewSecureStoreModule(secureStore),
       new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
-      new LocalLocationModule(),
       new ConfigStoreModule(),
       previewRunnerModule,
       new ProgramRunnerRuntimeModule().getStandaloneModules(),

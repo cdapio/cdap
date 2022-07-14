@@ -88,6 +88,7 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityManagementService;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -168,6 +169,8 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -229,6 +232,7 @@ public class TestBase {
   private static LineageAdmin lineageAdmin;
   private static AppFabricServer appFabricServer;
   private static PreferencesService preferencesService;
+  private static ArtifactLocalizerService artifactLocalizerService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -404,6 +408,8 @@ public class TestBase {
     fieldLineageAdmin = injector.getInstance(FieldLineageAdmin.class);
     lineageAdmin = injector.getInstance(LineageAdmin.class);
     metadataSubscriberService.startAndWait();
+    artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    artifactLocalizerService.startAndWait();
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
     if (previewRunnerManager instanceof Service) {
       ((Service) previewRunnerManager).startAndWait();
@@ -522,8 +528,8 @@ public class TestBase {
       ));
   }
 
-  private static CConfiguration createCConf(File localDataDir,
-                                            Map<String, String> customConfiguration) throws IOException {
+  private static CConfiguration createCConf(File localDataDir, Map<String, String> customConfiguration)
+    throws IOException, NoSuchAlgorithmException {
     CConfiguration cConf = CConfiguration.create();
 
     // Setup defaults that can be overridden by user
@@ -567,6 +573,13 @@ public class TestBase {
     // Set spark compat
     cConf.set(Constants.AppFabric.SPARK_COMPAT, getCurrentSparkCompat().getCompat());
 
+    // NOTE: As the artifact localizer client does not use service discovery for port discovery, we need to randomly
+    // generate a port ahead of time. This should have a success rate (i.e. no port conflicts) of ~97%+. We ignore
+    // the first 1024 ports as they typically require root privileges to bind to.
+    int artifactLocalizerServicePort = SecureRandom.getInstanceStrong().nextInt(65536 - 1024) + 1024;
+    LOG.info("Binding artifact localizer service to port {}", artifactLocalizerServicePort);
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerServicePort);
+
     return cConf;
   }
 
@@ -602,6 +615,7 @@ public class TestBase {
       ((Service) previewRunnerManager).stopAndWait();
     }
 
+    artifactLocalizerService.stopAndWait();
     previewHttpServer.stopAndWait();
 
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
