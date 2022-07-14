@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -149,6 +150,24 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
     private CacheKey(String fileName, long lastModified) {
       this.fileName = fileName;
       this.lastModified = lastModified;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(fileName, lastModified);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      CacheKey that = (CacheKey) o;
+      return this.lastModified == that.lastModified &&
+          this.fileName.equals(that.fileName);
     }
 
     String getFileName() {
