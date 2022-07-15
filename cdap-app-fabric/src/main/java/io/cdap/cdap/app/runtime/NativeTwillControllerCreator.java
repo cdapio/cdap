@@ -17,13 +17,18 @@
 package io.cdap.cdap.app.runtime;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Threads;
 import org.apache.twill.internal.RunIds;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of {@link TwillControllerCreator} for On-Premise(Native) Cluster mode.
@@ -31,15 +36,22 @@ import java.util.Objects;
 public class NativeTwillControllerCreator implements TwillControllerCreator {
 
   private final TwillRunnerService twillRunnerService;
+  private final CConfiguration cConf;
 
   @Inject
-  public NativeTwillControllerCreator(TwillRunnerService twillRunnerService) {
+  public NativeTwillControllerCreator(TwillRunnerService twillRunnerService, CConfiguration cConf) {
     this.twillRunnerService = twillRunnerService;
+    this.cConf = cConf;
   }
 
   @Override
-  public TwillController createTwillController(ProgramRunId programRunId) {
-    return twillRunnerService.lookup(TwillAppNames.toTwillAppName(programRunId.getParent()),
+  public TwillController createTwillController(ProgramRunId programRunId) throws Exception {
+    TwillController twillController = twillRunnerService.lookup(TwillAppNames.toTwillAppName(programRunId.getParent()),
                                      RunIds.fromString(Objects.requireNonNull(programRunId.getRun())));
+    CountDownLatch latch = new CountDownLatch(1);
+    twillController.onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    twillController.onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
+    return twillController;
   }
 }

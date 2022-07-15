@@ -24,5 +24,5 @@ import org.apache.twill.api.TwillController;
  */
 public interface TwillControllerCreator {
 
-  TwillController createTwillController(ProgramRunId programRunId);
+  TwillController createTwillController(ProgramRunId programRunId) throws Exception;
 }
