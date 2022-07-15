@@ -18,6 +18,9 @@ package io.cdap.cdap.app.runtime;
 
 import io.cdap.cdap.app.guice.ClusterMode;
 
+/**
+ * Factory for creating {@link TwillControllerCreator}
+ */
 public interface TwillControllerCreatorFactory {
 
   TwillControllerCreator create(ClusterMode clusterMode);
