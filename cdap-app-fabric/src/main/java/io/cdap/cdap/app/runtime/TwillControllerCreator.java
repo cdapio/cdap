@@ -19,6 +19,9 @@ package io.cdap.cdap.app.runtime;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 
+/**
+ * Creates {@link TwillController} using Program details in different cluster modes.
+ */
 public interface TwillControllerCreator {
 
   TwillController createTwillController(ProgramRunId programRunId);

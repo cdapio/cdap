@@ -18,6 +18,9 @@ package io.cdap.cdap.master.spi.twill;
 
 import org.apache.twill.api.TwillApplication;
 
+/**
+ * An extension of {@link TwillApplication} used to add extra functionalities for CDAP.
+ */
 public interface ExtendedTwillApplication extends TwillApplication {
 
   String getRunId();
