@@ -23,6 +23,10 @@ import io.cdap.cdap.app.runtime.TwillControllerCreatorFactory;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Implementation of {@link TwillControllerCreatorFactory} which returns {@link TwillControllerCreator} based on
+ * {@link ClusterMode}
+ */
 public final class DefaultTwillControllerCreatorFactory implements TwillControllerCreatorFactory {
 
   private final Map<ClusterMode, TwillControllerCreator> twillControllerCreatorMap;

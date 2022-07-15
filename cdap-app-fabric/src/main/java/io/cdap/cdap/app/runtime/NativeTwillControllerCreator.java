@@ -25,12 +25,15 @@ import org.apache.twill.internal.RunIds;
 
 import java.util.Objects;
 
-public class KubeTwillControllerCreator implements TwillControllerCreator {
+/**
+ * Implementation of {@link TwillControllerCreator} for On-Premise(Native) Cluster mode.
+ */
+public class NativeTwillControllerCreator implements TwillControllerCreator {
 
   private final TwillRunnerService twillRunnerService;
 
   @Inject
-  public KubeTwillControllerCreator(TwillRunnerService twillRunnerService) {
+  public NativeTwillControllerCreator(TwillRunnerService twillRunnerService) {
     this.twillRunnerService = twillRunnerService;
   }
 
