@@ -32,7 +32,8 @@ import io.cdap.cdap.app.runtime.ProgramControllerCreator;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
-import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.app.runtime.TwillControllerCreator;
+import io.cdap.cdap.app.runtime.TwillControllerCreatorFactory;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -46,8 +47,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.worker.ProgramRunDispatcherTask;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -55,7 +54,6 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,23 +76,20 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
-  private final Store store;
   private final ProgramRunnerFactory programRunnerFactory;
   private final RemoteTaskExecutor remoteTaskExecutor;
   private final ProgramRunnerFactory remoteProgramRunnerFactory;
-  private final RemoteExecutionTwillRunnerService remoteTwillRunnerService;
+  private final TwillControllerCreatorFactory twillControllerCreatorFactory;
 
   @Inject
   public RemoteProgramRunDispatcher(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                                    RemoteClientFactory remoteClientFactory, Store store,
+                                    RemoteClientFactory remoteClientFactory,
                                     ProgramRunnerFactory programRunnerFactory,
                                     @RemoteExecution ProgramRunnerFactory remoteProgramRunnerFactory,
-                                    @RemoteExecution TwillRunnerService twillRunnerService) {
-    this.store = store;
+                                    TwillControllerCreatorFactory twillControllerCreatorFactory) {
     this.programRunnerFactory = programRunnerFactory;
     this.remoteProgramRunnerFactory = remoteProgramRunnerFactory;
-    // TODO(CDAP-18964): Get rid of type casting.
-    this.remoteTwillRunnerService = (RemoteExecutionTwillRunnerService) twillRunnerService;
+    this.twillControllerCreatorFactory = twillControllerCreatorFactory;
     int connectTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_READ_TIMEOUT_MS);
     HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
@@ -112,26 +107,18 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     remoteTaskExecutor.runTask(request);
     ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(runId);
-    ProgramRunner runner =
-      (ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions()) == ClusterMode.ON_PREMISE
-        ? programRunnerFactory
-        : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)).create(
-        programId.getType());
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions());
+    ProgramRunnerFactory runnerFactory = clusterMode == ClusterMode.ON_PREMISE ? programRunnerFactory
+      : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new);
+    ProgramRunner runner = runnerFactory.create(programId.getType());
     if (!(runner instanceof ProgramControllerCreator)) {
       String msg = String.format("Program %s with runid %s uses an unsupported controller for remote dispatching.",
                                  programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
                                  programRunDispatcherInfo.getRunId());
       throw new UnsupportedOperationException(msg);
     }
-
-    RunRecordDetail runRecordDetail = store.getRun(programRunId);
-    if (runRecordDetail == null) {
-      String msg = String.format("Could not find run record for Program %s with runid %s",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
-      throw new IllegalStateException(msg);
-    }
-    TwillController twillController = remoteTwillRunnerService.createTwillControllerFromRunRecord(runRecordDetail);
+    TwillControllerCreator twillControllerCreator = twillControllerCreatorFactory.create(clusterMode);
+    TwillController twillController = twillControllerCreator.createTwillController(programRunId);
     ProgramController programController = null;
     if (twillController != null) {
       programController = ((ProgramControllerCreator) runner).createProgramController(programRunId, twillController);
