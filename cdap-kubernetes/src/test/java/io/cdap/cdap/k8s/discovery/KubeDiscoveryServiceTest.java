@@ -48,8 +48,9 @@ public class KubeDiscoveryServiceTest {
 
   @Test
   public void testDiscoveryService() throws Exception {
+    String namespace = "default";
     Map<String, String> podLabels = ImmutableMap.of("cdap.container", "test");
-    try (KubeDiscoveryService service = new KubeDiscoveryService("default", "cdap-test-",
+    try (KubeDiscoveryService service = new KubeDiscoveryService(namespace, "cdap-test-",
                                                                  podLabels, Collections.emptyList())) {
       // Watch for changes
       ServiceDiscovered serviceDiscovered = service.discover("test.service");
@@ -79,7 +80,7 @@ public class KubeDiscoveryServiceTest {
       Discoverable discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(1234, discoverable.getSocketAddress().getPort());
       Assert.assertEquals("https", new String(discoverable.getPayload(), StandardCharsets.UTF_8));
-      Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
+      Assert.assertEquals("cdap-test-test-service." + namespace, discoverable.getSocketAddress().getHostName());
 
       // Register the service again with different port. This is to simulate config update
       service.register(new Discoverable("test.service", new InetSocketAddress(InetAddress.getLoopbackAddress(), 4321)));
@@ -93,7 +94,7 @@ public class KubeDiscoveryServiceTest {
       discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(4321, discoverable.getSocketAddress().getPort());
       Assert.assertArrayEquals(new byte[0], discoverable.getPayload());
-      Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
+      Assert.assertEquals("cdap-test-test-service." + namespace, discoverable.getSocketAddress().getHostName());
     } finally {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(Config.defaultClient());
