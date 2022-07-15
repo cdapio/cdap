@@ -1660,6 +1660,7 @@ public final class Constants {
    */
   public static final class Namespace {
     public static final String NAMESPACES_DIR = "namespaces.dir";
+    public static final String NAMESPACE_CREATION_HOOK_ENABLED = "namespaces.creation.hook.enabled";
   }
 
   /**

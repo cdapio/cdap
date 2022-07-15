@@ -154,11 +154,11 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
           Path cConfPath = runDir.resolve("cConf.xml");
           if (!cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
-             // Unset the internal certificate path since certificate is stored cdap-security which
-             // is not going to be exposed to preview runner.
-             // TODO: CDAP-18768 this will break preview when certificate checking is enabled.
-             cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
-           }
+            // Unset the internal certificate path since certificate is stored cdap-security which
+            // is not going to be exposed to preview runner.
+            // TODO: CDAP-18768 this will break preview when certificate checking is enabled.
+            cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
+          }
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
             cConfCopy.writeXml(writer);
           }
