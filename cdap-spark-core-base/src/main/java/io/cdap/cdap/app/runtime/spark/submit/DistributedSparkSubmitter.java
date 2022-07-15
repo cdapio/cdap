@@ -117,10 +117,6 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
 
   @Override
   protected void onCompleted(boolean succeeded) {
-    if (succeeded) {
-      sparkExecutionService.stopAndWait();
-    } else {
-      sparkExecutionService.shutdownNow();
-    }
+    sparkExecutionService.shutdownNow();
   }
 }
