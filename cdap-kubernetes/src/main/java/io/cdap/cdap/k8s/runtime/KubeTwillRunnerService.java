@@ -115,6 +115,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final int jobCleanupIntervalMins;
   private final int jobCleanBatchSize;
   private final String selector;
+  private final boolean enableMonitor;
   private ApiClient apiClient;
   private CoreV1Api coreV1Api;
   private ScheduledExecutorService monitorScheduler;
@@ -123,7 +124,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext,
                                 String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
                                 PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
-                                int jobCleanupIntervalMins, int jobCleanBatchSize) {
+                                int jobCleanupIntervalMins, int jobCleanBatchSize,
+                                boolean enableMonitor) {
     this.masterEnvContext = masterEnvContext;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -139,6 +141,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     this.liveInfoLock = new ReentrantLock();
     this.jobCleanupIntervalMins = jobCleanupIntervalMins;
     this.jobCleanBatchSize = jobCleanBatchSize;
+    this.enableMonitor = enableMonitor;
   }
 
   @Override
@@ -168,8 +171,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       // Adds the controller to the LiveInfo.
       liveInfoLock.lock();
       try {
-        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), n -> new KubeLiveInfo(resourceType, n));
         KubeTwillController controller = createKubeTwillController(spec.getName(), runId, resourceType, meta);
+        if (!enableMonitor) {
+          //since monitor is disabled, we fire and forget
+          return controller;
+        }
+        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), n -> new KubeLiveInfo(resourceType, n));
         return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller, meta);
       } finally {
         liveInfoLock.unlock();
@@ -210,9 +217,13 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   @Override
   public void start() {
+    LOG.error("Starting KubeTwillRunnerService with {} monitor", enableMonitor ? "enabled" : "disabled");
     try {
       apiClient = Config.defaultClient();
       coreV1Api = new CoreV1Api(apiClient);
+      if (!enableMonitor) {
+        return;
+      }
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
       Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
@@ -238,11 +249,15 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   @Override
   public void stop() {
-    jobCleanerService.shutdownNow();
+    if (jobCleanerService != null) {
+      jobCleanerService.shutdownNow();
+    }
     resourceWatchers.values().forEach(typeMap -> {
       typeMap.values().forEach(AbstractWatcherThread::close);
     });
-    monitorScheduler.shutdownNow();
+    if (monitorScheduler != null) {
+      monitorScheduler.shutdownNow();
+    }
   }
 
   /**
@@ -262,6 +277,10 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     AppResourceWatcherThread<T> watcher, Type resourceType, CompletableFuture<Void> startupTaskCompletion) {
 
     String runId = controller.getRunId().getId();
+    if (!enableMonitor) {
+      throw new UnsupportedOperationException(
+        String.format("Cannot monitor controller for run %s when monitoring is disabled", runId));
+    }
 
     LOG.debug("Monitoring application {} with run {} starts in {} {}",
               liveInfo.getApplicationName(), runId, timeout, timeoutUnit);

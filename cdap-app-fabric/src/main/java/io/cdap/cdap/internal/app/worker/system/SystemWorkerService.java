@@ -55,6 +55,7 @@ public class SystemWorkerService extends AbstractIdleService {
   private final NettyHttpService httpService;
   private final KeyManager keyManager;
   private final TwillRunnerService twillRunnerService;
+  private final TwillRunnerService remoteTwillRunnerService;
   private final ProvisioningService provisioningService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
@@ -66,10 +67,12 @@ public class SystemWorkerService extends AbstractIdleService {
                       MetricsCollectionService metricsCollectionService,
                       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
                       KeyManager keyManager, TwillRunnerService twillRunnerService,
+                      @Constants.AppFabric.RemoteExecution TwillRunnerService remoteTwillRunnerService,
                       ProvisioningService provisioningService, Injector injector) {
     this.discoveryService = discoveryService;
     this.keyManager = keyManager;
     this.twillRunnerService = twillRunnerService;
+    this.remoteTwillRunnerService = remoteTwillRunnerService;
     this.provisioningService = provisioningService;
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.SYSTEM_WORKER)
@@ -98,6 +101,7 @@ public class SystemWorkerService extends AbstractIdleService {
     keyManager.startAndWait();
     provisioningService.initializeProvisionersAndExecutors();
     twillRunnerService.start();
+    remoteTwillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
@@ -110,6 +114,7 @@ public class SystemWorkerService extends AbstractIdleService {
     LOG.debug("Shutting down SystemWorkerService");
     keyManager.stop();
     twillRunnerService.stop();
+    remoteTwillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
     LOG.debug("Shutting down SystemWorkerService has completed");
