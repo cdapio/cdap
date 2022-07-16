@@ -617,6 +617,20 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   }
 
   /**
+   * Create and start job watcher for the given Kubernetes namespace
+   */
+  public void addAndStartJobWatcher(String namespace) {
+    if (resourceWatchers.containsKey(namespace)) {
+      return;
+    }
+    LOG.info("Adding job watcher for namespace {}", namespace);
+    AppResourceWatcherThread<?> watcherThread = AppResourceWatcherThread.createJobWatcher(namespace, selector);
+    watcherThread.addListener(new AppResourceChangeListener<>());
+    watcherThread.start();
+    resourceWatchers.put(namespace, ImmutableMap.of(V1Job.class, watcherThread));
+  }
+
+  /**
    * Kubernetes LiveInfo.
    */
   private final class KubeLiveInfo implements LiveInfo {
@@ -638,23 +652,10 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       }
       String namespace = meta.getNamespace();
       // If it is newly added controller, monitor it.
-      if (!resourceWatchers.containsKey(namespace)) {
-        addAndStartJobWatcher(namespace);
-      }
+      addAndStartJobWatcher(namespace);
       return monitorController(this, timeout, timeoutUnit, controller,
                                resourceWatchers.get(namespace).get(resourceType),
                                resourceType, controller.getStartedFuture());
-    }
-
-    /**
-     * Create and start job watcher for the given Kubernetes namespace
-     */
-    private void addAndStartJobWatcher(String namespace) {
-      LOG.info("Adding job watcher for namespace {}", namespace);
-      AppResourceWatcherThread<?> watcherThread = AppResourceWatcherThread.createJobWatcher(namespace, selector);
-      watcherThread.addListener(new AppResourceChangeListener<>());
-      watcherThread.start();
-      resourceWatchers.put(namespace, ImmutableMap.of(V1Job.class, watcherThread));
     }
 
     /**
