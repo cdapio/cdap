@@ -17,13 +17,24 @@
 package io.cdap.cdap.app.runtime;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Threads;
 import org.apache.twill.internal.RunIds;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of {@link TwillControllerCreator} for On-Premise(Native) Cluster mode.
@@ -31,15 +42,40 @@ import java.util.Objects;
 public class NativeTwillControllerCreator implements TwillControllerCreator {
 
   private final TwillRunnerService twillRunnerService;
+  private final CConfiguration cConf;
+  private final Set<String> namespaces;
 
   @Inject
-  public NativeTwillControllerCreator(TwillRunnerService twillRunnerService) {
+  public NativeTwillControllerCreator(CConfiguration cConf, TwillRunnerService twillRunnerService) {
+    this.cConf = cConf;
     this.twillRunnerService = twillRunnerService;
+    namespaces = new HashSet<>();
   }
 
   @Override
-  public TwillController createTwillController(ProgramRunId programRunId) {
-    return twillRunnerService.lookup(TwillAppNames.toTwillAppName(programRunId.getParent()),
-                                     RunIds.fromString(Objects.requireNonNull(programRunId.getRun())));
+  public TwillController createTwillController(ProgramRunId programRunId) throws Exception {
+    AtomicReference<TwillController> twillController = new AtomicReference<>();
+    RetryStrategy retryStrategy =
+      RetryStrategies.timeLimit(60, TimeUnit.SECONDS,
+                                RetryStrategies.exponentialDelay(10, 1000, TimeUnit.MILLISECONDS));
+
+    // TODO throw proper exception if retries fail
+    Retries.runWithRetries(() -> {
+      /**
+       * Under two scenarios, twillController might be null:
+       * (1) TwillController has not been added to the twillRunnerService, and it will be added later.
+       * (2) TwillController has been removed from twillRunnerService.
+       */
+      twillController.set(twillRunnerService.lookup(TwillAppNames.toTwillAppName(
+                                                      programRunId.getParent()),
+                                                    RunIds.fromString(Objects.requireNonNull(programRunId.getRun()))));
+    }, retryStrategy, e -> twillController.get() == null);
+
+    CountDownLatch latch = new CountDownLatch(1);
+    twillController.get().onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    twillController.get().onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
+    return twillController.get();
+
   }
 }

@@ -518,6 +518,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // and must start and end with an alphanumeric character
     KubeUtil.validateRFC1123LabelName(namespace);
     findOrCreateKubeNamespace(namespace, cdapNamespace);
+    twillRunner.addAndStartJobWatcher(cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
     copyVolumes(namespace, cdapNamespace);
     createWorkloadServiceAccount(namespace, cdapNamespace);
