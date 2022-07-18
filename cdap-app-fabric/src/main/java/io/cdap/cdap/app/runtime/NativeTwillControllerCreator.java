@@ -56,9 +56,10 @@ public class NativeTwillControllerCreator implements TwillControllerCreator {
   public TwillController createTwillController(ProgramRunId programRunId) throws Exception {
     AtomicReference<TwillController> twillController = new AtomicReference<>();
     RetryStrategy retryStrategy =
-      RetryStrategies.timeLimit(60, TimeUnit.SECONDS,
+      RetryStrategies.timeLimit(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS,
                                 RetryStrategies.exponentialDelay(10, 1000, TimeUnit.MILLISECONDS));
 
+    long startRetry = System.currentTimeMillis();
     // TODO throw proper exception if retries fail
     Retries.runWithRetries(() -> {
       /**
@@ -71,10 +72,11 @@ public class NativeTwillControllerCreator implements TwillControllerCreator {
                                                     RunIds.fromString(Objects.requireNonNull(programRunId.getRun()))));
     }, retryStrategy, e -> twillController.get() == null);
 
+    long retryDuration = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startRetry);
     CountDownLatch latch = new CountDownLatch(1);
     twillController.get().onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
     twillController.get().onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
-    latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
+    latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS) - retryDuration, TimeUnit.SECONDS);
     return twillController.get();
 
   }
