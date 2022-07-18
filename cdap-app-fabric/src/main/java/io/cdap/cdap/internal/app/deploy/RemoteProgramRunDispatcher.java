@@ -153,30 +153,45 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   private TwillController getNativeTwillController(ProgramRunId programRunId) throws InterruptedException {
-    AtomicReference<TwillController> twillController = new AtomicReference<>();
+    AtomicReference<TwillController> twillControllerReference = new AtomicReference<>();
     RetryStrategy retryStrategy =
       RetryStrategies.timeLimit(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS,
                                 RetryStrategies.exponentialDelay(10, 1000, TimeUnit.MILLISECONDS));
 
     long startRetry = System.currentTimeMillis();
-    // TODO throw proper exception if retries fail
     Retries.runWithRetries(() -> {
       /*
        * Under two scenarios, twillController might be null:
        * (1) TwillController has not been added to the twillRunnerService, and it will be added later.
        * (2) TwillController has been removed from twillRunnerService.
        */
-      twillController.set(twillRunnerService.lookup(TwillAppNames.toTwillAppName(
-                                                      programRunId.getParent()),
-                                                    RunIds.fromString(Objects.requireNonNull(programRunId.getRun()))));
-    }, retryStrategy, e -> twillController.get() == null);
+      TwillController twillController = twillRunnerService
+        .lookup(TwillAppNames.toTwillAppName(
+                  programRunId.getParent()),
+                RunIds.fromString(Objects.requireNonNull(programRunId.getRun())));
+      if (twillController == null) {
+        throw new RuntimeException(String.format("Unable to get twill controller for program run %s",
+                                                 programRunId));
+      }
+      twillControllerReference.set(twillController);
+    }, retryStrategy, e -> true);
+
+    LOG.debug("Waiting for twill controller for program run {} to go into either running or terminate states.",
+              programRunId);
+    CountDownLatch latch = new CountDownLatch(1);
+    twillControllerReference.get().onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    twillControllerReference.get().onTerminated(() -> {
+      latch.countDown();
+      LOG.warn("Twill controller for program run {} terminated prematurely.", programRunId);
+    }, Threads.SAME_THREAD_EXECUTOR);
+
 
     long retryDuration = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startRetry);
-    CountDownLatch latch = new CountDownLatch(1);
-    twillController.get().onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
-    twillController.get().onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    // Since it has already waited for retryDuration seconds to get twill controller, we subtract that
+    // from PROGRAM_MAX_START_SECONDS
+    // in order to have a consistent latch.wait logic between on_premise and isolated modes.
     latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS) - retryDuration, TimeUnit.SECONDS);
-    return twillController.get();
+    return twillControllerReference.get();
   }
 
   private TwillController getRemoteTwillController(ProgramRunId programRunId) {
