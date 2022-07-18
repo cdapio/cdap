@@ -32,13 +32,16 @@ import io.cdap.cdap.app.runtime.ProgramControllerCreator;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
-import io.cdap.cdap.app.runtime.TwillControllerCreator;
-import io.cdap.cdap.app.runtime.TwillControllerCreatorFactory;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric.RemoteExecution;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
@@ -47,6 +50,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.worker.ProgramRunDispatcherTask;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -54,10 +59,16 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of {@link ProgramRunDispatcher} which enables Program-run execution to take place remotely (E.g.- in
@@ -76,26 +87,31 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
+  private final Store store;
+  private final CConfiguration cConf;
   private final ProgramRunnerFactory programRunnerFactory;
   private final RemoteTaskExecutor remoteTaskExecutor;
+  private final TwillRunnerService twillRunnerService;
   private final ProgramRunnerFactory remoteProgramRunnerFactory;
-  private final TwillControllerCreatorFactory twillControllerCreatorFactory;
+  private final RemoteExecutionTwillRunnerService remoteExecutionTwillRunnerService;
 
   @Inject
   public RemoteProgramRunDispatcher(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                                    RemoteClientFactory remoteClientFactory,
-                                    ProgramRunnerFactory programRunnerFactory,
+                                    RemoteClientFactory remoteClientFactory, Store store,
+                                    ProgramRunnerFactory programRunnerFactory, TwillRunnerService twillRunnerService,
                                     @RemoteExecution ProgramRunnerFactory remoteProgramRunnerFactory,
-                                    TwillControllerCreatorFactory twillControllerCreatorFactory) {
+                                    @RemoteExecution TwillRunnerService remoteTwillRunnerService) {
+    this.store = store;
+    this.cConf = cConf;
     this.programRunnerFactory = programRunnerFactory;
+    this.twillRunnerService = twillRunnerService;
     this.remoteProgramRunnerFactory = remoteProgramRunnerFactory;
-    this.twillControllerCreatorFactory = twillControllerCreatorFactory;
+    this.remoteExecutionTwillRunnerService = (RemoteExecutionTwillRunnerService) remoteTwillRunnerService;
     int connectTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_READ_TIMEOUT_MS);
     HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
-    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
-                                                     remoteClientFactory, RemoteTaskExecutor.Type.SYSTEM_WORKER,
-                                                     httpRequestConfig);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory,
+                                                     RemoteTaskExecutor.Type.SYSTEM_WORKER, httpRequestConfig);
   }
 
   @Override
@@ -117,8 +133,12 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
                                  programRunDispatcherInfo.getRunId());
       throw new UnsupportedOperationException(msg);
     }
-    TwillControllerCreator twillControllerCreator = twillControllerCreatorFactory.create(clusterMode);
-    TwillController twillController = twillControllerCreator.createTwillController(programRunId);
+    TwillController twillController;
+    if (ClusterMode.ISOLATED.equals(clusterMode)) {
+      twillController = getRemoteTwillController(programRunId);
+    } else {
+      twillController = getNativeTwillController(programRunId);
+    }
     ProgramController programController = null;
     if (twillController != null) {
       programController = ((ProgramControllerCreator) runner).createProgramController(programRunId, twillController);
@@ -130,5 +150,42 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
       throw new Exception(msg);
     }
     return programController;
+  }
+
+  private TwillController getNativeTwillController(ProgramRunId programRunId) throws InterruptedException {
+    AtomicReference<TwillController> twillController = new AtomicReference<>();
+    RetryStrategy retryStrategy =
+      RetryStrategies.timeLimit(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS,
+                                RetryStrategies.exponentialDelay(10, 1000, TimeUnit.MILLISECONDS));
+
+    long startRetry = System.currentTimeMillis();
+    // TODO throw proper exception if retries fail
+    Retries.runWithRetries(() -> {
+      /*
+       * Under two scenarios, twillController might be null:
+       * (1) TwillController has not been added to the twillRunnerService, and it will be added later.
+       * (2) TwillController has been removed from twillRunnerService.
+       */
+      twillController.set(twillRunnerService.lookup(TwillAppNames.toTwillAppName(
+                                                      programRunId.getParent()),
+                                                    RunIds.fromString(Objects.requireNonNull(programRunId.getRun()))));
+    }, retryStrategy, e -> twillController.get() == null);
+
+    long retryDuration = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startRetry);
+    CountDownLatch latch = new CountDownLatch(1);
+    twillController.get().onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    twillController.get().onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+    latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS) - retryDuration, TimeUnit.SECONDS);
+    return twillController.get();
+  }
+
+  private TwillController getRemoteTwillController(ProgramRunId programRunId) {
+    RunRecordDetail runRecordDetail = store.getRun(programRunId);
+    if (runRecordDetail == null) {
+      String msg = String.format("Could not find run record for Program %s with runid %s", programRunId.getProgram(),
+                                 programRunId.getRun());
+      throw new IllegalStateException(msg);
+    }
+    return remoteExecutionTwillRunnerService.createTwillControllerFromRunRecord(runRecordDetail);
   }
 }

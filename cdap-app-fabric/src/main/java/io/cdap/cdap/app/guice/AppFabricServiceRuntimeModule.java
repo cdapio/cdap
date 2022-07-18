@@ -30,7 +30,6 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -42,10 +41,6 @@ import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
-import io.cdap.cdap.app.runtime.NativeTwillControllerCreator;
-import io.cdap.cdap.app.runtime.RemoteTwillControllerCreator;
-import io.cdap.cdap.app.runtime.TwillControllerCreator;
-import io.cdap.cdap.app.runtime.TwillControllerCreatorFactory;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -427,12 +422,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
-
-      bind(TwillControllerCreatorFactory.class).to(DefaultTwillControllerCreatorFactory.class);
-      MapBinder<ClusterMode, TwillControllerCreator> twillControllerCreatorBinder =
-        MapBinder.newMapBinder(binder(), ClusterMode.class, TwillControllerCreator.class);
-      twillControllerCreatorBinder.addBinding(ClusterMode.ON_PREMISE).to(NativeTwillControllerCreator.class);
-      twillControllerCreatorBinder.addBinding(ClusterMode.ISOLATED).to(RemoteTwillControllerCreator.class);
     }
 
     @Provides
