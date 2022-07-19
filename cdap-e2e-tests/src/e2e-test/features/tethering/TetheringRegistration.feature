@@ -19,7 +19,7 @@ Feature: Tethering registration and management
 
   @TETHERING_CREATION_TEST @TETHERING_CONNECTION_MANAGEMENT
   Scenario: Validate successful creation of new tethering connection requests
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Open create new request page
     Then Click to select a namespace
@@ -33,7 +33,7 @@ Feature: Tethering registration and management
 
   @TETHERING_CREATION_TEST
   Scenario: Validate unsuccessful creation of a new request with the same instance name
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Open create new request page
     Then Click to select a namespace
@@ -47,7 +47,7 @@ Feature: Tethering registration and management
 
   @TETHERING_CREATION_TEST
   Scenario: Validate unsuccessful creation of a new request with no namespaces
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Open create new request page
     Then Enter project name "test-project"
@@ -60,7 +60,7 @@ Feature: Tethering registration and management
 
   @TETHERING_CREATION_TEST
   Scenario: Validate unsuccessful creation of a new request with a missing required field
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Open create new request page
     Then Click to select a namespace
@@ -73,7 +73,7 @@ Feature: Tethering registration and management
 
   @TETHERING_CONNECTION_MANAGEMENT
   Scenario: Validate successful deletion of a pending request
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Count number of pending requests on client
     Then Click on the more menu of a pending request
@@ -83,14 +83,14 @@ Feature: Tethering registration and management
 
   @TETHERING_CONNECTION_MANAGEMENT
   Scenario: Validate successful rejection of a tethering request
-    Given Connect to tethering server Datafusion project
+    Given Connect to tethering server Datafusion instance
     Then Reject request on server from client
     Then Verify no pending tethering requests on server
     Then Delete rejected request on server from client
 
   @TETHERING_CONNECTION_MANAGEMENT
   Scenario: Validate successful connection between client and server
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Open create new request page
     Then Click to select a namespace
@@ -104,21 +104,21 @@ Feature: Tethering registration and management
     When Navigate to tethering page
     Then Count number of pending requests on client
     Then Count number of established connections on server
-    Given Connect to tethering server Datafusion project
+    Given Connect to tethering server Datafusion instance
     Then Accept request on server from client
     Then Verify no pending tethering requests on server
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Verify the connection is established
 
   @TETHERING_CONNECTION_MANAGEMENT
   Scenario: Validate successful deletion of an established connection
-    Given Open tethering client Datafusion project
+    Given Open tethering client Datafusion instance
     When Navigate to tethering page
     Then Count number of established connections on client
     Then Click on the more menu of a established connection
     Then Click on Delete option for established connection
     Then Confirm the delete action
     Then Verify the established connection has been deleted on client
-    Given Connect to tethering server Datafusion project
+    Given Connect to tethering server Datafusion instance
     Then Delete rejected request on server from client
