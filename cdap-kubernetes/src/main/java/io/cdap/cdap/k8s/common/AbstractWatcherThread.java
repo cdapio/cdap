@@ -130,7 +130,6 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
     LOG.info("Start watching for changes in kubernetes resource type {}", resourceType);
 
     int failureCount = 0;
-    String resourceVersion = null;
 
     while (!stopped) {
       // Create a new Watchable and start watching for events
@@ -138,7 +137,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
       // In case if the while loop exited, it must either be due to stopped or internal watcher state changed
       // such that the iterator is no longer connected to the API server.
       // In both cases, we reset the watcher so that it won't get reused.
-      try (Watchable<DynamicKubernetesObject> watch = createWatchable(resourceVersion)) {
+      try (Watchable<DynamicKubernetesObject> watch = createWatchable()) {
         // If we can create the watch, reset the failure count.
         failureCount = 0;
 
@@ -147,24 +146,20 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
           Watch.Response<DynamicKubernetesObject> response = watch.next();
           switch (response.type) {
             case ADDED:
-              resourceVersion = response.object.getMetadata().getResourceVersion();
               changeListener.resourceAdded(decodeResource(response.object));
               break;
             case MODIFIED:
-              resourceVersion = response.object.getMetadata().getResourceVersion();
               changeListener.resourceModified(decodeResource(response.object));
               break;
             case DELETED:
-              resourceVersion = response.object.getMetadata().getResourceVersion();
               changeListener.resourceDeleted(decodeResource(response.object));
               break;
             case ERROR:
               LOG.warn("Encountered error while watching for '{}/{}/{}' with status {}",
                        group, version, plural, response.status);
               // If the resourceVersion we provided was out-of-date when the watch was created,
-              // the server will respond with ERROR.
-              // Hence, we reset the resource version so that a fresh list will be fetched.
-              resourceVersion = null;
+              // the server will respond with ERROR. We close the watch to start with a fresh fetch.
+              closeWatch();
               break;
             default:
               LOG.warn("Ignore unsupported response type {}", response.type);
@@ -238,13 +233,9 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
   /**
    * Creates a new {@link Watchable} for watching for changes.
    *
-   * @param lastResourceVersion if provided, the watch will start from this version. If it is {@code null},
-   *                            a list of the latest resources will be fetch first to compute the difference with
-   *                            the previously known set and have the watch starting from there.
    * @return a {@link Watchable}
    */
-  private Watchable<DynamicKubernetesObject> createWatchable(@Nullable String lastResourceVersion)
-    throws IOException, ApiException {
+  private Watchable<DynamicKubernetesObject> createWatchable() throws IOException, ApiException {
 
     ApiClient apiClient = getApiClient();
     DynamicKubernetesApi api = new DynamicKubernetesApi(group, version, plural, apiClient);
@@ -252,42 +243,38 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
     ListOptions options = new ListOptions();
     updateListOptions(options);
 
-    String resourceVersion = lastResourceVersion;
+    KubernetesApiResponse<DynamicKubernetesListObject> listResult = api.list(namespace, options);
 
-    if (resourceVersion == null) {
-      KubernetesApiResponse<DynamicKubernetesListObject> listResult = api.list(namespace, options);
+    // Throw exception if the list call failed
+    listResult.throwsApiException();
 
-      // Throw exception if the list call failed
-      listResult.throwsApiException();
+    DynamicKubernetesListObject listObject = listResult.getObject();
+    String resourceVersion = listObject.getMetadata().getResourceVersion();
 
-      DynamicKubernetesListObject listObject = listResult.getObject();
-      resourceVersion = listObject.getMetadata().getResourceVersion();
+    LOG.debug("Fetched '{}/{}/{}' list with resource version as {}", group, version, plural, resourceVersion);
 
-      LOG.debug("Fetched '{}/{}/{}' list with resource version as {}", group, version, plural, resourceVersion);
+    Map<String, T> cachedResources = changeListener.getCachedResources();
+    Set<String> currentSet = new HashSet<>(cachedResources.keySet());
 
-      Map<String, T> cachedResources = changeListener.getCachedResources();
-      Set<String> currentSet = new HashSet<>(cachedResources.keySet());
+    // Add existing resources
+    for (DynamicKubernetesObject obj : listObject.getItems()) {
+      String name = obj.getMetadata().getName();
+      T resource = decodeResource(obj);
 
-      // Add existing resources
-      for (DynamicKubernetesObject obj : listObject.getItems()) {
-        String name = obj.getMetadata().getName();
-        T resource = decodeResource(obj);
-
-        // If the resource is not known before, emit an add event
-        if (!currentSet.remove(name)) {
-          changeListener.resourceAdded(resource);
-        } else if (!Objects.equals(resource, cachedResources.get(name))) {
-          // Otherwise, if there is changes in the resource, emit a modified event
-          changeListener.resourceModified(resource);
-        }
+      // If the resource is not known before, emit an add event
+      if (!currentSet.remove(name)) {
+        changeListener.resourceAdded(resource);
+      } else if (!Objects.equals(resource, cachedResources.get(name))) {
+        // Otherwise, if there is changes in the resource, emit a modified event
+        changeListener.resourceModified(resource);
       }
+    }
 
-      // Emit deleted event for resources that were deleted
-      for (String deleted : currentSet) {
-        T resource = cachedResources.get(deleted);
-        if (resource != null) {
-          changeListener.resourceDeleted(resource);
-        }
+    // Emit deleted event for resources that were deleted
+    for (String deleted : currentSet) {
+      T resource = cachedResources.get(deleted);
+      if (resource != null) {
+        changeListener.resourceDeleted(resource);
       }
     }
 
