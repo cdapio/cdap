@@ -17,8 +17,10 @@
 package io.cdap.cdap.etl.proto.v2;
 
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.etl.proto.Connection;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -83,6 +85,25 @@ public final class DataStreamsConfig extends ETLConfig {
   @Nullable
   public String getCheckpointDir() {
     return checkpointDir == null || checkpointDir.isEmpty() ? null : checkpointDir;
+  }
+
+  /**
+   * Updates current ETLBatchConfig by running update actions provided in context such as upgrading plugin artifact
+   * versions.
+   *
+   * @param upgradeContext Context for performing update for current batch config.
+   * @return a new (updated) etl batch config after performing update operations.
+   */
+  public DataStreamsConfig updateStreamingConfig(ApplicationUpdateContext upgradeContext)
+    throws Exception {
+    Set<ETLStage> upgradedStages = new HashSet<>();
+    // Upgrade all stages.
+    for (ETLStage stage : getStages()) {
+      upgradedStages.add(stage.updateStage(upgradeContext));
+    }
+    return new DataStreamsConfig(upgradedStages, connections, resources, driverResources, clientResources,
+                                 stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
+                                 disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGracefully, properties);
   }
 
   @Override
