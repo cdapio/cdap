@@ -209,7 +209,7 @@ public final class SparkRuntimeContextProvider {
       logAppenderInitializer.initialize();
 
       // For spark running natively on k8s, we may need to initialize the TokenManager for internal identity.
-      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      if (clusterMode == ClusterMode.ON_PREMISE && SecurityUtil.isInternalAuthEnabled(cConf)) {
         TokenManager tokenManager = injector.getInstance(TokenManager.class);
         tokenManager.startAndWait();
       }
