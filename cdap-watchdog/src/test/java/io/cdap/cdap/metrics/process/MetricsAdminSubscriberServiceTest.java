@@ -113,25 +113,25 @@ public class MetricsAdminSubscriberServiceTest {
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
 
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
-    metricsCollectionService.startAndWait();
-    metricsQueryService.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
+    metricsQueryService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    metricsQueryService.stopAndWait();
-    metricsCollectionService.stopAndWait();
+    metricsQueryService.stopAsync().awaitTerminated();
+    metricsCollectionService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 
   @Test
   public void test() throws Exception {
     MetricsAdminSubscriberService adminService = injector.getInstance(MetricsAdminSubscriberService.class);
-    adminService.startAndWait();
+    adminService.startAsync().awaitRunning();
 
     // publish a metrics
     MetricsContext metricsContext = metricsCollectionService.getContext(
@@ -219,6 +219,6 @@ public class MetricsAdminSubscriberServiceTest {
       return !foundInc && !foundGauge;
     }, 1000, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
 
-    adminService.stopAndWait();
+    adminService.stopAsync().awaitTerminated();
   }
 }

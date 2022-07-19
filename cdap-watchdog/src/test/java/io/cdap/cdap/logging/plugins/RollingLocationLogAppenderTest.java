@@ -112,12 +112,12 @@ public class RollingLocationLogAppenderTest {
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void cleanUp() throws Exception {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
   @Test

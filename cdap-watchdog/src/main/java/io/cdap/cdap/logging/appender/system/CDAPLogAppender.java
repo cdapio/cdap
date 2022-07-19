@@ -217,7 +217,11 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   public void stop() {
     try {
       if (logFileManager != null) {
-        logFileManager.close();
+        try {
+          logFileManager.close();
+        } catch (IOException e) {
+          //TODO
+        }
       }
       scheduledExecutorService.shutdownNow();
     } finally {

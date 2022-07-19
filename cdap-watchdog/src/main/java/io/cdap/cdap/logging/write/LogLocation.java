@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.io.SeekableInputStream;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
@@ -393,12 +392,13 @@ public class LogLocation {
           this.is = impersonator.doAs(namespaceId, new Callable<SeekableInputStream>() {
             @Override
             public SeekableInputStream call() throws Exception {
-              return Locations.newInputSupplier(location).getInput();
+              return null;
+              // return Locations.newInputSupplier(location).getInput();
             }
           });
         } else {
           // impersonation is not required for V1 version.
-          this.is = Locations.newInputSupplier(location).getInput();
+          this.is = null; // Locations.newInputSupplier(location).getInput();
         }
       } catch (IOException e) {
         throw e;

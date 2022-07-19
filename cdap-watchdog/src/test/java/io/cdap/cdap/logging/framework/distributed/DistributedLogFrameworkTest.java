@@ -113,19 +113,19 @@ public class DistributedLogFrameworkTest {
   @Before
   public void beforeTest() throws Exception {
     injector = createInjector();
-    injector.getInstance(ZKClientService.class).startAndWait();
-    injector.getInstance(KafkaClientService.class).startAndWait();
-    injector.getInstance(BrokerService.class).startAndWait();
-    injector.getInstance(TransactionManager.class).startAndWait();
+    injector.getInstance(ZKClientService.class).startAsync().awaitRunning();
+    injector.getInstance(KafkaClientService.class).startAsync().awaitRunning();
+    injector.getInstance(BrokerService.class).startAsync().awaitRunning();
+    injector.getInstance(TransactionManager.class).startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @After
   public void afterTest() {
-    injector.getInstance(TransactionManager.class).stopAndWait();
-    injector.getInstance(BrokerService.class).stopAndWait();
-    injector.getInstance(KafkaClientService.class).stopAndWait();
-    injector.getInstance(ZKClientService.class).stopAndWait();
+    injector.getInstance(TransactionManager.class).stopAsync().awaitTerminated();
+    injector.getInstance(BrokerService.class).stopAsync().awaitTerminated();
+    injector.getInstance(KafkaClientService.class).stopAsync().awaitTerminated();
+    injector.getInstance(ZKClientService.class).stopAsync().awaitTerminated();
     injector = null;
   }
 
@@ -134,7 +134,7 @@ public class DistributedLogFrameworkTest {
     DistributedLogFramework framework = injector.getInstance(DistributedLogFramework.class);
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
-    framework.startAndWait();
+    framework.startAsync().awaitRunning();
 
     // Send some logs to Kafka.
     LoggingContext context = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
@@ -184,7 +184,7 @@ public class DistributedLogFrameworkTest {
       }
     }, 10, TimeUnit.SECONDS, msgCount, TimeUnit.MILLISECONDS);
 
-    framework.stopAndWait();
+    framework.stopAsync().awaitTerminated();
 
     String kafkaTopic = cConf.get(Constants.Logging.KAFKA_TOPIC);
     // Check the checkpoint is persisted correctly. Since all messages are processed,

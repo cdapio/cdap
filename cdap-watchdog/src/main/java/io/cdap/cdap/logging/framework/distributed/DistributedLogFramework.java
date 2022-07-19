@@ -19,8 +19,6 @@ package io.cdap.cdap.logging.framework.distributed;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -46,7 +44,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 /**
  * A {@link ResourceBalancerService} for log processing in distributed mode
@@ -112,13 +109,13 @@ public class DistributedLogFramework extends ResourceBalancerService {
       @Override
       protected void startUp() throws Exception {
         // Starts all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::start));
+        validateAllFutures(Iterables.transform(pipelines, Service::startAsync));
       }
 
       @Override
       protected void shutDown() throws Exception {
         // Stops all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::stop));
+        validateAllFutures(Iterables.transform(pipelines, Service::startAsync));
       }
     };
   }
@@ -126,31 +123,15 @@ public class DistributedLogFramework extends ResourceBalancerService {
   /**
    * Blocks and validates all the given futures completed successfully.
    */
-  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures) throws Exception {
-    // The get call shouldn't throw exception. It just block until all futures completed.
-    Futures.successfulAsList(futures).get();
+  private void validateAllFutures(Iterable<? extends Service> futures) throws Exception {
 
     // Iterates all futures to make sure all of them completed successfully
     Throwable exception = null;
-    for (ListenableFuture<?> future : futures) {
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        if (exception == null) {
-          exception = e.getCause();
-        } else {
-          exception.addSuppressed(e.getCause());
-        }
-      }
+    for (Service future : futures) {
+      future.awaitRunning();
     }
 
-    // Throw exception if any of the future failed.
-    if (exception != null) {
-      if (exception instanceof Exception) {
-        throw (Exception) exception;
-      }
-      throw new RuntimeException(exception);
-    }
+    // TODO retrieve failure cause
   }
 
   /**

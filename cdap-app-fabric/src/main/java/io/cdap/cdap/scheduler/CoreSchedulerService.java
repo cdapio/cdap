@@ -114,8 +114,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
 
       @Override
-      protected Executor executor(final State state) {
-        return command -> new Thread(command, "core scheduler service " + state).start();
+      protected Executor executor() {
+        return command -> new Thread(command, "core scheduler service ").start();
       }
 
       @Override

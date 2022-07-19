@@ -137,7 +137,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "LogPipeline-" + name;
   }
 

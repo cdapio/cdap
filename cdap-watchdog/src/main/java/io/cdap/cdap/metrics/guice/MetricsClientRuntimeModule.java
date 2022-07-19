@@ -26,7 +26,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
-import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
+import io.cdap.cdap.metrics.collect.OTelMetricsCollectionService;
 import io.cdap.cdap.metrics.process.DirectMetricsSystemClient;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
@@ -84,7 +84,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     binder.expose(MetricStore.class);
     binder.expose(MetricsCleanUpService.class);
 
-    binder.bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
+    binder.bind(MetricsCollectionService.class).to(OTelMetricsCollectionService.class).in(Scopes.SINGLETON);
     binder.expose(MetricsCollectionService.class);
 
     // In local mode, we operates on the MetricsStore directly

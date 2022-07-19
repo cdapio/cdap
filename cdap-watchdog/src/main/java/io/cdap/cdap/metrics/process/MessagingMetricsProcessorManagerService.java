@@ -140,7 +140,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
     }
 
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
-      processorService.startAndWait();
+      processorService.startAsync().awaitRunning();
     }
   }
 
@@ -183,7 +183,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
     Exception exceptions = new Exception();
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
       try {
-        processorService.stopAndWait();
+        processorService.stopAsync().awaitTerminated();
         for (MetricsWriter metricsWriter : metricsWriters) {
           metricsWriter.close();
         }

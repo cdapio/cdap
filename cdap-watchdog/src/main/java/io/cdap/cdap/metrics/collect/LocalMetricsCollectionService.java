@@ -87,11 +87,11 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
       messagingMetricsProcessor = messagingMetricsProcessorFactory.create(
         IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM)).boxed().collect(Collectors.toSet()),
         getContext(METRICS_PROCESSOR_CONTEXT), 0);
-      messagingMetricsProcessor.startAndWait();
+      messagingMetricsProcessor.startAsync().awaitRunning();
     }
 
     // The local metrics store do not have ttl, so start the clean up service
-    metricsCleanUpService.startAndWait();
+    metricsCleanUpService.startAsync().awaitRunning();
   }
 
   @Override
@@ -100,7 +100,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     Exception failure = null;
     try {
       if (messagingMetricsProcessor != null) {
-        messagingMetricsProcessor.stopAndWait();
+        messagingMetricsProcessor.stopAsync().awaitTerminated();
       }
     } catch (Exception e) {
       failure = e;
@@ -119,7 +119,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
     // Shutdown the clean up service
     try {
-      metricsCleanUpService.stopAndWait();
+      metricsCleanUpService.stopAsync().awaitTerminated();
     } catch (Exception e) {
       if (failure != null) {
         failure.addSuppressed(e);

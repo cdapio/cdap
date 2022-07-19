@@ -149,7 +149,7 @@ public class LogBufferWriter implements Flushable, Closeable {
       LOG.warn("Error while flushing log buffer output stream.", e);
     }
 
-    Closeables.closeQuietly(currOutputStream);
+    Closeables.close(currOutputStream, true);
     executorService.shutdown();
   }
 
@@ -179,7 +179,7 @@ public class LogBufferWriter implements Flushable, Closeable {
   private Location rotateFile(OutputStream currOutputStream) throws IOException {
     currOutputStream.flush();
     // close current location output stream
-    Closeables.closeQuietly(currOutputStream);
+    Closeables.close(currOutputStream, true);
 
     writtenBytes = 0;
     currOffset = 0;

@@ -59,14 +59,14 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
     MetricsCollectionService collectionService = new MessagingMetricsCollectionService(CConfiguration.create(),
                                                                                        messagingService,
                                                                                        recordWriter);
-    collectionService.startAndWait();
+    collectionService.startAsync().awaitRunning();
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
       collectionService.getContext(ImmutableMap.of("tag", "" + i)).increment("processed", i);
     }
 
-    collectionService.stopAndWait();
+    collectionService.stopAsync().awaitTerminated();
 
     // <Context, metricName, value>
     Table<String, String, Long> expected = HashBasedTable.create();

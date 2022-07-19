@@ -112,14 +112,14 @@ public class CDAPLogAppenderTest {
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     StoreDefinition.LogFileMetaStore.create(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
   public static void cleanUp() {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
   @Test

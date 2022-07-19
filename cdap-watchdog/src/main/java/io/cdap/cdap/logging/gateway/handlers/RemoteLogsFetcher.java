@@ -111,7 +111,11 @@ public class RemoteLogsFetcher implements LogsFetcher {
 
         @Override
         public void onFinished() {
-          Closeables.closeQuietly(channel);
+          try {
+            Closeables.close(channel, true);
+          } catch (IOException e) {
+            LOG.warn("");
+          }
         }
       }).build();
       remoteClient.executeStreamingRequest(request);

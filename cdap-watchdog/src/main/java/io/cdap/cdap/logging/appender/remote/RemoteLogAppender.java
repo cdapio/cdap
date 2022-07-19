@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.appender.remote;
 
 
 import com.google.common.hash.Hashing;
-import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,9 +30,6 @@ import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpResponse;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumWriter;
@@ -43,8 +39,8 @@ import org.apache.avro.io.EncoderFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,8 +70,9 @@ public class RemoteLogAppender extends LogAppender {
   @Override
   public void start() {
     RemoteLogPublisher publisher = new RemoteLogPublisher(cConf, remoteClientFactory);
-    Optional.ofNullable(this.publisher.getAndSet(publisher)).ifPresent(RemoteLogPublisher::stopAndWait);
-    publisher.startAndWait();
+    // TODO
+    Optional.ofNullable(this.publisher.getAndSet(publisher)).ifPresent(RemoteLogPublisher::stopAsync);
+    publisher.startAsync().awaitRunning();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -83,7 +80,8 @@ public class RemoteLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(RemoteLogPublisher::stopAndWait);
+    // TODO
+    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(RemoteLogPublisher::stopAsync);
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -146,15 +144,15 @@ public class RemoteLogAppender extends LogAppender {
       try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
         for (Map.Entry<Integer, List<ByteBuffer>> partition : partitionedMessages.entrySet()) {
           encodeEvents(os, datumWriter, partition.getValue());
-          HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST,
-                                                            "/partitions/" + partition.getKey() + "/publish")
-            .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
-            .withBody(ByteBuffer.wrap(os.toByteArray())).build();
-          HttpResponse response = remoteClient.execute(request);
-          // if something went wrong, throw exception to retry
-          if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new IOException(String.format("Could not append logs for partition %s", partition));
-          }
+//          HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST,
+//                                                            "/partitions/" + partition.getKey() + "/publish")
+//            .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
+//            .withBody(ByteBuffer.wrap(os.toByteArray())).build();
+//          HttpResponse response = remoteClient.execute(request);
+//          // if something went wrong, throw exception to retry
+//          if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
+//            throw new IOException(String.format("Could not append logs for partition %s", partition));
+//          }
           os.reset();
         }
       }
@@ -172,7 +170,7 @@ public class RemoteLogAppender extends LogAppender {
    * dependencies in this class, this method is added here.
    */
   private static int partition(String key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashString(key, Charset.defaultCharset()).asInt()) % numPartitions;
   }
 
   private void encodeEvents(OutputStream os, DatumWriter<List<ByteBuffer>> datumWriter,

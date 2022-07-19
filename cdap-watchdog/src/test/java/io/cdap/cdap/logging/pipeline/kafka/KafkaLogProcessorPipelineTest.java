@@ -135,7 +135,7 @@ public class KafkaLogProcessorPipelineTest {
       checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // Publish some log messages to Kafka
     long now = System.currentTimeMillis();
@@ -177,7 +177,7 @@ public class KafkaLogProcessorPipelineTest {
       Assert.assertEquals("Large logger " + i, events.get(i).getMessage());
     }
 
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
 
     Assert.assertNull(appender.getEvents());
@@ -204,7 +204,7 @@ public class KafkaLogProcessorPipelineTest {
       checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // Even when there is no event, the flush should still get called.
     Tasks.waitFor(5, appender::getFlushCount, 3, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -220,7 +220,7 @@ public class KafkaLogProcessorPipelineTest {
     // Wait until getting all logs.
     Tasks.waitFor(3, () -> appender.getEvents().size(), 3, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
 
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
 
     // Should get at least 20 flush calls, since the checkpoint is every 2 seconds
     Assert.assertTrue(appender.getFlushCount() >= 20);
@@ -230,7 +230,7 @@ public class KafkaLogProcessorPipelineTest {
   public void testMetricsAppender() throws Exception {
     Injector injector = KAFKA_TESTER.getInjector();
     MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
-    collectionService.startAndWait();
+    collectionService.startAsync().awaitRunning();
     LoggerContext loggerContext = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                            injector.getInstance(LocationFactory.class),
                                                            injector.getInstance(MetricsCollectionService.class));
@@ -255,7 +255,7 @@ public class KafkaLogProcessorPipelineTest {
       checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // Publish some log messages to Kafka
     long now = System.currentTimeMillis();
@@ -338,9 +338,9 @@ public class KafkaLogProcessorPipelineTest {
                                                  LoggingContextHelper.getMetricsTags(serviceLoggingContext),
                                                  new ArrayList<>()), 3L);
     } finally {
-      pipeline.stopAndWait();
+      pipeline.stopAsync().awaitTerminated();
       loggerContext.stop();
-      collectionService.stopAndWait();
+      collectionService.stopAsync().awaitTerminated();
     }
   }
 
@@ -380,7 +380,7 @@ public class KafkaLogProcessorPipelineTest {
       checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // Publish some log messages to Kafka using a non-specific logger
     long now = System.currentTimeMillis();
@@ -440,7 +440,7 @@ public class KafkaLogProcessorPipelineTest {
       return Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR", "ERROR").equals(lines1);
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 
