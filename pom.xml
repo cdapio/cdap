@@ -2832,6 +2832,7 @@
         <module>cdap-cli-tests</module>
         <module>cdap-client-tests</module>
         <module>cdap-app-fabric-tests</module>
+        <module>cdap-e2e-tests</module>
       </modules>
     </profile>
 
