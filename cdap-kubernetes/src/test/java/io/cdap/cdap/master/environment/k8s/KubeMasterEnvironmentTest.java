@@ -18,6 +18,7 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.common.TemporaryLocalFileProvider;
+import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.kubernetes.client.openapi.ApiException;
@@ -74,6 +75,7 @@ public class KubeMasterEnvironmentTest {
   private CoreV1Api coreV1Api;
   private RbacAuthorizationV1Api rbacV1Api;
   private KubeMasterEnvironment kubeMasterEnvironment;
+  private KubeTwillRunnerService twillRunnerService;
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
@@ -85,9 +87,11 @@ public class KubeMasterEnvironmentTest {
   public void init() throws IOException {
     coreV1Api = mock(CoreV1Api.class);
     rbacV1Api = mock(RbacAuthorizationV1Api.class);
+    twillRunnerService = mock(KubeTwillRunnerService.class);
     kubeMasterEnvironment = new KubeMasterEnvironment();
     kubeMasterEnvironment.setCoreV1Api(coreV1Api);
     kubeMasterEnvironment.setRbacV1Api(rbacV1Api);
+    kubeMasterEnvironment.setTwillRunner(twillRunnerService);
     kubeMasterEnvironment.setLocalFileProvider(new TemporaryLocalFileProvider(temporaryFolder));
     KubeMasterPathProvider mockKubeMasterPathProvider = mock(KubeMasterPathProvider.class);
     when(mockKubeMasterPathProvider.getMasterPath()).thenReturn("https://127.0.0.1:443");

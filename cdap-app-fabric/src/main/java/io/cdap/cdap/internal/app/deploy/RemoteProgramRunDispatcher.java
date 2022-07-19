@@ -45,6 +45,7 @@ import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
@@ -133,8 +134,12 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
                                  programRunDispatcherInfo.getRunId());
       throw new UnsupportedOperationException(msg);
     }
+
+    boolean tetheredRun = programRunDispatcherInfo
+      .getProgramOptions().getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
+
     TwillController twillController;
-    if (ClusterMode.ISOLATED.equals(clusterMode)) {
+    if (ClusterMode.ISOLATED.equals(clusterMode) && !tetheredRun) {
       twillController = getRemoteTwillController(programRunId);
     } else {
       twillController = getNativeTwillController(programRunId);
@@ -182,7 +187,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     twillControllerReference.get().onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
     twillControllerReference.get().onTerminated(() -> {
       latch.countDown();
-      LOG.warn("Twill controller for program run {} terminated prematurely.", programRunId);
+      LOG.warn("Twill controller for program run {} terminated.", programRunId);
     }, Threads.SAME_THREAD_EXECUTOR);
 
 
