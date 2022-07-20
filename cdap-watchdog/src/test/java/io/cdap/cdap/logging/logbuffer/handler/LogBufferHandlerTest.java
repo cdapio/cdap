@@ -105,7 +105,7 @@ public class LogBufferHandlerTest {
 
   private RemoteLogAppender getRemoteAppender(CConfiguration cConf, NettyHttpService httpService) {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    discoveryService.register(new Discoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService.getBindAddress()));
+    discoveryService.register(new Discoverable(Constants.Service.LOGSAVER, httpService.getBindAddress()));
     RemoteClientFactory remoteClientFactory =
       new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     return new RemoteLogAppender(cConf, remoteClientFactory);

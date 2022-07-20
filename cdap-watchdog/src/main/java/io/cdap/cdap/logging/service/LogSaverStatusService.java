@@ -47,7 +47,7 @@ public class LogSaverStatusService extends AbstractIdleService {
 
   @Inject
   public LogSaverStatusService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                               @Named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER) Set<HttpHandler> handlers,
+                               @Named(Constants.LogSaver.LOG_SAVER_HANDLER) Set<HttpHandler> handlers,
                                CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOGSAVER)

@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -47,13 +48,16 @@ import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -69,6 +73,7 @@ public class LogBufferService extends AbstractIdleService {
   private final DiscoveryService discoveryService;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
+  private final Set<HttpHandler> handlers;
   private final Provider<AppenderContext> contextProvider;
   private final List<Service> pipelines = new ArrayList<>();
   private final List<CheckpointManager<LogBufferFileOffset>> checkpointManagers = new ArrayList<>();
@@ -81,11 +86,13 @@ public class LogBufferService extends AbstractIdleService {
 
   @Inject
   LogBufferService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
+                   @Named(Constants.LogSaver.LOG_SAVER_HANDLER) Set<HttpHandler> handlers,
                    Provider<AppenderContext> contextProvider,
                    CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
                    TransactionRunner txRunner) {
     this.cConf = cConf;
     this.sConf = sConf;
+    this.handlers = handlers;
     this.contextProvider = contextProvider;
     this.discoveryService = discoveryService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
@@ -114,8 +121,10 @@ public class LogBufferService extends AbstractIdleService {
                                                                                                     startCleanup));
 
     // create and start http service
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOG_BUFFER_SERVICE)
-      .setHttpHandlers(new LogBufferHandler(concurrentWriter))
+    Set<HttpHandler> handlers = new HashSet<>(this.handlers);
+    handlers.add(new LogBufferHandler(concurrentWriter));
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOGSAVER)
+      .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT));
@@ -127,7 +136,7 @@ public class LogBufferService extends AbstractIdleService {
     httpService = builder.build();
     httpService.start();
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService)));
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.LOGSAVER, httpService)));
   }
 
   @Override
