@@ -177,14 +177,12 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
        * (1) TwillController has not been added to the twillRunnerService, and it will be added later.
        * (2) TwillController has been removed from twillRunnerService.
        */
-      LOG.debug("Thread 1 spawned!");
+      LOG.debug("Thread used: {}", Thread.currentThread());
       TwillController twillController = twillRunnerService
-        .lookup(TwillAppNames.toTwillAppName(
-                  programRunId.getParent()),
+        .lookup(TwillAppNames.toTwillAppName(programRunId.getParent()),
                 RunIds.fromString(Objects.requireNonNull(programRunId.getRun())));
       if (twillController == null) {
-        throw new RuntimeException(String.format("Unable to get twill controller for program run %s",
-                                                 programRunId));
+        throw new RuntimeException(String.format("Unable to get twill controller for program run %s", programRunId));
       }
       twillControllerReference.set(twillController);
     }, retryStrategy, e -> true);
