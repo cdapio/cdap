@@ -18,6 +18,8 @@ package io.cdap.cdap.master.spi.environment;
 
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
+import io.cdap.cdap.master.spi.namespace.NamespaceDetail;
+import io.cdap.cdap.master.spi.namespace.NamespaceListener;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -100,15 +102,21 @@ public interface MasterEnvironment {
   }
 
   /**
-   * Called during namespace creation
+   * Called during namespace creation.
+   * Namespace creation is rolled back if this method throws an exception.
+   * @deprecated use {@link NamespaceListener#onNamespaceCreation(NamespaceDetail)} instead.
    */
+  @Deprecated
   default void onNamespaceCreation(String namespace, Map<String, String> properties) throws Exception {
     // no-op by default
   }
 
   /**
-   * Called during namespace deletion
+   * Called during namespace deletion.
+   * Namespace deletion is rolled back if this method throws an exception.
+   * @deprecated use {@link NamespaceListener#onNamespaceDeletion(NamespaceDetail)} instead.
    */
+  @Deprecated
   default void onNamespaceDeletion(String namespace, Map<String, String> properties) throws Exception {
     // no-op by default
   }

@@ -17,7 +17,7 @@
 package io.cdap.cdap.master.environment.k8s.stepsdesign;
 
 import com.google.common.collect.ImmutableMap;
-import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
+import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.environment.k8s.actions.NamespaceCreationActions;
 import io.cdap.e2e.pages.actions.CdfSysAdminActions;
 import io.cdap.e2e.utils.CdfHelper;
@@ -101,7 +101,7 @@ public class KubernetesNamespaceCreation implements CdfHelper {
     Map<String, Quantity> hardLimitMap = ImmutableMap.of("limits.cpu", new Quantity(cpuLimit), "limits.memory",
                                                          new Quantity(memLimit));
     try {
-      V1ResourceQuota resourceQuota = coreV1Api.readNamespacedResourceQuota(KubeMasterEnvironment.RESOURCE_QUOTA_NAME,
+      V1ResourceQuota resourceQuota = coreV1Api.readNamespacedResourceQuota(KubeTwillRunnerService.RESOURCE_QUOTA_NAME,
                                                                             namespace, null, null, null);
       if (resourceQuota.getSpec() == null) {
         throw new IOException("Resource quota not created");
