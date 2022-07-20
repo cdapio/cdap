@@ -21,8 +21,8 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
-import io.cdap.cdap.k8s.identity.GCPWorkloadIdentityCredential;
 import io.cdap.cdap.k8s.util.KubeUtil;
+import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -125,9 +125,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillRunnerService.class);
 
   static final String APP_LABEL = "cdap.twill.app";
-  @VisibleForTesting
-  static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY =
-    "workload.identity.gcp.service.account.email";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
   private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
@@ -141,12 +138,9 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final String RBAC_V1_API_GROUP = "rbac.authorization.k8s.io";
   private static final String CLUSTER_ROLE_KIND = "ClusterRole";
   private static final String SERVICE_ACCOUNT_KIND = "ServiceAccount";
-  private static final String WORKLOAD_IDENTITY_DATA_KEY = "config";
-  private static final String WORKLOAD_IDENTITY_AUDIENCE_FORMAT = "identitynamespace:%s:%s";
-  private static final String WORKLOAD_IDENTITY_IMPERSONATION_URL_FORMAT = "https://iamcredentials.googleapis.com/" +
-    "v1/projects/-/serviceAccounts/%s:generateAccessToken";
-  private static final String WORKLOAD_IDENTITY_TOKEN_URL = "https://sts.googleapis.com/v1/token";
   public static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
+  public static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY =
+    "workload.identity.gcp.service.account.email";
 
   private final MasterEnvironmentContext masterEnvContext;
   private final String kubeNamespace;
@@ -339,7 +333,10 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     if (workloadIdentityEnabled) {
       String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
       if (workloadIdentityServiceAccountEmail != null && !workloadIdentityServiceAccountEmail.isEmpty()) {
-        findOrCreateWorkloadIdentityConfigMap(namespace, workloadIdentityServiceAccountEmail);
+        WorkloadIdentityUtil.findOrCreateWorkloadIdentityConfigMap(coreV1Api, namespace,
+                                                                   workloadIdentityServiceAccountEmail,
+                                                                   workloadIdentityPool,
+                                                                   workloadIdentityProvider);
       }
     }
     addAndStartWatchers(cdapNamespace);
@@ -635,47 +632,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
                                 + e.getCode() + ", Body = " + e.getResponseBody(), e);
       }
     }
-  }
-
-  /**
-   * Finds or creates the ConfigMap which stores the GCP credentials for Fleet Workload Identity.
-   * For details, see steps 6-7 of
-   * https://cloud.google.com/anthos/multicluster-management/fleets/workload-identity#impersonate_a_service_account
-   */
-  private void findOrCreateWorkloadIdentityConfigMap(String k8sNamespace, String workloadIdentityGCPServiceAccountEmail)
-    throws ApiException, IOException {
-    // Check if workload identity config map already exists
-    try {
-      coreV1Api.readNamespacedConfigMap(k8sNamespace, KubeMasterEnvironment.WORKLOAD_IDENTITY_CONFIGMAP_NAME,
-                                        null, false, false);
-      // Workload identity config map already exists, so return early
-      LOG.debug("Workload identity config found, returning without creating it...");
-      return;
-    } catch (ApiException e) {
-      if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-        LOG.debug("Creating workload identity config map for kubernetes namespace {}", k8sNamespace);
-      } else {
-        throw new IOException("Failed to fetch existing workload identity config map. Error code = " + e.getCode() +
-                                ", Body = " + e.getResponseBody(), e);
-      }
-    }
-
-    String workloadIdentityAudience = String.format(WORKLOAD_IDENTITY_AUDIENCE_FORMAT, workloadIdentityPool,
-                                                    workloadIdentityProvider);
-    String workloadIdentityImpersonationURL = String.format(WORKLOAD_IDENTITY_IMPERSONATION_URL_FORMAT,
-                                                            workloadIdentityGCPServiceAccountEmail);
-    GCPWorkloadIdentityCredential credential =
-      new GCPWorkloadIdentityCredential(GCPWorkloadIdentityCredential.CredentialType.EXTERNAL_ACCOUNT,
-                                        workloadIdentityAudience, workloadIdentityImpersonationURL,
-                                        GCPWorkloadIdentityCredential.TokenType.JWT, WORKLOAD_IDENTITY_TOKEN_URL,
-                                        KubeMasterEnvironment.WORKLOAD_IDENTITY_CREDENTIAL_KSA_SOURCE_PATH);
-    String workloadIdentityCredentialJSON = gson.toJson(credential);
-    Map<String, String> workloadIdentityConfigMapData = new HashMap<>();
-    workloadIdentityConfigMapData.put(WORKLOAD_IDENTITY_DATA_KEY, workloadIdentityCredentialJSON);
-    V1ConfigMap configMap = new V1ConfigMap()
-      .metadata(new V1ObjectMeta().namespace(k8sNamespace).name(KubeMasterEnvironment.WORKLOAD_IDENTITY_CONFIGMAP_NAME))
-      .data(workloadIdentityConfigMapData);
-    coreV1Api.createNamespacedConfigMap(k8sNamespace, configMap, null, null, null);
   }
 
   @Override

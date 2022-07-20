@@ -17,10 +17,13 @@
 package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.master.environment.k8s.PodInfo;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.DefaultResourceSpecification;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -28,6 +31,7 @@ import org.junit.Test;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Tests for {@link KubeTwillPreparer}.
@@ -67,7 +71,23 @@ public class KubeTwillPreparerTest {
                                   Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",
                                   Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
                                   "test-pod-image-pull-policy");
-    KubeTwillPreparer preparer = new KubeTwillPreparer(null, null, "default",
+    KubeTwillPreparer preparer = new KubeTwillPreparer(new MasterEnvironmentContext() {
+      @Override
+      public LocationFactory getLocationFactory() {
+        return null;
+      }
+
+      @Override
+      public Map<String, String> getConfigurations() {
+        return Collections.emptyMap();
+      }
+
+      @Override
+      public String[] getRunnableArguments(Class<? extends MasterEnvironmentRunnable> runnableClass,
+                                           String... runnableArgs) {
+        return new String[0];
+      }
+    }, null, "default",
                                                        podInfo, twillSpecification, null, null,
                                                        null, null, null);
 
