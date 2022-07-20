@@ -527,6 +527,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         findOrCreateWorkloadIdentityConfigMap(namespace, workloadIdentityServiceAccountEmail);
       }
     }
+    twillRunner.addAndStartJobWatcher(cdapNamespace);
   }
 
   @Override
@@ -1347,6 +1348,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setWorkloadIdentityServiceAccountTokenTTLSeconds(long workloadIdentityServiceAccountTokenTTLSeconds) {
     this.workloadIdentityServiceAccountTokenTTLSeconds = workloadIdentityServiceAccountTokenTTLSeconds;
+  }
+
+  @VisibleForTesting
+  public void setTwillRunner(KubeTwillRunnerService twillRunner) {
+    this.twillRunner = twillRunner;
   }
 
   @VisibleForTesting
