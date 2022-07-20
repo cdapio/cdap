@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -127,6 +128,92 @@ public class KubeDiscoveryServiceTest {
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
       api.deleteNamespacedService("cdap-test-test-service", namespace, null, null, null, null, null, deleteOptions);
       api.deleteNamespacedService("cdap-test-test-service2", namespace, null, null, null, null, null, deleteOptions);
+    }
+  }
+
+  @Test
+  public void testCloseWatchRace() throws Exception {
+    String namespace = "default";
+    String prefix = "cdap-test-";
+    try (KubeDiscoveryService service = new KubeDiscoveryService(namespace, prefix,
+                                                                 ImmutableMap.of("cdap.container", "test"),
+                                                                 Collections.emptyList())) {
+      // Register two services first
+      service.register(new Discoverable("test1", new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234)));
+      service.register(new Discoverable("test2", new InetSocketAddress(InetAddress.getLoopbackAddress(), 5678)));
+
+      // Discover the first service. When receiving a change notification, start watching the second service from the
+      // change listener. This would cause a closeWatch() call in the watch thread while in the creation of
+      // the watch.
+      ServiceDiscovered discovered1 = service.discover("test1");
+      CompletableFuture<ServiceDiscovered> completion = new CompletableFuture<>();
+      discovered1.watchChanges(sd -> {
+        if (sd.iterator().hasNext()) {
+          completion.complete(service.discover("test2"));
+        }
+      }, MoreExecutors.directExecutor());
+
+      // Make sure we see the 2nd service
+      CompletableFuture<Discoverable> discoverableCompletion = new CompletableFuture<>();
+      completion.get(10, TimeUnit.SECONDS).watchChanges(sd -> {
+        for (Discoverable discoverable : sd) {
+          discoverableCompletion.complete(discoverable);
+          break;
+        }
+      }, MoreExecutors.directExecutor());
+
+      Discoverable discoverable = discoverableCompletion.get(10, TimeUnit.SECONDS);
+      Assert.assertNotNull(discoverable);
+      Assert.assertEquals(prefix + "test2." + namespace, discoverable.getSocketAddress().getHostName());
+    } finally {
+      CoreV1Api api = new CoreV1Api(Config.defaultClient());
+      V1DeleteOptions deleteOptions = new V1DeleteOptions();
+      api.deleteNamespacedService(prefix + "test1", namespace, null, null, null, null, null, deleteOptions);
+      api.deleteNamespacedService(prefix + "test2", namespace, null, null, null, null, null, deleteOptions);
+    }
+  }
+
+  @Test
+  public void testCloseWatchRaceDifferentThreads() throws Exception {
+    String namespace = "default";
+    String prefix = "cdap-test-";
+    try (KubeDiscoveryService service = new KubeDiscoveryService(namespace, prefix,
+                                                                 ImmutableMap.of("cdap.container", "test"),
+                                                                 Collections.emptyList())) {
+      // Register two services first
+      service.register(new Discoverable("test1", new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234)));
+      service.register(new Discoverable("test2", new InetSocketAddress(InetAddress.getLoopbackAddress(), 5678)));
+
+      // Discover the first service.
+      CompletableFuture<Discoverable> completion1 = new CompletableFuture<>();
+      service.discover("test1").watchChanges(sd -> {
+        for (Discoverable discoverable : sd) {
+          completion1.complete(discoverable);
+          break;
+        }
+      }, MoreExecutors.directExecutor());
+
+      // When the first service was discovered, start watching the 2nd service.
+      // This is a race between this thread and the watcher thread
+      completion1.get(10, TimeUnit.SECONDS);
+
+      // Make sure we see the 2nd service
+      CompletableFuture<Discoverable> completion2 = new CompletableFuture<>();
+      service.discover("test2").watchChanges(sd -> {
+        for (Discoverable discoverable : sd) {
+          completion2.complete(discoverable);
+          break;
+        }
+      }, MoreExecutors.directExecutor());
+
+      Discoverable discoverable = completion2.get(10, TimeUnit.SECONDS);
+      Assert.assertNotNull(discoverable);
+      Assert.assertEquals(prefix + "test2." + namespace, discoverable.getSocketAddress().getHostName());
+    } finally {
+      CoreV1Api api = new CoreV1Api(Config.defaultClient());
+      V1DeleteOptions deleteOptions = new V1DeleteOptions();
+      api.deleteNamespacedService(prefix + "test1", namespace, null, null, null, null, null, deleteOptions);
+      api.deleteNamespacedService(prefix + "test2", namespace, null, null, null, null, null, deleteOptions);
     }
   }
 }
