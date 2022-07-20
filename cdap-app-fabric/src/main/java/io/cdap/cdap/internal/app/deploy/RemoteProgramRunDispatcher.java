@@ -125,8 +125,18 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(runId);
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions());
-    ProgramRunnerFactory runnerFactory = clusterMode == ClusterMode.ON_PREMISE ? programRunnerFactory
-      : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new);
+
+//    ProgramRunnerFactory runnerFactory = clusterMode == ClusterMode.ON_PREMISE ? programRunnerFactory
+//      : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new);
+
+    boolean tetheredRun = programRunDispatcherInfo
+      .getProgramOptions().getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
+    ProgramRunnerFactory runnerFactory = programRunnerFactory;
+    if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
+      runnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
+        .orElseThrow(UnsupportedOperationException::new);
+    }
+
     ProgramRunner runner = runnerFactory.create(programId.getType());
     if (!(runner instanceof ProgramControllerCreator)) {
       String msg = String.format("Program %s with runid %s uses an unsupported controller for remote dispatching.",
@@ -134,9 +144,6 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
                                  programRunDispatcherInfo.getRunId());
       throw new UnsupportedOperationException(msg);
     }
-
-    boolean tetheredRun = programRunDispatcherInfo
-      .getProgramOptions().getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
 
     TwillController twillController;
     if (ClusterMode.ISOLATED.equals(clusterMode) && !tetheredRun) {
