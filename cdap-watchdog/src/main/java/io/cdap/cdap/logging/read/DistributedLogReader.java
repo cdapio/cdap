@@ -23,8 +23,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.logging.appender.kafka.StringPartitioner;
 import io.cdap.cdap.logging.filter.Filter;
-import io.cdap.cdap.logging.meta.CheckpointManager;
-import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
+import io.cdap.cdap.logging.meta.KafkaCheckpointManager;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,7 @@ public final class DistributedLogReader implements LogReader {
 
   private final KafkaLogReader kafkaLogReader;
   private final FileLogReader fileLogReader;
-  private final CheckpointManager checkpointManager;
+  private final KafkaCheckpointManager checkpointManager;
   private final StringPartitioner partitioner;
 
   /**
@@ -47,12 +47,12 @@ public final class DistributedLogReader implements LogReader {
   @Inject
   DistributedLogReader(CConfiguration cConf,
                        KafkaLogReader kafkaLogReader, FileLogReader fileLogReader,
-                       CheckpointManagerFactory checkpointManagerFactory, StringPartitioner partitioner) {
+                       StringPartitioner partitioner,
+                       TransactionRunner txRunner) {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
-    this.checkpointManager = checkpointManagerFactory.create(Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX +
-                                                             cConf.get(Constants.Logging.KAFKA_TOPIC),
-                                                             CheckpointManagerFactory.Type.KAFKA);
+    String prefix = Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX + cConf.get(Constants.Logging.KAFKA_TOPIC);
+    this.checkpointManager = new KafkaCheckpointManager(txRunner, prefix);
     this.partitioner = partitioner;
   }
 

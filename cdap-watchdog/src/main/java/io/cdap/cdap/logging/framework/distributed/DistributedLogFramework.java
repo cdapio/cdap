@@ -33,10 +33,11 @@ import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
 import io.cdap.cdap.logging.framework.LogPipelineSpecification;
-import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
+import io.cdap.cdap.logging.meta.KafkaCheckpointManager;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
 import io.cdap.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.kafka.client.BrokerService;
@@ -57,8 +58,8 @@ public class DistributedLogFramework extends ResourceBalancerService {
 
   private final CConfiguration cConf;
   private final Provider<AppenderContext> contextProvider;
-  private final CheckpointManagerFactory checkpointManagerFactory;
   private final BrokerService brokerService;
+  private final TransactionRunner txRunner;
 
   @Inject
   DistributedLogFramework(CConfiguration cConf,
@@ -66,18 +67,17 @@ public class DistributedLogFramework extends ResourceBalancerService {
                           DiscoveryService discoveryService,
                           DiscoveryServiceClient discoveryServiceClient,
                           Provider<AppenderContext> contextProvider,
-                          CheckpointManagerFactory checkpointManagerFactory,
-                          BrokerService brokerService) {
+                          BrokerService brokerService,
+                          TransactionRunner txRunner) {
     super(SERVICE_NAME, cConf.getInt(Constants.Logging.NUM_PARTITIONS),
           zkClient, discoveryService, discoveryServiceClient);
     this.cConf = cConf;
     this.contextProvider = contextProvider;
-    this.checkpointManagerFactory = checkpointManagerFactory;
     this.brokerService = brokerService;
+    this.txRunner = txRunner;
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   protected Service createService(Set<Integer> partitions) {
     Map<String, LogPipelineSpecification<AppenderContext>> specs = new LogPipelineLoader(cConf).load(contextProvider);
     int pipelineCount = specs.size();
@@ -102,8 +102,7 @@ public class DistributedLogFramework extends ResourceBalancerService {
         () -> new KafkaLogProcessorPipeline(
           new LogProcessorPipelineContext(cConf, context.getName(), context,
                                           context.getMetricsContext(), context.getInstanceId()),
-          checkpointManagerFactory.create(pipelineSpec.getCheckpointPrefix() + topic,
-                                          CheckpointManagerFactory.Type.KAFKA), brokerService, config),
+          new KafkaCheckpointManager(txRunner, pipelineSpec.getCheckpointPrefix() + topic), brokerService, config),
         retryStrategy));
     }
 
