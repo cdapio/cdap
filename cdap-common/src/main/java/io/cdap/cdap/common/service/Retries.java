@@ -142,6 +142,7 @@ public final class Retries {
   public static <T extends Throwable> void runWithRetries(Runnable<T> runnable, RetryStrategy retryStrategy,
                                                           Predicate<Throwable> isRetryable) throws T {
     callWithRetries((Callable<Void, T>) () -> {
+      LOG.debug("Thread 2 spawned!");
       runnable.run();
       return null;
     }, retryStrategy, isRetryable);

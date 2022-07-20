@@ -177,6 +177,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
        * (1) TwillController has not been added to the twillRunnerService, and it will be added later.
        * (2) TwillController has been removed from twillRunnerService.
        */
+      LOG.debug("Thread 1 spawned!");
       TwillController twillController = twillRunnerService
         .lookup(TwillAppNames.toTwillAppName(
                   programRunId.getParent()),
