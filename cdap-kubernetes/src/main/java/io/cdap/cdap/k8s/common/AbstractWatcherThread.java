@@ -251,7 +251,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
     DynamicKubernetesListObject listObject = listResult.getObject();
     String resourceVersion = listObject.getMetadata().getResourceVersion();
 
-    LOG.debug("Fetched '{}/{}/{}' list with resource version as {}", group, version, plural, resourceVersion);
+    LOG.trace("Fetched '{}/{}/{}' list with resource version as {}", group, version, plural, resourceVersion);
 
     Map<String, T> cachedResources = changeListener.getCachedResources();
     Set<String> currentSet = new HashSet<>(cachedResources.keySet());
@@ -278,7 +278,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
       }
     }
 
-    LOG.debug("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural, resourceVersion);
+    LOG.trace("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural, resourceVersion);
 
     // Create the new watch
     options = new ListOptions();
