@@ -1140,7 +1140,7 @@ public final class Constants {
     public static final String NUM_CORES = "log.saver.container.num.cores";
     public static final String MAX_INSTANCES = "log.saver.max.instances";
 
-    public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";
+    public static final String LOG_SAVER_HANDLER = "log.saver.handler";
     public static final String ADDRESS = "log.saver.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";

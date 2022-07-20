@@ -70,7 +70,7 @@ public class RemoteTaskExecutor {
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
   private final MetricsCollectionService metricsCollectionService;
-  private String workerUrl;
+  private final String workerUrl;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                             RemoteClientFactory remoteClientFactory, Type workerType) {

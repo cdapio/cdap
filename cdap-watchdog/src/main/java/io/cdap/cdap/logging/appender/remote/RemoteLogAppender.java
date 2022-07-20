@@ -121,7 +121,7 @@ public class RemoteLogAppender extends LogAppender {
       // DatumWriter stores schema in non final variable. However, this schem will not change per thread. So we are
       // not using ThreadLocal for datumWriter
       this.datumWriter = new GenericDatumWriter<>(Schema.createArray(Schema.create(Schema.Type.BYTES)));
-      this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.LOG_BUFFER_SERVICE,
+      this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.LOGSAVER,
                                                                  new DefaultHttpRequestConfig(false),
                                                                  "/v1/logs");
     }

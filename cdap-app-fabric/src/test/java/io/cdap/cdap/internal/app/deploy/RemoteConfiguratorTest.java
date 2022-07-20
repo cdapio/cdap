@@ -136,7 +136,6 @@ public class RemoteConfiguratorTest {
                                                                          return new NoOpArtifactManager();
                                                                        })))
       )
-      .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
@@ -145,6 +144,8 @@ public class RemoteConfiguratorTest {
       })
       .build();
     httpService.start();
+
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, httpService.getBindAddress().getPort());
 
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.APP_FABRIC_HTTP, httpService));
