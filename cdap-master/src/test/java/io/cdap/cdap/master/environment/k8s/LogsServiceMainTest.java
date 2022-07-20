@@ -202,7 +202,7 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
 
     private TestAppender(RemoteClientFactory remoteClientFactory) {
       this.remoteClient = remoteClientFactory.createRemoteClient(
-        Constants.Service.LOG_BUFFER_SERVICE,
+        Constants.Service.LOGSAVER,
         new DefaultHttpRequestConfig(false), "/v1/logs");
       this.loggingEventSerializer = new LoggingEventSerializer();
       this.datumWriter = new GenericDatumWriter<>(Schema.createArray(Schema.create(Schema.Type.BYTES)));

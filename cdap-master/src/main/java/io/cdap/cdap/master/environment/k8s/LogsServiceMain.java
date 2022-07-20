@@ -46,7 +46,6 @@ import io.cdap.cdap.logging.logbuffer.LogBufferService;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.service.LogQueryService;
-import io.cdap.cdap.logging.service.LogSaverStatusService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -104,15 +103,13 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
             .toInstance(1);
           bind(AppenderContext.class).to(DistributedAppenderContext.class);
 
+          // Bind the log buffer as the log saver service
+          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
+            (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
+          CommonHandlers.add(handlerBinder);
+
           bind(LogBufferService.class).in(Scopes.SINGLETON);
           expose(LogBufferService.class);
-
-          // Bind the status service
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
-            (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER));
-          CommonHandlers.add(handlerBinder);
-          bind(LogSaverStatusService.class).in(Scopes.SINGLETON);
-          expose(LogSaverStatusService.class);
         }
       }
     );
@@ -126,8 +123,6 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
     services.add(injector.getInstance(LogBufferService.class));
     // log handler
     services.add(injector.getInstance(LogQueryService.class));
-    // log saver status service
-    services.add(injector.getInstance(LogSaverStatusService.class));
     // ZK client service
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
     if (zkBinding != null) {
