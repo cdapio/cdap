@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -40,6 +39,8 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -81,9 +82,8 @@ import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.ContentProvider;
@@ -162,6 +162,7 @@ public abstract class DatasetServiceTestBase {
     // TODO: this whole method is a mess. Streamline it!
     injector = Guice.createInjector(
       new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new InMemoryDiscoveryModule(),
       new NonCustomLocationUnitTestModule(),
       new NamespaceAdminTestModule(),
@@ -184,7 +185,7 @@ public abstract class DatasetServiceTestBase {
         }
       });
 
-    AuthorizationEnforcer authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    AccessEnforcer authEnforcer = injector.getInstance(AccessEnforcer.class);
 
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
 
@@ -197,8 +198,7 @@ public abstract class DatasetServiceTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry);
+    StoreDefinition.createAllTables(structuredTableAdmin);
     TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
     TransactionSystemClientService txSystemClientService =
       new DelegatingTransactionSystemClientService(txSystemClient);
@@ -213,10 +213,11 @@ public abstract class DatasetServiceTestBase {
       new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    CommonNettyHttpServiceFactory commonNettyHttpServiceFactory =
+      injector.getInstance(CommonNettyHttpServiceFactory.class);
 
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
-                                                     discoveryService, metricsCollectionService, handlers);
+                                                     discoveryService, commonNettyHttpServiceFactory, handlers);
     opExecutorService.startAndWait();
 
     Map<String, DatasetModule> defaultModules =
@@ -254,7 +255,7 @@ public abstract class DatasetServiceTestBase {
                                                  new NoOpMetadataServiceClient());
 
     service = new DatasetService(cConf, SConfiguration.create(),
-                                 discoveryService, discoveryServiceClient, metricsCollectionService,
+                                 discoveryService, discoveryServiceClient, commonNettyHttpServiceFactory,
                                  new HashSet<>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
@@ -309,7 +310,7 @@ public abstract class DatasetServiceTestBase {
     File[] embeddedJars = new File[bundleEmbeddedJars.length];
     for (int i = 0; i < bundleEmbeddedJars.length; i++) {
       File file = TMP_FOLDER.newFile();
-      Files.copy(Locations.newInputSupplier(bundleEmbeddedJars[i]), file);
+      Locations.linkOrCopyOverwrite(bundleEmbeddedJars[i], file);
       embeddedJars[i] = file;
     }
 

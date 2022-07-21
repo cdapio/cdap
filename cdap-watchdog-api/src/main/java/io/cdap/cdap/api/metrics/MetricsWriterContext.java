@@ -16,12 +16,21 @@
 
 package io.cdap.cdap.api.metrics;
 
+import io.cdap.cdap.api.PlatformInfo;
+
 import java.util.Map;
 
 /**
  * Context passed to {@link MetricsWriter#initialize(MetricsWriterContext)}.
  */
 public interface MetricsWriterContext {
+
+  //TODO -  Remove this after the latest jar is published
+  /**
+   * CDAP version label
+   */
+  String CDAP_VERSION = "cdap.version";
+
   /**
    * Properties are derived from the CDAP configuration. Configuration file path will be
    * added as an entry in the  properties.
@@ -34,4 +43,13 @@ public interface MetricsWriterContext {
    * @return encapsulated {@link MetricsContext}.
    */
   MetricsContext getMetricsContext();
+
+  /**
+   * Provide version string of the CDAP platform to be included in metrics if required
+   *
+   * @return String value of the platform version
+   */
+  default String getPlatformVersion() {
+    return PlatformInfo.getVersion().toString();
+  }
 }

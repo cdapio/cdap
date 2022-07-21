@@ -280,7 +280,7 @@ public class AppFabricClient {
   }
 
   public List<ScheduleDetail> getProgramSchedules(String namespace, String app, String workflow)
-    throws NotFoundException {
+    throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/schedules",
                                getNamespacePath(namespace), app, workflow);
@@ -299,7 +299,7 @@ public class AppFabricClient {
 
   public WorkflowTokenDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,
                                               @Nullable WorkflowToken.Scope scope,
-                                              @Nullable String key) throws NotFoundException {
+                                              @Nullable String key) throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/token",
                                getNamespacePath(namespaceId), appId, wflowId, runId);
@@ -316,7 +316,8 @@ public class AppFabricClient {
 
   public WorkflowTokenNodeDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,
                                                   String nodeName, @Nullable WorkflowToken.Scope scope,
-                                                  @Nullable String key) throws NotFoundException {
+                                                  @Nullable String key)
+    throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/nodes/%s/token",
                                getNamespacePath(namespaceId), appId, wflowId, runId, nodeName);
@@ -333,7 +334,7 @@ public class AppFabricClient {
   }
 
   public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
-    throws NotFoundException {
+    throws NotFoundException, UnauthorizedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/nodes/state",
                                getNamespacePath(workflowRunId.getNamespace()), workflowRunId.getApplication(),
@@ -419,10 +420,11 @@ public class AppFabricClient {
       return json.get("status");
   }
 
-  private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
+  private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg)
+    throws UnauthorizedException {
     if (!expected.equals(actual)) {
       if (actual.code() == HttpResponseStatus.FORBIDDEN.code()) {
-        throw new UnauthorizedException(actual.reasonPhrase());
+        throw new UnauthorizedException(errorMsg + ": " + actual.reasonPhrase());
       }
       throw new IllegalStateException(String.format("Expected %s, got %s. Error: %s",
                                                     expected, actual, errorMsg));
@@ -466,7 +468,8 @@ public class AppFabricClient {
       }
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
-      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
+      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app (" +
+        mockResponder.getResponseContentAsString() + ")");
     }
     return deployedJar;
   }
@@ -490,7 +493,8 @@ public class AppFabricClient {
 
     bodyConsumer.chunk(Unpooled.copiedBuffer(GSON.toJson(appRequest), StandardCharsets.UTF_8), mockResponder);
     bodyConsumer.finished(mockResponder);
-    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app (" +
+      mockResponder.getResponseContentAsString() + ")");
   }
 
   public void updateApplication(ApplicationId appId, AppRequest appRequest) throws Exception {

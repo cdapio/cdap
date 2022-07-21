@@ -17,9 +17,11 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -27,8 +29,10 @@ import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +42,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Provisions a cluster using GCP Dataproc.
@@ -57,9 +63,20 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   private static final Pattern NETWORK_TAGS_PATTERN = Pattern.compile(("^[a-z][a-z0-9-]{0,62}$"));
 
+  //A lock to use for cluster reuse
+  private static final String REUSE_LOCK = "reuse";
+
+  private final DataprocClientFactory clientFactory;
+
   @SuppressWarnings("WeakerAccess")
   public DataprocProvisioner() {
+    this(new DefaultDataprocClientFactory(new GoogleComputeFactory()));
+  }
+
+  @VisibleForTesting
+  DataprocProvisioner(DataprocClientFactory clientFactory) {
     super(SPEC);
+    this.clientFactory = clientFactory;
   }
 
   @Override
@@ -87,13 +104,43 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     if (networkTags.size() > 64) {
       throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
     }
+
+    if (!isAutoscalingFieldsValid(conf, properties)) {
+      throw new IllegalArgumentException(
+        String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
+                      DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
+                      DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED));
+    }
+  }
+
+  @Override
+  public Optional<String> getTotalProcessingCpusLabel(Map<String, String> properties) {
+    DataprocConf conf = DataprocConf.create(properties);
+    StringBuilder label = new StringBuilder();
+
+    if (conf.isPredefinedAutoScaleEnabled()) {
+      label.append(DataprocUtils.WORKER_CPU_PREFIX).append(" ");
+    } else if (conf.getAutoScalingPolicy() != null && !conf.getAutoScalingPolicy().isEmpty()) {
+      //Return default implementation, as this is an user auto-scaling policy for which we do not have details
+      return super.getTotalProcessingCpusLabel(properties);
+    }
+
+    int totalCpus = conf.getTotalWorkerCPUs() > 0 ? conf.getTotalWorkerCPUs() : conf.getTotalMasterCpus();
+    label.append(totalCpus);
+    return Optional.of(label.toString());
   }
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
+    if (!isAutoscalingFieldsValid(conf, createContextProperties(context))) {
+      LOG.warn("The configs : {}, {}, {} will not be considered when {} is enabled ", DataprocConf.WORKER_NUM_NODES,
+               DataprocConf.SECONDARY_WORKER_NUM_NODES, DataprocConf.AUTOSCALING_POLICY ,
+               DataprocConf.PREDEFINED_AUTOSCALE_ENABLED);
+    }
 
-    if (context.getRuntimeMonitorType() == RuntimeMonitorType.SSH || !conf.isRuntimeJobManagerEnabled()) {
+    SSHPublicKey sshPublicKey = null;
+    if (shouldUseSSH(context, conf)) {
       // Generates and set the ssh key if it does not have one.
       // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
       SSHContext sshContext = context.getSSHContext();
@@ -103,41 +150,55 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
           sshKeyPair = sshContext.generate("cdap");
           sshContext.setSSHKeyPair(sshKeyPair);
         }
-        conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
+        sshPublicKey = sshKeyPair.getPublicKey();
       }
     }
 
-    String clusterName = getClusterName(context);
+    try (DataprocClient client = clientFactory.create(conf, sshPublicKey != null)) {
+      Cluster reused = tryReuseCluster(client, context, conf);
+      if (reused != null) {
+        DataprocUtils.emitMetric(context, conf.getRegion(),
+                                 "provisioner.createCluster.reuse.count");
+        return reused;
+      }
 
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+      String clusterName = getRunKey(context);
+
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
       if (existing.isPresent()) {
         return existing.get();
       }
 
-      String imageVersion = conf.getImageVersion();
-      if (imageVersion == null) {
-        switch (context.getSparkCompat()) {
-          case SPARK1_2_10:
-            imageVersion = "1.0";
-            break;
-          case SPARK2_2_11:
-          default:
-            imageVersion = "1.3";
-            break;
+      String imageVersion = getImageVersion(context, conf);
+      String imageDescription = conf.getCustomImageUri();
+      if (imageDescription == null || imageDescription.isEmpty()) {
+        imageDescription = imageVersion;
+      }
+
+      // Check dataproc cluster version if a custom image is not being used
+      if (conf.getCustomImageUri() == null) {
+        // Determine cluster version and fail if version is smaller than 1.5
+        VersionInfo comparableImageVersion = extractVersion(imageVersion);
+        if (comparableImageVersion == null) {
+          LOG.warn("Unable to extract Dataproc version from string '{}'.", imageVersion);
+        } else if (DATAPROC_1_5_VERSION.compareTo(comparableImageVersion) > 0) {
+          throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.");
         }
       }
 
+
       // Reload system context properties and get system labels
-      Map<String, String> systemLabels = getSystemLabels();
-      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with system labels {}",
-               clusterName, conf.getProjectId(),
-               conf.getRegion(), imageVersion, systemLabels);
+      Map<String, String> labels = new HashMap<>();
+      labels.putAll(getSystemLabels());
+      labels.putAll(getReuseLabels(context, conf));
+      labels.putAll(conf.getClusterLabels());
+      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with labels {}, endpoint {}",
+               clusterName, conf.getProjectId(), conf.getRegion(), imageDescription, labels, getRootUrl(conf));
 
       boolean privateInstance = Boolean.parseBoolean(getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
-                                                                          systemLabels, privateInstance);
+                                                                          labels, privateInstance, sshPublicKey);
       int numWarnings = createOperationMeta.getWarningsCount();
       if (numWarnings > 0) {
         LOG.warn("Encountered {} warning{} while creating Dataproc cluster:\n{}",
@@ -154,10 +215,134 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     }
   }
 
+  private Map<? extends String, ? extends String> getReuseLabels(ProvisionerContext context, DataprocConf conf) {
+    if (!isReuseSupported(conf)) {
+      return Collections.emptyMap();
+    }
+    Map<String, String> reuseLabels = new HashMap<>();
+    String normalProfileName = getNormalizedProfileName(context);
+    if (normalProfileName != null) {
+      reuseLabels.put(LABEL_PROFILE, normalProfileName);
+    }
+    reuseLabels.put(LABEL_REUSE_KEY, conf.getClusterReuseKey());
+    reuseLabels.put(LABEL_RUN_KEY, getRunKey(context));
+    return reuseLabels;
+  }
+
+  /**
+   * If cluster reuse is enabled & possible tries to find a cluster to reuse.
+   * @param client data proc client
+   * @param context provisioner contex
+   * @param conf dataproc configuration
+   * @return a cluster ready to reuse or null if none available.
+   */
+  @Nullable
+  private Cluster tryReuseCluster(DataprocClient client, ProvisionerContext context, DataprocConf conf)
+    throws RetryableProvisionException {
+    if (!isReuseSupported(conf)) {
+      LOG.debug("Not checking cluster reuse, enabled: {}, skip delete: {}, idle ttl: {}, reuse threshold: {}",
+                conf.isClusterReuseEnabled(), conf.isSkipDelete(), conf.getIdleTTLMinutes(),
+                conf.getClusterReuseThresholdMinutes());
+      return null;
+    }
+
+    String clusterKey = getRunKey(context);
+
+    //For idempotency, check if we already have the cluster allocated
+    Optional<Cluster> clusterOptional = findCluster(clusterKey, client);
+    if (clusterOptional.isPresent()) {
+      Cluster cluster = clusterOptional.get();
+      if (cluster.getStatus() == ClusterStatus.CREATING ||
+        cluster.getStatus() == ClusterStatus.RUNNING) {
+        LOG.debug("Found allocated cluster {}", cluster.getName());
+        return cluster;
+      } else {
+        LOG.debug("Preallocated cluster {} has expired, will find a new one", cluster.getName());
+        //Let's remove the reuse label to ensure new cluster will be picked up by findCluster
+        try {
+          client.updateClusterLabels(cluster.getName(), Collections.emptyMap(), Collections.singleton(LABEL_RUN_KEY));
+        } catch (Exception e) {
+          LOG.trace("Unable to remove reuse label, cluster may have died already", e);
+          if (!LOG.isTraceEnabled()) {
+            LOG.debug("Unable to remove reuse label, cluster may have died already");
+          }
+        }
+      }
+    }
+
+    Lock reuseLock = getSystemContext().getLock(REUSE_LOCK);
+    reuseLock.lock();
+    try {
+      Map<String, String> filter = new HashMap<>();
+      String normalizedProfileName = getNormalizedProfileName(context);
+      if (normalizedProfileName != null) {
+        filter.put(LABEL_PROFILE, normalizedProfileName);
+      }
+      filter.put(LABEL_VERSON, getVersionLabel());
+      filter.put(LABEL_REUSE_KEY, conf.getClusterReuseKey());
+      filter.put(LABEL_REUSE_UNTIL, "*");
+
+      Optional<Cluster> cluster = client.getClusters(ClusterStatus.RUNNING, filter, clientCluster -> {
+        //Verify reuse label
+        long reuseUntil = Long.parseLong(clientCluster.getLabelsOrDefault(LABEL_REUSE_UNTIL, "0"));
+        long now = System.currentTimeMillis();
+        if (reuseUntil < now) {
+          LOG.debug("Skipping expired cluster {}, reuse until {} is before now {}",
+                    clientCluster.getClusterName(), reuseUntil, now);
+          return false;
+        }
+        return true;
+      }).findAny();
+
+      if (cluster.isPresent()) {
+        String clusterName = cluster.get().getName();
+        LOG.info("Found cluster to reuse: {}", clusterName);
+        // Add cdap-reuse-for to find cluster later if needed
+        // And remove reuseUntil to indicate the cluster is taken
+        client.updateClusterLabels(clusterName,
+                                   Collections.singletonMap(LABEL_RUN_KEY, clusterKey),
+                                   Collections.singleton(LABEL_REUSE_UNTIL)
+        );
+      } else {
+        LOG.debug("Could not find any available cluster to reuse.");
+      }
+      return cluster.orElse(null);
+    } catch (Exception e) {
+      LOG.warn("Error retrieving clusters to reuse, will create a new one", e);
+      return null;
+    } finally {
+      reuseLock.unlock();
+    }
+  }
+
+  private boolean isReuseSupported(DataprocConf conf) {
+    return conf.isClusterReuseEnabled() && conf.isSkipDelete() &&
+      (conf.getIdleTTLMinutes() <= 0 || conf.getIdleTTLMinutes() > conf.getClusterReuseThresholdMinutes());
+  }
+
+  @Nullable
+  private String getNormalizedProfileName(ProvisionerContext context) {
+    if (context.getProfileName() == null) {
+      return null;
+    }
+    String normalName = context.getProfileName().replaceAll("[^a-zA-Z0-9]", "");
+    return normalName.isEmpty() ? null : normalName;
+  }
+
+  @VisibleForTesting
+  String getImageVersion(ProvisionerContext context, DataprocConf conf) {
+    String imageVersion = conf.getImageVersion();
+    if (imageVersion == null) {
+      // Dataproc 2.0 is the default version from 6.7 and later
+      imageVersion = "2.0";
+    }
+    return imageVersion;
+  }
+
   @Override
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
-    String clusterName = getClusterName(context);
+    String clusterName = cluster.getName();
 
     ClusterStatus status = cluster.getStatus();
     // if we are skipping the delete, need to avoid checking the real cluster status and pretend like it is deleted.
@@ -165,7 +350,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       return ClusterStatus.NOT_EXISTS;
     }
 
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    try (DataprocClient client = clientFactory.create(conf)) {
       status = client.getClusterStatus(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.clusterStatus.response.count");
@@ -180,8 +365,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   @Override
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
-    String clusterName = getClusterName(context);
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    String clusterName = cluster.getName();
+    try (DataprocClient client = clientFactory.create(conf, shouldUseSSH(context, conf))) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.clusterDetail.response.count");
@@ -195,12 +380,25 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   protected void doDeleteCluster(ProvisionerContext context, Cluster cluster, DataprocConf conf) throws Exception {
-    if (conf.isSkipDelete()) {
+    if (!isReuseSupported(conf) && conf.isSkipDelete()) {
       return;
     }
-    String clusterName = getClusterName(context);
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
-      client.deleteCluster(clusterName);
+    String clusterName = cluster.getName();
+    try (DataprocClient client = clientFactory.create(conf)) {
+      if (isReuseSupported(conf)) {
+        long reuseUntil = System.currentTimeMillis() +
+          TimeUnit.MINUTES.toMillis(conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
+        LOG.debug("Marking cluster {} reusable for {} minutes",
+                  clusterName,
+                  conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
+        client.updateClusterLabels(clusterName,
+                                   //Add reuse until
+                                   Collections.singletonMap(LABEL_REUSE_UNTIL, Long.toString(reuseUntil)),
+                                   //Drop allocation
+                                   Collections.singleton(LABEL_RUN_KEY));
+      } else {
+        client.deleteCluster(clusterName);
+      }
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.deleteCluster.response.count");
     } catch (Exception e) {
@@ -208,6 +406,24 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
                                "provisioner.deleteCluster.response.count", e);
       throw e;
     }
+  }
+
+  @Override
+  protected String getClusterName(ProvisionerContext context) throws Exception {
+    DataprocConf conf = DataprocConf.create(createContextProperties(context));
+    String clusterKey = getRunKey(context);
+    if (isReuseSupported(conf)) {
+      try (DataprocClient client = clientFactory.create(conf)) {
+        Optional<Cluster> allocatedCluster = findCluster(clusterKey, client);
+        return allocatedCluster.map(Cluster::getName).orElse(clusterKey);
+      }
+    }
+    return clusterKey;
+  }
+
+  private Optional<Cluster> findCluster(String clusterKey, DataprocClient client)
+    throws RetryableProvisionException {
+    return client.getClusters(null, Collections.singletonMap(LABEL_RUN_KEY, clusterKey)).findAny();
   }
 
   @Override
@@ -238,8 +454,10 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       DataprocConf.STACKDRIVER_MONITORING_ENABLED,
       DataprocConf.COMPONENT_GATEWAY_ENABLED,
       DataprocConf.IMAGE_VERSION,
-      DataprocConf.CLUSTER_MEATA_DATA,
-      DataprocConf.SERVICE_ACCOUNT
+      DataprocConf.CLUSTER_META_DATA,
+      DataprocConf.SERVICE_ACCOUNT,
+      DataprocConf.CLUSTER_IDLE_TTL_MINUTES,
+      DataprocConf.CLUSTER_REUSE_THRESHOLD_MINUTES
     ).contains(property);
   }
 
@@ -267,7 +485,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   }
 
   /**
-   * Gets the cluster name for the given context.
+   * Gets the identifier to locate cluster for the given context.
+   * It's used as a cluster name when reuse is disabled and put into {@link #LABEL_RUN_KEY} when reuse is enabled.
    * Name must start with a lowercase letter followed by up to 51 lowercase letters,
    * numbers, or hyphens, and cannot end with a hyphen
    * We'll use app-runid, where app is truncated to fit, lowercased, and stripped of invalid characters.
@@ -275,8 +494,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    * @param context the provisioner context
    * @return a string that is a valid cluster name
    */
-  @Override
-  protected String getClusterName(ProvisionerContext context) {
+  @VisibleForTesting
+  String getRunKey(ProvisionerContext context) {
     ProgramRunInfo programRunInfo = context.getProgramRunInfo();
 
     String cleanedAppName = programRunInfo.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
@@ -287,4 +506,21 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
   }
+
+  private boolean shouldUseSSH(ProvisionerContext context, DataprocConf conf) {
+    return context.getRuntimeMonitorType() == RuntimeMonitorType.SSH || !conf.isRuntimeJobManagerEnabled();
+  }
+
+  private boolean isAutoscalingFieldsValid(DataprocConf conf, Map<String, String> properties) {
+    if (conf.isPredefinedAutoScaleEnabled()) {
+      //If predefined auto-scaling is enabled, then user should not send values for the following
+      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
+        properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }

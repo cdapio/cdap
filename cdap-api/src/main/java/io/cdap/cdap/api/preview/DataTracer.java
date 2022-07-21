@@ -40,4 +40,9 @@ public interface DataTracer {
    * Returns {@code true} if application is running in preview mode otherwise false is returned.
    */
   boolean isEnabled();
+
+  /**
+   * Returns the maximum number of records that can be traced by the application
+   */
+  int getMaximumTracedRecords();
 }

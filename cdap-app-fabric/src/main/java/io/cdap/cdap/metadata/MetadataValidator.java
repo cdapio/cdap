@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 /**
  * Utility to validate metadata keys and values.
  */
-class MetadataValidator {
+public class MetadataValidator {
 
   private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
@@ -50,7 +50,7 @@ class MetadataValidator {
   /**
    * Constructor only takes the configuration to determine the maximal allowed length for a key.
    */
-  MetadataValidator(CConfiguration cConf) {
+  public MetadataValidator(CConfiguration cConf) {
     maxCharacters = cConf.getInt(Constants.Metadata.MAX_CHARS_ALLOWED);
   }
 
@@ -61,8 +61,8 @@ class MetadataValidator {
    * @param properties the properties to be set
    * @throws InvalidMetadataException if any of the keys or values are invalid
    */
-  void validateProperties(MetadataEntity metadataEntity,
-                          @Nullable Map<String, String> properties) throws InvalidMetadataException {
+  public void validateProperties(MetadataEntity metadataEntity,
+                                 @Nullable Map<String, String> properties) throws InvalidMetadataException {
 
     if (null == properties || properties.isEmpty()) {
       return;
@@ -86,8 +86,8 @@ class MetadataValidator {
    * @param tags the tags to be set
    * @throws InvalidMetadataException if any of the keys or values are invalid
    */
-  void validateTags(MetadataEntity metadataEntity,
-                    @Nullable Set<String> tags) throws InvalidMetadataException {
+  public void validateTags(MetadataEntity metadataEntity,
+                           @Nullable Set<String> tags) throws InvalidMetadataException {
     if (null == tags || tags.isEmpty()) {
       return;
     }

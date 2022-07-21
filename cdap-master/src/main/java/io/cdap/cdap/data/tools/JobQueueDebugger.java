@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -65,7 +66,9 @@ import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -235,9 +238,9 @@ public class JobQueueDebugger extends AbstractIdleService {
     @Nullable
     private Job newestJob;
 
-    private int pendingTrigger = 0;
-    private int pendingConstraint = 0;
-    private int pendingLaunch = 0;
+    private int pendingTrigger;
+    private int pendingConstraint;
+    private int pendingLaunch;
 
     JobStatistics() {
       this(false);
@@ -321,6 +324,7 @@ public class JobQueueDebugger extends AbstractIdleService {
 
     return Guice.createInjector(
       new ConfigModule(cConf, HBaseConfiguration.create()),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new IOModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
@@ -329,13 +333,15 @@ public class JobQueueDebugger extends AbstractIdleService {
       new ExploreClientModule(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new KafkaClientModule(),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
+      new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreServerModule(),

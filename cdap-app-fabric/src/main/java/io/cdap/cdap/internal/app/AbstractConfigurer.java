@@ -19,12 +19,19 @@ package io.cdap.cdap.internal.app;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 
@@ -36,21 +43,35 @@ import javax.annotation.Nullable;
 /**
  * Abstract base implementation for application and program configurer.
  */
-public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implements PluginConfigurer {
+public abstract class AbstractConfigurer extends DefaultDatasetConfigurer
+  implements PluginConfigurer, FeatureFlagsProvider {
 
   private final DefaultPluginConfigurer pluginConfigurer;
   private final Map<String, Plugin> extraPlugins;
+  private final FeatureFlagsProvider featureFlagsProvider;
   // this is the namespace that the app will be deployed in, which can be different than the namespace of
   // the artifact. If the artifact is a system artifact, it will have the system namespace.
   protected final Id.Namespace deployNamespace;
 
   protected AbstractConfigurer(Id.Namespace deployNamespace, Id.Artifact artifactId,
-                               PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
+                               PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                               @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                               FeatureFlagsProvider featureFlagsProvider) {
     this.deployNamespace = deployNamespace;
     this.extraPlugins = new HashMap<>();
-    this.pluginConfigurer = new DefaultPluginConfigurer(artifactId.toEntityId(),
-                                                        deployNamespace.toEntityId(), pluginInstantiator,
-                                                        pluginFinder);
+    this.featureFlagsProvider = featureFlagsProvider;
+
+    if (runtimeInfo != null && ClusterMode.ISOLATED.name().equals(
+      runtimeInfo.getSystemArguments().get(ProgramOptionConstants.CLUSTER_MODE))) {
+      this.pluginConfigurer = new RemotePluginConfigurer(
+        artifactId.toEntityId(), deployNamespace.toEntityId(), pluginInstantiator, pluginFinder,
+        runtimeInfo.getExistingAppSpec().getPlugins(),
+        runtimeInfo.getSystemArguments().get(ProgramOptionConstants.PLUGIN_DIR));
+    } else {
+      this.pluginConfigurer = new DefaultPluginConfigurer(artifactId.toEntityId(),
+                                                          deployNamespace.toEntityId(), pluginInstantiator,
+                                                          pluginFinder);
+    }
   }
 
   public Map<String, Plugin> getPlugins() {
@@ -85,5 +106,20 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implem
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
     return pluginConfigurer.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return pluginConfigurer.evaluateMacros(properties, evaluator, options);
+  }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagsProvider.isFeatureEnabled(name);
+  }
+
+  protected final FeatureFlagsProvider getFeatureFlagsProvider() {
+    return featureFlagsProvider;
   }
 }

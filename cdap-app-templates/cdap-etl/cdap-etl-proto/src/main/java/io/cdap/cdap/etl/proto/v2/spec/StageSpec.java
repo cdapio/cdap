@@ -17,9 +17,12 @@
 
 package io.cdap.cdap.etl.proto.v2.spec;
 
+import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -37,6 +40,7 @@ import javax.annotation.Nullable;
  */
 public class StageSpec implements Serializable {
   private static final long serialVersionUID = 4682820901456102283L;
+  private static final Logger LOG = LoggerFactory.getLogger(StageSpec.class);
   private final String name;
   private final PluginSpec plugin;
   private final Map<String, Schema> inputSchemas;
@@ -167,6 +171,10 @@ public class StageSpec implements Serializable {
       ", processTimingEnabled=" + processTimingEnabled +
       ", maxPreviewRecords=" + maxPreviewRecords +
       '}';
+  }
+
+  public boolean isPreviewEnabled(RuntimeContext context) {
+    return context.getDataTracer(name).isEnabled();
   }
 
   public static Builder builder(String name, PluginSpec plugin) {
@@ -314,5 +322,24 @@ public class StageSpec implements Serializable {
     public int hashCode() {
       return Objects.hash(port, schema);
     }
+  }
+
+  /**
+   * Returns a copy of the StageSpec object with {@link StageSpec#maxPreviewRecords} field updated
+   */
+  public static StageSpec createCopy(StageSpec stageSpec, int newMaxPreviewRecords, boolean isPreviewEnabled) {
+    // if not a preview run, don't modify stageSpec
+    if (!isPreviewEnabled) {
+      return stageSpec;
+    }
+
+    if (newMaxPreviewRecords < stageSpec.getMaxPreviewRecords()) {
+      LOG.warn("Max preview records exceeds allowed limit. Setting maximum preview records to {} instead of {} ",
+               newMaxPreviewRecords, stageSpec.maxPreviewRecords);
+    }
+    return new StageSpec(stageSpec.name, stageSpec.plugin, stageSpec.inputSchemas, stageSpec.outputSchema,
+                         stageSpec.errorSchema, stageSpec.portSchemas, stageSpec.outputPorts,
+                         stageSpec.stageLoggingEnabled, stageSpec.processTimingEnabled,
+                         Math.min(stageSpec.maxPreviewRecords, newMaxPreviewRecords));
   }
 }

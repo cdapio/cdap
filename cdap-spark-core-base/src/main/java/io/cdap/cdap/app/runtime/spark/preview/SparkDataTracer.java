@@ -65,6 +65,11 @@ public class SparkDataTracer implements DataTracer, Externalizable {
   }
 
   @Override
+  public int getMaximumTracedRecords() {
+    return dataTracer.getMaximumTracedRecords();
+  }
+
+  @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     String tracerName = in.readUTF();
     this.dataTracer = SparkRuntimeContextProvider.get().getDataTracer(tracerName);

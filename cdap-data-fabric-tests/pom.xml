@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-data-fabric-tests</artifactId>
@@ -121,6 +121,13 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <!-- explicitly get protobuf 2.5.0 for testing since it has been excluded from regular dependencies -->
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>2.5.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -129,7 +136,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Xmx6000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+          <argLine>@{argLine}  -Xmx6000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
           <forkCount>2</forkCount>
         </configuration>
       </plugin>

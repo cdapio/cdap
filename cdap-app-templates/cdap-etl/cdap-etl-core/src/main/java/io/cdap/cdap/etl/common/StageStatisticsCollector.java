@@ -34,4 +34,19 @@ public interface StageStatisticsCollector {
    * Increment the error record count.
    */
   void incrementErrorRecordCount();
+
+  /**
+   * Increment the input record count.
+   */
+  void incrementInputRecordCount(long n);
+
+  /**
+   * Increment the output record count.
+   */
+  void incrementOutputRecordCount(long n);
+
+  /**
+   * Increment the error record count.
+   */
+  void incrementErrorRecordCount(long n);
 }

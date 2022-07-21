@@ -48,24 +48,27 @@ public class RemoteExecutionDiscoveryServiceTest {
 
     // Without registering, the service discovered should contain one
     // entry with the host name the same as the service name
-    ServiceDiscovered serviceDiscovered = discoveryService.discover("test");
+    ServiceDiscovered serviceDiscovered = discoveryService.discover("test.invalid.");
     List<Discoverable> discoverables = Lists.newArrayList(serviceDiscovered);
     Assert.assertEquals(1, discoverables.size());
-    Assert.assertEquals(InetSocketAddress.createUnresolved("test", 0), discoverables.get(0).getSocketAddress());
+    Assert.assertEquals(InetSocketAddress.createUnresolved("test.invalid.", 0),
+                        discoverables.get(0).getSocketAddress());
 
     // Explicitly register an endpoint, this should override the previous one
     Cancellable cancellable = discoveryService.register(
-      new Discoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
+      new Discoverable("test.invalid.", InetSocketAddress.createUnresolved("xyz.invalid.", 12345)));
     discoverables = Lists.newArrayList(serviceDiscovered);
     Assert.assertEquals(1, discoverables.size());
-    Assert.assertEquals(InetSocketAddress.createUnresolved("xyz", 12345), discoverables.get(0).getSocketAddress());
+    Assert.assertEquals(InetSocketAddress.createUnresolved("xyz.invalid.", 12345),
+                        discoverables.get(0).getSocketAddress());
 
     // Cancel the registration,
     // it should resort back to having discoverable with address host the same as the discovery name
     cancellable.cancel();
     discoverables = Lists.newArrayList(serviceDiscovered);
     Assert.assertEquals(1, discoverables.size());
-    Assert.assertEquals(InetSocketAddress.createUnresolved("test", 0), discoverables.get(0).getSocketAddress());
+    Assert.assertEquals(InetSocketAddress.createUnresolved("test.invalid.", 0),
+                        discoverables.get(0).getSocketAddress());
   }
 
   @Test
@@ -83,7 +86,7 @@ public class RemoteExecutionDiscoveryServiceTest {
 
     // Register one with HTTP, should expect the discovery return the one with HTTP, as it override the previous one.
     Cancellable cancellable = discoveryService.register(
-      new Discoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
+      new Discoverable("test", InetSocketAddress.createUnresolved("xyz.invalid.", 12345)));
     discoverables = Lists.newArrayList(serviceDiscovered);
     Assert.assertEquals(1, discoverables.size());
     Assert.assertEquals(URIScheme.HTTP, URIScheme.getScheme(discoverables.get(0)));
@@ -91,7 +94,7 @@ public class RemoteExecutionDiscoveryServiceTest {
 
     // Override again with HTTPS
     cancellable = discoveryService.register(
-      URIScheme.HTTPS.createDiscoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
+      URIScheme.HTTPS.createDiscoverable("test", InetSocketAddress.createUnresolved("xyz.invalid.", 12345)));
     discoverables = Lists.newArrayList(serviceDiscovered);
     Assert.assertEquals(1, discoverables.size());
     Assert.assertEquals(URIScheme.HTTPS, URIScheme.getScheme(discoverables.get(0)));
@@ -105,7 +108,7 @@ public class RemoteExecutionDiscoveryServiceTest {
                                                                                            RuntimeMonitorType.SSH);
 
     // Register, an entry should be added to the cConf
-    discoveryService.register(new Discoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
+    discoveryService.register(new Discoverable("test", InetSocketAddress.createUnresolved("xyz.invalid.", 12345)));
     Assert.assertNotNull(cConf.get(Constants.RuntimeMonitor.DISCOVERY_SERVICE_PREFIX + "test"));
 
     // Create a new discoveryService from the same config, discover() should return the address from the config
@@ -114,7 +117,7 @@ public class RemoteExecutionDiscoveryServiceTest {
     Assert.assertTrue(
       StreamSupport.stream(serviceDiscovered.spliterator(), false)
         .map(Discoverable::getSocketAddress)
-        .allMatch(addr -> InetSocketAddress.createUnresolved("xyz", 12345).equals(addr))
+        .allMatch(addr -> InetSocketAddress.createUnresolved("xyz.invalid.", 12345).equals(addr))
     );
   }
 

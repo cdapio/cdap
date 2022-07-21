@@ -39,7 +39,10 @@ public class FactCodecTest {
     MetricsTable table = new InMemoryMetricsTable("FactCodecTest");
     int resolution = 10;
     int rollTimebaseInterval = 2;
-    FactCodec codec = new FactCodec(new EntityTable(table), resolution, rollTimebaseInterval);
+    int coarseLagFactor = 3;
+    int coarseRoundFactor = 4;
+    FactCodec codec = new FactCodec(new EntityTable(table), resolution, rollTimebaseInterval,
+                                    coarseLagFactor, coarseRoundFactor);
 
     // testing encoding with multiple dimensions
     List<DimensionValue> dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
@@ -47,29 +50,40 @@ public class FactCodecTest {
                                                 new DimensionValue("dimension3", "value3"));
     // note: we use seconds everywhere and rely on this
     long ts = 1422312915;
-    byte[] rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
-    byte[] column = codec.createColumn(ts);
+    long nowWithoutCoarsing = ts;
+    long nowWithCoarsing = 1422312941;
+    byte[] rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithoutCoarsing);
+    byte[] column = codec.createColumn(ts, nowWithoutCoarsing);
 
     Assert.assertEquals((ts / resolution) * resolution, codec.getTimestamp(rowKey, column));
     Assert.assertEquals(dimensionValues, codec.getDimensionValues(rowKey));
     Assert.assertEquals("myMetric", codec.getMeasureName(rowKey));
 
+    // testing coarsing
+    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithCoarsing);
+    column = codec.createColumn(ts, nowWithCoarsing);
+
+    Assert.assertEquals((ts / resolution / coarseRoundFactor) * resolution * coarseRoundFactor,
+                        codec.getTimestamp(rowKey, column));
+    Assert.assertEquals(dimensionValues, codec.getDimensionValues(rowKey));
+    Assert.assertEquals("myMetric", codec.getMeasureName(rowKey));
+
     // testing encoding without one dimension
     dimensionValues = ImmutableList.of(new DimensionValue("myTag", "myValue"));
-    rowKey = codec.createRowKey(dimensionValues, "mySingleTagMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "mySingleTagMetric", ts, nowWithoutCoarsing);
     Assert.assertEquals((ts / resolution) * resolution, codec.getTimestamp(rowKey, column));
     Assert.assertEquals(dimensionValues, codec.getDimensionValues(rowKey));
     Assert.assertEquals("mySingleTagMetric", codec.getMeasureName(rowKey));
 
     // testing encoding without empty dimensions
-    rowKey = codec.createRowKey(new ArrayList<DimensionValue>(), "myNoTagsMetric", ts);
+    rowKey = codec.createRowKey(new ArrayList<DimensionValue>(), "myNoTagsMetric", ts, nowWithoutCoarsing);
     Assert.assertEquals((ts / resolution) * resolution, codec.getTimestamp(rowKey, column));
     Assert.assertEquals(new ArrayList<DimensionValue>(), codec.getDimensionValues(rowKey));
     Assert.assertEquals("myNoTagsMetric", codec.getMeasureName(rowKey));
 
     // testing null metric
     dimensionValues = ImmutableList.of(new DimensionValue("myTag", "myValue"));
-    rowKey = codec.createRowKey(dimensionValues, "mySingleTagMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "mySingleTagMetric", ts, nowWithoutCoarsing);
     Assert.assertEquals((ts / resolution) * resolution, codec.getTimestamp(rowKey, column));
     Assert.assertEquals(dimensionValues, codec.getDimensionValues(rowKey));
     Assert.assertEquals("mySingleTagMetric", codec.getMeasureName(rowKey));
@@ -78,7 +92,7 @@ public class FactCodecTest {
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
                                  new DimensionValue("dimension2", null),
                                  new DimensionValue("dimension3", "value3"));
-    rowKey = codec.createRowKey(dimensionValues, "myNullTagMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myNullTagMetric", ts, nowWithoutCoarsing);
     Assert.assertEquals((ts / resolution) * resolution, codec.getTimestamp(rowKey, column));
     Assert.assertEquals(dimensionValues, codec.getDimensionValues(rowKey));
     Assert.assertEquals("myNullTagMetric", codec.getMeasureName(rowKey));
@@ -88,65 +102,65 @@ public class FactCodecTest {
                                  new DimensionValue("dimension2", null), // any value is accepted
                                  new DimensionValue("dimension3", "value3"));
     byte[] mask = codec.createFuzzyRowMask(dimensionValues, "myMetric");
-    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithoutCoarsing);
     FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(rowKey, mask)));
 
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
                                  new DimensionValue("dimension2", "annnnnnnnnny"),
                                  new DimensionValue("dimension3", "value3"));
-    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithoutCoarsing);
     Assert.assertEquals(FuzzyRowFilter.ReturnCode.INCLUDE, filter.filterRow(rowKey));
 
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value12"),
                                  new DimensionValue("dimension2", "value2"),
                                  new DimensionValue("dimension3", "value3"));
-    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithoutCoarsing);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
                                  new DimensionValue("dimension2", "value2"),
                                  new DimensionValue("dimension3", "value13"));
-    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithoutCoarsing);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
                                  new DimensionValue("dimension3", "value3"));
-    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithoutCoarsing);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
     // fuzzy in value should match the "null" value
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
                                  new DimensionValue("dimension2", null),
                                  new DimensionValue("dimension3", "value3"));
-    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myMetric", ts, nowWithoutCoarsing);
     Assert.assertEquals(FuzzyRowFilter.ReturnCode.INCLUDE, filter.filterRow(rowKey));
 
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
                                  new DimensionValue("dimension2", "value2"),
                                  new DimensionValue("dimension3", "value3"));
-    rowKey = codec.createRowKey(dimensionValues, "myMetric2", ts);
+    rowKey = codec.createRowKey(dimensionValues, "myMetric2", ts, nowWithoutCoarsing);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
-    rowKey = codec.createRowKey(dimensionValues, null, ts);
+    rowKey = codec.createRowKey(dimensionValues, null, ts, nowWithoutCoarsing);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
-    rowKey = codec.createRowKey(new ArrayList<DimensionValue>(), "myMetric", ts);
+    rowKey = codec.createRowKey(new ArrayList<DimensionValue>(), "myMetric", ts, nowWithoutCoarsing);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
     // testing fuzzy mask for fuzzy metric
     dimensionValues = ImmutableList.of(new DimensionValue("myTag", "myValue"));
-    rowKey = codec.createRowKey(dimensionValues, null, ts);
+    rowKey = codec.createRowKey(dimensionValues, null, ts, nowWithoutCoarsing);
     mask = codec.createFuzzyRowMask(dimensionValues, null);
     filter = new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(rowKey, mask)));
 
-    rowKey = codec.createRowKey(dimensionValues, "annyyy", ts);
+    rowKey = codec.createRowKey(dimensionValues, "annyyy", ts, nowWithoutCoarsing);
     Assert.assertEquals(FuzzyRowFilter.ReturnCode.INCLUDE, filter.filterRow(rowKey));
 
-    rowKey = codec.createRowKey(dimensionValues, "zzzzzzzzzzzz", ts);
+    rowKey = codec.createRowKey(dimensionValues, "zzzzzzzzzzzz", ts, nowWithoutCoarsing);
     Assert.assertEquals(FuzzyRowFilter.ReturnCode.INCLUDE, filter.filterRow(rowKey));
 
     dimensionValues = ImmutableList.of(new DimensionValue("myTag", "myValue2"));
-    rowKey = codec.createRowKey(dimensionValues, "metric", ts);
+    rowKey = codec.createRowKey(dimensionValues, "metric", ts, nowWithoutCoarsing);
     Assert.assertTrue(FuzzyRowFilter.ReturnCode.INCLUDE != filter.filterRow(rowKey));
 
 

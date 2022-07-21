@@ -18,12 +18,14 @@ package io.cdap.cdap.internal.app.spark;
 
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.spark.SparkConfigurer;
 import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
@@ -36,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link SparkConfigurer}.
@@ -52,8 +55,10 @@ public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkC
   private Resources executorResources;
 
   public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                                @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";

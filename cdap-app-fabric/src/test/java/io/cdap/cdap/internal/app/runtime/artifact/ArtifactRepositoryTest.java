@@ -29,6 +29,7 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.Macros;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
@@ -62,11 +63,15 @@ import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.EmptyClass;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.Plugin2;
+import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlugin;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
+import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.PluginId;
+import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -114,6 +119,7 @@ public class ArtifactRepositoryTest {
   private static ProgramClassLoader appClassLoader;
   private static MetadataStorage metadataStorage;
   private static File appArtifactFile;
+  private static MetadataAdmin metadataAdmin;
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
@@ -136,6 +142,7 @@ public class ArtifactRepositoryTest {
     appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
                                    createManifest(ManifestFields.EXPORT_PACKAGE,
                                                   PluginTestRunnable.class.getPackage().getName()));
+    metadataAdmin = injector.getInstance(MetadataAdmin.class);
   }
 
   @AfterClass
@@ -194,8 +201,10 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testMultiplePluginClasses() throws InvalidArtifactException {
     DefaultArtifactRepository.validatePluginSet(ImmutableSet.of(
-      new PluginClass("t1", "n1", "", "io.cdap.test1", "cfg", ImmutableMap.of()),
-      new PluginClass("t1", "n1", "", "io.cdap.test2", "cfg", ImmutableMap.of())));
+      PluginClass.builder().setName("n1").setType("t1").setDescription("").setClassName("io.cdap.test1")
+        .setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build(),
+      PluginClass.builder().setName("n1").setType("t1").setDescription("").setClassName("io.cdap.test2")
+        .setConfigFieldName("cfg").setProperties(ImmutableMap.of()).build()));
   }
 
   @Test
@@ -214,8 +223,10 @@ public class ArtifactRepositoryTest {
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
     Set<PluginClass> manuallyAddedPlugins1 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", TestPlugin.class.getName(), null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", TestPlugin.class.getName(), null, emptyMap)
+      PluginClass.builder().setName("manual1").setType("typeA").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build(),
+      PluginClass.builder().setName("manual2").setType("typeB").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build()
     );
     File pluginConfigFile = new File(systemArtifactsDir1, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig1 = new ArtifactConfig(
@@ -237,8 +248,10 @@ public class ArtifactRepositoryTest {
 
     // write plugins config file
     Set<PluginClass> manuallyAddedPlugins2 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", TestPlugin.class.getName(), null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", TestPlugin.class.getName(), null, emptyMap)
+      PluginClass.builder().setName("manual1").setType("typeA").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build(),
+      PluginClass.builder().setName("manual2").setType("typeB").setDescription("desc")
+        .setClassName(TestPlugin.class.getName()).setProperties(emptyMap).build()
     );
     pluginConfigFile = new File(systemArtifactsDir2, "BPlugin-1.0.0.json");
     ArtifactConfig pluginConfig2 = new ArtifactConfig(
@@ -335,6 +348,93 @@ public class ArtifactRepositoryTest {
           Assert.assertEquals("example.com,false,0,\u0000,0.0,0.0,0,0,0,null", plugin.call());
         }
       }
+    }
+  }
+
+  @Test
+  public void testInstantiateNestedConfigPlugins() throws Exception {
+    File pluginDir = TMP_FOLDER.newFolder();
+    // Create the plugin jar.
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, NestedConfigPlugin.class.getPackage().getName());
+    File jarFile = createPluginJar(NestedConfigPlugin.class, new File(tmpDir, "nested-1.0.jar"), manifest);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "nested", "1.0");
+    artifactRepository.addArtifact(
+      artifactId, jarFile,
+      Collections.singleton(new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
+                                              new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))), null);
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
+      artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);
+    Assert.assertEquals(1, plugins.keySet().size());
+    Assert.assertEquals(1, plugins.values().size());
+    Assert.assertEquals(1, plugins.values().iterator().next().size());
+    copyArtifacts(pluginDir, plugins);
+
+    Gson gson = new Gson();
+    ArtifactId artifact = plugins.firstKey().getArtifactId();
+    // only 1 plugin
+    PluginClass pluginClass = plugins.values().iterator().next().iterator().next();
+    NestedConfigPlugin.Config expected =
+      new NestedConfigPlugin.Config(1, new NestedConfigPlugin.NestedConfig("nested val1", "nested val2"));
+    Set<String> nestedFields = ImmutableSet.of("Nested1", "Nested2");
+
+    // test flat structure, all pre 6.5 plugins look like this
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested1", "nested val1")
+                                                   .add("Nested2", "nested val2").build()), expected,
+                           Collections.emptySet(), nestedFields);
+
+    // test nested
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested",
+                                                        gson.toJson(ImmutableMap.of("Nested1", "nested val1",
+                                                                                    "Nested2", "nested val2")))
+                                                   .build()), expected, Collections.emptySet(), nestedFields);
+
+    // test macro gets correct default value, and macro fields get set correctly
+    expected = new NestedConfigPlugin.Config(1, new NestedConfigPlugin.NestedConfig(null, null));
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested1", "${macro1}")
+                                                   .add("Nested2", "${macro2}").build()), expected,
+                           nestedFields, Collections.emptySet());
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested", "${I am macro}")
+                                                   .build()), expected, nestedFields, Collections.emptySet());
+
+    // test partial macros inside the nested field
+    Map<String, String> childMap = ImmutableMap.of("Nested1", "${macro1}", "Nested2", "myActualVal");
+    expected = new NestedConfigPlugin.Config(1, new NestedConfigPlugin.NestedConfig(null, "myActualVal"));
+    instantiateAndValidate(pluginDir, new Plugin(Collections.emptyList(), artifact, pluginClass,
+                                                 PluginProperties.builder()
+                                                   .add("X", "1")
+                                                   .add("Nested", new Gson().toJson(childMap)).build()),
+                           expected, Collections.singleton("Nested1"), Collections.singleton("Nested2"));
+  }
+
+  private void instantiateAndValidate(File pluginDir, Plugin pluginInfo,
+                                      NestedConfigPlugin.Config expected, Set<String> macroFields,
+                                      Set<String> notMacroFields) throws Exception {
+    Gson gson = new Gson();
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+
+      // here cannot use directly cast to NestedConfigPlugin since the classloaders are different, will get
+      // ClassCastException
+      Callable<String> plugin = instantiator.newInstance(pluginInfo);
+      NestedConfigPlugin.Config actual = gson.fromJson(plugin.call(), NestedConfigPlugin.Config.class);
+      Assert.assertEquals(expected, actual);
+      macroFields.forEach(field -> {
+        Assert.assertTrue(actual.nested.containsMacro(field));
+      });
+      notMacroFields.forEach(field -> {
+        Assert.assertFalse(actual.nested.containsMacro(field));
+      });
     }
   }
 
@@ -481,7 +581,9 @@ public class ArtifactRepositoryTest {
           String pluginId = "5";
           PluginContext pluginContext = new DefaultPluginContext(instantiator,
                                                                  NamespaceId.DEFAULT.app("abc").worker("w"),
-                                                                 ImmutableMap.of(pluginId, pluginInfo));
+                                                                 ImmutableMap.of(pluginId, pluginInfo),
+                                                                 new FeatureFlagsProvider() {
+                                                                 });
           PluginProperties resolvedProperties = pluginContext.getPluginProperties(pluginId, testMacroEvaluator);
           Map<String, String> expected = new HashMap<>();
           expected.put("class.name", TEST_EMPTY_CLASS);
@@ -537,8 +639,8 @@ public class ArtifactRepositoryTest {
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
-    Files.copy(Locations.newInputSupplier(plugin.getKey().getLocation()),
-               new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
+    Locations.linkOrCopyOverwrite(plugin.getKey().getLocation(),
+                                  new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Create another plugin jar with later version and update the repository
     Id.Artifact artifact2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "2.0");
@@ -551,8 +653,8 @@ public class ArtifactRepositoryTest {
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getArtifactId().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
-    Files.copy(Locations.newInputSupplier(plugin.getKey().getLocation()),
-               new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
+    Locations.linkOrCopyOverwrite(plugin.getKey().getLocation(),
+                                  new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Load the Plugin class from the classLoader.
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
@@ -652,6 +754,36 @@ public class ArtifactRepositoryTest {
     } catch (InvalidArtifactException e) {
       // expected
     }
+  }
+
+  @Test
+  public void testPluginMetadata() throws Exception {
+    // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
+    Id.Artifact artifact1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
+    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+
+    // Build up the plugin repository.
+    Set<ArtifactRange> parents = ImmutableSet.of(
+      new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
+                        new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    artifactRepository.addArtifact(artifact1Id, jarFile, parents, null);
+
+    PluginId testPlugin1 = new PluginId("default", "myPlugin", "1.0", "TestPlugin", "plugin");
+    Metadata expected = new Metadata(MetadataScope.SYSTEM, ImmutableSet.of("tag1", "tag2", "tag3"),
+                                     ImmutableMap.of("k1", "v1", "k2", "v2"));
+    Assert.assertEquals(expected, metadataAdmin.getMetadata(testPlugin1.toMetadataEntity()));
+
+    PluginId testPlugin2 = new PluginId("default", "myPlugin", "1.0", "TestPlugin2", "plugin");
+    expected = new Metadata(MetadataScope.SYSTEM, ImmutableSet.of("test-tag1", "test-tag2", "test-tag3"),
+                            ImmutableMap.of("key1", "val1", "key2", "val2"));
+    Assert.assertEquals(expected, metadataAdmin.getMetadata(testPlugin2.toMetadataEntity()));
+
+    // test metadata is cleaned up when the artifact gets deleted
+    artifactRepository.deleteArtifact(artifact1Id);
+
+    Assert.assertEquals(Metadata.EMPTY, metadataAdmin.getMetadata(testPlugin1.toMetadataEntity()));
+    Assert.assertEquals(Metadata.EMPTY, metadataAdmin.getMetadata(testPlugin2.toMetadataEntity()));
   }
 
   @Test
@@ -765,13 +897,12 @@ public class ArtifactRepositoryTest {
   private static void copyArtifacts(File pluginDir, SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins)
     throws IOException {
     ArtifactDescriptor descriptor = plugins.firstKey();
-    Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
-               new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
+    Locations.linkOrCopyOverwrite(descriptor.getLocation(),
+                                  new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
   }
 
   private static ProgramClassLoader createAppClassLoader(File jarFile) throws IOException {
-    File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
-    BundleJarUtil.unJar(jarFile, unpackDir);
+    File unpackDir = BundleJarUtil.prepareClassLoaderFolder(jarFile, TMP_FOLDER::newFolder).getDir();
     return new ProgramClassLoader(cConf, unpackDir,
                                   FilterClassLoader.create(ArtifactRepositoryTest.class.getClassLoader()));
   }
@@ -780,7 +911,7 @@ public class ArtifactRepositoryTest {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               cls, manifest);
     DirUtils.mkdirs(destFile.getParentFile());
-    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
+    Locations.linkOrCopyOverwrite(deploymentJar, destFile);
     return destFile;
   }
 
@@ -788,7 +919,7 @@ public class ArtifactRepositoryTest {
     Location deploymentJar = PluginJarHelper.createPluginJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                              manifest, cls);
     DirUtils.mkdirs(destFile.getParentFile());
-    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
+    Locations.linkOrCopyOverwrite(deploymentJar, destFile);
     return destFile;
   }
 

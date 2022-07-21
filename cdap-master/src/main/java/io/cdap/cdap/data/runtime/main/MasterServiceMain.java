@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,7 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.FileContextProvider;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.URLConnections;
@@ -88,17 +89,18 @@ import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.cdap.support.guice.SupportBundleServiceModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileContext;
@@ -265,7 +267,7 @@ public class MasterServiceMain extends DaemonMain {
                           TimeUnit.MILLISECONDS,
                           String.format("Connection timed out while trying to start ZooKeeper client. Please " +
                                           "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
-                                          "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
+                                          "Currently configured as: %s", zkClient.getConnectString()));
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
@@ -546,6 +548,7 @@ public class MasterServiceMain extends DaemonMain {
                                        final LeaderElectionInfoService electionInfoService) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -569,13 +572,16 @@ public class MasterServiceMain extends DaemonMain {
       new MessagingClientModule(),
       new ExploreClientModule(),
       new AuditModule(),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
+      new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
       new MonitorHandlerModule(true),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),
+      new SupportBundleServiceModule(),
       new RuntimeServerModule(),
       new OperationalStatsModule(),
       new AbstractModule() {
@@ -605,7 +611,7 @@ public class MasterServiceMain extends DaemonMain {
     private Cancellable secureStoreUpdateCancellable;
     // Executor for re-running master twill app if it gets terminated.
     private ScheduledExecutorService executor;
-    private AuthorizerInstantiator authorizerInstantiator;
+    private AccessControllerInstantiator accessControllerInstantiator;
     private TwillRunnerService twillRunner;
     private TwillRunnerService remoteExecutionTwillRunner;
     private ExploreClient exploreClient;
@@ -640,9 +646,8 @@ public class MasterServiceMain extends DaemonMain {
 
       try {
         // Define all StructuredTable before starting any services that need StructuredTable
-        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                        injector.getInstance(StructuredTableRegistry.class));
-      } catch (IOException | TableAlreadyExistsException e) {
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+      } catch (IOException e) {
         throw new RuntimeException("Unable to create the system tables.", e);
       }
       metadataStorage = injector.getInstance(MetadataStorage.class);
@@ -652,7 +657,7 @@ public class MasterServiceMain extends DaemonMain {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
 
-      authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+      accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
       services.add(injector.getInstance(KafkaClientService.class));
       services.add(injector.getInstance(MetricsCollectionService.class));
       services.add(injector.getInstance(OperationalStatsService.class));
@@ -682,7 +687,6 @@ public class MasterServiceMain extends DaemonMain {
       services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                   RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
       services.add(injector.getInstance(AppFabricServer.class));
-
       executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
 
       // Start monitoring twill application
@@ -738,7 +742,7 @@ public class MasterServiceMain extends DaemonMain {
       }
       services.clear();
       Closeables.closeQuietly(metadataStorage);
-      Closeables.closeQuietly(authorizerInstantiator);
+      Closeables.closeQuietly(accessControllerInstantiator);
       Closeables.closeQuietly(exploreClient);
       Closeables.closeQuietly(logAppenderInitializer);
     }

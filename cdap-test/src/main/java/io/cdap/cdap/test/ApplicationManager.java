@@ -30,7 +30,6 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Instance of this class is for managing deployed application.
@@ -99,7 +98,7 @@ public interface ApplicationManager {
    * Wait for a given programId to have no running run record
    * @param programId the program id to wait on
    */
-  void waitForStopped(final ProgramId programId) throws Exception;
+  void waitForStopped(ProgramId programId) throws Exception;
 
   /**
    * Starts a particular program.

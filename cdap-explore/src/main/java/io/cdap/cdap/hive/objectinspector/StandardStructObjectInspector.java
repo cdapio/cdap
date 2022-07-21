@@ -159,7 +159,7 @@ public class StandardStructObjectInspector extends
     return fields;
   }
 
-  boolean warned = false;
+  boolean warned;
 
   // With Data
   @Override

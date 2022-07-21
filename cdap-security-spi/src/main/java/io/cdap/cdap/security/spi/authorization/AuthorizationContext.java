@@ -30,8 +30,8 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * A context for {@link Authorizer} extensions to interact with CDAP. This context is available to {@link Authorizer}
- * extensions in the {@link Authorizer#initialize(AuthorizationContext)} method.
+ * A context for {@link AccessController} extensions to interact with CDAP. This context is available to
+ * {@link AccessController} extensions in the {@link AccessController#initialize(AuthorizationContext)} method.
  *
  * Extensions can use this class to:
  * <ol>

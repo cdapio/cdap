@@ -31,7 +31,7 @@ public class LimitingInputFormatProvider extends BasicInputFormatProvider {
     super(LimitingInputFormat.class.getName(), getConfiguration(delegate, maxRecords));
   }
 
-  private static Map<String, String> getConfiguration(InputFormatProvider delegate, int maxRecords) {
+  public static Map<String, String> getConfiguration(InputFormatProvider delegate, int maxRecords) {
     Map<String, String> config = new HashMap<>(delegate.getInputFormatConfiguration());
     config.put(LimitingInputFormat.DELEGATE_CLASS_NAME, delegate.getInputFormatClassName());
     config.put(LimitingInputFormat.MAX_RECORDS, String.valueOf(maxRecords));

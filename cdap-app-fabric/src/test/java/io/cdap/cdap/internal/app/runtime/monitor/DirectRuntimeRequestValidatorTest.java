@@ -26,7 +26,6 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
@@ -49,12 +48,15 @@ import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
@@ -63,18 +65,25 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import org.apache.tephra.TransactionSystemClient;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * Unit test for {@link DirectRuntimeRequestValidator}.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DirectRuntimeRequestValidatorTest {
 
   @ClassRule
@@ -84,6 +93,11 @@ public class DirectRuntimeRequestValidatorTest {
 
   private CConfiguration cConf;
   private TransactionRunner txRunner;
+
+  @Mock
+  private AccessEnforcer accessEnforcer;
+  @Mock
+  private AuthenticationContext authenticationContext;
 
   @Before
   public void setup() throws IOException, TableAlreadyExistsException {
@@ -103,7 +117,7 @@ public class DirectRuntimeRequestValidatorTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
+          bind(AccessEnforcer.class).to(NoOpAccessController.class);
           bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
           bind(Store.class).to(DefaultStore.class);
         }
@@ -111,8 +125,7 @@ public class DirectRuntimeRequestValidatorTest {
     );
 
     // Create store definition
-    injector.getInstance(StructuredTableRegistry.class).initialize();
-    StoreDefinition.AppMetadataStore.createTables(injector.getInstance(StructuredTableAdmin.class), true);
+    StoreDefinition.AppMetadataStore.create(injector.getInstance(StructuredTableAdmin.class));
 
     txRunner = injector.getInstance(TransactionRunner.class);
   }
@@ -124,7 +137,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test
-  public void testValid() throws BadRequestException, AuthorizationException {
+  public void testValid() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert the run
@@ -139,22 +152,43 @@ public class DirectRuntimeRequestValidatorTest {
 
     // Validation should pass
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
-                                                                          new MockProgramRunRecordFetcher());
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+                                                                          new MockProgramRunRecordFetcher(),
+                                                                          accessEnforcer, authenticationContext);
+    ProgramRunInfo programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    // After recording the program start in AppMetaDataStore the expected state is Starting
+    Assert.assertEquals(ProgramRunStatus.STARTING, programRunInfo.getProgramRunStatus());
   }
 
   @Test (expected = BadRequestException.class)
-  public void testInvalid() throws BadRequestException, AuthorizationException {
+  public void testInvalid() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Validation should fail
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
-                                                                          new MockProgramRunRecordFetcher());
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+                                                                          new MockProgramRunRecordFetcher(),
+                                                                          accessEnforcer, authenticationContext);
+    validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+  }
+
+  @Test (expected = UnauthorizedException.class)
+  public void testUnauthorized() throws BadRequestException {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
+                                                                          new MockProgramRunRecordFetcher(),
+                                                                          accessEnforcer, authenticationContext);
+
+    Principal principal = new Principal("test", Principal.PrincipalType.USER);
+    Mockito.when(authenticationContext.getPrincipal()).thenReturn(principal);
+    Mockito.doThrow(new UnauthorizedException("Unauthorized"))
+      .when(accessEnforcer).enforce(programRunId, principal, StandardPermission.GET);
+
+    validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test (expected = BadRequestException.class)
-  public void testNotRunning() throws BadRequestException, AuthorizationException {
+  public void testNotRunning() throws BadRequestException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert a completed run
@@ -171,19 +205,21 @@ public class DirectRuntimeRequestValidatorTest {
 
     // Validation should fail
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
-                                                                          new MockProgramRunRecordFetcher());
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+                                                                          new MockProgramRunRecordFetcher(),
+                                                                          accessEnforcer, authenticationContext);
+    validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test
-  public void testFetcher() throws BadRequestException, AuthorizationException {
+  public void testFetcher() throws BadRequestException {
     ArtifactId artifactId = new ArtifactId("test", new ArtifactVersion("1.0"), ArtifactScope.USER);
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    ProgramRunStatus programRunStatus = ProgramRunStatus.RUNNING;
     RunRecordDetail runRecord = RunRecordDetail.builder()
       .setProgramRunId(programRunId)
       .setStartTime(System.currentTimeMillis())
       .setArtifactId(artifactId)
-      .setStatus(ProgramRunStatus.RUNNING)
+      .setStatus(programRunStatus)
       .setSystemArgs(ImmutableMap.of(
         SystemArguments.PROFILE_NAME, "default",
         SystemArguments.PROFILE_PROVISIONER, "native"))
@@ -192,14 +228,48 @@ public class DirectRuntimeRequestValidatorTest {
       .build();
 
     MockProgramRunRecordFetcher runRecordFetcher = new MockProgramRunRecordFetcher().setRunRecord(runRecord);
-    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner, runRecordFetcher);
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner, runRecordFetcher,
+                                                                          accessEnforcer, authenticationContext);
 
     // The first call should be hitting the run record fetching to fetch the run record.
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    ProgramRunInfo programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    Assert.assertEquals(programRunStatus, programRunInfo.getProgramRunStatus());
 
     // The second call will hit the runtime store, so it shouldn't matter what the run record fetch returns
     runRecordFetcher.setRunRecord(null);
-    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1,
+                                                                                        HttpMethod.GET, "/"));
+    Assert.assertEquals(programRunStatus, programRunInfo.getProgramRunStatus());
+  }
+
+  @Test
+  public void testValidProgramInStoppingState() throws BadRequestException {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+
+    // Insert the run
+    long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    long terminateTs = now + 300L;
+    TransactionRunners.run(txRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "system:default"),
+                                      createSourceId(1), ARTIFACT_ID);
+      store.recordProgramProvisioned(programRunId, 1, createSourceId(2));
+      store.recordProgramStart(programRunId, null, Collections.emptyMap(), createSourceId(3));
+      store.recordProgramRunning(programRunId, System.currentTimeMillis(), null, createSourceId(3));
+      store.recordProgramStopping(programRunId, createSourceId(3), now, terminateTs);
+    });
+
+    // Validation should pass
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
+                                                                          new MockProgramRunRecordFetcher(),
+                                                                          accessEnforcer, authenticationContext);
+    ProgramRunInfo programRunInfo = validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    // After recording the program start in AppMetaDataStore the expected state is Stopping
+    Assert.assertEquals(ProgramRunStatus.STOPPING, programRunInfo.getProgramRunStatus());
+    Assert.assertEquals(terminateTs, programRunInfo.getTerminateTimestamp());
   }
 
   private byte[] createSourceId(int value) {

@@ -20,9 +20,6 @@ import io.cdap.cdap.api.metrics.MetricValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * {@link MetricsEmitter} that aggregates  values for a metric
  * during collection and emit the aggregated value when emit.
@@ -31,10 +28,10 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
 
   private final String name;
-  // metric value
-  private final AtomicLong value;
-  // specifies if the metric type is gauge or counter
-  private final AtomicBoolean gaugeUsed;
+  private long value;
+
+  private MetricType metricType = MetricType.COUNTER;
+  private Distribution distribution;
 
   AggregatedMetricsEmitter(String name) {
     if (name == null || name.isEmpty()) {
@@ -42,25 +39,44 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     }
 
     this.name = name;
-    this.value = new AtomicLong();
-    this.gaugeUsed = new AtomicBoolean(false);
   }
 
-  void increment(long value) {
-    this.value.addAndGet(value);
+  public synchronized void increment(long incrementValue) {
+    this.value += incrementValue;
+    this.metricType = MetricType.COUNTER;
   }
-
 
   @Override
-  public MetricValue emit() {
-    // todo CDAP-2195 - potential race condition , reseting value and type has to be done together
-    long value = this.value.getAndSet(0);
-    MetricType type = gaugeUsed.getAndSet(false) ? MetricType.GAUGE : MetricType.COUNTER;
-    return new MetricValue(name, type, value);
+  public synchronized MetricValue emit() {
+    if (metricType == MetricType.DISTRIBUTION) {
+      Distribution oldVal;
+      // TODO emit maybe made faster using CAS inside Distribution.
+      // https://cdap.atlassian.net/browse/CDAP-18792 has more context
+      oldVal = distribution;
+      distribution = null;
+      if (oldVal != null) {
+        LOG.trace("Emitting distribution metric: {}", oldVal.toString());
+        return oldVal.getMetricValue(name);
+      }
+      return new Distribution().getMetricValue(name);
+    }
+
+    MetricValue returnVal = new MetricValue(name, metricType, this.value);
+    this.value = 0;
+    this.metricType = MetricType.COUNTER;
+    return returnVal;
   }
 
-  public void gauge(long value) {
-    this.value.set(value);
-    this.gaugeUsed.set(true);
+  public synchronized void gauge(long value) {
+    this.value = value;
+    this.metricType = MetricType.GAUGE;
+  }
+
+  public synchronized void event(long value) {
+    if (distribution == null) {
+      distribution = new Distribution();
+    }
+    distribution.add(value);
+    this.metricType = MetricType.DISTRIBUTION;
   }
 }

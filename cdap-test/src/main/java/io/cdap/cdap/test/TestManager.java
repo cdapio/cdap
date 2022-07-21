@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -55,7 +56,8 @@ public interface TestManager {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(NamespaceId namespace,
-                                       Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
+                                       Class<? extends Application> applicationClz, File... bundleEmbeddedJars)
+    throws AccessException;
   /**
    * Deploys an {@link Application}.
    *
@@ -66,7 +68,8 @@ public interface TestManager {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
-                                       @Nullable Config configObject, File... bundleEmbeddedJars);
+                                       @Nullable Config configObject, File... bundleEmbeddedJars)
+    throws AccessException;
 
   /**
    * Creates an {@link Application} with a version using an existing artifact.

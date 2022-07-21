@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
-import io.cdap.cdap.common.AuthorizationException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.netty.handler.codec.http.HttpRequest;
@@ -27,12 +27,14 @@ import io.netty.handler.codec.http.HttpRequest;
 public interface RuntimeRequestValidator {
 
   /**
-   * Validates the request.
+   * Returns the {@link ProgramRunInfo} for the programRunId if the program is not in an end state,
+   * Otherwise, it throws BadRequestException.
    *
    * @param programRunId the program run id where the request is coming from
    * @param request the http request from the program runtime
    * @throws BadRequestException if the request is not valid
-   * @throws AuthorizationException if the request doesn't have a valid Authorization header
+   * @throws AccessException if the request doesn't have a valid Authorization header
    */
-  void validate(ProgramRunId programRunId, HttpRequest request) throws BadRequestException, AuthorizationException;
+  ProgramRunInfo getProgramRunStatus(ProgramRunId programRunId, HttpRequest request)
+    throws BadRequestException, AccessException;
 }

@@ -106,7 +106,8 @@ public class MasterServiceMainTestBase {
     // Use remote fetcher for runtime server
     cConf.setClass(Constants.RuntimeMonitor.RUN_RECORD_FETCHER_CLASS,
                    RemoteProgramRunRecordFetcher.class, ProgramRunRecordFetcher.class);
-
+    // Set JMX server port for JMXMetricsCollector
+    cConf.setInt(Constants.JMXMetricsCollector.SERVER_PORT, 11022);
     // Starting all master service mains
     List<Class<? extends AbstractServiceMain<EnvironmentOptions>>> serviceMainClasses = new ArrayList<>(
       Arrays.asList(RouterServiceMain.class,
@@ -115,7 +116,11 @@ public class MasterServiceMainTestBase {
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
                     RuntimeServiceMain.class,
-                    AppFabricServiceMain.class));
+                    AppFabricServiceMain.class,
+                    SupportBundleServiceMain.class,
+                    SystemMetricsExporterServiceMain.class,
+                    ArtifactCacheServiceMain.class,
+                    TetheringAgentServiceMain.class));
 
     if (SecurityUtil.isManagedSecurity(cConf)) {
       serviceMainClasses.add(AuthenticationServiceMain.class);

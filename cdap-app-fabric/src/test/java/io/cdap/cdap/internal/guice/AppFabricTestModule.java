@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -44,6 +45,7 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import org.apache.hadoop.conf.Configuration;
@@ -87,9 +89,10 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new TransactionExecutorModule());
     install(new DataSetServiceModules().getInMemoryModules());
     install(new ConfigModule(cConf, hConf, sConf));
+    install(RemoteAuthenticatorModules.getNoOpModule());
     install(new IOModule());
     install(new InMemoryDiscoveryModule());
-    install(new AppFabricServiceRuntimeModule().getInMemoryModules());
+    install(new AppFabricServiceRuntimeModule(cConf).getInMemoryModules());
     install(new MonitorHandlerModule(false));
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule());
@@ -101,6 +104,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ExploreClientModule());
     install(new ConfigStoreModule());
     install(new MetadataServiceModule());
+    install(new AuthenticationContextModules().getMasterModule());
     install(new AuthorizationModule());
     install(new AuthorizationEnforcementModule().getStandaloneModules());
     install(new SecureStoreServerModule());

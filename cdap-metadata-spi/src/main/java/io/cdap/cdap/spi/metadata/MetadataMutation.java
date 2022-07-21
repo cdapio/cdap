@@ -21,6 +21,7 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -63,6 +64,22 @@ public abstract class MetadataMutation {
    * time, or redefined.
    */
   public static class Create extends MetadataMutation {
+    // directives for (re-)creation of system metadata:
+    // - keep description if new metadata does not contain it
+    // - preserve creation-time if it exists in current metadata
+    public static final Map<ScopedNameOfKind, MetadataDirective> CREATE_DIRECTIVES;
+
+    static {
+      Map<ScopedNameOfKind, MetadataDirective> createDirectives = new HashMap<>();
+      createDirectives.put(
+        new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.DESCRIPTION_KEY),
+        MetadataDirective.KEEP);
+      createDirectives.put(
+        new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.CREATION_TIME_KEY),
+        MetadataDirective.PRESERVE);
+      CREATE_DIRECTIVES = Collections.unmodifiableMap(createDirectives);
+    }
+
     private final Metadata metadata;
     private final Map<ScopedNameOfKind, MetadataDirective> directives;
 

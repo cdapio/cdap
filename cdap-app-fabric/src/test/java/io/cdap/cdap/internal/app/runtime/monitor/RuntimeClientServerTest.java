@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
@@ -41,6 +42,8 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
@@ -61,6 +64,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -69,6 +74,9 @@ import java.util.stream.IntStream;
  */
 @RunWith(Parameterized.class)
 public class RuntimeClientServerTest {
+
+  public static final String TEST_TOPIC_KEY = "topic.key";
+  public static final String TEST_TOPIC = "topic";
 
   @Parameterized.Parameters(name = "{index}: compression = {0}")
   public static Collection<Object[]> parameters() {
@@ -99,16 +107,22 @@ public class RuntimeClientServerTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED, compression);
     cConf.setBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED, true);
+    cConf.set(TEST_TOPIC_KEY, TEST_TOPIC);
+    cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, Constants.Logging.TMS_TOPIC_PREFIX + ":1," + TEST_TOPIC_KEY);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new InMemoryDiscoveryModule(),
       new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new AuthenticationContextModules().getNoOpModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new RuntimeServerModule() {
         @Override
         protected void bindRequestValidator() {
-          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
+          bind(RuntimeRequestValidator.class).toInstance(
+            (programRunId, request) -> new ProgramRunInfo(Long.MAX_VALUE));
         }
 
         @Override
@@ -164,7 +178,7 @@ public class RuntimeClientServerTest {
   @Test
   public void testLargeMessage() throws Exception {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    TopicId topicId = NamespaceId.SYSTEM.topic("topic");
+    TopicId topicId = NamespaceId.SYSTEM.topic(TEST_TOPIC);
 
     List<Message> messages = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
@@ -197,13 +211,28 @@ public class RuntimeClientServerTest {
   @Test
   public void testLogMessage() throws Exception {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX) + "-1");
+    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX) + "0");
 
     List<Message> messages = IntStream.range(0, 100).mapToObj(this::createMessage).collect(Collectors.toList());
     runtimeClient.sendMessages(programRunId, topicId, messages.iterator());
 
     List<String> expected = messages.stream().map(Message::getPayloadAsString).collect(Collectors.toList());
     Assert.assertEquals(expected, logEntries);
+  }
+
+  @Test
+  public void testFutureIsNotBlockingWhenValueIsSet() throws Exception {
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    runtimeClient.onProgramStopRequested(terminateTs -> countDownLatch.countDown());
+    // Now call sendMessages which will set the future
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    TopicId topicId = NamespaceId.SYSTEM.topic("topic");
+    List<Message> messages = new ArrayList<>();
+    messages.add(createMessage(Math.max(1, RuntimeClient.CHUNK_SIZE / 4)));
+    runtimeClient.sendMessages(programRunId, topicId, messages.iterator());
+
+    // Assert that future is not blocking anymore
+    Assert.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
   }
 
   @Test (timeout = 2000L)

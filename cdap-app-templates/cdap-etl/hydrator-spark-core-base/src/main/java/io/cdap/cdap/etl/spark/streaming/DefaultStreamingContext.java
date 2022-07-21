@@ -54,11 +54,12 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
     super(new PipelineRuntime(sec.getNamespace(), sec.getApplicationSpecification().getName(),
                               sec.getLogicalStartTime(), new BasicArguments(sec), sec.getMetrics(),
-                              sec.getPluginContext(), sec.getServiceDiscoverer(), sec, sec, sec), stageSpec);
+                              sec.getPluginContext(), sec.getServiceDiscoverer(), sec, sec, sec,
+                              sec.getPluginContext()), stageSpec);
     this.sec = sec;
     this.jsc = jsc;
     this.admin = sec.getAdmin();
-    this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(sec);
   }
 
   @Override

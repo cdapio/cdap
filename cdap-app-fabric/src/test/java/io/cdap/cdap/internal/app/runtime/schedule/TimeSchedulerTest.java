@@ -70,4 +70,15 @@ public class TimeSchedulerTest extends AppFabricTestBase {
     // and from 2:05 pm to 2:55pm will have 11 schedules as end time is exclusive. in total we expect 24 schedules.
     Assert.assertEquals(24, nextRuntimes.size());
   }
+
+  @Test
+  public void testDeleteNonExisting() throws Exception {
+    ProgramSchedule sched = new ProgramSchedule("name", "description", PROG1_ID,
+                                                Collections.emptyMap(),
+                                                new TimeTrigger("*/5 * * * *"), Collections.emptyList());
+    timeScheduler.addProgramSchedule(sched);
+    timeScheduler.deleteProgramSchedule(sched);
+    // check deleting non-existing doesn't throw an exception
+    timeScheduler.deleteProgramSchedule(sched);
+  }
 }

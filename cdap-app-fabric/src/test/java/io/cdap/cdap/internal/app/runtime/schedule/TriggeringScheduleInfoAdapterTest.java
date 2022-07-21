@@ -49,7 +49,8 @@ public class TriggeringScheduleInfoAdapterTest {
     token.setCurrentNode("node");
     token.put("tokenKey", "tokenVal");
     List<TriggerInfo> triggerInfos = ImmutableList.of(
-        new DefaultProgramStatusTriggerInfo("ns", Specifications.from(new WorkflowAppWithFork()), ProgramType.WORKFLOW,
+        new DefaultProgramStatusTriggerInfo("ns", Specifications.from(new WorkflowAppWithFork()).getName(),
+                                            ProgramType.WORKFLOW,
                                             WorkflowAppWithFork.WorkflowWithFork.class.getSimpleName(),
                                             RunIds.generate(), ProgramStatus.COMPLETED,
                                             token, Collections.emptyMap()),
@@ -67,8 +68,8 @@ public class TriggeringScheduleInfoAdapterTest {
       (DefaultProgramStatusTriggerInfo) triggerInfos.get(0);
     DefaultProgramStatusTriggerInfo deserializedProgramStatusTriggerInfo =
       (DefaultProgramStatusTriggerInfo) deserializedScheduleInfo.getTriggerInfos().get(0);
-    Assert.assertEquals(expectedProgramStatusTriggerInfo.getApplicationSpecification().getName(),
-                        deserializedProgramStatusTriggerInfo.getApplicationSpecification().getName());
+    Assert.assertEquals(expectedProgramStatusTriggerInfo.getApplicationName(),
+                        deserializedProgramStatusTriggerInfo.getApplicationName());
     Assert.assertEquals(expectedProgramStatusTriggerInfo.getWorkflowToken().getAll(),
                         deserializedProgramStatusTriggerInfo.getWorkflowToken().getAll());
   }

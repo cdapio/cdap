@@ -56,6 +56,7 @@ public class DoubleTransform extends Transform<StructuredRecord, StructuredRecor
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(Transform.PLUGIN_TYPE, "Double", "", DoubleTransform.class.getName(), null, properties);
+    return PluginClass.builder().setName("Double").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(DoubleTransform.class.getName()).setProperties(properties).build();
   }
 }

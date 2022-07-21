@@ -21,6 +21,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithDataset;
 import io.cdap.cdap.AppWithDatasetDuplicate;
@@ -30,15 +34,29 @@ import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.capability.CapabilityReader;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
@@ -49,11 +67,22 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.common.http.HttpResponse;
 import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -64,6 +93,44 @@ import java.util.stream.StreamSupport;
  * Tests for {@link AppLifecycleHttpHandler}
  */
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
+
+  @BeforeClass
+  public static void beforeClass() throws Throwable {
+    initializeAndStartServices(createBasicCConf());
+  }
+
+  @Before
+  public void resetMock() {
+    Mockito.reset(getInjector().getInstance(ApplicationLifecycleService.class));
+  }
+
+  protected static void initializeAndStartServices(CConfiguration cConf) throws Exception {
+    initializeAndStartServices(cConf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
+      }
+
+      @Provides
+      @Singleton
+      public ApplicationLifecycleService createLifeCycleService(CConfiguration cConf,
+          Store store, Scheduler scheduler, UsageRegistry usageRegistry,
+          PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
+          OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
+          ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
+          MetadataServiceClient metadataServiceClient,
+          AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
+          MessagingService messagingService, Impersonator impersonator,
+          CapabilityReader capabilityReader) {
+
+        return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
+            usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
+            managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
+            messagingService, impersonator, capabilityReader));
+      }
+    });
+  }
 
   /**
    * Tests deploying an application in a non-existing non-default namespace.
@@ -360,6 +427,134 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testListAndGetForPaginatedAPI() throws Exception {
+    for (int i = 0; i < 10; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME + i;
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    boolean emptyListReceived = false;
+
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, "");
+      int currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      emptyListReceived = (currentResultSize == 0);
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+    }
+    Assert.assertEquals(10, count);
+    Assert.assertFalse(emptyListReceived);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                     Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
+  public void testListAndGetForPaginatedAPIWithEmptyLastPage() throws Exception {
+    for (int i = 0; i < 9; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME + i;
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    boolean emptyListReceived = false;
+
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, "");
+      int currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      emptyListReceived = (currentResultSize == 0);
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+    }
+    Assert.assertEquals(9, count);
+    Assert.assertTrue(emptyListReceived);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
+  public void testListAndGetForPaginatedAPIWithFiltering() throws Exception {
+    List<Integer> filteredIndices = new ArrayList<>(Arrays.asList(1, 2, 4, 5, 7, 9));
+    for (int i = 0; i < 10; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME + i;
+      if (filteredIndices.contains(i)) {
+        ns1AppName = AllProgramsApp.NAME + "filter" + i;
+      }
+
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    boolean emptyListReceived = false;
+
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, "filter");
+      int currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      emptyListReceived = (currentResultSize == 0);
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+    }
+    Assert.assertEquals(6, count);
+    Assert.assertTrue(emptyListReceived);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
   public void testListAndGet() throws Exception {
     //deploy without name to testnamespace1
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
@@ -451,6 +646,22 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     //verify testnamespace2 has 0 app
     apps = getAppList(TEST_NAMESPACE2);
     Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
+  public void testListAndGetWithScanApplicationsException() throws Exception {
+    String exceptionMessage = "sample_exception";
+    Mockito.doThrow(new RuntimeException(exceptionMessage))
+        .when(getInjector().getInstance(ApplicationLifecycleService.class))
+        .scanApplications(Mockito.any(), Mockito.any());
+
+    //deploy without name to testnamespace1
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+
+    //verify getApps fails with error code 500
+    HttpResponse response = getAppListResponseWhenFailingWithException(TEST_NAMESPACE1);
+    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertEquals(exceptionMessage, response.getResponseBodyAsString());
   }
 
   /**
@@ -603,5 +814,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static class ExtraConfig extends Config {
     @SuppressWarnings("unused")
     private final int x = 5;
+  }
+
+  protected HttpResponse getAppListResponseWhenFailingWithException(String namespace) throws Exception {
+    return doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
 }

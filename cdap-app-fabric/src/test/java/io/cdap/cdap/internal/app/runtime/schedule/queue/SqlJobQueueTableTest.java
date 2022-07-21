@@ -21,7 +21,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -36,9 +35,9 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -78,12 +77,11 @@ public class SqlJobQueueTableTest extends JobQueueTableTest {
       }
     );
 
-    injector.getInstance(StructuredTableRegistry.class).initialize();
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    StoreDefinition.JobQueueStore.createTables(structuredTableAdmin, false);
-    StoreDefinition.AppMetadataStore.createTables(structuredTableAdmin, false);
+    StoreDefinition.JobQueueStore.create(structuredTableAdmin);
+    StoreDefinition.AppMetadataStore.create(structuredTableAdmin);
   }
 
   @Override

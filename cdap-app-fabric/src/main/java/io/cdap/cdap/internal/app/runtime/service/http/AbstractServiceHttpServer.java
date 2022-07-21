@@ -96,6 +96,16 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
 
   protected abstract List<? extends AbstractDelegatorContext<T>> createDelegatorContexts() throws Exception;
 
+  // this method will run before the netty http service starts
+  protected void initializeService() throws Exception {
+    // no-op
+  }
+
+  // this method will run before the netty http service stops
+  protected void destroyService() throws Exception {
+    // no-op
+  }
+
   /**
    * Creates a {@link NettyHttpService} from the given host, and list of {@link AbstractDelegatorContext}s
    *
@@ -130,12 +140,19 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
                                                                context.getHandlerMetricsContext()));
     }
 
-    NettyHttpService.Builder builder = NettyHttpService.builder(program.getName() + "-http")
+    NettyHttpService.Builder builder = createHttpServiceBuilder(program.getName() + "-http")
       .setHost(host)
       .setPort(0)
       .setHttpHandlers(nettyHttpHandlers);
 
     return SystemArguments.configureNettyHttpService(programOptions.getUserArguments().asMap(), builder).build();
+  }
+
+  /**
+   * Create a netty http service builder. Children classes can customize is as needed
+   */
+  protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
+    return NettyHttpService.builder(serviceName);
   }
 
   /**
@@ -150,6 +167,8 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
 
     delegatorContexts.addAll(createDelegatorContexts());
     service = createNettyHttpService(delegatorContexts);
+
+    initializeService();
 
     LOG.debug("Starting HTTP server for Service {}", program.getId());
     ProgramId programId = program.getId();
@@ -176,6 +195,7 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    destroyService();
     cancelDiscovery.cancel();
     try {
       service.stop();

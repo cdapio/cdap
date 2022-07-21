@@ -20,6 +20,10 @@ import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
@@ -47,25 +51,34 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
   private final String stageName;
   private final DefaultStageConfigurer stageConfigurer;
   private final Map<String, String> properties;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(
-    C configurer, String stageName, Engine engine) {
-    this(configurer, stageName, engine, new DefaultStageConfigurer(stageName));
+    C configurer, String stageName, Engine engine, FeatureFlagsProvider featureFlagsProvider) {
+    this(configurer, stageName, engine, new DefaultStageConfigurer(stageName), featureFlagsProvider);
   }
 
   public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(
-    C configurer, String stageName, Engine engine, DefaultStageConfigurer stageConfigurer) {
-    this(configurer, configurer, stageName, engine, stageConfigurer);
+    C configurer, String stageName, Engine engine, DefaultStageConfigurer stageConfigurer,
+    FeatureFlagsProvider featureFlagsProvider) {
+    this(configurer, configurer, stageName, engine, stageConfigurer, featureFlagsProvider);
   }
 
   public DefaultPipelineConfigurer(PluginConfigurer pluginConfigurer, DatasetConfigurer datasetConfigurer,
-                                   String stageName, Engine engine, DefaultStageConfigurer stageConfigurer) {
+                                   String stageName, Engine engine, DefaultStageConfigurer stageConfigurer,
+                                   FeatureFlagsProvider featureFlagsProvider) {
     this.pluginConfigurer = pluginConfigurer;
     this.datasetConfigurer = datasetConfigurer;
     this.stageName = stageName;
     this.stageConfigurer = stageConfigurer;
     this.engine = engine;
     this.properties = new HashMap<>();
+    this.featureFlagsProvider = featureFlagsProvider;
+  }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagsProvider.isFeatureEnabled(name);
   }
 
   @Override
@@ -124,7 +137,13 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
                                      PluginSelector selector) {
     return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
   }
-  
+
+  @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return pluginConfigurer.evaluateMacros(properties, evaluator, options);
+  }
+
   private String getPluginId(String childPluginId) {
     return String.format("%s%s%s", stageName, Constants.ID_SEPARATOR, childPluginId);
   }

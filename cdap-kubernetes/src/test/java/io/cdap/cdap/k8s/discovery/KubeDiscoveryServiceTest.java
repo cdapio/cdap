@@ -18,8 +18,8 @@ package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1DeleteOptions;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -48,8 +48,9 @@ public class KubeDiscoveryServiceTest {
 
   @Test
   public void testDiscoveryService() throws Exception {
+    String namespace = "default";
     Map<String, String> podLabels = ImmutableMap.of("cdap.container", "test");
-    try (KubeDiscoveryService service = new KubeDiscoveryService("default", "cdap-test-",
+    try (KubeDiscoveryService service = new KubeDiscoveryService(namespace, "cdap-test-",
                                                                  podLabels, Collections.emptyList())) {
       // Watch for changes
       ServiceDiscovered serviceDiscovered = service.discover("test.service");
@@ -79,7 +80,7 @@ public class KubeDiscoveryServiceTest {
       Discoverable discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(1234, discoverable.getSocketAddress().getPort());
       Assert.assertEquals("https", new String(discoverable.getPayload(), StandardCharsets.UTF_8));
-      Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
+      Assert.assertEquals("cdap-test-test-service." + namespace, discoverable.getSocketAddress().getHostName());
 
       // Register the service again with different port. This is to simulate config update
       service.register(new Discoverable("test.service", new InetSocketAddress(InetAddress.getLoopbackAddress(), 4321)));
@@ -93,12 +94,39 @@ public class KubeDiscoveryServiceTest {
       discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(4321, discoverable.getSocketAddress().getPort());
       Assert.assertArrayEquals(new byte[0], discoverable.getPayload());
-      Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
+      Assert.assertEquals("cdap-test-test-service." + namespace, discoverable.getSocketAddress().getHostName());
+
+      // (CDAP-19415) Add a discovery of a new service. This would force recreating a new watch.
+      service.discover("test.service2").watchChanges(sd -> {
+        queue.add(StreamSupport.stream(sd.spliterator(), false).collect(Collectors.toSet()));
+      }, MoreExecutors.directExecutor());
+
+      // The new service shouldn't be available yet.
+      discoverables = queue.poll(5, TimeUnit.SECONDS);
+      Assert.assertNotNull(discoverables);
+      Assert.assertTrue(discoverables.isEmpty());
+
+      // Register the new service.
+      service.register(new Discoverable("test.service2",
+                                        new InetSocketAddress(InetAddress.getLoopbackAddress(), 6789),
+                                        "https".getBytes(StandardCharsets.UTF_8)));
+
+      // We should see the new service being notified.
+      discoverables = queue.poll(5, TimeUnit.SECONDS);
+      Assert.assertNotNull(discoverables);
+      Assert.assertEquals(1, discoverables.size());
+
+      discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
+      Assert.assertEquals(6789, discoverable.getSocketAddress().getPort());
+      Assert.assertEquals("https", new String(discoverable.getPayload(), StandardCharsets.UTF_8));
+      Assert.assertEquals("cdap-test-test-service2." + namespace, discoverable.getSocketAddress().getHostName());
+
     } finally {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService("cdap-test-test-service", "default", null, deleteOptions, null, null, null, null);
+      api.deleteNamespacedService("cdap-test-test-service", namespace, null, null, null, null, null, deleteOptions);
+      api.deleteNamespacedService("cdap-test-test-service2", namespace, null, null, null, null, null, deleteOptions);
     }
   }
 }

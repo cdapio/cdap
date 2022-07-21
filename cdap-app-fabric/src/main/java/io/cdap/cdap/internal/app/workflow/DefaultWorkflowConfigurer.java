@@ -24,6 +24,7 @@ import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.Condition;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
@@ -38,6 +39,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.workflow.condition.DefaultConditionConfigurer;
@@ -48,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link WorkflowConfigurer}.
@@ -62,17 +65,21 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   private final Id.Artifact artifactId;
   private final PluginFinder pluginFinder;
   private final PluginInstantiator pluginInstantiator;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
-  private int nodeIdentifier = 0;
+  private int nodeIdentifier;
   private String name;
   private String description;
   private Map<String, String> properties;
 
+
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                                   @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                   FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
@@ -81,6 +88,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
     this.artifactId = artifactId;
     this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
+    this.runtimeInfo = runtimeInfo;
   }
 
   @Override
@@ -111,25 +119,27 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   @Override
   public void addAction(CustomAction action) {
     nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                 pluginFinder, pluginInstantiator));
+                                                                 pluginFinder, pluginInstantiator, 
+                                                                 runtimeInfo, getFeatureFlagsProvider()));
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
     return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, pluginFinder,
-                                               pluginInstantiator);
+                                               pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate, this, deployNamespace, artifactId,
-                                                    pluginFinder, pluginInstantiator);
+                                                    pluginFinder, pluginInstantiator, runtimeInfo,
+                                                    getFeatureFlagsProvider());
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Condition condition) {
     return new DefaultWorkflowConditionConfigurer<>(condition, this, deployNamespace, artifactId, pluginFinder,
-                                                    pluginInstantiator);
+                                                    pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
   }
 
   private void checkArgument(boolean condition, String template, Object...args) {
@@ -234,8 +244,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
                                        List<WorkflowNode> elseBranch) {
     Preconditions.checkArgument(condition != null, "Condition is null.");
     ConditionSpecification spec = DefaultConditionConfigurer.configureCondition(condition, deployNamespace,
-                                                                                artifactId, pluginFinder,
-                                                                                pluginInstantiator);
+        artifactId, pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     nodes.add(new WorkflowConditionNode(spec.getName(), spec, ifBranch, elseBranch));
   }
 }

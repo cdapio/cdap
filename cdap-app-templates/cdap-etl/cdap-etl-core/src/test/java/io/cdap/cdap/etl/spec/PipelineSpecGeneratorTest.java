@@ -22,7 +22,9 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurable;
@@ -37,6 +39,15 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.engine.sql.BatchSQLEngine;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
@@ -51,9 +62,11 @@ import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.ETLTransformationPushdown;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -88,11 +101,15 @@ public class PipelineSpecGeneratorTest {
   private static final ETLPlugin MOCK_ACTION = new ETLPlugin("mockaction", Action.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_CONDITION = new ETLPlugin("mockcondition", Condition.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_SPLITTER = new ETLPlugin("mocksplit", SplitterTransform.PLUGIN_TYPE, EMPTY_MAP);
+  private static final ETLPlugin MOCK_SQL_ENGINE = new ETLPlugin("mocksqlengine", BatchSQLEngine.PLUGIN_TYPE,
+                                                                 EMPTY_MAP);
+  private static final FeatureFlagsProvider MOCK_FEATURE_FLAGS_PROVIDER = new FeatureFlagsProvider() {
+  };
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
   private static JoinDefinition joinDefinition;
   private static BatchPipelineSpecGenerator specGenerator;
-
+  
   @BeforeClass
   public static void setupTests() {
     // populate some mock plugins.
@@ -118,11 +135,11 @@ public class PipelineSpecGeneratorTest {
                                    new MockSplitter(ImmutableMap.of("portA", SCHEMA_A, "portB", SCHEMA_B)),
                                    artifactIds);
     pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockautojoiner", new MockAutoJoin(), artifactIds);
+    pluginConfigurer.addMockPlugin(BatchSQLEngine.PLUGIN_TYPE, "mocksqlengine", new MockSQLEngine(), artifactIds);
 
-    specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
-                                                   ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                   Engine.MAPREDUCE);
+    specGenerator = new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(), pluginConfigurer,
+        null, ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+        Engine.MAPREDUCE, MOCK_FEATURE_FLAGS_PROVIDER);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -291,6 +308,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(new Resources(1024, 1))
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
     Assert.assertEquals(expected, actual);
   }
@@ -327,6 +345,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(new Resources(1024, 1))
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(etlConfig);
@@ -374,6 +393,54 @@ public class PipelineSpecGeneratorTest {
     try {
       specGenerator.generateSpec(config);
       Assert.fail("Did not fail a pipeline with an action in the middle");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testSourceInPipelineMiddle() throws ValidationException {
+    /*
+     * source1 --> t1 --> source2 --> t2 --> sink
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder()
+            .addStage(new ETLStage("source1", MOCK_SOURCE))
+            .addStage(new ETLStage("source2", MOCK_SOURCE))
+            .addStage(new ETLStage("sink", MOCK_SINK))
+            .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+            .addStage(new ETLStage("t2", MOCK_TRANSFORM_B))
+            .addConnection("source1", "t1")
+            .addConnection("t1", "source2")
+            .addConnection("source2", "t2")
+            .addConnection("t2", "sink")
+            .build();
+    try {
+      specGenerator.generateSpec(config);
+      Assert.fail("Did not fail a pipeline with a source in the middle");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    /*
+     * source1 --> condition --> source2 --> sink1
+     *                       --> t1 -> sink2
+     */
+    config = ETLBatchConfig.builder()
+            .addStage(new ETLStage("source1", MOCK_SOURCE))
+            .addStage(new ETLStage("source2", MOCK_SOURCE))
+            .addStage(new ETLStage("sink1", MOCK_SINK))
+            .addStage(new ETLStage("sink2", MOCK_SINK))
+            .addStage(new ETLStage("condition", MOCK_CONDITION))
+            .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+            .addConnection("source1", "condition")
+            .addConnection("condition", "source2", true)
+            .addConnection("condition", "t1", false)
+            .addConnection("source2", "sink1")
+            .addConnection("t1", "sink2")
+            .build();
+    try {
+      specGenerator.generateSpec(config);
+      Assert.fail("Did not fail a pipeline with a source after a condition that had a source as input");
     } catch (IllegalArgumentException e) {
       // expected
     }
@@ -447,6 +514,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     Assert.assertEquals(expected, actual);
@@ -468,6 +536,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     Assert.assertEquals(expected, actual);
@@ -534,6 +603,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -616,6 +686,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -683,6 +754,7 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -805,8 +877,9 @@ public class PipelineSpecGeneratorTest {
       .setEngine(Engine.MAPREDUCE)
       .build();
 
-    new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+    new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(),
+        pluginConfigurer, null, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+        ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE, MOCK_FEATURE_FLAGS_PROVIDER)
       .generateSpec(config);
   }
 
@@ -832,8 +905,9 @@ public class PipelineSpecGeneratorTest {
       .setNumOfRecordsPreview(100)
       .build();
 
-    PipelineSpec actual = new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+    PipelineSpec actual = new BatchPipelineSpecGenerator(NamespaceId.DEFAULT.getNamespace(), pluginConfigurer,
+        null, ImmutableSet.of(BatchSource.PLUGIN_TYPE), ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+        Engine.MAPREDUCE, MOCK_FEATURE_FLAGS_PROVIDER)
       .generateSpec(config);
 
     PipelineSpec expected = BatchPipelineSpec.builder()
@@ -851,7 +925,85 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(new Resources(1024))
       .setClientResources(new Resources(1024))
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setEngine(Engine.MAPREDUCE)
       .build();
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSQLEngine() throws ValidationException {
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .setPushdownEnabled(true)
+      .setTransformationPushdown(new ETLTransformationPushdown(MOCK_SQL_ENGINE))
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID)).build())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setEngine(Engine.MAPREDUCE)
+      .setSqlEngineStageSpec(
+        StageSpec.builder("sqlengine_mocksqlengine",
+                          new PluginSpec(BatchSQLEngine.PLUGIN_TYPE, "mocksqlengine", emptyMap, ARTIFACT_ID)).build())
+      .build();
+
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSQLEngineNotEnabled() throws ValidationException {
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .setPushdownEnabled(false)
+      .setTransformationPushdown(new ETLTransformationPushdown(MOCK_SQL_ENGINE))
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID)).build())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setSqlEngineStageSpec(null)
+      .setEngine(Engine.MAPREDUCE)
+      .build();
+
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSQLEngineEnabledButNotConfigured() throws ValidationException {
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .setPushdownEnabled(true)
+      .setTransformationPushdown(null)
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID)).build())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setSqlEngineStageSpec(null)
+      .setEngine(Engine.MAPREDUCE)
+      .build();
+
     Assert.assertEquals(expected, actual);
   }
 
@@ -991,6 +1143,32 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
+  public void testSourceConditionWithMultipleInputStepWithinBranch() {
+    //
+    //  condition1-----source-----condition2------t1-------sink
+    //                                 |                    |
+    //                                 |----------t2---------
+    //
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("condition1", MOCK_CONDITION))
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition2", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t2", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("condition1", "source", true)
+      .addConnection("source", "condition2")
+      .addConnection("condition2", "t1", true)
+      .addConnection("condition2", "t2", false)
+      .addConnection("t1", "sink")
+      .addConnection("t2", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test
   public void testSimpleValidCondition() throws ValidationException {
 
     //  source--condition-----t1-----sink
@@ -1100,6 +1278,41 @@ public class PipelineSpecGeneratorTest {
     @Override
     public JoinDefinition define(AutoJoinerContext context) {
       return joinDefinition;
+    }
+  }
+
+  private static class MockSQLEngine extends BatchSQLEngine<Object, Object, Object, Object> {
+    @Override
+    public SQLPushDataset<StructuredRecord, Object, Object> getPushProvider(SQLPushRequest pushRequest)
+      throws SQLEngineException {
+      return null;
+    }
+
+    @Override
+    public SQLPullDataset<StructuredRecord, Object, Object> getPullProvider(SQLPullRequest pullRequest)
+      throws SQLEngineException {
+      return null;
+    }
+
+    @Override
+    public boolean exists(String datasetName) throws SQLEngineException {
+      return false;
+    }
+
+    @Override
+    public boolean canJoin(SQLJoinDefinition joinRequest) {
+      return false;
+    }
+
+    @Override
+    public SQLDataset join(SQLJoinRequest joinRequest)
+      throws SQLEngineException {
+      return null;
+    }
+
+    @Override
+    public void cleanup(String datasetName) throws SQLEngineException {
+
     }
   }
 

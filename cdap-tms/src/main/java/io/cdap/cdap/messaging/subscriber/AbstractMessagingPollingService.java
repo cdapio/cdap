@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.xml.ws.handler.MessageContext;
 
 /**
  * Abstract base class for implementing message polling logic for reading messages from TMS.

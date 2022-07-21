@@ -36,20 +36,17 @@ import io.cdap.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.MetadataWriterStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import io.cdap.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
-import io.cdap.cdap.pipeline.Context;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
-import io.cdap.cdap.pipeline.Stage;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 
 /**
@@ -60,14 +57,8 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
  */
 public class LocalApplicationManager<I, O> implements Manager<I, O> {
 
-  /**
-   * The key used in the {@link Stage} {@link Context} property for storing the artifact classloader
-   * of the artifact used during deployment.
-   */
-  public static final String ARTIFACT_CLASSLOADER_KEY = "artifact.classLoader";
-
   private final PipelineFactory pipelineFactory;
-  private final CConfiguration configuration;
+  private final CConfiguration cConf;
   private final Store store;
   private final OwnerAdmin ownerAdmin;
   private final ProgramTerminator programTerminator;
@@ -80,13 +71,13 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
   private final io.cdap.cdap.scheduler.Scheduler programScheduler;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final StructuredTableAdmin structuredTableAdmin;
-  private final PluginFinder pluginFinder;
   private final CapabilityReader capabilityReader;
+  private final ConfiguratorFactory configuratorFactory;
 
   @Inject
-  LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
+  LocalApplicationManager(CConfiguration cConf, PipelineFactory pipelineFactory,
                           Store store, OwnerAdmin ownerAdmin,
                           DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
@@ -95,10 +86,11 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           MetadataServiceClient metadataServiceClient,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
                           Scheduler programScheduler,
-                          AuthorizationEnforcer authorizationEnforcer,
+                          AccessEnforcer accessEnforcer,
                           StructuredTableAdmin structuredTableAdmin,
-                          PluginFinder pluginFinder, CapabilityReader capabilityReader) {
-    this.configuration = configuration;
+                          CapabilityReader capabilityReader,
+                          ConfiguratorFactory configuratorFactory) {
+    this.cConf = cConf;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
     this.ownerAdmin = ownerAdmin;
@@ -112,30 +104,29 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
     this.programScheduler = programScheduler;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.structuredTableAdmin = structuredTableAdmin;
-    this.pluginFinder = pluginFinder;
     this.capabilityReader = capabilityReader;
+    this.configuratorFactory = configuratorFactory;
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
-                                                  authorizationEnforcer, authenticationContext, pluginFinder,
-                                                  capabilityReader));
+    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, accessEnforcer, authenticationContext,
+                                                  capabilityReader, configuratorFactory));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
-    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework,
-                                                   ownerAdmin, authenticationContext));
-    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
+    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
+                                                   authenticationContext, artifactRepository, impersonator));
+    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
                                                      authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
                                                     metricsSystemClient, metadataServiceClient, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
-    pipeline.addLast(new SystemMetadataWriterStage(metadataServiceClient));
+    pipeline.addLast(new MetadataWriterStage(metadataServiceClient));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }

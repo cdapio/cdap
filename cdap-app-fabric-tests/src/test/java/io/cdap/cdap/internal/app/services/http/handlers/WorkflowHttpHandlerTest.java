@@ -44,6 +44,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramStatus;
@@ -629,7 +630,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowScopedArguments() throws Exception {
-    String workflowRunIdProperty = "workflowrunid";
+    String workflowRunIdProperty = AppMetadataStore.WORKFLOW_RUNID;
     deploy(WorkflowAppWithScopedParameters.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     ProgramId programId = Ids.namespace(TEST_NAMESPACE2).app(WorkflowAppWithScopedParameters.APP_NAME)
@@ -676,7 +677,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     verifyProgramRuns(mr1ProgramId, ProgramRunStatus.RUNNING);
     List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, ProgramRunStatus.ALL);
 
-    String expectedMessage = String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
+    String expectedMessage = String.format("Cannot stop the program run '%s' started by the Workflow run '%s'. " +
                                              "Please stop the Workflow.",
                                            mr1ProgramId.run(oneMRHistoryRuns.get(0).getPid()), workflowRunId);
     stopProgram(Id.Program.fromEntityId(mr1ProgramId), oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);

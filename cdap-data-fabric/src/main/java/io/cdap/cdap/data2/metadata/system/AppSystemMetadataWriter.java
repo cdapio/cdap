@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.Requirements;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Application application}.
@@ -48,20 +50,25 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final ApplicationId appId;
   private final ApplicationClass applicationClass;
   private final String creationTime;
+  private final Metadata systemAppMetadata;
 
   public AppSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ApplicationId entityId,
                                  ApplicationSpecification appSpec, ApplicationClass applicationClass,
-                                 String creationTime) {
+                                 String creationTime, @Nullable Metadata systemAppMetadata) {
     super(metadataServiceClient, entityId);
     this.appSpec = appSpec;
     this.appId = entityId;
     this.applicationClass = applicationClass;
     this.creationTime = creationTime;
+    this.systemAppMetadata = systemAppMetadata;
   }
 
   @Override
   public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+    if (systemAppMetadata != null) {
+      properties.putAll(systemAppMetadata.getProperties());
+    }
     properties.put(MetadataConstants.ENTITY_NAME_KEY, appSpec.getName());
     properties.put(VERSION_KEY, appId.getVersion());
     String description = appSpec.getDescription();
@@ -104,7 +111,9 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   @Override
   public Set<String> getSystemTagsToAdd() {
-    return Collections.singleton(appSpec.getArtifactId().getName());
+    Set<String> systemTags = systemAppMetadata != null ? new HashSet<>(systemAppMetadata.getTags()) : new HashSet<>();
+    systemTags.add(appSpec.getArtifactId().getName());
+    return Collections.unmodifiableSet(systemTags);
   }
 
   private void addPrograms(ImmutableMap.Builder<String, String> properties) {

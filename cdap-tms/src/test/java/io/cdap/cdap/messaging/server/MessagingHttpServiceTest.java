@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
@@ -42,9 +44,11 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -105,7 +109,10 @@ public class MessagingHttpServiceTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new InMemoryDiscoveryModule(),
+      new AuthenticationContextModules().getNoOpModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
@@ -117,7 +124,7 @@ public class MessagingHttpServiceTest {
 
     httpService = injector.getInstance(MessagingHttpService.class);
     httpService.startAndWait();
-    client = new ClientMessagingService(injector.getInstance(DiscoveryServiceClient.class), compressPayload);
+    client = new ClientMessagingService(injector.getInstance(RemoteClientFactory.class), compressPayload);
   }
 
   @After
@@ -590,7 +597,8 @@ public class MessagingHttpServiceTest {
   }
 
   @Test
-  public void testReuseRequest() throws IOException, TopicAlreadyExistsException, TopicNotFoundException {
+  public void testReuseRequest()
+    throws IOException, TopicAlreadyExistsException, TopicNotFoundException, UnauthorizedException {
     // This test a StoreRequest object can be reused.
     // This test is to verify storing transaction messages to the payload table
     TopicId topicId = new NamespaceId("ns1").topic("testReuseRequest");
@@ -618,7 +626,8 @@ public class MessagingHttpServiceTest {
   }
 
   @Test
-  public void testLargePublish() throws IOException, TopicAlreadyExistsException, TopicNotFoundException {
+  public void testLargePublish()
+    throws IOException, TopicAlreadyExistsException, TopicNotFoundException, UnauthorizedException {
     // A 5MB message, which is larger than the 1MB buffer.
     String message = Strings.repeat("01234", 1024 * 1024);
 

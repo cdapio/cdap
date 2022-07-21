@@ -19,7 +19,9 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -52,6 +54,7 @@ import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,7 +101,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     List<Module> modules = new ArrayList<>(Arrays.asList(
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule().getStandaloneModules(),
+      new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new MetricsStoreModule(),
       new MessagingClientModule(),
@@ -109,7 +112,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       new DFSLocationModule(),
       new MetadataServiceModule(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
+      new AuthorizationEnforcementModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -136,10 +139,14 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
                              List<? super AutoCloseable> closeableResources,
                              MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(injector.getInstance(PreviewHttpServer.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
 
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
     if (cConf.getInt(Constants.Preview.CONTAINER_COUNT) <= 0) {
       services.add(injector.getInstance(PreviewRunnerManager.class));
     }

@@ -17,10 +17,13 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.io.Closeables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,6 +34,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HandlerContext;
@@ -56,9 +60,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -79,6 +85,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
   private final String logsTopicPrefix;
   private final boolean eventLogsEnabled;
   private final Location eventLogsBaseLocation;
+  private final Set<String> allowedTopics;
 
   @Inject
   RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
@@ -90,6 +97,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
     this.eventLogsEnabled = cConf.getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED);
     this.eventLogsBaseLocation = locationFactory.create(cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR));
+    this.allowedTopics = new HashSet<>(RuntimeMonitors.createTopicConfigs(cConf).values());
   }
 
   @Override
@@ -137,11 +145,15 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
-    requestValidator.validate(programRunId, request);
+    ProgramRunInfo programRunInfo = requestValidator.getProgramRunStatus(programRunId, request);
+
+    if (!allowedTopics.contains(topic)) {
+      throw new UnauthorizedException("Access denied for topic " + topic);
+    }
 
     TopicId topicId = NamespaceId.SYSTEM.topic(topic);
     if (topic.startsWith(logsTopicPrefix)) {
-      return new MessageBodyConsumer(topicId, logProcessor::process);
+      return new MessageBodyConsumer(topicId, logProcessor::process, programRunInfo);
     }
 
     return new MessageBodyConsumer(topicId, payloads -> {
@@ -151,7 +163,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
       } catch (TopicNotFoundException e) {
         throw new BadRequestException(e);
       }
-    });
+    }, programRunInfo);
   }
 
   /**
@@ -178,7 +190,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
-    requestValidator.validate(programRunId, request);
+    requestValidator.getProgramRunStatus(programRunId, request);
 
     Location location = eventLogsBaseLocation.append(String.format("%s-%s-%s-%s-%s", namespace, app, program, run, id));
     if (location.exists()) {
@@ -234,8 +246,11 @@ public class RuntimeHandler extends AbstractHttpHandler {
     private final List<byte[]> payloads;
     private ByteBuffer payload;
     private long items;
+    private final ProgramRunInfo programRunInfo;
+    private static final Gson GSON = new GsonBuilder()
+      .create();
 
-    MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor) {
+    MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor, ProgramRunInfo programRunInfo) {
       this.topicId = topicId;
       this.payloadProcessor = payloadProcessor;
       this.buffer = Unpooled.compositeBuffer();
@@ -243,6 +258,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
       this.decoder = DecoderFactory.get().directBinaryDecoder(inputStream, null);
       this.payloads = new LinkedList<>();
       this.items = -1L;
+      this.programRunInfo = programRunInfo;
     }
 
     @Override
@@ -296,7 +312,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
         } catch (EOFException e) {
           inputStream.reset();
         }
-      } catch (IOException | BadRequestException e) {
+      } catch (IOException | BadRequestException | AccessException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Failed to process request due to exception " + e.getMessage());
         throw new RuntimeException(e);
@@ -307,15 +323,17 @@ public class RuntimeHandler extends AbstractHttpHandler {
     public void finished(HttpResponder responder) {
       try {
         if (payloads.isEmpty()) {
-          responder.sendStatus(HttpResponseStatus.OK);
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(programRunInfo, ProgramRunInfo.class));
           return;
         }
         try {
           payloadProcessor.process(payloads.iterator());
-          responder.sendStatus(HttpResponseStatus.OK);
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(programRunInfo, ProgramRunInfo.class));
         } catch (BadRequestException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        } catch (IOException e) {
+        } catch (UnauthorizedException e) {
+          responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+        } catch (IOException | AccessException e) {
           responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
                                "Failed to process all messages due to " + e.getMessage());
         }
@@ -359,6 +377,6 @@ public class RuntimeHandler extends AbstractHttpHandler {
      * @throws IOException if there is error when processing the payload
      * @throws BadRequestException if the request is invalid
      */
-    void process(Iterator<byte[]> payloads) throws IOException, BadRequestException;
+    void process(Iterator<byte[]> payloads) throws IOException, BadRequestException, AccessException;
   }
 }

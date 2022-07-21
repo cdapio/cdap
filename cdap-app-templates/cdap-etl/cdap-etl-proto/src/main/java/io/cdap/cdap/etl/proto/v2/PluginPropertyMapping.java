@@ -26,7 +26,14 @@ public class PluginPropertyMapping extends ArgumentMapping {
   private final String stageName;
 
   public PluginPropertyMapping(@Nullable String stageName, @Nullable String source, @Nullable String target) {
-    super(source, target);
+    this(stageName, source, target, null);
+  }
+
+  public PluginPropertyMapping(@Nullable String stageName,
+                               @Nullable String source,
+                               @Nullable String target,
+                               @Nullable TriggeringPipelineId pipelineId) {
+    super(source, target, pipelineId);
     this.stageName = stageName;
   }
 
@@ -43,7 +50,8 @@ public class PluginPropertyMapping extends ArgumentMapping {
     return "PluginPropertyMapping{" +
       "source='" + getSource() + '\'' +
       ", target='" + getTarget() + '\'' +
-      "stageName='" + getStageName() + '\'' +
+      ", stageName='" + getStageName() + '\'' +
+      ", triggeringPipelineId='" + getTriggeringPipelineId() + '\'' +
       '}';
   }
 }

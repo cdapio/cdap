@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2019 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@
 
   <groupId>io.cdap.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>6.5.0-SNAPSHOT</version>
+  <version>6.8.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -124,15 +124,16 @@
     <cdap.client.version>1.4.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
     <commons.compress.version>1.18</commons.compress.version>
+    <commons.lang3.version>3.5</commons.lang3.version>
+    <dropwizard.version>3.1.2</dropwizard.version>
     <fastutil.version>6.5.6</fastutil.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <geronimo.version>2.0.0</geronimo.version>
     <grok.version>0.1.0</grok.version>
-    <gson.version>2.2.4</gson.version>
+    <gson.version>2.3.1</gson.version>
     <guava.version>13.0.1</guava.version>
     <guice.version>4.0</guice.version>
-    <hadoop.version>2.3.0</hadoop.version>
-    <hadoop26.version>2.6.0</hadoop26.version>
+    <hadoop.version>2.6.0</hadoop.version>
     <hbase10.version>1.0.1.1</hbase10.version>
     <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
     <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
@@ -140,45 +141,59 @@
     <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
     <hive.version>1.2.1</hive.version>
     <hsql.version>2.2.4</hsql.version>
+    <jackson.version>2.8.8</jackson.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
     <kafka.version>0.8.2.2</kafka.version>
-    <leveldb.version>0.6</leveldb.version>
+    <leveldb.version>0.12</leveldb.version>
     <logback.version>1.0.9</logback.version>
     <mockftp.version>2.6</mockftp.version>
-    <mockito.version>1.9.5</mockito.version>
+    <mockito.version>1.10.19</mockito.version>
     <mysql.version>5.1.21</mysql.version>
-    <netty.http.version>1.5.0</netty.http.version>
+    <netty.http.version>1.7.0</netty.http.version>
     <netty.version>4.1.16.Final</netty.version>
-    <powermock.version>1.5.6</powermock.version>
+    <powermock.version>1.7.4</powermock.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
-    <scala2.10.version>2.10.4</scala2.10.version>
-    <scala2.11.version>2.11.8</scala2.11.version>
+    <scala2.11.version>2.11.12</scala2.11.version>
+    <!-- Please keep consistent with the one in Spark 3 -->
+    <scala2.12.version>2.12.10</scala2.12.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <slf4j.version>1.7.5</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
-    <spark1.artifacts.dir>spark1_2.10</spark1.artifacts.dir>
     <spark2.artifacts.dir>spark2_2.11</spark2.artifacts.dir>
-    <spark1.version>1.6.1</spark1.version>
+    <spark3.artifacts.dir>spark3_2.12</spark3.artifacts.dir>
     <spark2.version>2.1.3</spark2.version>
+    <spark3.version>3.1.1</spark3.version>
     <sshd.version>1.7.0</sshd.version>
     <tephra.version>0.15.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
+    <tink.version>1.6.0</tink.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.14.0</twill.version>
+    <twill.version>1.1.1</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <opentable.version>0.13.1</opentable.version>
+    <embedded-postgres.version>1.3.1</embedded-postgres.version>
     <dbcp.version>2.6.0</dbcp.version>
+    <jacoco.version>0.8.6</jacoco.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>
+
+    <sonar.organization>cdap</sonar.organization>
+    <sonar.projectKey>cdapio_${project.artifactId}</sonar.projectKey>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/cdap-coverage/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <!-- We need next line to ensure generated classes are analyzed -->
+    <sonar.scm.exclusions.disabled>true</sonar.scm.exclusions.disabled>
+
+    <!-- Need default value when coverage is not collected -->
+    <argLine/>
   </properties>
 
   <dependencyManagement>
@@ -214,7 +229,7 @@
         <version>${rs-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-api</artifactId>
         <version>${twill.version}</version>
       </dependency>
@@ -268,6 +283,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.twill</groupId>
+            <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -368,6 +387,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
           </exclusion>
+          <!-- The one from spark should be used -->
+          <exclusion>
+            <groupId>com.thoughtworks.paranamer</groupId>
+            <artifactId>paranamer</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -445,7 +469,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.10</artifactId>
+        <artifactId>kafka_2.11</artifactId>
         <version>${kafka.version}</version>
         <exclusions>
           <exclusion>
@@ -470,6 +494,8 @@
         <groupId>org.iq80.leveldb</groupId>
         <artifactId>leveldb</artifactId>
         <version>${leveldb.version}</version>
+        <!-- leveldb 0.12 has conflicting guava 20 as a dependency. The uber jar shades guava -->
+        <classifier>uber</classifier>
       </dependency>
       <dependency>
         <groupId>commons-cli</groupId>
@@ -477,18 +503,18 @@
         <version>${commons.cli.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-common</artifactId>
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-core</artifactId>
         <version>${twill.version}</version>
         <exclusions>
           <exclusion>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-compiler</artifactId>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.10</artifactId>
           </exclusion>
           <exclusion>
             <groupId>net.jpountz.lz4</groupId>
@@ -501,20 +527,24 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-discovery-api</artifactId>
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-discovery-core</artifactId>
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-yarn</artifactId>
         <version>${twill.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>asm</groupId>
             <artifactId>asm</artifactId>
@@ -570,9 +600,15 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.twill</groupId>
+        <groupId>io.cdap.twill</groupId>
         <artifactId>twill-zookeeper</artifactId>
         <version>${twill.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.toools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.thrift</groupId>
@@ -594,6 +630,10 @@
         <artifactId>hadoop-common</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -658,6 +698,10 @@
             <artifactId>slf4j-api</artifactId>
             <groupId>org.slf4j</groupId>
           </exclusion>
+          <exclusion>
+            <artifactId>jdk.tools</artifactId>
+            <groupId>jdk.tools</groupId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -665,6 +709,10 @@
         <artifactId>hadoop-auth</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
@@ -685,6 +733,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -695,6 +747,10 @@
         <artifactId>hadoop-yarn-client</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -710,6 +766,10 @@
         <artifactId>hadoop-yarn-common</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
@@ -750,6 +810,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -768,6 +832,10 @@
         <artifactId>hadoop-mapreduce-client-app</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
@@ -791,6 +859,10 @@
         <artifactId>hadoop-mapreduce-client-core</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -831,6 +903,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -845,10 +921,29 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-annotations</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -860,6 +955,14 @@
         <artifactId>hbase-client</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -880,6 +983,10 @@
         <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -890,6 +997,10 @@
         <artifactId>hbase-server</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -1190,7 +1301,7 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>  
+          </exclusion>
           <exclusion>
             <groupId>org.codehaus.janino</groupId>
             <artifactId>janino</artifactId>
@@ -1202,6 +1313,10 @@
           <exclusion>
             <groupId>stax</groupId>
             <artifactId>stax-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.pentaho</groupId>
+            <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1245,6 +1360,32 @@
         <version>${tephra.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
+      </dependency>
+      <!-- Manage dropwizard to version compatible with tephra -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-jvm</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-json</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-graphite</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-jms</artifactId>
+        <version>${dropwizard.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -1303,6 +1444,10 @@
         <scope>test</scope>
         <exclusions>
           <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -1322,8 +1467,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_2.10</artifactId>
-        <version>${spark1.version}</version>
+        <artifactId>spark-core_2.12</artifactId>
+        <version>${spark3.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1426,9 +1571,13 @@
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-sql_2.10</artifactId>
-        <version>${spark1.version}</version>
+        <artifactId>spark-sql_2.12</artifactId>
+        <version>${spark3.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
@@ -1441,15 +1590,14 @@
         <version>${spark2.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-streaming_2.10</artifactId>
-        <version>${spark1.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
@@ -1458,8 +1606,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-mllib_2.10</artifactId>
-        <version>${spark1.version}</version>
+        <artifactId>spark-streaming_2.12</artifactId>
+        <version>${spark3.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
@@ -1468,13 +1616,18 @@
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
-        <artifactId>spark-repl_2.10</artifactId>
-        <version>${spark1.version}</version>
+        <artifactId>spark-mllib_2.12</artifactId>
+        <version>${spark3.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-repl_2.11</artifactId>
         <version>${spark2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-repl_2.12</artifactId>
+        <version>${spark3.version}</version>
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
@@ -1503,6 +1656,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -1522,10 +1679,25 @@
         <version>${commons.compress.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>${commons.lang3.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.tez</groupId>
         <artifactId>tez-api</artifactId>
         <version>${tez.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>
@@ -1540,9 +1712,9 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.opentable.components</groupId>
-        <artifactId>otj-pg-embedded</artifactId>
-        <version>${opentable.version}</version>
+        <groupId>io.zonky.test</groupId>
+        <artifactId>embedded-postgres</artifactId>
+        <version>${embedded-postgres.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -1553,6 +1725,52 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-cbor</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-scala_2.10</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-scala_2.11</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-scala_2.12</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.crypto.tink</groupId>
+        <artifactId>tink</artifactId>
+        <version>${tink.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1574,12 +1792,13 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.19.1</version>
+          <version>3.0.0-M6</version>
           <configuration>
-            <argLine>-Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+            <argLine>@{argLine}  -Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <forkCount>3</forkCount>
+            <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
             <reportFormat>plain</reportFormat>
             <trimStackTrace>false</trimStackTrace>
             <systemPropertyVariables>
@@ -1601,7 +1820,7 @@
             <dependency>
               <groupId>org.apache.maven.surefire</groupId>
               <artifactId>surefire-junit47</artifactId>
-              <version>2.14</version>
+              <version>3.0.0-M6</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -1671,7 +1890,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.17</version>
+          <version>3.1.2</version>
           <executions>
             <execution>
               <id>validate</id>
@@ -1693,7 +1912,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>6.19</version>
+              <version>8.42</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -1705,7 +1924,8 @@
           <version>3.3.1</version>
           <configuration>
             <args>
-              <arg>-target:jvm-1.7</arg>
+              <arg>-target:jvm-1.8</arg>
+              <arg>-nobootcp</arg>
             </args>
           </configuration>
           <executions>
@@ -1800,6 +2020,27 @@
   </build>
 
   <profiles>
+    <!-- Special profile for running tests in MacOS. It needs a higher embedded postgreSQL version -->
+    <profile>
+      <id>postgres11</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>io.zonky.test.postgres</groupId>
+            <artifactId>embedded-postgres-binaries-bom</artifactId>
+            <version>11.14.0</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+    </profile>
+
     <!-- Profile to turn on inclusion of all cdap-app-templates -->
     <profile>
       <id>templates</id>
@@ -1820,7 +2061,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.14.1</version>
+              <version>3.0.0-M6</version>
               <configuration>
                 <groups>${testcase.groups}</groups>
               </configuration>
@@ -1842,7 +2083,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.14.1</version>
+              <version>3.0.0-M5</version>
               <configuration>
                 <groups>${testcase.groups}</groups>
               </configuration>
@@ -1886,7 +2127,7 @@
                 </bottom>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
-                  <link>https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
+                  <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
                   <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
@@ -1949,7 +2190,7 @@
         <package.dirs>opt etc</package.dirs>
         <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
         <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
-          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</dependency.groupId.exclusions>
+          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging,com.google.crypto.tink</dependency.groupId.exclusions>
       </properties>
       <build>
         <pluginManagement>
@@ -2591,6 +2832,7 @@
         <module>cdap-cli-tests</module>
         <module>cdap-client-tests</module>
         <module>cdap-app-fabric-tests</module>
+        <module>cdap-e2e-tests</module>
       </modules>
     </profile>
 
@@ -2609,9 +2851,10 @@
         <module>cdap-common-unit-test</module>
         <module>cdap-api-common</module>
         <module>cdap-api</module>
-        <module>cdap-api-spark</module>
         <module>cdap-api-spark2_2.11</module>
+        <module>cdap-api-spark3_2.12</module>
         <module>cdap-formats</module>
+        <module>cdap-features</module>
         <module>cdap-elastic</module>
         <module>cdap-hbase-compat-base</module>
         <module>cdap-hbase-compat-1.0-cdh5.5.0</module>
@@ -2628,12 +2871,13 @@
         <module>cdap-data-fabric</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
-        <module>cdap-spark-core</module>
         <module>cdap-spark-core2_2.11</module>
+        <module>cdap-spark-core3_2.12</module>
         <module>cdap-spark-python</module>
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-metadata-spi</module>
+        <module>cdap-storage-ext-spanner</module>
         <module>cdap-storage-spi</module>
         <module>cdap-system-app-api</module>
         <module>cdap-system-app-unit-test</module>
@@ -2644,6 +2888,7 @@
         <module>cdap-explore</module>
         <module>cdap-unit-test</module>
         <module>cdap-unit-test-spark2_2.11</module>
+        <module>cdap-unit-test-spark3_2.12</module>
         <module>cdap-kms</module>
         <module>cdap-master-spi</module>
         <module>cdap-master</module>
@@ -2654,6 +2899,7 @@
         <module>cdap-runtime-spi</module>
         <module>cdap-securestore-ext-cloudkms</module>
         <module>cdap-securestore-spi</module>
+        <module>cdap-support-bundle</module>
         <module>cdap-operational-stats-core</module>
         <module>cdap-client</module>
         <module>cdap-cli</module>
@@ -2662,6 +2908,8 @@
         <module>cdap-test</module>
         <module>cdap-integration-test</module>
         <module>cdap-ui</module>
+        <module>cdap-event-writer-spi</module>
+        <module>cdap-authenticator-ext-gcp</module>
       </modules>
     </profile>
     <profile>
@@ -2690,6 +2938,35 @@
         </pluginManagement>
       </build>
     </profile>
+    <profile>
+      <id>coverage</id>
+      <modules>
+        <module>cdap-coverage</module>
+      </modules>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>${jacoco.version}</version>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>report</id>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <!-- Site reporting section -->
@@ -2709,7 +2986,7 @@
           </bottom>
           <doctitle>${project.name} ${project.version}</doctitle>
           <links>
-            <link>https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
+            <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
             <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
             <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
             <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>

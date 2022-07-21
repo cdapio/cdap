@@ -21,7 +21,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -29,8 +28,8 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableTest;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -61,11 +60,10 @@ public class SqlStructuredTableTest extends StructuredTableTest {
       }
     );
 
-    injector.getInstance(StructuredTableRegistry.class).initialize();
     tableAdmin = injector.getInstance(StructuredTableAdmin.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    Assert.assertEquals(PostgresSqlStructuredTableAdmin.class, tableAdmin.getClass());
+    Assert.assertEquals(PostgreSqlStructuredTableAdmin.class, tableAdmin.getClass());
     Assert.assertEquals(RetryingSqlTransactionRunner.class, transactionRunner.getClass());
   }
 

@@ -137,7 +137,8 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
     properties.put("runtimeDatasetName", new PluginPropertyField("runtimeDatasetName", "", "string", true, true));
-    return new PluginClass(BatchSink.PLUGIN_TYPE, "MockRuntime", "", MockRuntimeDatasetSink.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("MockRuntime").setType(BatchSink.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockRuntimeDatasetSink.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -39,9 +38,12 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
+import io.cdap.cdap.app.runtime.spark.submit.MasterEnvironmentSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -57,18 +59,19 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,10 +99,9 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
   private final MetricsCollectionService metricsCollectionService;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -108,17 +110,20 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final FieldLineageWriter fieldLineageWriter;
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final RemoteClientFactory remoteClientFactory;
+  private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                      TransactionSystemClient txClient, DatasetFramework datasetFramework,
                      MetricsCollectionService metricsCollectionService,
-                     DiscoveryServiceClient discoveryServiceClient,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
-                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                     AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                      PluginFinder pluginFinder, MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                     FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin) {
+                     FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin,
+                     RemoteClientFactory remoteClientFactory,
+                     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -126,10 +131,9 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
     this.metricsCollectionService = metricsCollectionService;
-    this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -138,6 +142,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.fieldLineageWriter = fieldLineageWriter;
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.remoteClientFactory = remoteClientFactory;
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
   }
 
   @Override
@@ -185,13 +191,14 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options, cConf,
                                                                    host, txClient, programDatasetFramework,
-                                                                   discoveryServiceClient,
                                                                    metricsCollectionService, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
-                                                                   authorizationEnforcer, authenticationContext,
+                                                                   accessEnforcer, authenticationContext,
                                                                    messagingService, serviceAnnouncer, pluginFinder,
                                                                    locationFactory, metadataReader, metadataPublisher,
-                                                                   namespaceQueryAdmin, fieldLineageWriter, () -> { });
+                                                                   namespaceQueryAdmin, fieldLineageWriter,
+                                                                   remoteClientFactory, () -> { }
+      );
       closeables.addFirst(runtimeContext);
 
       Spark spark;
@@ -203,14 +210,23 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       }
 
       boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
-      SparkSubmitter submitter = isLocal
-        ? new LocalSparkSubmitter()
-        : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
-                                        options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+      SparkSubmitter submitter;
+      // If MasterEnvironment is not available, use non-master env spark submitters
+      MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+      if (masterEnv != null && cConf.getBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, true)) {
+        submitter = new MasterEnvironmentSparkSubmitter(cConf, locationFactory, host, runtimeContext,
+                                                        masterEnv, options);
+      } else {
+        submitter = isLocal
+          ? new LocalSparkSubmitter()
+          : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
+                                          options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+      }
 
-      Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter, locationFactory, isLocal,
-                                                            fieldLineageWriter);
+      SparkRuntimeService sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
+                                                                        runtimeContext, submitter, locationFactory,
+                                                                        isLocal, fieldLineageWriter, masterEnv,
+                                                                        commonNettyHttpServiceFactory);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);

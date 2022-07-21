@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -62,8 +63,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.Transaction;
@@ -74,7 +73,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -96,9 +94,8 @@ public class ExploreDisabledTest {
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+
     dsOpExecutor = injector.getInstance(DatasetOpExecutorService.class);
     dsOpExecutor.startAndWait();
 
@@ -114,14 +111,6 @@ public class ExploreDisabledTest {
     }
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
-    try {
-      StoreDefinition.createAllTables(tableAdmin, registry);
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Failed to create the system tables", e);
-    }
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     NamespacePathLocator namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
@@ -237,6 +226,7 @@ public class ExploreDisabledTest {
 
     return ImmutableList.of(
         new ConfigModule(configuration, hConf),
+        RemoteAuthenticatorModules.getNoOpModule(),
         new IOModule(),
         new InMemoryDiscoveryModule(),
         new NonCustomLocationUnitTestModule(),

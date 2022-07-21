@@ -49,8 +49,9 @@ import java.util.jar.Attributes;
  *   keys with the prefix {@code security.authorization.extension.config}.</li>
  *   <li>The {@link #destroy()} method can be used to perform cleanup tasks.</li>
  * </ul>
+ * @deprecated Use {@link AccessController}
  */
-@Beta
+@Beta @Deprecated
 public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, AuthorizationEnforcer {
   /**
    * Initialize the {@link Authorizer}. Authorization extensions can use this method to access an

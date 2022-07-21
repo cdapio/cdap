@@ -16,62 +16,51 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1StatefulSet;
-import io.kubernetes.client.util.Config;
+import io.kubernetes.client.common.KubernetesObject;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1StatefulSet;
+import io.kubernetes.client.util.generic.options.ListOptions;
 import org.apache.twill.common.Cancellable;
 
-import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A thread for monitoring Kubernetes application resource state change.
  *
  * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
-abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
+abstract class AppResourceWatcherThread<T extends KubernetesObject> extends AbstractWatcherThread<T> {
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Deployment} events.
    */
   static AppResourceWatcherThread<V1Deployment> createDeploymentWatcher(String namespace, String selector) {
-    return new AppResourceWatcherThread<V1Deployment>("kube-deployment-watch", namespace, selector) {
-      @Override
-      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
-                                                         null, null, null, true, null, null);
-      }
-    };
+    return new AppResourceWatcherThread<V1Deployment>("apps", "v1", "deployments", namespace, selector) { };
   }
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1StatefulSet} events.
    */
   static AppResourceWatcherThread<V1StatefulSet> createStatefulSetWatcher(String namespace, String selector) {
-    return new AppResourceWatcherThread<V1StatefulSet>("kube-statefulset-watch", namespace, selector) {
-      @Override
-      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, labelSelector,
-                                                          null, null, null, true, null, null);
-      }
-    };
+    return new AppResourceWatcherThread<V1StatefulSet>("apps", "v1", "statefulsets", namespace, selector) { };
+  }
+
+  /**
+   * Creates a {@link AppResourceWatcherThread} for watching {@link V1Job} events.
+   */
+  static AppResourceWatcherThread<V1Job> createJobWatcher(String namespace, String selector) {
+    return new AppResourceWatcherThread<V1Job>("batch", "v1", "jobs", namespace, selector) { };
   }
 
   private final String selector;
   private final Queue<ResourceChangeListener<T>> listeners;
-  private volatile AppsV1Api appsApi;
 
-  private AppResourceWatcherThread(String threadName, String namespace, String selector) {
-    super(threadName, namespace);
+  private AppResourceWatcherThread(String group, String version, String plural, String namespace, String selector) {
+    super("kube-" + plural + "-watch", namespace, group, version, plural);
     setDaemon(true);
     this.selector = selector;
     this.listeners = new ConcurrentLinkedQueue<>();
@@ -81,14 +70,17 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
     // Wrap the listener for removal
     ResourceChangeListener<T> wrappedListener = wrapListener(listener);
     listeners.add(wrappedListener);
-    resetWatch();
+    closeWatch();
     return () -> listeners.remove(wrappedListener);
   }
 
-  @Nullable
+
+
   @Override
-  protected String getSelector() {
-    return selector;
+  protected void updateListOptions(ListOptions options) {
+    if (selector != null) {
+      options.setLabelSelector(selector);
+    }
   }
 
   @Override
@@ -104,38 +96,6 @@ abstract class AppResourceWatcherThread<T> extends AbstractWatcherThread<T> {
   @Override
   public void resourceDeleted(T resource) {
     listeners.forEach(l -> l.resourceDeleted(resource));
-  }
-
-  @Override
-  protected ApiClient getApiClient() throws IOException {
-    return getAppsApi().getApiClient();
-  }
-
-  /**
-   * Returns a {@link AppsV1Api} instance for interacting with the API server.
-   *
-   * @throws IOException if exception was raised during creation of {@link AppsV1Api}
-   */
-  AppsV1Api getAppsApi() throws IOException {
-    AppsV1Api api = appsApi;
-    if (api != null) {
-      return api;
-    }
-
-    synchronized (this) {
-      api = appsApi;
-      if (api != null) {
-        return api;
-      }
-
-      ApiClient client = Config.defaultClient();
-
-      // Set a reasonable timeout for the watch.
-      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
-
-      appsApi = api = new AppsV1Api(client);
-      return api;
-    }
   }
 
   private ResourceChangeListener<T> wrapListener(ResourceChangeListener<T> listener) {

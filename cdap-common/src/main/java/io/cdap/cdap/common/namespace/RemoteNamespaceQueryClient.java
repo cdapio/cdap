@@ -17,15 +17,14 @@
 package io.cdap.cdap.common.namespace;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.HttpHandler;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.net.URL;
@@ -36,28 +35,22 @@ import java.net.URL;
  */
 public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
   private final RemoteClient remoteClient;
-  private final AuthenticationContext authenticationContext;
 
   @Inject
-  RemoteNamespaceQueryClient(final DiscoveryServiceClient discoveryClient, CConfiguration cConf,
-                             AuthenticationContext authenticationContext) {
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
-    this.authenticationContext = authenticationContext;
+  RemoteNamespaceQueryClient(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override
-  protected HttpResponse execute(HttpRequest request) throws IOException {
-    return remoteClient.execute(addUserIdHeader(request));
+  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+    return remoteClient.execute(request);
   }
 
   @Override
   protected URL resolve(String resource) throws IOException {
     return remoteClient.resolve(resource);
   }
-
-  private HttpRequest addUserIdHeader(HttpRequest request) throws IOException {
-    return new HttpRequest.Builder(request).addHeader(Constants.Security.Headers.USER_ID,
-                                                      authenticationContext.getPrincipal().getName()).build();
-  }
 }
+

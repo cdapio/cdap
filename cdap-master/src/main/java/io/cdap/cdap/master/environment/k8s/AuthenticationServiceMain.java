@@ -23,15 +23,13 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.guice.SecurityModule;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -59,13 +57,7 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
 
     List<Module> modules = new ArrayList<>();
     modules.add(new MessagingClientModule());
-
-    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
-    }
-
+    modules.add(new ExternalAuthenticationModule());
     return modules;
   }
 

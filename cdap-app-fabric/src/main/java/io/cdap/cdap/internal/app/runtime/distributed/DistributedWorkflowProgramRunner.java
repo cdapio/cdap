@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
@@ -41,19 +42,21 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,9 +84,13 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   DistributedWorkflowProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                    Impersonator impersonator, ClusterMode clusterMode,
                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
-                                   @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+                                   @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory,
+                                   Injector injector) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, injector.getInstance(LocationFactory.class));
     this.programRunnerFactory = programRunnerFactory;
+    if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    }
   }
 
   @Override
@@ -110,8 +117,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new WorkflowTwillProgramController(programId, twillController, runId).startListen();
+  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+    return new WorkflowTwillProgramController(programRunId, twillController).startListen();
   }
 
   @Override

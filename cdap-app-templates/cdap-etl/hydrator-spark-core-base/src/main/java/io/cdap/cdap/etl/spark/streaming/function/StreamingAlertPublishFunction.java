@@ -34,7 +34,7 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Function used to publish alerts with a JavaDStream.
  */
-public class StreamingAlertPublishFunction implements Function2<JavaRDD<Alert>, Time, Void> {
+public class StreamingAlertPublishFunction implements VoidFunction2<JavaRDD<Alert>, Time> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamingAlertPublishFunction.class);
   private final JavaSparkExecutionContext sec;
   private final StageSpec stageSpec;
@@ -53,7 +53,7 @@ public class StreamingAlertPublishFunction implements Function2<JavaRDD<Alert>, 
   }
 
   @Override
-  public Void call(JavaRDD<Alert> data, Time batchTime) throws Exception {
+  public void call(JavaRDD<Alert> data, Time batchTime) throws Exception {
     MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          batchTime.milliseconds(),
                                                          sec.getSecureStore(),
@@ -77,6 +77,5 @@ public class StreamingAlertPublishFunction implements Function2<JavaRDD<Alert>, 
       new TrackedIterator<>(data.collect().iterator(), stageMetrics, Constants.Metrics.RECORDS_IN);
     alertPublisher.publish(trackedAlerts);
     alertPublisher.destroy();
-    return null;
   }
 }

@@ -20,6 +20,10 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
+import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.SystemNamespaceAdmin;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.io.IOException;
@@ -29,7 +33,7 @@ import java.util.Map;
  * A System HttpServiceContext that exposes capabilities beyond those available to service contexts for user services.
  */
 @Beta
-public interface SystemHttpServiceContext extends HttpServiceContext, TransactionRunner {
+public interface SystemHttpServiceContext extends HttpServiceContext, TransactionRunner, SystemNamespaceAdmin {
 
   /**
    * Evaluates lookup macros and the 'secure' macro function using provided macro evaluator.
@@ -78,7 +82,27 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * @throws IllegalArgumentException if the namespace doesn't exist.
    */
   default Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
-    throws IOException, IllegalArgumentException {
+    throws IOException, IllegalArgumentException, AccessException {
     throw new UnsupportedOperationException("Not implemented");
   }
+
+  /**
+   *
+   * @return {@link ContextAccessEnforcer} that can be used to enforce access for current request
+   */
+  ContextAccessEnforcer getContextAccessEnforcer();
+
+  /**
+   * Runs the task from {@link RunnableTaskRequest} remotely on a task worker
+   * @param runnableTaskRequest Details of the task
+   * @return byte[] result
+   * @throws IOException if there is a problem in connecting to remote worker
+   */
+  byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception;
+
+  /**
+   * Returns boolean indicating whether remote task execution is enabled
+   * @return
+   */
+  boolean isRemoteTaskEnabled();
 }

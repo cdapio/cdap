@@ -19,7 +19,17 @@ package io.cdap.cdap.api.retry;
 /**
  * An exception that indicates an operation failed after it was retried.
  */
-public class RetriesExhaustedException extends RuntimeException {
+public class RetriesExhaustedException extends RuntimeException implements RetryCountProvider {
+
+  /**
+   * Number of retries
+   */
+  private int retries;
+
+  public RetriesExhaustedException(String message, int retries) {
+    super(message);
+    this.retries = retries;
+  }
 
   public RetriesExhaustedException(String message) {
     super(message);
@@ -31,5 +41,14 @@ public class RetriesExhaustedException extends RuntimeException {
 
   public RetriesExhaustedException(String message, Throwable cause) {
     super(message, cause);
+  }
+
+  /**
+   * Return the retry count set
+   * @return int for retry count
+   */
+  @Override
+  public int getRetries() {
+    return retries;
   }
 }

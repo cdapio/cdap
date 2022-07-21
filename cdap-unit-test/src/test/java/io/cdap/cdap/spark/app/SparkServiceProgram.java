@@ -126,7 +126,7 @@ public class SparkServiceProgram extends AbstractExtendedSpark implements JavaSp
         public void onFinish(HttpServiceResponder responder) throws Exception {
           try {
             Map<String, Integer> result = getContext().getJavaSparkContext().textFile(tmpLocation.toURI().toString())
-              .flatMap((FlatMapFunction<String, String>) s -> Arrays.asList(s.split("\\s+")))
+              .flatMap((FlatMapFunction<String, String>) s -> Arrays.asList(s.split("\\s+")).iterator())
               .mapToPair((PairFunction<String, String, Integer>) s -> new Tuple2<>(s, 1))
               .reduceByKey((Function2<Integer, Integer, Integer>) (v1, v2) -> v1 + v2)
               .collectAsMap();
@@ -174,7 +174,7 @@ public class SparkServiceProgram extends AbstractExtendedSpark implements JavaSp
               result.add(new Tuple2<>(element, func.applyAsInt(element)));
             }
 
-            return result;
+            return result.iterator();
           })
           .reduceByKey((v1, v2) -> v1 + v2)
           .collectAsMap();
@@ -211,7 +211,7 @@ public class SparkServiceProgram extends AbstractExtendedSpark implements JavaSp
               result.add(new Tuple2<>(element, func.applyAsInt(element)));
             }
 
-            return result;
+            return result.iterator();
           })
           .reduceByKey((v1, v2) -> v1 + v2)
           .collectAsMap();

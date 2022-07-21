@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.Schema.LogicalType;
+import io.cdap.cdap.api.data.schema.SchemaCache;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -52,7 +53,6 @@ import javax.annotation.Nullable;
 @Beta
 public class StructuredRecord implements Serializable {
   private static final SimpleDateFormat DEFAULT_FORMAT = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss z");
-  private static final LRUCache<String, Schema> SCHEMA_CACHE = new LRUCache<>(100);
 
   private final Schema schema;
   private final Map<String, Object> fields;
@@ -64,7 +64,7 @@ public class StructuredRecord implements Serializable {
   }
 
   private StructuredRecord(Schema schema, Map<String, Object> fields) {
-    this.schema = SCHEMA_CACHE.putIfAbsent(schema.getSchemaHash().toString(), schema);
+    this.schema = SchemaCache.intern(schema);
     this.fields = fields;
   }
 

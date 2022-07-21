@@ -40,21 +40,30 @@ be granted::
 
   {
     "authorizable": {
-      "entityType": "DATASET",
-      "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
+      "entityType": "APPLICATION",
+      "entityParts": {"NAMESPACE": "default", "APPLICATION": "application"}
     },
     "principal": {
       "name": "admin",
       "type": "ROLE"
     },
-    "actions": ["READ", "WRITE", "ADMIN"]
+    "permissions": [
+      {
+        "name": "GET",
+        "type": "STANDARD"
+      },
+      {
+        "name": "EXECUTE",
+        "type": "APPLICATION"
+      }
+    ]
   }
 
 .. highlight:: console
 
 In the above JSON body, the ``authorizable`` object is the JSON-serialized form of the CDAP
 :cdap-java-source-github:`Authorizable <cdap-proto/src/main/java/io/cdap/cdap/proto/id/Authorizable.java>` class.
-|---| for example, for datasets, its entity type is DATASET and it can be constructed by the namespace and dataset name.
+|---| for example, for applications, its entity type is APPLICATION and it can be constructed by the namespace and application name.
 More info can be found at the :cdap-java-source-github:`DatasetId <cdap-proto/src/main/java/io/cdap/cdap/proto/id/Authorizable.java>`
 class. In entity parts, the name of the entity can be represented using wildcard by including * and ? in the name.
 For example, ``ns*`` represents all namespaces that starts with ``ns``.
@@ -65,8 +74,10 @@ Principals have a ``name`` and a ``type``. The supported types are ``USER``, ``G
 
 **Please note that** the REST endpoints have only been created for supporting :ref:`Apache Sentry <integrations:apache-sentry>`.
 
-The ``actions`` list contains the actions you want to grant the ``principal`` on the
-``entity``. The supported actions are ``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``.
+The ``permissions`` list contains the permissions you want to grant the ``principal`` on the
+``entity``. The supported permission names are ``CREATE``, ``LIST``, ``GET``, ``UPDATE``, ``DELETE`` for
+the type ``STANDARD``; ``PREVIEW``, ``EXECUTE`` for type ``APPLICATION`` and ``SET_OWNER``, ``IMPERSONATE``
+for the type ``ACCESS``.
 
 .. _http-restful-api-security-auth-grant:
 
@@ -79,19 +90,28 @@ the URL::
 
 .. highlight:: json
 
-with JSON-formatted body that contains the principal, the CDAP entity, and the actions to
+with JSON-formatted body that contains the principal, the CDAP entity, and the permissions to
 be granted, such as::
 
   {
     "authorizable": {
-      "entityType": "DATASET",
-      "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
+      "entityType": "APPLICATION",
+      "entityParts": {"NAMESPACE": "default", "APPLICATION": "application"}
     },
     "principal": {
       "name": "admin",
       "type": "ROLE"
     },
-    "actions": ["READ", "WRITE", "ADMIN"]
+    "permissions": [
+      {
+        "name": "GET",
+        "type": "STANDARD"
+      },
+      {
+        "name": "EXECUTE",
+        "type": "APPLICATION"
+      }
+    ]
   }
 
 .. highlight:: console
@@ -120,29 +140,37 @@ You can revoke privileges for a principal on a CDAP Entity by making an HTTP POS
 
 .. highlight:: json
 
-with JSON-formatted body that contains the principal, the CDAP entity and the actions to be revoked::
+with JSON-formatted body that contains the principal, the CDAP entity and the permissions to be revoked::
 
   {
     "authorizable": {
-      "entityType": "DATASET",
-      "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
+      "entityType": "APPLICATION",
+      "entityParts": {"NAMESPACE": "default", "APPLICATION": "application"}
     },
     "principal": {
       "name": "admin",
       "type": "ROLE"
     },
-    "actions": ["READ", "WRITE", "ADMIN"]
+    "permissions": [
+      {
+        "name": "GET",
+        "type": "STANDARD"
+      },
+      {
+        "name": "EXECUTE",
+        "type": "APPLICATION"
+      }
+    ]
   }
 
 .. highlight:: console
 
 The ``authorizable`` object is mandatory in a revoke request.
 
-- If both ``principal`` and ``actions`` are not provided, then the API revokes all
+- If both ``principal`` and ``permissions`` are not provided, then the API revokes all
   privileges on the specified entity for all principals.
-- If ``authorizable`` and ``principal`` are provided, but ``actions`` is not, the API revokes
-  all actions (``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``) on the specified entity for
-  the specified principal.
+- If ``authorizable`` and ``principal`` are provided, but ``permissions`` is not, the API revokes
+  all permissions on the specified entity for the specified principal.
 - Revoking privileges is only supported for ``ROLE`` type.
 
 .. rubric:: HTTP Responses
@@ -190,7 +218,7 @@ You can list all privileges for a principal on all CDAP entities by making an HT
 
 .. highlight:: json
 
-This will return a JSON array that lists each privilege for the principal with its ``authorizable`` and ``action``.
+This will return a JSON array that lists each privilege for the principal with its ``authorizable`` and ``permission``.
 Example output (pretty-printed)::
 
   [
@@ -199,21 +227,21 @@ Example output (pretty-printed)::
         "entityType": "DATASET",
         "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
       },
-      "action": "WRITE"
+      "permission": {"type": "STANDARD", "name": "UPDATE"}
     },
     {
       "authorizable": {
         "entityType": "NAMESPACE",
         "entityParts": {"NAMESPACE": "default"}
       },
-      "action": "READ"
+      "permission": {"type": "STANDARD", "name": "GET"}
     },
     {
       "authorizable": {
         "entityType": "PROGRAM",
         "entityParts":{"NAMESPACE": "default", "APPLICATION": "SportResults", "PROGRAM": "service.UploadService"}
       },
-      "action": "EXECUTE"
+      "permission": {"type": "APPLICATION", "name": "EXECUTE"}
     }
   ]
 

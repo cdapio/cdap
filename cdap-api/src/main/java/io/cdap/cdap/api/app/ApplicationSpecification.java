@@ -51,6 +51,13 @@ public interface ApplicationSpecification {
   String getAppVersion();
 
   /**
+   * @return CDAP version that was used to create or update pipeline for the Application or null if it happened
+   * before version tracking was introduced in CDAP 6.5.0.
+   */
+  @Nullable
+  String getAppCDAPVersion();
+
+  /**
    * @return Configuration string used during the creation of the Application.
    */
   @Nullable

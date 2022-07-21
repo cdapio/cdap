@@ -23,19 +23,20 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import sun.net.www.protocol.http.HttpURLConnection;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 
 /**
  * Fetch preferences via REST API calls (using internal endpoint {@code INTERNAL_API_VERSION_3})
@@ -47,16 +48,17 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemotePreferencesFetcherInternal(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(
-      discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+  public RemotePreferencesFetcherInternal(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**
    * Get preferences for the given identify
    */
-  public PreferencesDetail get(EntityId entityId, boolean resolved) throws IOException, NotFoundException {
+  public PreferencesDetail get(EntityId entityId, boolean resolved)
+    throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse;
     String url = getPreferencesURI(entityId, resolved);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
@@ -98,7 +100,7 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
     return uri;
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

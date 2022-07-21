@@ -17,8 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.api.RunId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +31,8 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceTwillProgramController.class);
 
-  ServiceTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
-    super(programId, controller, runId);
+  ServiceTwillProgramController(ProgramRunId programRunId, TwillController controller) {
+    super(programRunId, controller);
   }
 
   @SuppressWarnings("unchecked")
@@ -46,8 +45,8 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
     Map<String, String> command = (Map<String, String>) value;
     try {
       changeInstances(command.get("runnable"),
-                      Integer.valueOf(command.get("newInstances")),
-                      Integer.valueOf(command.get("oldInstances")));
+                      Integer.parseInt(command.get("newInstances")),
+                      Integer.parseInt(command.get("oldInstances")));
     } catch (Throwable t) {
       LOG.error(String.format("Failed to change instances: %s", command), t);
       throw t;

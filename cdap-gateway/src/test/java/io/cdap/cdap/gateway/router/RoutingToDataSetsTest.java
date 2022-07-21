@@ -28,7 +28,8 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -61,7 +62,8 @@ public class RoutingToDataSetsTest {
   @BeforeClass
   public static void before() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+    Injector injector = Guice.createInjector(new CoreSecurityRuntimeModule().getInMemoryModules(),
+                                             new ExternalAuthenticationModule(),
                                              new InMemoryDiscoveryModule(),
                                              new AppFabricTestModule(cConf));
 

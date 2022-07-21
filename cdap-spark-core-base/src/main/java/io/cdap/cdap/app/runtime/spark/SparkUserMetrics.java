@@ -53,6 +53,11 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
   }
 
   @Override
+  public void countLong(String metricName, long delta) {
+    delegate.countLong(metricName, delta);
+  }
+
+  @Override
   public void gauge(String metricName, long value) {
     delegate.gauge(metricName, value);
   }

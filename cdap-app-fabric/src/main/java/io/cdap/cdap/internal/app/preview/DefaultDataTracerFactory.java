@@ -19,7 +19,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.DataTracerFactory;
 import io.cdap.cdap.app.preview.PreviewDataPublisher;
-import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
@@ -28,14 +28,16 @@ import io.cdap.cdap.proto.id.ApplicationId;
 public class DefaultDataTracerFactory implements DataTracerFactory {
 
   private final PreviewDataPublisher publisher;
+  private final CConfiguration cConf;
 
   @Inject
-  public DefaultDataTracerFactory(PreviewDataPublisher publisher) {
+  public DefaultDataTracerFactory(PreviewDataPublisher publisher, CConfiguration cConf) {
     this.publisher = publisher;
+    this.cConf = cConf;
   }
 
   @Override
   public DataTracer getDataTracer(ApplicationId applicationId, String tracerName) {
-    return new DefaultDataTracer(applicationId, tracerName, publisher);
+    return new DefaultDataTracer(applicationId, tracerName, publisher, cConf);
   }
 }

@@ -22,6 +22,7 @@ import io.cdap.cdap.api.messaging.MessagingAdmin;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.etl.api.AlertPublisherContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -60,28 +61,31 @@ public class DefaultAlertPublisherContext extends AbstractStageContext implement
   }
 
   @Override
-  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException, AccessException {
     messagingAdmin.createTopic(topic);
   }
 
   @Override
   public void createTopic(String topic,
-                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+                          Map<String, String> properties)
+    throws TopicAlreadyExistsException, IOException, AccessException {
     messagingAdmin.createTopic(topic, properties);
   }
 
   @Override
-  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+  public Map<String, String> getTopicProperties(String topic)
+    throws TopicNotFoundException, IOException, AccessException {
     return messagingAdmin.getTopicProperties(topic);
   }
 
   @Override
-  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+  public void updateTopic(String topic, Map<String, String> properties)
+    throws TopicNotFoundException, IOException, AccessException {
     messagingAdmin.updateTopic(topic, properties);
   }
 
   @Override
-  public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
+  public void deleteTopic(String topic) throws TopicNotFoundException, IOException, AccessException {
     messagingAdmin.deleteTopic(topic);
   }
 

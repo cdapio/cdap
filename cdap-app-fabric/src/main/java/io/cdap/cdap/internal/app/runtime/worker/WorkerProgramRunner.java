@@ -31,6 +31,7 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -70,6 +71,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final FieldLineageWriter fieldLineageWriter;
+  private final RemoteClientFactory remoteClientFactory;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -78,7 +80,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService, MetadataReader metadataReader,
                              MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
-                             FieldLineageWriter fieldLineageWriter) {
+                             FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -92,6 +94,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.fieldLineageWriter = fieldLineageWriter;
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   @Override
@@ -135,7 +138,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, metadataReader, metadataPublisher,
-                                                          namespaceQueryAdmin, fieldLineageWriter);
+                                                          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 

@@ -21,6 +21,7 @@ package io.cdap.cdap.api.workflow;
 public enum NodeStatus {
   STARTING,
   RUNNING,
+  STOPPING,
   COMPLETED,
   FAILED,
   KILLED;

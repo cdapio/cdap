@@ -17,10 +17,8 @@
 package io.cdap.cdap.security.impersonation;
 
 
-import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -29,26 +27,13 @@ import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.NamespacedEntityId;
-import io.cdap.http.AbstractHttpHandler;
-import io.cdap.http.HttpResponder;
-import io.cdap.http.NettyHttpService;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.minikdc.MiniKdc;
-import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -59,13 +44,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 
 /**
  * Unit tests for {@link UGIProvider}.
@@ -128,6 +108,7 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     hConf.setBoolean("ipc.client.fallback-to-simple-auth-allowed", true);
+    hConf.setBoolean("ignore.secure.ports.for.testing", true);
 
     miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     miniDFSCluster.waitClusterUp();
@@ -238,7 +219,7 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
 
   private void verifyCaching(DefaultUGIProvider provider, ImpersonationRequest aliceImpRequest,
                              ImpersonationRequest bobImpRequest, UGIWithPrincipal aliceUGIWithPrincipal,
-                             UGIWithPrincipal bobUGIWithPrincipal) throws IOException {
+                             UGIWithPrincipal bobUGIWithPrincipal) throws IOException, AccessException {
     // Fetch the bob UGI again, it should still return the valid one
     Assert.assertSame(bobUGIWithPrincipal, provider.getConfiguredUGI(bobImpRequest));
 
@@ -247,8 +228,8 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
     Assert.assertNotSame(aliceUGIWithPrincipal, provider.getConfiguredUGI(aliceImpRequest));
     try {
       provider.getConfiguredUGI(bobImpRequest);
-      Assert.fail("Expected IOException when getting UGI for " + bobImpRequest);
-    } catch (IOException e) {
+      Assert.fail("Expected AccessException when getting UGI for " + bobImpRequest);
+    } catch (AccessException e) {
       // Expected
     }
   }
@@ -261,7 +242,8 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
   }
 
   private UGIWithPrincipal verifyAndGetUGI(UGIProvider provider, KerberosPrincipalId principalId,
-                                           ImpersonationRequest impersonationRequest) throws IOException {
+                                           ImpersonationRequest impersonationRequest)
+    throws IOException, AccessException {
     UGIWithPrincipal ugiWithPrincipal = provider.getConfiguredUGI(impersonationRequest);
     Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS,
                         ugiWithPrincipal.getUGI().getAuthenticationMethod());

@@ -31,8 +31,8 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.security.guice.SecurityModule;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -70,18 +70,20 @@ public class DistributedKeyManagerTest extends TestTokenManager {
       + zkCluster.getClientPort();
     LOG.info("Running ZK cluster at " + zkConnectString);
     CConfiguration cConf1 = CConfiguration.create();
+    cConf1.setBoolean(Constants.Security.ENABLED, true);
     cConf1.set(Constants.Zookeeper.QUORUM, zkConnectString);
 
     CConfiguration cConf2 = CConfiguration.create();
+    cConf2.setBoolean(Constants.Security.ENABLED, true);
     cConf2.set(Constants.Zookeeper.QUORUM, zkConnectString);
 
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf1, testUtil.getConfiguration()));
     modules.add(new IOModule());
 
-    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf1);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf1);
+    modules.add(coreSecurityModule);
+    if (coreSecurityModule.requiresZKClient()) {
       modules.add(new ZKClientModule());
       modules.add(new ZKDiscoveryModule());
     }
@@ -91,9 +93,9 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     modules.add(new ConfigModule(cConf2, testUtil.getConfiguration()));
     modules.add(new IOModule());
 
-    securityModule = SecurityModules.getDistributedModule(cConf2);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
+    coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf2);
+    modules.add(coreSecurityModule);
+    if (coreSecurityModule.requiresZKClient()) {
       modules.add(new ZKClientModule());
       modules.add(new ZKDiscoveryModule());
     }
@@ -120,8 +122,9 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     tokenManager2.startAndWait();
 
     long now = System.currentTimeMillis();
-    UserIdentity ident1 = new UserIdentity("testuser", Lists.newArrayList("users", "admins"),
-                                           now, now + 60 * 60 * 1000);
+    UserIdentity ident1 = new UserIdentity("testuser", UserIdentity.IdentifierType.EXTERNAL,
+                                           Lists.newArrayList("users", "admins"), now,
+                                           now + 60 * 60 * 1000);
     AccessToken token1 = tokenManager1.signIdentifier(ident1);
     // make sure the second token manager has the secret key required to validate the signature
     tokenManager2.waitForKey(tokenManager1.getCurrentKey().getKeyId(), 2000, TimeUnit.MILLISECONDS);

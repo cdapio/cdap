@@ -20,6 +20,8 @@ package io.cdap.cdap.etl.proto.v2.spec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 
@@ -47,6 +49,10 @@ public class PipelineSpec {
   private final boolean processTimingEnabled;
   private final int numOfRecordsPreview;
   private final Map<String, String> properties;
+  private final Engine engine;
+
+  // we don't need this config after deploy time so don't serialize it
+  private final transient Set<String> connectionsUsed;
 
   protected PipelineSpec(Set<StageSpec> stages,
                          Set<Connection> connections,
@@ -56,7 +62,8 @@ public class PipelineSpec {
                          boolean stageLoggingEnabled,
                          boolean processTimingEnabled,
                          int numOfRecordsPreview,
-                         Map<String, String> properties) {
+                         Map<String, String> properties,
+                         Set<String> connectionsUsed, Engine engine) {
     this.stages = ImmutableSet.copyOf(stages);
     this.connections = ImmutableSet.copyOf(connections);
     this.resources = resources;
@@ -66,6 +73,8 @@ public class PipelineSpec {
     this.processTimingEnabled = processTimingEnabled;
     this.numOfRecordsPreview = numOfRecordsPreview;
     this.properties = ImmutableMap.copyOf(properties);
+    this.connectionsUsed = connectionsUsed;
+    this.engine = engine;
   }
 
   public Set<StageSpec> getStages() {
@@ -100,8 +109,16 @@ public class PipelineSpec {
     return numOfRecordsPreview;
   }
 
+  public Set<String> getConnectionsUsed() {
+    return connectionsUsed;
+  }
+
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  public Engine getEngine() {
+    return engine;
   }
 
   @Override
@@ -123,13 +140,13 @@ public class PipelineSpec {
       Objects.equals(properties, that.properties) &&
       stageLoggingEnabled == that.stageLoggingEnabled &&
       processTimingEnabled == that.processTimingEnabled &&
-      numOfRecordsPreview == that.numOfRecordsPreview;
+      numOfRecordsPreview == that.numOfRecordsPreview && engine == that.engine;
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(stages, connections, resources, driverResources, clientResources,
-                        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
+                        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties, engine);
   }
 
   @Override
@@ -144,7 +161,12 @@ public class PipelineSpec {
       ", processTimingEnabled=" + processTimingEnabled +
       ", numOfRecordsPreview=" + numOfRecordsPreview +
       ", properties=" + properties +
+      ", engine=" + engine +
       "}";
+  }
+
+  public boolean isPreviewEnabled(RuntimeContext context) {
+    return stages.isEmpty() || context.getDataTracer(stages.iterator().next().getName()).isEnabled();
   }
 
   /**
@@ -170,6 +192,8 @@ public class PipelineSpec {
     protected boolean processTimingEnabled;
     protected int numOfRecordsPreview;
     protected Map<String, String> properties;
+    protected Set<String> connectionsUsed;
+    protected Engine engine;
 
     protected Builder() {
       this.stages = new HashSet<>();
@@ -178,6 +202,7 @@ public class PipelineSpec {
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
       this.properties = new HashMap<>();
+      this.connectionsUsed = new HashSet<>();
     }
 
     public T addStage(StageSpec stage) {
@@ -236,9 +261,25 @@ public class PipelineSpec {
       return (T) this;
     }
 
+    public T addConnectionUsed(String connection) {
+      this.connectionsUsed.add(connection);
+      return (T) this;
+    }
+
+    public T addConnectionsUsed(Set<String> connectionsUsed) {
+      this.connectionsUsed.addAll(connectionsUsed);
+      return (T) this;
+    }
+
+    public T setEngine(Engine engine) {
+      this.engine = engine;
+      return (T) this;
+    }
+
     public PipelineSpec build() {
       return new PipelineSpec(stages, connections, resources, driverResources, clientResources,
-                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
+                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties,
+                              connectionsUsed, engine);
     }
   }
 }

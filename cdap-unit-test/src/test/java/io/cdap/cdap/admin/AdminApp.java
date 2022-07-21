@@ -38,6 +38,7 @@ import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.AbstractService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
@@ -121,7 +122,7 @@ public class AdminApp extends AbstractApplication {
     @GET
     @Path("/namespaces/{namespace}/plugins")
     public void getPlugins(HttpServiceRequest request, HttpServiceResponder responder,
-                           @PathParam("namespace") String namespace) throws IOException {
+                           @PathParam("namespace") String namespace) throws IOException, AccessException {
       Admin admin = getContext().getAdmin();
       if (!admin.namespaceExists(namespace)) {
         responder.sendError(404, String.format("namespace '%s' not found.", namespace));
@@ -143,7 +144,7 @@ public class AdminApp extends AbstractApplication {
     @GET
     @Path("exists/{dataset}")
     public void exists(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("dataset") String dataset) throws DatasetManagementException {
+                       @PathParam("dataset") String dataset) throws DatasetManagementException, AccessException {
       Admin admin = getContext().getAdmin();
       responder.sendString(Boolean.toString(admin.datasetExists(dataset)));
     }
@@ -151,7 +152,7 @@ public class AdminApp extends AbstractApplication {
     @GET
     @Path("type/{dataset}")
     public void type(HttpServiceRequest request, HttpServiceResponder responder,
-                     @PathParam("dataset") String dataset) throws DatasetManagementException {
+                     @PathParam("dataset") String dataset) throws DatasetManagementException, AccessException {
       Admin admin = getContext().getAdmin();
       if (!admin.datasetExists(dataset)) {
         responder.sendStatus(404);
@@ -163,7 +164,7 @@ public class AdminApp extends AbstractApplication {
     @GET
     @Path("props/{dataset}")
     public void properties(HttpServiceRequest request, HttpServiceResponder responder,
-                           @PathParam("dataset") String dataset) throws DatasetManagementException {
+                           @PathParam("dataset") String dataset) throws DatasetManagementException, AccessException {
       Admin admin = getContext().getAdmin();
       if (!admin.datasetExists(dataset)) {
         responder.sendStatus(404);
@@ -176,7 +177,7 @@ public class AdminApp extends AbstractApplication {
     @Path("create/{dataset}/{type}")
     public void create(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("dataset") String dataset, @PathParam("type") String type)
-      throws DatasetManagementException {
+      throws DatasetManagementException, AccessException {
 
       DatasetProperties datasetProps = parseBodyAsProps(request);
       Admin admin = getContext().getAdmin();
@@ -192,7 +193,7 @@ public class AdminApp extends AbstractApplication {
     @Path("update/{dataset}")
     public void update(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("dataset") String dataset)
-      throws DatasetManagementException {
+      throws DatasetManagementException, AccessException {
 
       DatasetProperties datasetProps = parseBodyAsProps(request);
       Admin admin = getContext().getAdmin();
@@ -208,7 +209,7 @@ public class AdminApp extends AbstractApplication {
     @Path("truncate/{dataset}")
     public void truncate(HttpServiceRequest request, HttpServiceResponder responder,
                          @PathParam("dataset") String dataset)
-      throws DatasetManagementException {
+      throws DatasetManagementException, AccessException {
 
       Admin admin = getContext().getAdmin();
       try {
@@ -223,7 +224,7 @@ public class AdminApp extends AbstractApplication {
     @Path("delete/{dataset}")
     public void delete(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("dataset") String dataset)
-      throws DatasetManagementException {
+      throws DatasetManagementException, AccessException {
 
       Admin admin = getContext().getAdmin();
       try {
@@ -289,7 +290,7 @@ public class AdminApp extends AbstractApplication {
         admin.dropDataset("d");
       }
     } catch (DatasetManagementException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
 
   }
@@ -366,11 +367,8 @@ public class AdminApp extends AbstractApplication {
       public void run(JavaSparkExecutionContext sec) throws Exception {
         JavaSparkContext jsc = new JavaSparkContext();
         JavaPairRDD<byte[], byte[]> input = sec.fromDataset("lines");
-        JavaRDD<String> words = input.values().flatMap(new FlatMapFunction<byte[], String>() {
-          public Iterable<String> call(byte[] line) {
-            return Arrays.asList(Bytes.toString(line).split(" "));
-          }
-        });
+        JavaRDD<String> words = input.values().flatMap((FlatMapFunction<byte[], String>) line ->
+          Arrays.asList(Bytes.toString(line).split(" ")).iterator());
         JavaPairRDD<String, Integer> pairs = words.mapToPair(new PairFunction<String, String, Integer>() {
           public Tuple2<String, Integer> call(String s) {
             return new Tuple2<>(s, 1);

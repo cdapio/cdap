@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,17 +39,22 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.security.AuthEnforce;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.tethering.PeerInfo;
+import io.cdap.cdap.internal.tethering.TetheringStore;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.store.NamespaceStore;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -64,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -82,11 +88,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   // Use Provider to abstract out
   private final Provider<NamespaceResourceDeleter> resourceDeleter;
   private final Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Impersonator impersonator;
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
   private final String masterShortUserName;
+  private final TetheringStore tetheringStore;
+  private final CConfiguration cConf;
 
   @Inject
   @VisibleForTesting
@@ -96,16 +104,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                MetricsCollectionService metricsCollectionService,
                                Provider<NamespaceResourceDeleter> resourceDeleter,
                                Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
-                               CConfiguration cConf,
-                               Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
-                               AuthenticationContext authenticationContext) {
+                               CConfiguration cConf, Impersonator impersonator, AccessEnforcer accessEnforcer,
+                               AuthenticationContext authenticationContext,
+                               TetheringStore tetheringStore) {
     this.resourceDeleter = resourceDeleter;
     this.nsStore = nsStore;
     this.store = store;
     this.dsFramework = dsFramework;
     this.metricsCollectionService = metricsCollectionService;
     this.authenticationContext = authenticationContext;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
     this.namespaceMetaCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, NamespaceMeta>() {
@@ -115,6 +123,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       }
     });
     this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
+    this.tetheringStore = tetheringStore;
+    this.cConf = cConf;
   }
 
   /**
@@ -136,9 +146,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     String ownerPrincipal = metadata.getConfig().getPrincipal();
     Principal requestingUser = authenticationContext.getPrincipal();
     if (ownerPrincipal != null) {
-      authorizationEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser, Action.ADMIN);
+      accessEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser, AccessPermission.SET_OWNER);
     }
-    authorizationEnforcer.enforce(namespace, requestingUser, Action.ADMIN);
+    accessEnforcer.enforce(namespace, requestingUser, StandardPermission.CREATE);
 
     // If this namespace has custom mapping then validate the given custom mapping
     if (hasCustomMapping(metadata)) {
@@ -182,9 +192,27 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         storageProviderNamespaceAdmin.get().create(metadata);
         return null;
       });
+
+      // if needed, run master environment specific logic
+      MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED) && masterEnv != null) {
+        masterEnv.onNamespaceCreation(namespace.getNamespace(), metadata.getConfig().getConfigs());
+      }
     } catch (Throwable t) {
-      // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
-      deleteNamespaceMeta(metadata.getNamespaceId());
+      LOG.error(String.format("Failed to create namespace '%s'", namespace.getNamespace()), t);
+      try {
+        resourceDeleter.get().deleteResources(metadata);
+      } catch (Exception e) {
+        LOG.error(String.format("Failed to delete resources for namespace '%s'", namespace.getNamespace()), e);
+        t.addSuppressed(e);
+      }
+      try {
+        // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
+        deleteNamespaceMeta(metadata.getNamespaceId());
+      } catch (Exception e) {
+        LOG.error(String.format("Failed to delete metadata for namespace '%s'", namespace.getNamespace()), e);
+        t.addSuppressed(e);
+      }
       throw new NamespaceCannotBeCreatedException(namespace, t);
     }
     emitNamespaceCountMetric();
@@ -260,7 +288,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
   @Override
-  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.DELETE)
   public synchronized void delete(@Name("namespaceId") final NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     NamespaceMeta namespaceMeta = get(namespaceId);
@@ -272,8 +300,25 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                                                 namespaceId));
     }
 
+    List<String> tetheredPeers = getTetheredPeersUsingNamespace(namespaceId);
+    if (!tetheredPeers.isEmpty()) {
+      throw new NamespaceCannotBeDeletedException(namespaceId,
+                                                  String.format("Namespace '%s' is used in tethering connections " +
+                                                                  "with peers: %s. Delete tethering connections " +
+                                                                  "before deleting the namespace",
+                                                                namespaceId,
+                                                                tetheredPeers));
+    }
+
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
+      // if needed, run master environment specific logic if it is a non-default namespace (see below for more info)
+      MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)
+        && masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
+        masterEnv.onNamespaceDeletion(namespaceId.getNamespace(), namespaceMeta.getConfig().getConfigs());
+      }
+
       resourceDeleter.get().deleteResources(namespaceMeta);
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
@@ -323,7 +368,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     NamespaceMeta existingMeta = nsStore.get(namespaceId);
     // Already ensured that namespace exists, so namespace meta should not be null
@@ -386,7 +431,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     final Principal principal = authenticationContext.getPrincipal();
 
     //noinspection ConstantConditions
-    return AuthorizationUtil.isVisible(namespaces, authorizationEnforcer, principal,
+    return AuthorizationUtil.isVisible(namespaces, accessEnforcer, principal,
                                        NamespaceMeta::getNamespaceId,
                                        input -> principal.getName().equals(input.getConfig().getPrincipal()));
   }
@@ -403,14 +448,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
 
-    boolean isAuthorized = true;
+    UnauthorizedException lastUnauthorizedException = null;
     // if the principal is not same as cdap master principal do the authorization check. Otherwise, skip the auth check
     // See: CDAP-7387
     if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
       try {
-        AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
+        accessEnforcer.enforce(namespaceId, principal, StandardPermission.GET);
       } catch (UnauthorizedException e) {
-        isAuthorized = false;
+        lastUnauthorizedException = e;
       }
     }
 
@@ -418,7 +463,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     try {
       namespaceMeta = namespaceMetaCache.get(namespaceId);
     } catch (Exception e) {
-      if (isAuthorized) {
+      if (lastUnauthorizedException == null) {
         Throwable cause = e.getCause();
         if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
           cause instanceof UnauthorizedException) {
@@ -433,10 +478,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       return namespaceMeta;
     }
 
-    if (!isAuthorized) {
-      throw new UnauthorizedException(
-        String.format("Namespace %s is not visible to principal %s since the principal does not have any " +
-                        "privilege on this namespace or any entity in this namespace.", namespaceId, principal));
+    if (lastUnauthorizedException != null) {
+      throw lastUnauthorizedException;
     }
     return namespaceMeta;
   }
@@ -474,6 +517,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
   private boolean checkProgramsRunning(final NamespaceId namespaceId) {
     return !store.getActiveRuns(namespaceId).isEmpty();
+  }
+
+  private List<String> getTetheredPeersUsingNamespace(NamespaceId namespaceId) throws IOException {
+    return tetheringStore.getPeers()
+      .stream()
+      .filter(p -> p.getMetadata().getNamespaceAllocations().stream().
+        anyMatch(na -> na.getNamespace().equals(namespaceId.getNamespace())))
+      .map(PeerInfo::getName)
+      .collect(Collectors.toList());
   }
 
   /**

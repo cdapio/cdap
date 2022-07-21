@@ -48,6 +48,7 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -70,7 +71,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
@@ -107,7 +109,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Transaction transaction;
   private final TaskLocalizationContext taskLocalizationContext;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MapReduceClassLoader mapReduceClassLoader;
 
@@ -137,22 +139,23 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             Map<String, File> localizedResources,
                             SecureStore secureStore,
                             SecureStoreManager secureStoreManager,
-                            AuthorizationEnforcer authorizationEnforcer,
+                            AccessEnforcer accessEnforcer,
                             AuthenticationContext authenticationContext,
                             MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
-    super(program, programOptions, cConf, ImmutableSet.of(), dsFramework, txClient, discoveryServiceClient,
+                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+                            RemoteClientFactory remoteClientFactory) {
+    super(program, programOptions, cConf, ImmutableSet.of(), dsFramework, txClient,
           true, metricsCollectionService, createMetricsTags(programOptions,
                                                             taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
     this.spec = spec;
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.mapReduceClassLoader = mapReduceClassLoader;
     initializeTransactionAwares();
@@ -276,7 +279,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
         return new AbstractMessagePublisher() {
           @Override
           protected void publish(TopicId topicId,
-                                 Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+                                 Iterator<byte[]> payloads)
+            throws IOException, TopicNotFoundException, UnauthorizedException {
             if (!allowedTopic.equals(topicId)) {
               throw new UnsupportedOperationException("Publish to topic '" + topicId.getTopic() + "' is not supported");
             }
@@ -435,10 +439,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   /**
-   * Return {@link AuthorizationEnforcer} to enforce authorization checks in MR tasks.
+   * Return {@link AccessEnforcer} to enforce authorization checks in MR tasks.
    */
-  public AuthorizationEnforcer getAuthorizationEnforcer() {
-    return authorizationEnforcer;
+  public AccessEnforcer getAccessEnforcer() {
+    return accessEnforcer;
   }
 
   /**

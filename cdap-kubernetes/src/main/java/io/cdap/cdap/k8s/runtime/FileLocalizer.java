@@ -17,11 +17,10 @@
 package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
@@ -29,9 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,10 +50,11 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizer.class);
 
-  private final MasterEnvironmentContext context;
+  private final MasterEnvironmentRunnableContext context;
   private volatile boolean stopped;
 
-  public FileLocalizer(MasterEnvironmentContext context, @SuppressWarnings("unused") MasterEnvironment masterEnv) {
+  public FileLocalizer(MasterEnvironmentRunnableContext context,
+                       @SuppressWarnings("unused") MasterEnvironment masterEnv) {
     this.context = context;
   }
 
@@ -62,16 +65,21 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
       throw new IllegalArgumentException("Expected to have two arguments: runtime config uri and the runnable name.");
     }
 
+    LocalLocationFactory localLocationFactory = new LocalLocationFactory();
+
     // Localize the runtime config jar
     URI uri = URI.create(args[0]);
-    Location runtimeConfigLocation;
-    if (context.getLocationFactory().getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
-      runtimeConfigLocation = context.getLocationFactory().create(uri);
-    } else {
-      runtimeConfigLocation = new LocalLocationFactory().create(new File(uri).toURI());
-    }
 
-    Path runtimeConfigDir = expand(runtimeConfigLocation, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+    Path runtimeConfigDir;
+    if (localLocationFactory.getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
+      try (FileInputStream is = new FileInputStream(new File(uri))) {
+        runtimeConfigDir = expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+      }
+    } else {
+      try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(uri))) {
+        runtimeConfigDir = expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+      }
+    }
 
     try (Reader reader = Files.newBufferedReader(runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC),
                                                  StandardCharsets.UTF_8)) {
@@ -86,13 +94,14 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
           break;
         }
 
-        Location location = context.getLocationFactory().create(localFile.getURI());
         Path targetPath = targetDir.resolve(localFile.getName());
 
-        if (localFile.isArchive()) {
-          expand(location, targetPath);
-        } else {
-          copy(location, targetPath);
+        try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(localFile.getURI()))) {
+          if (localFile.isArchive()) {
+            expand(localFile.getURI(), is, targetPath);
+          } else {
+            copy(localFile.getURI(), is, targetPath);
+          }
         }
       }
     }
@@ -103,23 +112,42 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
     stopped = true;
   }
 
-  private void copy(Location location, Path target) throws IOException {
-    LOG.debug("Localize {} to {}", location, target);
-
-    try (InputStream is = location.getInputStream()) {
-      Files.copy(is, target, StandardCopyOption.REPLACE_EXISTING);
-    }
+  /**
+   * Return an {@link InputStream} for the given {@link HttpURLConnection} URL path that
+   * auto disconnects upon closing the {@link InputStream}
+   */
+  private InputStream getHttpURLConnectionInputStream(String urlPath) throws IOException {
+    HttpURLConnection conn = context.openHttpURLConnection(urlPath);
+    return new FilterInputStream(conn.getInputStream()) {
+      @Override
+      public void close() throws IOException {
+        try {
+          super.close();
+        } finally {
+          conn.disconnect();
+        }
+      }
+    };
   }
 
-  private Path expand(Location location, Path targetDir) throws IOException {
-    LOG.debug("Localize and expand {} to {}", location, targetDir);
+  private String fileDownloadURLPath(URI uri) {
+    return String.format("%s/%s", "v3Internal/location", uri.getPath());
+  }
 
-    try (ZipInputStream is = new ZipInputStream(location.getInputStream())) {
+  private void copy(URI uri, InputStream inputStream, Path target) throws IOException {
+    LOG.debug("Localize {} to {}", uri, target);
+
+    Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  private Path expand(URI uri, InputStream inputStream, Path targetDir) throws IOException {
+    LOG.debug("Localize and expand {} to {}", uri.toString(), targetDir);
+
+    try (ZipInputStream is = new ZipInputStream(inputStream)) {
       Path targetPath = Files.createDirectories(targetDir);
       ZipEntry entry;
       while ((entry = is.getNextEntry()) != null && !stopped) {
         Path outputPath = targetPath.resolve(entry.getName());
-
         if (entry.isDirectory()) {
           Files.createDirectories(outputPath);
         } else {

@@ -17,10 +17,12 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
+import io.cdap.cdap.master.spi.twill.Completable;
 
 /**
  * A TwillRunnable for running Workers in distributed mode.
  */
+@Completable
 public class WorkerTwillRunnable extends AbstractProgramTwillRunnable<WorkerProgramRunner> {
 
   protected WorkerTwillRunnable(String name) {

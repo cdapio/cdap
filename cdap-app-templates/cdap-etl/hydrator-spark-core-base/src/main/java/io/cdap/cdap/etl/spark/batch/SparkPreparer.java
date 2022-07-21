@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
-import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
@@ -83,7 +82,14 @@ public class SparkPreparer extends AbstractSparkPreparer {
     throws TransactionFailureException, InstantiationException, IOException {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
+
     File configFile = File.createTempFile("HydratorSpark", ".config");
+    if (!configFile.getParentFile().exists()) {
+      configFile.getParentFile().mkdirs();
+    }
+    if (!configFile.exists()) {
+      configFile.createNewFile();
+    }
 
     List<Finisher> finishers = super.prepare(phaseSpec);
     finishers.add(new Finisher() {
@@ -94,7 +100,6 @@ public class SparkPreparer extends AbstractSparkPreparer {
         }
       }
     });
-
     try (Writer writer = Files.newBufferedWriter(configFile.toPath(), StandardCharsets.UTF_8)) {
       SparkBatchSourceSinkFactoryInfo sourceSinkInfo = new SparkBatchSourceSinkFactoryInfo(sourceFactory,
                                                                                            sinkFactory,

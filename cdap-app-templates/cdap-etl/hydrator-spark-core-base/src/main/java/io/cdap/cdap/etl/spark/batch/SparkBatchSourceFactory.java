@@ -17,14 +17,11 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
@@ -109,21 +106,12 @@ public final class SparkBatchSourceFactory {
                                                   Class<K> keyClass, Class<V> valueClass) {
     if (inputFormatProviders.containsKey(inputName)) {
       InputFormatProvider inputFormatProvider = inputFormatProviders.get(inputName);
-      Configuration hConf = new Configuration();
-      hConf.clear();
-      for (Map.Entry<String, String> entry : inputFormatProvider.getInputFormatConfiguration().entrySet()) {
-        hConf.set(entry.getKey(), entry.getValue());
-      }
+
       ClassLoader classLoader = Objects.firstNonNull(currentThread().getContextClassLoader(),
                                                      getClass().getClassLoader());
-      try {
-        @SuppressWarnings("unchecked")
-        Class<InputFormat> inputFormatClass = (Class<InputFormat>) classLoader.loadClass(
-          inputFormatProvider.getInputFormatClassName());
-        return jsc.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
-      } catch (ClassNotFoundException e) {
-        throw Throwables.propagate(e);
-      }
+
+      return RDDUtils.readUsingInputFormat(jsc, inputFormatProvider, classLoader, keyClass,
+                                           valueClass);
     }
 
     if (datasetInfos.containsKey(inputName)) {

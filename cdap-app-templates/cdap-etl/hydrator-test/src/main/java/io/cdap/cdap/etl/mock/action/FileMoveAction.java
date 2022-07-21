@@ -108,7 +108,8 @@ public class FileMoveAction extends Action {
     properties.put("sourceFileset", new PluginPropertyField("sourceFileset", "", "string", true, false));
     properties.put("destinationFileset", new PluginPropertyField("destinationFileset", "", "string", true, false));
     properties.put("filterRegex", new PluginPropertyField("filterRegex", "", "string", false, false));
-    return new PluginClass(Action.PLUGIN_TYPE, NAME, "", FileMoveAction.class.getName(),
-                           "conf", properties);
+    return PluginClass.builder().setName(NAME).setType(Action.PLUGIN_TYPE)
+             .setDescription("").setClassName(FileMoveAction.class.getName()).setProperties(properties)
+             .setConfigFieldName("conf").build();
   }
 }

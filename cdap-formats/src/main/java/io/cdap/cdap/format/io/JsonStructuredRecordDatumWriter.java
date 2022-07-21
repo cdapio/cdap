@@ -122,6 +122,11 @@ public class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter
     encode(encoder, schema.getUnionSchema(matchingIdx), value);
   }
 
+  @Override
+  protected void encodeNumber(Encoder encoder, Number number) throws IOException {
+    encoder.writeNumber(number);
+  }
+
   private JsonWriter getJsonWriter(Encoder encoder) {
     // Type already checked in the encode method, hence assuming the casting is fine.
     return ((JsonEncoder) encoder).getJsonWriter();
@@ -132,36 +137,14 @@ public class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter
     Schema nonNullableSchema = schema.isNullable() ? schema.getNonNullable() : schema;
     Schema.LogicalType logicalType = nonNullableSchema.getLogicalType();
 
-    if (value != null && logicalTypeAsString && logicalType != null) {
-      switch (logicalType) {
-        case DATE:
-          Integer date = (Integer) value;
-          // will be encoded to string of format YYYY-mm-DD
-          encoder.writeString(LocalDate.ofEpochDay(date.longValue()).format(DateTimeFormatter.ISO_LOCAL_DATE));
-          break;
-        case TIME_MILLIS:
-          LocalTime localTimeMillis = LocalTime.ofNanoOfDay(TimeUnit.MILLISECONDS.toNanos(((Integer) value)));
-          // will be encoded to string of format HH:mm:ss.SSSSSSSSS
-          encoder.writeString(localTimeMillis.format(DateTimeFormatter.ISO_LOCAL_TIME));
-          break;
-        case TIME_MICROS:
-          LocalTime localTimeMicros = LocalTime.ofNanoOfDay(TimeUnit.MICROSECONDS.toNanos((Long) value));
-          // will be encoded to string of format HH:mm:ss.SSSSSSSSS
-          encoder.writeString(localTimeMicros.format(DateTimeFormatter.ISO_LOCAL_TIME));
-          break;
-        case TIMESTAMP_MILLIS:
-          ZonedDateTime timestampMillis = getZonedDateTime((Long) value, TimeUnit.MILLISECONDS,
-                                                           ZoneId.ofOffset("UTC", ZoneOffset.UTC));
-          // will be encoded to string of format YYYY-mm-DDTHH:mm:ss.SSSSSSSSSZ[UTC]
-          encoder.writeString(timestampMillis.format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
-          break;
-        case TIMESTAMP_MICROS:
-          ZonedDateTime timestampMicros = getZonedDateTime((Long) value, TimeUnit.MICROSECONDS,
-                                                           ZoneId.ofOffset("UTC", ZoneOffset.UTC));
-          // will be encoded to string of format YYYY-mm-DDTHH:mm:ss.SSSSSSSSSZ[UTC]
-          encoder.writeString(timestampMicros.format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
-          break;
-        case DECIMAL:
+    if (value != null && logicalType != null) {
+      // output logical types as string values if needed
+      if (logicalTypeAsString) {
+        handleLogicalTypeAsString(encoder, value, nonNullableSchema, logicalType);
+        return;
+      } else {
+        // encode BigDecimal values using its full numeric representation
+        if (logicalType == Schema.LogicalType.DECIMAL) {
           int scale = nonNullableSchema.getScale();
           BigDecimal bigDecimal;
           if (value instanceof ByteBuffer) {
@@ -169,24 +152,69 @@ public class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter
           } else {
             bigDecimal = new BigDecimal(new BigInteger((byte[]) value), scale);
           }
-          encoder.writeString(bigDecimal.toString());
-          break;
-        case DATETIME:
-          //expecting value to be already in the correct format
-          encoder.writeString(value.toString());
-          break;
+          encodeNumber(encoder, bigDecimal);
+          return;
+        }
       }
-      return;
     }
     super.encode(encoder, schema, value);
+  }
+
+  protected void handleLogicalTypeAsString(Encoder encoder,
+                                           Object value,
+                                           Schema nonNullableSchema,
+                                           Schema.LogicalType logicalType) throws IOException {
+    switch (logicalType) {
+      case DATE:
+        Integer date = (Integer) value;
+        // will be encoded to string of format YYYY-mm-DD
+        encoder.writeString(LocalDate.ofEpochDay(date.longValue()).format(DateTimeFormatter.ISO_LOCAL_DATE));
+        break;
+      case TIME_MILLIS:
+        LocalTime localTimeMillis = LocalTime.ofNanoOfDay(TimeUnit.MILLISECONDS.toNanos(((Integer) value)));
+        // will be encoded to string of format HH:mm:ss.SSSSSSSSS
+        encoder.writeString(localTimeMillis.format(DateTimeFormatter.ISO_LOCAL_TIME));
+        break;
+      case TIME_MICROS:
+        LocalTime localTimeMicros = LocalTime.ofNanoOfDay(TimeUnit.MICROSECONDS.toNanos((Long) value));
+        // will be encoded to string of format HH:mm:ss.SSSSSSSSS
+        encoder.writeString(localTimeMicros.format(DateTimeFormatter.ISO_LOCAL_TIME));
+        break;
+      case TIMESTAMP_MILLIS:
+        ZonedDateTime timestampMillis = getZonedDateTime((Long) value, TimeUnit.MILLISECONDS,
+                                                         ZoneId.ofOffset("UTC", ZoneOffset.UTC));
+        // will be encoded to string of format YYYY-mm-DDTHH:mm:ss.SSSSSSSSSZ[UTC]
+        encoder.writeString(timestampMillis.format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+        break;
+      case TIMESTAMP_MICROS:
+        ZonedDateTime timestampMicros = getZonedDateTime((Long) value, TimeUnit.MICROSECONDS,
+                                                         ZoneId.ofOffset("UTC", ZoneOffset.UTC));
+        // will be encoded to string of format YYYY-mm-DDTHH:mm:ss.SSSSSSSSSZ[UTC]
+        encoder.writeString(timestampMicros.format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+        break;
+      case DECIMAL:
+        int scale = nonNullableSchema.getScale();
+        BigDecimal bigDecimal;
+        if (value instanceof ByteBuffer) {
+          bigDecimal = new BigDecimal(new BigInteger(Bytes.toBytes((ByteBuffer) value)), scale);
+        } else {
+          bigDecimal = new BigDecimal(new BigInteger((byte[]) value), scale);
+        }
+        encoder.writeString(bigDecimal.toString());
+        break;
+      case DATETIME:
+        //expecting value to be already in the correct format
+        encoder.writeString(value.toString());
+        break;
+    }
   }
 
   /**
    * Get zoned date and time represented by the field.
    *
-   * @param ts timestamp to be used to get {@link ZonedDateTime}
+   * @param ts     timestamp to be used to get {@link ZonedDateTime}
    * @param zoneId zone id for the field
-   * @param unit time unit for ts
+   * @param unit   time unit for ts
    * @return {@link ZonedDateTime} represented by field.
    */
   private ZonedDateTime getZonedDateTime(long ts, TimeUnit unit, ZoneId zoneId) {

@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
@@ -42,6 +41,7 @@ import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ArtifactRangeNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.ArtifactConfig;
 import io.cdap.cdap.common.conf.ArtifactConfigReader;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -57,23 +57,28 @@ import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
 import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import org.apache.commons.io.IOUtils;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.ExecutionException;
@@ -96,6 +101,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactConfigReader configReader;
   private final MetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
+  private final int maxArtifactLoadParallelism;
 
   @VisibleForTesting
   @Inject
@@ -107,8 +113,9 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
+    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
     this.systemArtifactDirs = new HashSet<>();
+    this.maxArtifactLoadParallelism = cConf.getInt(Constants.AppFabric.SYSTEM_ARTIFACTS_MAX_PARALLELISM);
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
       String sparkDirStr = SparkCompatReader.get(cConf).getCompat();
@@ -134,8 +141,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public CloseableClassLoader createArtifactClassLoader(
-    Location artifactLocation, EntityImpersonator entityImpersonator) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactLocation).iterator(),
+    ArtifactDescriptor artifactDescriptor, EntityImpersonator entityImpersonator) throws IOException {
+    return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactDescriptor.getLocation()).iterator(),
                                                         entityImpersonator);
   }
 
@@ -175,6 +182,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
     return artifactRepositoryReader.getArtifact(artifactId);
+  }
+
+  @Override
+  public InputStream newInputStream(Id.Artifact artifactId) throws IOException, NotFoundException {
+    return artifactRepositoryReader.newInputStream(artifactId);
   }
 
   @Override
@@ -251,7 +263,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins) throws Exception {
     return addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
-                       Collections.<String, String>emptyMap());
+                       Collections.emptyMap());
   }
 
   @Override
@@ -267,25 +279,29 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     CloseableClassLoader parentClassLoader = null;
     EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(),
                                                                    impersonator);
+    List<ArtifactDescriptor> parentDescriptors = new ArrayList<>();
     if (!parentArtifacts.isEmpty()) {
       validateParentSet(artifactId, parentArtifacts);
-      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts, entityImpersonator);
+      parentDescriptors = getParentArtifactDescriptors(artifactId, parentArtifacts);
     }
-    try {
-      additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
-      ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
-      ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, properties);
-      ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
-      ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
-      // info hides some fields that are available in detail, such as the location of the artifact
-      ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
-                                                   artifactDetail.getMeta().getProperties());
-      // add system metadata for artifacts
-      writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
-      return artifactDetail;
-    } finally {
-      Closeables.closeQuietly(parentClassLoader);
-    }
+
+    additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
+    ArtifactClassesWithMetadata artifactClassesWithMetadata = inspectArtifact(artifactId, artifactFile,
+                                                                              parentDescriptors,
+                                                                              additionalPlugins);
+    ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(), parentArtifacts,
+                                         properties);
+    ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
+    ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
+    // info hides some fields that are available in detail, such as the location of the artifact
+    ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
+                                                 artifactDetail.getMeta().getProperties());
+    // add system metadata for artifacts
+    writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
+
+    // add plugin metadata, these metadata can be in any scope depending on the artifact scope
+    metadataServiceClient.batch(artifactClassesWithMetadata.getMutations());
+    return artifactDetail;
   }
 
   @Override
@@ -381,7 +397,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
     if (!remainingArtifacts.isEmpty()) {
       ExecutorService executorService =
-        Executors.newFixedThreadPool(remainingArtifacts.size(),
+        Executors.newFixedThreadPool(Math.min(maxArtifactLoadParallelism, remainingArtifacts.size()),
                                      Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
       try {
         // loop until there is no change
@@ -451,10 +467,25 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+    ArtifactDetail artifactDetail = artifactStore.getArtifact(artifactId);
+    io.cdap.cdap.proto.id.ArtifactId artifact = artifactId.toEntityId();
+
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataServiceClient.drop(new MetadataMutation.Drop(artifactId.toEntityId().toMetadataEntity()));
+
+    List<MetadataMutation> mutations = new ArrayList<>();
+    // drop artifact metadata
+    mutations.add(new MetadataMutation.Drop(artifact.toMetadataEntity()));
+    Set<PluginClass> plugins = artifactDetail.getMeta().getClasses().getPlugins();
+
+    // drop plugin metadata
+    plugins.forEach(pluginClass -> {
+      PluginId pluginId = new PluginId(artifact.getNamespace(), artifact.getArtifact(), artifact.getVersion(),
+                                       pluginClass.getName(), pluginClass.getType());
+      mutations.add(new MetadataMutation.Drop(pluginId.toMetadataEntity()));
+    });
+    metadataServiceClient.batch(mutations);
   }
 
   @Override
@@ -462,16 +493,16 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     final List<ArtifactDetail> artifactDetails = artifactStore.getArtifacts(namespace);
 
     return Lists.transform(artifactDetails, new Function<ArtifactDetail, ArtifactInfo>() {
-        @Nullable
-        @Override
-        public ArtifactInfo apply(@Nullable ArtifactDetail input) {
-          // transform artifactDetail to artifactInfo
-          ArtifactId artifactId = input.getDescriptor().getArtifactId();
-          return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope(),
-                                  input.getMeta().getClasses(), input.getMeta().getProperties(),
-                                  input.getMeta().getUsableBy());
-        }
-      });
+      @Nullable
+      @Override
+      public ArtifactInfo apply(@Nullable ArtifactDetail input) {
+        // transform artifactDetail to artifactInfo
+        ArtifactId artifactId = input.getDescriptor().getArtifactId();
+        return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope(),
+                                input.getMeta().getClasses(), input.getMeta().getProperties(),
+                                input.getMeta().getUsableBy());
+      }
+    });
   }
 
   private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws Exception {
@@ -479,15 +510,15 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     try {
       Id.Artifact artifactId = systemArtifactInfo.getArtifactId();
 
-      // if it's not a snapshot and it already exists, don't bother trying to add it since artifacts are immutable
-      if (!artifactId.getVersion().isSnapshot()) {
-        try {
-          artifactStore.getArtifact(artifactId);
-          LOG.info("Artifact {} already exists, will not try loading it again.", artifactId);
+      // Check if it already exists
+      try {
+        ArtifactDetail currentArtifactDetail = artifactStore.getArtifact(artifactId);
+        if (!shouldUpdateSytemArtifact(currentArtifactDetail, systemArtifactInfo)) {
+          LOG.info("Artifact {} already exists and it did not change, will not try loading it again.", artifactId);
           return;
-        } catch (ArtifactNotFoundException e) {
-          // this is fine, means it doesn't exist yet and we should add it
         }
+      } catch (ArtifactNotFoundException e) {
+        // this is fine, means it doesn't exist yet and we should add it
       }
 
       addArtifact(artifactId,
@@ -507,20 +538,55 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
   }
 
-  private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile, Set<PluginClass> additionalPlugins,
-                                          @Nullable ClassLoader parentClassLoader)
+  private boolean shouldUpdateSytemArtifact(ArtifactDetail currentArtifactDetail,
+                                            SystemArtifactInfo systemArtifactInfo) {
+    if (!currentArtifactDetail.getDescriptor().getArtifactId().getVersion().isSnapshot()) {
+      // if it's not a snapshot, don't bother trying to update it since artifacts are immutable
+      return false;
+    }
+    // For snapshots check if it's different. Artifact update is disruptive, so we spend some cycles
+    // to check if it's really needed
+    Set<ArtifactRange> parents = systemArtifactInfo.getConfig().getParents();
+    if (!Objects.equals(parents, currentArtifactDetail.getMeta().getUsableBy())) {
+      return true;
+    }
+    if (!Objects.equals(systemArtifactInfo.getConfig().getProperties(),
+                       currentArtifactDetail.getMeta().getProperties())) {
+      return true;
+    }
+    Set<PluginClass> additionalPlugins = systemArtifactInfo.getConfig().getPlugins();
+    if (additionalPlugins != null && !currentArtifactDetail.getMeta().getClasses().getPlugins().containsAll(
+      additionalPlugins)) {
+      return true;
+    }
+    try (
+      InputStream stream1 = currentArtifactDetail.getDescriptor().getLocation().getInputStream();
+      InputStream stream2 = new FileInputStream(systemArtifactInfo.getArtifactFile())
+      ) {
+      return !IOUtils.contentEquals(stream1, stream2);
+    } catch (IOException e) {
+      // In case of any IO problems, jsut update it
+      return true;
+    }
+  }
+
+  private ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                                      List<ArtifactDescriptor> parentDescriptors,
+                                                      Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
-    ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile,
-                                                                        parentClassLoader, additionalPlugins);
-    validatePluginSet(artifactClasses.getPlugins());
+    ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
+                                                                             parentDescriptors,
+                                                                             additionalPlugins);
+    validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
-      return artifactClasses;
+      return artifact;
     } else {
-      return ArtifactClasses.builder()
-        .addApps(artifactClasses.getApps())
-        .addPlugins(artifactClasses.getPlugins())
+      ArtifactClasses newArtifactClasses = ArtifactClasses.builder()
+        .addApps(artifact.getArtifactClasses().getApps())
+        .addPlugins(artifact.getArtifactClasses().getPlugins())
         .addPlugins(additionalPlugins)
         .build();
+      return new ArtifactClassesWithMetadata(newArtifactClasses, artifact.getMutations());
     }
   }
 
@@ -553,19 +619,17 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   /**
-   * Create a parent classloader using an artifact from one of the artifacts in the specified parents.
+   * Get {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts for the given artifact.
    *
-   * @param artifactId the id of the artifact to create the parent classloader for
-   * @param parentArtifacts the ranges of parents to create the classloader from
-   * @return a classloader based off a parent artifact
+   * @param artifactId the id of the artifact for which to find its parent and grandparent {@link ArtifactDescriptor}
+   * @param parentArtifacts the ranges of parents to find
+   * @return {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts, in that specific order
    * @throws ArtifactRangeNotFoundException if none of the parents could be found
-   * @throws InvalidArtifactException if one of the parents also has parents
-   * @throws IOException if there was some error reading from the store
+   * @throws InvalidArtifactException       if one of the parents also has parents
    */
-  private CloseableClassLoader createParentClassLoader(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
-                                                       EntityImpersonator entityImpersonator)
-    throws ArtifactRangeNotFoundException, IOException, InvalidArtifactException {
-
+  private List<ArtifactDescriptor> getParentArtifactDescriptors(Id.Artifact artifactId,
+                                                                Set<ArtifactRange> parentArtifacts)
+    throws ArtifactRangeNotFoundException, InvalidArtifactException {
     List<ArtifactDetail> parents = new ArrayList<>();
     for (ArtifactRange parentRange : parentArtifacts) {
       parents.addAll(artifactStore.getArtifacts(parentRange, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
@@ -576,8 +640,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                              artifactId, Joiner.on('/').join(parentArtifacts)));
     }
 
-    Location parentLocation = null;
-    Location grandparentLocation = null;
+    ArtifactDescriptor parentArtifact = null;
+    ArtifactDescriptor grandparentArtifact = null;
 
     // check if any of the parents also have grandparents, which is not allowed. This is to simplify things
     // so that we don't have to chain a bunch of classloaders, and also to keep it simple for users to avoid
@@ -607,22 +671,40 @@ public class DefaultArtifactRepository implements ArtifactRepository {
           }
 
           // assumes any grandparent will do
-          if (parentLocation == null && grandparentLocation == null) {
-            grandparentLocation = grandparent.getDescriptor().getLocation();
+          if (parentArtifact == null && grandparentArtifact == null) {
+            grandparentArtifact = grandparent.getDescriptor();
           }
         }
       }
 
       // assumes any parent will do
-      if (parentLocation == null) {
-        parentLocation = parent.getDescriptor().getLocation();
+      if (parentArtifact == null) {
+        parentArtifact = parent.getDescriptor();
       }
     }
 
+    List<ArtifactDescriptor> parentArtifactList = new ArrayList<>();
+    parentArtifactList.add(parentArtifact);
+    if (grandparentArtifact != null) {
+      parentArtifactList.add(grandparentArtifact);
+    }
+    return parentArtifactList;
+  }
+
+  /**
+   * Create a parent classloader (potentially multi-level classloader) based on the list of parent artifacts provided.
+   * The multi-level classloader will be constructed based the order of artifacts in the list (e.g. lower level
+   * classloader from artifacts in the front of the list and high leveler classloader from those towards the end)
+   *
+   * @param parentArtifacts list of parent artifacts to create the classloader from
+   * @throws IOException if there was some error reading from the store
+   */
+  private CloseableClassLoader createParentClassLoader(List<ArtifactDescriptor> parentArtifacts,
+                                                       EntityImpersonator entityImpersonator)
+    throws IOException {
     List<Location> parentLocations = new ArrayList<>();
-    parentLocations.add(parentLocation);
-    if (grandparentLocation != null) {
-      parentLocations.add(grandparentLocation);
+    for (ArtifactDescriptor descriptor : parentArtifacts) {
+      parentLocations.add(descriptor.getLocation());
     }
     return artifactClassLoaderFactory.createClassLoader(parentLocations.iterator(), entityImpersonator);
   }

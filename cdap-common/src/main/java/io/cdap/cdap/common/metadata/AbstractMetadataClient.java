@@ -27,9 +27,9 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -190,7 +190,7 @@ public abstract class AbstractMetadataClient {
   private HttpResponse searchMetadataHelper(@Nullable List<NamespaceId> namespaces, String query, Set<String> targets,
                                             @Nullable String sort, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden)
-    throws IOException, UnauthenticatedException, BadRequestException {
+    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     StringBuilder path = new StringBuilder();
     if (namespaces != null && namespaces.size() == 1) {
       path.append("namespaces/").append(namespaces.get(0).getNamespace()).append("/");
@@ -249,7 +249,7 @@ public abstract class AbstractMetadataClient {
   }
 
   private HttpResponse getMetadataHelper(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
-    throws IOException, UnauthenticatedException, BadRequestException {
+    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata", constructPath(metadataEntity));
     path = addQueryParams(path, metadataEntity, scope);
     return makeRequest(path, HttpMethod.GET, null);

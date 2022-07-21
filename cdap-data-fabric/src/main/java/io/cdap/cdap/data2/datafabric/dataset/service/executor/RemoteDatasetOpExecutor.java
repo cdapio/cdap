@@ -27,15 +27,16 @@ import io.cdap.cdap.common.HandlerException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,10 +55,11 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  public RemoteDatasetOpExecutor(DiscoveryServiceClient discoveryClient, AuthenticationContext authenticationContext) {
+  public RemoteDatasetOpExecutor(AuthenticationContext authenticationContext, RemoteClientFactory remoteClientFactory) {
     this.authenticationContext = authenticationContext;
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.DATASET_EXECUTOR,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.DATASET_EXECUTOR,
+      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override
@@ -99,13 +101,13 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
   }
 
   private DatasetAdminOpResponse executeAdminOp(DatasetId datasetInstanceId, String opName)
-    throws IOException, HandlerException, ConflictException {
+    throws IOException, HandlerException, ConflictException, UnauthorizedException {
     HttpResponse httpResponse = doRequest(datasetInstanceId, opName, null);
     return GSON.fromJson(Bytes.toString(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
   }
 
   private HttpResponse doRequest(DatasetId datasetInstanceId, String opName,
-                                 @Nullable String body) throws IOException, ConflictException {
+                                 @Nullable String body) throws IOException, ConflictException, UnauthorizedException {
     String path = String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
                                 datasetInstanceId.getEntityName(), opName);
     LOG.trace("executing POST on {} with body {}", path, body);

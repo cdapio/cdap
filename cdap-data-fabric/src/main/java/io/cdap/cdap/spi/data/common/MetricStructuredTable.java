@@ -20,6 +20,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
@@ -62,6 +63,24 @@ public class MetricStructuredTable implements StructuredTable {
       metricsCollector.increment(metricPrefix + "upsert.count", 1L);
     } catch (Exception e) {
       metricsCollector.increment(metricPrefix + "upsert.error", 1L);
+      throw e;
+    }
+  }
+
+  @Override
+  public void update(Collection<Field<?>> fields) throws InvalidFieldException, IOException {
+    try {
+      if (!emitTimeMetrics) {
+        structuredTable.update(fields);
+      } else {
+        long curTime = System.nanoTime();
+        structuredTable.update(fields);
+        long duration = System.nanoTime() - curTime;
+        metricsCollector.increment(metricPrefix + "update.time", duration);
+      }
+      metricsCollector.increment(metricPrefix + "update.count", 1L);
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + "update.error", 1L);
       throw e;
     }
   }
@@ -127,14 +146,16 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
+    throws InvalidFieldException, IOException {
+
     try {
       CloseableIterator<StructuredRow> result;
       if (!emitTimeMetrics) {
-        result = structuredTable.scan(keyRange, limit);
+        result = structuredTable.scan(keyRange, limit, sortOrder);
       } else {
         long curTime = System.nanoTime();
-        result = structuredTable.scan(keyRange, limit);
+        result = structuredTable.scan(keyRange, limit, sortOrder);
         long duration = System.nanoTime() - curTime;
         metricsCollector.increment(metricPrefix + "scan.time", duration);
       }
@@ -144,6 +165,11 @@ public class MetricStructuredTable implements StructuredTable {
       metricsCollector.increment(metricPrefix + "scan.error", 1L);
       throw e;
     }
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException {
+    return scan(keyRange, limit, SortOrder.ASC);
   }
 
   @Override

@@ -18,6 +18,7 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
@@ -30,7 +31,9 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.SystemWorker;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -49,6 +52,9 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
+import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
+import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -56,12 +62,13 @@ import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.store.SecureStoreService;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -95,7 +102,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
-      Modules.override(new AppFabricServiceRuntimeModule().getDistributedModules()).with(new AbstractModule() {
+      Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
           bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
@@ -107,6 +114,9 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       new OperationalStatsModule(),
       getDataFabricModule(),
       new DFSLocationModule(),
+      // Used in InMemoryProgramRunDispatcher
+      RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+                                                  Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -127,11 +137,18 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
                              List<? super AutoCloseable> closeableResources,
                              MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
-    closeableResources.add(injector.getInstance(AuthorizerInstantiator.class));
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
+
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
+
 
     // Start both the remote TwillRunnerService and regular TwillRunnerService
     TwillRunnerService remoteTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
@@ -141,6 +158,14 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                 RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
+
+    if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
+      services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
+    }
+
+    if (cConf.getBoolean(SystemWorker.POOL_ENABLE)) {
+      services.add(injector.getInstance(SystemWorkerServiceLauncher.class));
+    }
 
     // Optionally adds the master environment task
     masterEnv.getTask().ifPresent(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));

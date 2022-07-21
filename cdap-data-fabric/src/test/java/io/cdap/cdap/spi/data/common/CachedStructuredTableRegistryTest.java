@@ -17,8 +17,6 @@
 package io.cdap.cdap.spi.data.common;
 
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistryTest;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,14 +35,12 @@ public abstract class CachedStructuredTableRegistryTest extends StructuredTableR
   public void testCachedRegistryRead() throws IOException, TableAlreadyExistsException {
     // Get cached registry
     StructuredTableRegistry cachedRegistry = getStructuredTableRegistry();
-    cachedRegistry.initialize();
     // Assert empty
     Assert.assertTrue(cachedRegistry.isEmpty());
     Assert.assertNull(cachedRegistry.getSpecification(TABLE1));
 
     // Get non-cached registry
     StructuredTableRegistry nonCachedRegistry = getNonCachedStructuredTableRegistry();
-    nonCachedRegistry.initialize();
     // Assert empty
     Assert.assertTrue(nonCachedRegistry.isEmpty());
     Assert.assertNull(nonCachedRegistry.getSpecification(TABLE1));
@@ -69,14 +65,12 @@ public abstract class CachedStructuredTableRegistryTest extends StructuredTableR
   public void testCachedRegistryWrite() throws IOException, TableAlreadyExistsException {
     // Get cached registry
     StructuredTableRegistry cachedRegistry = getStructuredTableRegistry();
-    cachedRegistry.initialize();
     // Assert empty
     Assert.assertTrue(cachedRegistry.isEmpty());
     Assert.assertNull(cachedRegistry.getSpecification(TABLE1));
 
     // Get non-cached registry
     StructuredTableRegistry nonCachedRegistry = getNonCachedStructuredTableRegistry();
-    nonCachedRegistry.initialize();
     // Assert empty
     Assert.assertTrue(nonCachedRegistry.isEmpty());
     Assert.assertNull(nonCachedRegistry.getSpecification(TABLE1));

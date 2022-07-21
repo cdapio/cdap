@@ -19,6 +19,7 @@ package io.cdap.cdap.internal;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -47,27 +48,29 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
-import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
@@ -76,24 +79,29 @@ import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -106,6 +114,7 @@ public class AppFabricTestHelper {
   public static CConfiguration configuration;
   private static Injector injector;
   private static MetadataStorage metadataStorage;
+  private static List<Service> services;
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
@@ -135,8 +144,12 @@ public class AppFabricTestHelper {
   public static synchronized Injector getInjector(CConfiguration conf, @Nullable SConfiguration sConf,
                                                   Module overrides) {
     if (injector == null) {
+      services = new ArrayList<>();
+
       configuration = conf;
-      configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+      if (!CConfigurationUtil.isOverridden(configuration, Constants.CFG_LOCAL_DATA_DIR)) {
+        configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+      }
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       // Speed up tests
@@ -145,42 +158,34 @@ public class AppFabricTestHelper {
 
       injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration, sConf)).with(overrides));
 
-      MessagingService messagingService = injector.getInstance(MessagingService.class);
-      if (messagingService instanceof Service) {
-        ((Service) messagingService).startAndWait();
-      }
+      startService(injector, MessagingService.class);
+      startService(injector, TransactionManager.class);
 
-      injector.getInstance(TransactionManager.class).startAndWait();
       metadataStorage = injector.getInstance(MetadataStorage.class);
       try {
         metadataStorage.createIndex();
       } catch (IOException e) {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
-      injector.getInstance(MetadataService.class).startAndWait();
+
+      startService(injector, MetadataService.class);
+
       // Register the tables before services will need to use them
-      StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-      StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
       try {
-        structuredTableRegistry.initialize();
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
       } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      try {
-        StoreDefinition.createAllTables(tableAdmin, structuredTableRegistry);
-      } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Failed to create the system tables", e);
       }
 
-      injector.getInstance(DatasetOpExecutorService.class).startAndWait();
-      injector.getInstance(DatasetService.class).startAndWait();
-      injector.getInstance(MetricsCollectionService.class).startAndWait();
-      injector.getInstance(MetadataSubscriberService.class).startAndWait();
-      injector.getInstance(ProgramNotificationSubscriberService.class).startAndWait();
-      Scheduler programScheduler = injector.getInstance(Scheduler.class);
-      if (programScheduler instanceof Service) {
-        ((Service) programScheduler).startAndWait();
-      }
+      startService(injector, DatasetOpExecutorService.class);
+      startService(injector, DatasetService.class);
+      startService(injector, MetricsCollectionService.class);
+      startService(injector, MetadataSubscriberService.class);
+      startService(injector, ProgramNotificationSubscriberService.class);
+      startService(injector, ProgramStopSubscriberService.class);
+
+      Scheduler programScheduler = startService(injector, Scheduler.class);
+
       // Wait for the scheduler to be functional.
       if (programScheduler instanceof CoreSchedulerService) {
         try {
@@ -198,7 +203,17 @@ public class AppFabricTestHelper {
    */
   public static void shutdown() {
     Closeables.closeQuietly(metadataStorage);
+
+    if (services != null) {
+      Lists.reverse(services).forEach(Service::stopAndWait);
+    }
+
+    InMemoryTableService.reset();
+
     metadataStorage = null;
+    injector = null;
+    services = null;
+    TEMP_FOLDER.delete();
   }
 
   public static byte[] createSourceId(long sourceId) {
@@ -210,22 +225,35 @@ public class AppFabricTestHelper {
   /**
    * @return an instance of {@link LocalApplicationManager}
    */
-  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager() throws IOException {
+  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager() {
+    return getLocalManager(CConfiguration.create());
+  }
+
+  /**
+   * @return an instance of {@link LocalApplicationManager} created from the given configuration
+   */
+  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager(CConfiguration cConf) {
     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(
+      getInjector(cConf).getInstance(Key.get(
         new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { }
       ));
 
-    return factory.create(new ProgramTerminator() {
-      @Override
-      public void stop(ProgramId programId) throws Exception {
-        //No-op
-      }
+    return factory.create(programId -> {
+      //No-op
     });
   }
 
   public static void ensureNamespaceExists(NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId, CConfiguration.create());
+  }
+
+  private static <T> T startService(Injector injector, Class<T> cls) {
+    T instance = injector.getInstance(cls);
+    if (instance instanceof Service) {
+      services.add((Service) instance);
+      ((Service) instance).startAndWait();
+    }
+    return instance;
   }
 
   private static void ensureNamespaceExists(NamespaceId namespaceId, CConfiguration cConf) throws Exception {
@@ -276,17 +304,17 @@ public class AppFabricTestHelper {
   public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
                                                                      Supplier<File> folderSupplier,
                                                                      Config config) throws Exception  {
-    ensureNamespaceExists(namespace.toEntityId());
+    NamespaceId namespaceId = namespace.toEntityId();
+    ensureNamespaceExists(namespaceId);
     Location deployedJar = createAppJar(appClass, folderSupplier);
     ArtifactVersion artifactVersion = new ArtifactVersion(String.format("1.0.%d", System.currentTimeMillis()));
     ArtifactId artifactId = new ArtifactId(appClass.getSimpleName(), artifactVersion, ArtifactScope.USER);
-    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
-    artifactRepository.addArtifact(Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(namespace.toEntityId(),
-                                                                                        artifactId)),
+    artifactRepository.addArtifact(Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(namespaceId, artifactId)),
                                    new File(deployedJar.toURI()));
     ApplicationClass applicationClass = new ApplicationClass(appClass.getName(), "", null);
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),
+    AppDeploymentInfo info = new AppDeploymentInfo(Artifacts.toProtoArtifactId(namespaceId, artifactId),
+                                                   deployedJar, namespaceId,
                                                    applicationClass, null, null,
                                                    config == null ? null : new Gson().toJson(config));
     return getLocalManager().deploy(info).get();
@@ -339,7 +367,7 @@ public class AppFabricTestHelper {
                                        Supplier<File> folderSupplier) throws Exception {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     return Programs.create(cConf, programRunner, programDescriptor, artifactLocation,
-                           BundleJarUtil.unJar(artifactLocation, folderSupplier.get()));
+                           BundleJarUtil.prepareClassLoaderFolder(artifactLocation, folderSupplier::get).getDir());
 
   }
 
@@ -348,5 +376,40 @@ public class AppFabricTestHelper {
     LocationFactory lf = new LocalLocationFactory(DirUtils.createTempDir(folderSupplier.get()));
     return AppJarHelper.createDeploymentJar(lf, appClass);
   }
+
+  /**
+   * Enables in-memory authorization in the provided configuration. Default user is given superuser rights,
+   * so that you can use it to grant permissions to others. While in
+   * {@link io.cdap.cdap.internal.app.services.http.AppFabricTestBase} use
+   * {@link io.cdap.cdap.security.spi.authentication.SecurityRequestContext#setUserId(String)} or
+   * {@link io.cdap.cdap.internal.app.services.http.AppFabricTestBase#doAs(String, Retries.Runnable)}
+   * to set user
+   * for the call.
+   */
+  public static CConfiguration enableAuthorization(CConfiguration cConf, TemporaryFolder temporaryFolder)
+    throws IOException {
+    enableAuthorization(cConf::set, temporaryFolder);
+    return cConf;
+  }
+
+  /**
+   * More generic method of {@link #enableAuthorization(CConfiguration, TemporaryFolder)}. Allows to set
+   * configuration values that enable security on any set-like method, e.g. in CConfiguration or Map.
+   */
+  public static void enableAuthorization(BiConsumer<String, String> confSetter, TemporaryFolder temporaryFolder)
+    throws IOException {
+    confSetter.accept(Constants.Security.ENABLED, Boolean.toString(true));
+    confSetter.accept(Constants.Security.KERBEROS_ENABLED, Boolean.toString(false));
+    confSetter.accept(Constants.Security.Authorization.ENABLED, Boolean.toString(true));
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAccessController.class.getName());
+    LocationFactory locationFactory = new LocalLocationFactory(temporaryFolder.newFolder());
+    Location externalAuthJar = AppJarHelper.createDeploymentJar(
+      locationFactory, InMemoryAccessController.class, manifest);
+    confSetter.accept(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+    confSetter.accept(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers",
+              UserGroupInformation.getCurrentUser().getShortUserName());
+  }
+
 }
 

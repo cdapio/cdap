@@ -16,24 +16,29 @@
 
 package io.cdap.cdap.api.spark
 
-import java.io.IOException
-
+import io.cdap.cdap.api.RuntimeContext
+import io.cdap.cdap.api.ServiceDiscoverer
+import io.cdap.cdap.api.TaskLocalizationContext
+import io.cdap.cdap.api.Transactional
+import io.cdap.cdap.api.TxRunnable
 import io.cdap.cdap.api.annotation.Beta
 import io.cdap.cdap.api.data.batch.Split
 import io.cdap.cdap.api.lineage.field.LineageRecorder
 import io.cdap.cdap.api.messaging.MessagingContext
-import io.cdap.cdap.api.metadata.{MetadataReader, MetadataWriter}
+import io.cdap.cdap.api.metadata.MetadataReader
+import io.cdap.cdap.api.metadata.MetadataWriter
 import io.cdap.cdap.api.metrics.Metrics
 import io.cdap.cdap.api.plugin.PluginContext
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo
 import io.cdap.cdap.api.security.store.SecureStore
 import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
-import io.cdap.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
-import io.cdap.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional, TxRunnable}
+import io.cdap.cdap.api.workflow.WorkflowInfo
+import io.cdap.cdap.api.workflow.WorkflowToken
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.tephra.TransactionFailureException
 
+import java.io.IOException
 import scala.reflect.ClassTag
 /**
   * Spark program execution context. User Spark program can interact with CDAP through this context.
@@ -55,6 +60,16 @@ trait SparkExecutionContextBase extends RuntimeContext
     * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
     */
   def getLogicalStartTime: Long
+
+  /**
+   * Returns the termination time of this Spark job as timestamp in milliseconds.
+   * The termination time is the time where this Spark job will be forced to termination
+   * The value is only available when stop was requested on this Spark job.
+   *
+   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
+   * @throws IllegalStateException if stop was not requested
+   */
+  def getTerminationTime: Long
 
   /**
     * Returns a [[scala.Serializable]] [[io.cdap.cdap.api.ServiceDiscoverer]] for Service Discovery

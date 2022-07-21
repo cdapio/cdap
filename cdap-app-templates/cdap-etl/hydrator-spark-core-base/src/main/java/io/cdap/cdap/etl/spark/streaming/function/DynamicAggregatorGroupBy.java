@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spark.streaming.function;
 
-import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.function.AggregatorGroupByFunction;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
@@ -47,8 +46,8 @@ public class DynamicAggregatorGroupBy<GROUP_KEY, GROUP_VAL>
   @Override
   public JavaPairRDD<GROUP_KEY, GROUP_VAL> call(JavaRDD<GROUP_VAL> input, Time batchTime) throws Exception {
     if (function == null) {
-      function = Compat.convert(new AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>(
-        dynamicDriverContext.getPluginFunctionContext(), functionCache));
+      function = new AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>(
+        dynamicDriverContext.getPluginFunctionContext(), functionCache);
     }
     return input.flatMapToPair(function);
   }

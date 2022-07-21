@@ -21,6 +21,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -37,7 +38,8 @@ final class DirectMessagePublisher extends AbstractMessagePublisher {
   }
 
   @Override
-  public void publish(TopicId topicId, Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+  public void publish(TopicId topicId, Iterator<byte[]> payloads)
+    throws IOException, TopicNotFoundException, UnauthorizedException {
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads).build());
   }
 }

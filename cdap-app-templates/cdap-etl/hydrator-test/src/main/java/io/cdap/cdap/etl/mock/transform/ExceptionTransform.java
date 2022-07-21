@@ -16,12 +16,10 @@
 
 package io.cdap.cdap.etl.mock.transform;
 
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.plugin.PluginClass;
-import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
@@ -29,8 +27,10 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * An transform that throws exception if expected condition is not met.
@@ -61,7 +61,7 @@ public class ExceptionTransform extends Transform<StructuredRecord, StructuredRe
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     String expectedField = properties.get(EXPECTED_FIELD);
     String expectedValue = properties.get(EXPECTED_VALUE);
-    if (expectedField == null || !input.get(expectedField).equals(expectedValue)) {
+    if (expectedField == null || !Objects.equals(input.get(expectedField), expectedValue)) {
       throw new IllegalArgumentException("Not getting expected value");
     }
     emitter.emit(input);
@@ -75,7 +75,12 @@ public class ExceptionTransform extends Transform<StructuredRecord, StructuredRe
   }
 
   private static PluginClass getPluginClass() {
-    return new PluginClass(Transform.PLUGIN_TYPE, NAME, "", IdentityTransform.class.getName(), null,
-                           ImmutableMap.<String, PluginPropertyField>of());
+    return PluginClass.builder()
+      .setName(NAME)
+      .setType(Transform.PLUGIN_TYPE)
+      .setDescription("")
+      .setClassName(ExceptionTransform.class.getName())
+      .setProperties(Collections.emptyMap())
+      .build();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -64,14 +65,12 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
-import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
@@ -147,7 +146,7 @@ public class BaseHiveExploreServiceTest {
     Configuration hConf = new Configuration();
     if (enableAuthorization) {
       LocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
-      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
       cConf.setBoolean(Constants.Security.ENABLED, true);
       cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
       cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
@@ -160,9 +159,8 @@ public class BaseHiveExploreServiceTest {
     transactionManager.startAndWait();
     transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
 
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
 
@@ -181,14 +179,6 @@ public class BaseHiveExploreServiceTest {
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
-
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
-    try {
-      StoreDefinition.createAllTables(tableAdmin, registry);
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Failed to create the system tables", e);
-    }
 
     // create namespaces
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
@@ -323,6 +313,7 @@ public class BaseHiveExploreServiceTest {
 
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new IOModule(),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),

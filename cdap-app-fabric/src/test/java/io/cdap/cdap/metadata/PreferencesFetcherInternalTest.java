@@ -47,7 +47,7 @@ public class PreferencesFetcherInternalTest extends AppFabricTestBase {
     REMOTE,
   };
 
-  private PreferencesFetcherType fetcherType = null;
+  private PreferencesFetcherType fetcherType;
 
   public PreferencesFetcherInternalTest(PreferencesFetcherType type) {
     this.fetcherType = type;

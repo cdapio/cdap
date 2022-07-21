@@ -17,35 +17,49 @@
 package io.cdap.cdap.etl.common;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroObjectType;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.etl.common.macro.LogicalStartTimeMacroEvaluator;
 
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
  * Macro evaluator used by batch application
  */
 public class DefaultMacroEvaluator implements MacroEvaluator {
+  public static final Set<String> MAP_FUNCTIONS =
+    ImmutableSet.of(ConnectionMacroEvaluator.FUNCTION_NAME, OAuthMacroEvaluator.FUNCTION_NAME);
 
   private final BasicArguments arguments;
   private final Map<String, MacroEvaluator> macroEvaluators;
+  private final Set<String> mapFunctions;
 
   public DefaultMacroEvaluator(BasicArguments arguments, long logicalStartTime,
                                SecureStore secureStore, ServiceDiscoverer serviceDiscoverer, String namespace) {
     this(arguments, ImmutableMap.of(
       LogicalStartTimeMacroEvaluator.FUNCTION_NAME, new LogicalStartTimeMacroEvaluator(logicalStartTime),
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, secureStore),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer)
-    ));
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer),
+      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, serviceDiscoverer)
+    ), MAP_FUNCTIONS);
   }
 
-  public DefaultMacroEvaluator(BasicArguments arguments, Map<String, MacroEvaluator> macroEvaluators) {
+  public DefaultMacroEvaluator(BasicArguments arguments, Map<String, MacroEvaluator> macroEvaluators,
+                               Set<String> mapFunctions) {
     this.arguments = arguments;
     this.macroEvaluators = ImmutableMap.copyOf(macroEvaluators);
+    if (!macroEvaluators.keySet().containsAll(mapFunctions)) {
+      throw new IllegalArgumentException(
+        String.format("The given macro evaluators %s should contain all map functions %s",
+                      macroEvaluators.keySet(), mapFunctions));
+    }
+    this.mapFunctions = mapFunctions;
   }
 
   @Override
@@ -61,11 +75,30 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   @Override
   @Nullable
   public String evaluate(String macroFunction, String... args) throws InvalidMacroException {
+    MacroEvaluator evaluator = getMacroEvaluator(macroFunction);
+    return evaluator.evaluate(macroFunction, args);
+  }
+
+  @Override
+  public Map<String, String> evaluateMap(String macroFunction, String... arguments) throws InvalidMacroException {
+    MacroEvaluator evaluator = getMacroEvaluator(macroFunction);
+    if (!mapFunctions.contains(macroFunction)) {
+      throw new InvalidMacroException(String.format("The macro function %s cannot be evaluated as map. " +
+                                                      "Please use evaluate() instead", macroFunction));
+    }
+    return evaluator.evaluateMap(macroFunction, arguments);
+  }
+
+  @Override
+  public MacroObjectType evaluateAs(String macroFunction) {
+    return mapFunctions.contains(macroFunction) ? MacroObjectType.MAP : MacroObjectType.STRING;
+  }
+
+  private MacroEvaluator getMacroEvaluator(String macroFunction) {
     MacroEvaluator evaluator = macroEvaluators.get(macroFunction);
     if (evaluator == null) {
       throw new InvalidMacroException(String.format("Unsupported macro function %s", macroFunction));
     }
-
-    return evaluator.evaluate(macroFunction, args);
+    return evaluator;
   }
 }

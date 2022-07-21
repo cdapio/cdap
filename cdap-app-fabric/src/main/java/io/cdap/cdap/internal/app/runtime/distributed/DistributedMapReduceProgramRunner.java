@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
@@ -27,16 +28,17 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,13 +53,17 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
   @Inject
   DistributedMapReduceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                     Impersonator impersonator, ClusterMode clusterMode,
-                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+                                    Injector injector) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, injector.getInstance(LocationFactory.class));
+    if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    }
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new MapReduceTwillProgramController(programId, twillController, runId).startListen();
+  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+    return new MapReduceTwillProgramController(programRunId, twillController).startListen();
   }
 
   @Override

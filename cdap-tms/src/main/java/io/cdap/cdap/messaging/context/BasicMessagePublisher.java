@@ -22,6 +22,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 
@@ -55,7 +56,8 @@ final class BasicMessagePublisher extends AbstractMessagePublisher implements Tr
   }
 
   @Override
-  public void publish(TopicId topicId, Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+  public void publish(TopicId topicId, Iterator<byte[]> payloads)
+    throws IOException, TopicNotFoundException, UnauthorizedException {
     if (transaction == null) {
       directMessagePublisher.publish(topicId, payloads);
       return;

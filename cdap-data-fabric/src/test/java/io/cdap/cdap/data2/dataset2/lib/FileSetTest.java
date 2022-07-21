@@ -31,6 +31,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.data2.dataset2.lib.file.FileSetDataset;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
@@ -78,7 +79,7 @@ public class FileSetTest {
   }
 
   // helper to create a commonly used file set instance and return its Java instance.
-  private FileSet createFileset(DatasetId dsid) throws IOException, DatasetManagementException {
+  private FileSet createFileset(DatasetId dsid) throws IOException, DatasetManagementException, UnauthorizedException {
     dsFrameworkUtil.createInstance("fileSet", dsid, FileSetProperties.builder()
       .setBasePath("testDir").build());
     Map<String, String> fileArgs = Maps.newHashMap();
@@ -88,7 +89,7 @@ public class FileSetTest {
   }
 
   @Test
-  public void testWriteRead() throws IOException, DatasetManagementException {
+  public void testWriteRead() throws IOException, DatasetManagementException, UnauthorizedException {
     FileSet fileSet1 = createFileset(testFileSetInstance1);
     FileSet fileSet2 = createFileset(testFileSetInstance2);
     Location fileSet1Output = fileSet1.getOutputLocation();
@@ -225,7 +226,7 @@ public class FileSetTest {
   }
 
   @Test
-  public void testAbsolutePath() throws IOException, DatasetManagementException {
+  public void testAbsolutePath() throws IOException, DatasetManagementException, UnauthorizedException {
     String absolutePath = tmpFolder.newFolder() + "/absolute/path";
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance3, FileSetProperties.builder()
       .setBasePath(absolutePath).build());
@@ -248,7 +249,7 @@ public class FileSetTest {
   }
 
   @Test(expected = DataSetException.class)
-  public void testAbsolutePathInsideCDAP() throws IOException, DatasetManagementException {
+  public void testAbsolutePathInsideCDAP() throws IOException, DatasetManagementException, UnauthorizedException {
     String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("/hello");
     dsFrameworkUtil.createInstance("fileSet",
                                    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
@@ -256,7 +257,7 @@ public class FileSetTest {
   }
 
   @Test(expected = DataSetException.class)
-  public void testAbsolutePathInsideCDAPDouble() throws IOException, DatasetManagementException {
+  public void testAbsolutePathInsideCDAPDouble() throws IOException, DatasetManagementException, UnauthorizedException {
     // test that it rejects also paths that have // in them
     String absolutePath = dsFrameworkUtil.getConfiguration()
       .get(Constants.CFG_LOCAL_DATA_DIR).replace("/", "//").concat("/hello");
@@ -266,14 +267,14 @@ public class FileSetTest {
   }
 
   @Test
-  public void testAbsolutePathLooksLikeCDAP() throws IOException, DatasetManagementException {
+  public void testAbsolutePathLooksLikeCDAP() throws IOException, DatasetManagementException, UnauthorizedException {
     String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("-hello");
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance4,
                                    FileSetProperties.builder().setBasePath(absolutePath).build());
   }
 
   @Test
-  public void testExternalAbsolutePath() throws IOException, DatasetManagementException {
+  public void testExternalAbsolutePath() throws IOException, DatasetManagementException, UnauthorizedException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/absolute/path";
     File absoluteFile = new File(absolutePath);
@@ -314,7 +315,7 @@ public class FileSetTest {
   }
 
   @Test(expected = IOException.class)
-  public void testExternalNonExistentPath() throws IOException, DatasetManagementException {
+  public void testExternalNonExistentPath() throws IOException, DatasetManagementException, UnauthorizedException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
     // attempt to create an external dataset - should fail
@@ -345,7 +346,7 @@ public class FileSetTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testReuseAndExternal() throws IOException, DatasetManagementException {
+  public void testReuseAndExternal() throws IOException, DatasetManagementException, UnauthorizedException {
     dsFrameworkUtil.createInstance("fileSet",
                                    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
                                    FileSetProperties.builder()
@@ -355,7 +356,7 @@ public class FileSetTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testPossessAndExternal() throws IOException, DatasetManagementException {
+  public void testPossessAndExternal() throws IOException, DatasetManagementException, UnauthorizedException {
     dsFrameworkUtil.createInstance("fileSet",
                                    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
                                    FileSetProperties.builder()
@@ -365,7 +366,7 @@ public class FileSetTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testPossessAndReuse() throws IOException, DatasetManagementException {
+  public void testPossessAndReuse() throws IOException, DatasetManagementException, UnauthorizedException {
     dsFrameworkUtil.createInstance("fileSet",
                                    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
                                    FileSetProperties.builder()
@@ -375,7 +376,7 @@ public class FileSetTest {
   }
 
   @Test(expected = IOException.class)
-  public void testReuseNonExistentPath() throws IOException, DatasetManagementException {
+  public void testReuseNonExistentPath() throws IOException, DatasetManagementException, UnauthorizedException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
     // attempt to create an external dataset - should fail
@@ -387,7 +388,7 @@ public class FileSetTest {
   }
 
   @Test(expected = IOException.class)
-  public void testPossessNonExistentPath() throws IOException, DatasetManagementException {
+  public void testPossessNonExistentPath() throws IOException, DatasetManagementException, UnauthorizedException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
     // attempt to create an external dataset - should fail
@@ -399,7 +400,7 @@ public class FileSetTest {
   }
 
   @Test
-  public void testReuseDoesNotDelete() throws IOException, DatasetManagementException {
+  public void testReuseDoesNotDelete() throws IOException, DatasetManagementException, UnauthorizedException {
     String existingPath = tmpFolder.newFolder() + "/existing/path";
     File existingDir = new File(existingPath);
     existingDir.mkdirs();
@@ -424,7 +425,7 @@ public class FileSetTest {
   }
 
   @Test
-  public void testPossessDoesDelete() throws IOException, DatasetManagementException {
+  public void testPossessDoesDelete() throws IOException, DatasetManagementException, UnauthorizedException {
     String existingPath = tmpFolder.newFolder() + "/existing/path";
     File existingDir = new File(existingPath);
     existingDir.mkdirs();
@@ -463,7 +464,8 @@ public class FileSetTest {
   }
 
   @Test
-   public void testRollback() throws IOException, TransactionFailureException, DatasetManagementException {
+   public void testRollback()
+    throws IOException, TransactionFailureException, DatasetManagementException, UnauthorizedException {
     // test deletion of an empty output directory
     FileSet fileSet1 = createFileset(testFileSetInstance1);
     Location outputLocation = fileSet1.getOutputLocation();
@@ -479,7 +481,7 @@ public class FileSetTest {
 
   @Test
   public void testRollbackOfNonDirectoryOutput()
-    throws IOException, TransactionFailureException, DatasetManagementException {
+    throws IOException, TransactionFailureException, DatasetManagementException, UnauthorizedException {
     // test deletion of an output location, pointing to a non-directory file
     FileSet fileSet1 = createFileset(testFileSetInstance1);
     Location outputFile = fileSet1.getOutputLocation();
@@ -496,7 +498,7 @@ public class FileSetTest {
 
   @Test
   public void testRollbackWithNonEmptyDir()
-    throws IOException, TransactionFailureException, DatasetManagementException {
+    throws IOException, TransactionFailureException, DatasetManagementException, UnauthorizedException {
     FileSet fileSet1 = createFileset(testFileSetInstance1);
     Location outputDir = fileSet1.getOutputLocation();
     Assert.assertFalse(outputDir.exists());

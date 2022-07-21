@@ -28,6 +28,7 @@ import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -53,8 +54,6 @@ import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.security.FakeSecureStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
@@ -84,6 +83,7 @@ public class ProvisioningServiceTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+  public static final String APP_CDAP_VERSION = "6.4.4";
 
   private static ProvisioningService provisioningService;
   private static TransactionManager txManager;
@@ -100,9 +100,10 @@ public class ProvisioningServiceTest {
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+
+    // Define all StructuredTable before starting any services that need StructuredTable
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     messagingService = injector.getInstance(MessagingService.class);
@@ -110,13 +111,7 @@ public class ProvisioningServiceTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
-    try {
-      // Define all StructuredTable before starting any services that need StructuredTable
-      StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                      injector.getInstance(StructuredTableRegistry.class));
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Unable to create the system tables.", e);
-    }
+
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
     transactionRunner = injector.getInstance(TransactionRunner.class);
@@ -138,6 +133,7 @@ public class ProvisioningServiceTest {
     TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
                                              .setFirstClusterStatus(ClusterStatus.RUNNING)
                                              .failRetryablyEveryN(2)
+                                             .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
                                              .build());
 
     Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
@@ -151,6 +147,7 @@ public class ProvisioningServiceTest {
     TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
                                              .setFirstClusterStatus(ClusterStatus.RUNNING)
                                              .failGet()
+                                             .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
                                              .build());
 
     Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
@@ -160,11 +157,11 @@ public class ProvisioningServiceTest {
   @Test
   public void testGetSpecs() {
     Collection<ProvisionerDetail> specs = provisioningService.getProvisionerDetails();
-    Assert.assertEquals(1, specs.size());
+    Assert.assertEquals(2, specs.size());
 
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
     ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getLabel(),
-                                                       spec.getDescription(), new ArrayList<>(), null, false);
+                                                       spec.getDescription(), new ArrayList<>(), null, null, false);
     Assert.assertEquals(expected, specs.iterator().next());
 
     Assert.assertEquals(expected, provisioningService.getProvisionerDetail(MockProvisioner.NAME));
@@ -173,7 +170,9 @@ public class ProvisioningServiceTest {
 
   @Test
   public void testNoErrors() throws Exception {
-    ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().build();
+    ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder()
+      .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
+      .build();
     TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED, provisionerInfo);
     testDeprovision(taskFields.programRunId, ProvisioningOp.Status.DELETED);
   }
@@ -336,12 +335,13 @@ public class ProvisioningServiceTest {
 
     Profile profile = new Profile(ProfileId.NATIVE.getProfile(), "label", "desc", provisionerInfo);
     SystemArguments.addProfileArgs(systemArgs, profile);
+    systemArgs.put(Constants.APP_CDAP_VERSION, APP_CDAP_VERSION);
     ProgramOptions programOptions = new SimpleProgramOptions(programRunId.getParent(),
                                                              new BasicArguments(systemArgs),
                                                              new BasicArguments(userArgs));
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "1.0.0", "desc", null, artifactId,
+      "name", "1.0.0", APP_CDAP_VERSION, "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());
@@ -457,6 +457,16 @@ public class ProvisioningServiceTest {
     // test empty
     pluginGroupedByRequirement = provisioningService.groupByRequirement(Collections.emptySet());
     Assert.assertTrue(pluginGroupedByRequirement.isEmpty());
+  }
+
+  @Test
+  public void testGetTotalProcessingCpusLabel() throws NotFoundException {
+    String defaultLabel = provisioningService.getTotalProcessingCpusLabel(MockProvisioner.NAME, new HashMap<>());
+    Assert.assertEquals(ProvisionerInfo.DEFAULT_PROCESSING_CPUS_LABEL, defaultLabel);
+
+    String implementedLabel = provisioningService.getTotalProcessingCpusLabel(MockProvisionerWithCpus.NAME,
+                                                                              new HashMap<>());
+    Assert.assertEquals(MockProvisionerWithCpus.TEST_LABEL, implementedLabel);
   }
 
   /**

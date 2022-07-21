@@ -19,6 +19,7 @@ package io.cdap.cdap.app.runtime.spark.distributed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.spark.Spark;
@@ -33,17 +34,17 @@ import io.cdap.cdap.app.runtime.spark.SparkPackageUtils;
 import io.cdap.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
-import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.twill.ProgramRuntimeClassAcceptor;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramLaunchConfig;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -51,7 +52,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.filesystem.LocationFactory;
@@ -86,15 +86,19 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   public DistributedSparkProgramRunner(SparkCompat sparkComat, CConfiguration cConf, YarnConfiguration hConf,
                                        Impersonator impersonator, LocationFactory locationFactory,
                                        ClusterMode clusterMode,
-                                       @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+                                       @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+                                       Injector injector) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, locationFactory);
     this.sparkCompat = sparkComat;
     this.locationFactory = locationFactory;
+    if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    }
   }
 
   @Override
-  public ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new SparkTwillProgramController(programId, twillController, runId).startListen();
+  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+    return new SparkTwillProgramController(programRunId, twillController).startListen();
   }
 
   @Override

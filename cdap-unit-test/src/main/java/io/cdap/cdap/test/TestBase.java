@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,10 +29,12 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Beta;
@@ -46,6 +48,7 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -67,13 +70,13 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
 import io.cdap.cdap.config.PreferencesService;
-import io.cdap.cdap.config.PreferencesTable;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -87,6 +90,7 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityManagementService;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -105,7 +109,6 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
-import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -120,19 +123,20 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.profile.Profile;
-import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import io.cdap.cdap.security.authorization.InvalidAuthorizerException;
+import io.cdap.cdap.security.authorization.InvalidAccessControllerException;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.test.internal.ApplicationManagerFactory;
@@ -143,6 +147,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.spark.package$;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -166,14 +171,17 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -195,6 +203,7 @@ public class TestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   static Injector injector;
+  private static Map<String, String> customConfiguration;
   private static CConfiguration cConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
@@ -208,7 +217,7 @@ public class TestBase {
   private static MetricsManager metricsManager;
   private static TestManager testManager;
   private static NamespaceAdmin namespaceAdmin;
-  private static AuthorizerInstantiator authorizerInstantiator;
+  private static AccessControllerInstantiator accessControllerInstantiator;
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static MessagingService messagingService;
@@ -224,6 +233,7 @@ public class TestBase {
   private static LineageAdmin lineageAdmin;
   private static AppFabricServer appFabricServer;
   private static PreferencesService preferencesService;
+  private static ArtifactLocalizerService artifactLocalizerService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -231,11 +241,16 @@ public class TestBase {
   @BeforeClass
   public static void initialize() throws Exception {
     if (nestedStartCount++ > 0) {
+      Assert.assertEquals(
+        "Test is loaded that requires custom configuration while other configuration is in place. " +
+          "Please check if test is part of the suite and apply configuration on the suite level",
+        customConfiguration, getCustomConfiguration());
       return;
     }
     File localDataDir = TMP_FOLDER.newFolder();
 
-    cConf = createCConf(localDataDir);
+    customConfiguration = getCustomConfiguration();
+    cConf = createCConf(localDataDir, customConfiguration);
 
     CConfiguration previewCConf = createPreviewConf(cConf);
     LevelDBTableService previewLevelDBTableService = new LevelDBTableService();
@@ -246,6 +261,9 @@ public class TestBase {
     capabilityFolder.mkdir();
     cConf.set(Constants.Capability.CONFIG_DIR, capabilityFolder.getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
+
+    // Set artifact localizer to use random port
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, 0);
 
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
@@ -272,11 +290,15 @@ public class TestBase {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new IOModule(),
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
-      new AppFabricServiceRuntimeModule().getInMemoryModules(),
+      new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
       new MonitorHandlerModule(false),
+      new AuthenticationContextModules().getMasterModule(),
+      new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new SecureStoreServerModule(),
       new MetadataReaderWriterModules().getInMemoryModules(),
@@ -292,8 +314,6 @@ public class TestBase {
       new LogReaderRuntimeModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewManagerModule(false),
@@ -311,6 +331,7 @@ public class TestBase {
 
           // Needed by MonitorHandlerModuler
           bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+          bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -331,8 +352,7 @@ public class TestBase {
     metadataService.startAndWait();
 
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
@@ -345,10 +365,11 @@ public class TestBase {
       exploreExecutorService.startAndWait();
       // wait for explore service to be discoverable
       DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() ->
-        discoveryService.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryService.discover(
+        Constants.Service.EXPLORE_HTTP_USER_SERVICE));
       Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                                 "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+                                 "%s service is not up after 5 seconds",
+                                 Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       exploreClient = injector.getInstance(ExploreClient.class);
     }
     programScheduler = injector.getInstance(Scheduler.class);
@@ -359,7 +380,7 @@ public class TestBase {
 
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
 
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
@@ -367,10 +388,10 @@ public class TestBase {
       SecurityRequestContext.setUserId(user);
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(user, Principal.PrincipalType.USER);
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
-                                         ImmutableSet.of(Action.ADMIN));
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
-                                         ImmutableSet.of(Action.ADMIN));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
+                                               EnumSet.allOf(StandardPermission.class));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
+                                               EnumSet.allOf(StandardPermission.class));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
@@ -391,10 +412,17 @@ public class TestBase {
     fieldLineageAdmin = injector.getInstance(FieldLineageAdmin.class);
     lineageAdmin = injector.getInstance(LineageAdmin.class);
     metadataSubscriberService.startAndWait();
+    artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    artifactLocalizerService.startAndWait();
+    // NOTE: As the artifact localizer client does not use service discovery for port discovery,
+    // We need to set the port after starting the localizer service.
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
+    // Set the artifact localizer port for the preview conf as well
+    injector.getInstance(Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
+      .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
+
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
-    if (previewRunnerManager instanceof Service) {
-      ((Service) previewRunnerManager).startAndWait();
-    }
+    previewRunnerManager.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     preferencesService = injector.getInstance(PreferencesService.class);
@@ -500,22 +528,31 @@ public class TestBase {
     }
   }
 
-  private static CConfiguration createCConf(File localDataDir) throws IOException {
+  private static Map<String, String> getCustomConfiguration() {
+    return System.getProperties().stringPropertyNames().stream()
+      .filter(key -> key.startsWith(TestConfiguration.PROPERTY_PREFIX))
+      .collect(Collectors.toMap(
+        key -> key.substring(TestConfiguration.PROPERTY_PREFIX.length()),
+        key -> System.getProperty(key)
+      ));
+  }
+
+  private static CConfiguration createCConf(File localDataDir, Map<String, String> customConfiguration)
+    throws IOException, NoSuchAlgorithmException {
     CConfiguration cConf = CConfiguration.create();
 
     // Setup defaults that can be overridden by user
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, "");
+    //Set this to artificially big value to effectively disable SystemProgramManagementService
+    cConf.setLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS, 3600 * 24 * 30);
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule
-    for (String key : System.getProperties().stringPropertyNames()) {
-      if (key.startsWith(TestConfiguration.PROPERTY_PREFIX)) {
-        String value = System.getProperty(key);
-        cConf.set(key.substring(TestConfiguration.PROPERTY_PREFIX.length()), System.getProperty(key));
-        LOG.info("Custom configuration set: {} = {}", key, value);
-      }
+    for (Map.Entry<String, String> e: customConfiguration.entrySet()) {
+      cConf.set(e.getKey(), e.getValue());
+      LOG.info("Custom configuration set: {} = {}", e.getKey(), e.getValue());
     }
 
     // These configurations cannot be overridden by user
@@ -532,6 +569,7 @@ public class TestBase {
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
+    cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -540,6 +578,9 @@ public class TestBase {
     // Speed up test
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
     cConf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
+
+    // Set spark compat
+    cConf.set(Constants.AppFabric.SPARK_COMPAT, getCurrentSparkCompat().getCompat());
 
     return cConf;
   }
@@ -576,18 +617,20 @@ public class TestBase {
       ((Service) previewRunnerManager).stopAndWait();
     }
 
+    artifactLocalizerService.stopAndWait();
     previewHttpServer.stopAndWait();
 
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal, ImmutableSet.of(Action.ADMIN));
-      authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
-                                         principal, ImmutableSet.of(Action.ADMIN));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
+                                               ImmutableSet.of(StandardPermission.UPDATE));
+      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                                               principal, ImmutableSet.of(StandardPermission.UPDATE));
     }
-    
+
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    authorizerInstantiator.close();
+    accessControllerInstantiator.close();
 
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).stopAndWait();
@@ -627,7 +670,7 @@ public class TestBase {
    */
   protected static ApplicationManager deployApplication(NamespaceId namespace,
                                                         Class<? extends Application> applicationClz,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 
@@ -644,7 +687,7 @@ public class TestBase {
    */
   protected static ApplicationManager deployApplication(NamespaceId namespace,
                                                         Class<? extends Application> applicationClz, Config appConfig,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz, appConfig,
                                                                                bundleEmbeddedJars);
     applicationManagers.add(applicationManager);
@@ -660,7 +703,7 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(NamespaceId.DEFAULT, applicationClz, bundleEmbeddedJars);
   }
 
@@ -674,7 +717,7 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
-                                                        File... bundleEmbeddedJars) {
+                                                        File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(NamespaceId.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
@@ -1052,11 +1095,12 @@ public class TestBase {
   }
 
   /**
-   * Returns an {@link Authorizer} for performing authorization operations.
+   * Returns an {@link AccessController} for performing authorization operations.
+   * @return
    */
   @Beta
-  protected static Authorizer getAuthorizer() throws IOException, InvalidAuthorizerException {
-    return authorizerInstantiator.get();
+  protected static AccessController getAccessController() throws IOException, InvalidAccessControllerException {
+    return accessControllerInstantiator.get();
   }
 
   /**
@@ -1067,14 +1111,14 @@ public class TestBase {
   }
 
   /**
-   * Returns a {@link FieldLineageAdmin to interact with field lineage.
+   * Returns a {@link FieldLineageAdmin} to interact with field lineage.
    */
   protected static FieldLineageAdmin getFieldLineageAdmin() {
     return fieldLineageAdmin;
   }
 
   /**
-   * Returns a {@link LineageAdmin to interact with field lineage.
+   * Returns a {@link LineageAdmin} to interact with field lineage.
    */
   protected static LineageAdmin getLineageAdmin() {
     return lineageAdmin;
@@ -1129,5 +1173,17 @@ public class TestBase {
     previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
     return previewCConf;
+  }
+
+  public static SparkCompat getCurrentSparkCompat() {
+    String sparkVersion = package$.MODULE$.SPARK_VERSION();
+    switch (sparkVersion.charAt(0)) {
+      case '3':
+        return SparkCompat.SPARK3_2_12;
+      case '2':
+        return SparkCompat.SPARK2_2_11;
+      default:
+        throw new IllegalStateException("Spark version " + sparkVersion + " is unknown");
+    }
   }
 }

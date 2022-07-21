@@ -39,10 +39,10 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.proto.security.Action;
-import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.util.Collection;
@@ -59,16 +59,16 @@ import java.util.stream.Collectors;
  * TODO: push predicates down to the lowest level to make things more efficient
  */
 public class ProgramScheduleService {
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Scheduler scheduler;
   private final TimeSchedulerService timeSchedulerService;
 
   @Inject
-  ProgramScheduleService(AuthorizationEnforcer authorizationEnforcer,
+  ProgramScheduleService(AccessEnforcer accessEnforcer,
                          AuthenticationContext authenticationContext, Scheduler scheduler,
                          TimeSchedulerService timeSchedulerService) {
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
@@ -87,7 +87,7 @@ public class ProgramScheduleService {
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
   public List<ScheduledRuntime> getPreviousScheduledRuntimes(ProgramId progrmaId) throws Exception {
-    AuthorizationUtil.ensureAccess(progrmaId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(progrmaId, authenticationContext.getPrincipal(), StandardPermission.GET);
     return timeSchedulerService.previousScheduledRuntime(progrmaId);
   }
 
@@ -104,7 +104,7 @@ public class ProgramScheduleService {
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
   public List<ScheduledRuntime> getNextScheduledRuntimes(ProgramId programId) throws Exception {
-    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     return timeSchedulerService.nextScheduledRuntime(programId);
   }
 
@@ -120,8 +120,8 @@ public class ProgramScheduleService {
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
   public void add(ProgramSchedule schedule) throws Exception {
-    authorizationEnforcer.enforce(schedule.getProgramId().getParent(),
-                                  authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(schedule.getProgramId().getParent(),
+                           authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     scheduler.addSchedule(schedule);
   }
 
@@ -138,7 +138,7 @@ public class ProgramScheduleService {
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
   public void update(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
-    authorizationEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     ProgramSchedule existing = scheduler.getSchedule(scheduleId);
 
     String description = Objects.firstNonNull(scheduleDetail.getDescription(), existing.getDescription());
@@ -173,8 +173,7 @@ public class ProgramScheduleService {
    */
   public ProgramSchedule get(ScheduleId scheduleId) throws Exception {
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
-                                   authenticationContext.getPrincipal());
+    accessEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(), StandardPermission.GET);
     return schedule;
   }
 
@@ -188,8 +187,8 @@ public class ProgramScheduleService {
    */
   public ProgramScheduleRecord getRecord(ScheduleId scheduleId) throws Exception {
     ProgramScheduleRecord record = scheduler.getScheduleRecord(scheduleId);
-    AuthorizationUtil.ensureAccess(record.getSchedule().getProgramId(), authorizationEnforcer,
-                                   authenticationContext.getPrincipal());
+    accessEnforcer.enforce(record.getSchedule().getProgramId(), authenticationContext.getPrincipal(),
+                           StandardPermission.GET);
     return record;
   }
 
@@ -203,8 +202,7 @@ public class ProgramScheduleService {
    */
   public ProgramScheduleStatus getStatus(ScheduleId scheduleId) throws Exception {
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
-                                   authenticationContext.getPrincipal());
+    accessEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(), StandardPermission.GET);
     return scheduler.getScheduleStatus(scheduleId);
   }
 
@@ -220,7 +218,7 @@ public class ProgramScheduleService {
    */
   public Collection<ProgramScheduleRecord> list(ApplicationId applicationId,
                                                 Predicate<ProgramScheduleRecord> predicate) throws Exception {
-    AuthorizationUtil.ensureAccess(applicationId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.GET);
     return scheduler.listScheduleRecords(applicationId).stream().filter(predicate).collect(Collectors.toList());
   }
 
@@ -235,7 +233,7 @@ public class ProgramScheduleService {
    */
   public Collection<ProgramScheduleRecord> list(ProgramId programId,
                                                 Predicate<ProgramScheduleRecord> predicate) throws Exception {
-    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     return scheduler.listScheduleRecords(programId).stream().filter(predicate).collect(Collectors.toList());
   }
 
@@ -250,7 +248,7 @@ public class ProgramScheduleService {
    */
   public Collection<ProgramScheduleRecord> findTriggeredBy(ProgramId programId,
                                                            Set<ProgramStatus> statusSet) throws Exception {
-    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
 
     Set<ProgramScheduleRecord> schedules = new HashSet<>();
     scheduler.findSchedules(programId.toString());
@@ -270,7 +268,8 @@ public class ProgramScheduleService {
    */
   public void suspend(ScheduleId scheduleId) throws Exception {
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    authorizationEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(), Action.EXECUTE);
+    accessEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(),
+                           ApplicationPermission.EXECUTE);
     scheduler.disableSchedule(scheduleId);
   }
 
@@ -284,7 +283,8 @@ public class ProgramScheduleService {
    */
   public void resume(ScheduleId scheduleId) throws Exception {
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    authorizationEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(), Action.EXECUTE);
+    accessEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(),
+                           ApplicationPermission.EXECUTE);
     scheduler.enableSchedule(scheduleId);
   }
 
@@ -297,7 +297,7 @@ public class ProgramScheduleService {
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
   public void delete(ScheduleId scheduleId) throws Exception {
-    authorizationEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     scheduler.deleteSchedule(scheduleId);
   }
 
@@ -310,7 +310,7 @@ public class ProgramScheduleService {
    * @throws ConflictException if the schedule was already enabled
    */
   public void reEnableSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis) throws Exception {
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     scheduler.reEnableSchedules(namespaceId, startTimeMillis, endTimeMillis);
   }
 }

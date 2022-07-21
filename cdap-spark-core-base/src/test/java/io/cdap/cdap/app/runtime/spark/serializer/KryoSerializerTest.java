@@ -28,22 +28,28 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Unit tests for various Kryo serializers in CDAP.
@@ -210,6 +216,14 @@ public class KryoSerializerTest {
       .set("ts", System.currentTimeMillis())
       .set("enum", "a")
       .set("array", new int[]{1, 2, 3})
+      .setDecimal("decimal", new BigDecimal(10.5).setScale(2))
+      .setDate("date", LocalDate.now())
+      .setDateTime("dateTime", LocalDateTime.now())
+      .setTime("timeMillis", LocalTime.now())
+      .setTimestamp("timestampMillis", ZonedDateTime.now())
+      .setTime("timeMicros", LocalTime.now())
+      .setTimestamp("timestampMicros", ZonedDateTime.now())
+      .set("nullField", null)
       .set("map", ImmutableMap.of("1", 1, "2", 2, "3", 3))
       .set("union", null)
       .set("node", StructuredRecord.builder(schema.getField("node").getSchema()).build())
@@ -230,6 +244,26 @@ public class KryoSerializerTest {
     // The StructuredRecord.equals is broken, Json it and compare for now
     Assert.assertEquals(StructuredRecordStringConverter.toJsonString(record),
                         StructuredRecordStringConverter.toJsonString(newRecord));
+
+    // Verify that schema is deserialized only once and then cached
+    input = new Input(bos.toByteArray());
+    StructuredRecord newRecord2 = kryo.readObject(input, StructuredRecord.class);
+    Assert.assertSame(newRecord.getSchema(), newRecord2.getSchema());
+  }
+
+  @Test
+  public void testAllTypesChecked() {
+    Schema schema = createSchema();
+    Set<Schema.LogicalType> logicalTypes = schema.getFields().stream()
+      .map(f -> f.getSchema().getLogicalType())
+      .filter(Objects::nonNull)
+      .collect(Collectors.toCollection(TreeSet::new));
+    Set<Schema.Type> types =
+      schema.getFields().stream().map(f -> f.getSchema().getType()).collect(Collectors.toCollection(TreeSet::new));
+    Assert.assertEquals("Test does not test all logical types",
+                        new TreeSet<>(Arrays.asList(Schema.LogicalType.values())), logicalTypes);
+    Assert.assertEquals("Test does not test all types",
+                        new TreeSet<>(Arrays.asList(Schema.Type.values())), types);
   }
 
   private Schema createSchema() {
@@ -237,7 +271,7 @@ public class KryoSerializerTest {
     Schema nodeSchema = Schema.recordOf(
       "node", Schema.Field.of("children", Schema.nullableOf(Schema.arrayOf(Schema.recordOf("node")))));
 
-    return Schema.recordOf("record",
+    return Schema.recordOf("record", Stream.of(
                            Schema.Field.of("boolean", Schema.of(Schema.Type.BOOLEAN)),
                            Schema.Field.of("int", Schema.of(Schema.Type.INT)),
                            Schema.Field.of("long", Schema.of(Schema.Type.LONG)),
@@ -248,11 +282,22 @@ public class KryoSerializerTest {
                            Schema.Field.of("ts", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
                            Schema.Field.of("enum", Schema.enumWith("a", "b", "c")),
                            Schema.Field.of("array", Schema.arrayOf(Schema.of(Schema.Type.INT))),
+                           Schema.Field.of("decimal", Schema.decimalOf(10, 2)),
+                           Schema.Field.of("date", Schema.of(Schema.LogicalType.DATE)),
+                           Schema.Field.of("dateTime", Schema.of(Schema.LogicalType.DATETIME)),
+                           Schema.Field.of("timeMicros", Schema.of(Schema.LogicalType.TIME_MICROS)),
+                           Schema.Field.of("timestampMicros", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
+                           Schema.Field.of("timeMillis", Schema.of(Schema.LogicalType.TIME_MILLIS)),
+                           Schema.Field.of("timestampMillis", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
+                           Schema.Field.of("nullField", Schema.of(Schema.Type.NULL)),
                            Schema.Field
                              .of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.INT))),
                            Schema.Field
                              .of("union", Schema.unionOf(Schema.of(Schema.Type.NULL), Schema.of(Schema.Type.STRING))),
-                           Schema.Field.of("node", nodeSchema)
+                           Schema.Field.of("node", nodeSchema))
+                           .flatMap(f -> f.getSchema().getType() == Schema.Type.NULL ? Stream.of(f) : Stream.of(
+                             f, Schema.Field.of(f.getName() + "Nullable", Schema.nullableOf(f.getSchema()))))
+                           .collect(Collectors.toList())
     );
   }
 }

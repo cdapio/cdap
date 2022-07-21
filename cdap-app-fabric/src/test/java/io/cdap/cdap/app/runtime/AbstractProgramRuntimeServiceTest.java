@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -25,19 +26,25 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
-import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
+import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -45,15 +52,21 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -75,6 +88,13 @@ public class AbstractProgramRuntimeServiceTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+  CConfiguration cConf;
+
+  @Before
+  public void setUp() {
+    cConf = CConfiguration.create();
+  }
 
   @Test
   public void testConcurrentStartLimit() throws Exception {
@@ -99,10 +119,11 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                          NamespaceId.DEFAULT.artifact("test", "1.0"));
 
-    CConfiguration cConf = CConfiguration.create();
     cConf.setInt(Constants.AppFabric.PROGRAM_LAUNCH_THREADS, 2);
-    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf,
-                                                                         runnerFactory, program, null, null);
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             program, null, null);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
+                                                                         null, launchDispatcher);
     runtimeService.startAndWait();
     try {
       List<ProgramController> controllers = new ArrayList<>();
@@ -142,8 +163,10 @@ public class AbstractProgramRuntimeServiceTest {
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     Program program = createDummyProgram();
-    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                         runnerFactory, program, null, null);
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             program, null, null);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
+                                                                         null, launchDispatcher);
     runtimeService.startAndWait();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
@@ -171,8 +194,10 @@ public class AbstractProgramRuntimeServiceTest {
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
-    TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                             runnerFactory, null, null, extraInfo);
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             null, null, null);
+    TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
+                                                                             extraInfo, launchDispatcher);
     runtimeService.startAndWait();
 
     // The lookup will get deadlock for CDAP-3716
@@ -188,26 +213,14 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory(argumentsMap);
 
     final Program program = createDummyProgram();
+    TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
+                                                                             program, null, null);
+    ProgramRunDispatcherFactory factory = new ProgramRunDispatcherFactory(cConf, launchDispatcher);
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null, new NoOpProgramStateWriter()) {
+      new AbstractProgramRuntimeService(cConf, runnerFactory, new NoOpProgramStateWriter(), factory, false) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
-      }
-
-      @Override
-      protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                      ProgramDescriptor programDescriptor,
-                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
-        return program;
-      }
-
-      @Override
-      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-        io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
-          "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-        return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
-                                  new ArtifactMeta(ArtifactClasses.builder().build()));
       }
     };
 
@@ -253,6 +266,34 @@ public class AbstractProgramRuntimeServiceTest {
         runtimeService.stopAndWait();
       }
 
+    } finally {
+      runtimeService.stopAndWait();
+    }
+  }
+
+  @Test (timeout = 5000)
+  public void testTetheredRun() throws IOException, ExecutionException, InterruptedException, TimeoutException {
+    ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
+    Program program = createDummyProgram();
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+      discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
+    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    InMemoryProgramRunDispatcher launchDispatcher =
+      new TestProgramRunDispatcher(cConf, runnerFactory, program, locationFactory,
+                                   remoteClientFactory, true);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null, launchDispatcher);
+    runtimeService.startAndWait();
+    try {
+      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
+                                                           NamespaceId.DEFAULT.artifact("test", "1.0"));
+      Arguments sysArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.PEER_NAME, "mypeer"));
+      Arguments userArgs = new BasicArguments(Collections.emptyMap());
+      ProgramController controller = runtimeService.run(descriptor,
+                                                        new SimpleProgramOptions(program.getId(), sysArgs, userArgs),
+                                                        RunIds.generate()).getController();
+      Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
+                    5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       runtimeService.stopAndWait();
     }
@@ -401,15 +442,13 @@ public class AbstractProgramRuntimeServiceTest {
    */
   private static final class TestProgramRuntimeService extends AbstractProgramRuntimeService {
 
-    private final Program program;
     private final RuntimeInfo extraInfo;
 
-    protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                        @Nullable Program program,
-                                        @Nullable ArtifactRepository artifactRepository,
-                                        @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter());
-      this.program = program;
+    private TestProgramRuntimeService(CConfiguration cConf,
+                                      ProgramRunnerFactory programRunnerFactory, @Nullable RuntimeInfo extraInfo,
+                                      InMemoryProgramRunDispatcher programRunDispatcher) {
+      super(cConf, programRunnerFactory, new NoOpProgramStateWriter(),
+            new ProgramRunDispatcherFactory(cConf, programRunDispatcher), false);
       this.extraInfo = extraInfo;
     }
 
@@ -426,16 +465,37 @@ public class AbstractProgramRuntimeServiceTest {
       }
 
       if (extraInfo != null) {
-        updateRuntimeInfo(programId.getType(), runId, extraInfo);
+        updateRuntimeInfo(extraInfo);
         return extraInfo;
       }
       return null;
+    }
+  }
+
+  private static class TestProgramRunDispatcher extends InMemoryProgramRunDispatcher {
+
+    private final Program program;
+    private final boolean tetheredRun;
+
+    public TestProgramRunDispatcher(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                    Program program, LocationFactory locationFactory,
+                                    RemoteClientFactory remoteClientFactory) {
+      this(cConf, programRunnerFactory, program, locationFactory, remoteClientFactory, false);
+    }
+
+    public TestProgramRunDispatcher(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                    Program program, LocationFactory locationFactory,
+                                    RemoteClientFactory remoteClientFactory,
+                                    boolean tetheredRun) {
+      super(cConf, programRunnerFactory, null, locationFactory, remoteClientFactory, null, null);
+      this.program = program;
+      this.tetheredRun = tetheredRun;
     }
 
     @Override
     protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                     ProgramDescriptor programDescriptor,
-                                    ArtifactDetail artifactDetail, File tempDir) {
+                                    ArtifactDetail artifactDetail, File tempDir, boolean isTethered) {
       if (program == null) {
         throw new IllegalArgumentException("No program is available");
       }
@@ -443,11 +503,29 @@ public class AbstractProgramRuntimeServiceTest {
     }
 
     @Override
-    protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException {
+    protected ArtifactDetail getArtifactDetail(ArtifactId artifactId, ArtifactRepository artifactRepository)
+      throws IOException {
       io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
         "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-      return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
+      return new ArtifactDetail(new ArtifactDescriptor(NamespaceId.DEFAULT.getNamespace(),
+                                                       id, Locations.toLocation(TEMP_FOLDER.newFile())),
                                 new ArtifactMeta(ArtifactClasses.builder().build()));
+    }
+
+    @Override
+    protected void downloadArtifact(Id.Artifact artifactId, Path target, ArtifactRepository artifactRepository) {
+    }
+
+    @Override
+    protected ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail, ProgramId programId,
+                                                         ArtifactId artifactId, ApplicationSpecification appSpec,
+                                                         ProgramOptions options, PluginFinder pluginFinder,
+                                                         RemoteClientFactory factory,
+                                                         ArtifactRepository artifactRepository)
+      throws ExecutionException, InterruptedException, TimeoutException {
+      return tetheredRun ? appSpec : super.regenerateAppSpec(artifactDetail, programId, artifactId,
+                                                             appSpec, options, pluginFinder, factory,
+                                                             artifactRepository);
     }
   }
 }

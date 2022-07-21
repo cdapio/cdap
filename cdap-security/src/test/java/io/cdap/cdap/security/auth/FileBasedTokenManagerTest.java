@@ -29,7 +29,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.security.guice.FileBasedSecurityModule;
+import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(new IOModule(),
                                              new ConfigModule(cConf),
-                                             new FileBasedSecurityModule(),
+                                             new FileBasedCoreSecurityModule(),
                                              new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     tokenManager.startAndWait();
@@ -78,14 +78,14 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     TokenManager tokenManager = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
-      new FileBasedSecurityModule(),
+      new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
     tokenManager.startAndWait();
 
     TokenManager tokenManager2 = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
-      new FileBasedSecurityModule(),
+      new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
     tokenManager2.startAndWait();
 
@@ -94,7 +94,8 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     String user = "testuser";
     long now = System.currentTimeMillis();
     List<String> groups = Lists.newArrayList("users", "admins");
-    UserIdentity identifier = new UserIdentity(user, groups, now, now + TOKEN_DURATION);
+    UserIdentity identifier = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups, now,
+                                               now + TOKEN_DURATION);
 
     AccessToken token = tokenManager.signIdentifier(identifier);
 
@@ -114,7 +115,7 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     Injector injector = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
-      new FileBasedSecurityModule(),
+      new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()
     );
 

@@ -20,8 +20,10 @@ import com.google.common.base.Strings;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.customaction.CustomActionConfigurer;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.customaction.DefaultCustomActionSpecification;
@@ -33,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of the {@link CustomActionConfigurer}.
@@ -46,8 +49,10 @@ public final class DefaultCustomActionConfigurer extends AbstractConfigurer impl
   private Map<String, String> properties;
 
   private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                        PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder , pluginInstantiator);
+                                        PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+                                        @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                        FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder , pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.customAction = customAction;
     this.name = customAction.getClass().getSimpleName();
     this.description = "";
@@ -82,10 +87,14 @@ public final class DefaultCustomActionConfigurer extends AbstractConfigurer impl
 
   public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,
                                                           Id.Artifact artifactId, PluginFinder pluginFinder,
-                                                          PluginInstantiator pluginInstantiator) {
+                                                          PluginInstantiator pluginInstantiator,
+                                                          @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                                          FeatureFlagsProvider featureFlagsProvider) {
     DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action, deployNamespace, artifactId,
                                                                                  pluginFinder,
-                                                                                 pluginInstantiator);
+                                                                                 pluginInstantiator, 
+                                                                                 runtimeInfo,
+                                                                                 featureFlagsProvider);
     action.configure(configurer);
     return configurer.createSpecification();
   }

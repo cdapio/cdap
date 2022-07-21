@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.validation;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 
+import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
@@ -35,10 +36,23 @@ public interface ValidatingInputFormat extends InputFormatProvider {
   void validate(FormatContext context);
 
   /**
-   * Gets validated schema. Also adds
+   * Gets validated schema.
    *
    * @param context format context
    */
   @Nullable
   Schema getSchema(FormatContext context);
+
+  /**
+   * Try to detect the schema from some input data.
+   *
+   * @param context format context
+   * @param inputFiles files to sample from in order to detect schema.
+   * @return the detected schema, or null if the schema could not be detected.
+   * @throws IOException if there was an issue opening or reading the data.
+   */
+  @Nullable
+  default Schema detectSchema(FormatContext context, InputFiles inputFiles) throws IOException {
+    return getSchema(context);
+  }
 }

@@ -21,13 +21,16 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -38,13 +41,15 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Unit tests for the {@link ProgramStateWriterWithHeartBeat}.
+ */
 public class ProgramStateWriterWithHeartBeatTest {
   private static class MockProgramStatePublisher implements ProgramStatePublisher {
-    long heartBeatCount = 0;
+    long heartBeatCount;
 
     @Override
     public void publish(Notification.Type notificationType, Map<String, String> properties) {
@@ -60,10 +65,44 @@ public class ProgramStateWriterWithHeartBeatTest {
   }
 
   @Test
-  public void testHeartBeatThread() throws InterruptedException, ExecutionException, TimeoutException {
+  public void testProgramCompleted() throws Exception {
+    testHeartBeatThread(ProgramRunStatus.COMPLETED);
+  }
+
+  @Test
+  public void testProgramKilled() throws Exception {
+    testHeartBeatThread(ProgramRunStatus.KILLED);
+  }
+
+  @Test
+  public void testProgramFailed() throws Exception {
+    testHeartBeatThread(ProgramRunStatus.FAILED);
+  }
+
+  private void testHeartBeatThread(ProgramRunStatus terminalState) throws Exception {
     // configure program state writer to emit heart beat every second
-    ProgramStatePublisher programStatePublisher = new MockProgramStatePublisher();
-    NoOpProgramStateWriter programStateWriter = new NoOpProgramStateWriter();
+    MockProgramStatePublisher programStatePublisher = new MockProgramStatePublisher();
+
+    AtomicReference<ProgramRunStatus> completionState = new AtomicReference<>();
+    ProgramStateWriter programStateWriter = new NoOpProgramStateWriter() {
+      @Override
+      public void completed(ProgramRunId programRunId) {
+        super.completed(programRunId);
+        completionState.set(ProgramRunStatus.COMPLETED);
+      }
+
+      @Override
+      public void killed(ProgramRunId programRunId) {
+        super.killed(programRunId);
+        completionState.set(ProgramRunStatus.KILLED);
+      }
+
+      @Override
+      public void error(ProgramRunId programRunId, Throwable failureCause) {
+        super.error(programRunId, failureCause);
+        completionState.set(ProgramRunStatus.FAILED);
+      }
+    };
 
     // mock program configurations
     ProgramId programId = NamespaceId.DEFAULT.app("someapp").program(ProgramType.SERVICE, "s");
@@ -77,36 +116,39 @@ public class ProgramStateWriterWithHeartBeatTest {
     ProgramStateWriterWithHeartBeat programStateWriterWithHeartBeat =
       new ProgramStateWriterWithHeartBeat(runId, programStateWriter, 1, programStatePublisher);
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "1.0.0", "desc", null, artifactId,
+      "name", "1.0.0", ProjectInfo.getVersion().toString(), "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // start the program and ensure heart beat is 0 before we call running
-    programStateWriterWithHeartBeat.start(programOptions, null, programDescriptor);
-    Assert.assertEquals(0, ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount());
+    programStateWriter.start(runId, programOptions, null, programDescriptor);
+    Assert.assertEquals(0, programStatePublisher.getHeartBeatCount());
     programStateWriterWithHeartBeat.running(null);
 
-    // on running, we start receiving heart beat messages, verify if we heart beat count goes to 2.
-    Tasks.waitFor(true , () -> ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount() > 1,
+    // on running, we start receiving heart beat messages, verify if the heartbeat count goes to 2.
+    Tasks.waitFor(true , () -> programStatePublisher.getHeartBeatCount() > 1,
                   10, TimeUnit.SECONDS, "Didn't receive expected heartbeat after 10 seconds");
 
-    // make sure suspending program suspended the heartbeat thread
-    programStateWriterWithHeartBeat.suspend();
-    Tasks.waitFor(false , () -> programStateWriterWithHeartBeat.isHeartBeatThreadAlive(),
-                  5, TimeUnit.SECONDS, "Heartbeat thread did not stop after 5 seconds");
-    long heartBeatAfterSuspend = ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount();
+    // Terminate the program and make sure the heart beat thread also gets stopped
+    switch (terminalState) {
+      case COMPLETED:
+        programStateWriterWithHeartBeat.completed();
+        break;
+      case FAILED:
+        programStateWriterWithHeartBeat.error(new RuntimeException());
+        break;
+      case KILLED:
+        programStateWriterWithHeartBeat.killed();
+        break;
+      default:
+        throw new IllegalStateException("The terminal state must one of COMPLETED, FAILED, or KILLED");
+    }
 
-    // resume the program and make sure that the heart beat messages goes up after resuming program
-    programStateWriterWithHeartBeat.resume();
-    long expected = heartBeatAfterSuspend + 1;
-    Tasks.waitFor(true , () -> ((MockProgramStatePublisher) programStatePublisher).getHeartBeatCount() > expected,
-                  10, TimeUnit.SECONDS, "Didn't receive expected heartbeat after 10 seconds after resuming program");
-
-    // kill the program and make sure the heart beat thread also gets stopped
-    programStateWriterWithHeartBeat.killed();
-    Tasks.waitFor(false , () -> programStateWriterWithHeartBeat.isHeartBeatThreadAlive(),
+    Tasks.waitFor(false , programStateWriterWithHeartBeat::isHeartBeatThreadAlive,
                   5, TimeUnit.SECONDS, "Heartbeat thread did not stop after 5 seconds");
+
+    Assert.assertEquals(terminalState, completionState.get());
   }
 }

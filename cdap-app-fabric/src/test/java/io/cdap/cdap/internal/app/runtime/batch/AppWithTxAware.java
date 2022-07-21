@@ -76,8 +76,8 @@ public class AppWithTxAware extends AbstractApplication {
   }
 
   public static class PedanticTxAware extends AbstractDataset implements BatchReadable<Integer, Integer> {
-    private Transaction tx = null;
-    private Transaction remembered = null;
+    private Transaction tx;
+    private Transaction remembered;
 
     public PedanticTxAware(DatasetSpecification spec, @EmbeddedDataset("t") Table embedded) {
       super(spec.getName(), embedded);

@@ -153,7 +153,8 @@ public final class ExternalDatasets {
    */
   public static void registerLineage(Admin admin, String referenceName,
                                      AccessType accessType, @Nullable Schema schema,
-                                     Supplier<Dataset> datasetSupplier) throws DatasetManagementException {
+                                     Supplier<Dataset> datasetSupplier)
+    throws DatasetManagementException {
     DatasetProperties datasetProperties;
     if (schema == null) {
       datasetProperties = DatasetProperties.EMPTY;

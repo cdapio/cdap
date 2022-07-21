@@ -51,4 +51,9 @@ public class ArtifactDetail {
     return Objects.equals(descriptor, that.descriptor) &&
       Objects.equals(meta, that.meta);
   }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(descriptor, meta);
+  }
 }

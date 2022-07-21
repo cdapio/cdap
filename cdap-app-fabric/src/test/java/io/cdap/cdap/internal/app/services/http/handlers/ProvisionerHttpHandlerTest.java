@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.MockProvisioner;
+import io.cdap.cdap.internal.provision.MockProvisionerWithCpus;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.common.http.HttpResponse;
@@ -40,12 +41,18 @@ public class ProvisionerHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testListAndGetProvisioners() throws Exception {
-    // in unit test, we only have the mock provisioner currently
+    // in unit test, we have the mock provisioners currently
     ProvisionerSpecification spec = new MockProvisioner().getSpec();
     ProvisionerDetail expected = new ProvisionerDetail(spec.getName(), spec.getLabel(),
-                                                       spec.getDescription(), new ArrayList<>(), null, false);
+                                                       spec.getDescription(), new ArrayList<>(), null, null,
+                                                       false);
+
+    ProvisionerSpecification specWithCpus = new MockProvisionerWithCpus().getSpec();
+    ProvisionerDetail expectedWithCpus = new ProvisionerDetail(specWithCpus.getName(), specWithCpus.getLabel(),
+                                                       specWithCpus.getDescription(), new ArrayList<>(), null, null,
+                                                               false);
     List<ProvisionerDetail> details = listProvisioners();
-    Assert.assertEquals(ImmutableList.of(expected), details);
+    Assert.assertEquals(ImmutableList.of(expected, expectedWithCpus), details);
 
     // get a non-existing provisioner should get a 404
     getProvisioner("nonExisting", 404);

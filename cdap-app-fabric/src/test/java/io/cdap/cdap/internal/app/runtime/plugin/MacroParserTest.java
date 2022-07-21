@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -79,9 +81,14 @@ public class MacroParserTest {
     assertContainsMacroParsing("${badFormatting", false);
   }
 
-  @Test
+  @Test(expected = InvalidMacroException.class)
   public void containsEmptyMacro() throws InvalidMacroException {
     assertContainsMacroParsing("${}", true);
+  }
+
+  @Test(expected = InvalidMacroException.class)
+  public void containsEmptyMacroInsideNestedMacro() throws InvalidMacroException {
+    assertContainsMacroParsing("${abc${}}", true);
   }
 
   @Test
@@ -100,22 +107,6 @@ public class MacroParserTest {
   @Test(expected = InvalidMacroException.class)
   public void testUndefinedMacro() throws InvalidMacroException {
     assertSubstitution("${undefined}", "", Collections.emptyMap(), Collections.emptyMap());
-  }
-
-  /**
-   * Tests if the empty string can be passed macro-substituted.
-   * Expands the following macro tree of depth 1:
-   *
-   *             ${}
-   *              |
-   *           emptyMacro
-   */
-  @Test
-  public void testEmptyMacro() throws InvalidMacroException {
-    Map<String, String> properties = ImmutableMap.<String, String>builder()
-      .put("", "emptyMacro")
-      .build();
-    assertSubstitution("${}", "emptyMacro", properties, Collections.emptyMap());
   }
 
   /**
@@ -530,6 +521,32 @@ public class MacroParserTest {
     Assert.assertEquals("${k1}", parser.parse("${k1}"));
     Assert.assertEquals("${test(key)}", parser.parse("${test(key)}"));
     Assert.assertEquals("abc${123}", parser.parse("abc${123}"));
+  }
+
+  @Test
+  public void testSkipInvalidMacrosInMacroFunctions() {
+    MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap(), true);
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().skipInvalidMacros().build());
+
+    // test macros in the macro function still get skipped correctly
+    Assert.assertEquals("${test(${k1})}", parser.parse("${test(${k1})}"));
+    Assert.assertEquals("${test(${k1${k2}})}", parser.parse("${test(${k1${k2}})}"));
+    Assert.assertEquals("${test(${k1})}${t(${t1})}", parser.parse("${test(${k1})}${t(${t1})}"));
+  }
+
+  @Test
+  public void testMacroParserMapSubstitutions() {
+    Map<String, String> connectionProperties = ImmutableMap.of("k1", "v2", "k2", "${test(t1)}");
+    MacroEvaluator evaluator = new TestMacroEvaluator(
+      Collections.emptyMap(), Collections.singletonMap("t1", "{\"a\" : 1}"), false,
+      Collections.singletonMap("connection", connectionProperties));
+
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().setEscaping(false).build());
+
+    Gson gson = new Gson();
+    Map<String, String> expected = ImmutableMap.of("k1", "v2", "k2", "{\"a\" : 1}");
+    Assert.assertEquals(expected, gson.fromJson(parser.parse("${testmap(connection)}"),
+                                                new TypeToken<Map<String, String>>() { }.getType()));
   }
 
   // Testing util methods

@@ -166,7 +166,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   public boolean namespaceExists(String namespace) throws IOException {
     try {
       return namespaceQueryAdmin.exists(new NamespaceId(namespace));
-    } catch (IOException e) {
+    } catch (IOException | RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw new IOException(e);
@@ -181,7 +181,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
       return new NamespaceSummary(meta.getName(), meta.getDescription(), meta.getGeneration());
     } catch (NamespaceNotFoundException e) {
       return null;
-    } catch (IOException e) {
+    } catch (IOException | RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw new IOException(e);

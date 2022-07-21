@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.auth.context;
 
 import com.google.common.base.Throwables;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -37,13 +38,12 @@ import java.io.IOException;
  * @see UserGroupInformation
  */
 public class MasterAuthenticationContext implements AuthenticationContext {
-
   @Override
   public Principal getPrincipal() {
     // When requests come in via rest endpoints, the userId is updated inside SecurityRequestContext, so give that
     // precedence.
     String userId = SecurityRequestContext.getUserId();
-    String userCredential = SecurityRequestContext.getUserCredential();
+    Credential userCredential = SecurityRequestContext.getUserCredential();
     // This userId can be null, when the master itself is asynchoronously updating the policy cache, since
     // during that process the router will not set the SecurityRequestContext. In that case, obtain the userId from
     // the UserGroupInformation, which will be the user that the master is running as.

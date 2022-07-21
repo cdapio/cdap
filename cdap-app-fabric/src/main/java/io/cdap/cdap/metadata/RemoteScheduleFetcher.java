@@ -26,17 +26,18 @@ import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -57,9 +58,9 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteScheduleFetcher(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(
-      discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+  public RemoteScheduleFetcher(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
@@ -67,7 +68,8 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
    * Get the schedule identified by the given schedule id
    */
   @Override
-  public ScheduleDetail get(ScheduleId scheduleId) throws IOException, ScheduleNotFoundException {
+  public ScheduleDetail get(ScheduleId scheduleId)
+    throws IOException, ScheduleNotFoundException, UnauthorizedException {
     String url = String.format(
       "namespaces/%s/apps/%s/versions/%s/schedules/%s",
       scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
@@ -85,7 +87,8 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
    * Get the list of schedules for the given program id
    */
   @Override
-  public List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException {
+  public List<ScheduleDetail> list(ProgramId programId)
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules",
                                programId.getNamespace(), programId.getApplication(), programId.getVersion());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
@@ -102,7 +105,7 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
 
   // TODO: refactor out into a util function that can be shared by RemoteApplicationDetailFetcher
   //       RemotePreferencesFetcherInternal and RemoteScheduleFetcher
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

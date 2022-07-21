@@ -16,20 +16,20 @@
 
 package io.cdap.cdap.k8s.discovery;
 
-import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1OwnerReference;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServiceBuilder;
-import io.kubernetes.client.models.V1ServiceList;
-import io.kubernetes.client.models.V1ServicePort;
-import io.kubernetes.client.models.V1ServiceSpec;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1OwnerReference;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServiceBuilder;
+import io.kubernetes.client.openapi.models.V1ServiceList;
+import io.kubernetes.client.openapi.models.V1ServicePort;
+import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import io.kubernetes.client.util.Config;
+import io.kubernetes.client.util.generic.options.ListOptions;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -52,7 +52,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -108,16 +107,12 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     try {
       CoreV1Api api = getCoreApi();
       while (true) {
-        // First try to create the service
-        if (createV1Service(api, serviceName, discoverable)) {
-          break;
-        }
-
-        // If creation failed, we update the service.
-        // To update, first need to find the service version.
         Optional<V1Service> currentService = getV1Service(api, serviceName, discoverable.getName());
         if (!currentService.isPresent()) {
-          // Loop and try to create again
+          if (createV1Service(api, serviceName, discoverable)) {
+            break;
+          }
+          // Service create encountered a conflict, loop and check for service again
           continue;
         }
 
@@ -203,7 +198,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       ApiClient client = Config.defaultClient();
 
       // Set a reasonable timeout for the watch.
-      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
+      client.setReadTimeout((int) TimeUnit.MINUTES.toMillis(5));
 
       coreApi = api = new CoreV1Api(client);
       return api;
@@ -221,9 +216,9 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    */
   private Optional<V1Service> getV1Service(CoreV1Api api,
                                            String serviceName, String discoveryName) throws ApiException {
-    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null,
+    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null, null,
                                                           "cdap.service=" + namePrefix + discoveryName, 1,
-                                                          null, null, null);
+                                                          null, null, null, null);
     // Find the service with the given name
     return serviceList.getItems().stream()
       .filter(service -> serviceName.equals(service.getMetadata().getName()))
@@ -272,6 +267,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     } catch (ApiException e) {
       // It means the service already exists. In this case we update the port if it is not the same.
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.debug("Service {} already exists.", serviceName);
         return false;
       }
       throw e;
@@ -288,8 +284,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param discoverable the {@link Discoverable} for updating the service
    * @return {@code true} if the update was successful
    *         {@code false} if the current service version doesn't match with the server, and there is no
-   *         change to the service
-   * @throws ApiException if the update failed that doesn't due to mismatch of current version
+   *         change to the service; or if the service does not exist
+   * @throws ApiException if the update failed for reasons other than mismatch of current version or service not found
    */
   private boolean updateV1Service(CoreV1Api api, V1Service currentService,
                                   Discoverable discoverable) throws ApiException {
@@ -334,7 +330,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       LOG.info("Service updated in kubernetes with name {} and port {}",
                currentService.getMetadata().getName(), port.getPort());
     } catch (ApiException e) {
-      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT || e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         return false;
       }
       throw e;
@@ -366,7 +362,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     private final Set<String> services;
 
     WatcherThread() {
-      super("kube-discovery-service", namespace);
+      super("kube-discovery-service", namespace, "", "v1", "services");
       this.services = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
@@ -374,25 +370,13 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       // Service name in K8s are prefixed
       // If this is a new service to watch, reset the watch so that the new selector will get pickup.
       if (services.add(namePrefix + name)) {
-        resetWatch();
+        closeWatch();
       }
     }
 
-    @Nullable
     @Override
-    protected String getSelector() {
-      return String.format("%s in (%s)", SERVICE_LABEL, services.stream().collect(Collectors.joining(",")));
-    }
-
-    @Override
-    protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-      return getCoreApi().listNamespacedServiceCall(namespace, null, null, null, labelSelector,
-                                                    null, null, null, true, null, null);
-    }
-
-    @Override
-    protected ApiClient getApiClient() throws IOException {
-      return getCoreApi().getApiClient();
+    protected void updateListOptions(ListOptions options) {
+      options.setLabelSelector(String.format("%s in (%s)", SERVICE_LABEL, String.join(",", services)));
     }
 
     @Override
@@ -464,7 +448,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       if (port == null) {
         return null;
       }
-      return new Discoverable(name, InetSocketAddress.createUnresolved(hostname, port), payload);
+      String namespacedHostName = String.format("%s.%s", hostname, namespace);
+      return new Discoverable(name, InetSocketAddress.createUnresolved(namespacedHostName, port), payload);
     }
   }
 }

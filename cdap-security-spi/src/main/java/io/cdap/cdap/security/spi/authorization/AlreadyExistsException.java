@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.spi.authorization;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.security.Role;
 
 import java.net.HttpURLConnection;
@@ -24,7 +25,7 @@ import java.net.HttpURLConnection;
 /**
  * Exception thrown when a {@link Role} or an entity already exists
  */
-public class AlreadyExistsException extends Exception implements HttpErrorStatusProvider {
+public class AlreadyExistsException extends AccessException implements HttpErrorStatusProvider {
   public AlreadyExistsException(Role role) {
     super(String.format("%s already exists.", role));
   }

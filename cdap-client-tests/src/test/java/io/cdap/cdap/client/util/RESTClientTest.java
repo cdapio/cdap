@@ -23,11 +23,11 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.matcher.Matcher;
 import io.cdap.cdap.client.config.ClientConfig;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.authentication.client.AccessToken;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -254,8 +254,8 @@ public class RESTClientTest {
 
   @Path("/api")
   public final class TestHandler extends AbstractHttpHandler {
-    private int unavailEnpointCount = 0;
-    private int integer = 0;
+    private int unavailEnpointCount;
+    private int integer;
 
     private final String message = new UnauthorizedException(
       new Principal("test", Principal.PrincipalType.USER), ImmutableSet.of(Action.READ, Action.WRITE),

@@ -76,6 +76,6 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
   public void waitForStopped(final ProgramId programId) throws Exception {
     // TODO CDAP-12362 This should be exposed to ProgramManager to stop all runs of a program
     // Ensure that there are no pending run records before moving on to the next test.
-    Tasks.waitFor(true, () -> isStopped(programId), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(true, () -> isStopped(programId), 120, TimeUnit.SECONDS);
   }
 }

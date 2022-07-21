@@ -16,14 +16,12 @@
 
 package io.cdap.cdap.security.impersonation;
 
-import java.io.IOException;
-
 /**
  * An implementation of {@link UGIProvider} that is used when Kerberos is never enabled, and so should never be called.
  */
 public class UnsupportedUGIProvider implements UGIProvider {
   @Override
-  public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
+  public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) {
     // If this implementation's method is called, then some guice binding is done improperly.
     // For instance, we don't call this method if Kerberos is not enabled, and we only bind this implementation
     // in-memory and for Standalone, where Kerberos is not enabled.

@@ -24,7 +24,6 @@ import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.gateway.router.NettyRouter;
@@ -33,13 +32,12 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.guice.SecurityModule;
-import io.cdap.cdap.security.guice.SecurityModules;
-import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -47,6 +45,7 @@ import javax.annotation.Nullable;
  * The main class to run router service.
  */
 public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+  private static final Logger LOG = LoggerFactory.getLogger(RouterServiceMain.class);
 
   /**
    * Main entry point
@@ -59,25 +58,11 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
                                            EnvironmentOptions options, CConfiguration cConf) {
     List<Module> modules = new ArrayList<>();
+
     modules.add(new MessagingClientModule());
     modules.add(new RouterModules().getDistributedModules());
     modules.add(new DFSLocationModule());
-    modules.addAll(getSecurityModules(cConf));
-
-    return modules;
-  }
-
-  private List<Module> getSecurityModules(CConfiguration cConf) {
-    if (!SecurityUtil.isManagedSecurity(cConf)) {
-      return Collections.singletonList(new SecurityModules().getStandaloneModules());
-    }
-
-    List<Module> modules = new ArrayList<>();
-    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf);
-    modules.add(securityModule);
-    if (securityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
-    }
+    modules.add(new ExternalAuthenticationModule());
 
     return modules;
   }
@@ -101,10 +86,5 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
         NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,
         Constants.Service.GATEWAY);
-  }
-
-  @Override
-  protected void initializeDataSourceConnection(CConfiguration cConf) {
-    // no-op since we don't connect to dataset in router service
   }
 }

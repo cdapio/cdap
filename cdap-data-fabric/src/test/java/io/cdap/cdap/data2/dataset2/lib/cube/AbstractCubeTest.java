@@ -51,6 +51,11 @@ public abstract class AbstractCubeTest {
   protected abstract Cube getCube(String name, int[] resolutions,
                                   Map<String, ? extends Aggregation> aggregations) throws Exception;
 
+  protected abstract Cube getCube(String name, int[] resolutions,
+                                  Map<String, ? extends Aggregation> aggregations,
+                                  int coarseLagFactor,
+                                  int coarseRoundFactor) throws Exception;
+
   @Test
   public void testBasics() throws Exception {
     Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
@@ -170,6 +175,97 @@ public abstract class AbstractCubeTest {
                      ImmutableMap.of("dim1", "1", "dim2", "1"),
                      ImmutableList.<String>of(), ImmutableList.<TimeSeries>of());
 
+  }
+
+  @Test
+  public void testCoarsing() throws Exception {
+    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
+                                              ImmutableList.of("dim1", "dim2"));
+    Aggregation agg2 = new DefaultAggregation(ImmutableList.of("dim1", "dim2"),
+                                              ImmutableList.of("dim1"));
+
+    int resolution = 1;
+    //Use round factor of 2 - we should get only even timestamps
+    Cube cube = getCube("myCoarseCube", new int[] {resolution},
+                        ImmutableMap.of("agg1", agg1, "agg2", agg2), 1, 2);
+
+    // write some data
+    // NOTE: we mostly use different ts, as we are interested in checking incs not at persist, but rather at query time
+    writeInc(cube, "metric1",  1,  1,  "1",  "1",  "1");
+    writeInc(cube, "metric1",  1,  1,  "1",  "1",  "1");
+    writeInc(cube, "metric1",  2,  2, null,  "1",  "1");
+    writeInc(cube, "metric1",  3,  3,  "1",  "2",  "1");
+    writeInc(cube, "metric1",  3,  5,  "1",  "2",  "3");
+    writeInc(cube, "metric1",  3,  7,  "2",  "1",  "1");
+    writeInc(cube, "metric1", 4, 4, "1", null, "2");
+    writeInc(cube, "metric1", 5, 5, null, null, "1");
+    writeInc(cube, "metric1", 6, 6, "1", null, null);
+    writeInc(cube, "metric1",  7,  3,  "1",  "1", null);
+    // writing using BatchWritable APIs
+    writeIncViaBatchWritable(cube, "metric1", 8, 2, null, "1", null);
+    writeIncViaBatchWritable(cube, "metric1", 9, 1, null, null, null);
+    // writing in batch
+    cube.add(ImmutableList.of(
+      getFact("metric1", 10, 2, MeasureType.COUNTER, "1", "1", "1", "1"),
+      getFact("metric1", 11, 3, MeasureType.COUNTER, "1", "1", "1", null),
+      getFact("metric1", 12, 4, MeasureType.COUNTER, "2", "1", "1", "1"),
+      getFact("metric1", 13, 5, MeasureType.COUNTER, null, null, null, "1")
+    ));
+
+    writeInc(cube, "metric2", 1, 1, "1", "1", "1");
+
+    // todo: do some write instead of increments - test those as well
+
+    // now let's query!
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), ImmutableList.of("dim2"),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", dimensionValues("dim2", "1"), timeValues(0, 2, 6, 3, 10, 5)),
+                       new TimeSeries("metric1", dimensionValues("dim2", "2"), timeValues(2, 8))));
+
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1", "dim3", "1"),
+                     new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(0, 2, 10, 5))));
+
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     new HashMap<String, String>(), ImmutableList.of("dim1"),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", dimensionValues("dim1", "1"),
+                                      timeValues(0, 2, 2, 8, 4, 4, 6, 9, 10, 5)),
+                       new TimeSeries("metric1", dimensionValues("dim1", "2"),
+                                      timeValues(2, 7, 12, 4))));
+
+    verifyCountQuery(cube, 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim3", "3"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(2, 5))));
+
+
+    // test querying specific aggregations
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(0, 2, 2, 8, 6, 3, 10, 5))));
+    verifyCountQuery(cube, "agg2", 0, 15, resolution, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(0, 2, 2, 8, 4, 4, 6, 9, 10, 5))));
+
+    // query with different agg functions
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.MAX,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(0, 2, 2, 5, 6, 3, 10, 5))));
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.MIN,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(0, 2, 2, 3, 6, 3, 10, 5))));
+    verifyCountQuery(cube, "agg1", 0, 15, resolution, "metric1",  AggregationFunction.LATEST,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(new TimeSeries("metric1", new HashMap<String, String>(),
+                                                     timeValues(0, 2, 2, 5, 6, 3, 10, 5))));
   }
 
   @Test

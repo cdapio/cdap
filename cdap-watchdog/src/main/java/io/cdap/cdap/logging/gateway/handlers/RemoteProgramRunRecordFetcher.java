@@ -22,12 +22,13 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -41,11 +42,11 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteProgramRunRecordFetcher(DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(discoveryClient,
-                                         Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false),
-                                         Constants.Gateway.INTERNAL_API_VERSION_3);
+  public RemoteProgramRunRecordFetcher(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**
@@ -55,7 +56,8 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
    * @throws IOException if failed to fetch {@link RunRecordDetail}
    * @throws NotFoundException if the program or runid is not found
    */
-  public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws IOException, NotFoundException {
+  public RunRecordDetail getRunRecordMeta(ProgramRunId runId)
+    throws IOException, NotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s",
                                runId.getNamespace(),
                                runId.getApplication(),
@@ -71,7 +73,7 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
       .build();
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

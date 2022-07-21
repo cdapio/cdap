@@ -21,8 +21,10 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Information required by one phase of a batch pipeline.
@@ -35,12 +37,14 @@ public class BatchPhaseSpec extends PhaseSpec {
   private final String description;
   private final int numOfRecordsPreview;
   private final boolean isPipelineContainsCondition;
+  private final StageSpec sqlEngineStageSpec;
 
   public BatchPhaseSpec(String phaseName, PipelinePhase phase,
                         Resources resources, Resources driverResources, Resources clientResources,
                         boolean isStageLoggingEnabled, boolean isProcessTimingEnabled,
                         Map<String, String> connectorDatasets, int numOfRecordsPreview,
-                        Map<String, String> pipelineProperties, boolean isPipelineContainsCondition) {
+                        Map<String, String> pipelineProperties, boolean isPipelineContainsCondition,
+                        @Nullable StageSpec sqlEngineStageSpec) {
     super(phaseName, phase, connectorDatasets, isStageLoggingEnabled, isProcessTimingEnabled);
     this.resources = resources;
     this.driverResources = driverResources;
@@ -49,6 +53,7 @@ public class BatchPhaseSpec extends PhaseSpec {
     this.numOfRecordsPreview = numOfRecordsPreview;
     this.pipelineProperties = ImmutableMap.copyOf(pipelineProperties);
     this.isPipelineContainsCondition = isPipelineContainsCondition;
+    this.sqlEngineStageSpec = sqlEngineStageSpec;
   }
 
   public Resources getResources() {
@@ -79,13 +84,24 @@ public class BatchPhaseSpec extends PhaseSpec {
     return isPipelineContainsCondition;
   }
 
+  public StageSpec getSQLEngineStageSpec() {
+    return sqlEngineStageSpec;
+  }
+
   private String createDescription() {
     StringBuilder description = new StringBuilder("Sources '");
     Joiner.on("', '").appendTo(description, getPhase().getSources());
     description.append("' to sinks '");
 
     Joiner.on("', '").appendTo(description, getPhase().getSinks());
-    description.append("'.");
+    description.append("'");
+
+    if (sqlEngineStageSpec != null) {
+      description.append(", using pushdown engine '").append(sqlEngineStageSpec.getPlugin().getName()).append("'");
+    }
+
+    description.append(".");
+
     return description.toString();
   }
 }

@@ -28,8 +28,12 @@ import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.store.NamespaceStore;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -52,12 +56,19 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Gson GSON = new Gson();
 
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final PreferencesService preferencesService;
   private final Store store;
   private final NamespaceStore nsStore;
 
   @Inject
-  PreferencesHttpHandler(PreferencesService preferencesService, Store store, NamespaceStore nsStore) {
+  PreferencesHttpHandler(AccessEnforcer accessEnforcer,
+                         AuthenticationContext authenticationContext,
+                         PreferencesService preferencesService,
+                         Store store, NamespaceStore nsStore) {
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
     this.preferencesService = preferencesService;
     this.store = store;
     this.nsStore = nsStore;
@@ -66,13 +77,17 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   //Instance Level Properties
   @Path("/preferences")
   @GET
-  public void getInstancePrefs(HttpRequest request, HttpResponder responder) {
+  public void getInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
+    InstanceId instanceId = new InstanceId("");
+    accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getProperties()));
   }
 
   @Path("/preferences")
   @DELETE
-  public void deleteInstancePrefs(HttpRequest request, HttpResponder responder) {
+  public void deleteInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
+    InstanceId instanceId = new InstanceId("");
+    accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     preferencesService.deleteProperties();
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -81,6 +96,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setInstancePrefs(FullHttpRequest request, HttpResponder responder) throws Exception {
+    InstanceId instanceId = new InstanceId("");
+    accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     try {
       Map<String, String> propMap = decodeArguments(request);
       preferencesService.setProperties(propMap);
@@ -95,8 +112,10 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/preferences")
   @GET
   public void getNamespacePrefs(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespace, @QueryParam("resolved") boolean resolved) {
+                                @PathParam("namespace-id") String namespace, @QueryParam("resolved") boolean resolved)
+    throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.GET);
     if (nsStore.get(namespaceId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
@@ -116,6 +135,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void setNamespacePrefs(FullHttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (nsStore.get(namespaceId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
       return;
@@ -133,8 +153,9 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/preferences")
   @DELETE
   public void deleteNamespacePrefs(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespace) {
+                                   @PathParam("namespace-id") String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (nsStore.get(namespaceId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
@@ -149,8 +170,9 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
-                          @QueryParam("resolved") boolean resolved) {
+                          @QueryParam("resolved") boolean resolved) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.GET);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
@@ -170,6 +192,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
@@ -188,8 +211,10 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @DELETE
   public void deleteAppPrefs(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId) {
+                             @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
+    throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
@@ -208,6 +233,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("program-type") String programType, @PathParam("program-id") String programId,
                               @QueryParam("resolved") boolean resolved) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.GET);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     if (resolved) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getResolvedProperties(program)));
@@ -225,6 +251,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("program-type") String programType,
                               @PathParam("program-id") String programId) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     try {
       Map<String, String> propMap = decodeArguments(request);
@@ -242,8 +269,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("program-type") String programType,
                                  @PathParam("program-id") String programId) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
-
     preferencesService.deleteProperties(program);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -252,7 +279,6 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
    * Parses the give program type into {@link ProgramType} object.
    *
    * @param programType the program type to parse.
-   *
    * @throws BadRequestException if the given program type is not a valid {@link ProgramType}.
    */
   private ProgramType getProgramType(String programType) throws BadRequestException {

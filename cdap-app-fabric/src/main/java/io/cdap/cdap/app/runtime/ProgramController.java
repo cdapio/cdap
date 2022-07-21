@@ -23,6 +23,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -135,7 +136,27 @@ public interface ProgramController {
 
   ListenableFuture<ProgramController> resume();
 
+  /**
+   * Attempt to stop the program gracefully.
+   *
+   * @return A {@link ListenableFuture} that will be completed when the program is actually stopped.
+   */
   ListenableFuture<ProgramController> stop();
+
+  /**
+   * Attempt to stop the program gracefully within the given timeout. Depending on the implementation,
+   * if the timeout reached, the running program can be killed.
+   *
+   * @param timeout the maximum time that it allows the service to terminate gracefully
+   * @param timeoutUnit the {@link TimeUnit} for the {@code timeout}
+   * @return A {@link ListenableFuture} that will be completed when the program is actually stopped.
+   */
+  ListenableFuture<ProgramController> stop(long timeout, TimeUnit timeoutUnit);
+
+  /**
+   * Force kill the program.
+   */
+  void kill();
 
   /**
    * @return The current state of the program at the time when this method is called.

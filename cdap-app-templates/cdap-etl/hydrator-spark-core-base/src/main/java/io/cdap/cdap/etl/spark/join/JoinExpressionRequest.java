@@ -18,15 +18,13 @@ package io.cdap.cdap.etl.spark.join;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.join.JoinCondition;
-import io.cdap.cdap.etl.api.join.JoinDistribution;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinField;
-import io.cdap.cdap.etl.api.join.JoinStage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Request to join some collection to another collection on an arbitrary expression.
@@ -38,15 +36,22 @@ public class JoinExpressionRequest {
   private final JoinCollection right;
   private final JoinCondition.OnExpression condition;
   private final Schema outputSchema;
+  private final JoinDefinition joinDefinition;
 
-  public JoinExpressionRequest(String stageName, List<JoinField> fields, JoinCollection left, JoinCollection right,
-                               JoinCondition.OnExpression condition, Schema outputSchema) {
+  public JoinExpressionRequest(String stageName,
+                               List<JoinField> fields,
+                               JoinCollection left,
+                               JoinCollection right,
+                               JoinCondition.OnExpression condition,
+                               Schema outputSchema,
+                               JoinDefinition joinDefinition) {
     this.stageName = stageName;
     this.fields = fields;
     this.left = left;
     this.right = right;
     this.condition = condition;
     this.outputSchema = outputSchema;
+    this.joinDefinition = joinDefinition;
   }
 
   /**
@@ -80,7 +85,7 @@ public class JoinExpressionRequest {
       .build();
 
     return new JoinExpressionRequest(stageName, renamedFields, renamedLeft, renamedRight,
-                                     renamedCondition, outputSchema);
+                                     renamedCondition, outputSchema, joinDefinition);
   }
 
   public String getStageName() {
@@ -105,5 +110,9 @@ public class JoinExpressionRequest {
 
   public Schema getOutputSchema() {
     return outputSchema;
+  }
+
+  public JoinDefinition getJoinDefinition() {
+    return joinDefinition;
   }
 }

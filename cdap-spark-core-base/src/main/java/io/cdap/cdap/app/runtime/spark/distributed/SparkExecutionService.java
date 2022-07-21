@@ -36,7 +36,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.api.Command;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -59,7 +58,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -85,8 +84,9 @@ public final class SparkExecutionService extends AbstractIdleService {
   private final ProgramRunId programRunId;
   @Nullable
   private final WorkflowToken workflowToken;
-  private final AtomicBoolean stopping;
+  private final AtomicLong shutdownWaitSeconds;
   private final CountDownLatch stopLatch;
+  private volatile SparkCommand stopCommand;
 
   public SparkExecutionService(LocationFactory locationFactory, String host,
                                ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
@@ -96,21 +96,39 @@ public final class SparkExecutionService extends AbstractIdleService {
       .setHost(host)
       .setExceptionHandler(new HttpExceptionHandler())
       .build();
-    this.stopping = new AtomicBoolean();
     this.stopLatch = new CountDownLatch(1);
     this.programRunId = programRunId;
     this.workflowToken = workflowToken;
+    this.shutdownWaitSeconds = new AtomicLong(SHUTDOWN_WAIT_SECONDS);
   }
 
   /**
    * Returns the base {@link URI} for talking to this service remotely through HTTP.
    */
   public URI getBaseURI() {
+    InetSocketAddress bindAddress = getBindAddress();
+    return URI.create(String.format("http://%s:%d", bindAddress.getHostName(), bindAddress.getPort()));
+  }
+
+  /**
+   * Returns the socket address that the service is bound to.
+   */
+  public InetSocketAddress getBindAddress() {
     InetSocketAddress bindAddress = httpServer.getBindAddress();
     if (bindAddress == null) {
       throw new IllegalStateException("SparkExecutionService hasn't been started");
     }
-    return URI.create(String.format("http://%s:%d", bindAddress.getHostName(), bindAddress.getPort()));
+    return bindAddress;
+  }
+
+  /**
+   * Sets the number of seconds to wait for the Spark job to complete during shutdown.
+   */
+  public void setShutdownWaitSeconds(long seconds) {
+    if (seconds < 0L) {
+      throw new IllegalStateException("Shutdown wait seconds must be >= 0");
+    }
+    shutdownWaitSeconds.set(seconds);
   }
 
   @Override
@@ -120,17 +138,25 @@ public final class SparkExecutionService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    stopping.set(true);
-    if (!stopLatch.await(SHUTDOWN_WAIT_SECONDS, TimeUnit.SECONDS)) {
+    LOG.info("Shutting down SparkExecutionService");
+    long waitSeconds = shutdownWaitSeconds.get();
+    long currentTs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    long terminateTs = (Long.MAX_VALUE - currentTs < waitSeconds) ? Long.MAX_VALUE : currentTs + waitSeconds;
+
+    stopCommand = SparkCommand.createStop(terminateTs);
+
+    if (!stopLatch.await(waitSeconds, TimeUnit.SECONDS)) {
       LOG.warn("Timeout in waiting for Spark program to stop: {}", programRunId);
     }
+    LOG.info("Shutting down HTTP server");
     httpServer.stop();
   }
 
   /**
    * Shutdown this service without waiting for the `completed` call from the {@link SparkDriverService}.
-   * This method is used when the Spark application is terminated due to error, as there is no guarantees whether
-   * the `completed` call will be received or not.
+   * This method is used when the Spark job is terminated as reported by SparkSubmit.
+   * If the Spark job was terminated normally, the `completed` should been called from the driver service already
+   * prior to this method being called.
    */
   public void shutdownNow() {
     stopLatch.countDown();
@@ -158,10 +184,9 @@ public final class SparkExecutionService extends AbstractIdleService {
       validateRequest(programName, runId);
       updateWorkflowToken(request.content());
 
-      // If the stop was requested, send the "stop" command
-      if (stopping.get()) {
-        Command.Builder.of("stop");
-        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(SparkCommand.STOP));
+      // If the stop command is present, send the stop command to request the spark job to stop
+      if (stopCommand != null) {
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(stopCommand));
       } else {
         responder.sendStatus(HttpResponseStatus.OK);
       }
@@ -175,6 +200,7 @@ public final class SparkExecutionService extends AbstractIdleService {
     public synchronized void completed(FullHttpRequest request, HttpResponder responder,
                                        @PathParam("programName") String programName,
                                        @PathParam("runId") String runId) throws Exception {
+      LOG.info("Spark program completed {} {}", programName, runId);
       validateRequest(programName, runId);
       try {
         updateWorkflowToken(request.content());
@@ -232,7 +258,7 @@ public final class SparkExecutionService extends AbstractIdleService {
                         programName, programRunId.getProgram())
         );
       }
-      if (runId == null || !programRunId.getRun().equals(runId)) {
+      if (!programRunId.getRun().equals(runId)) {
         throw new BadRequestException(
           String.format("Request runId '%s' is not the same as the context runId '%s'", runId, programRunId.getRun())
         );

@@ -86,12 +86,14 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public void createDataset(String name, String type, DatasetProperties properties) throws DatasetManagementException {
+  public void createDataset(String name, String type, DatasetProperties properties)
+    throws DatasetManagementException {
     delegateAdmin.createDataset(name, type, properties);
   }
 
   @Override
-  public void updateDataset(String name, DatasetProperties properties) throws DatasetManagementException {
+  public void updateDataset(String name, DatasetProperties properties)
+    throws DatasetManagementException {
     delegateAdmin.updateDataset(name, properties);
   }
 

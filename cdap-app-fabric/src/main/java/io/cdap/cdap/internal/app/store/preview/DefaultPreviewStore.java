@@ -45,10 +45,10 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.Principal;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +61,7 @@ import javax.annotation.Nullable;
  */
 public class DefaultPreviewStore implements PreviewStore {
   private static final DatasetId PREVIEW_TABLE_ID = NamespaceId.SYSTEM.dataset("preview.table");
+  private static final DatasetId PREVIEW_QUEUE_TABLE_ID = NamespaceId.SYSTEM.dataset("preview.queue.table");
   private static final byte[] DATA_ROW_KEY_PREFIX = Bytes.toBytes("dr");
   private static final byte[] META_ROW_KEY_PREFIX = Bytes.toBytes("mr");
   private static final byte[] TRACER = Bytes.toBytes("t");
@@ -69,7 +70,6 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] RUN = Bytes.toBytes("r");
   private static final byte[] STATUS = Bytes.toBytes("s");
   private static final byte[] POLLERINFO = Bytes.toBytes("i");
-
   /*
    * Row storing the preview requests waiting for execution
    * |------------------------------------|--------------------|-----------------|
@@ -82,11 +82,12 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] WAITING = Bytes.toBytes("w");
   private static final byte[] CONFIG = Bytes.toBytes("c");
   private static final byte[] APPID = Bytes.toBytes("a");
-
+  private static final byte[] PRINCIPAL = Bytes.toBytes("p");
 
   private final AtomicLong counter = new AtomicLong(0L);
 
-  private final LevelDBTableCore table;
+  private final LevelDBTableCore previewTable;
+  private final LevelDBTableCore previewQueueTable;
   private final LevelDBTableService service;
 
   @Inject
@@ -94,7 +95,9 @@ public class DefaultPreviewStore implements PreviewStore {
     try {
       this.service = service;
       service.ensureTableExists(PREVIEW_TABLE_ID.getDataset());
-      this.table = new LevelDBTableCore(PREVIEW_TABLE_ID.getDataset(), service);
+      this.previewTable = new LevelDBTableCore(PREVIEW_TABLE_ID.getDataset(), service);
+      service.ensureTableExists(PREVIEW_QUEUE_TABLE_ID.getDataset());
+      this.previewQueueTable = new LevelDBTableCore(PREVIEW_QUEUE_TABLE_ID.getDataset(), service);
     } catch (IOException e) {
       throw new RuntimeException("Error creating preview table", e);
     }
@@ -109,9 +112,9 @@ public class DefaultPreviewStore implements PreviewStore {
       .add(tracerName).add(counter.getAndIncrement()).build();
 
     try {
-      table.put(mdsKey.getKey(), TRACER, Bytes.toBytes(tracerName), 1L);
-      table.put(mdsKey.getKey(), PROPERTY, Bytes.toBytes(propertyName), 1L);
-      table.put(mdsKey.getKey(), VALUE, Bytes.toBytes(gson.toJson(value)), 1L);
+      previewTable.putDefaultVersion(mdsKey.getKey(), TRACER, Bytes.toBytes(tracerName));
+      previewTable.putDefaultVersion(mdsKey.getKey(), PROPERTY, Bytes.toBytes(propertyName));
+      previewTable.putDefaultVersion(mdsKey.getKey(), VALUE, Bytes.toBytes(gson.toJson(value)));
     } catch (IOException e) {
       String message = String.format("Error while putting property '%s' for application '%s' and tracer '%s' in" +
                                        " preview table.", propertyName, applicationId, tracerName);
@@ -128,7 +131,7 @@ public class DefaultPreviewStore implements PreviewStore {
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
 
     Map<String, List<JsonElement>> result = new HashMap<>();
-    try (Scanner scanner = table.scan(startRowKey, stopRowKey, null, null, null)) {
+    try (Scanner scanner = previewTable.scan(startRowKey, stopRowKey, null, null, null)) {
       Row indexRow;
       while ((indexRow = scanner.next()) != null) {
         Map<byte[], byte[]> columns = indexRow.getColumns();
@@ -149,7 +152,7 @@ public class DefaultPreviewStore implements PreviewStore {
     byte[] startRowKey = getPreviewRowKeyBuilder(prefix, applicationId).build().getKey();
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
     try {
-      table.deleteRange(startRowKey, stopRowKey, null, null);
+      previewTable.deleteRange(startRowKey, stopRowKey, null, null);
     } catch (IOException e) {
       String message = String.format("Error while removing preview data for application '%s'.", applicationId);
       throw new RuntimeException(message, e);
@@ -171,7 +174,7 @@ public class DefaultPreviewStore implements PreviewStore {
     Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, programRunId.getParent().getParent()).build();
     try {
-      table.put(mdsKey.getKey(), RUN, Bytes.toBytes(gson.toJson(programRunId)), 1L);
+      previewTable.putDefaultVersion(mdsKey.getKey(), RUN, Bytes.toBytes(gson.toJson(programRunId)));
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to put %s into preview store", programRunId), e);
     }
@@ -183,15 +186,14 @@ public class DefaultPreviewStore implements PreviewStore {
     Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
 
-    Map<byte[], byte[]> row = null;
+    byte[] runId = null;
     try {
-      row = table.getRow(mdsKey.getKey(), new byte[][]{RUN},
-                                             null, null, -1, null);
+      runId = previewTable.getDefaultVersion(mdsKey.getKey(), RUN);;
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to get program run id for preview %s", applicationId), e);
     }
-    if (!row.isEmpty()) {
-      return gson.fromJson(Bytes.toString(row.get(RUN)), ProgramRunId.class);
+    if (runId != null) {
+      return gson.fromJson(Bytes.toString(runId), ProgramRunId.class);
     }
     return null;
   }
@@ -202,8 +204,8 @@ public class DefaultPreviewStore implements PreviewStore {
     Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
     try {
-      table.put(mdsKey.getKey(), STATUS, Bytes.toBytes(gson.toJson(previewStatus)), 1L);
-      table.put(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)), 1L);
+      previewTable.putDefaultVersion(mdsKey.getKey(), STATUS, Bytes.toBytes(gson.toJson(previewStatus)));
+      previewTable.putDefaultVersion(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)));
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to put preview status %s for preview %s",
                                                previewStatus, applicationId), e);
@@ -216,21 +218,22 @@ public class DefaultPreviewStore implements PreviewStore {
     Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
 
-    Map<byte[], byte[]> row = null;
+    byte[] status = null;
     try {
-      row = table.getRow(mdsKey.getKey(), new byte[][]{STATUS},
-                                             null, null, -1, null);
+      status = previewTable.getDefaultVersion(mdsKey.getKey(), STATUS);
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to get the preview status for preview %s", applicationId), e);
     }
-    if (!row.isEmpty()) {
-      return gson.fromJson(Bytes.toString(row.get(STATUS)), PreviewStatus.class);
+
+    if (status != null) {
+      return gson.fromJson(Bytes.toString(status), PreviewStatus.class);
     }
+
     return null;
   }
 
   @Override
-  public void add(ApplicationId applicationId, AppRequest appRequest) {
+  public void add(ApplicationId applicationId, AppRequest appRequest, @Nullable Principal principal) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
@@ -242,8 +245,9 @@ public class DefaultPreviewStore implements PreviewStore {
       .build();
 
     try {
-      table.put(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)), 1L);
-      table.put(mdsKey.getKey(), CONFIG, Bytes.toBytes(gson.toJson(appRequest)), 1L);
+      previewQueueTable.putDefaultVersion(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)));
+      previewQueueTable.putDefaultVersion(mdsKey.getKey(), CONFIG, Bytes.toBytes(gson.toJson(appRequest)));
+      previewQueueTable.putDefaultVersion(mdsKey.getKey(), PRINCIPAL, Bytes.toBytes(gson.toJson(principal)));
       long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.MILLISECONDS);
       setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.WAITING, submitTimeInMillis, null, null,
                                                         null));
@@ -265,7 +269,9 @@ public class DefaultPreviewStore implements PreviewStore {
       .build();
 
     try {
-      table.deleteRows(Collections.singleton(mdsKey.getKey()));
+      previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), APPID);
+      previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), CONFIG);
+      previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), PRINCIPAL);
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to remove application with id %s from waiting queue.",
                                                applicationId), e);
@@ -280,13 +286,14 @@ public class DefaultPreviewStore implements PreviewStore {
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
 
     List<PreviewRequest> result = new ArrayList<>();
-    try (Scanner scanner = table.scan(startRowKey, stopRowKey, null, null, null)) {
+    try (Scanner scanner = previewQueueTable.scan(startRowKey, stopRowKey, null, null, null)) {
       Row indexRow;
       while ((indexRow = scanner.next()) != null) {
         Map<byte[], byte[]> columns = indexRow.getColumns();
         AppRequest request = gson.fromJson(Bytes.toString(columns.get(CONFIG)), AppRequest.class);
         ApplicationId applicationId = gson.fromJson(Bytes.toString(columns.get(APPID)), ApplicationId.class);
-        result.add(new PreviewRequest(applicationId, request));
+        Principal principal = gson.fromJson(Bytes.toString(columns.get(PRINCIPAL)), Principal.class);
+        result.add(new PreviewRequest(applicationId, request, principal));
       }
     } catch (IOException e) {
       throw new RuntimeException("Error while listing the waiting preview requests.", e);
@@ -320,7 +327,7 @@ public class DefaultPreviewStore implements PreviewStore {
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
 
     try {
-      table.put(mdsKey.getKey(), POLLERINFO, pollerInfo, 1L);
+      previewTable.putDefaultVersion(mdsKey.getKey(), POLLERINFO, pollerInfo);
     } catch (IOException e) {
       String msg = String.format("Error while setting the poller information %s for waiting preview application %s.",
                                  gson.toJson(pollerInfo), applicationId);
@@ -332,16 +339,16 @@ public class DefaultPreviewStore implements PreviewStore {
   public byte[] getPreviewRequestPollerInfo(ApplicationId applicationId) {
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
 
-    Map<byte[], byte[]> row = null;
+    byte[] pollerInfo = null;
     try {
-      row = table.getRow(mdsKey.getKey(), new byte[][]{POLLERINFO},
-                         null, null, -1, null);
+      pollerInfo = previewTable.getDefaultVersion(mdsKey.getKey(), POLLERINFO);
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to get the poller info for preview %s", applicationId), e);
     }
-    if (!row.isEmpty()) {
-      return row.get(POLLERINFO);
+    if (pollerInfo != null) {
+      return pollerInfo;
     }
+
     return null;
   }
 
@@ -352,7 +359,7 @@ public class DefaultPreviewStore implements PreviewStore {
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
 
     long currentTimeInSeconds = System.currentTimeMillis() / 1000;
-    try (Scanner scanner = table.scan(startRowKey, stopRowKey, null, null, null)) {
+    try (Scanner scanner = previewTable.scan(startRowKey, stopRowKey, null, null, null)) {
       Row indexRow;
       while ((indexRow = scanner.next()) != null) {
         Map<byte[], byte[]> columns = indexRow.getColumns();
@@ -383,5 +390,7 @@ public class DefaultPreviewStore implements PreviewStore {
   void clear() throws IOException {
     service.dropTable(PREVIEW_TABLE_ID.getDataset());
     service.ensureTableExists(PREVIEW_TABLE_ID.getDataset());
+    service.dropTable(PREVIEW_QUEUE_TABLE_ID.getDataset());
+    service.ensureTableExists(PREVIEW_QUEUE_TABLE_ID.getDataset());
   }
 }

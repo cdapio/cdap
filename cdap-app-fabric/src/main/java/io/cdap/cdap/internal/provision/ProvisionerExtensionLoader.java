@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.provision;
 
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassPathResources;
@@ -26,10 +27,8 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Loads provisioners from the extensions directory.
@@ -40,6 +39,8 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
   private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
   private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
 
+  private final Injector injector;
+
   private static Set<String> createAllowedResources() {
     try {
       return ClassPathResources.getResourcesWithDependencies(Provisioner.class.getClassLoader(), Provisioner.class);
@@ -49,19 +50,10 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
     }
   }
 
-  private static Set<String> createPackageSets(Set<String> resources) {
-    return resources.stream()
-      .map(resource -> {
-        int idx = resource.lastIndexOf("/");
-        return idx < 0 ? "" : resource.substring(0, idx).replace('/', '.');
-      })
-      .filter(s -> !s.isEmpty())
-      .collect(Collectors.toSet());
-  }
-
   @Inject
-  ProvisionerExtensionLoader(CConfiguration cConf) {
+  ProvisionerExtensionLoader(Injector injector, CConfiguration cConf) {
     super(cConf.get(Constants.Provisioner.EXTENSIONS_DIR));
+    this.injector = injector;
   }
 
   @Override
@@ -71,7 +63,7 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
 
   @Override
   protected FilterClassLoader.Filter getExtensionParentClassLoaderFilter() {
-    // filter all non-spi classes to provide isolation from CDAP's classes. For example, dataproc provisioner uses
+    // filter classes to provide isolation from CDAP's classes. For example, dataproc provisioner uses
     // a different guava than CDAP's guava.
     return new FilterClassLoader.Filter() {
       @Override
@@ -88,11 +80,12 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
 
   @Override
   public Map<String, Provisioner> loadProvisioners() {
-    Map<String, Provisioner> provisioners = new HashMap<>();
-    // always include the native provisioner
-    Provisioner nativeProvisioner = new NativeProvisioner();
-    provisioners.put(nativeProvisioner.getSpec().getName(), nativeProvisioner);
-    provisioners.putAll(getAll());
-    return provisioners;
+    return getAll();
+  }
+
+  @Override
+  protected Provisioner prepareSystemExtension(Provisioner provisioner) {
+    injector.injectMembers(provisioner);
+    return provisioner;
   }
 }

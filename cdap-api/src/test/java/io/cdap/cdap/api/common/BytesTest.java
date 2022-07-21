@@ -24,7 +24,10 @@ import org.junit.rules.ExpectedException;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Unit tests for {@link Bytes} class.
@@ -100,16 +103,6 @@ public class BytesTest {
     Assert.assertFalse(Bytes.equals(a, 2, 2, c, 2, 2));
     Assert.assertFalse(Bytes.equals(a, 0, 0, b, 2, 2));
     Assert.assertFalse(Bytes.equals(a, 0, 3, b, 2, 2));
-  }
-
-  @Test
-  public void testFromHexString() {
-    Assert.assertArrayEquals(new byte[]{}, Bytes.fromHexString(""));
-    Assert.assertArrayEquals(new byte[]{0x16}, Bytes.fromHexString("16"));
-    Assert.assertArrayEquals(new byte[]{0x16, 0x0A}, Bytes.fromHexString("160A"));
-
-    thrown.expect(IllegalArgumentException.class);
-    Bytes.fromHexString("g");
   }
 
   @Test
@@ -600,15 +593,104 @@ public class BytesTest {
     Assert.assertEquals("AbCd", Bytes.toString(bb));
   }
 
+  /**
+   * Test cases for testing {@link Bytes#toHexString(byte[])}.
+   */
+  private class ToHexStringTestCase {
+    private final String description;
+    private final String expectedOutput;
+    private final byte[] input;
+
+    private ToHexStringTestCase(String description, String expectedOutput, byte[] input) {
+      this.description = description;
+      this.expectedOutput = expectedOutput;
+      this.input = input;
+    }
+
+    private void assertPasses() {
+      Assert.assertEquals(description, expectedOutput, Bytes.toHexString(input));
+    }
+  }
+
+  /**
+   * Test cases for testing {@link Bytes#toHexString(byte[])}.
+   */
+  private class FromHexStringTestCase {
+    private final String description;
+    @Nullable
+    private final byte[] expectedOutput;
+    private final String input;
+    @Nullable
+    private final Class<? extends Exception> expectedException;
+
+    private FromHexStringTestCase(String description, byte[] expectedOutput, String input) {
+      this(description, expectedOutput, input, null);
+    }
+
+    private FromHexStringTestCase(String description, Class<? extends Exception> expectedException, String input) {
+      this(description, null, input, expectedException);
+    }
+
+    private FromHexStringTestCase(String description, @Nullable byte[] expectedOutput, String input,
+                                  @Nullable Class<? extends Exception> expectedException) {
+      this.description = description;
+      this.expectedOutput = expectedOutput;
+      this.input = input;
+      this.expectedException = expectedException;
+    }
+
+    private void assertPasses() {
+      try {
+        byte[] output = Bytes.fromHexString(input);
+        if (expectedException != null) {
+          Assert.fail(String.format("Expected exception '%s', but got none", expectedException));
+        }
+        Assert.assertArrayEquals(description, expectedOutput, output);
+      } catch (Exception e) {
+        if (expectedException != null) {
+          Assert.assertEquals(expectedException, e.getClass());
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
+
   @Test
-  public void testHexString() {
-    byte[] bytes = new byte[]{1, 2, 0, 127, -128, 63, -1};
+  public void testToHexString() {
+    List<ToHexStringTestCase> testCases = Arrays.asList(
+      new ToHexStringTestCase("Empty byte array returns empty string", "", new byte[]{}),
+      new ToHexStringTestCase("String returns expected hex string", "7465737463617365313233",
+                              "testcase123".getBytes(StandardCharsets.UTF_8)),
+      new ToHexStringTestCase("Single byte returns expected hex string", "6f", "o".getBytes(StandardCharsets.UTF_8)),
+      new ToHexStringTestCase("Byte with leading zeros returns expected hex string", "01", new byte[]{0x01}),
+      new ToHexStringTestCase("Arbitrary bytes returns expected hex string", "deadbeef",
+                              new byte[]{(byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef}),
+      new ToHexStringTestCase("Arbitrary bytes returns expected hex string 2", "0102007f803fff",
+                              new byte[]{1, 2, 0, 127, -128, 63, -1})
+    );
 
-    String hexString = Bytes.toHexString(bytes);
-    Assert.assertEquals("0102007f803fff", hexString);
+    for (ToHexStringTestCase testCase : testCases) {
+      testCase.assertPasses();
+    }
+  }
 
-    Assert.assertArrayEquals(bytes, Bytes.fromHexString(hexString));
-    Assert.assertArrayEquals(bytes, Bytes.fromHexString(hexString.toUpperCase()));
+  @Test
+  public void testFromHexString() {
+    List<FromHexStringTestCase> testCases = Arrays.asList(
+      new FromHexStringTestCase("Hex string returns expected bytes",
+                                "somereadablebytes".getBytes(StandardCharsets.UTF_8),
+                                "736f6d657265616461626c656279746573"),
+      new FromHexStringTestCase("Single hex digit throws IllegalArgumentException", IllegalArgumentException.class,
+                                "g"),
+      new FromHexStringTestCase("Empty hex string returns empty byte array", new byte[]{}, ""),
+      new FromHexStringTestCase("Single hex byte returns single byte array", new byte[]{0x16}, "16"),
+      new FromHexStringTestCase("Capitalized hex string returns expected byte array", new byte[]{0x16, 0x0A}, "160A")
+    );
+
+    for (FromHexStringTestCase testCase : testCases) {
+      testCase.assertPasses();
+    }
   }
 
   @Test

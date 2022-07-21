@@ -17,7 +17,9 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,8 +33,8 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +59,6 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new DFSLocationModule()
     );
@@ -73,6 +74,10 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
       services.add((Service) messagingService);
     }
     services.add(injector.getInstance(MessagingHttpService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
   }
 
   @Nullable
@@ -81,10 +86,5 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.MESSAGING_SERVICE);
-  }
-
-  @Override
-  protected void initializeDataSourceConnection(CConfiguration cConf) {
-    // no-op since we use leveldb in messaging service
   }
 }

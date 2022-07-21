@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,9 +25,12 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.store.FileSecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.http.NettyHttpService;
@@ -67,7 +70,9 @@ public class RemoteSecureStoreTest {
       .build();
     namespaceClient.create(namespaceMeta);
 
-    FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient);
+    FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient,
+                                                                               FileSecureStoreService.CURRENT_CODEC
+                                                                                 .newInstance());
     // Starts a mock server to handle remote secure store requests
     httpService = new HttpsEnabler().configureKeyStore(conf, sConf).enable(
       NettyHttpService.builder("remoteSecureStoreTest")
@@ -81,7 +86,9 @@ public class RemoteSecureStoreTest {
     discoveryService.register(URIScheme.HTTPS.createDiscoverable(Constants.Service.SECURE_STORE_SERVICE,
                                                          httpService.getBindAddress()));
 
-    remoteSecureStore = new RemoteSecureStore(discoveryService);
+    RemoteClientFactory remoteClientFactory =
+      new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
+    remoteSecureStore = new RemoteSecureStore(remoteClientFactory);
   }
 
   @AfterClass

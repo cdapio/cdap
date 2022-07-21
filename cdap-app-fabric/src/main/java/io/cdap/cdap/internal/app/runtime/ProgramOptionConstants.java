@@ -67,6 +67,10 @@ public final class ProgramOptionConstants {
 
   public static final String RESUME_TIME = "resumeTime";
 
+  public static final String STOPPING_TIME = "stoppingTime";
+
+  public static final String TERMINATE_TIME = "terminateTime";
+
   public static final String PROGRAM_NAME_IN_WORKFLOW = "programNameInWorkflow";
 
   public static final String ENABLE_FIELD_LINEAGE_CONSOLIDATION = "enableFieldLineageConsolidation";
@@ -133,4 +137,36 @@ public final class ProgramOptionConstants {
    * Option for requirements of various plugins present in the program
    */
   public static final String PLUGIN_REQUIREMENTS = "pluginRequirements";
+
+  /**
+   * Option for whether the program is in preview mode
+   */
+  public static final String IS_PREVIEW = "isPreview";
+
+  /**
+   * Option for the application class name for the program, this is needed for isolated mode to regenerate the app
+   * spec
+   */
+  public static final String APPLICATION_CLASS = "applicationClass";
+
+  /**
+   * Option for name of tethered peer, if any, that has initiated the program run
+   */
+  public static final String PEER_NAME = "peer";
+
+  /**
+   * Option for url of tethered peer, if any, that has initiated the program run
+   */
+  public static final String PEER_ENDPOINT = "peerEndpoint";
+
+  /**
+   * Option for name of the runtime namespace for the tethered program run.
+   */
+  public static final String RUNTIME_NAMESPACE = "runtimeNamespace";
+
+  /**
+   * Option for a URI to a directory containing additional resources needed for the program run. This is needed for
+   * running tethered programs
+   */
+  public static final String PROGRAM_RESOURCE_URI = "programResourceUri";
 }

@@ -375,7 +375,7 @@ public class AppWithCustomTx extends AbstractApplication {
 
       return new HttpContentConsumer() {
 
-        String body = null;
+        String body;
 
         @Override
         public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
@@ -471,7 +471,7 @@ public class AppWithCustomTx extends AbstractApplication {
       executeAttemptNestedTransaction(getContext(), HANDLER_NOTX, RUNTIME_NEST);
       return new HttpContentConsumer() {
 
-        String body = null;
+        String body;
 
         @Override
         public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
@@ -726,7 +726,7 @@ public class AppWithCustomTx extends AbstractApplication {
     public RecordReader createRecordReader(InputSplit split, TaskAttemptContext context)
       throws IOException, InterruptedException {
       return new RecordReader<Void, Void>() {
-        private int count = 0;
+        private int count;
         @Override
         public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         }

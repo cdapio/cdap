@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.gateway.handlers.metrics;
 
 import com.google.common.collect.ImmutableMap;
@@ -34,6 +35,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -54,7 +56,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.apache.http.Header;
@@ -125,6 +126,9 @@ public abstract class MetricsSuiteTestBase {
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
+    //Disable coarsing as it will be flacky on integration test level due to variable timing.
+    //It's tested on lower level
+    conf.setInt(Constants.Metrics.COARSE_ROUND_FACTOR, 1);
 
     Injector injector = startMetricsService(conf);
     store = injector.getInstance(Store.class);
@@ -148,6 +152,7 @@ public abstract class MetricsSuiteTestBase {
   public static Injector startMetricsService(CConfiguration conf) throws Exception {
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(conf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
       new MetricsHandlerModule(),
@@ -173,9 +178,7 @@ public abstract class MetricsSuiteTestBase {
 
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();

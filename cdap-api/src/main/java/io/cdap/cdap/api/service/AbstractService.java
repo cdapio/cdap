@@ -17,10 +17,13 @@
 package io.cdap.cdap.api.service;
 
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
 
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
@@ -28,10 +31,12 @@ import java.util.Arrays;
  * The default no-op constructor must be implemented.
  *
  * @param <T> type of service configurer
+ * @param <V> type of service context
  */
-public abstract class AbstractService<T extends ServiceConfigurer> extends AbstractPluginConfigurable<T>
-  implements Service<T> {
+public abstract class AbstractService<T extends ServiceConfigurer, V extends ServiceContext>
+  extends AbstractPluginConfigurable<T> implements Service<T, V> {
   private T configurer;
+  private V context;
 
   @Override
   public final void configure(T serviceConfigurer) {
@@ -88,6 +93,16 @@ public abstract class AbstractService<T extends ServiceConfigurer> extends Abstr
   }
 
   /**
+   * Sets a set of properties that will be available through the {@link ServiceSpecification#getProperties()}
+   * at runtime.
+   *
+   * @param properties the properties to set
+   */
+  protected void setProperties(Map<String, String> properties) {
+    configurer.setProperties(properties);
+  }
+
+  /**
    * Returns the {@link ServiceConfigurer}, only available at configuration time.
    */
   @Override
@@ -99,4 +114,14 @@ public abstract class AbstractService<T extends ServiceConfigurer> extends Abstr
    * Implements this method to configure this Service.
    */
   protected abstract void configure();
+
+  protected V getContext() {
+    return context;
+  }
+
+  @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
+  public void initialize(V context) throws Exception {
+    this.context = context;
+  }
 }

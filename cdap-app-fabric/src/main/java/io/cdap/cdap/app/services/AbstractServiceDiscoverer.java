@@ -20,11 +20,11 @@ import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.common.http.HttpRequestConfig;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -39,11 +39,17 @@ import javax.annotation.Nullable;
 public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   private final String namespaceId;
+  @Nullable
   private final String applicationId;
 
   public AbstractServiceDiscoverer(ProgramId programId) {
     this.namespaceId = programId.getNamespace();
     this.applicationId = programId.getApplication();
+  }
+
+  public AbstractServiceDiscoverer(String namespaceId) {
+    this.namespaceId = namespaceId;
+    this.applicationId = null;
   }
 
   @Override
@@ -62,6 +68,9 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   @Override
   public URL getServiceURL(String serviceId) {
+    if (applicationId == null) {
+      throw new UnsupportedOperationException("Application Id is not available");
+    }
     return getServiceURL(applicationId, serviceId);
   }
 
@@ -77,9 +86,9 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   }
 
   /**
-   * @return the {@link DiscoveryServiceClient} for Service Discovery
+   * @return the {@link RemoteClientFactory}
    */
-  protected abstract DiscoveryServiceClient getDiscoveryServiceClient();
+  protected abstract RemoteClientFactory getRemoteClientFactory();
 
   /**
    * Creates a {@link RemoteClient} for connecting to the given service endpoint.
@@ -93,6 +102,6 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
     String discoveryName = ServiceDiscoverable.getName(namespaceId, applicationId, ProgramType.SERVICE, serviceId);
     String basePath = String.format("%s/namespaces/%s/apps/%s/services/%s/methods/",
                                     Constants.Gateway.API_VERSION_3_TOKEN, namespaceId, applicationId, serviceId);
-    return new RemoteClient(getDiscoveryServiceClient(), discoveryName, HttpRequestConfig.DEFAULT, basePath);
+    return getRemoteClientFactory().createRemoteClient(discoveryName, HttpRequestConfig.DEFAULT, basePath);
   }
 }

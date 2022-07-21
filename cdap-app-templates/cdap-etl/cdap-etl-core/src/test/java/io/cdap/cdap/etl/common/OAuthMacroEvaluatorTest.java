@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,16 +21,18 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -70,11 +72,12 @@ public class OAuthMacroEvaluatorTest {
                                                        Constants.PIPELINEID, ProgramType.SERVICE,
                                                        Constants.STUDIO_SERVICE_NAME);
     discoveryService.register(new Discoverable(discoveryName, httpService.getBindAddress()));
+    RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+      discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     serviceDiscoverer = new AbstractServiceDiscoverer(NamespaceId.DEFAULT.app("testapp").spark("testspark")) {
-
       @Override
-      protected DiscoveryServiceClient getDiscoveryServiceClient() {
-        return discoveryService;
+      protected RemoteClientFactory getRemoteClientFactory() {
+        return remoteClientFactory;
       }
     };
   }
@@ -87,8 +90,13 @@ public class OAuthMacroEvaluatorTest {
   @Test
   public void testOAuthMacro() {
     MacroEvaluator macroEvaluator = new OAuthMacroEvaluator(serviceDiscoverer);
-    String value = macroEvaluator.evaluate(OAuthMacroEvaluator.FUNCTION_NAME, PROVIDER, CREDENTIAL_ID);
-    OAuthInfo oAuthInfo = GSON.fromJson(value, OAuthInfo.class);
+    Map<String, String> oauthToken = macroEvaluator.evaluateMap(OAuthMacroEvaluator.FUNCTION_NAME,
+                                                                PROVIDER, CREDENTIAL_ID);
+    // assert contain all properties
+    Assert.assertEquals("accessToken", oauthToken.get("accessToken"));
+    Assert.assertEquals("bearer", oauthToken.get("tokenType"));
+
+    OAuthInfo oAuthInfo = GSON.fromJson(GSON.toJson(oauthToken), OAuthInfo.class);
 
     Assert.assertEquals("accessToken", oAuthInfo.accessToken);
     Assert.assertEquals("bearer", oAuthInfo.tokenType);

@@ -16,18 +16,20 @@
 
 package io.cdap.cdap.app.deploy;
 
+import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+
 import javax.annotation.Nullable;
 
 /**
- * Interface defining the response as returned by the execution of configure method.
+ * Interface defining the response as returned by the execution of the {@link Configurator#config()} method.
  */
 public interface ConfigResponse {
 
   /**
-   * Returns the configuration response or {@code null} if there is no response available.
+   * Returns the {@link AppSpecInfo} or {@code null} if there is no response available.
    */
   @Nullable
-  String getResponse();
+  AppSpecInfo getAppSpecInfo();
 
   /**
    * @return 0 if succeeded

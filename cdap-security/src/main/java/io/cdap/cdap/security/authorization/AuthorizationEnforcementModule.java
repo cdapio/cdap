@@ -19,11 +19,19 @@ package io.cdap.cdap.security.authorization;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 import io.cdap.cdap.common.runtime.RuntimeModule;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
+
+import java.util.Set;
 
 /**
- * A module that contains bindings for {@link AuthorizationEnforcer}.
+ * A module that contains bindings for {@link AccessEnforcer}.
  */
 public class AuthorizationEnforcementModule extends RuntimeModule {
 
@@ -32,7 +40,10 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(AuthorizationEnforcer.class).to(DefaultAuthorizationEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+          .to(NoOpAccessController.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -42,8 +53,10 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(AuthorizationEnforcer.class).to(DefaultAuthorizationEnforcer.class)
-          .in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+          .to(NoOpAccessController.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -57,7 +70,8 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(AuthorizationEnforcer.class).to(RemoteAuthorizationEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).to(RemoteAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -69,7 +83,39 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(AuthorizationEnforcer.class).to(DefaultAuthorizationEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+          .to(InternalAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+      }
+    };
+  }
+
+  /**
+   * Returns an {@link AbstractModule} containing bindings for a No-Op Access Enforcer. These modules should primarily
+   * be used in workers in which user code is executed which should not have any owned data to enforce access on.
+   */
+  public AbstractModule getNoOpModules() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(AccessEnforcer.class).to(NoOpAccessController.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).toInstance(new ContextAccessEnforcer() {
+          @Override
+          public void enforce(EntityId entity, Set<? extends Permission> permissions) {
+            // no-op
+          }
+
+          @Override
+          public void enforceOnParent(EntityType entityType, EntityId parentId, Permission permission) {
+            // no-op
+          }
+
+          @Override
+          public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds) {
+            return entityIds;
+          }
+        });
       }
     };
   }

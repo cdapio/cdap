@@ -20,6 +20,8 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.io.IOException;
@@ -43,17 +45,23 @@ public class CreateSystemTablesStage extends AbstractStage<ApplicationDeployable
   @Override
   public void process(ApplicationDeployable input) throws IOException, TableAlreadyExistsException {
     for (StructuredTableSpecification spec : input.getSystemTables()) {
-      StructuredTableSpecification existing = structuredTableAdmin.getSpecification(spec.getTableId());
-      if (existing == null) {
-        // it's possible this throws TableAlreadyExistsException if two apps are deployed at the same time and there
-        // is a race. In that case, fail deployment. On re-deployment, the existing spec will get checked with the
+      try {
+        StructuredTableSchema schema = structuredTableAdmin.getSchema(spec.getTableId());
+
+        // If the table exists, check if the schema is compatible with the spec
+        if (!schema.isCompatible(spec)) {
+          // don't allow deploying the app if the app expects a specification different than the one that exists
+          throw new IllegalArgumentException(
+            String.format("System table '%s' already exists, but with a different specification.",
+                          spec.getTableId().getName()));
+        }
+
+      } catch (TableNotFoundException e) {
+        // it's possible the creation throws TableAlreadyExistsException if two apps are deployed at the same time
+        // and there is a race. In that case, fail deployment.
+        // On re-deployment, the existing spec will get checked with the
         // desired spec here. If they are the same, things will continue. If they differ, deployment will fail again.
         structuredTableAdmin.create(spec);
-      } else if (!existing.equals(spec)) {
-        // don't allow deploying the app if the app expects a specification different than the one that exists
-        throw new IllegalArgumentException(
-          String.format("System table '%s' already exists, but with a different specification.",
-                        spec.getTableId().getName()));
       }
     }
 

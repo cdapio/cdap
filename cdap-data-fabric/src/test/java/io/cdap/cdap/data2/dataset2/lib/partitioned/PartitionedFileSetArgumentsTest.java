@@ -164,11 +164,13 @@ public class PartitionedFileSetArgumentsTest {
       PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(arguments);
       Assert.fail();
     } catch (IllegalArgumentException expected) {
+      // expected
     }
     try {
       PartitionedFileSetArguments.setDynamicPartitionerConcurrency(arguments, false);
       Assert.fail();
     } catch (IllegalArgumentException expected) {
+      // expected
     }
 
     // set a DynamicPartitioner

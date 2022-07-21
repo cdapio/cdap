@@ -26,6 +26,7 @@ import com.google.common.collect.Lists;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.ArtifactClient;
@@ -38,7 +39,6 @@ import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.client.util.RESTClient;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -53,6 +53,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.authentication.client.AuthenticationClient;
 import io.cdap.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.junit.After;
 import org.junit.Assert;
@@ -364,11 +365,12 @@ public abstract class IntegrationTestBase {
 
   protected ApplicationManager deployApplication(NamespaceId namespace,
                                                  Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) throws IOException {
+                                                 File...bundleEmbeddedJars) throws IOException, AccessException {
     return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
   }
 
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
+  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz)
+    throws IOException, AccessException {
     return deployApplication(getConfiguredNamespace(), applicationClz);
   }
 

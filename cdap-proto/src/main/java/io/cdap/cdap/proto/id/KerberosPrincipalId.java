@@ -31,14 +31,18 @@ import java.util.Objects;
  * Note: This class should not be confused with {@link io.cdap.cdap.proto.security.Principal} which represents a
  * user, group or role in CDAP to whom {@link io.cdap.cdap.proto.security.Privilege} can be given.
  * Whereas this {@link KerberosPrincipalId} class represent a Kerberos principal on
- * which {@link io.cdap.cdap.proto.security.Action} can be granted to {@link io.cdap.cdap.proto.security.Principal} to
- * represent a {@link io.cdap.cdap.proto.security.Privilege}.
+ * which {@link io.cdap.cdap.proto.security.Permission} can be granted to {@link io.cdap.cdap.proto.security.Principal}
+ * to represent a {@link io.cdap.cdap.proto.security.GrantedPermission}.
  * </p>
  * <p>
  * For example, if a {@link io.cdap.cdap.proto.security.Principal} has
- * {@link io.cdap.cdap.proto.security.Action#READ} on a {@link KerberosPrincipalId} it signifies that the
+ * {@link io.cdap.cdap.proto.security.StandardPermission#GET} on a {@link KerberosPrincipalId} it signifies that the
  * {@link io.cdap.cdap.proto.security.Principal} can READ (use) the {@link KerberosPrincipalId} to impersonate the user
  * of the {@link KerberosPrincipalId}.
+ * </p>
+ * <p>
+ * Usually user operating kerberos principal would need one of {@link io.cdap.cdap.proto.security.AccessPermission} on
+ * that principal.
  * </p>
  * <p>
  * This class does not perform any kind of validation while creating an instance through

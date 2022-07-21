@@ -55,7 +55,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

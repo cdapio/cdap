@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2021 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,6 +48,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -91,17 +92,20 @@ import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
-import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.cdap.support.guice.SupportBundleServiceModule;
+import io.cdap.cdap.support.services.SupportBundleInternalService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
@@ -142,13 +146,14 @@ public class StandaloneMain {
   private final DatasetService datasetService;
   private final DatasetOpExecutorService datasetOpExecutorService;
   private final ExploreClient exploreClient;
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final AccessControllerInstantiator accessControllerInstantiator;
   private final MessagingService messagingService;
   private final OperationalStatsService operationalStatsService;
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final SecureStoreService secureStoreService;
+  private final SupportBundleInternalService supportBundleInternalService;
   private final PreviewHttpServer previewHttpServer;
   private final PreviewRunnerManager previewRunnerManager;
   private final MetadataStorage metadataStorage;
@@ -156,7 +161,6 @@ public class StandaloneMain {
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
-
 
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
@@ -166,7 +170,7 @@ public class StandaloneMain {
 
     levelDBTableService = injector.getInstance(LevelDBTableService.class);
     messagingService = injector.getInstance(MessagingService.class);
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     logQueryService = injector.getInstance(LogQueryService.class);
@@ -211,6 +215,7 @@ public class StandaloneMain {
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
     secureStoreService = injector.getInstance(SecureStoreService.class);
+    supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -251,8 +256,7 @@ public class StandaloneMain {
       txService.startAndWait();
     }
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage.createIndex();
 
     metricsCollectionService.startAndWait();
@@ -295,10 +299,9 @@ public class StandaloneMain {
       exploreExecutorService.startAndWait();
     }
     metadataService.startAndWait();
-
     operationalStatsService.startAndWait();
-
     secureStoreService.startAndWait();
+    supportBundleInternalService.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -324,6 +327,7 @@ public class StandaloneMain {
       router.stopAndWait();
 
       secureStoreService.stopAndWait();
+      supportBundleInternalService.stopAndWait();
       operationalStatsService.stopAndWait();
 
       // Stop all services that requires tx service
@@ -365,7 +369,7 @@ public class StandaloneMain {
       }
 
       logAppenderInitializer.close();
-      authorizerInstantiator.close();
+      accessControllerInstantiator.close();
       metadataStorage.close();
       levelDBTableService.close();
     } catch (Throwable e) {
@@ -417,8 +421,8 @@ public class StandaloneMain {
    */
   @SuppressWarnings("unused")
   public static void doMain(String[] args) {
-    StandaloneMain main = create(CConfiguration.create(), new Configuration());
     try {
+      StandaloneMain main = create(CConfiguration.create(), new Configuration());
       if (args.length > 0) {
         System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
         System.out.println("These arguments are being ignored:");
@@ -505,9 +509,11 @@ public class StandaloneMain {
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
+    cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
@@ -523,24 +529,27 @@ public class StandaloneMain {
       new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
-      new SecurityModules().getStandaloneModules(),
+      new CoreSecurityRuntimeModule().getStandaloneModules(),
+      new ExternalAuthenticationModule(),
       new SecureStoreServerModule(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getStandaloneModules(),
       new AuditModule(),
+      new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule().getStandaloneModules(),
+      new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
       new MonitorHandlerModule(false),
       new RuntimeServerModule(),
       new OperationalStatsModule(),
       new MetricsWriterModule(),
+      new SupportBundleServiceModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

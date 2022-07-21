@@ -38,7 +38,7 @@ public final class TypeRepresentation implements ParameterizedType {
   private final String rawType;
   private final TypeRepresentation enclosingType;
   private final TypeRepresentation[] parameters;
-  private transient ClassLoader classLoader = null;
+  private transient ClassLoader classLoader;
 
   /**
    * Set the class loader to be used by toType(), getRawType(), etc.

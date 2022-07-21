@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2019 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-common</artifactId>
@@ -129,31 +129,31 @@
       <artifactId>tephra-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-discovery-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-discovery-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-yarn</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-zookeeper</artifactId>
     </dependency>
     <dependency>
@@ -185,6 +185,10 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
     </dependency>
@@ -209,9 +213,29 @@
       <artifactId>sshd-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.iq80.leveldb</groupId>
+      <artifactId>leveldb</artifactId>
+      <!-- leveldb 0.12 has conflicting guava 20 as a dependency. The uber jar shades guava -->
+      <classifier>uber</classifier>
+      <!-- This dependency is used for LevelDB rewriting only.
+           Rewriting would happen only if LevelDB is actually available -->
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
       <version>1.8.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.11</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala2.11.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -250,5 +274,53 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <!-- Use when the default configs need to be extended -->
+      <id>extend-default-configs</id>
+      <activation>
+        <property>
+          <name>extend-default-configs</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>xml-maven-plugin</artifactId>
+            <version>1.0.2</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>transform</goal>
+                </goals>
+                <configuration>
+                  <transformationSets>
+                    <transformationSet>
+                      <dir>src/main/resources</dir>
+                      <includes>
+                        <include>cdap-default.xml</include>
+                      </includes>
+                      <!--  <stylesheet>configuration-transform.xsl</stylesheet> -->
+                      <parameters>
+                        <parameter>
+                          <name>config-path</name>
+                          <value>${config-path}</value>
+                        </parameter>
+                      </parameters>
+                      <stylesheet>merge-config-transform.xsl</stylesheet>
+                      <outputDir>src/main/resources</outputDir>
+                    </transformationSet>
+                  </transformationSets>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

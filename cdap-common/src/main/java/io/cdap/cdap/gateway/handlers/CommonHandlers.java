@@ -17,6 +17,7 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.inject.multibindings.Multibinder;
+import io.cdap.cdap.common.healthcheck.VMInformationHandler;
 import io.cdap.http.HttpHandler;
 
 /**
@@ -27,6 +28,7 @@ public class CommonHandlers {
   public static void add(Multibinder<HttpHandler> handlerBinder) {
     handlerBinder.addBinding().to(PingHandler.class);
     handlerBinder.addBinding().to(StackHandler.class);
+    handlerBinder.addBinding().to(VMInformationHandler.class);
   }
 
 }

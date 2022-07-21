@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2019 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-data-fabric</artifactId>
@@ -119,6 +119,16 @@
     <dependency>
       <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-core</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.twill</groupId>
+          <artifactId>twill-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.twill</groupId>
+          <artifactId>twill-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.http</groupId>
@@ -138,11 +148,11 @@
       <artifactId>libthrift</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-core</artifactId>
     </dependency>
     <dependency>
@@ -156,6 +166,8 @@
     <dependency>
       <groupId>org.iq80.leveldb</groupId>
       <artifactId>leveldb</artifactId>
+      <!-- leveldb 0.12 has conflicting guava 20 as a dependency. The uber jar shades guava -->
+      <classifier>uber</classifier>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -201,9 +213,17 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.opentable.components</groupId>
-      <artifactId>otj-pg-embedded</artifactId>
+      <groupId>io.zonky.test</groupId>
+      <artifactId>embedded-postgres</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.11</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
   </dependencies>
 

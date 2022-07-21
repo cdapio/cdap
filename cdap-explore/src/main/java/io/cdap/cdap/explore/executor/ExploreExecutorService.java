@@ -20,16 +20,14 @@ import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.explore.service.ExploreService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -40,7 +38,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -59,7 +56,7 @@ public class ExploreExecutorService extends AbstractIdleService {
 
   @Inject
   public ExploreExecutorService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                                MetricsCollectionService metricsCollectionService,
+                                CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
                                 ExploreService exploreService,
                                 @Named(Constants.Service.EXPLORE_HTTP_USER_SERVICE) Set<HttpHandler> handlers) {
     this.exploreService = exploreService;
@@ -69,13 +66,11 @@ public class ExploreExecutorService extends AbstractIdleService {
     int workerThreads = cConf.getInt(Constants.Explore.WORKER_THREADS, 10);
     int execThreads = cConf.getInt(Constants.Explore.EXEC_THREADS, 10);
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf,
-                                                                         Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory
+      .builder(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
       .setHttpHandlers(handlers)
       .setHost(cConf.get(Constants.Explore.SERVER_ADDRESS))
       .setPort(cConf.getInt(Constants.Explore.SERVER_PORT))
-      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
-                                                                     Constants.Service.EXPLORE_HTTP_USER_SERVICE)))
       .setWorkerThreadPoolSize(workerThreads)
       .setExecThreadPoolSize(execThreads)
       .setConnectionBacklog(cConf.getInt(Constants.Explore.BACKLOG_CONNECTIONS, 20000));

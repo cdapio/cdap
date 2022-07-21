@@ -18,6 +18,7 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
@@ -49,6 +50,7 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
   private static final String CLUSTER_NAME = "clusterName";
   private static final String SSH_USER = "sshUser";
   private static final String SSH_KEY = "sshKey";
+  private static final DataprocClientFactory CLIENT_FACTORY = new DefaultDataprocClientFactory();
 
   public ExistingDataprocProvisioner() {
     super(SPEC);
@@ -89,7 +91,7 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
     }
 
     String clusterName = contextProperties.get(CLUSTER_NAME);
-    try (DataprocClient client = DataprocClient.fromConf(conf, false)) {
+    try (DataprocClient client = CLIENT_FACTORY.create(conf)) {
       try {
         client.updateClusterLabels(clusterName, getSystemLabels());
       } catch (DataprocRuntimeException e) {
@@ -101,10 +103,23 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
           LOG.debug("Cannot update cluster labels due to {}", e.getMessage());
         }
       }
-      return client.getCluster(clusterName)
+      Cluster cluster = client.getCluster(clusterName)
         .filter(c -> c.getStatus() == ClusterStatus.RUNNING)
         .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
                                                           " does not exist or not in running state."));
+
+      // Determine cluster version and fail if version is smaller than 1.5
+      Optional<String> optImageVer = client.getClusterImageVersion(clusterName);
+      Optional<VersionInfo> optComparableImageVer = optImageVer.map(this::extractVersion);
+      if (!optImageVer.isPresent()) {
+        LOG.warn("Unable to determine Dataproc version.");
+      } else if (!optComparableImageVer.isPresent()) {
+        LOG.warn("Unable to extract Dataproc version from string '{}'.", optImageVer.get());
+      } else if (DATAPROC_1_5_VERSION.compareTo(optComparableImageVer.get()) > 0) {
+        throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.");
+      }
+
+      return cluster;
     }
   }
 

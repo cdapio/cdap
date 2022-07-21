@@ -26,11 +26,11 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.cli.Arguments;
 

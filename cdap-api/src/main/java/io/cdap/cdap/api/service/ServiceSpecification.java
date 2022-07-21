@@ -31,15 +31,24 @@ import java.util.Map;
 public final class ServiceSpecification extends AbstractProgramSpecification {
   private final Map<String, HttpServiceHandlerSpecification> handlers;
   private final Resources resources;
+  private final Map<String, String> properties;
   private final int instances;
 
   public ServiceSpecification(String className, String name, String description,
                               Map<String, HttpServiceHandlerSpecification> handlers,
                               Resources resources, int instances, Map<String, Plugin> plugins) {
+    this(className, name, description, handlers, resources, instances, plugins, Collections.emptyMap());
+  }
+
+  public ServiceSpecification(String className, String name, String description,
+                              Map<String, HttpServiceHandlerSpecification> handlers,
+                              Resources resources, int instances, Map<String, Plugin> plugins,
+                              Map<String, String> properties) {
     super(className, name, description, plugins);
     this.handlers = Collections.unmodifiableMap(new HashMap<>(handlers));
     this.resources = resources;
     this.instances = instances;
+    this.properties = properties;
   }
 
   /**
@@ -61,5 +70,21 @@ public final class ServiceSpecification extends AbstractProgramSpecification {
    */
   public Resources getResources() {
     return resources;
+  }
+
+  /**
+   * @return the properties
+   */
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  /**
+   * @param key for getting specific property value
+   *
+   * @return the property value
+   */
+  public String getProperty(String key) {
+    return properties.get(key);
   }
 }

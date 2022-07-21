@@ -33,7 +33,7 @@ public class FileUtils {
   public static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY_RW =
     PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ));
 
-  private FileUtils(){ }
+  private FileUtils() { }
 
   /**
    * Converts a permission, interpreted as a 3-digit octal, into a umask that yields this permission.
@@ -85,6 +85,26 @@ public class FileUtils {
     } else {
       throw new IllegalArgumentException("Not a valid permissions string: " + permissions);
     }
+  }
+
+  /**
+   * Returns the file name extension. File extension is defined as suffix after the last `.` character.
+   * @param name name of the file
+   * @return the extension
+   */
+  public static String getExtension(String name) {
+    int idx = name.lastIndexOf('.');
+    return idx >= 0 ? name.substring(idx + 1) : "";
+  }
+
+  /**
+   * Returns the name of a given file without the extension, if one is present.
+   * @param name name of the file
+   * @return the name of the file without the extension
+   */
+  public static String getNameWithoutExtension(String name) {
+    int idx = name.lastIndexOf('.');
+    return idx >= 0 ? name.substring(0, idx) : name;
   }
 
   private static int parsePermissionGroup(String permissions, int start) {

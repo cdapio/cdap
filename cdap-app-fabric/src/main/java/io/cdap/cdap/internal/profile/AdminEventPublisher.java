@@ -23,6 +23,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -144,7 +145,7 @@ public class AdminEventPublisher {
                                                            GSON.toJson(message));
           } catch (TopicNotFoundException | ServiceUnavailableException e) {
             throw new RetryableException(e);
-          } catch (IOException e) {
+          } catch (IOException | AccessException e) {
             throw Throwables.propagate(e);
           }
           return null;

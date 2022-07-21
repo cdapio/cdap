@@ -31,6 +31,7 @@ import org.apache.twill.common.Cancellable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -101,8 +102,30 @@ public final class DelayedProgramController implements ProgramController, Delega
   }
 
   @Override
+  public ListenableFuture<ProgramController> stop(long timeout, TimeUnit timeoutUnit) {
+    return callDelegate(controller -> controller.stop(timeout, timeoutUnit));
+  }
+
+  @Override
+  public void kill() {
+    Futures.getUnchecked(callDelegate(controller -> {
+      try {
+        controller.kill();
+        return Futures.immediateFuture(controller);
+      } catch (Throwable t) {
+        return Futures.immediateFailedFuture(t);
+      }
+    }));
+  }
+
+  @Override
   public State getState() {
     try {
+      if (!delegateFuture.isDone()) {
+        // In order to avoid waiting for delegateFuture to complete before returning its state, we can return the
+        // state right away.
+        return State.STARTING;
+      }
       return Uninterruptibles.getUninterruptibly(delegateFuture).getState();
     } catch (ExecutionException e) {
       throw new RuntimeException(e);

@@ -18,6 +18,8 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -86,8 +88,9 @@ public final class NamespaceMeta {
     private String groupName;
     private String keytabURIWithoutVersion;
     private int keytabURIVersion;
-    private long generation = 0;
+    private long generation;
     private boolean exploreAsPrincipal = true;
+    private Map<String, String> configMap = new HashMap<>();
 
     public Builder() {
       // No-Op
@@ -99,6 +102,7 @@ public final class NamespaceMeta {
       this.generation = meta.getGeneration();
       NamespaceConfig config = meta.getConfig();
       if (config != null) {
+        this.configMap = config.getConfigs();
         this.schedulerQueueName = config.getSchedulerQueueName();
         this.rootDirectory = config.getRootDirectory();
         this.hbaseNamespace = config.getHbaseNamespace();
@@ -186,6 +190,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setConfig(Map<String, String> configMap) {
+      this.configMap = configMap;
+      return this;
+    }
+
     public NamespaceMeta build() {
       // combine the keytab URI with the version if the version is not 0
       String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion : keytabURIWithoutVersion + "#" + keytabURIVersion;
@@ -214,7 +223,7 @@ public final class NamespaceMeta {
                                new NamespaceConfig(schedulerQueueName, rootDirectory,
                                                    hbaseNamespace, hiveDatabase,
                                                    principal, groupName, keytabURI,
-                                                   exploreAsPrincipal));
+                                                   exploreAsPrincipal, configMap));
     }
   }
 

@@ -71,7 +71,7 @@
     <name>app.program.spark.compat</name>
     <value>spark2_2.11</value>
     <description>
-      Spark compatibility version. Must be 'spark1_2.10' or 'spark2_2.11'. This is only
+      Spark compatibility version. Must be 'spark2_2.11' or 'spark3_2.12'. This is only
       used in CDAP Local Sandbox mode. In Distributed CDAP mode, the Spark version will be
       automatically detected.
     </description>
@@ -91,7 +91,7 @@
 
   <property>
     <name>data.local.storage.blocksize</name>
-    <value>1024</value>
+    <value>8192</value>
     <description>
       Block size in bytes for data fabric when in CDAP Local Sandbox
     </description>
@@ -305,6 +305,15 @@
     <value>5</value>
     <description>
       Number of threads to be used for auto installing resources when a capability is enabled
+    </description>
+  </property>
+
+  <!-- Events Settings -->
+  <property>
+    <name>event.publish.enabled</name>
+    <value>false</value>
+    <description>
+      Boolean value to enable or disable publish manager to publish TMS messages.
     </description>
   </property>
 

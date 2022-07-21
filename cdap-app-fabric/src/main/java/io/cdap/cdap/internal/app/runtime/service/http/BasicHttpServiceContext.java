@@ -22,20 +22,23 @@ import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
+import io.cdap.cdap.internal.app.DefaultServicePluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -83,7 +86,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
    * @param programOptions program options for the program execution context
    * @param cConf the CDAP configuration
    * @param spec spec of the service handler of this context. If {@code null} is provided, this context
-   *             is not associated with any service handler (e.g. for the http server itself).
+*             is not associated with any service handler (e.g. for the http server itself).
    * @param instanceId instanceId of the component.
    * @param instanceCount total number of instances of the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
@@ -100,6 +103,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
    * @param namespaceQueryAdmin the {@link NamespaceQueryAdmin} for querying namespace information
    * @param pluginFinder the {@link PluginFinder} for plugin discovery
    * @param fieldLineageWriter the {@link FieldLineageWriter} for writing out field level lineage
+   * @param remoteClientFactory
    */
   public BasicHttpServiceContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                                  @Nullable HttpServiceHandlerSpecification spec,
@@ -113,12 +117,12 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  MetadataPublisher metadataPublisher,
                                  NamespaceQueryAdmin namespaceQueryAdmin,
                                  PluginFinder pluginFinder,
-                                 FieldLineageWriter fieldLineageWriter) {
+                                 FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
-          dsFramework, txClient, discoveryServiceClient, false,
+          dsFramework, txClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
     this.cConf = cConf;
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.spec = spec;
@@ -160,16 +164,27 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
 
   @Override
   public PluginConfigurer createPluginConfigurer() {
-    return createPluginConfigurer(getNamespace());
+    return createServicePluginConfigurer(getNamespace());
   }
 
   @Override
   public PluginConfigurer createPluginConfigurer(String namespace) {
+    return createServicePluginConfigurer(namespace);
+  }
+
+  @Override
+  public ServicePluginConfigurer createServicePluginConfigurer() {
+    return createServicePluginConfigurer(getNamespace());
+  }
+
+  @Override
+  public ServicePluginConfigurer createServicePluginConfigurer(String namespace) {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     try {
       File pluginsDir = Files.createTempDirectory(tmpDir.toPath(), "plugins").toFile();
       PluginInstantiator instantiator = new PluginInstantiator(cConf, getProgram().getClassLoader(), pluginsDir);
+      // this closeables will be closed after each execution of a handler event
       closeables.add(() -> {
         try {
           instantiator.close();
@@ -177,31 +192,34 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
           DirUtils.deleteDirectoryContents(pluginsDir, true);
         }
       });
-      return new DefaultPluginConfigurer(artifactId, new NamespaceId(namespace), instantiator, pluginFinder);
+      return new DefaultServicePluginConfigurer(artifactId, new NamespaceId(namespace), instantiator, pluginFinder,
+                                                getProgram().getClassLoader());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
   @Override
-  public List<ArtifactInfo> listArtifacts() throws IOException {
+  public List<ArtifactInfo> listArtifacts() throws IOException, AccessException {
     return artifactManager.listArtifacts();
   }
 
   @Override
-  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
+  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException, AccessException {
     return artifactManager.listArtifacts(namespace);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws IOException {
+                                                @Nullable ClassLoader parentClassLoader)
+    throws IOException, AccessException {
     return artifactManager.createClassLoader(artifactInfo, parentClassLoader);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws IOException {
+                                                @Nullable ClassLoader parentClassLoader)
+    throws IOException, AccessException {
     return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
   }
 

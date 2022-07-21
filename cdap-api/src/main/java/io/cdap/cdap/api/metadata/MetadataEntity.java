@@ -325,6 +325,10 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
         builder.append(String.format("%s: %s of ", MetadataEntity.PROGRAM_RUN,
                                      getValue(MetadataEntity.PROGRAM_RUN)));
         return getDescription(builder, MetadataEntity.PROGRAM);
+      case MetadataEntity.PLUGIN:
+        builder.append(String.format("%s: %s of %s %s in ", MetadataEntity.PLUGIN, getValue(MetadataEntity.PLUGIN),
+                                     MetadataEntity.TYPE, getValue(MetadataEntity.TYPE)));
+        return getDescription(builder, MetadataEntity.ARTIFACT);
       default:
         for (MetadataEntity.KeyValue keyValue : this) {
           builder.append(keyValue.getKey());

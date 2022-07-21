@@ -31,7 +31,8 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AuthenticationMode;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.server.GrantAccessToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -118,7 +119,8 @@ public class AuthServerAnnounceTest {
     @Override
     protected void startUp() {
       SConfiguration sConfiguration = SConfiguration.create();
-      Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+      Injector injector = Guice.createInjector(new CoreSecurityRuntimeModule().getInMemoryModules(),
+                                               new ExternalAuthenticationModule(),
                                                new InMemoryDiscoveryModule(),
                                                new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);

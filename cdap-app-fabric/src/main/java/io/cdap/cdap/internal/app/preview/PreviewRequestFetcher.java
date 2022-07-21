@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.preview;
 
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -33,5 +34,5 @@ public interface PreviewRequestFetcher {
    *         available
    * @throws IOException if failed to fetch preview request
    */
-  Optional<PreviewRequest> fetch() throws IOException;
+  Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException;
 }

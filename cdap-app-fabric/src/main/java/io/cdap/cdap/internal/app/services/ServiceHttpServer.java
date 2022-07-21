@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxCallable;
+import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metadata.MetadataReader;
@@ -27,6 +28,9 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.service.AbstractSystemService;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.api.service.ServiceContext;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
@@ -35,6 +39,9 @@ import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.http.AuthenticationChannelHandler;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -48,6 +55,8 @@ import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.runtime.service.BasicServiceContext;
+import io.cdap.cdap.internal.app.runtime.service.BasicSystemServiceContext;
 import io.cdap.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
 import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
 import io.cdap.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
@@ -56,6 +65,7 @@ import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.http.NettyHttpService;
 import org.apache.tephra.TransactionSystemClient;
@@ -74,11 +84,16 @@ import javax.annotation.Nullable;
 public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHandler> {
 
   private final ServiceSpecification serviceSpecification;
-  private final BasicHttpServiceContext context;
+  private final BasicServiceContext serviceContext;
+  private final BasicHttpServiceContext httpServiceContext;
   private final CConfiguration cConf;
   private final AtomicInteger instanceCount;
   private final BasicHttpServiceContextFactory contextFactory;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
+  private final Program program;
+
+  private Service service;
 
   public ServiceHttpServer(String host, Program program, ProgramOptions programOptions,
                            CConfiguration cConf, ServiceSpecification spec,
@@ -91,20 +106,76 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            ArtifactManager artifactManager, MetadataReader metadataReader,
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
                            PluginFinder pluginFinder, FieldLineageWriter fieldLineageWriter,
-                           TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher) {
+                           TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
+                           RemoteClientFactory remoteClientFactory, ContextAccessEnforcer contextAccessEnforcer,
+                           CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
     this.serviceSpecification = spec;
     this.instanceCount = new AtomicInteger(instanceCount);
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.contextFactory = createContextFactory(program, programOptions, instanceId, this.instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
                                                pluginFinder, fieldLineageWriter, transactionRunner,
-                                               preferencesFetcher);
-    this.context = contextFactory.create(null, null);
+                                               preferencesFetcher, remoteClientFactory, contextAccessEnforcer);
+
+    Class<?> serviceClass = null;
+    try {
+      serviceClass = program.getClassLoader().loadClass(serviceSpecification.getClassName());
+    } catch (ClassNotFoundException e) {
+      // this should not happen, the service should never be able to get deployed
+    }
+
+    if (serviceClass != null && AbstractSystemService.class.isAssignableFrom(serviceClass)) {
+      this.serviceContext = new BasicSystemServiceContext(spec, program, programOptions, instanceId,
+                                                          this.instanceCount, cConf, metricsCollectionService,
+                                                          datasetFramework, txClient, pluginInstantiator,
+                                                          secureStore, secureStoreManager, messagingService,
+                                                          metadataReader, metadataPublisher, namespaceQueryAdmin,
+                                                          fieldLineageWriter, transactionRunner, remoteClientFactory,
+                                                          artifactManager);
+    } else {
+      this.serviceContext = new BasicServiceContext(spec, program, programOptions, instanceId, this.instanceCount,
+                                                    cConf, metricsCollectionService, datasetFramework, txClient,
+                                                    pluginInstantiator,
+                                                    secureStore, secureStoreManager, messagingService, metadataReader,
+                                                    metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
+                                                    remoteClientFactory, artifactManager);
+    }
+    this.httpServiceContext = contextFactory.create(null, null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.program = program;
+  }
+
+  @Override
+  protected void initializeService() throws Exception {
+    super.initializeService();
+    // Instantiate service instance
+    Class<?> serviceClass = program.getClassLoader().loadClass(serviceSpecification.getClassName());
+    @SuppressWarnings("unchecked")
+    TypeToken<Service> serviceType = (TypeToken<Service>) TypeToken.of(serviceClass);
+    service = new InstantiatorFactory(false).get(serviceType).create();
+    // Initialize service
+    // Service is always using Explicit transaction
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT, Service.class,
+                                                                      service, "initialize", ServiceContext.class);
+    serviceContext.initializeProgram(service, txControl, false);
+  }
+
+  @Override
+  protected void destroyService() throws Exception {
+    super.destroyService();
+    if (service == null) {
+      return;
+    }
+    // Service is always using Explicit transaction
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT,
+                                                                      Service.class, service, "destroy");
+    serviceContext.destroyProgram(service, txControl, false);
+    serviceContext.close();
   }
 
   @Override
@@ -118,7 +189,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
       @SuppressWarnings("unchecked")
       TypeToken<HttpServiceHandler> type = TypeToken.of((Class<HttpServiceHandler>) handlerClass);
 
-      MetricsContext metrics = context.getProgramMetrics().childContext(
+      MetricsContext metrics = httpServiceContext.getProgramMetrics().childContext(
         BasicHttpServiceContext.createMetricsTags(handlerSpec, getInstanceId()));
       delegatorContexts.add(new HandlerDelegatorContext(type, instantiatorFactory, handlerSpec,
                                                         contextFactory, metrics));
@@ -134,7 +205,17 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
 
   @Override
   protected LoggingContext getLoggingContext() {
-    return context.getLoggingContext();
+    return httpServiceContext.getLoggingContext();
+  }
+
+  /**
+   *
+   * @return a service builder preconfigured with common settings. {@link AuthenticationChannelHandler} will be added
+   * if security is on in the configuration. Also {@link io.cdap.cdap.common.HttpExceptionHandler} will be installed.
+   */
+  @Override
+  protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
+    return commonNettyHttpServiceFactory.builder(serviceName);
   }
 
   private BasicHttpServiceContextFactory createContextFactory(Program program, ProgramOptions programOptions,
@@ -153,7 +234,9 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               PluginFinder pluginFinder,
                                                               FieldLineageWriter fieldLineageWriter,
                                                               TransactionRunner transactionRunner,
-                                                              PreferencesFetcher preferencesFetcher) {
+                                                              PreferencesFetcher preferencesFetcher,
+                                                              RemoteClientFactory remoteClientFactory,
+                                                              ContextAccessEnforcer contextAccessEnforcer) {
     return (spec, handlerClass) -> {
       if (handlerClass != null && AbstractSystemHttpServiceHandler.class.isAssignableFrom(handlerClass)) {
         return new BasicSystemHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
@@ -161,13 +244,14 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                  txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                  messagingService, artifactManager, metadataReader, metadataPublisher,
                                                  namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
-                                                 transactionRunner, preferencesFetcher);
+                                                 transactionRunner, preferencesFetcher, remoteClientFactory,
+                                                 contextAccessEnforcer);
       }
       return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                          metricsCollectionService, datasetFramework, discoveryServiceClient,
                                          txClient, pluginInstantiator, secureStore, secureStoreManager,
                                          messagingService, artifactManager, metadataReader, metadataPublisher,
-                                         namespaceQueryAdmin, pluginFinder, fieldLineageWriter);
+                                         namespaceQueryAdmin, pluginFinder, fieldLineageWriter, remoteClientFactory);
     };
   }
 
@@ -191,7 +275,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                     HttpServiceHandlerSpecification spec,
                                     BasicHttpServiceContextFactory contextFactory,
                                     MetricsContext handlerMetricsContext) {
-      super(handlerType, instantiatorFactory, context.getProgramMetrics(), handlerMetricsContext);
+      super(handlerType, instantiatorFactory, httpServiceContext.getProgramMetrics(), handlerMetricsContext);
       this.spec = spec;
       this.contextFactory = contextFactory;
     }
@@ -225,7 +309,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
         @Override
         public void execute(ThrowingRunnable runnable, boolean transactional) throws Exception {
           if (transactional) {
-            context.execute(datasetContext -> runnable.run());
+            Transactionals.execute(context, (TxRunnable) datasetContext -> runnable.run(), Exception.class);
           } else {
             context.execute(runnable);
           }

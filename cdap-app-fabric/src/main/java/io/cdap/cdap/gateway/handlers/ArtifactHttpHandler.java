@@ -67,9 +67,12 @@ import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.artifact.ArtifactSummaryProperties;
 import io.cdap.cdap.proto.artifact.PluginInfo;
 import io.cdap.cdap.proto.artifact.PluginSummary;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
@@ -87,6 +90,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,7 +125,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Type APPCLASS_SUMMARIES_TYPE = new TypeToken<List<ApplicationClassSummary>>() { }.getType();
   private static final Type APPCLASS_INFOS_TYPE = new TypeToken<List<ApplicationClassInfo>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
   private static final Type BATCH_ARTIFACT_PROPERTIES_REQUEST =
     new TypeToken<List<ArtifactPropertiesRequest>>() { }.getType();
   private static final Type BATCH_ARTIFACT_PROPERTIES_RESPONSE =
@@ -135,15 +138,18 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CapabilityReader capabilityReader;
   private final File tmpDir;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
   ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository,
-                      NamespaceQueryAdmin namespaceQueryAdmin, CapabilityReader capabilityReader) {
+                      NamespaceQueryAdmin namespaceQueryAdmin, CapabilityReader capabilityReader,
+                      ContextAccessEnforcer contextAccessEnforcer) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.artifactRepository = artifactRepository;
     this.capabilityReader = capabilityReader;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @POST
@@ -341,6 +347,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to read properties from the request.", e);
     }
 
+    if (properties == null) {
+      throw new BadRequestException("Missing properties from the request. Please check that the request body " +
+                                      "is a json map from string to string.");
+    }
+
     try {
       artifactRepository.writeArtifactProperties(Id.Artifact.fromEntityId(artifactId), properties);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -501,8 +512,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             continue;
           }
           pluginSummaries.add(new PluginSummary(
-            pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
-            pluginClass.getClassName(), pluginArtifactSummary));
+            pluginClass.getName(), pluginClass.getType(), pluginClass.getCategory(), pluginClass.getClassName(),
+            pluginArtifactSummary, pluginClass.getDescription()));
         }
       }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginSummaries));
@@ -642,8 +653,17 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     // if version is explicitly given, validate the id now. otherwise version will be derived from the manifest
     // and validated there
+    // Perform auth checks outside BodyConsumer as only the first http request containing auth header
+    // to populate SecurityRequestContext while http chunk doesn't. BodyConsumer runs in the thread
+    // that processes the last http chunk.
     if (artifactVersion != null && !artifactVersion.isEmpty()) {
-      validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+      ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+      // If the artifact ID is available, use it to perform an authorization check.
+      contextAccessEnforcer.enforce(artifactId, StandardPermission.CREATE);
+    } else {
+      // If there is no version, we perform an enforceOnParent check in which the entityID is not needed.
+      contextAccessEnforcer.enforceOnParent(EntityType.ARTIFACT, namespace, StandardPermission.CREATE);
+
     }
 
     final Set<ArtifactRange> parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
@@ -664,7 +684,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       // copy the artifact contents to local tmp directory
-      final File destination = File.createTempFile("artifact-", ".jar", tmpDir);
+      Files.createDirectories(tmpDir.toPath());
+      File destination = File.createTempFile("artifact-", ".jar", tmpDir);
 
       return new AbstractBodyConsumer(destination) {
 

@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.internal.provision;
 
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *  Provides provisioners config for unit test
@@ -26,7 +28,7 @@ import java.util.Set;
 public class MockProvisionerConfigProvider implements ProvisionerConfigProvider {
 
   @Override
-  public Map<String, ProvisionerConfig> loadProvisionerConfigs(Set<String> provisioners) {
+  public Map<String, ProvisionerConfig> loadProvisionerConfigs(Collection<Provisioner> provisioners) {
     // Only need to return an empty map since the provisioning service will take care of provisioner that does
     // not have a config
     return Collections.emptyMap();

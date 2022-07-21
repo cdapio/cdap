@@ -84,7 +84,7 @@ public class AlertReader extends AbstractCloseableIterator<Alert> {
       try {
         currentReader.close();
       } catch (IOException e) {
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
   }

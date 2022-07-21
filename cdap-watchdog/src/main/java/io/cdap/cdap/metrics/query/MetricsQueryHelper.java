@@ -119,6 +119,11 @@ public class MetricsQueryHelper {
       // put profile related tag
       .put(Constants.Metrics.Tag.PROFILE, "profile")
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, "profilescope")
+      .put(Constants.Metrics.Tag.CLASS, "class")
+      .put(Constants.Metrics.Tag.TRIES, "retry")
+
+      // put schedule job related tag
+      .put(Constants.Metrics.Tag.SCHEDULE, "schedule")
       .build();
 
     tagNameToHuman = mapping;
@@ -456,7 +461,9 @@ public class MetricsQueryHelper {
   private Map<String, String> tagNamesToHuman(Map<String, String> tagValues) {
     Map<String, String> humanTagValues = Maps.newHashMap();
     for (Map.Entry<String, String> tag : tagValues.entrySet()) {
-      humanTagValues.put(tagNameToHuman.get(tag.getKey()), tag.getValue());
+      String tagName = tagNameToHuman.get(tag.getKey());
+      tagName = tagName != null ? tagName : tag.getKey();
+      humanTagValues.put(tagName, tag.getValue());
     }
     return humanTagValues;
   }

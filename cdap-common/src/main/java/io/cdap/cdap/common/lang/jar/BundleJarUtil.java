@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.lang.jar;
 
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.ThrowingSupplier;
 import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedInputStream;
@@ -25,13 +27,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.CopyOption;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -87,7 +92,6 @@ public class BundleJarUtil {
       return getManifest(is);
     }
   }
-
 
   /**
    * Gets the {@link Manifest} inside the given jar.
@@ -168,6 +172,36 @@ public class BundleJarUtil {
   }
 
   /**
+   * Takes a jar or a local directory and prepares a folder to be loaded by classloader.
+   * If a jar is provided it unpacks a manifest and any nested jars
+   * and links original jar into the destination folder, so that it would be picked up by classloader to
+   * load any classes or resources.
+   *
+   * If a directory is provided, it assumes that this directory already contains the unpacked jar contents (ie. this
+   * directory was used as the destinationFolder in a previous call to this method). In this case,
+   * no unpacking is needed. The {@link ClassLoaderFolder} returned will be pointing at the provided directory.
+   *
+   * @param jarLocation Location containing the jar file or local directory with already unpacked jar files
+   * @param destinationSupplier Supply the directory to expand into when needed
+   * @return a {@link ClassLoaderFolder} containing the directory with the content ready for classloader creation.
+   * @throws IOException If failed to expand the jar
+   */
+  public static ClassLoaderFolder prepareClassLoaderFolder(Location jarLocation,
+                                                           ThrowingSupplier<File, IOException> destinationSupplier)
+    throws IOException {
+    return new ClassLoaderFolder(jarLocation, destinationSupplier);
+  }
+
+  /**
+   * Performs the same operation as the {@link #prepareClassLoaderFolder(Location, ThrowingSupplier)} method.
+   */
+  public static ClassLoaderFolder prepareClassLoaderFolder(File jarFile,
+                                                           ThrowingSupplier<File, IOException> destinationSupplier)
+    throws IOException {
+    return prepareClassLoaderFolder(Locations.toLocation(jarFile), destinationSupplier);
+  }
+
+  /**
    * Unpack a jar file in the given location to a directory.
    *
    * @param jarLocation Location containing the jar file
@@ -176,8 +210,22 @@ public class BundleJarUtil {
    * @throws IOException If failed to expand the jar
    */
   public static File unJar(Location jarLocation, File destinationFolder) throws IOException {
+    return unJar(jarLocation, destinationFolder, name -> true);
+  }
+
+  /**
+   * Unpack a jar file in the given location to a directory.
+   *
+   * @param jarLocation Location containing the jar file
+   * @param destinationFolder Directory to expand into
+   * @param nameFilter Predicate to select files to unpack
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File unJar(Location jarLocation, File destinationFolder, Predicate<String> nameFilter)
+    throws IOException {
     try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
-      unJar(zipIn, destinationFolder);
+      unJar(zipIn, destinationFolder, nameFilter);
     }
     return destinationFolder;
   }
@@ -191,8 +239,36 @@ public class BundleJarUtil {
    * @throws IOException If failed to expand the jar
    */
   public static File unJar(File jarFile, File destinationFolder) throws IOException {
+    return unJar(jarFile, destinationFolder, name -> true);
+  }
+
+  /**
+   * Unpack a jar file to a directory, overwriting any existing files.
+   *
+   * @param jarFile the jar file to unpack
+   * @param destinationFolder Directory to expand into
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File unJarOverwrite(File jarFile, File destinationFolder) throws IOException {
+    return unJar(jarFile, destinationFolder, name -> true, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  /**
+   * Unpack a jar file to a directory.
+   *
+   * @param jarFile the jar file to unpack
+   * @param destinationFolder Directory to expand into
+   * @param nameFilter Predicate to select files to unpack
+   * @param copyOptions Copy options to use when unpacking
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  private static File unJar(File jarFile, File destinationFolder, Predicate<String> nameFilter,
+                            CopyOption ...copyOptions)
+    throws IOException {
     try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(jarFile)))) {
-      unJar(zipIn, destinationFolder);
+      unJar(zipIn, destinationFolder, nameFilter, copyOptions);
     }
     return destinationFolder;
   }
@@ -224,19 +300,23 @@ public class BundleJarUtil {
     return null;
   }
 
-  private static void unJar(ZipInputStream input, File targetDirectory) throws IOException {
+  private static void unJar(ZipInputStream input, File targetDirectory, Predicate<String> nameFilter,
+                            CopyOption ...copyOptions)
+    throws IOException {
     Path targetPath = targetDirectory.toPath();
     Files.createDirectories(targetPath);
 
     ZipEntry entry;
     while ((entry = input.getNextEntry()) != null) {
-      Path output = targetPath.resolve(entry.getName());
+      if (nameFilter.test(entry.getName())) {
+        Path output = targetPath.resolve(entry.getName());
 
-      if (entry.isDirectory()) {
-        Files.createDirectories(output);
-      } else {
-        Files.createDirectories(output.getParent());
-        Files.copy(input, output);
+        if (entry.isDirectory()) {
+          Files.createDirectories(output);
+        } else {
+          Files.createDirectories(output.getParent());
+          Files.copy(input, output, copyOptions);
+        }
       }
     }
   }

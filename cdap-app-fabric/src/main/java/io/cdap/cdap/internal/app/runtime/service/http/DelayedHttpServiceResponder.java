@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.service.http;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.http.HttpContentProducer;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
@@ -116,11 +117,19 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
    */
   public void setFailure(Throwable t) {
     LOG.error("Exception occurred while handling request:", t);
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    ByteBuf content = Unpooled.copiedBuffer("Exception occurred while handling request: "
-                                              + Throwables.getRootCause(t).getMessage(), StandardCharsets.UTF_8);
+    String message;
+    int code;
+    if (t instanceof HttpErrorStatusProvider) {
+      HttpErrorStatusProvider statusProvider = (HttpErrorStatusProvider) t;
+      code = statusProvider.getStatusCode();
+      message = statusProvider.getMessage();
+    } else {
+      message = "Exception occurred while handling request: " + Throwables.getRootCause(t).getMessage();
+      code = HttpResponseStatus.INTERNAL_SERVER_ERROR.code();
+    }
+    ByteBuf content = Unpooled.copiedBuffer(message, StandardCharsets.UTF_8);
 
-    bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+    bufferedResponse = new BufferedResponse(code,
                                             "text/plain; charset=" + Charsets.UTF_8.name(),
                                             content, null, null);
   }

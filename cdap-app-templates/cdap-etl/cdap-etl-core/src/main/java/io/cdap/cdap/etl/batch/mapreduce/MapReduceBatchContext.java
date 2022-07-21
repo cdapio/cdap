@@ -25,10 +25,12 @@ import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
 import io.cdap.cdap.etl.batch.preview.LimitingInputFormatProvider;
 import io.cdap.cdap.etl.batch.preview.NullOutputFormatProvider;
@@ -59,11 +61,13 @@ public class MapReduceBatchContext extends AbstractBatchContext
 
   public MapReduceBatchContext(MapReduceContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                Set<String> connectorDatasets, DatasetContext datasetContext) {
-    super(pipelineRuntime, stageSpec, datasetContext, context.getAdmin());
+    super(pipelineRuntime, StageSpec.createCopy(stageSpec, context.getDataTracer(stageSpec.getName()).
+              getMaximumTracedRecords(), context.getDataTracer(stageSpec.getName()).isEnabled()),
+          datasetContext, context.getAdmin());
     this.mrContext = context;
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();
-    this.isPreviewEnabled = context.getDataTracer(stageSpec.getName()).isEnabled();
+    this.isPreviewEnabled = stageSpec.isPreviewEnabled(context);
     this.connectorDatasets = Collections.unmodifiableSet(connectorDatasets);
   }
 
@@ -86,6 +90,10 @@ public class MapReduceBatchContext extends AbstractBatchContext
 
   @Override
   public void addOutput(Output output) {
+    // Skip SQLEngineOutput as this is not supported in MapReduce.
+    if (output instanceof SQLEngineOutput) {
+      return;
+    }
     Output actualOutput = suffixOutput(getOutput(output));
     Output trackableOutput = CALLER.callUnchecked(() -> {
       Output trackableOutput1 = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(mrContext.getAdmin(),
@@ -158,28 +166,32 @@ public class MapReduceBatchContext extends AbstractBatchContext
   }
 
   @Override
-  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException, AccessException {
     mrContext.getAdmin().createTopic(topic);
   }
 
   @Override
   public void createTopic(String topic,
-                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+                          Map<String, String> properties)
+    throws TopicAlreadyExistsException, IOException, AccessException {
     mrContext.getAdmin().createTopic(topic, properties);
   }
 
   @Override
-  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+  public Map<String, String> getTopicProperties(String topic)
+    throws TopicNotFoundException, IOException, AccessException {
     return mrContext.getAdmin().getTopicProperties(topic);
   }
 
   @Override
-  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+  public void updateTopic(String topic, Map<String, String> properties)
+    throws TopicNotFoundException, IOException, AccessException {
     mrContext.getAdmin().updateTopic(topic, properties);
   }
 
   @Override
-  public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
+  public void deleteTopic(String topic)
+    throws TopicNotFoundException, IOException, AccessException {
     mrContext.getAdmin().deleteTopic(topic);
   }
 }

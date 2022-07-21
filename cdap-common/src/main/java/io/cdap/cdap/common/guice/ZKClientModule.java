@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.common.guice;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -47,13 +46,10 @@ public class ZKClientModule extends AbstractModule {
   @Provides
   @Singleton
   private ZKClientService provideZKClientService(CConfiguration cConf) {
-    String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
-    Preconditions.checkNotNull(zookeeper, "Missing ZooKeeper configuration '%s'", Constants.Zookeeper.QUORUM);
-
     return ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
+          ZKClientService.Builder.of(Constants.Zookeeper.getZKQuorum(cConf))
             .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
                                             Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
             .build(),

@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.batch;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -27,12 +28,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Specification for a batch pipeline.
  */
 public class BatchPipelineSpec extends PipelineSpec {
   private final List<ActionSpec> endingActions;
+  private final StageSpec sqlEngineStageSpec;
 
   private BatchPipelineSpec(Set<StageSpec> stages,
                             Set<Connection> connections,
@@ -43,14 +46,22 @@ public class BatchPipelineSpec extends PipelineSpec {
                             boolean processTimingEnabled,
                             List<ActionSpec> endingActions,
                             int numOfRecordsPreview,
-                            Map<String, String> properties) {
+                            Map<String, String> properties,
+                            Set<String> connectionsUsed,
+                            @Nullable StageSpec sqlEngineStageSpec, Engine engine) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, properties);
+          numOfRecordsPreview, properties, connectionsUsed, engine);
     this.endingActions = ImmutableList.copyOf(endingActions);
+    this.sqlEngineStageSpec = sqlEngineStageSpec;
   }
 
   public List<ActionSpec> getEndingActions() {
     return endingActions;
+  }
+
+  @Nullable
+  public StageSpec getSqlEngineStageSpec() {
+    return sqlEngineStageSpec;
   }
 
   @Override
@@ -67,26 +78,38 @@ public class BatchPipelineSpec extends PipelineSpec {
 
     BatchPipelineSpec that = (BatchPipelineSpec) o;
 
-    return Objects.equals(endingActions, that.endingActions);
+    return Objects.equals(endingActions, that.endingActions)
+      && Objects.equals(sqlEngineStageSpec, that.sqlEngineStageSpec);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), endingActions);
+    return Objects.hash(super.hashCode(), endingActions, sqlEngineStageSpec);
+  }
+
+  @Override
+  public String toString() {
+    return "BatchPipelineSpec{" +
+      "endingActions=" + endingActions +
+      ", sqlEngineStageSpec=" + sqlEngineStageSpec +
+      "} " + super.toString();
   }
 
   public static Builder builder() {
     return new Builder();
   }
 
+
   /**
    * Builder for creating a BatchPipelineSpec.
    */
   public static class Builder extends PipelineSpec.Builder<Builder> {
     private List<ActionSpec> endingActions;
+    private StageSpec sqlEngineStageSpec;
 
     public Builder() {
       this.endingActions = new ArrayList<>();
+      this.sqlEngineStageSpec = null;
     }
 
     public Builder addAction(ActionSpec action) {
@@ -94,11 +117,16 @@ public class BatchPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setSqlEngineStageSpec(StageSpec sqlEngineStageSpec) {
+      this.sqlEngineStageSpec = sqlEngineStageSpec;
+      return this;
+    }
+
     @Override
     public BatchPipelineSpec build() {
       return new BatchPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                    stageLoggingEnabled, processTimingEnabled, endingActions,
-                                   numOfRecordsPreview, properties);
+                                   numOfRecordsPreview, properties, connectionsUsed, sqlEngineStageSpec, engine);
     }
   }
 }

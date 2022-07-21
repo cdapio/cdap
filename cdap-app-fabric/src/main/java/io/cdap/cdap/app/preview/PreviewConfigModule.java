@@ -72,6 +72,7 @@ public class PreviewConfigModule extends AbstractModule {
     }
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    previewCConf.set(Constants.Namespace.NAMESPACES_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
     // Use No-SQL store for preview data
@@ -85,6 +86,15 @@ public class PreviewConfigModule extends AbstractModule {
 
     // Don't upload event logs for preview execution
     previewCConf.setBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED, false);
+
+    // Set this property for preview runs
+    previewCConf.setBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, false);
+
+    // Set HDFS namespace to use a writable directory by default
+    previewCConf.set(Constants.CFG_HDFS_NAMESPACE, previewDir.toString());
+
+    // Never run master environment-specific hooks on namespace creation as all preview runs happen locally.
+    previewCConf.setBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED, false);
 
     // Setup Hadoop configuration
     previewHConf = new Configuration(hConf);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2021 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,10 +25,12 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.internal.Services;
@@ -53,9 +55,11 @@ public class AuthenticationServerMain extends DaemonMain {
   public void init(String[] args) {
     Injector injector = Guice.createInjector(new ConfigModule(),
                                              new IOModule(),
+                                             RemoteAuthenticatorModules.getDefaultModule(),
                                              new ZKClientModule(),
                                              new ZKDiscoveryModule(),
-                                             new SecurityModules().getDistributedModules());
+                                             new CoreSecurityRuntimeModule().getDistributedModules(),
+                                             new ExternalAuthenticationModule());
     configuration = injector.getInstance(CConfiguration.class);
 
     if (SecurityUtil.isManagedSecurity(configuration)) {
@@ -81,7 +85,7 @@ public class AuthenticationServerMain extends DaemonMain {
                                                                           "ZooKeeper client. Please verify that the " +
                                                                           "ZooKeeper quorum settings are correct in " +
                                                                           "cdap-site.xml. Currently configured as: %s",
-                                                                        configuration.get(Constants.Zookeeper.QUORUM)));
+                                                                        zkClientService.getConnectString()));
         authServer.startAndWait();
       } catch (Exception e) {
         Throwable rootCause = Throwables.getRootCause(e);

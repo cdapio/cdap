@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2019 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-master</artifactId>
@@ -80,6 +80,13 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-watchdog</artifactId>
       <version>${project.version}</version>
+      <!-- paranamer corresponding to spark version should be used and provided by the runtime -->
+      <exclusions>
+        <exclusion>
+          <groupId>com.thoughtworks.paranamer</groupId>
+          <artifactId>paranamer</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -103,6 +110,11 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-support-bundle</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-tms</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -113,33 +125,47 @@
     <dependency>
       <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-core</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.twill</groupId>
+          <artifactId>twill-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.twill</groupId>
+          <artifactId>twill-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.twill</groupId>
+          <artifactId>twill-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-discovery-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-discovery-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-zookeeper</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-yarn</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-core</artifactId>
     </dependency>
     <dependency>
@@ -185,6 +211,10 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.11</artifactId>
+    </dependency>
 
     <!-- for tools -->
     <dependency>
@@ -224,6 +254,11 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -242,6 +277,12 @@
         <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
+        <stage.storage.ext.dir>${stage.opt.dir}/ext/storageproviders</stage.storage.ext.dir>
+        <stage.authenticators.ext.dir>${stage.opt.dir}/ext/authenticators</stage.authenticators.ext.dir>
+        <stage.metricswriters.ext.dir>${stage.opt.dir}/ext/metricswriters/google_cloud_monitoring_writer
+        </stage.metricswriters.ext.dir>
+        <stage.eventwriters.ext.dir>${stage.opt.dir}/ext/eventwriters/google_cloud_pubsub_writer
+        </stage.eventwriters.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
@@ -250,6 +291,12 @@
         <security.ext.jar.pattern>**/target/*.jar</security.ext.jar.pattern>
         <security.ext.config.pattern>**/target/*.json</security.ext.config.pattern>
         <security.ext.exclude.pattern>**/target/*-tests.jar</security.ext.exclude.pattern>
+        <metricswriters.ext.jar.pattern>**/target/libexec/*.jar</metricswriters.ext.jar.pattern>
+        <metricswriters.ext.config.pattern>**/target/libexec/*.json</metricswriters.ext.config.pattern>
+        <metricswriters.ext.exclude.pattern>**/target/libexec/*-tests.jar</metricswriters.ext.exclude.pattern>
+        <eventwriters.ext.jar.pattern>**/target/libexec/*.jar</eventwriters.ext.jar.pattern>
+        <eventwriters.ext.config.pattern>**/target/libexec/*.json</eventwriters.ext.config.pattern>
+        <eventwriters.ext.exclude.pattern>**/target/libexec/*-tests.jar</eventwriters.ext.exclude.pattern>
         <!-- contains hydrator upgrade tool. Should be moved out when Hydrator is moved out of CDAP -->
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
@@ -258,25 +305,25 @@
       <dependencies>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-api-spark</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-api-spark2_2.11</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-spark-core</artifactId>
+          <artifactId>cdap-api-spark3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-spark-core2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-spark-core3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -311,6 +358,42 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-authenticator-ext-gcp</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-pipeline2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-pipeline3_2.12</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-streams2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-data-streams3_2.12</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-storage-ext-spanner</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -330,34 +413,6 @@
             <artifactId>maven-resources-plugin</artifactId>
             <version>2.6</version>
             <executions>
-              <execution>
-                <id>copy-pipelines-spark1_2.10</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/${spark1.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline/target
-                      </directory>
-                      <includes>
-                        <include>cdap-data-pipeline-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams/target
-                      </directory>
-                      <includes>
-                        <include>cdap-data-streams-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
               <execution>
                 <id>copy-pipelines-spark2_2.11</id>
                 <phase>process-resources</phase>
@@ -381,6 +436,34 @@
                       </directory>
                       <includes>
                         <include>cdap-data-streams2_2.11-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-pipelines-spark3_2.12</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/${spark3.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline3_2.12/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-pipeline3_2.12-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams3_2.12/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-streams3_2.12-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -446,6 +529,26 @@
                   </resources>
                 </configuration>
               </execution>
+              <execution>
+                <id>copy-program-report-app-spark3</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/${spark3.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
+                      </directory>
+                      <includes>
+                        <include>cdap-program-report-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
 
               <!-- Copy cdap-kms. -->
               <execution>
@@ -471,28 +574,6 @@
 
               <!-- Copy runtime extensions. Currently only has Spark -->
               <execution>
-                <id>copy-spark1-extensions</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/${spark1.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-spark-core/target/libexec
-                      </directory>
-                      <!-- Only package with the cdap extensions, not the spark assembly jar -->
-                      <includes>
-                        <include>io.cdap.cdap.cdap-api-spark*.jar</include>
-                        <include>io.cdap.cdap.cdap-spark-*.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-spark2-extensions</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -504,6 +585,28 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-spark-core2_2.11/target/libexec
+                      </directory>
+                      <!-- Only package with the cdap extensions, not the spark assembly jar -->
+                      <includes>
+                        <include>io.cdap.cdap.cdap-api-spark*.jar</include>
+                        <include>io.cdap.cdap.cdap-spark-*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-spark3-extensions</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.ext.dir}/${spark3.artifacts.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-spark-core3_2.12/target/libexec
                       </directory>
                       <!-- Only package with the cdap extensions, not the spark assembly jar -->
                       <includes>
@@ -662,6 +765,51 @@
                   </resources>
                 </configuration>
               </execution>
+
+              <!-- Copy storage engine extensions -->
+              <execution>
+                <id>copy-storage-ext-spanner</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.storage.ext.dir}/gcp-spanner</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-storage-ext-spanner/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy remote authenticator extensions -->
+              <execution>
+                <id>copy-authenticator-ext-gcp</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.authenticators.ext.dir}/gcp-remote-authenticator</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-authenticator-ext-gcp/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
             </executions>
           </plugin>
           <plugin>
@@ -720,6 +868,46 @@
                   <goal>run</goal>
                 </goals>
               </execution>
+              <execution>
+                <id>copy-metricswriters-extensions-artifacts</id>
+                <phase>process-resources</phase>
+                <configuration>
+                  <target if="metricswriters.extensions.dir">
+                    <copy todir="${stage.metricswriters.ext.dir}" flatten="true">
+                      <fileset dir="${metricswriters.extensions.dir}">
+                        <include name="${metricswriters.ext.jar.pattern}"/>
+                        <include name="${metricswriters.ext.config.pattern}"/>
+                        <exclude name="${metricswriters.ext.exclude.pattern}"/>
+                        <exclude name="**/target/*-sources.jar"/>
+                        <exclude name="**/target/*-javadoc.jar"/>
+                      </fileset>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>copy-eventwriters-extensions-artifacts</id>
+                <phase>process-resources</phase>
+                <configuration>
+                  <target if="eventwriters.extensions.dir">
+                    <copy todir="${stage.eventwriters.ext.dir}" flatten="true">
+                      <fileset dir="${eventwriters.extensions.dir}">
+                        <include name="${eventwriters.ext.jar.pattern}"/>
+                        <include name="${eventwriters.ext.config.pattern}"/>
+                        <exclude name="${eventwriters.ext.exclude.pattern}"/>
+                        <exclude name="**/target/*-sources.jar"/>
+                        <exclude name="**/target/*-javadoc.jar"/>
+                      </fileset>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
               <!--
                 Rename cdap-data-pipeline2_2.11 to cdap-data-pipeline and cdap-data-streams2_2.11 to cdap-data-streams
                 This is may be removed if the UI supports different artifacts for each pipeline type.
@@ -737,6 +925,19 @@
                   </target>
                 </configuration>
               </execution>
+              <execution>
+                <id>rename-pipeline-jars-spark3</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                  </target>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
         </plugins>
@@ -744,7 +945,7 @@
     </profile>
 
     <!--
-      Profile for building master to be use in Kubernetes envirnment.
+      Profile for building master to be use in Kubernetes environment.
       This profile requires the dist profile to be enabled as well
     -->
     <profile>
@@ -811,7 +1012,7 @@
                 </goals>
                 <configuration>
                   <excludeGroupIds>
-                    ${dependency.groupId.exclusions},org.scala-lang,org.apache.kafka
+                    ${dependency.groupId.exclusions},org.scala-lang,org.apache.kafka,net.jpountz.lz4
                   </excludeGroupIds>
                 </configuration>
               </execution>
@@ -996,7 +1197,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Xmx6000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+          <argLine>@{argLine}  -Xmx6000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
           <forkCount>2</forkCount>
         </configuration>
       </plugin>

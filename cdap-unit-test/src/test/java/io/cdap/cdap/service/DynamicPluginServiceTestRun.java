@@ -29,13 +29,13 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.service.function.ConstantFunction;
 import io.cdap.cdap.service.function.DelegatingFunction;
+import io.cdap.cdap.service.function.MacroFunction;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.After;
 import org.junit.Assert;
@@ -68,13 +68,14 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     addAppArtifact(appArtifactId, DynamicPluginServiceApp.class);
 
     ArtifactId pluginArtifactId = NamespaceId.DEFAULT.artifact("plugins", "1.0.0");
-    addPluginArtifact(pluginArtifactId, appArtifactId, ConstantFunction.class, DelegatingFunction.class);
+    addPluginArtifact(pluginArtifactId, appArtifactId, ConstantFunction.class, DelegatingFunction.class,
+                      MacroFunction.class);
     ApplicationId appId = NamespaceId.DEFAULT.app("dynamicPluginService");
     ArtifactSummary summary = new ArtifactSummary(appArtifactId.getArtifact(), appArtifactId.getVersion());
     AppRequest<Void> appRequest = new AppRequest<>(summary);
     ApplicationManager appManager = deployApplication(appId, appRequest);
     serviceManager = appManager.getServiceManager(DynamicPluginServiceApp.SERVICE_NAME);
-    serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
+    serviceManager.startAndWaitForGoodRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
 
     baseURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
   }
@@ -125,6 +126,30 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("y", response.getResponseBodyAsString());
+  }
+
+  @Test
+  public void testServiceMacroEvaluator() throws Exception {
+    // properties with macro
+    Map<String, String> rawProperties = new HashMap<>();
+    rawProperties.put("key1", "${macro1}");
+    rawProperties.put("key2", "${macro2}");
+    Map<String, String> macroProperties = new HashMap<>();
+    macroProperties.put("macro1", "value1");
+    macroProperties.put("macro2", "value2");
+    URL url = baseURI.resolve(String.format("plugins/%s/macro", MacroFunction.NAME)).toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
+                            .withBody(GSON.toJson(new DynamicPluginServiceApp.MacroPluginRequest(rawProperties,
+                                                                                                 macroProperties)))
+                            .build();
+    HttpResponse response = executeHttp(request);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    MacroFunction.MacroFunctionResult result = GSON.fromJson(response.getResponseBodyAsString(),
+                                                             MacroFunction.MacroFunctionResult.class);
+    Assert.assertEquals(rawProperties, result.getRawProperties());
+    Assert.assertEquals("value1", result.getConf().getKey1());
+    Assert.assertEquals("value2", result.getConf().getKey2());
   }
 
   @Test

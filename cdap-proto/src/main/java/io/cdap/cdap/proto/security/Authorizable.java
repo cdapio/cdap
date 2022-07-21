@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Class to represent entities on which privileges can be granted/revoked.
@@ -36,16 +37,20 @@ public class Authorizable {
   private final EntityType entityType;
   // represent the parts of the entity
   private final Map<EntityType, String> entityParts;
+  // represents the type of children for parent-only permission checks
+  private final EntityType childType;
 
 
-  public Authorizable(EntityType entityType, Map<EntityType, String> entityParts) {
+  public Authorizable(EntityType entityType, Map<EntityType, String> entityParts, @Nullable EntityType childType) {
     this.entityType = entityType;
     this.entityParts = Collections.unmodifiableMap(entityParts);
+    this.childType = childType;
   }
 
   /**
    * Constructs an {@link Authorizable} from the given entityString. The entityString must be a representation of an
    * entity similar to {@link EntityId#toString()} with the exception that the string can contain wildcards (? and *).
+   * ChildType can be optionally specified after a second ":" character.
    * Note:
    * <ol>
    * <li>
@@ -67,14 +72,15 @@ public class Authorizable {
       throw new IllegalArgumentException("Null or empty entity string.");
     }
 
-    String[] typeAndId = entityString.split(EntityId.IDSTRING_TYPE_SEPARATOR, 2);
-    if (typeAndId.length != 2) {
+    String[] typeAndId = entityString.split(EntityId.IDSTRING_TYPE_SEPARATOR, 3);
+    if (typeAndId.length < 2) {
       throw new IllegalArgumentException(
         String.format("Cannot extract the entity type from %s", entityString));
     }
     String typeString = typeAndId[0];
     EntityType type = EntityType.valueOf(typeString.toUpperCase());
     String idString = typeAndId[1];
+    EntityType childType = typeAndId.length == 3 ? EntityType.valueOf(typeAndId[2].toUpperCase()) : null;
 
     List<String> idParts = Collections.emptyList();
     switch (type) {
@@ -99,7 +105,7 @@ public class Authorizable {
 
     Map<EntityType, String> entityParts = new LinkedHashMap<>();
     checkParts(type, idParts, idParts.size() - 1, entityParts);
-    return new Authorizable(type, entityParts);
+    return new Authorizable(type, entityParts, childType);
   }
 
   /**
@@ -112,6 +118,20 @@ public class Authorizable {
    * @return {@link Authorizable} representing the entity
    */
   public static Authorizable fromEntityId(EntityId entityId) {
+    return fromEntityId(entityId, null);
+  }
+  /**
+   * Creates an {@link Authorizable} which represents the given entityId with an optional child type for parent-only
+   * checks.
+   * Note: CDAP Authorization does not support authorization on versions of {@link io.cdap.cdap.proto.id.ApplicationId}
+   * and {@link io.cdap.cdap.proto.id.ArtifactId}. If an artifactId or applicationId which has version is passed to
+   * then the version will be silently dropped to construct the authorizable.
+   *
+   * @param entityId the entity
+   * @param childType optional type of child for parent-only checks
+   * @return {@link Authorizable} representing the entity
+   */
+  public static Authorizable fromEntityId(EntityId entityId, @Nullable EntityType childType) {
     if (entityId == null) {
       throw new IllegalArgumentException("EntityId is required.");
     }
@@ -132,6 +152,9 @@ public class Authorizable {
       String version = entity.substring(versionStartIndex, versionEndIndex);
       entity = entity.replace(version, "");
     }
+    if (childType != null) {
+      entity = entity + EntityId.IDSTRING_TYPE_SEPARATOR + childType.name().toLowerCase();
+    }
     return fromString(entity);
   }
 
@@ -151,11 +174,18 @@ public class Authorizable {
   }
 
   /**
+   * @return the type of children for parent-only permission checks
+   */
+  public EntityType getChildType() {
+    return childType;
+  }
+
+  /**
    * @return a string representation of the authorizable which is compatible with {@link EntityId#toString()}.
    */
   @Override
   public String toString() {
-    // the to string is done in this way to matain compatibility with EntityId.toString()
+    // the to string is done in this way to maintain compatibility with EntityId.toString()
     StringBuilder result = new StringBuilder();
     result.append(entityType.name().toLowerCase());
 
@@ -163,6 +193,9 @@ public class Authorizable {
     for (String part : entityParts.values()) {
       result.append(separator).append(part);
       separator = EntityId.IDSTRING_PART_SEPARATOR;
+    }
+    if (childType != null) {
+      result.append(EntityId.IDSTRING_TYPE_SEPARATOR).append(childType.name().toLowerCase());
     }
     return result.toString();
   }
@@ -177,18 +210,19 @@ public class Authorizable {
     }
 
     Authorizable that = (Authorizable) o;
-    return entityType == that.entityType && entityParts.equals(that.entityParts);
+    return entityType == that.entityType && childType == that.childType && entityParts.equals(that.entityParts);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityType, entityParts);
+    return Objects.hash(entityType, childType, entityParts);
   }
 
   private static void checkParts(EntityType entityType, List<String> parts, int index,
                                  Map<EntityType, String> entityParts) {
     switch (entityType) {
       case INSTANCE:
+      case SYSTEM_SERVICE:
       case NAMESPACE:
       case KERBEROSPRINCIPAL:
         if (parts.size() != 1 && index == (parts.size() - 1)) {
@@ -218,6 +252,7 @@ public class Authorizable {
       case DATASET_MODULE:
       case DATASET_TYPE:
       case SECUREKEY:
+      case PROFILE:
         if (parts.size() != 2 && index == (parts.size() - 1)) {
           throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +
                                                "Expected: <namespace-name>.<entity-name>, given entity: " + parts);
@@ -254,7 +289,17 @@ public class Authorizable {
           entityParts.put(entityType, parts.get(index - 1) + "." + parts.get(index));
         }
         break;
-      default:
+      case SYSTEM_APP_ENTITY:
+        if (parts.size() != 4 && index == (parts.size() - 1)) {
+          throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +
+                                               "Expected: <namespace-name>.<app-name>.* or " +
+                                               "<namespace-name>.<app-name>.<entity-type>.<entity-name>, " +
+                                               "given entity: " + parts);
+        }
+        checkParts(EntityType.NAMESPACE, parts, index - 3, entityParts);
+        entityParts.put(entityType, parts.get(index - 2) + "." + parts.get(index - 1) + "." + parts.get(index));
+        break;
+        default:
         // although it should never happen
         throw new IllegalArgumentException(String.format("Entity type %s does not support authorization.", entityType));
     }

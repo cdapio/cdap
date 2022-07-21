@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.spark.SparkExecutionContext;
+import io.cdap.cdap.app.runtime.spark.classloader.SparkClassRewriter;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkDriverService;
 import io.cdap.cdap.common.conf.Constants;
@@ -68,6 +69,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Util class for common functions needed for Spark implementation.
@@ -196,9 +198,18 @@ public final class SparkRuntimeUtils {
     // In local mode, the LocalSparkSubmitter calls the Cancellable.cancel() returned by this method directly
     // (via SparkMainWraper).
     // We use a service listener so that it can handle all cases.
-    final CountDownLatch mainThreadCallLatch = new CountDownLatch(1);
     final CountDownLatch secStopLatch = new CountDownLatch(1);
     driverService.addListener(new ServiceListenerAdapter() {
+
+      @Override
+      public void stopping(Service.State from) {
+        // Interrupt the driver main thread to signal for stopping if the driverService.stop() is not coming from
+        // the main thread.
+        if (Thread.currentThread() != mainThread) {
+          LOG.debug("Issuing interrupt to mainThread '{}' to indicate a stop request.", mainThread.getName());
+          mainThread.interrupt();
+        }
+      }
 
       @Override
       public void terminated(Service.State from) {
@@ -212,15 +223,6 @@ public final class SparkRuntimeUtils {
 
       private void handleStopped() {
         try {
-          // Avoid interrupt/join on the current thread
-          if (Thread.currentThread() != mainThread) {
-            mainThread.interrupt();
-            // If it is spark streaming, wait for the user class call returns from the main thread.
-            if (SparkRuntimeEnv.getStreamingContext().isDefined()) {
-              Uninterruptibles.awaitUninterruptibly(mainThreadCallLatch);
-            }
-          }
-
           // Close the SparkExecutionContext (it will stop all the SparkContext and release all resources)
           if (sec instanceof AutoCloseable) {
             try {
@@ -241,24 +243,28 @@ public final class SparkRuntimeUtils {
     return new SparkProgramCompletion() {
       @Override
       public void completed() {
-        handleCompleted(false);
+        handleCompleted(null);
       }
 
       @Override
       public void completedWithException(Throwable t) {
-        handleCompleted(true);
+        handleCompleted(t);
       }
 
-      private void handleCompleted(boolean failure) {
-        // If the cancel call is from the main thread, it means the calling to user class has been returned,
-        // since it's the last thing that Spark main methhod would do.
+      private void handleCompleted(@Nullable Throwable t) {
+        // If the completed call is from the main thread, it means the calling to user class has been returned,
+        // since it's the last thing that Spark main method would do.
         if (Thread.currentThread() == mainThread) {
-          mainThreadCallLatch.countDown();
           mainThread.setContextClassLoader(oldClassLoader);
         }
 
-        if (failure && driverService instanceof SparkDriverService) {
-          ((SparkDriverService) driverService).stopWithoutComplete();
+        if (driverService instanceof SparkProgramCompletion) {
+          SparkProgramCompletion delegate = (SparkProgramCompletion) driverService;
+          if (t == null) {
+            delegate.completed();
+          } else {
+            delegate.completedWithException(t);
+          }
         } else {
           driverService.stop();
         }
@@ -382,9 +388,21 @@ public final class SparkRuntimeUtils {
     }
 
     RuntimeClient runtimeClient = new RuntimeClient(runtimeContext.getCConfiguration(),
-                                                    runtimeContext.getDiscoveryServiceClient());
+                                                    runtimeContext.getRemoteClientFactory());
     Retries.runWithRetries(() -> runtimeClient.uploadSparkEventLogs(programRunId, eventFile),
                            RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
     LOG.debug("Uploaded event logs file {} for program run {}", eventFile, programRunId);
+  }
+
+  /**
+   * Appends value of cdap.spark.pyFiles to the original paths list.
+   * This function is used to simplify code generation in
+   * {@link SparkClassRewriter#rewritePythonWorkerFactory(java.io.InputStream)}.
+   * @param paths original path list
+   * @return new path list with cdap.spark.pyFiles added (if any)
+   */
+  public static String appendPyFiles(String paths) {
+    String pyFiles = SparkRuntimeEnv.getProperty("cdap.spark.pyFiles");
+    return pyFiles == null ? paths : paths + File.pathSeparator + pyFiles;
   }
 }

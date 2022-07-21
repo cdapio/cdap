@@ -32,9 +32,13 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -45,6 +49,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.app.store.RunRecordDetailWithExistingStatus;
 import io.cdap.cdap.internal.provision.ProvisionRequest;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -54,10 +59,10 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.reporting.ProgramHeartbeatTable;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -75,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +120,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final Queue<Runnable> tasks;
   private final MetricsCollectionService metricsCollectionService;
   private Set<ProgramCompletionNotifier> programCompletionNotifiers;
+  private final CConfiguration cConf;
+  private final Store store;
+  private final RunRecordMonitorService runRecordMonitorService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -121,7 +130,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                        ProvisionerNotifier provisionerNotifier,
                                        ProgramLifecycleService programLifecycleService,
                                        ProvisioningService provisioningService,
-                                       ProgramStateWriter programStateWriter, TransactionRunner transactionRunner) {
+                                       ProgramStateWriter programStateWriter, TransactionRunner transactionRunner,
+                                       Store store,
+                                       RunRecordMonitorService runRecordMonitorService) {
     super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
@@ -134,6 +145,47 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.tasks = new LinkedList<>();
     this.metricsCollectionService = metricsCollectionService;
     this.programCompletionNotifiers = Collections.emptySet();
+    this.runRecordMonitorService = runRecordMonitorService;
+    this.cConf = cConf;
+    this.store = store;
+  }
+
+  @Override
+  protected void doStartUp() throws Exception {
+    super.doStartUp();
+
+    int batchSize = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
+    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf,
+                                                                    Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
+    long startTs = System.currentTimeMillis();
+
+    Retries.runWithRetries(() -> store.scanActiveRuns(batchSize, (runRecordDetail) -> {
+      if (runRecordDetail.getStartTs() > startTs) {
+        return;
+      }
+      try {
+        if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
+          runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
+        } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
+          runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
+          // It is unknown what is the state of program runs in STARTING state.
+          // A STARTING message is published again to retry STARTING logic.
+          ProgramOptions programOptions =
+            new SimpleProgramOptions(runRecordDetail.getProgramRunId().getParent(),
+                                     new BasicArguments(runRecordDetail.getSystemArgs()),
+                                     new BasicArguments(runRecordDetail.getUserArgs()));
+          LOG.debug("Retrying to start run {}.", runRecordDetail.getProgramRunId());
+          programStateWriter.start(runRecordDetail.getProgramRunId(),
+                                   programOptions,
+                                   null,
+                                   this.store.loadProgram(runRecordDetail.getProgramRunId().getParent()));
+        }
+      } catch (Exception e) {
+        ProgramRunId programRunId = runRecordDetail.getProgramRunId();
+        LOG.warn("Retrying to start run {} failed. Marking it as failed.", programRunId, e);
+        programStateWriter.error(programRunId, e);
+      }
+    }), retryStrategy, e -> true);
   }
 
   @Inject(optional = true)
@@ -263,27 +315,65 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     RunRecordDetail recordedRunRecord;
     switch (programRunStatus) {
       case STARTING:
+        try {
+          RunRecordDetail runRecordDetail = appMetadataStore.getRun(programRunId);
+          if (runRecordDetail != null
+            && runRecordDetail.getStatus() != ProgramRunStatus.PENDING
+            && runRecordDetail.getStatus() != ProgramRunStatus.STARTING) {
+            //This is an invalid state transition happening. Valid state transitions are:
+            // PENDING => STARTING : normal state transition
+            // STARTING => STARTING : state transition after app-fabric restart
+            LOG.debug("Ignoring unexpected request to transition program run {} from {} state to program " +
+                        "STARTING state.", programRunId, runRecordDetail.getStatus());
+            return;
+          }
+        } catch (IllegalStateException ex) {
+          LOG.error("Request to transition program run {} from non-existent state to program STARTING state " +
+                      "but multiple run IDs exist.", programRunId);
+        }
+
         String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
         Map<String, String> systemArguments = systemArgumentsString == null ?
           Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
         boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
         boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
+
+        ProgramOptions prgOptions = ProgramOptions.fromNotification(notification, GSON);
+        ProgramDescriptor prgDescriptor =
+          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
+
         // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
         // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
+        // if this is NOT a preview run or a program within a workflow (i.e., else case), program is started and its
+        // state changes into Starting.
         if (isInWorkflow || skipProvisioning) {
-          ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-          ProgramDescriptor programDescriptor =
-            GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
-          appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
-                                                     programOptions.getArguments().asMap(), messageIdBytes,
-                                                     programDescriptor.getArtifactId().toApiArtifactId());
+          appMetadataStore.recordProgramProvisioning(programRunId, prgOptions.getUserArguments().asMap(),
+                                                     prgOptions.getArguments().asMap(), messageIdBytes,
+                                                     prgDescriptor.getArtifactId().toApiArtifactId());
           appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
+        } else {
+          runnables.add(() -> {
+            String oldUser = SecurityRequestContext.getUserId();
+            try {
+              SecurityRequestContext.setUserId(prgOptions.getArguments().getOption(ProgramOptionConstants.USER_ID));
+              try {
+                programLifecycleService.startInternal(prgDescriptor, prgOptions, programRunId);
+              } catch (Exception e) {
+                LOG.error("Failed to start program {}", programRunId, e);
+                programStateWriter.error(programRunId, e);
+              }
+            } finally {
+              SecurityRequestContext.setUserId(oldUser);
+            }
+          });
         }
+
         recordedRunRecord = appMetadataStore.recordProgramStart(programRunId, twillRunId,
                                                                 systemArguments, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord,
                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                               programHeartbeatTable);
+
         break;
       case RUNNING:
         long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
@@ -296,11 +386,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         recordedRunRecord =
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
+        runRecordMonitorService.removeRequest(programRunId, true);
+        long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+        emitStartingTimeMetric(programRunId, startDelayTime, recordedRunRecord);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
                                           ProgramOptionConstants.SUSPEND_TIME);
-        // since we are adding suspend time recently, there might be old suspended notificications for which time
+        // since we are adding suspend time recently, there might be old suspended notifications for which time
         // can be -1.
         recordedRunRecord = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes, suspendTime);
         writeToHeartBeatTable(recordedRunRecord, suspendTime, programHeartbeatTable);
@@ -308,10 +401,23 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       case RESUMING:
         long resumeTime = getTimeSeconds(notification.getProperties(),
                                          ProgramOptionConstants.RESUME_TIME);
-        // since we are adding suspend time recently, there might be old suspended notificications for which time
+        // since we are adding suspend time recently, there might be old suspended notifications for which time
         // can be -1.
         recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
+        break;
+      case STOPPING:
+        Map<String, String> notificationProperties = notification.getProperties();
+        long stoppingTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.STOPPING_TIME);
+        if (stoppingTsSecs == -1L) {
+          LOG.warn("Ignore program stopping notification for program {} without {} specified, {}",
+                   programRunId, ProgramOptionConstants.STOPPING_TIME, notification);
+          return;
+        }
+        long terminateTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.TERMINATE_TIME);
+        recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTsSecs,
+                                                                   terminateTsSecs);
+        writeToHeartBeatTable(recordedRunRecord, stoppingTsSecs, programHeartbeatTable);
         break;
       case COMPLETED:
       case KILLED:
@@ -330,8 +436,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord,
                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                               programHeartbeatTable);
-        getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                               Constants.Metrics.Program.PROGRAM_REJECTED_RUNS).ifPresent(runnables::add);
+        getEmitMetricsRunnable(programRunId, recordedRunRecord, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS,
+                               null).ifPresent(runnables::add);
+        runRecordMonitorService.removeRequest(programRunId, true);
         break;
       default:
         // This should not happen
@@ -404,23 +511,27 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                             programRunStatus, notification, sourceId, runnables);
     }
 
-    RunRecordDetail recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
-                                                                           failureCause, sourceId);
+    RunRecordDetailWithExistingStatus recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs,
+                                                                                             programRunStatus,
+                                                                                             failureCause, sourceId);
     if (recordedRunRecord != null) {
       writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
-
-      getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                             STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+      getEmitMetricsRunnable(programRunId, recordedRunRecord, STATUS_METRICS_NAME.get(programRunStatus),
+                             recordedRunRecord.getExistingStatus()).ifPresent(runnables::add);
 
       // emit program run time metric.
       long runTime = endTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
       SystemArguments
         .getProfileIdFromArgs(programRunId.getNamespaceId(), recordedRunRecord.getSystemArgs())
-        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime));
+        .ifPresent(profileId -> {
+          emitRunTimeMetric(programRunId, programRunStatus, runTime, recordedRunRecord);
+          emitStoppingTimeMetric(programRunId, profileId, recordedRunRecord);
+        });
 
       runnables.add(() -> {
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
                                                                                    recordedRunRecord.getStatus()));
+        runRecordMonitorService.removeRequest(programRunId, true);
       });
     }
     return recordedRunRecord;
@@ -454,32 +565,49 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       return;
     }
 
-    // Loop over workflow node states and alter program states that are not in end state
-    // We can do this because under normal operation, all inner program should be completed before the workflow
-    // and the message ordering should preserve that.
-    for (WorkflowNodeStateDetail nodeState : appMetadataStore.getWorkflowNodeStates(programRunId)) {
-      WorkflowNode workflowNode = workflowSpec.getNodeIdMap().get(nodeState.getNodeId());
+    // For all MR and Spark nodes, we need to update the inner program run status if they are not in end state yet.
+    for (WorkflowNode workflowNode : workflowSpec.getNodeIdMap().values()) {
       if (!(workflowNode instanceof WorkflowActionNode)) {
         continue;
       }
 
-      // For MR and Spark, we need to update the states if they are not in end state yet.
       ScheduleProgramInfo programInfo = ((WorkflowActionNode) workflowNode).getProgram();
-      if (!WORKFLOW_INNER_PROGRAM_TYPES.containsKey(programInfo.getProgramType())
-        || nodeState.getNodeStatus().isEndState()) {
+      if (!WORKFLOW_INNER_PROGRAM_TYPES.containsKey(programInfo.getProgramType())) {
         continue;
       }
-      ProgramRunId innerProgramRunId = appId
-        .program(WORKFLOW_INNER_PROGRAM_TYPES.get(programInfo.getProgramType()), programInfo.getProgramName())
-        .run(nodeState.getRunId());
 
-      Map<String, String> notificationProps = new HashMap<>(notification.getProperties());
-      notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(innerProgramRunId));
+      // Get all active runs of the inner program. If the parent workflow runId is the same as this one,
+      // set a terminal state for the inner program run.
+      ProgramId innerProgramId = appId.program(WORKFLOW_INNER_PROGRAM_TYPES.get(programInfo.getProgramType()),
+                                               programInfo.getProgramName());
 
-      Notification innerNotification = new Notification(Notification.Type.PROGRAM_STATUS, notificationProps);
+      Map<ProgramRunId, Notification> innerProgramNotifications = new LinkedHashMap<>();
 
-      handleProgramEvent(innerProgramRunId, programRunStatus, innerNotification,
-                         sourceId, appMetadataStore, programHeartbeatTable, runnables);
+      appMetadataStore.scanActiveRuns(innerProgramId, runRecord -> {
+        Map<String, String> systemArgs = runRecord.getSystemArgs();
+        String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
+        String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
+
+        if (workflowName == null || workflowRun == null) {
+          return;
+        }
+
+        ProgramRunId workflowRunId = appId.program(ProgramType.WORKFLOW, workflowName).run(workflowRun);
+        if (!programRunId.equals(workflowRunId)) {
+          return;
+        }
+
+        Map<String, String> notificationProps = new HashMap<>(notification.getProperties());
+        notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runRecord.getProgramRunId()));
+
+        innerProgramNotifications.put(runRecord.getProgramRunId(),
+                                      new Notification(Notification.Type.PROGRAM_STATUS, notificationProps));
+      });
+
+      for (Map.Entry<ProgramRunId, Notification> entry : innerProgramNotifications.entrySet()) {
+        handleProgramEvent(entry.getKey(), programRunStatus, entry.getValue(),
+                           sourceId, appMetadataStore, programHeartbeatTable, runnables);
+      }
     }
   }
 
@@ -509,8 +637,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
-                                                AppMetadataStore appMetadataStore,
-                                                StructuredTableContext context) throws IOException {
+                                                AppMetadataStore appMetadataStore, StructuredTableContext context)
+                                                throws IOException, InterruptedException {
     Map<String, String> properties = notification.getProperties();
 
     ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
@@ -530,7 +658,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return Optional.of(provisioningService.provision(provisionRequest, context));
       case PROVISIONED:
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
-        appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
+        RunRecordDetail runRecord =
+          appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
+        // if the run was stopped right before provisioning completes, it is possible for the state
+        // to transition to stopping or killed, but not in time to cancel the provisioning.
+        // In that case, we end up with a provisioned message, but we don't want to start the program.
+        if (runRecord == null || runRecord.getStatus() == ProgramRunStatus.STOPPING
+          || runRecord.getStatus() == ProgramRunStatus.KILLED) {
+          break;
+        }
 
         // Update the ProgramOptions system arguments to include information needed for program execution
         Map<String, String> systemArgs = new HashMap<>(programOptions.getArguments().asMap());
@@ -553,21 +689,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           .ifPresent(profileId -> emitProvisioningTimeMetric(programRunId, profileId,
                                                              programOptions, provisioningTime));
 
-        // start the program run
-        return Optional.of(() -> {
-          String oldUser = SecurityRequestContext.getUserId();
-          try {
-            SecurityRequestContext.setUserId(userId);
-            try {
-              programLifecycleService.startInternal(programDescriptor, newProgramOptions, programRunId);
-            } catch (Exception e) {
-              LOG.error("Failed to start program {}", programRunId, e);
-              programStateWriter.error(programRunId, e);
-            }
-          } finally {
-            SecurityRequestContext.setUserId(oldUser);
-          }
-        });
+        break;
       case DEPROVISIONING:
         RunRecordDetail recordedMeta = appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
         // If we skipped recording the run status, that means this was a duplicate message,
@@ -588,14 +710,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   private Optional<Runnable> getEmitMetricsRunnable(ProgramRunId programRunId,
-                                                    @Nullable RunRecordDetail recordedRunRecord,
-                                                    String metricName) {
+                                                    @Nullable RunRecordDetail recordedRunRecord, String metricName,
+                                                    @Nullable ProgramRunStatus existingStatus) {
     if (recordedRunRecord == null) {
       return Optional.empty();
     }
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
                                                                        recordedRunRecord.getSystemArgs());
-    return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName));
+    Map<String, String> additionalTags = getAdditionalTagsForProgramMetrics(recordedRunRecord,
+                                                                            existingStatus);
+    return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName, additionalTags));
   }
 
   private void publishRecordedStatus(Notification notification,
@@ -620,7 +744,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private long getTimeSeconds(Map<String, String> properties, String option) {
     String timeString = properties.get(option);
-    return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
+    return (timeString == null) ? -1L : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
   }
 
   /**
@@ -644,7 +768,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Emit the metrics context for the program, the tags are constructed with the program run id and
    * the profile id
    */
-  private void emitProfileMetrics(ProgramRunId programRunId, ProfileId profileId, String metricName) {
+  private void emitProfileMetrics(ProgramRunId programRunId, ProfileId profileId, String metricName,
+                                  Map<String, String> additionalTags) {
     Map<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
       .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
@@ -653,6 +778,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
       .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
       .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
+      .putAll(additionalTags)
       .build();
 
     metricsCollectionService.getContext(tags).increment(metricName, 1L);
@@ -684,11 +810,67 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Emit the program run time metric. The tags are constructed with the program run id and program run status.
    */
   private void emitRunTimeMetric(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
-                                 long runTime) {
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.STATUS, programRunStatus.name());
+                                 long runTime, RunRecordDetail runRecord) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.STATUS, programRunStatus.name())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .putAll(getAdditionalTagsForProfileMetrics(runRecord, programRunId))
+      .putAll(getAdditionalTagsForProgramMetrics(runRecord, null))
+      .build();
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.RUN_TIME_SECONDS, runTime);
+  }
+
+  /**
+   * Emit stopping latency metric.
+   */
+  private void emitStoppingTimeMetric(ProgramRunId programRunId, ProfileId profileId, RunRecordDetail runRecord) {
+    if (runRecord.getStopTs() == null || runRecord.getStoppingTs() == null) {
+      return;
+    }
+    Map<String, String> additionalTags = new HashMap<>();
+    // don't want to add the tag if it is not present otherwise it will result in NPE
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.PROVISIONER,
+                                   provisioner -> SystemArguments.getProfileProvisioner(
+                                     runRecord.getSystemArgs()));
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .putAll(additionalTags)
+      .build();
+    MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
+                                                                               metricsCollectionService);
+
+    metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STOPPING_DELAY_SECONDS,
+                         runRecord.getStopTs() - runRecord.getStoppingTs());
+  }
+
+  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime,
+                                      @Nullable RunRecordDetail runRecord) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .putAll(getAdditionalTagsForProfileMetrics(runRecord, programRunId))
+      .putAll(getAdditionalTagsForProgramMetrics(runRecord, null))
+      .build();
+    MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
+                                                                               metricsCollectionService);
+    metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STARTING_DELAY_SECONDS, startDelayTime);
+  }
+
+  private Map<String, String> getAdditionalTagsForProfileMetrics(@Nullable RunRecordDetail runRecord,
+                                                                 ProgramRunId programRunId) {
+    Map<String, String> tags = new HashMap<>(Collections.emptyMap());
+    if (runRecord == null) {
+      return tags;
+    }
+    SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), runRecord.getSystemArgs())
+      .ifPresent(profileId -> {
+        tags.putIfAbsent(Constants.Metrics.Tag.PROFILE, profileId.getProfile());
+        tags.putIfAbsent(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name());
+      });
+    return tags;
   }
 
   /**
@@ -696,5 +878,22 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
     return AppMetadataStore.create(context);
+  }
+
+  private Map<String, String> getAdditionalTagsForProgramMetrics(@Nullable RunRecordDetail runRecord,
+                                                                 @Nullable ProgramRunStatus existingStatus) {
+    Map<String, String> additionalTags = new HashMap<>();
+    if (runRecord == null) {
+      return additionalTags;
+    }
+    // don't want to add the tag if it is not present otherwise it will result in NPE
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.PROVISIONER,
+                                   provisioner -> SystemArguments.getProfileProvisioner(runRecord.getSystemArgs()));
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.CLUSTER_STATUS,
+                                   clusterStatus -> runRecord.getCluster().getStatus().name());
+    additionalTags.computeIfAbsent(Constants.Metrics.Tag.EXISTING_STATUS,
+                                   existingProgramStatus -> existingStatus == null ? null : existingStatus.name());
+
+    return additionalTags;
   }
 }

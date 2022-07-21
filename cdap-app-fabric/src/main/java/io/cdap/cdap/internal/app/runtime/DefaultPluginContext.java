@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -39,12 +40,15 @@ public class DefaultPluginContext implements PluginContext {
   private final PluginInstantiator pluginInstantiator;
   private final ProgramId programId;
   private final Map<String, Plugin> plugins;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   public DefaultPluginContext(@Nullable PluginInstantiator pluginInstantiator,
-                              ProgramId programId, Map<String, Plugin> plugins) {
+                              ProgramId programId, Map<String, Plugin> plugins,
+                              FeatureFlagsProvider featureFlagsProvider) {
     this.pluginInstantiator = pluginInstantiator;
     this.programId = programId;
     this.plugins = plugins;
+    this.featureFlagsProvider = featureFlagsProvider;
   }
 
   @Override
@@ -58,7 +62,7 @@ public class DefaultPluginContext implements PluginContext {
     if (pluginInstantiator == null) {
       throw new UnsupportedOperationException("Plugin is not supported");
     }
-    return pluginInstantiator.substituteMacros(plugin, evaluator);
+    return pluginInstantiator.substituteMacros(plugin, evaluator, null);
   }
 
   @Override
@@ -100,6 +104,11 @@ public class DefaultPluginContext implements PluginContext {
       // This is fatal, since jar cannot be expanded.
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagsProvider.isFeatureEnabled(name);
   }
 
   private Plugin getPlugin(String pluginId) {

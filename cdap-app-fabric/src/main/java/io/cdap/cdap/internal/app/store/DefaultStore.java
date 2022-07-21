@@ -36,6 +36,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -56,6 +57,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -66,17 +69,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -91,12 +98,23 @@ public class DefaultStore implements Store {
   // as it is not specifically metadata
   private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset("workflow.stats");
   private static final Map<String, String> EMPTY_STRING_MAP = Collections.emptyMap();
+  // If store does not support reverse scanning, we reorder in memory.
+  // This is maximum number of items we will reorder at a time
+  // before repeating the scan. We would need to store so many key in memory to serve the answer
+  private static final int MAX_REORDER_BATCH = 1000;
 
-  private TransactionRunner transactionRunner;
+  private final TransactionRunner transactionRunner;
+  private final int maxReorderBatch;
 
   @Inject
   public DefaultStore(TransactionRunner transactionRunner) {
+    this(transactionRunner, MAX_REORDER_BATCH);
+  }
+
+  @VisibleForTesting
+  DefaultStore(TransactionRunner transactionRunner, int maxReorderBatch) {
     this.transactionRunner = transactionRunner;
+    this.maxReorderBatch = maxReorderBatch;
   }
 
   /**
@@ -104,7 +122,8 @@ public class DefaultStore implements Store {
    *
    * @param framework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+  public static void setupDatasets(DatasetFramework framework)
+    throws IOException, DatasetManagementException, UnauthorizedException {
     framework.addInstance(Table.class.getName(), AppMetadataStore.APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }
@@ -157,6 +176,13 @@ public class DefaultStore implements Store {
   public void setRunning(ProgramRunId id, long runTime, String twillRunId, byte[] sourceId) {
     TransactionRunners.run(transactionRunner, context -> {
       getAppMetadataStore(context).recordProgramRunning(id, runTime, twillRunId, sourceId);
+    });
+  }
+
+  @Override
+  public void setStopping(ProgramRunId id, byte[] sourceId, long stoppingTsSecs, long terminateTsSecs) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppMetadataStore(context).recordProgramStopping(id, sourceId, stoppingTsSecs, terminateTsSecs);
     });
   }
 
@@ -325,6 +351,24 @@ public class DefaultStore implements Store {
   public int countActiveRuns(@Nullable Integer limit) {
     return TransactionRunners.run(transactionRunner,
                                   context -> (int) getAppMetadataStore(context).countActiveRuns(limit));
+  }
+
+  @Override
+  public void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer) {
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+
+    AtomicInteger count = new AtomicInteger();
+    do {
+      count.set(0);
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore.create(context).scanActiveRuns(cursorRef.get(), txBatchSize, (cursor, runRecordDetail) -> {
+          count.incrementAndGet();
+          cursorRef.set(cursor);
+          consumer.accept(runRecordDetail);
+        });
+      });
+    }
+    while (count.get() > 0);
   }
 
   @Override
@@ -537,22 +581,96 @@ public class DefaultStore implements Store {
 
   @Override
   public void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+    scanApplications(ScanApplicationsRequest.builder().build(), txBatchSize, consumer);
+  }
 
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+  @Override
+  public boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
+                               BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
 
-    while (true) {
+    AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(request);
+    AtomicReference<ApplicationId> lastKey = new AtomicReference<>();
+    AtomicInteger currentLimit = new AtomicInteger(request.getLimit());
+
+    while (currentLimit.get() > 0) {
       AtomicInteger count = new AtomicInteger();
 
+      try {
+        TransactionRunners.run(transactionRunner, context -> {
+          getAppMetadataStore(context).scanApplications(requestRef.get(), entry -> {
+            lastKey.set(entry.getKey());
+            currentLimit.decrementAndGet();
+            consumer.accept(entry.getKey(), entry.getValue().getSpec());
+            return count.incrementAndGet() < txBatchSize && currentLimit.get() > 0;
+          });
+        });
+      } catch (UnsupportedOperationException e) {
+        if (requestRef.get().getSortOrder() != SortOrder.DESC || count.get() != 0) {
+          throw e;
+        }
+        scanApplicationwWithReorder(requestRef.get(), txBatchSize, consumer);
+      }
+
+      if (lastKey.get() == null) {
+        break;
+      }
+      ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
+        .builder(requestRef.get())
+        .setScanFrom(lastKey.get())
+        .setLimit(currentLimit.get())
+        .build();
+      requestRef.set(nextBatchRequest);
+      lastKey.set(null);
+    }
+    return currentLimit.get() == 0;
+  }
+
+  /**
+   * Special case where we are asked to get applications in descending order and the store does not support it.
+   * We scan keys in large batches and serve backwards
+   */
+  private void scanApplicationwWithReorder(ScanApplicationsRequest request,
+                                           int txBatchSize,
+                                           BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+    AtomicReference<ScanApplicationsRequest> forwardRequest =
+      new AtomicReference<>(ScanApplicationsRequest.builder(request)
+      .setSortOrder(SortOrder.ASC)
+      .setScanFrom(request.getScanTo())
+      .setScanTo(request.getScanFrom())
+      .setLimit(Integer.MAX_VALUE)
+      .build());
+    AtomicBoolean needMoreScans = new AtomicBoolean(true);
+    Deque<ApplicationId> ids = new ArrayDeque<>(1 + Math.min(maxReorderBatch, request.getLimit()));
+    AtomicInteger currentLimit = new AtomicInteger(request.getLimit());
+    while (needMoreScans.get()) {
+      needMoreScans.set(false);
       TransactionRunners.run(transactionRunner, context -> {
-        getAppMetadataStore(context).scanApplications(cursorRef.get(), (cursor, entry) -> {
-          cursorRef.set(cursor);
-          consumer.accept(entry.getKey(), entry.getValue().getSpec());
-          return count.incrementAndGet() < txBatchSize;
+        getAppMetadataStore(context).scanApplications(forwardRequest.get(), entry -> {
+          if (ids.size() >= currentLimit.get()) {
+            ids.removeFirst();
+          }
+          if (ids.size() >= maxReorderBatch) {
+            ids.removeFirst();
+            needMoreScans.set(true);
+          }
+          ids.add(entry.getKey());
+          return true;
         });
       });
-
-      if (count.get() == 0) {
-        break;
+      if (needMoreScans.get()) {
+        forwardRequest.set(ScanApplicationsRequest
+                             .builder(forwardRequest.get())
+                             .setScanTo(ids.getFirst())
+                             .build());
+      }
+      while (!ids.isEmpty()) {
+        TransactionRunners.run(transactionRunner, context -> {
+          for (int i = 0; !ids.isEmpty() && i < txBatchSize; i++) {
+            ApplicationId id = ids.removeLast();
+            consumer.accept(id, getApplicationSpec(getAppMetadataStore(context), id));
+            currentLimit.decrementAndGet();
+          }
+        });
       }
     }
   }
@@ -615,8 +733,8 @@ public class DefaultStore implements Store {
   }
 
   private static class ApplicationSpecificationWithChangedServices extends ForwardingApplicationSpecification {
-    private String serviceName;
-    private ServiceSpecification serviceSpecification;
+    private final String serviceName;
+    private final ServiceSpecification serviceSpecification;
 
     private ApplicationSpecificationWithChangedServices(ApplicationSpecification delegate,
                                                         String serviceName, ServiceSpecification serviceSpecification) {
@@ -675,8 +793,8 @@ public class DefaultStore implements Store {
   }
 
   private static class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
-    private String workerId;
-    private WorkerSpecification workerSpecification;
+    private final String workerId;
+    private final WorkerSpecification workerSpecification;
 
     private ApplicationSpecificationWithChangedWorkers(ApplicationSpecification delegate, String workerId,
                                                        WorkerSpecification workerSpec) {

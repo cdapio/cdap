@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,9 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import io.cdap.cdap.data.runtime.StorageModule;
@@ -65,9 +68,9 @@ import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.http.HttpHandler;
@@ -110,6 +113,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // TODO: Refactor to use injector for everything
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, txConf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new InMemoryDiscoveryModule(),
       new AuthorizationTestModule(),
       new StorageModule(),
@@ -134,17 +138,18 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     txManager.startAndWait();
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry);
+    StoreDefinition.createAllTables(structuredTableAdmin);
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
     TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    CommonNettyHttpServiceFactory commonNettyHttpServiceFactory =
+      injector.getInstance(CommonNettyHttpServiceFactory.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
 
-    framework = new RemoteDatasetFramework(cConf, discoveryServiceClient, registryFactory, authenticationContext);
+    framework = createFramework(authenticationContext, remoteClientFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
 
@@ -153,12 +158,12 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
-                                                     discoveryService, metricsCollectionService, handlers);
+                                                     discoveryService, commonNettyHttpServiceFactory, handlers);
     opExecutorService.startAndWait();
 
     DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
     ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
-    AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
 
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, impersonator, transactionRunner);
     DatasetInstanceManager instanceManager = new DatasetInstanceManager(transactionRunner);
@@ -166,20 +171,20 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                          namespacePathLocator, cConf, impersonator,
                                                                          txSystemClientService, transactionRunner,
                                                                          DEFAULT_MODULES);
-    DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authorizationEnforcer,
+    DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, accessEnforcer,
                                                                          authenticationContext);
 
 
-    DatasetOpExecutor opExecutor = new RemoteDatasetOpExecutor(discoveryServiceClient, authenticationContext);
+    DatasetOpExecutor opExecutor = new RemoteDatasetOpExecutor(authenticationContext, remoteClientFactory);
     DatasetInstanceService instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
                                                                         instanceManager, opExecutor,
                                                                         exploreFacade, namespaceQueryAdmin, ownerAdmin,
-                                                                        authorizationEnforcer, authenticationContext,
+                                                                        accessEnforcer, authenticationContext,
                                                                         new NoOpMetadataServiceClient());
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, SConfiguration.create(),
-                                 discoveryService, discoveryServiceClient, metricsCollectionService,
+                                 discoveryService, discoveryServiceClient, commonNettyHttpServiceFactory,
                                  new HashSet<>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable
@@ -190,11 +195,19 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                "%s service is not up after 5 seconds", service);
   }
 
+  /**
+   * This method allows to replace / mock remote clients
+   */
+  protected RemoteDatasetFramework createFramework(AuthenticationContext authenticationContext,
+                                                   RemoteClientFactory remoteClientFactory) {
+    return new RemoteDatasetFramework(cConf, registryFactory, authenticationContext, remoteClientFactory);
+  }
+
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
   // DatasetMetaTable util to add modules to system namespace. However, we should definitely impose these restrictions
   // in RemoteDatasetFramework.
   @Test
-  public void testSystemNamespace() {
+  public void testSystemNamespace() throws UnauthorizedException {
     DatasetFramework framework = getFramework();
     try {
       framework.deleteModule(NamespaceId.SYSTEM.datasetModule("orderedTable-memory"));

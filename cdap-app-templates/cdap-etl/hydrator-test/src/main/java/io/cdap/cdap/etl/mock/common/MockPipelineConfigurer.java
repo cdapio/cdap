@@ -21,6 +21,9 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.etl.api.Engine;
@@ -112,6 +115,12 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   }
 
   @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return properties;
+  }
+
+  @Override
   public void addDatasetModule(String s, Class<? extends DatasetModule> aClass) {
 
   }
@@ -139,6 +148,11 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   @Override
   public void createDataset(String s, Class<? extends Dataset> aClass) {
 
+  }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    throw new UnsupportedOperationException();
   }
 }
 

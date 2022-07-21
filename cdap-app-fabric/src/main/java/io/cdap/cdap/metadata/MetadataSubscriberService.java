@@ -34,6 +34,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.lineage.LineageTable;
+import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
+import io.cdap.cdap.data2.metadata.lineage.field.EndpointFieldDeserializer;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageTable;
 import io.cdap.cdap.data2.metadata.writer.DataAccessLineage;
@@ -66,8 +68,6 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
 import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.spi.metadata.Metadata;
-import io.cdap.cdap.spi.metadata.MetadataConstants;
-import io.cdap.cdap.spi.metadata.MetadataDirective;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
@@ -108,15 +108,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   private static final String BACKFILL_SUBSCRIBER_NAME = "metadata.backfill";
 
-  // directives for (re-)creation of system metadata:
-  // - keep description if new metadata does not contain it
-  // - preserve creation-time if it exists in current metadata
-  private static final Map<ScopedNameOfKind, MetadataDirective> CREATE_DIRECTIVES = ImmutableMap.of(
-    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.DESCRIPTION_KEY),
-    MetadataDirective.KEEP,
-    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.CREATION_TIME_KEY),
-    MetadataDirective.PRESERVE);
-
   private final CConfiguration cConf;
   private final MetadataStorage metadataStorage;
   private final MultiThreadMessagingContext messagingContext;
@@ -124,11 +115,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final int maxRetriesOnConflict;
   private final MetricsCollectionService metricsCollectionService;
 
-  private String conflictMessageId = null;
-  private int conflictCount = 0;
+  private String conflictMessageId;
+  private int conflictCount;
 
-  private boolean didBackfill = false;
-  private int backfillAttempts = 0;
+  private boolean didBackfill;
+  private int backfillAttempts;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -169,7 +160,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Override
   protected MetadataMessage decodeMessage(Message message) {
-    return GSON.fromJson(message.getPayloadAsString(), MetadataMessage.class);
+    return message.decodePayload(r -> GSON.fromJson(r, MetadataMessage.class));
   }
 
   @Nullable
@@ -355,7 +346,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing {@link DataAccessLineage}.
    */
-  private final class DataAccessLineageProcessor implements MetadataMessageProcessor {
+  private static final class DataAccessLineageProcessor implements MetadataMessageProcessor {
 
     DataAccessLineageProcessor() {}
 
@@ -376,7 +367,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing field lineage.
    */
-  private final class FieldLineageProcessor implements MetadataMessageProcessor {
+  private static final class FieldLineageProcessor implements MetadataMessageProcessor {
 
     FieldLineageProcessor() {}
 
@@ -390,7 +381,14 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
       FieldLineageInfo info;
       try {
-        info = message.getPayload(GSON, FieldLineageInfo.class);
+        Gson gson = new GsonBuilder()
+          .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+          .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
+          .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+          .registerTypeAdapter(EndPointField.class, new EndpointFieldDeserializer())
+          .create();
+
+        info = message.getPayload(gson, FieldLineageInfo.class);
       } catch (Throwable t) {
         LOG.warn("Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
                  message, t);
@@ -404,7 +402,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing {@link DatasetUsage}.
    */
-  private final class UsageProcessor implements MetadataMessageProcessor {
+  private static final class UsageProcessor implements MetadataMessageProcessor {
 
     UsageProcessor() {}
 
@@ -424,7 +422,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * The {@link MetadataMessageProcessor} for processing workflow state updates.
    */
-  private final class WorkflowProcessor implements MetadataMessageProcessor {
+  private static final class WorkflowProcessor implements MetadataMessageProcessor {
 
     WorkflowProcessor() {}
 
@@ -474,7 +472,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           // all the new metadata is in System scope - no validation
           MetadataOperation.Create create = (MetadataOperation.Create) operation;
           MetadataMutation mutation = new MetadataMutation.Create(
-            entity, new Metadata(MetadataScope.SYSTEM, create.getTags(), create.getProperties()), CREATE_DIRECTIVES);
+            entity, new Metadata(MetadataScope.SYSTEM, create.getTags(), create.getProperties()),
+            MetadataMutation.Create.CREATE_DIRECTIVES);
           metadataStorage.apply(mutation, MutationOptions.DEFAULT);
           break;
         }

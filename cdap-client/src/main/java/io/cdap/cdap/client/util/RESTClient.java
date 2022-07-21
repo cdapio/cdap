@@ -21,8 +21,8 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.exception.DisconnectedException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.security.authentication.client.AccessToken;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -65,12 +65,12 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
@@ -78,7 +78,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
                               int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -87,7 +87,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
                               AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -95,7 +95,7 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, UnauthorizedException {
 
     int currentTry = 0;
     HttpResponse response;
@@ -167,9 +167,12 @@ public class RESTClient {
   }
 
   private Map<String, String> getAuthHeaders(AccessToken accessToken) {
-    Map<String, String> headers = ImmutableMap.of();
+    Map<String, String> headers = clientConfig.getAdditionalHeaders();
     if (accessToken != null) {
-      headers = ImmutableMap.of(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
+      ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
+      headersBuilder.putAll(headers);
+      headersBuilder.put(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
+      headers = headersBuilder.build();
     }
     return headers;
   }

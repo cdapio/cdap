@@ -35,6 +35,7 @@ import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.lineage.field.LineageRecorder;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -55,6 +56,7 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
@@ -66,6 +68,8 @@ import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -110,7 +114,6 @@ import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,7 +136,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable {
+  PluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable, FeatureFlagsProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -150,7 +153,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Map<String, String> runtimeArguments;
   private final Metrics userMetrics;
   private final MetricsContext programMetrics;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
   private final Admin admin;
@@ -164,6 +166,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Set<Operation> fieldLineageOperations;
   private final LoggingContext loggingContext;
   private final FieldLineageWriter fieldLineageWriter;
+  private final RemoteClientFactory remoteClientFactory;
+  private final FeatureFlagsProvider featureFlagsProvider;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -173,22 +177,24 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    */
   protected AbstractContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
-                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
+                            boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             MessagingService messagingService,
                             @Nullable PluginInstantiator pluginInstantiator,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
+                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+                            RemoteClientFactory remoteClientFactory) {
     super(program.getId());
 
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.program = program;
     this.programOptions = programOptions;
     this.cConf = cConf;
+    this.remoteClientFactory = remoteClientFactory;
     this.programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
     this.triggeringScheduleInfo = getTriggeringScheduleInfo(programOptions);
-    this.discoveryServiceClient = discoveryServiceClient;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
@@ -224,7 +230,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
-                                                  program.getApplicationSpecification().getPlugins());
+                                                  program.getApplicationSpecification().getPlugins(),
+                                                  featureFlagsProvider);
 
     KerberosPrincipalId principalId = ProgramRunners.getApplicationPrincipal(programOptions);
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
@@ -451,8 +458,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public DiscoveryServiceClient getDiscoveryServiceClient() {
-    return discoveryServiceClient;
+  public RemoteClientFactory getRemoteClientFactory() {
+    return remoteClientFactory;
   }
 
   @Override
@@ -783,6 +790,15 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
+   *
+   * @return Map with feature flags defined in CConf.
+   */
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return featureFlagsProvider.isFeatureEnabled(name);
+  }
+
+  /**
    * Creates a new instance of {@link RuntimeProgramContext} to be
    * provided to {@link RuntimeProgramContextAware} dataset.
    */
@@ -810,6 +826,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
           } catch (TopicNotFoundException e) {
             // this shouldn't happen since the TMS creates the data event topic on startup.
             throw new IOException("Unexpected exception due to missing topic '" + dataEventTopic + "'", e);
+          } catch (AccessException e) {
+            throw new IOException("Unexpected access exception during publishing notification to '"
+                                    + dataEventTopic + "'", e);
           } catch (IOException e) {
             long sleepTime = retryStrategy.nextRetry(++failure, startTime);
             if (sleepTime < 0) {

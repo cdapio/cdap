@@ -18,9 +18,11 @@ package io.cdap.cdap.security.impersonation;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -75,29 +77,33 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   @Override
-  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException {
+  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws AccessException {
     return getUGI(entityId, ImpersonatedOpType.OTHER);
   }
 
   private UserGroupInformation getUGI(NamespacedEntityId entityId,
-                                      ImpersonatedOpType impersonatedOpType) throws IOException {
-    UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
-    // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
-    if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
-      return currentUser;
-    }
+                                      ImpersonatedOpType impersonatedOpType) throws AccessException {
+    try {
+      UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
+      // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
+      if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
+        return currentUser;
+      }
 
-    ImpersonationRequest impersonationRequest = new ImpersonationRequest(entityId, impersonatedOpType);
-    // if the current user is not same as cdap master user then it means we are already impersonating some user
-    // and hence we should not allow another impersonation. See CDAP-8641 and CDAP-13123
-    // Note that this is just a temporary fix and we will need to revisit the impersonation model in the future.
-    if (!currentUser.getShortUserName().equals(masterShortUsername)) {
-      LOG.debug("Not impersonating for {} as the call is already impersonated as {}",
-                impersonationRequest, currentUser);
-      IMPERSONATION_FAILTURE_LOG.warn("Not impersonating for {} as the call is already impersonated as {}",
-                                      impersonationRequest, currentUser);
-      return currentUser;
+      ImpersonationRequest impersonationRequest = new ImpersonationRequest(entityId, impersonatedOpType);
+      // if the current user is not same as cdap master user then it means we are already impersonating some user
+      // and hence we should not allow another impersonation. See CDAP-8641 and CDAP-13123
+      // Note that this is just a temporary fix and we will need to revisit the impersonation model in the future.
+      if (!currentUser.getShortUserName().equals(masterShortUsername)) {
+        LOG.debug("Not impersonating for {} as the call is already impersonated as {}",
+                  impersonationRequest, currentUser);
+        IMPERSONATION_FAILTURE_LOG.warn("Not impersonating for {} as the call is already impersonated as {}",
+                                        impersonationRequest, currentUser);
+        return currentUser;
+      }
+      return ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();
+    } catch (IOException e) {
+      throw AuthEnforceUtil.propagateAccessException(e);
     }
-    return ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();
   }
 }

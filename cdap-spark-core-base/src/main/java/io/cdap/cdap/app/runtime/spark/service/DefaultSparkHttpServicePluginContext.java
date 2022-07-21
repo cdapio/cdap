@@ -27,6 +27,7 @@ import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
@@ -159,6 +160,12 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
   }
 
   @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    return pluginConfigurer.evaluateMacros(properties, evaluator, options);
+  }
+
+  @Override
   public PluginProperties getPluginProperties(String pluginId) {
     try {
       return runtimeContext.getPluginProperties(pluginId);
@@ -175,7 +182,7 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
     } catch (IllegalArgumentException | UnsupportedOperationException e) {
       // Expected if the plugin is not in the runtime context. Keep going.
     }
-    return pluginInstantiator.substituteMacros(getExtraPlugin(pluginId), evaluator);
+    return pluginInstantiator.substituteMacros(getExtraPlugin(pluginId), evaluator, null);
   }
 
   @Override
@@ -257,6 +264,10 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
     Closeables.closeQuietly(pluginInstantiator);
   }
 
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return runtimeContext.isFeatureEnabled(name);
+  }
   /**
    * Checks if a plugin of the given id can be configured through this context object.
    */

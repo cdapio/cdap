@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -28,12 +27,11 @@ import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.table.Scanner;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,18 +56,29 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
   private final NoSqlStructuredTableDatasetDefinition tableDefinition;
   private final DatasetSpecification entityRegistrySpec;
 
-  @Inject
-  public NoSqlStructuredTableRegistry(@Named(Constants.Dataset.TABLE_TYPE_NO_TX) DatasetDefinition tableDefinition) {
+  private volatile boolean initialized;
+
+  @VisibleForTesting
+  public NoSqlStructuredTableRegistry(DatasetDefinition tableDefinition) {
     this.tableDefinition = new NoSqlStructuredTableDatasetDefinition(tableDefinition);
     this.entityRegistrySpec = tableDefinition.configure(ENTITY_REGISTRY, DatasetProperties.EMPTY);
   }
 
-  @Override
-  public void initialize() throws IOException {
-    DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityRegistrySpec, null);
-    if (!admin.exists()) {
-      LOG.info("Creating dataset table {} in namespace {}", entityRegistrySpec.getName(), NamespaceId.SYSTEM);
-      admin.create();
+  private void initIfNeeded() throws IOException {
+    if (initialized) {
+      return;
+    }
+    synchronized (this) {
+      if (initialized) {
+        return;
+      }
+
+      DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityRegistrySpec, null);
+      if (!admin.exists()) {
+        LOG.info("Creating dataset table {} in namespace {}", entityRegistrySpec.getName(), NamespaceId.SYSTEM);
+        admin.create();
+      }
+      initialized = true;
     }
   }
 
@@ -134,6 +143,7 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
 
   private <T extends Dataset> T getRegistryTable() {
     try {
+      initIfNeeded();
       //noinspection unchecked
       return (T) tableDefinition.getDataset(SYSTEM_CONTEXT, entityRegistrySpec, Collections.emptyMap(), null);
     } catch (IOException e) {

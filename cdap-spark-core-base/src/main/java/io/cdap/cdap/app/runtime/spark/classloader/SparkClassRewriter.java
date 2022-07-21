@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import io.cdap.cdap.common.logging.RedirectedPrintStream;
 import io.cdap.cdap.internal.asm.Classes;
 import io.cdap.cdap.internal.asm.Methods;
 import io.cdap.cdap.internal.asm.Signatures;
+import org.apache.spark.deploy.SparkSubmit;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -99,13 +100,14 @@ public class SparkClassRewriter implements ClassRewriter {
     Type.getObjectType("org/apache/spark/api/python/PythonWorkerFactory");
   private static final Type SPARK_PYTHON_WORKER_MONITOR_THREAD_TYPE =
     Type.getObjectType("org/apache/spark/api/python/PythonWorkerFactory$MonitorThread");
-  private static final Type SPARK_REDIRECT_THREAD = Type.getObjectType("org/apache/spark/util/RedirectThread");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type CHECKPOINT_WRITE_HANDLER_TYPE =
     Type.getObjectType("org/apache/spark/streaming/CheckpointWriter$CheckpointWriteHandler");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
   private static final Type SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE =
     Type.getObjectType("org/apache/spark/streaming/util/BatchedWriteAheadLog");
+  private static final Type SPARK_WRITER_AHEAD_LOG_BASED_BLOCK_HANDLER_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/receiver/WriteAheadLogBasedBlockHandler");
   private static final Type RATE_CONTROLLER_TYPE =
     Type.getObjectType("org/apache/spark/streaming/scheduler/RateController");
   private static final Type SPARK_STREAMING_TIME_TYPE =
@@ -204,8 +206,14 @@ public class SparkClassRewriter implements ClassRewriter {
     }
     if (className.equals(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE.getClassName())) {
       // Rewrite BatchedWriteAheadLog to register it in SparkRuntimeEnv so that we can free up the batch writer thread
-      // even there is no Receiver based DStream (it's a thread leak from Spark) (CDAP-11577) (SPARK-20935)
+      // even there is no Receiver based DStream (it's a thread leak from Spark) (CDAP-11577) (SPARK-20935).
+      // See method for details.
       return rewriteBatchedWriteAheadLog(input);
+    }
+    if (className.equals(SPARK_WRITER_AHEAD_LOG_BASED_BLOCK_HANDLER_TYPE.getClassName())) {
+      // Rewrite WriteAheadLogBasedBlockHandler to keep the ExecutorContext running even after stop().
+      // See method for details.
+      return rewriteWritAheadLogHandler(input);
     }
     if (className.equals(RATE_CONTROLLER_TYPE.getClassName())) {
       // Rewrite the RateController class to avoid leaking a "stream-rate-update"
@@ -377,9 +385,16 @@ public class SparkClassRewriter implements ClassRewriter {
   /**
    * Rewrites the BatchedWriteAheadLog class to register itself to SparkRuntimeEnv so that the write ahead log thread
    * can be shutdown when the Spark program finished.
+   *
+   * Also, rewrite the close() method on the writer to a no-op and
+   * add a new realClose() method to perform the closing operation. This is needed for the graceful shutdown.
+   * During graceful shutdown, the JobGenerator would first close the ReceiverTracker to signal all receivers to stop,
+   * which will also close the WAL inside the ReceiverTracker. This causes the JobGenerator failureto update the WAL
+   * while processing the remaining jobs as part of the graceful shutdown logic.
    */
   private byte[] rewriteBatchedWriteAheadLog(InputStream byteCodeStream) throws IOException {
-    return rewriteConstructor(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE, byteCodeStream, new ConstructorRewriter() {
+    // First rewrite the constructor
+    byte[] bytecode = rewriteConstructor(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE, byteCodeStream, new ConstructorRewriter() {
       @Override
       public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
@@ -388,6 +403,76 @@ public class SparkClassRewriter implements ClassRewriter {
                                                  new Type[] { Type.getType(Object.class) }));
       }
     });
+
+    // Second pass to copy the close() method to the realClose() method, and turn close() to no-op
+    ClassReader cr = new ClassReader(bytecode);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+    Method closeMethod = new Method("close", Type.VOID_TYPE, new Type[0]);
+    cr.accept(new ClassVisitor(Opcodes.ASM7, cw) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String descriptor,
+                                       String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+
+        if (!(closeMethod.getName().equals(name) && closeMethod.getDescriptor().equals(descriptor))) {
+          return mv;
+        }
+        // Make the close() method no-op and simply return
+        GeneratorAdapter adapter = new GeneratorAdapter(mv, access, name, descriptor);
+        adapter.returnValue();
+        adapter.endMethod();
+
+        // Rename the close() to realClose()
+        return super.visitMethod(access, "realClose", descriptor, signature, exceptions);
+      }
+    }, 0);
+
+    return cw.toByteArray();
+  }
+
+  /**
+   * Rewrites the WriteAheadLogBasedBlockHandler.stop() method to skip shutting down of the ExecutorContext.
+   * The executor is needed for writing out the last received block after stop() was called since persisting
+   * received blocks into WAL is a async operation.
+   * The ExecutorContext runs in daemon thread, hence it won't block the process termination.
+   */
+  private byte[] rewriteWritAheadLogHandler(InputStream byteCodeStream) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+    Method stopMethod = new Method("stop", Type.VOID_TYPE, new Type[0]);
+    Method shutdownMethod = new Method("shutdown", Type.VOID_TYPE, new Type[0]);
+    String executorClass = "scala/concurrent/ExecutionContextExecutorService";
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String descriptor,
+                                       String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+
+        if (!stopMethod.getDescriptor().equals(descriptor)) {
+          return mv;
+        }
+
+        return new MethodVisitor(Opcodes.ASM7, mv) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+            if (Opcodes.INVOKEINTERFACE == opcode
+                && executorClass.equals(owner)
+                && shutdownMethod.getDescriptor().equals(descriptor)) {
+              // Inside the stop() method, skip the call the ExecutionContextExecutorService.shutdown() method.
+              // We need to pop the ExecutionContextExecutorService instance from the stack since
+              // it is not used to call any method.
+              super.visitInsn(Opcodes.POP);
+            } else {
+              super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+            }
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
   }
 
   /**
@@ -694,7 +779,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
 
-      boolean hasCheckpointTimeField = false;
+      boolean hasCheckpointTimeField;
 
       @Override
       public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
@@ -715,7 +800,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
         return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
 
-          boolean tempStringAddedToStack = false;
+          boolean tempStringAddedToStack;
           final Method hadoopPathConstructorMethod =
             new Method("<init>", Type.VOID_TYPE, new Type[]{ stringType, stringType });
 
@@ -937,27 +1022,11 @@ public class SparkClassRewriter implements ClassRewriter {
               Type stringType = Type.getType(String.class);
 
               // Generates
-              // if (SparkRuntimeEnv.getProperty("cdap.spark.pyFiles") != null) {
-              //   <stringOnStack>.concat(File.pathSeparator).concat(SparkRuntimeEnv.getProperty("cdap.spark.pyFiles"))
-              // }
+              //   SparkRuntimeUtils.appendPyFiles(<stringOnStack>)
               // The result will be back on the stack
               // The "cdap.spark.pyFiles" property is only set in local mode by SparkRuntimeService
-              Label nullLabel = adapter.newLabel();
-              // The if condition
-              adapter.push("cdap.spark.pyFiles");
-              adapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
-                                   Methods.getMethod(String.class, "getProperty", String.class));
-              adapter.ifNull(nullLabel);
-
-              // Inside the if block
-              adapter.push(File.pathSeparator);
-              adapter.invokeVirtual(stringType, Methods.getMethod(String.class, "concat", String.class));
-              adapter.push("cdap.spark.pyFiles");
-              adapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
-                                   Methods.getMethod(String.class, "getProperty", String.class));
-              adapter.invokeVirtual(stringType, Methods.getMethod(String.class, "concat", String.class));
-              // End of if block
-              adapter.mark(nullLabel);
+              adapter.invokeStatic(SPARK_RUNTIME_UTILS_TYPE,
+                                   Methods.getMethod(String.class, "appendPyFiles", String.class));
             }
 
             super.visitFieldInsn(opcode, owner, name, desc);

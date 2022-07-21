@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -72,8 +74,10 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -170,6 +174,7 @@ public class UpgradeTool {
   Injector createInjector() {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new DFSLocationModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
@@ -197,12 +202,14 @@ public class UpgradeTool {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),
+      new IOModule(),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreServerModule(),
       new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
       new KafkaLogAppenderModule(),
       // the DataFabricDistributedModule needs MetricsCollectionService binding
       new AbstractModule() {
@@ -260,7 +267,7 @@ public class UpgradeTool {
                           TimeUnit.MILLISECONDS,
                           String.format("Connection timed out while trying to start ZooKeeper client. Please " +
                                           "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
-                                          "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
+                                          "Currently configured as: %s", zkClientService.getConnectString()));
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
@@ -450,7 +457,7 @@ public class UpgradeTool {
    * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    */
   private void initializeDSFramework(DatasetFramework datasetFramework, boolean includeNewDatasets)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, UnauthorizedException {
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     //noinspection StatementWithEmptyBody
     if (includeNewDatasets) {

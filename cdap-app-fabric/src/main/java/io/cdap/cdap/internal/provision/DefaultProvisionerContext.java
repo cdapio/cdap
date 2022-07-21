@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -49,17 +50,21 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final Map<String, String> properties;
   private final SSHContext sshContext;
   private final SparkCompat sparkCompat;
-  private final String cdapVersion;
+  private final VersionInfo cdapVersion;
+  @Nullable
+  private final VersionInfo appCDAPVersion;
   private final LocationFactory locationFactory;
   private final RuntimeMonitorType runtimeMonitorType;
   private final MetricsCollectionService metricsCollectionService;
   private final String provisionerName;
+  private final String profileName;
   private final Executor executor;
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
-                            SparkCompat sparkCompat, @Nullable SSHContext sshContext, LocationFactory locationFactory,
+                            SparkCompat sparkCompat, @Nullable SSHContext sshContext,
+                            @Nullable VersionInfo appCDAPVersion, LocationFactory locationFactory,
                             RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
-                            Executor executor) {
+                            @Nullable String profileName, Executor executor) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -73,8 +78,10 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.sshContext = sshContext;
     this.sparkCompat = sparkCompat;
+    this.appCDAPVersion = appCDAPVersion;
     this.locationFactory = locationFactory;
-    this.cdapVersion = ProjectInfo.getVersion().toString();
+    this.profileName = profileName;
+    this.cdapVersion = ProjectInfo.getVersion();
     this.runtimeMonitorType = runtimeMonitorType;
     this.metricsCollectionService = metricsCollectionService;
     this.provisionerName = provisionerName;
@@ -108,8 +115,13 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   }
 
   @Override
-  public String getCDAPVersion() {
+  public VersionInfo getCDAPVersionInfo() {
     return cdapVersion;
+  }
+
+  @Override @Nullable
+  public VersionInfo getAppCDAPVersionInfo() {
+    return appCDAPVersion;
   }
 
   @Override
@@ -120,6 +132,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public RuntimeMonitorType getRuntimeMonitorType() {
     return runtimeMonitorType;
+  }
+
+  @Override
+  public String getProfileName() {
+    return profileName;
   }
 
   @Override

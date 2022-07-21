@@ -42,6 +42,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
@@ -50,11 +51,14 @@ import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.provision.task.DeprovisionTask;
 import io.cdap.cdap.internal.provision.task.ProvisionTask;
 import io.cdap.cdap.internal.provision.task.ProvisioningTask;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -90,6 +94,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -126,6 +131,9 @@ public class ProvisioningService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private ExecutorService contextExecutor;
+  // Using this latch to ensure that the `initializeProvisionersAndExecutors` is completed before provision/deprovision
+  // methods are called from other services.  
+  private final CountDownLatch initializeLatch = new CountDownLatch(1);
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
@@ -158,19 +166,7 @@ public class ProvisioningService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
-
-    this.taskExecutor = new KeyedExecutor<>(
-      Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
-                                       Threads.createDaemonThreadFactory("provisioning-task-%d")));
-
-    int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
-    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
-      maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-      Threads.createDaemonThreadFactory("provisioning-context-%d"));
-    contextExecutor.allowCoreThreadTimeOut(true);
-    this.contextExecutor = contextExecutor;
-
-    initializeProvisioners();
+    initializeProvisionersAndExecutors();
     resumeTasks(taskStateCleanup);
   }
 
@@ -222,8 +218,7 @@ public class ProvisioningService extends AbstractIdleService {
         defaultSSHContext = new DefaultSSHContext(
           Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
       }
-      context = createContext(programRunId, userId, properties, defaultSSHContext,
-                              SystemArguments.getRuntimeMonitorType(cConf, programOptions), name);
+      context = createContext(cConf, programOptions, programRunId, userId, properties, defaultSSHContext);
     } catch (InvalidMacroException e) {
       // This shouldn't happen
       runWithProgramLogging(programRunId, systemArgs,
@@ -234,6 +229,12 @@ public class ProvisioningService extends AbstractIdleService {
     return Retries.callWithRetries(() -> provisioner.getClusterStatus(context, cluster),
                                    RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
                                    RetryableProvisionException.class::isInstance);
+  }
+
+  @Nullable
+  private VersionInfo getAppCDAPVersion(ProgramOptions programOptions) {
+    String version = programOptions.getArguments().getOption(Constants.APP_CDAP_VERSION);
+    return version == null ? null : new ProjectInfo.Version(version);
   }
 
   /**
@@ -336,7 +337,9 @@ public class ProvisioningService extends AbstractIdleService {
    * @param context context for the transaction
    * @return runnable that will actually execute the cluster provisioning
    */
-  public Runnable provision(ProvisionRequest provisionRequest, StructuredTableContext context) throws IOException {
+  public Runnable provision(ProvisionRequest provisionRequest, StructuredTableContext context) throws IOException,
+    InterruptedException {
+    initializeLatch.await(120, TimeUnit.SECONDS);
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
     Map<String, String> args = programOptions.getArguments().asMap();
@@ -396,8 +399,7 @@ public class ProvisioningService extends AbstractIdleService {
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
-    ProvisionerContext context = createContext(programRunId, user, properties, null,
-                                               SystemArguments.getRuntimeMonitorType(cConf, programOptions), name);
+    ProvisionerContext context = createContext(cConf, programOptions, programRunId, user, properties, null);
     return provisioner.getRuntimeJobManager(context);
   }
 
@@ -412,14 +414,16 @@ public class ProvisioningService extends AbstractIdleService {
    * @param context context for the transaction
    * @return runnable that will actually execute the cluster deprovisioning
    */
-  public Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context) throws IOException {
+  public Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context) throws IOException,
+    InterruptedException {
     return deprovision(programRunId, context, taskStateCleanup);
   }
 
   // This is visible for testing, where we may not want to delete the task information after it completes
   @VisibleForTesting
   Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context,
-                       Consumer<ProgramRunId> taskCleanup) throws IOException {
+                       Consumer<ProgramRunId> taskCleanup) throws IOException, InterruptedException {
+    initializeLatch.await(120, TimeUnit.SECONDS);
     // look up information for the corresponding provision operation
     ProvisioningTaskInfo existing =
       provisionerStore.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
@@ -514,12 +518,27 @@ public class ProvisioningService extends AbstractIdleService {
    * Reloads provisioners in the extension directory. Any new provisioners will be added and any deleted provisioners
    * will be removed. Loaded provisioners will be initialized.
    */
-  private void initializeProvisioners() {
-    Map<String, Provisioner> provisioners = provisionerProvider.loadProvisioners();
+  public void initializeProvisionersAndExecutors() {
+    this.taskExecutor = new KeyedExecutor<>(
+        Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
+            Threads.createDaemonThreadFactory("provisioning-task-%d")));
+
+    int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
+    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
+        maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+        Threads.createDaemonThreadFactory("provisioning-context-%d"));
+    contextExecutor.allowCoreThreadTimeOut(true);
+    this.contextExecutor = contextExecutor;
+
+    Map<String, Provisioner> provisioners = new HashMap<>(provisionerProvider.loadProvisioners());
     Map<String, ProvisionerConfig> provisionerConfigs =
-      provisionerConfigProvider.loadProvisionerConfigs(provisioners.keySet());
+      provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
     LOG.debug("Provisioners = {}", provisioners);
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
+    // Remove the tethering provisioner if tethering is disabled
+    if (!cConf.getBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED)) {
+      provisioners.remove(TetheringProvisioner.TETHERING_NAME);
+    }
     for (Map.Entry<String, Provisioner> provisionerEntry : provisioners.entrySet()) {
       String provisionerName = provisionerEntry.getKey();
       Provisioner provisioner = provisionerEntry.getValue();
@@ -533,12 +552,14 @@ public class ProvisioningService extends AbstractIdleService {
       }
       ProvisionerSpecification spec = provisioner.getSpec();
       ProvisionerConfig config = provisionerConfigs.getOrDefault(provisionerName,
-                                                                 new ProvisionerConfig(new ArrayList<>(), null, false));
+                                                                 new ProvisionerConfig(new ArrayList<>(), null,
+                                                                                       null, false));
       details.put(provisionerName, new ProvisionerDetail(spec.getName(), spec.getLabel(), spec.getDescription(),
-                                                         config.getConfigurationGroups(), config.getIcon(),
-                                                         config.isBeta()));
+                                                         config.getConfigurationGroups(), config.getFilters(),
+                                                         config.getIcon(), config.isBeta()));
     }
     provisionerInfo.set(new ProvisionerInfo(provisioners, details));
+    initializeLatch.countDown();
   }
 
   /**
@@ -575,18 +596,35 @@ public class ProvisioningService extends AbstractIdleService {
     provisioner.validateProperties(properties);
   }
 
+  /**
+   * Generates the label to display for total no of CPUs available for processing for the specified provisioner.
+   *
+   * @param provisionerName the name of the provisioner to validate
+   * @param properties properties for the specified provisioner
+   */
+  public String getTotalProcessingCpusLabel(String provisionerName, Map<String, String> properties)
+    throws NotFoundException {
+    Provisioner provisioner = provisionerInfo.get().provisioners.get(provisionerName);
+    if (provisioner == null) {
+      throw new NotFoundException(String.format("Provisioner '%s' does not exist", provisionerName));
+    }
+
+    Optional<String> label = provisioner.getTotalProcessingCpusLabel(properties);
+    return label.filter(s -> !s.isEmpty()).orElse(
+      io.cdap.cdap.proto.provisioner.ProvisionerInfo.DEFAULT_PROCESSING_CPUS_LABEL);
+  }
+
   private Runnable createProvisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner) {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     ProgramOptions programOptions = taskInfo.getProgramOptions();
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     ProvisionerContext context;
-    String name = SystemArguments.getProfileProvisioner(systemArgs);
     try {
       SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                     locationFactory.create(taskInfo.getSecureKeysDir()),
                                                     createSSHKeyPair(taskInfo));
-      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), sshContext,
-                              SystemArguments.getRuntimeMonitorType(cConf, programOptions), name);
+      context = createContext(cConf, programOptions, programRunId, taskInfo.getUser(),
+                              taskInfo.getProvisionerProperties(), sshContext);
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
@@ -636,13 +674,12 @@ public class ProvisioningService extends AbstractIdleService {
 
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
-    String name = SystemArguments.getProfileProvisioner(systemArgs);
 
     try {
       SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                     null, sshKeyPair);
-      context = createContext(programRunId, taskInfo.getUser(), properties, sshContext,
-                              SystemArguments.getRuntimeMonitorType(cConf, taskInfo.getProgramOptions()), name);
+      context = createContext(cConf, taskInfo.getProgramOptions(), programRunId, taskInfo.getUser(), properties,
+                              sshContext);
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
@@ -751,13 +788,21 @@ public class ProvisioningService extends AbstractIdleService {
     }
   }
 
-  private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
-                                           @Nullable SSHContext sshContext, RuntimeMonitorType runtimeMonitorType,
-                                           String provisionerName) {
+  private ProvisionerContext createContext(CConfiguration cConf, ProgramOptions programOptions,
+                                           ProgramRunId programRunId, String userId,
+                                           Map<String, String> properties,
+                                           @Nullable SSHContext sshContext) {
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOptions);
+    Map<String, String> systemArgs = programOptions.getArguments().asMap();
+    String provisionerName = SystemArguments.getProfileProvisioner(systemArgs);
+    String profileName = SystemArguments
+      .getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs)
+      .map(ProfileId::getEntityName).orElse(null);
+    VersionInfo appCDAPVersion = getAppCDAPVersion(programOptions);
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, provisionerName, evaluated, sparkCompat, sshContext,
-                                         locationFactory, runtimeMonitorType,
-                                         metricsCollectionService, contextExecutor);
+                                         appCDAPVersion, locationFactory, runtimeMonitorType,
+                                         metricsCollectionService, profileName, contextExecutor);
   }
 
   /**

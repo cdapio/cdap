@@ -36,7 +36,6 @@ import io.cdap.cdap.test.SlowTests;
 import io.cdap.cdap.test.TestBase;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.ClassRule;

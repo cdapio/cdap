@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.registry;
 
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
-import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.nosql.NoSqlTransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -34,12 +34,11 @@ public class NoSqlUsageTableTest extends UsageTableTest {
 
   @BeforeClass
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
-    StructuredTableAdmin structuredTableAdmin =
-      dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableAdmin.class);
-    transactionRunner = dsFrameworkUtil.getInjector().getInstance(NoSqlTransactionRunner.class);
-    NoSqlStructuredTableRegistry registry =
-      dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableRegistry.class);
-    registry.initialize();
-    StoreDefinition.createAllTables(structuredTableAdmin, registry);
+    CConfiguration cConf = dsFrameworkUtil.getConfiguration();
+    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+
+    StructuredTableAdmin structuredTableAdmin = dsFrameworkUtil.getInjector().getInstance(StructuredTableAdmin.class);
+    transactionRunner = dsFrameworkUtil.getInjector().getInstance(TransactionRunner.class);
+    StoreDefinition.createAllTables(structuredTableAdmin);
   }
 }

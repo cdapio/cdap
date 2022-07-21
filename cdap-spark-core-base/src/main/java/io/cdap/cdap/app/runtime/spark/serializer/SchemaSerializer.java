@@ -44,6 +44,11 @@ public class SchemaSerializer extends Serializer<Schema> {
     Schema.Type type = kryo.readObject(input, Schema.Type.class);
     Schema.LogicalType logicalType = kryo.readObjectOrNull(input, Schema.LogicalType.class);
 
+    if (logicalType == Schema.LogicalType.DECIMAL) {
+      int precision = kryo.readObject(input, Integer.class);
+      int scale = kryo.readObject(input, Integer.class);
+      return Schema.decimalOf(precision, scale);
+    }
     if (type.isSimpleType()) {
       return logicalType == null ? Schema.of(type) : Schema.of(logicalType);
     }
@@ -86,7 +91,10 @@ public class SchemaSerializer extends Serializer<Schema> {
     Schema.Type type = schema.getType();
     kryo.writeObject(output, type);
     kryo.writeObjectOrNull(output, schema.getLogicalType(), Schema.LogicalType.class);
-
+    if (schema.getLogicalType() == Schema.LogicalType.DECIMAL) {
+      kryo.writeObject(output, schema.getPrecision());
+      kryo.writeObject(output, schema.getScale());
+    }
     switch (type) {
       case ENUM:
         kryo.writeObject(output, new ArrayList<>(schema.getEnumValues()));

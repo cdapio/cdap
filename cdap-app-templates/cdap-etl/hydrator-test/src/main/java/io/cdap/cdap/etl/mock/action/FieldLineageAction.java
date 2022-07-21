@@ -98,8 +98,9 @@ public class FieldLineageAction extends Action {
     properties.put("writeDataset", new PluginPropertyField("writeDataset", "", "string", true, false));
     properties.put("fieldOperations", new PluginPropertyField("fieldOperations", "", "string", true, false));
 
-    return new PluginClass(Action.PLUGIN_TYPE, "FieldLineageAction", "", FieldLineageAction.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("FieldLineageAction").setType(Action.PLUGIN_TYPE)
+             .setDescription("").setClassName(FieldLineageAction.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 
   /**

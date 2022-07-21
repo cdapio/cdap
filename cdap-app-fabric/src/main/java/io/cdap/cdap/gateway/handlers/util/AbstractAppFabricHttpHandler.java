@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.Instances;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
@@ -65,6 +66,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
    */
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .registerTypeAdapterFactory(new PermissionAdapterFactory())
     .create();
 
   protected static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();

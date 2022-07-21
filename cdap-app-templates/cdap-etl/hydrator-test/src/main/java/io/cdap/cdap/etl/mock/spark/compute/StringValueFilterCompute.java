@@ -115,8 +115,8 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, true));
     properties.put("value", new PluginPropertyField("value", "", "string", true, true));
-    return new PluginClass(SparkCompute.PLUGIN_TYPE, "StringValueFilterCompute", "",
-                           StringValueFilterCompute.class.getName(),
-                           "conf", properties);
+    return PluginClass.builder().setName("StringValueFilterCompute").setType(SparkCompute.PLUGIN_TYPE)
+             .setDescription("").setClassName(StringValueFilterCompute.class.getName()).setProperties(properties)
+             .setConfigFieldName("conf").build();
   }
 }

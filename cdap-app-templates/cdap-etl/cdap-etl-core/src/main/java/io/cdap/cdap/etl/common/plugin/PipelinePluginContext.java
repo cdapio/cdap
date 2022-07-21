@@ -121,4 +121,9 @@ public class PipelinePluginContext implements PluginContext {
   protected Object wrapUnknownPlugin(String pluginId, Object plugin, Caller caller) {
     return plugin;
   }
+
+  @Override
+  public boolean isFeatureEnabled(String name) {
+    return delegate.isFeatureEnabled(name);
+  }
 }

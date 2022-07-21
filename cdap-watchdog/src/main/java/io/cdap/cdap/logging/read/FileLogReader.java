@@ -163,7 +163,7 @@ public class FileLogReader implements LogReader {
 
       CloseableIterator<CloseableIterator<LogEvent>> closeableIterator =
         new CloseableIterator<CloseableIterator<LogEvent>>() {
-          private CloseableIterator<LogEvent> curr = null;
+          private CloseableIterator<LogEvent> curr;
 
           @Override
           public void close() {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.lang.FilterClassLoader;
@@ -49,13 +50,14 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.RemotePrivilegesManager;
+import io.cdap.cdap.security.authorization.RemotePermissionManager;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import org.apache.hadoop.conf.Configuration;
@@ -126,6 +128,7 @@ public class ContextManager {
   static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new ZKClientModule(),
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
@@ -150,7 +153,7 @@ public class ContextManager {
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           // bind PrivilegesManager to a remote implementation, so it does not need to instantiate the authorizer
-          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
+          bind(PermissionManager.class).to(RemotePermissionManager.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       }
@@ -199,7 +202,8 @@ public class ContextManager {
       this(datasetFramework, null, datasetInstantiatorFactory);
     }
 
-    public DatasetSpecification getDatasetSpec(DatasetId datasetId) throws DatasetManagementException {
+    public DatasetSpecification getDatasetSpec(DatasetId datasetId)
+      throws DatasetManagementException, UnauthorizedException {
       return datasetFramework.getDatasetSpec(datasetId);
     }
 

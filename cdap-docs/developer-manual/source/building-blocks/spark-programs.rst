@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2017 Cask Data, Inc.
+    :copyright: Copyright © 2014-2021 Cask Data, Inc.
 
 .. _spark:
 
@@ -332,18 +332,18 @@ Here is an example of using an explicit transaction in Spark:
 
 Spark Versions
 ==============
-CDAP allows you to write Spark programs using either Spark1 or Spark2. 
-To use Spark1, you must add the ``cdap-api-spark`` Maven dependency::
+CDAP allows you to write Spark programs using either Spark2 or Spark3.
+To use Spark2, you must add the ``cdap-api-spark2_2.11`` Maven dependency::
 
     . . .
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-api-spark</artifactId>
+      <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${cdap.version}</version>
     </dependency>
     . . .
 
-To use Spark2, you must add the ``cdap-api-spark2_2.11`` Maven dependency::
+To use Spark3, you must add the ``cdap-api-spark3_2.12`` Maven dependency::
 
     . . .
     <dependency>

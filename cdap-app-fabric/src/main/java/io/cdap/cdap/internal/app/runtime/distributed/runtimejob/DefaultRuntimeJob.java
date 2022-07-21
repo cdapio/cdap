@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
@@ -29,9 +30,13 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.guice.RemoteExecutionDiscoveryModule;
@@ -52,6 +57,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -59,11 +65,24 @@ import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteIsolatedPluginFinder;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
@@ -92,6 +111,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.apache.twill.api.TwillRunner;
@@ -118,12 +138,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -134,6 +158,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultRuntimeJob.class);
   private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+  private static final long STOP_PROPAGATION_DELAY_SECS = 30L;
 
   private static final Gson GSON =
     ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -142,6 +167,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   private final CompletableFuture<ProgramController> controllerFuture = new CompletableFuture<>();
   private final CountDownLatch runCompletedLatch = new CountDownLatch(1);
+  private RuntimeClientService runtimeClientService;
   private volatile boolean stopRequested;
 
   @Override
@@ -153,7 +179,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     // Get Program Options
     ProgramOptions programOpts = readJsonFile(new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
-                                                 ProgramOptions.class);
+                                              ProgramOptions.class);
     ProgramRunId programRunId = programOpts.getProgramId().run(ProgramRunners.getRunId(programOpts));
     ProgramId programId = programRunId.getParent();
 
@@ -186,6 +212,52 @@ public class DefaultRuntimeJob implements RuntimeJob {
     Deque<Service> coreServices = createCoreServices(injector, systemArgs, cluster);
     startCoreServices(coreServices);
 
+    // regenerate app spec
+    ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
+
+    try {
+      Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
+      File pluginDir = new File(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
+                                                                     DistributedProgramRunner.PLUGIN_DIR));
+      // create a directory to store plugin artifacts for the regeneration of app spec to fetch plugin artifacts
+      DirUtils.mkdirs(pluginDir);
+
+      if (!programOpts.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+        systemArguments.put(ProgramOptionConstants.PLUGIN_DIR, DistributedProgramRunner.PLUGIN_DIR);
+      }
+
+      // remember the file names in the artifact folder before app regeneration
+      List<String> pluginFiles = DirUtils.listFiles(pluginDir, File::isFile).stream()
+        .map(File::getName)
+        .collect(Collectors.toList());
+
+      ApplicationSpecification generatedAppSpec =
+        regenerateAppSpec(systemArguments, programOpts.getUserArguments().asMap(), programId, appSpec,
+                          programDescriptor, configuratorFactory);
+      appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
+      programDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
+
+      List<String> pluginFilesAfter = DirUtils.listFiles(pluginDir, File::isFile).stream()
+        .map(File::getName)
+        .collect(Collectors.toList());
+
+      if (pluginFilesAfter.isEmpty()) {
+        systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
+      }
+
+      // if different, we will need to remove the plugin artifact archive argument from options and let program runner
+      // recreate it from the folders
+      if (!pluginFiles.equals(pluginFilesAfter)) {
+        systemArguments.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
+      }
+
+      // update program options
+      programOpts = new SimpleProgramOptions(programOpts.getProgramId(), new BasicArguments(systemArguments),
+                                             programOpts.getUserArguments(), programOpts.isDebug());
+    } catch (Exception e) {
+      LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId, e);
+    }
+
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
@@ -195,6 +267,20 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+        runtimeClientService.onProgramStopRequested(terminateTs -> {
+          long timeout = TimeUnit.SECONDS.toMillis(terminateTs - STOP_PROPAGATION_DELAY_SECS)
+            - System.currentTimeMillis();
+
+          if (timeout < 0) {
+            // If the timeout is smaller than the propagation delay, use the propagation delay as timeout
+            // to give the remote process some time to shutdown
+            LOG.debug("Terminating program run {} short timeout {} seconds", programRunId, STOP_PROPAGATION_DELAY_SECS);
+            controller.stop(STOP_PROPAGATION_DELAY_SECS, TimeUnit.SECONDS);
+          } else {
+            LOG.debug("Terminating program run {} with timeout {} ms", programRunId, timeout);
+            controller.stop(timeout, TimeUnit.MILLISECONDS);
+          }
+        });
 
         controller.addListener(new AbstractListener() {
           @Override
@@ -252,6 +338,34 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
   }
 
+  @Nullable
+  private ApplicationSpecification regenerateAppSpec(
+    Map<String, String> systemArguments, Map<String, String> userArguments, ProgramId programId,
+    ApplicationSpecification existingAppSpec, ProgramDescriptor programDescriptor,
+    ConfiguratorFactory configuratorFactory) throws InterruptedException, ExecutionException, TimeoutException {
+
+    String appClassName = systemArguments.get(ProgramOptionConstants.APPLICATION_CLASS);
+    Location programJarLocation = Locations.toLocation(
+      new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
+
+
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
+      programDescriptor.getArtifactId(), programJarLocation, programId.getNamespaceId(), appClassName,
+      programId.getApplication(), programId.getVersion(), existingAppSpec.getConfiguration(), null, false,
+      new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments));
+    Configurator configurator = configuratorFactory.create(deploymentInfo);
+    ListenableFuture<ConfigResponse> future = configurator.config();
+    ConfigResponse response = future.get(120, TimeUnit.SECONDS);
+
+    if (response.getExitCode() == 0) {
+      AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+      if (appSpecInfo != null && appSpecInfo.getAppSpec() != null) {
+        return appSpecInfo.getAppSpec();
+      }
+    }
+    return null;
+  }
+
   @Override
   public void requestStop() {
     try {
@@ -296,6 +410,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
       }
     }
 
+    // Pass runtime token to distributed jobs
+    Path tokenFile = Paths.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+    if (Files.exists(tokenFile)) {
+      cConf.set(Constants.Security.Authentication.RUNTIME_TOKEN,
+                new String(Files.readAllBytes(tokenFile), StandardCharsets.UTF_8));
+    }
+
     return cConf;
   }
 
@@ -310,18 +431,14 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   private Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                 ProgramDescriptor programDescriptor, ProgramOptions options) throws IOException {
-    File tempDir = createTempDirectory(cConf, options.getProgramId(), options.getArguments()
-      .getOption(ProgramOptionConstants.RUN_ID));
-    File programDir = new File(tempDir, "program");
-    DirUtils.mkdirs(programDir);
-    File programJarFile = new File(programDir, "program.jar");
+
     Location programJarLocation = Locations.toLocation(
       new File(options.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR)));
-    Locations.linkOrCopy(programJarLocation, programJarFile);
-    programJarLocation = Locations.toLocation(programJarFile);
-    BundleJarUtil.unJar(programJarLocation, programDir);
 
-    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, programDir);
+    ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+      programJarLocation, () -> createTempDirectory(cConf, options.getProgramId(),
+                                                    options.getArguments().getOption(ProgramOptionConstants.RUN_ID)));
+    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
   }
 
   private File createTempDirectory(CConfiguration cConf, ProgramId programId, String runId) {
@@ -342,10 +459,15 @@ public class DefaultRuntimeJob implements RuntimeJob {
                              ProgramOptions programOpts) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
+
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
+
     modules.add(new IOModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new RemoteExecutionDiscoveryModule());
-    modules.add(new AuthenticationContextModules().getProgramContainerModule());
+    modules.add(new AuthorizationEnforcementModule().getDistributedModules());
+    modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
 
@@ -374,7 +496,21 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
-        bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+        bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
+
+        install(
+          new FactoryModuleBuilder()
+            .implement(Configurator.class, InMemoryConfigurator.class)
+            .build(ConfiguratorFactory.class)
+        );
+
+        bind(String.class)
+          .annotatedWith(Names.named(RemoteIsolatedPluginFinder.ISOLATED_PLUGIN_DIR))
+          .toInstance(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
+                                                           DistributedProgramRunner.PLUGIN_DIR));
+        bind(PluginFinder.class).to(RemoteIsolatedPluginFinder.class);
+        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+        bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
       }
     });
 
@@ -401,7 +537,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     if (injector.getInstance(RuntimeMonitorType.class) == RuntimeMonitorType.SSH) {
       services.add(injector.getInstance(TrafficRelayService.class));
     }
-    services.add(injector.getInstance(RuntimeClientService.class));
+    runtimeClientService = injector.getInstance(RuntimeClientService.class);
+    services.add(runtimeClientService);
 
     // Creates a service to emit profile metrics
     ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);

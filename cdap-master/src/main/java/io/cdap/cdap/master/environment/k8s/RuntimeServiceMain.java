@@ -18,7 +18,9 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -33,10 +35,10 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -62,7 +64,8 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       new MessagingClientModule(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       getDataFabricModule(),
-      new RuntimeServerModule()
+      new RuntimeServerModule(),
+      new AuthorizationEnforcementModule().getDistributedModules()
     );
   }
 
@@ -81,12 +84,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     services.add(new AbstractIdleService() {
       @Override
       protected void startUp() throws Exception {
-        try {
-          StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                          injector.getInstance(StructuredTableRegistry.class));
-        } catch (TableAlreadyExistsException e) {
-          // ignore
-        }
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
       }
 
       @Override
@@ -96,6 +94,10 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     });
     services.add(injector.getInstance(RuntimeProgramStatusSubscriberService.class));
     services.add(injector.getInstance(RuntimeServer.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
   }
 
   @Nullable

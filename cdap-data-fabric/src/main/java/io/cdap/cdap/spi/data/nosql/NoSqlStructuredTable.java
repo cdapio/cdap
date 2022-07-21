@@ -43,11 +43,14 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +75,16 @@ public final class NoSqlStructuredTable implements StructuredTable {
   public void upsert(Collection<Field<?>> fields) throws InvalidFieldException {
     LOG.trace("Table {}: Write fields {}", schema.getTableId(), fields);
     table.put(convertFieldsToBytes(fields));
+  }
+
+  @Override
+  public void update(Collection<Field<?>> fields) throws InvalidFieldException {
+    LOG.trace("Table {}: Update fields {}", schema.getTableId(), fields);
+    Put put = updateFieldsToBytes(fields);
+    // Put will not have values if a row is not being updated
+    if (!put.getValues().isEmpty()) {
+      table.put(put);
+    }
   }
 
   @Override
@@ -320,6 +333,39 @@ public final class NoSqlStructuredTable implements StructuredTable {
     Put put = new Put(key.build().getKey());
     for (int index = 0; index < columns.length; index++) {
       put.add(columns[index], values[index]);
+    }
+    return put;
+  }
+
+  /**
+   * Updates fields in the row and converts to a {@link Put} to write to table. The primary key must be provided.
+   *
+   * @param fields the fields to update
+   * @return a PUT object
+   * @throws InvalidFieldException if primary keys are missing or the column is not in schema
+   */
+  private Put updateFieldsToBytes(Collection<Field<?>> fields) throws InvalidFieldException {
+    Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
+    if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
+      throw new InvalidFieldException(schema.getTableId(), fields,
+                                      String.format("Given fields %s does not contain all the " +
+                                                      "primary keys %s", fieldNames, schema.getPrimaryKeys()));
+    }
+    Set<String> primaryKeys = new HashSet<>(schema.getPrimaryKeys());
+    Collection<Field<?>> keyFields = fields.stream()
+      .filter(field -> primaryKeys.contains(field.getName())).collect(Collectors.toList());
+    byte[] primaryKey = convertKeyToBytes(keyFields, false);
+    Put put = new Put(primaryKey);
+    Row row = table.get(primaryKey);
+
+    Map<String, Field<?>> fieldMap = fields.stream().collect(Collectors.toMap(Field::getName, Function.identity()));
+    for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+      String columnName = Bytes.toString(entry.getKey());
+      if (!fieldMap.containsKey(columnName) || primaryKeys.contains(columnName)) {
+        put.add(entry.getKey(), entry.getValue());
+      } else {
+        put.add(entry.getKey(), fieldToBytes(fieldMap.get(columnName)));
+      }
     }
     return put;
   }

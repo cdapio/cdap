@@ -26,6 +26,7 @@ import java.util.Objects;
 public class EndPointField {
   private final EndPoint endPoint;
   private final String field;
+  private transient Integer hashCode;
 
   public EndPointField(EndPoint endPoint, String field) {
     this.endPoint = endPoint;
@@ -55,7 +56,10 @@ public class EndPointField {
 
   @Override
   public int hashCode() {
-    return Objects.hash(endPoint, field);
+    if (hashCode == null) {
+      hashCode = Objects.hash(endPoint, field);
+    }
+    return hashCode;
   }
 
   @Override

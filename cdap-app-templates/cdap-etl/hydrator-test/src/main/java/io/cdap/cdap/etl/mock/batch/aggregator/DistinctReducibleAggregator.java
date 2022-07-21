@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.mock.batch.aggregator;
 
 import com.google.common.base.Splitter;
-import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -45,12 +44,9 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = BatchReducibleAggregator.PLUGIN_TYPE)
 @Name(DistinctReducibleAggregator.NAME)
-@Description(DistinctReducibleAggregator.DESCRIPTION)
 public class DistinctReducibleAggregator
   extends BatchReducibleAggregator<StructuredRecord, StructuredRecord, StructuredRecord, StructuredRecord> {
-  public static final String NAME = "Distinct Aggregator";
-  public static final String DESCRIPTION = "Deduplicates input records so that only provided fields are used to " +
-    "apply distinction on while other fields are projected out.";
+  public static final String NAME = "DistinctReducibleAggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf config;
   private Iterable<String> fields;
@@ -131,7 +127,6 @@ public class DistinctReducibleAggregator
    * Plugin Configuration.
    */
   public static class Conf extends PluginConfig {
-    @Description("Comma-separated list of fields to perform the distinct on.")
     private String fields;
 
     @Nullable
@@ -157,11 +152,10 @@ public class DistinctReducibleAggregator
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("fields", new PluginPropertyField(
-      "fields", "Comma-separated list of fields to perform the distinct on.", "string", true, false));
+    properties.put("fields", new PluginPropertyField("fields", "", "string", true, false));
     properties.put("partitions", new PluginPropertyField("partitions", "", "int", false, false));
-    return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, DESCRIPTION,
-                           DistinctReducibleAggregator.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName(NAME).setType(BatchReducibleAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(DistinctReducibleAggregator.class.getName())
+             .setConfigFieldName("config").setProperties(properties).build();
   }
 }

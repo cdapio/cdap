@@ -121,8 +121,9 @@ public class MockAction extends Action {
     properties.put("value", new PluginPropertyField("value", "", "string", true, true));
     properties.put("argumentKey", new PluginPropertyField("argumentKey", "", "string", false, false));
     properties.put("argumentValue", new PluginPropertyField("argumentValue", "", "string", false, false));
-    return new PluginClass(Action.PLUGIN_TYPE, "TableWriterAction", "", MockAction.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("TableWriterAction").setType(Action.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockAction.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 
   /**

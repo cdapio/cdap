@@ -21,7 +21,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableConcurrencyTest;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -40,7 +39,7 @@ public class NoSqlStructuredTableConcurrencyTest extends StructuredTableConcurre
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
   private static TransactionManager txManager;
-  private static NoSqlStructuredTableAdmin noSqlTableAdmin;
+  private static StructuredTableAdmin noSqlTableAdmin;
   private static TransactionRunner transactionRunner;
 
   @Override
@@ -61,11 +60,8 @@ public class NoSqlStructuredTableConcurrencyTest extends StructuredTableConcurre
 
     CConfiguration cConf = dsFrameworkUtil.getConfiguration();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
-    noSqlTableAdmin = dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableAdmin.class);
-    transactionRunner = dsFrameworkUtil.getInjector().getInstance(NoSqlTransactionRunner.class);
-    StructuredTableRegistry registry =
-      dsFrameworkUtil.getInjector().getInstance(StructuredTableRegistry.class);
-    registry.initialize();
+    noSqlTableAdmin = dsFrameworkUtil.getInjector().getInstance(StructuredTableAdmin.class);
+    transactionRunner = dsFrameworkUtil.getInjector().getInstance(TransactionRunner.class);
   }
 
   @AfterClass

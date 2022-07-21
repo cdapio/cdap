@@ -18,10 +18,12 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -38,6 +40,17 @@ public interface ArtifactRepositoryReader {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception;
+
+  /**
+   * Returns an input stream for reading the artifact bytes.
+   * If no such artifact exists, or an error occurs during reading, an exception is thrown.
+   *
+   * @param artifactId the id of the artifact to get
+   * @return an InputStream for the artifact bytes
+   * @throws IOException if there as an exception reading from the store.
+   * @throws NotFoundException if the given artifact does not exist
+   */
+  InputStream newInputStream(Id.Artifact artifactId) throws IOException, NotFoundException;
 
   /**
    * Get all artifact details that match artifacts in the given ranges.

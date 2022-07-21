@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.AlreadyExistsException;
@@ -269,7 +270,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
       throw e;
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -350,7 +351,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       try {
         // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
         timeSchedulerService.deleteProgramSchedule(schedule);
-      } catch (Exception e) {
+      } catch (SchedulerException e) {
         // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
         // Need better error handling
         LOG.error("Exception occurs when deleting schedule {}", schedule, e);
@@ -576,7 +577,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     String userId;
     try {
       userId = impersonator.getUGI(schedule.getProgramId()).getUserName();
-    } catch (IOException e) {
+    } catch (AccessException e) {
       LOG.error("Exception occurs when looking up user group information for program {} in schedule {}",
                 schedule.getProgramId(), schedule, e);
       throw new RuntimeException(String.format("Exception occurs when looking up user group information for" +

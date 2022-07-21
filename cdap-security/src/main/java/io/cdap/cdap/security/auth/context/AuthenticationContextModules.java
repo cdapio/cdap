@@ -18,13 +18,29 @@ package io.cdap.cdap.security.auth.context;
 
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Exposes the right {@link AuthenticationContext} via an {@link AbstractModule} based on the context in which
@@ -33,15 +49,42 @@ import java.io.IOException;
 public class AuthenticationContextModules {
   /**
    * An {@link AuthenticationContext} for HTTP requests in Master. The authentication details in this context are
-   * derived from {@link SecurityRequestContext}.
+   * derived from a combination of {@link SecurityRequestContext} and the {@link SystemAuthenticationContext}.
    *
    * @see SecurityRequestContext
+   * @see SystemAuthenticationContext
    */
   public Module getMasterModule() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(AuthenticationContext.class).to(MasterAuthenticationContext.class);
+        bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
+          .toInstance(SystemAuthenticationContext.class);
+        bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
+        expose(AuthenticationContext.class);
+        expose(InternalAuthenticator.class);
+      }
+    };
+  }
+
+  /**
+   * Returns a Guice module that provides {@link AuthenticationContext} for workers such as preview and task workers.
+   * The authentication details in this context are derived from the {@link WorkerAuthenticationContext}.
+   *
+   * @see WorkerAuthenticationContext
+   */
+  public Module getMasterWorkerModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
+          .toInstance(WorkerAuthenticationContext.class);
+        bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
+        expose(AuthenticationContext.class);
+        expose(InternalAuthenticator.class);
+
       }
     };
   }
@@ -51,14 +94,15 @@ public class AuthenticationContextModules {
    * determined based on the {@link UserGroupInformation} of the user running the program. The provided
    * kerberos principal information is also included in the {@link Principal}.
    */
-  public Module getProgramContainerModule(final String principal) {
+  public Module getProgramContainerModule(CConfiguration cConf, final String principal) {
     return new AbstractModule() {
       @Override
       protected void configure() {
         String username = getUsername();
         bind(AuthenticationContext.class)
-          .toInstance(new ProgramContainerAuthenticationContext(new Principal(username, Principal.PrincipalType.USER,
-                                                                              principal, null)));
+          .toInstance(new ProgramContainerAuthenticationContext(
+            new Principal(username, Principal.PrincipalType.USER, principal, loadRemoteCredentials(cConf))));
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
       }
     };
   }
@@ -67,16 +111,39 @@ public class AuthenticationContextModules {
    * An {@link AuthenticationContext} for use in program containers. The authentication details in this context are
    * determined based on the {@link UserGroupInformation} of the user running the program.
    */
-  public Module getProgramContainerModule() {
+  public Module getProgramContainerModule(CConfiguration cConf) {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        String username = getUsername();
-        bind(AuthenticationContext.class)
-          .toInstance(new ProgramContainerAuthenticationContext(new Principal(username,
-                                                                              Principal.PrincipalType.USER)));
+        Credential remoteCredentials = loadRemoteCredentials(cConf);
+        if (remoteCredentials != null) {
+          String username = getUsername();
+          bind(AuthenticationContext.class)
+            .toInstance(new ProgramContainerAuthenticationContext(new Principal(username,
+                                                                                Principal.PrincipalType.USER,
+                                                                                loadRemoteCredentials(cConf))));
+        } else {
+          bind(new TypeLiteral<Class<? extends AuthenticationContext>>() { })
+            .toInstance(WorkerAuthenticationContext.class);
+          bind(AuthenticationContext.class).toProvider(MasterAuthenticationContextProvider.class);
+        }
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
       }
     };
+  }
+
+  private Credential loadRemoteCredentials(CConfiguration cConf) {
+    Path secretFile = Paths.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+    if (Files.exists(secretFile)) {
+      try {
+        String token = new String(Files.readAllBytes(secretFile), StandardCharsets.UTF_8);
+        return new Credential(token, Credential.CredentialType.INTERNAL);
+      } catch (IOException e) {
+        throw new IllegalStateException("Can't read runtime token file", e);
+      }
+    }
+    String token = cConf.get(Constants.Security.Authentication.RUNTIME_TOKEN);
+    return token == null ? null : new Credential(token, Credential.CredentialType.INTERNAL);
   }
 
   private String getUsername() {
@@ -89,14 +156,68 @@ public class AuthenticationContextModules {
 
   /**
    * An {@link AuthenticationContext} for use in tests that do not need authentication/authorization. The
-   * authentication details in this context are determined based on the {@link System#props user.name} system property.
+   * authentication details in this context are determined based on the {@code user.name}
+   * from the {@link System#getProperties()}.
+   *
+   * @return A module with internal authentication bindings for testing.
    */
   public Module getNoOpModule() {
     return new AbstractModule() {
       @Override
       protected void configure() {
         bind(AuthenticationContext.class).to(AuthenticationTestContext.class);
+        bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
       }
     };
+  }
+
+  /**
+   * A {@link Provider} for {@link InternalAuthenticator} for use in the
+   * {@link io.cdap.cdap.common.internal.remote.RemoteClient}.
+   */
+  private static final class InternalAuthenticatorProvider implements Provider<InternalAuthenticator> {
+    private final CConfiguration cConf;
+    private final Injector injector;
+
+    @Inject
+    InternalAuthenticatorProvider(CConfiguration cConf, Injector injector) {
+      this.cConf = cConf;
+      this.injector = injector;
+    }
+
+    @Override
+    public InternalAuthenticator get() {
+      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+        return new DefaultInternalAuthenticator(injector.getInstance(AuthenticationContext.class));
+      }
+      return new NoOpInternalAuthenticator();
+    }
+  }
+
+  /**
+   * A {@link Provider} for {@link AuthenticationContext} based on CDAP configuration for the master service processes
+   * and the runtime processes to use.
+   */
+  private static final class MasterAuthenticationContextProvider implements Provider<AuthenticationContext> {
+
+    private final CConfiguration cConf;
+    private final Injector injector;
+    private final Class<? extends AuthenticationContext> internalAuthContextClass;
+
+    @Inject
+    MasterAuthenticationContextProvider(CConfiguration cConf, Injector injector,
+                                        Class<? extends AuthenticationContext> internalAuthContextClass) {
+      this.cConf = cConf;
+      this.injector = injector;
+      this.internalAuthContextClass = internalAuthContextClass;
+    }
+
+    @Override
+    public AuthenticationContext get() {
+      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+        return injector.getInstance(internalAuthContextClass);
+      }
+      return injector.getInstance(MasterAuthenticationContext.class);
+    }
   }
 }

@@ -16,9 +16,12 @@
 
 package io.cdap.cdap.proto;
 
-import com.google.gson.annotations.SerializedName;
+import com.google.gson.annotations.JsonAdapter;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -26,6 +29,7 @@ import javax.annotation.Nullable;
 /**
  * Represents the configuration of a namespace. This class needs to be GSON serializable.
  */
+@JsonAdapter(NamespaceConfigCodec.class)
 public class NamespaceConfig {
 
   public static final String SCHEDULER_QUEUE_NAME = "scheduler.queue.name";
@@ -33,25 +37,11 @@ public class NamespaceConfig {
   public static final String HBASE_NAMESPACE = "hbase.namespace";
   public static final String HIVE_DATABASE = "hive.database";
   public static final String EXPLORE_AS_PRINCIPAL = "explore.as.principal";
+  public static final String PRINCIPAL = "principal";
+  public static final String GROUP_NAME = "groupName";
+  public static final String KEYTAB_URI = "keytabURI";
 
-  @SerializedName(SCHEDULER_QUEUE_NAME)
-  private final String schedulerQueueName;
-
-  @SerializedName(ROOT_DIRECTORY)
-  private final String rootDirectory;
-
-  @SerializedName(HBASE_NAMESPACE)
-  private final String hbaseNamespace;
-
-  @SerializedName(HIVE_DATABASE)
-  private final String hiveDatabase;
-
-  @SerializedName(EXPLORE_AS_PRINCIPAL)
-  private final Boolean exploreAsPrincipal;
-
-  private final String principal;
-  private final String groupName;
-  private final String keytabURI;
+  private final Map<String, String> configs;
 
   // scheduler queue name is kept non nullable unlike others like root directory, hbase namespace etc for backward
   // compatibility
@@ -65,47 +55,84 @@ public class NamespaceConfig {
                          @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
                          @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
                          boolean exploreAsPrincipal) {
-    this.schedulerQueueName = schedulerQueueName;
-    this.rootDirectory = rootDirectory;
-    this.hbaseNamespace = hbaseNamespace;
-    this.hiveDatabase = hiveDatabase;
-    this.principal = principal;
-    this.groupName = groupName;
-    this.keytabURI = keytabURI;
-    this.exploreAsPrincipal = exploreAsPrincipal;
+    this(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI,
+            exploreAsPrincipal, new HashMap<>());
+  }
+
+  public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
+                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
+                         @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
+                         boolean exploreAsPrincipal, Map<String, String> existingConfigs) {
+    Map<String, String> configs = new HashMap<>(existingConfigs);
+    configs.put(SCHEDULER_QUEUE_NAME, schedulerQueueName);
+
+    if (rootDirectory != null) {
+      configs.put(ROOT_DIRECTORY, rootDirectory);
+    }
+
+    if (hbaseNamespace != null) {
+      configs.put(HBASE_NAMESPACE, hbaseNamespace);
+    }
+
+    if (hiveDatabase != null) {
+      configs.put(HIVE_DATABASE, hiveDatabase);
+    }
+
+    if (principal != null) {
+      configs.put(PRINCIPAL, principal);
+    }
+
+    if (groupName != null) {
+      configs.put(GROUP_NAME, groupName);
+    }
+
+    if (keytabURI != null) {
+      configs.put(KEYTAB_URI, keytabURI);
+    }
+
+    configs.put(EXPLORE_AS_PRINCIPAL, Boolean.toString(exploreAsPrincipal));
+
+    this.configs = Collections.unmodifiableMap(configs);
+  }
+
+  /**
+   * Creates a new instance with the given set of configurations.
+   */
+  public NamespaceConfig(Map<String, String> configs) {
+    this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
   }
 
   public String getSchedulerQueueName() {
-    return schedulerQueueName;
+    return getConfig(SCHEDULER_QUEUE_NAME);
   }
 
   @Nullable
   public String getRootDirectory() {
-    return rootDirectory;
+    return getConfig(ROOT_DIRECTORY);
   }
 
   @Nullable
   public String getHbaseNamespace() {
-    return hbaseNamespace;
+    return getConfig(HBASE_NAMESPACE);
   }
 
   @Nullable
   public String getHiveDatabase() {
-    return hiveDatabase;
+    return getConfig(HIVE_DATABASE);
   }
 
   @Nullable
   public String getPrincipal() {
-    return principal;
+    return getConfig(PRINCIPAL);
   }
 
   public String getGroupName() {
-    return groupName;
+    return getConfig(GROUP_NAME);
   }
 
   @Nullable
   public String getKeytabURI() {
-    return keytabURI;
+    return getConfig(KEYTAB_URI);
   }
 
   /**
@@ -114,6 +141,7 @@ public class NamespaceConfig {
   @Nullable
   public String getKeytabURIWithoutVersion() {
     // try to get the keytab URI version if the keytab URI is not null
+    String keytabURI = getKeytabURI();
     if (keytabURI != null) {
       // find the position of the fragment containing the version in the keytab URI
       int versionIdx = keytabURI.lastIndexOf("#");
@@ -127,6 +155,7 @@ public class NamespaceConfig {
    */
   public int getKeytabURIVersion() {
     // try to get the keytab URI version if the keytab URI is not null
+    String keytabURI = getKeytabURI();
     if (keytabURI != null) {
       // find the position where the fragment containing the version in the keytab URI
       int versionIdx = keytabURI.lastIndexOf("#");
@@ -137,36 +166,49 @@ public class NamespaceConfig {
   }
 
   public Boolean isExploreAsPrincipal() {
-    return exploreAsPrincipal == null || exploreAsPrincipal;
+    String value = configs.get(EXPLORE_AS_PRINCIPAL);
+    return value == null || Boolean.parseBoolean(value);
   }
 
   public Set<String> getDifference(@Nullable NamespaceConfig other) {
-    Set<String> difference = new HashSet<>();
     if (other == null) {
       // nothing to validate
-      return difference;
+      return Collections.emptySet();
     }
 
-    if (!Objects.equals(this.rootDirectory, other.rootDirectory)) {
+    Set<String> difference = new HashSet<>();
+
+    if (!Objects.equals(this.getRootDirectory(), other.getRootDirectory())) {
       difference.add(ROOT_DIRECTORY);
     }
 
-    if (!Objects.equals(this.hbaseNamespace, other.hbaseNamespace)) {
+    if (!Objects.equals(this.getHbaseNamespace(), other.getHbaseNamespace())) {
       difference.add(HBASE_NAMESPACE);
     }
 
-    if (!Objects.equals(this.hiveDatabase, other.hiveDatabase)) {
+    if (!Objects.equals(this.getHiveDatabase(), other.getHiveDatabase())) {
       difference.add(HIVE_DATABASE);
     }
 
-    if (!Objects.equals(this.principal, other.principal)) {
-      difference.add("principal");
+    if (!Objects.equals(this.getPrincipal(), other.getPrincipal())) {
+      difference.add(PRINCIPAL);
     }
 
-    if (!Objects.equals(this.groupName, other.groupName)) {
-      difference.add("groupName");
+    if (!Objects.equals(this.getGroupName(), other.getGroupName())) {
+      difference.add(GROUP_NAME);
     }
     return difference;
+  }
+
+  /**
+   * Returns the config value of the given name.
+   *
+   * @param name name of the config
+   * @return the value of the config or {@code null} if the config doesn't exist.
+   */
+  @Nullable
+  public String getConfig(String name) {
+    return configs.get(name);
   }
 
   @Override
@@ -177,35 +219,26 @@ public class NamespaceConfig {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NamespaceConfig other = (NamespaceConfig) o;
-    return Objects.equals(schedulerQueueName, other.schedulerQueueName) &&
-      Objects.equals(rootDirectory, other.rootDirectory) &&
-      Objects.equals(hbaseNamespace, other.hbaseNamespace) &&
-      Objects.equals(hiveDatabase, other.hiveDatabase) &&
-      Objects.equals(principal, other.principal) &&
-      Objects.equals(groupName, other.groupName) &&
-      Objects.equals(keytabURI, other.keytabURI) &&
-      Objects.equals(exploreAsPrincipal, other.exploreAsPrincipal);
+    NamespaceConfig that = (NamespaceConfig) o;
+    return Objects.equals(configs, that.configs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-      schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI,
-      exploreAsPrincipal);
+    return Objects.hash(configs);
   }
 
   @Override
   public String toString() {
     return "NamespaceConfig{" +
-      "schedulerQueueName='" + schedulerQueueName + '\'' +
-      ", rootDirectory='" + rootDirectory + '\'' +
-      ", hbaseNamespace='" + hbaseNamespace + '\'' +
-      ", hiveDatabase='" + hiveDatabase + '\'' +
-      ", principal='" + principal + '\'' +
-      ", groupName='" + groupName + '\'' +
-      ", keytabURI='" + keytabURI + '\'' +
-      ", exploreAsPrincipal='" + exploreAsPrincipal + '\'' +
+      "configs=" + configs +
       '}';
+  }
+
+  /**
+   * Returns the raw full config map. This is for the {@link NamespaceConfigCodec} to use.
+   */
+  public Map<String, String> getConfigs() {
+    return configs;
   }
 }

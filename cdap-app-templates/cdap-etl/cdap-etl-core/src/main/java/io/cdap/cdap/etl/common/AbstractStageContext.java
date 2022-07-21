@@ -288,6 +288,11 @@ public abstract class AbstractStageContext implements StageContext {
   }
 
   @Override
+  public boolean isFeatureEnabled(String name) {
+    return pipelineRuntime.isFeatureEnabled(name);
+  }
+
+  @Override
   public FailureCollector getFailureCollector() {
     return failureCollector;
   }

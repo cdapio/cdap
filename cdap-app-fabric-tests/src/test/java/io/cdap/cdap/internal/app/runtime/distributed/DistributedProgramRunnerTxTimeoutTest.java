@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -38,6 +40,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.runtime.spi.SparkCompat;
@@ -74,15 +77,19 @@ public class DistributedProgramRunnerTxTimeoutTest {
       Id.Namespace.DEFAULT, new Id.Artifact(Id.Namespace.DEFAULT, "artifact", new ArtifactVersion("0.1")), app);
     app.configure(configurer, () -> null);
     appSpec = configurer.createSpecification("app", "1.0");
-    // System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(appSpec));
+    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
 
     cConf.setInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 60);
-    serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
-    workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
-    mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
-    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK1_2_10, cConf, yConf, null, null,
-                                                    ClusterMode.ON_PREMISE, null);
-    workflowRunner = new DistributedWorkflowProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null, null);
+    serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null,
+                                                        injector);
+    workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null,
+                                                      injector);
+    mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null,
+                                                            injector);
+    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK2_2_11, cConf, yConf, null, null,
+                                                    ClusterMode.ON_PREMISE, null, injector);
+    workflowRunner = new DistributedWorkflowProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null, null,
+                                                          injector);
   }
 
   @Test

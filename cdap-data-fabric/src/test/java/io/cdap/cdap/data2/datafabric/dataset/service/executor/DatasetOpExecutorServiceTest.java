@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -63,8 +64,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -125,6 +124,7 @@ public class DatasetOpExecutorServiceTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getNoOpModule(),
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
@@ -150,9 +150,8 @@ public class DatasetOpExecutorServiceTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpExecService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpExecService.startAndWait();
@@ -169,13 +168,6 @@ public class DatasetOpExecutorServiceTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(bob.getParent()).build());
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
-    try {
-      StoreDefinition.createAllTables(tableAdmin, registry);
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Failed to create the system tables", e);
-    }
   }
 
   @After

@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.api.plugin.PluginConfig;
@@ -26,7 +27,6 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.lineage.field.LineageRecorder;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +36,8 @@ import javax.annotation.Nullable;
  * Context for a pipeline stage, providing access to information about the stage, metrics, and plugins.
  */
 @Beta
-public interface StageContext extends ServiceDiscoverer, MetadataReader, MetadataWriter, LineageRecorder {
+public interface StageContext
+  extends ServiceDiscoverer, MetadataReader, MetadataWriter, LineageRecorder, FeatureFlagsProvider {
 
   /**
    * Gets the unique stage name.

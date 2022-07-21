@@ -18,12 +18,14 @@ package io.cdap.cdap.app.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.OptionalBinder;
+import com.google.inject.util.Providers;
 import io.cdap.cdap.api.artifact.ArtifactManager;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 
 /**
  * Guice module for bindings for artifacts and plugins supports for program API.
@@ -34,7 +36,9 @@ public class DistributedArtifactManagerModule extends AbstractModule {
   protected void configure() {
     // Bind the PluginFinder implementation
     bind(PluginFinder.class).to(RemotePluginFinder.class);
-    bind(ArtifactFinder.class).to(RemotePluginFinder.class);
+    // ArtifactLocalizerClient is only used for task worker
+    OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class)
+      .setBinding().toProvider(Providers.of(null));
 
     // Bind the ArtifactManager implementation
     install(new FactoryModuleBuilder()

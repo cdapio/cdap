@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.security.spi.authentication;
 
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 
 import javax.annotation.Nullable;
@@ -24,7 +25,7 @@ import javax.annotation.Nullable;
  */
 public final class SecurityRequestContext {
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
-  private static final ThreadLocal<String> userCredential = new InheritableThreadLocal<>();
+  private static final ThreadLocal<Credential> userCredential = new InheritableThreadLocal<>();
   private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
@@ -42,7 +43,7 @@ public final class SecurityRequestContext {
    * @return the user credential set on the current thread or null if user credential is not set
    */
   @Nullable
-  public static String getUserCredential() {
+  public static Credential getUserCredential() {
     return userCredential.get();
   }
 
@@ -68,7 +69,7 @@ public final class SecurityRequestContext {
    *
    * @param userCredentialParam user credential to be set
    */
-  public static void setUserCredential(@Nullable String userCredentialParam) {
+  public static void setUserCredential(@Nullable Credential userCredentialParam) {
     userCredential.set(userCredentialParam);
   }
 
@@ -86,5 +87,14 @@ public final class SecurityRequestContext {
    */
   public static Principal toPrincipal() {
     return new Principal(userId.get(), Principal.PrincipalType.USER, userCredential.get());
+  }
+
+  /**
+   * Clears security state for this thread
+   */
+  public static void reset() {
+    userId.remove();
+    userIP.remove();
+    userCredential.remove();
   }
 }

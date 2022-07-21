@@ -86,7 +86,8 @@ public class TMSAlertPublisher extends AlertPublisher {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("topic", new PluginPropertyField("topic", "", "string", true, false));
     properties.put("topicNamespace", new PluginPropertyField("topicNamespace", "", "string", true, false));
-    return new PluginClass(AlertPublisher.PLUGIN_TYPE, NAME, "", TMSAlertPublisher.class.getName(),
-                           "conf", properties);
+    return PluginClass.builder().setName(NAME).setType(AlertPublisher.PLUGIN_TYPE)
+             .setDescription("").setClassName(TMSAlertPublisher.class.getName()).setProperties(properties)
+             .setConfigFieldName("conf").build();
   }
 }

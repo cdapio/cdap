@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.etl.spark;
 
-import com.google.common.base.Optional;
+import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;

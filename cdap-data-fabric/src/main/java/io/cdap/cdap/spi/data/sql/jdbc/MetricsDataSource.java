@@ -31,13 +31,14 @@ import javax.sql.DataSource;
 /**
  * A metrics data source that will emit metrics about the number of connections.
  */
-public class MetricsDataSource implements DataSource {
+public class MetricsDataSource implements DataSource, AutoCloseable {
+
   private final DataSource dataSource;
   private final MetricsCollectionService metricsCollectionService;
-  private final ObjectPool objectPool;
+  private final ObjectPool<?> objectPool;
 
   public MetricsDataSource(DataSource dataSource, MetricsCollectionService metricsCollectionService,
-                           ObjectPool objectPool) {
+                           ObjectPool<?> objectPool) {
     this.dataSource = dataSource;
     this.metricsCollectionService = metricsCollectionService;
     this.objectPool = objectPool;
@@ -104,5 +105,12 @@ public class MetricsDataSource implements DataSource {
   @Override
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
     return dataSource.getParentLogger();
+  }
+
+  @Override
+  public void close() throws Exception {
+    if (dataSource instanceof AutoCloseable) {
+      ((AutoCloseable) dataSource).close();
+    }
   }
 }

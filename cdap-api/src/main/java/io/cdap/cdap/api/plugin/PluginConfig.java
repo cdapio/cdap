@@ -25,6 +25,12 @@ import java.util.Set;
 
 /**
  * Base class for writing configuration class for template plugin.
+ * This class can also be used inside the plugin configuration class to represent a collection of configs.
+ * If it is used to represent a collection of configs:
+ * When the plugin is deployed, the configs inside this class will be inspected and represented in the same way as
+ * {@link PluginPropertyField}.
+ * The {@link PluginPropertyField} for this field will contain a collection of property names about configs inside
+ * this class.
  */
 @Beta
 public abstract class PluginConfig extends Config implements Serializable {

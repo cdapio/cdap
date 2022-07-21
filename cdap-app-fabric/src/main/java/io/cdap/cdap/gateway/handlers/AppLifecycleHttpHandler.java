@@ -20,6 +20,7 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,8 +34,11 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
@@ -70,7 +74,11 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
@@ -82,7 +90,6 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,14 +103,16 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -128,6 +137,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
+  /**
+   * Key in json paginated applications list response.
+   */
+  public static final String APP_LIST_PAGINATED_KEY = "applications";
 
   /**
    * Runtime program service for running and managing programs.
@@ -139,13 +152,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespacePathLocator namespacePathLocator;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
                           ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacePathLocator namespacePathLocator,
-                          ApplicationLifecycleService applicationLifecycleService) {
+                          ApplicationLifecycleService applicationLifecycleService,
+                          AccessEnforcer accessEnforcer,
+                          AuthenticationContext authenticationContext) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.runtimeService = runtimeService;
@@ -153,6 +170,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.applicationLifecycleService = applicationLifecycleService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -164,14 +183,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer create(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
 
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
   }
@@ -188,7 +207,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(APP_CONFIG_HEADER) String configString,
                              @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal,
                              @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean updateSchedules)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
     // null means use name provided by app spec
@@ -234,8 +253,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @QueryParam("artifactName") String artifactName,
-                         @QueryParam("artifactVersion") String artifactVersion)
-    throws Exception {
+                         @QueryParam("artifactVersion") String artifactVersion,
+                         @QueryParam("pageToken") String pageToken,
+                         @QueryParam("pageSize") Integer pageSize,
+                         @QueryParam("orderBy") SortOrder orderBy,
+                         @QueryParam("nameFilter") String nameFilter
+      )
+      throws Exception {
 
     NamespaceId namespace = validateNamespace(namespaceId);
 
@@ -245,12 +269,53 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         names.add(name);
       }
     }
-    List<ApplicationRecord> apps = applicationLifecycleService.getApps(namespace, names, artifactVersion)
-      .stream()
-      .map(ApplicationRecord::new)
-      .collect(Collectors.toList());
 
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(apps));
+    if (Optional.ofNullable(pageSize).orElse(0) != 0) {
+      JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
+        AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
+        ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, pageSize,
+                                                                 orderBy, nameFilter, names);
+        boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
+          ApplicationRecord record = new ApplicationRecord(appDetail);
+          jsonListResponder.send(record);
+          lastRecord.set(record);
+        });
+        ApplicationRecord record = lastRecord.get();
+        return !pageLimitReached  || record == null ? null :
+          record.getName() + EntityId.IDSTRING_PART_SEPARATOR + record.getAppVersion();
+      });
+    } else {
+      ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, null,
+                                                           orderBy, nameFilter, names);
+      JsonWholeListResponder.respond(GSON, responder,
+          jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
+              d -> jsonListResponder.send(new ApplicationRecord(d)))
+      );
+    }
+  }
+
+  private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion, String pageToken,
+                                                 Integer pageSize, SortOrder orderBy, String nameFilter,
+                                                 Set<String> names) {
+    ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
+    builder.setNamespaceId(new NamespaceId(namespaceId));
+    if (pageSize != null) {
+      builder.setLimit(pageSize);
+    }
+    if (nameFilter != null && !nameFilter.isEmpty()) {
+      builder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));
+    }
+    builder.addFilters(applicationLifecycleService.getAppFilters(names, artifactVersion));
+    if (orderBy != null) {
+      builder.setSortOrder(orderBy);
+    }
+    if (pageToken != null && !pageToken.isEmpty()) {
+      builder.setScanFrom(ApplicationId.fromIdParts(Iterables.concat(
+        Collections.singleton(namespaceId),
+        Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(pageToken))
+      )));
+    }
+    return builder.build();
   }
 
   /**
@@ -306,7 +371,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getPluginsInfo(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
-    throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException {
+    throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException, AccessException {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(applicationId)));
@@ -380,7 +445,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateApp(FullHttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appName)
-    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+    throws NotFoundException, BadRequestException, AccessException, IOException {
 
     ApplicationId appId = validateApplicationId(namespaceId, appName);
 
@@ -472,8 +537,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             updateDetail = new ApplicationUpdateDetail(appId, e);
           } catch (Exception e) {
             updateDetail =
-                new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
+                new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", e,
                                             HttpResponseStatus.INTERNAL_SERVER_ERROR));
+            LOG.error("Application upgrade failed with exception", e);
           }
           GSON.toJson(updateDetail, ApplicationUpdateDetail.class, jsonWriter);
           jsonWriter.flush();
@@ -593,7 +659,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
   private BodyConsumer deployAppFromArtifact(final ApplicationId appId) throws IOException {
-
+    // Perform auth checks outside BodyConsumer as only the first http request containing auth header
+    // to populate SecurityRequestContext while http chunk doesn't. BodyConsumer runs in the thread
+    // that processes the last http chunk.
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+    LOG.info("Start to deploy app {} in namespace {} by user {}", appId.getApplication(), appId.getParent(),
+             applicationLifecycleService.decodeUserId(authenticationContext));
     // createTempFile() needs a prefix of at least 3 characters
     return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
 
@@ -615,7 +686,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           try {
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
                                                   artifactSummary, configString, createProgramTerminator(),
-                                                  ownerPrincipalId, appRequest.canUpdateSchedules());
+                                                  ownerPrincipalId, appRequest.canUpdateSchedules(), false,
+                                                  Collections.emptyMap());
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();
@@ -734,28 +806,26 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ProgramTerminator createProgramTerminator() {
-    return new ProgramTerminator() {
-      @Override
-      public void stop(ProgramId programId) throws Exception {
-        switch (programId.getType()) {
-          case SERVICE:
-          case WORKER:
-            stopProgramIfRunning(programId);
-            break;
-        }
+    return programId -> {
+      switch (programId.getType()) {
+        case SERVICE:
+        case WORKER:
+          killProgramIfRunning(programId);
+          break;
       }
     };
   }
 
-  private void stopProgramIfRunning(ProgramId programId) throws InterruptedException, ExecutionException {
+  private void killProgramIfRunning(ProgramId programId) {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId, runtimeService);
     if (programRunInfo != null) {
       ProgramController controller = programRunInfo.getController();
-      controller.stop().get();
+      controller.kill();
     }
   }
 
-  private NamespaceId validateNamespace(String namespaceId) throws BadRequestException, NamespaceNotFoundException {
+  private NamespaceId validateNamespace(String namespaceId) throws BadRequestException,
+    NamespaceNotFoundException, AccessException {
     NamespaceId namespace;
     if (namespaceId == null) {
       throw new BadRequestException("Path parameter namespace-id cannot be empty");
@@ -770,7 +840,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (!namespace.equals(NamespaceId.SYSTEM)) {
         namespaceQueryAdmin.get(namespace);
       }
-    } catch (NamespaceNotFoundException e) {
+    } catch (NamespaceNotFoundException | AccessException e) {
       throw e;
     } catch (Exception e) {
       // This can only happen when NamespaceAdmin uses HTTP calls to interact with namespaces.
@@ -782,7 +852,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ApplicationId validateApplicationId(String namespace, String appId)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationId(validateNamespace(namespace), appId);
   }
 
@@ -791,7 +861,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ApplicationId validateApplicationVersionId(String namespace, String appId, String versionId)
-    throws BadRequestException, NamespaceNotFoundException {
+    throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
   }
 

@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
 public class PluginClass {
   private final String type;
   private final String name;
+  private final String category;
   private final String description;
   private final String className;
   private final String configFieldName;
@@ -43,27 +44,47 @@ public class PluginClass {
     this.type = Plugin.DEFAULT_TYPE;
     this.name = null;
     this.description = "";
+    this.category = null;
     this.className = null;
     this.configFieldName = null;
     this.properties = Collections.emptyMap();
     this.requirements = Requirements.EMPTY;
   }
 
-  public PluginClass(String type, String name, String description, String className,
-                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
-                     Requirements requirements) {
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  private PluginClass(String type, String name, @Nullable String category,
+                      String className, String configFieldName, Map<String, PluginPropertyField> properties,
+                      Requirements requirements, String description) {
     this.type = type;
     this.name = name;
+    this.category = category;
     this.description = description;
     this.className = className;
-    this.configFieldName = configfieldName;
-    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.configFieldName = configFieldName;
+    this.properties = properties;
     this.requirements = requirements;
   }
 
+  /**
+   * @deprecated use {@link Builder} to create the object
+   */
+  @Deprecated
+  public PluginClass(String type, String name, String className,
+                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
+                     Requirements requirements, String description) {
+    this(type, name, null, className, configfieldName, properties, requirements, description);
+  }
+
+  /**
+   * @deprecated use {@link Builder} to create the object
+   */
+  @Deprecated
   public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
                      Map<String, PluginPropertyField> properties) {
-    this(type, name, description, className, configfieldName, properties, Requirements.EMPTY);
+    this(type, name, className, configfieldName, properties, Requirements.EMPTY, description);
   }
 
   /**
@@ -104,6 +125,15 @@ public class PluginClass {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * Returns the category of the plugin.
+   * If a plugin does not belong to any category, {@code null} will be returned.
+   */
+  @Nullable
+  public String getCategory() {
+    return category;
   }
 
   /**
@@ -156,6 +186,7 @@ public class PluginClass {
 
     return Objects.equals(type, that.type)
       && Objects.equals(name, that.name)
+      && Objects.equals(category, that.category)
       && Objects.equals(description, that.description)
       && Objects.equals(className, that.className)
       && Objects.equals(configFieldName, that.configFieldName)
@@ -165,7 +196,7 @@ public class PluginClass {
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, description, className, configFieldName, properties, requirements);
+    return Objects.hash(type, name, category, description, className, configFieldName, properties, requirements);
   }
 
   @Override
@@ -173,11 +204,129 @@ public class PluginClass {
     return "PluginClass{" +
       "type='" + type + '\'' +
       ", name='" + name + '\'' +
+      ", category='" + category + '\'' +
       ", description='" + description + '\'' +
       ", className='" + className + '\'' +
       ", configFieldName='" + configFieldName + '\'' +
       ", properties=" + properties +
       ", requirements=" + requirements +
       '}';
+  }
+
+  /**
+   * A builder to create {@link PluginClass} instance.
+   */
+  public static final class Builder {
+    private String type;
+    private String name;
+    private String category;
+    private String description;
+    private String className;
+    private String configFieldName;
+    private Map<String, PluginPropertyField> properties;
+    private Requirements requirements;
+
+    private Builder() {
+      this.properties = new HashMap<>();
+      this.requirements = Requirements.EMPTY;
+    }
+
+    /**
+     * Set the plugin type
+     */
+    public Builder setType(String type) {
+      this.type = type;
+      return this;
+    }
+
+    /**
+     * Set the plugin name
+     */
+    public Builder setName(String name) {
+      this.name = name;
+      return this;
+    }
+
+    /**
+     * Set the plugin category
+     */
+    public Builder setCategory(String category) {
+      this.category = category;
+      return this;
+    }
+
+    /**
+     * Set the plugin description
+     */
+    public Builder setDescription(String description) {
+      this.description = description;
+      return this;
+    }
+
+    /**
+     * Set the plugin class name
+     */
+    public Builder setClassName(String className) {
+      this.className = className;
+      return this;
+    }
+
+    /**
+     * Set the plugin config field
+     */
+    public Builder setConfigFieldName(String configFieldName) {
+      this.configFieldName = configFieldName;
+      return this;
+    }
+
+    /**
+     * Set the plugin requirements
+     */
+    public Builder setRequirements(Requirements requirements) {
+      this.requirements = requirements;
+      return this;
+    }
+
+    /**
+     * Set and replace the plugin properties
+     */
+    public Builder setProperties(Map<String, PluginPropertyField> properties) {
+      this.properties.clear();
+      this.properties.putAll(properties);
+      return this;
+    }
+
+    /**
+     * Adds multiple properties.
+     *
+     * @param properties map of properties to add.
+     * @return this builder
+     */
+    public Builder addAll(Map<String, PluginPropertyField> properties) {
+      this.properties.putAll(properties);
+      return this;
+    }
+
+    /**
+     * Adds a property
+     *
+     * @param key the name of the property
+     * @param value the value of the property
+     * @return this builder
+     */
+    public Builder add(String key, PluginPropertyField value) {
+      this.properties.put(key, value);
+      return this;
+    }
+
+    /**
+     * Creates a new instance of {@link PluginClass}.
+     */
+    public PluginClass build() {
+      PluginClass pluginClass = new PluginClass(type, name, category, className, configFieldName,
+                                                properties, requirements, description);
+      pluginClass.validate();
+      return pluginClass;
+    }
   }
 }

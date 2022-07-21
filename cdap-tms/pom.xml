@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-tms</artifactId>
@@ -100,6 +100,8 @@
     <dependency>
       <groupId>org.iq80.leveldb</groupId>
       <artifactId>leveldb</artifactId>
+      <!-- leveldb 0.12 has conflicting guava 20 as a dependency. The uber jar shades guava -->
+      <classifier>uber</classifier>
     </dependency>
     <dependency>
       <groupId>org.apache.avro</groupId>
@@ -161,8 +163,14 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-storage-spi</artifactId>
-      <version>6.5.0-SNAPSHOT</version>
+      <version>${project.version}</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-security</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,19 +18,19 @@ package io.cdap.cdap.security.impersonation;
 
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
@@ -124,6 +124,7 @@ public class UGIProviderTest {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     hConf.setBoolean("ipc.client.fallback-to-simple-auth-allowed", true);
+    hConf.setBoolean("ignore.secure.ports.for.testing", true);
 
     miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     miniDFSCluster.waitClusterUp();
@@ -164,8 +165,11 @@ public class UGIProviderTest {
       InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
       discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP, httpService.getBindAddress()));
 
-      RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, discoveryService, locationFactory,
-                                                            ownerAdmin);
+      RemoteClientFactory remoteClientFactory =
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
+      RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, locationFactory,
+                                                            ownerAdmin,
+                                                            remoteClientFactory);
 
       ImpersonationRequest aliceImpRequest = new ImpersonationRequest(aliceEntity, ImpersonatedOpType.OTHER);
       UGIWithPrincipal aliceUGIWithPrincipal = ugiProvider.getConfiguredUGI(aliceImpRequest);

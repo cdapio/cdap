@@ -19,6 +19,8 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -27,6 +29,7 @@ import org.apache.twill.filesystem.Location;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -42,6 +45,7 @@ public class ApplicationDeployable {
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
   private final Collection<StructuredTableSpecification> systemTables;
+  private final Map<MetadataScope, Metadata> metadata;
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
@@ -53,7 +57,7 @@ public class ApplicationDeployable {
                                ApplicationDeployScope applicationDeployScope,
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         applicationClass, null, true, Collections.emptyList());
+         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap());
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -63,7 +67,8 @@ public class ApplicationDeployable {
                                ApplicationClass applicationClass,
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
-                               Collection<StructuredTableSpecification> systemTables) {
+                               Collection<StructuredTableSpecification> systemTables,
+                               Map<MetadataScope, Metadata> metadata) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -74,6 +79,7 @@ public class ApplicationDeployable {
     this.updateSchedules = updateSchedules;
     this.systemTables = systemTables;
     this.applicationClass = applicationClass;
+    this.metadata = metadata;
   }
 
   /**
@@ -145,5 +151,12 @@ public class ApplicationDeployable {
    */
   public boolean canUpdateSchedules() {
     return updateSchedules;
+  }
+
+  /**
+   * Returns the metadata to emit
+   */
+  public Map<MetadataScope, Metadata> getMetadata() {
+    return metadata;
   }
 }

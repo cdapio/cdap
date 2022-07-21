@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Tests for {@link SystemMetadataWriterStage}.
+ * Tests for {@link MetadataWriterStage}.
  */
 public class SystemMetadataWriterStageTest {
   @ClassRule
@@ -96,7 +96,7 @@ public class SystemMetadataWriterStageTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
     ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName, applicationClass);
     WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
-    SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataServiceClient);
+    MetadataWriterStage systemMetadataWriterStage = new MetadataWriterStage(metadataServiceClient);
     StageContext stageContext = new StageContext(Object.class);
     systemMetadataWriterStage.process(stageContext);
     systemMetadataWriterStage.process(appWithPrograms);
@@ -131,7 +131,7 @@ public class SystemMetadataWriterStageTest {
     ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName,
                                                                     new CapabilityAppWithWorkflow(), applicationClass);
     WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
-    SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataServiceClient);
+    MetadataWriterStage systemMetadataWriterStage = new MetadataWriterStage(metadataServiceClient);
     StageContext stageContext = new StageContext(Object.class);
     systemMetadataWriterStage.process(stageContext);
     systemMetadataWriterStage.process(appWithPrograms);

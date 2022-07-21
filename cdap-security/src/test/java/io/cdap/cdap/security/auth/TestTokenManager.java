@@ -49,7 +49,7 @@ public abstract class TestTokenManager {
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
-    UserIdentity ident1 = new UserIdentity(user, groups,
+    UserIdentity ident1 = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups,
                                            now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     LOG.info("Signed token is: " + Bytes.toStringBinary(tokenCodec.encode(token1)));
@@ -57,13 +57,16 @@ public abstract class TestTokenManager {
     tokenManager.validateSecret(token1);
 
     // test token expiration
-    UserIdentity expiredIdent = new UserIdentity(user, groups, now - 1000, now - 1);
+    UserIdentity expiredIdent = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups, now - 1000,
+                                                 now - 1);
     AccessToken expiredToken = tokenManager.signIdentifier(expiredIdent);
     try {
       tokenManager.validateSecret(expiredToken);
       fail("Token should have been expired but passed validation: " +
              Bytes.toStringBinary(tokenCodec.encode(expiredToken)));
-    } catch (InvalidTokenException expected) { }
+    } catch (InvalidTokenException expected) {
+      // expected
+    }
 
     // test token with invalid signature
     Random random = new Random();
@@ -74,7 +77,9 @@ public abstract class TestTokenManager {
       tokenManager.validateSecret(invalidToken);
       fail("Token should have been rejected for invalid digest but passed: " +
              Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
-    } catch (InvalidTokenException expected) { }
+    } catch (InvalidTokenException expected) {
+      // expected
+    }
 
     // test token with bad key ID
     AccessToken invalidKeyToken = new AccessToken(token1.getIdentifier(), token1.getKeyId() + 1,
@@ -83,7 +88,9 @@ public abstract class TestTokenManager {
       tokenManager.validateSecret(invalidKeyToken);
       fail("Token should have been rejected for invalid key ID but passed: " +
              Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
-    } catch (InvalidTokenException expected) { }
+    } catch (InvalidTokenException expected) {
+      // expected
+    }
 
     tokenManager.stopAndWait();
   }
@@ -98,7 +105,7 @@ public abstract class TestTokenManager {
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
-    UserIdentity ident1 = new UserIdentity(user, groups,
+    UserIdentity ident1 = new UserIdentity(user, UserIdentity.IdentifierType.EXTERNAL, groups,
                                            now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     byte[] tokenBytes = tokenCodec.encode(token1);

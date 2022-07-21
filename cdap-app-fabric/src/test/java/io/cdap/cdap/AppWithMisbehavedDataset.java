@@ -59,7 +59,7 @@ public class AppWithMisbehavedDataset extends AbstractApplication {
    */
   public static class MisbehavedDataset extends AbstractDataset {
 
-    private boolean active = false;
+    private boolean active;
 
     public MisbehavedDataset(DatasetSpecification spec, @EmbeddedDataset("t") Table table) {
       super(spec.getName(), table);
@@ -120,7 +120,7 @@ public class AppWithMisbehavedDataset extends AbstractApplication {
           }
         });
       } catch (TransactionFailureException e) {
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
   }

@@ -35,7 +35,8 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.discovery.Discoverable;
@@ -103,8 +104,8 @@ public abstract class ExternalAuthenticationServerTestBase {
     // values verify that they are not used by external authentication server
     configuration.set(Constants.Security.AUTH_SERVER_ANNOUNCE_URLS, "invalid.urls");
 
-    Module securityModule = Modules.override(new SecurityModules().getInMemoryModules()).with(
-      new AbstractModule() {
+    Module externalAuthenticationModule = Modules.override(new ExternalAuthenticationModule())
+      .with(new AbstractModule() {
         @Override
         protected void configure() {
           bind(AuditLogHandler.class)
@@ -112,9 +113,9 @@ public abstract class ExternalAuthenticationServerTestBase {
               ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
             .toInstance(new AuditLogHandler(TEST_AUDIT_LOGGER));
         }
-      }
-    );
-    Injector injector = Guice.createInjector(new IOModule(), securityModule,
+      });
+    Injector injector = Guice.createInjector(new IOModule(), externalAuthenticationModule,
+                                             new CoreSecurityRuntimeModule().getInMemoryModules(),
                                              new ConfigModule(getConfiguration(configuration),
                                                               HBaseConfiguration.create(), sConfiguration),
                                              new InMemoryDiscoveryModule());

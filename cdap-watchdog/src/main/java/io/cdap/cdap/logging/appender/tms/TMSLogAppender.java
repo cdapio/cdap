@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -127,7 +128,8 @@ public class TMSLogAppender extends LogAppender {
     }
 
     @Override
-    protected void publish(List<Map.Entry<Integer, byte[]>> logMessages) throws TopicNotFoundException, IOException {
+    protected void publish(List<Map.Entry<Integer, byte[]>> logMessages)
+      throws TopicNotFoundException, IOException, AccessException {
       MessagePublisher directMessagePublisher = messagingContext.getDirectMessagePublisher();
 
       // Group the log messages by partition and then publish all messages to their respective partitions

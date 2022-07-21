@@ -49,13 +49,13 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.http.Header;
@@ -160,7 +160,8 @@ public abstract class GatewayTestBase {
                                       ("localhost", 0).getAddress());
           }
         },
-        new SecurityModules().getInMemoryModules(),
+        new CoreSecurityRuntimeModule().getInMemoryModules(),
+        new ExternalAuthenticationModule(),
         new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
         @Override
@@ -169,7 +170,7 @@ public abstract class GatewayTestBase {
           // bindings out as it overlaps with
           // AppFabricServiceModule
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-          bind(PrivilegesManager.class).to(NoOpAuthorizer.class);
+          bind(PermissionManager.class).to(NoOpAccessController.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       })
@@ -182,8 +183,7 @@ public abstract class GatewayTestBase {
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
     metadataService = injector.getInstance(MetadataService.class);

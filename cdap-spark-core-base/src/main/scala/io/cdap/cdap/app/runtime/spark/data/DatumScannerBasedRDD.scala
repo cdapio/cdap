@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.TaskContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import org.apache.spark.util.TaskCompletionListener
 import org.apache.tephra.TransactionAware
 
 import java.net.URI
@@ -69,13 +70,16 @@ abstract class DatumScannerBasedRDD[R: ClassTag](@(transient @param) sc: SparkCo
 
       // Create an iterator from the split
       val iterator = new DatumScannerIterator[R](context, createDatumScanner(dataset, split))
-      context.addTaskCompletionListener(context => {
+      // Need a val as workaround for scala 2.12 https://github.com/scala/bug/issues/11016
+      val listener = new TaskCompletionListener {
+        override def onTaskCompletion(context: TaskContext) =  {
         try {
           iterator.close
         } finally {
           dataset.close
         }
-      })
+      }}
+      context.addTaskCompletionListener(listener)
       iterator
     } catch {
       case t: Throwable =>

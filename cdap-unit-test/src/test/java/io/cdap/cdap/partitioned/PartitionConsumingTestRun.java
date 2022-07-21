@@ -30,7 +30,6 @@ import io.cdap.cdap.test.ProgramManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;

@@ -20,9 +20,9 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -41,21 +41,19 @@ public class RemoteMetadataClient extends AbstractMetadataClient {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteMetadataClient.class);
 
   private final RemoteClient remoteClient;
-  private final AuthenticationContext authenticationContext;
 
   @Inject
-  RemoteMetadataClient(final DiscoveryServiceClient discoveryClient,
-                       AuthenticationContext authenticationContext) {
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.METADATA_SERVICE,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
-    this.authenticationContext = authenticationContext;
+  RemoteMetadataClient(RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.METADATA_SERVICE,
+      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override
-  protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
-    UnauthorizedException {
+  protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
+    throws IOException, UnauthorizedException {
     LOG.trace("Making metadata request {}", request);
-    HttpResponse response = remoteClient.execute(addUserIdHeader(request));
+    HttpResponse response = remoteClient.execute(request);
     LOG.trace("Received response {} for request {}", response, request);
     return response;
   }
@@ -71,10 +69,5 @@ public class RemoteMetadataClient extends AbstractMetadataClient {
     URL url = remoteClient.resolve(resource);
     LOG.trace("Resolved URL {} for resources {}", url, resource);
     return url;
-  }
-
-  private HttpRequest addUserIdHeader(HttpRequest request) {
-    return new HttpRequest.Builder(request).addHeader(Constants.Security.Headers.USER_ID,
-                                                      authenticationContext.getPrincipal().getName()).build();
   }
 }

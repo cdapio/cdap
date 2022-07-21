@@ -35,12 +35,14 @@ import io.cdap.cdap.proto.metadata.lineage.Field;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageDetails;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -65,11 +67,16 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
 
   private final LineageAdmin lineageAdmin;
   private final FieldLineageAdmin fieldLineageAdmin;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  LineageHTTPHandler(LineageAdmin lineageAdmin, FieldLineageAdmin fieldLineageAdmin) {
+  LineageHTTPHandler(LineageAdmin lineageAdmin, FieldLineageAdmin fieldLineageAdmin,
+                     AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.lineageAdmin = lineageAdmin;
     this.fieldLineageAdmin = fieldLineageAdmin;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -98,6 +105,7 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     TimeRange range = parseRange(startStr, endStr);
 
     DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
+    accessEnforcer.enforce(datasetInstance, authenticationContext.getPrincipal(), StandardPermission.GET);
     Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(),
                                                   levels, rollup);
     responder.sendJson(HttpResponseStatus.OK,
@@ -127,7 +135,9 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                             @QueryParam("end") String endStr,
                             @QueryParam("prefix") String prefix,
                             @QueryParam("includeCurrent") boolean includeCurrent)
-    throws BadRequestException, IOException {
+    throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
+                           StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
     Set<Field> result = fieldLineageAdmin.getFields(EndPoint.of(namespaceId, datasetId), range.getStart(),
                                                     range.getEnd(), prefix, includeCurrent);
@@ -159,7 +169,9 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                                   @PathParam("dataset-id") String datasetId,
                                   @QueryParam("direction") String directionStr,
                                   @QueryParam("start") String startStr,
-                                  @QueryParam("end") String endStr) throws BadRequestException, IOException {
+                                  @QueryParam("end") String endStr) throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
+                           StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
     Constants.FieldLineage.Direction direction = parseDirection(directionStr);
     DatasetFieldLineageSummary summary = fieldLineageAdmin.getDatasetFieldLineage(direction,
@@ -186,7 +198,9 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                                          @PathParam("field-name") String field,
                                          @QueryParam("direction") String directionStr,
                                          @QueryParam("start") String startStr,
-                                         @QueryParam("end") String endStr) throws BadRequestException {
+                                         @QueryParam("end") String endStr) throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
+                           StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
     Constants.FieldLineage.Direction direction = parseDirection(directionStr);
     EndPointField endPointField = new EndPointField(EndPoint.of(namespaceId, datasetId), field);
@@ -213,7 +227,9 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                                          @PathParam("field-name") String field,
                                          @QueryParam("direction") @DefaultValue("both") String directionStr,
                                          @QueryParam("start") String startStr,
-                                         @QueryParam("end") String endStr) throws BadRequestException {
+                                         @QueryParam("end") String endStr) throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
+                           StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
     Constants.FieldLineage.Direction direction = parseDirection(directionStr);
     EndPointField endPointField = new EndPointField(EndPoint.of(namespaceId, datasetId), field);

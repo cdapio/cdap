@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.internal.provision;
 
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Provides provisioner config
@@ -30,5 +32,5 @@ public interface ProvisionerConfigProvider {
    * @param provisioners the set provisioner names to get the config
    * @return the map of the configs of the provisioners
    */
-  Map<String, ProvisionerConfig> loadProvisionerConfigs(Set<String> provisioners);
+  Map<String, ProvisionerConfig> loadProvisionerConfigs(Collection<Provisioner> provisioners);
 }

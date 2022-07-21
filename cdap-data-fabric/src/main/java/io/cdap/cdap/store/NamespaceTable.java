@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.store;
 
-import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -30,12 +29,15 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -45,7 +47,7 @@ import javax.annotation.Nullable;
 public final class NamespaceTable {
   private static final Gson GSON = new Gson();
 
-  private StructuredTable table;
+  private final StructuredTable table;
 
   public NamespaceTable(StructuredTableContext context) throws TableNotFoundException {
     this.table = context.getTable(StoreDefinition.NamespaceStore.NAMESPACES);
@@ -61,7 +63,7 @@ public final class NamespaceTable {
     Field<String> nameField = Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD, metadata.getName());
     Field<String> metadataField =
       Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD, GSON.toJson(metadata));
-    table.upsert(ImmutableList.of(nameField, metadataField));
+    table.upsert(Arrays.asList(nameField, metadataField));
   }
 
   /**
@@ -72,14 +74,10 @@ public final class NamespaceTable {
    */
   @Nullable
   public NamespaceMeta get(NamespaceId id) throws IOException {
-    Optional<StructuredRow> row =
-      table.read(
-        ImmutableList.of(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD, id.getEntityName())));
-    if (!row.isPresent()) {
-      return null;
-    }
-    return GSON.fromJson(
-      row.get().getString(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD), NamespaceMeta.class);
+    return table.read(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+                                                               id.getEntityName())))
+      .map(this::getNamespaceMeta)
+      .orElse(null);
   }
 
   /**
@@ -88,8 +86,8 @@ public final class NamespaceTable {
    * @param id id of the namespace
    */
   public void delete(NamespaceId id) throws IOException {
-    table.delete(
-      ImmutableList.of(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD, id.getEntityName())));
+    table.delete(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+                                                          id.getEntityName())));
   }
 
   /**
@@ -98,15 +96,11 @@ public final class NamespaceTable {
    * @return list of all namespace metas
    */
   public List<NamespaceMeta> list() throws IOException {
-    List<NamespaceMeta> result = new ArrayList<>();
     try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), Integer.MAX_VALUE)) {
-      while (iterator.hasNext()) {
-        result.add(
-          GSON.fromJson(
-            iterator.next().getString(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD), NamespaceMeta.class));
-      }
+      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
+        .map(this::getNamespaceMeta)
+        .collect(Collectors.toList());
     }
-    return result;
   }
 
   /**
@@ -126,5 +120,12 @@ public final class NamespaceTable {
    */
   public long getNamespaceCount(Collection<Range> ranges) throws IOException {
     return table.count(ranges);
+  }
+
+  @Nullable
+  private NamespaceMeta getNamespaceMeta(StructuredRow row) {
+    return Optional.ofNullable(row.getString(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD))
+      .map(field -> GSON.fromJson(field, NamespaceMeta.class))
+      .orElse(null);
   }
 }

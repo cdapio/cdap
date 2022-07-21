@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services.http.handlers;
 
 import io.cdap.cdap.SleepingWorkflowApp;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -30,7 +31,6 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -44,12 +44,12 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
   private static final String STOPPED = "STOPPED";
   private static final String RUNNING = "RUNNING";
 
-  private static ProgramRunRecordFetcher programRunRecordFetcher = null;
+  private static ProgramRunRecordFetcher programRunRecordFetcher;
 
   @BeforeClass
   public static void init() {
     programRunRecordFetcher = new RemoteProgramRunRecordFetcher(
-      getInjector().getInstance(DiscoveryServiceClient.class));
+      getInjector().getInstance(RemoteClientFactory.class));
   }
 
   @Test

@@ -25,7 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
@@ -46,7 +46,7 @@ public class MasterServiceMainTest {
       new LeaderElectionInfoService(baseInjector.getInstance(ZKClientService.class), "/election")
     );
 
-    Assert.assertNotNull(injector.getInstance(AuthorizerInstantiator.class));
+    Assert.assertNotNull(injector.getInstance(AccessControllerInstantiator.class));
     Assert.assertNotNull(injector.getInstance(DatasetService.class));
     Assert.assertNotNull(injector.getInstance(AppFabricServer.class));
   }

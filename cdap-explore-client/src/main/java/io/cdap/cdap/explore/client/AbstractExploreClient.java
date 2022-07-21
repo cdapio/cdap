@@ -32,7 +32,6 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.common.ServiceUnavailableException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.explore.service.Explore;
 import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.explore.service.HandleNotFoundException;
@@ -45,6 +44,7 @@ import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -411,7 +411,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     private int fetchSize = DEFAULT_FETCH_SIZE;
     private Iterator<QueryResult> delegate;
-    private List<ColumnDesc> resultSchema = null;
+    private List<ColumnDesc> resultSchema;
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;

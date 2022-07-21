@@ -33,7 +33,7 @@ import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
 import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.twill.filesystem.Location;
@@ -53,15 +53,14 @@ import javax.annotation.Nullable;
 public interface ArtifactRepository extends ArtifactRepositoryReader {
 
   /**
-   * Create a classloader that uses the artifact at the specified location to load classes, with access to
+   * Create a classloader that uses the artifact specified by {@link ArtifactDescriptor} to load classes, with access to
    * packages that all program type has access to.
    * It delegates to {@link ArtifactClassLoaderFactory#createClassLoader(Location, EntityImpersonator)}.
    *
    * @see ArtifactClassLoaderFactory
    */
-  CloseableClassLoader createArtifactClassLoader(Location artifactLocation,
+  CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
                                                  EntityImpersonator entityImpersonator) throws IOException;
-
   /**
    * Clear all artifacts in the given namespace. This method is only intended to be called by unit tests, and
    * when a namespace is being deleted.
@@ -211,10 +210,8 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
    * @throws InvalidArtifactException if the artifact is invalid. For example, if it is not a zip file,
    *                                  or the application class given is not an Application.
    * @throws UnauthorizedException if the current user does not have the privilege to add an artifact in the specified
-   *                               namespace. To add an artifact, a user needs {@link Action#WRITE} privilege on the
-   *                               namespace in which the artifact is being added. If authorization is successful, and
-   *                               the artifact is added successfully, then the user gets all {@link Action privileges}
-   *                               on the added artifact.
+   *                               namespace. To add an artifact, a user needs {@link StandardPermission#UPDATE}
+   *                               privilege on the namespace in which the artifact is being added.
    */
   ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception;
 
@@ -233,10 +230,8 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
    * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
-   *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
-   *                               the artifact is being added. If authorization is successful, and
-   *                               the artifact is added successfully, then the user gets all {@link Action privileges}
-   *                               on the added artifact.
+   *                               an artifact, a user must have {@link StandardPermission#UPDATE} on the namespace
+   *                               in which the artifact is being added.
    */
   ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                              @Nullable Set<ArtifactRange> parentArtifacts,
@@ -258,10 +253,8 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
    * @throws UnauthorizedException if the user is not authorized to add an artifact in the specified namespace. To add
-   *                               an artifact, a user must have {@link Action#WRITE} on the namespace in which
-   *                               the artifact is being added. If authorization is successful, and
-   *                               the artifact is added successfully, then the user gets all {@link Action privileges}
-   *                               on the added artifact.
+   *                               an artifact, a user must have {@link StandardPermission#UPDATE} on the namespace
+   *                               in which the artifact is being added.
    */
   @VisibleForTesting
   ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
@@ -333,7 +326,7 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
    * @throws IOException if there was some IO error deleting the artifact
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws UnauthorizedException if the current user is not authorized to delete the artifact. To delete an artifact,
-   *                               a user needs {@link Action#ADMIN} permission on the artifact.
+   *                               a user needs {@link StandardPermission#DELETE} permission on the artifact.
    */
   void deleteArtifact(Id.Artifact artifactId) throws Exception;
 

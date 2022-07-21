@@ -17,6 +17,7 @@ package io.cdap.cdap.metrics.collect;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
+import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.MetricValue;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsContext;
@@ -26,13 +27,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * Testing the basic properties of the {@link AggregatedMetricsCollectionService}.
@@ -48,6 +52,7 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final String INSTANCE = "testInstance";
   private static final String METRIC = "metric";
   private static final String GAUGE_METRIC = "gaugeMetric";
+  private static final String DISTRIBUTION_METRIC = "distributionMetric";
 
   private Long getMetricValue(Collection<MetricValue> metrics, String metricName) {
     for (MetricValue metricValue : metrics) {
@@ -194,4 +199,80 @@ public class AggregatedMetricsCollectionServiceTest {
     // validate that no further aggregates are in the queue
     Assert.assertNull(published.poll());
   }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testPublishDistribution() throws InterruptedException {
+    final BlockingQueue<MetricValues> published = new LinkedBlockingQueue<>();
+
+    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService(1000L) {
+      @Override
+      protected void publish(Iterator<MetricValues> metrics) {
+        Iterators.addAll(published, metrics);
+      }
+    };
+
+    service.startAndWait();
+
+    // non-empty tags.
+    final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
+            Constants.Metrics.Tag.APP, APP,
+            Constants.Metrics.Tag.SERVICE, SERVICE,
+            Constants.Metrics.Tag.RUN_ID, RUNID);
+
+    try {
+      // publish distribution with empty tags
+      service.getContext(EMPTY_TAGS).event(DISTRIBUTION_METRIC, 40);
+      service.getContext(EMPTY_TAGS).event(DISTRIBUTION_METRIC, 9);
+      service.getContext(EMPTY_TAGS).event(DISTRIBUTION_METRIC, 57);
+      service.getContext(EMPTY_TAGS).event(DISTRIBUTION_METRIC, 200000);
+
+      verifyDistribtionMetricValues(published, 1, 4);
+
+      MetricsContext baseCollector = service.getContext(baseTags);
+      MetricsContext metricsContext = baseCollector.childContext(Constants.Metrics.Tag.HANDLER, HANDLER)
+              .childContext(Constants.Metrics.Tag.INSTANCE_ID, INSTANCE);
+
+      //publish distribution with non empty tags
+      baseCollector.event(DISTRIBUTION_METRIC, 40);
+      metricsContext.event(DISTRIBUTION_METRIC, 40);
+      baseCollector.event(DISTRIBUTION_METRIC, 9);
+      metricsContext.event(DISTRIBUTION_METRIC, 9);
+      baseCollector.event(DISTRIBUTION_METRIC, 57);
+      metricsContext.event(DISTRIBUTION_METRIC, 57);
+      baseCollector.event(DISTRIBUTION_METRIC, 200000);
+      metricsContext.event(DISTRIBUTION_METRIC, 200000);
+
+      verifyDistribtionMetricValues(published, 2, 4);
+
+    } finally {
+      service.stopAndWait();
+    }
+  }
+
+  private void verifyDistribtionMetricValues(BlockingQueue<MetricValues> published,
+                                             int numMetrics, int numValuesInMetric) throws InterruptedException {
+    long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
+    MetricValues metricValues;
+    HashSet<Integer> tagCounts = new HashSet<>();
+    while (timeout > System.currentTimeMillis() && tagCounts.size() != numMetrics) {
+      metricValues = published.poll(100, TimeUnit.MILLISECONDS);
+      if (metricValues == null) {
+        continue;
+      }
+
+      Collection<MetricValue> values = metricValues.getMetrics();
+      for (MetricValue mv:values) {
+        if (mv.getType() == MetricType.DISTRIBUTION) {
+          tagCounts.add(metricValues.getTags().size());
+          Assert.assertEquals(numValuesInMetric, Arrays.stream(mv.getBucketCounts()).sum());
+        }
+      }
+    }
+
+    Assert.assertEquals(numMetrics, tagCounts.size());
+    // validate that no further aggregates are in the queue
+    Assert.assertNull(published.poll());
+  }
+
 }

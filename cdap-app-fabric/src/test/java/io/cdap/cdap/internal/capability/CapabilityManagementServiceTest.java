@@ -41,13 +41,13 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import jersey.repackaged.com.google.common.base.Throwables;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
@@ -103,16 +103,26 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   @After
   public void reset() throws Exception {
     // Reset all relevant stores.
-    for (ApplicationDetail appDetail : applicationLifecycleService
-      .getApps(NamespaceId.SYSTEM, applicationDetail -> true)) {
-      programLifecycleService.stopAll(
-        new ApplicationId(NamespaceId.SYSTEM.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
-    }
-    for (ApplicationDetail appDetail : applicationLifecycleService
-      .getApps(NamespaceId.DEFAULT, applicationDetail -> true)) {
-      programLifecycleService.stopAll(
-        new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
-    }
+    applicationLifecycleService.scanApplications(NamespaceId.SYSTEM, Collections.emptyList(),
+        d -> {
+          try {
+            programLifecycleService.stopAll(
+                new ApplicationId(NamespaceId.SYSTEM.getNamespace(), d.getName(), d.getAppVersion()));
+          } catch (Exception e) {
+            Throwables.propagate(e);
+          }
+        });
+
+    applicationLifecycleService.scanApplications(NamespaceId.DEFAULT, Collections.emptyList(),
+        d -> {
+          try {
+            programLifecycleService.stopAll(
+                new ApplicationId(NamespaceId.DEFAULT.getNamespace(), d.getName(), d.getAppVersion()));
+          } catch (Exception e) {
+            Throwables.propagate(e);
+          }
+        });
+
     applicationLifecycleService.removeAll(NamespaceId.SYSTEM);
     applicationLifecycleService.removeAll(NamespaceId.DEFAULT);
     artifactRepository.clear(NamespaceId.SYSTEM);
@@ -165,7 +175,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton("cap1"));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
 
     //disable from delete and see if it is applied correctly
@@ -180,7 +190,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton("cap1"));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     Assert.assertEquals(disableConfig, capabilityStatusStore.getConfigs(Collections.singleton("cap1")).get("cap1"));
 
@@ -248,7 +258,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -305,7 +315,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -340,7 +350,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -397,7 +407,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -429,7 +439,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
@@ -457,7 +467,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Arrays.asList(declaredAnnotation.capabilities()));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
     String appNameWithCapability = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();
     deployTestArtifact(Id.Namespace.DEFAULT.getId(), appNameWithCapability, testVersion, appWithWorkflowClass);
@@ -544,7 +554,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
@@ -565,13 +575,13 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
 
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception
@@ -602,7 +612,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.from(namespace), pluginName, version);
     File pluginJarFile = new File(tmpFolder.newFolder(),
                                   String.format("%s-%s.jar", pluginArtifactId.getName(), version));
-    Files.copy(Locations.newInputSupplier(pluginJar), pluginJarFile);
+    Locations.linkOrCopyOverwrite(pluginJar, pluginJarFile);
     pluginJar.delete();
     artifactRepository.addArtifact(pluginArtifactId, pluginJarFile);
 
@@ -624,7 +634,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
@@ -645,13 +655,13 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
-
+      // expected
     }
 
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception
@@ -675,11 +685,13 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(testCapability2));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
+      // expected
     }
     try {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(testCapability3));
       Assert.fail("expecting exception");
     } catch (CapabilityNotAvailableException ex) {
+      // expected
     }
     try {
       capabilityStatusStore.checkAllEnabled(Collections.singleton(testCapability1));
@@ -783,7 +795,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
   }
@@ -793,7 +805,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClass);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
     //deploy app

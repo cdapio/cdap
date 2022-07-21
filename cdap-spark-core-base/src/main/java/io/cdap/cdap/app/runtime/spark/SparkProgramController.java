@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.workflow.WorkflowToken;
@@ -26,6 +25,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link ProgramController} for {@link Spark} jobs. This class acts as an adapter for reflecting state changes
@@ -34,10 +34,17 @@ import java.util.Set;
 final class SparkProgramController extends ProgramControllerServiceAdapter implements WorkflowDataProvider {
 
   private final SparkRuntimeContext context;
+  private final SparkRuntimeService sparkRuntimeService;
 
-  SparkProgramController(Service sparkRuntimeService, SparkRuntimeContext context) {
+  SparkProgramController(SparkRuntimeService sparkRuntimeService, SparkRuntimeContext context) {
     super(sparkRuntimeService, context.getProgramRunId());
     this.context = context;
+    this.sparkRuntimeService = sparkRuntimeService;
+  }
+
+  @Override
+  protected void gracefulStop(long gracefulTimeoutMillis) {
+    sparkRuntimeService.stop(gracefulTimeoutMillis, TimeUnit.MILLISECONDS);
   }
 
   @Override

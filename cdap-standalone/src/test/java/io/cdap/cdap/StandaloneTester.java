@@ -25,7 +25,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.conf.Configuration;

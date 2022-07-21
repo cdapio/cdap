@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -42,6 +41,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.FilterClassLoader;
@@ -63,18 +63,22 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -109,7 +113,7 @@ public final class SparkRuntimeContextProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeContextProvider.class);
 
-  // Constants defined for file names used for files localization done by the SparkRuntimeService.
+  // Constants defined for file names used for files localization done by the SparkRuntimeService/SparkContainerLauncher
   // They are needed for recreating the SparkRuntimeContext in this class.
   static final String CCONF_FILE_NAME = "cConf.xml";
   static final String HCONF_FILE_NAME = "hConf.xml";
@@ -117,8 +121,17 @@ public final class SparkRuntimeContextProvider {
   static final String PROGRAM_JAR_EXPANDED_NAME = "program.jar.expanded.zip";
   static final String PROGRAM_JAR_NAME = "program.jar";
   static final String EXECUTOR_CLASSLOADER_NAME = "org.apache.spark.repl.ExecutorClassLoader";
+  public static final String ARTIFACTS_DIRECTORY_NAME = "artifacts_archive.jar";
 
   private static volatile SparkRuntimeContext sparkRuntimeContext;
+  private static String masterEnvName;
+
+  /**
+   * Set the name of the master environment implementation, if one is being used.
+   */
+  public static void setMasterEnvName(String name) {
+    masterEnvName = name;
+  }
 
   /**
    * Returns the current {@link SparkRuntimeContext}.
@@ -177,11 +190,14 @@ public final class SparkRuntimeContextProvider {
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(hConf);
       ProgramOptions programOptions = contextConfig.getProgramOptions();
 
-      // Should be yarn only and only for executor node, not the driver node.
-      Preconditions.checkState(!contextConfig.isLocal(programOptions),
-                               "SparkContextProvider.getSparkContext should only be called in Spark executor process.");
-
       ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
+
+      if (masterEnvName != null) {
+        MasterEnvironment masterEnv = MasterEnvironments.create(cConf, masterEnvName);
+        MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+        masterEnv.initialize(context);
+        MasterEnvironments.setMasterEnvironment(masterEnv);
+      }
 
       // Create the program
       Program program = createProgram(cConf, contextConfig);
@@ -191,6 +207,13 @@ public final class SparkRuntimeContextProvider {
 
       LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
+
+      // For spark running natively on k8s, we may need to initialize the TokenManager for internal identity.
+      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+        TokenManager tokenManager = injector.getInstance(TokenManager.class);
+        tokenManager.startAndWait();
+      }
+
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
       ProxySelector oldProxySelector = ProxySelector.getDefault();
@@ -203,7 +226,7 @@ public final class SparkRuntimeContextProvider {
 
       Deque<Service> coreServices = new LinkedList<>();
 
-      if (clusterMode == ClusterMode.ON_PREMISE) {
+      if (clusterMode == ClusterMode.ON_PREMISE && masterEnvName == null) {
         // Add ZK for discovery and Kafka
         coreServices.add(injector.getInstance(ZKClientService.class));
         // Add the Kafka client for logs collection
@@ -260,13 +283,12 @@ public final class SparkRuntimeContextProvider {
         getHostname(),
         injector.getInstance(TransactionSystemClient.class),
         programDatasetFramework,
-        injector.getInstance(DiscoveryServiceClient.class),
         metricsCollectionService,
         contextConfig.getWorkflowProgramInfo(),
         pluginInstantiator,
         injector.getInstance(SecureStore.class),
         injector.getInstance(SecureStoreManager.class),
-        injector.getInstance(AuthorizationEnforcer.class),
+        injector.getInstance(AccessEnforcer.class),
         injector.getInstance(AuthenticationContext.class),
         injector.getInstance(MessagingService.class),
         serviceAnnouncer,
@@ -276,8 +298,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(MetadataPublisher.class),
         injector.getInstance(NamespaceQueryAdmin.class),
         injector.getInstance(FieldLineageWriter.class),
-        closeable
-      );
+        injector.getInstance(RemoteClientFactory.class),
+        closeable);
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
     } catch (Exception e) {

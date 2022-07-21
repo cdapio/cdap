@@ -22,13 +22,19 @@ import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1StatefulSet;
+import io.kubernetes.client.common.KubernetesObject;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.BatchV1Api;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1JobStatus;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
-import io.kubernetes.client.util.Reflect;
-import io.kubernetes.client.util.exception.ObjectMetaReflectException;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStoreUpdater;
@@ -66,6 +72,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -102,15 +109,23 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final PodInfo podInfo;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, String> extraLabels;
-  private final Map<Type, AppResourceWatcherThread<?>> resourceWatchers;
+  private final Map<String, Map<Type, AppResourceWatcherThread<?>>> resourceWatchers;
   private final Map<String, KubeLiveInfo> liveInfos;
   private final Lock liveInfoLock;
-  private ScheduledExecutorService monitorScheduler;
+  private final int jobCleanupIntervalMins;
+  private final int jobCleanBatchSize;
+  private final String selector;
+  private final boolean enableMonitor;
   private ApiClient apiClient;
+  private CoreV1Api coreV1Api;
+  private ScheduledExecutorService monitorScheduler;
+  private ScheduledExecutorService jobCleanerService;
 
   public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext,
                                 String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
-                                PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels) {
+                                PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
+                                int jobCleanupIntervalMins, int jobCleanBatchSize,
+                                boolean enableMonitor) {
     this.masterEnvContext = masterEnvContext;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -118,14 +133,15 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
 
-    // Selects all runs start by the k8s twill runner that has the run id label
-    String selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
-    this.resourceWatchers = ImmutableMap.of(
-      V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
-      V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector)
-    );
+    // Selects all runs started by the k8s twill runner that has the run id label
+    this.selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
+    // Contains mapping of the Kubernetes namespace to a map of resource types and the watcher threads
+    this.resourceWatchers = new HashMap<>();
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
+    this.jobCleanupIntervalMins = jobCleanupIntervalMins;
+    this.jobCleanBatchSize = jobCleanBatchSize;
+    this.enableMonitor = enableMonitor;
   }
 
   @Override
@@ -155,9 +171,13 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       // Adds the controller to the LiveInfo.
       liveInfoLock.lock();
       try {
-        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), n -> new KubeLiveInfo(resourceType, n));
         KubeTwillController controller = createKubeTwillController(spec.getName(), runId, resourceType, meta);
-        return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller);
+        if (!enableMonitor) {
+          //since monitor is disabled, we fire and forget
+          return controller;
+        }
+        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), n -> new KubeLiveInfo(resourceType, n));
+        return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller, meta);
       } finally {
         liveInfoLock.unlock();
       }
@@ -197,14 +217,31 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   @Override
   public void start() {
+    LOG.error("Starting KubeTwillRunnerService with {} monitor", enableMonitor ? "enabled" : "disabled");
     try {
       apiClient = Config.defaultClient();
+      coreV1Api = new CoreV1Api(apiClient);
+      if (!enableMonitor) {
+        return;
+      }
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
-      resourceWatchers.values().forEach(watcher -> {
+      Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
+        V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
+        V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
+        V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector)
+      );
+      typeMap.values().forEach(watcher -> {
         watcher.addListener(new AppResourceChangeListener<>());
         watcher.start();
       });
+      resourceWatchers.put(kubeNamespace, typeMap);
+
+      // start job cleaner service
+      jobCleanerService =
+        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kube-job-cleaner"));
+      jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(new BatchV1Api(apiClient), selector, jobCleanBatchSize),
+                                            10, jobCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get Kubernetes API Client", e);
     }
@@ -212,8 +249,15 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   @Override
   public void stop() {
-    resourceWatchers.values().forEach(AbstractWatcherThread::close);
-    monitorScheduler.shutdownNow();
+    if (jobCleanerService != null) {
+      jobCleanerService.shutdownNow();
+    }
+    resourceWatchers.values().forEach(typeMap -> {
+      typeMap.values().forEach(AbstractWatcherThread::close);
+    });
+    if (monitorScheduler != null) {
+      monitorScheduler.shutdownNow();
+    }
   }
 
   /**
@@ -224,18 +268,25 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    * @param timeoutUnit the start timeout unit
    * @param controller the controller top monitor
    * @param <T> the type of the resource to watch
+   * @param resourceType resource type being controlled by controller
+   * @param startupTaskCompletion startup task completion
    * @return the controller
    */
-  private <T> KubeTwillController monitorController(KubeLiveInfo liveInfo, long timeout,
-                                                    TimeUnit timeoutUnit, KubeTwillController controller,
-                                                    AppResourceWatcherThread<T> watcher) {
+  private <T extends KubernetesObject> KubeTwillController monitorController(
+    KubeLiveInfo liveInfo, long timeout, TimeUnit timeoutUnit, KubeTwillController controller,
+    AppResourceWatcherThread<T> watcher, Type resourceType, CompletableFuture<Void> startupTaskCompletion) {
+
     String runId = controller.getRunId().getId();
+    if (!enableMonitor) {
+      throw new UnsupportedOperationException(
+        String.format("Cannot monitor controller for run %s when monitoring is disabled", runId));
+    }
 
     LOG.debug("Monitoring application {} with run {} starts in {} {}",
               liveInfo.getApplicationName(), runId, timeout, timeoutUnit);
 
     // Schedule to terminate the controller in the timeout time.
-    Future<?> terminationFuture = monitorScheduler.schedule(controller::terminate, timeout, timeoutUnit);
+    Future<?> terminationFuture = monitorScheduler.schedule(controller::terminateOnTimeout, timeout, timeoutUnit);
 
     // This future is for transferring the cancel watch to the change listener
     CompletableFuture<Cancellable> cancellableFuture = new CompletableFuture<>();
@@ -252,46 +303,64 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
       @Override
       public void resourceModified(T resource) {
-        V1ObjectMeta metadata = getMetadata(resource);
-        if (metadata == null) {
-          return;
-        }
+        V1ObjectMeta metadata = resource.getMetadata();
 
         if (!runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           return;
         }
 
-        if (isAllReplicasReady(resource)) {
-          LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
-          // Cancel the scheduled termination
-          terminationFuture.cancel(false);
-          // Cancel the watch
-          try {
-            Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
-          } catch (ExecutionException e) {
-            // This never happen
+        if (resourceType.equals(V1Job.class)) {
+          // If job has status active we consider it as ready
+          if (isJobReady((V1Job) resource)) {
+            LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
+            startupTaskCompletion.complete(null);
+            // Cancel the scheduled termination
+            terminationFuture.cancel(false);
+          }
+
+          // If job is in terminal state - success/failure - we consider it as complete.
+          if (isJobComplete((V1Job) resource)) {
+            // Cancel the watch
+            try {
+              Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            } catch (ExecutionException e) {
+              // This will never happen
+            }
+
+            controller.setJobStatus(((V1Job) resource).getStatus());
+            // terminate the job controller
+            controller.terminate();
+          }
+        } else {
+          if (isAllReplicasReady(resource)) {
+            LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
+            // Cancel the scheduled termination
+            terminationFuture.cancel(false);
+            // Cancel the watch
+            try {
+              Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            } catch (ExecutionException e) {
+              // This will never happen
+            }
           }
         }
       }
 
       @Override
       public void resourceDeleted(T resource) {
-        V1ObjectMeta metadata = getMetadata(resource);
-        if (metadata == null) {
-          return;
-        }
+        V1ObjectMeta metadata = resource.getMetadata();
 
         // If the run is deleted, terminate the controller right away and cancel the scheduled termination
         if (runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           // Cancel the scheduled termination
           terminationFuture.cancel(false);
-          controller.terminate();
           // Cancel the watch
           try {
             Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
           } catch (ExecutionException e) {
-            // This never happen
+            // This will never happen
           }
+          controller.terminate();
         }
       }
     });
@@ -314,12 +383,14 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         liveInfoLock.unlock();
       }
 
-      try {
-        Uninterruptibles.getUninterruptibly(controller.terminate());
-        LOG.debug("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
-      } catch (ExecutionException e) {
-        LOG.error("Controller for application {} of run {} is terminated due to failure",
-                  liveInfo.getApplicationName(), runId, e.getCause());
+      if (!resourceType.equals(V1Job.class)) {
+        try {
+          Uninterruptibles.getUninterruptibly(controller.terminate());
+          LOG.debug("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
+        } catch (ExecutionException e) {
+          LOG.error("Controller for application {} of run {} is terminated due to failure",
+                    liveInfo.getApplicationName(), runId, e.getCause());
+        }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
@@ -331,24 +402,10 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    *
    * @param name name of the twill application
    * @param runId the runId
-   * @return the applicaiton {@link Location}
+   * @return the application {@link Location}
    */
   private Location getApplicationLocation(String name, RunId runId) {
     return masterEnvContext.getLocationFactory().create(String.format("twill/%s/%s", name, runId.getId()));
-  }
-
-  /**
-   * Extracts a {@link V1ObjectMeta} from the given k8s resource or returns {@code null} if the given resource object
-   * doesn't contain metadata.
-   */
-  @Nullable
-  private V1ObjectMeta getMetadata(Object resource) {
-    try {
-      return Reflect.objectMetadata(resource);
-    } catch (ObjectMetaReflectException e) {
-      LOG.warn("Failed to extract object metadata from resource {}", resource, e);
-      return null;
-    }
   }
 
   /**
@@ -374,17 +431,60 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   }
 
   /**
+   * Checks if job is ready.
+   */
+  private boolean isJobReady(V1Job job) {
+    V1JobStatus jobStatus = job.getStatus();
+    if (jobStatus != null) {
+      Integer active = jobStatus.getActive();
+      if (active == null) {
+        return false;
+      }
+
+      try {
+        String labelSelector = job.getMetadata().getLabels().entrySet().stream()
+          .map(e -> e.getKey() + "=" + e.getValue())
+          .collect(Collectors.joining(","));
+
+        // Make sure at least one pod launched from the job is in active state.
+        // https://github.com/kubernetes-client/java/blob/master/kubernetes/docs/V1JobStatus.md
+        V1PodList podList = coreV1Api.listNamespacedPod(job.getMetadata().getNamespace(), null, null, null, null,
+                                                        labelSelector, null, null, null, null, null);
+
+        for (V1Pod pod : podList.getItems()) {
+          if (pod.getStatus() != null && pod.getStatus().getPhase() != null
+            && pod.getStatus().getPhase().equalsIgnoreCase("RUNNING")) {
+            return true;
+          }
+        }
+      } catch (ApiException e) {
+        // If there is an exception while getting active pods for a job, we will use job level status.
+        LOG.warn("Error while getting active pods for job {}, {}", job.getMetadata().getName(), e.getResponseBody());
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks if job is complete. Job completion can be in success or failed state.
+   */
+  private boolean isJobComplete(V1Job job) {
+    V1JobStatus jobStatus = job.getStatus();
+    if (jobStatus != null) {
+      return jobStatus.getFailed() != null || jobStatus.getSucceeded() != null;
+    }
+    return false;
+  }
+
+  /**
    * An {@link ResourceChangeListener} to watch for changes in application resources. It is for refreshing the
    * liveInfos map.
    */
-  private final class AppResourceChangeListener<T> implements ResourceChangeListener<T> {
+  private final class AppResourceChangeListener<T extends KubernetesObject> implements ResourceChangeListener<T> {
 
     @Override
     public void resourceAdded(T resource) {
-      V1ObjectMeta metadata = getMetadata(resource);
-      if (metadata == null) {
-        return;
-      }
+      V1ObjectMeta metadata = resource.getMetadata();
       String appName = metadata.getAnnotations().get(APP_LABEL);
       if (appName == null) {
         // This shouldn't happen. Just to guard against future bug.
@@ -408,7 +508,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       try {
         KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(appName, k -> new KubeLiveInfo(resource.getClass(), appName));
         KubeTwillController controller = createKubeTwillController(appName, runId, resource.getClass(), metadata);
-        liveInfo.addControllerIfAbsent(runId, startTimeoutMillis, TimeUnit.MILLISECONDS, controller);
+        liveInfo.addControllerIfAbsent(runId, startTimeoutMillis, TimeUnit.MILLISECONDS, controller, metadata);
       } finally {
         liveInfoLock.unlock();
       }
@@ -416,10 +516,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
     @Override
     public void resourceDeleted(T resource) {
-      V1ObjectMeta metadata = getMetadata(resource);
-      if (metadata == null) {
-        return;
-      }
+      V1ObjectMeta metadata = resource.getMetadata();
       String appName = metadata.getAnnotations().get(APP_LABEL);
       if (appName == null) {
         // This shouldn't happen. Just to guard against future bug.
@@ -432,7 +529,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
         KubeLiveInfo liveInfo = liveInfos.get(appName);
         if (liveInfo != null) {
           RunId runId = RunIds.fromString(metadata.getLabels().get(RUN_ID_LABEL));
-          Optional.ofNullable(liveInfo.getController(runId)).ifPresent(KubeTwillController::terminate);
+          if (!liveInfo.resourceType.equals(V1Job.class)) {
+            Optional.ofNullable(liveInfo.getController(runId)).ifPresent(KubeTwillController::terminate);
+          }
         }
       } finally {
         liveInfoLock.unlock();
@@ -445,8 +544,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    */
   private KubeTwillController createKubeTwillController(String appName, RunId runId,
                                                         Type resourceType, V1ObjectMeta meta) {
-    KubeTwillController controller = new KubeTwillController(kubeNamespace, runId, discoveryServiceClient,
-                                                             apiClient, resourceType, meta);
+    CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
+    KubeTwillController controller = new KubeTwillController(meta.getNamespace(), runId, discoveryServiceClient,
+                                                             apiClient, resourceType, meta, startupTaskCompletion);
 
     Location appLocation = getApplicationLocation(appName, runId);
     controller.onTerminated(() -> {
@@ -499,13 +599,30 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     }
 
     KubeTwillController addControllerIfAbsent(RunId runId, long timeout, TimeUnit timeoutUnit,
-                                              KubeTwillController controller) {
+                                              KubeTwillController controller, V1ObjectMeta meta) {
       KubeTwillController existing = controllers.putIfAbsent(runId.getId(), controller);
       if (existing != null) {
         return existing;
       }
+      String namespace = meta.getNamespace();
       // If it is newly added controller, monitor it.
-      return monitorController(this, timeout, timeoutUnit, controller, resourceWatchers.get(resourceType));
+      if (!resourceWatchers.containsKey(namespace)) {
+        addAndStartJobWatcher(namespace);
+      }
+      return monitorController(this, timeout, timeoutUnit, controller,
+                               resourceWatchers.get(namespace).get(resourceType),
+                               resourceType, controller.getStartedFuture());
+    }
+
+    /**
+     * Create and start job watcher for the given Kubernetes namespace
+     */
+    private void addAndStartJobWatcher(String namespace) {
+      LOG.info("Adding job watcher for namespace {}", namespace);
+      AppResourceWatcherThread<?> watcherThread = AppResourceWatcherThread.createJobWatcher(namespace, selector);
+      watcherThread.addListener(new AppResourceChangeListener<>());
+      watcherThread.start();
+      resourceWatchers.put(namespace, ImmutableMap.of(V1Job.class, watcherThread));
     }
 
     /**

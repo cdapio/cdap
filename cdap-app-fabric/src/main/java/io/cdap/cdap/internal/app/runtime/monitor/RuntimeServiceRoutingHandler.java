@@ -21,7 +21,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
-import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -186,12 +185,12 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
    */
   private HttpURLConnection openConnection(HttpRequest request, String namespace, String app,
                                            String version, String programType, String program, String run,
-                                           String service) throws BadRequestException, AuthorizationException {
+                                           String service) throws BadRequestException {
     ApplicationId appId = new NamespaceId(namespace).app(app, version);
     ProgramRunId programRunId = new ProgramRunId(appId,
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
-    requestValidator.validate(programRunId, request);
+    requestValidator.getProgramRunStatus(programRunId, request);
     Discoverable discoverable = endpointStrategyLoadingCache.getUnchecked(service).pick(2, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException(service);

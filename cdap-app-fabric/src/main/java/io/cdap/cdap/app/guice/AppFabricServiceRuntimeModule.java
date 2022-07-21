@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -33,14 +34,17 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
@@ -54,6 +58,7 @@ import io.cdap.cdap.gateway.handlers.BootstrapHttpHandler;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.ConfigHandler;
 import io.cdap.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
+import io.cdap.cdap.gateway.handlers.FileFetcherHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ImpersonationHandler;
 import io.cdap.cdap.gateway.handlers.InstanceOperationHttpHandler;
 import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
@@ -71,7 +76,13 @@ import io.cdap.cdap.gateway.handlers.VersionHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.internal.app.deploy.RemoteConfigurator;
+import io.cdap.cdap.internal.app.deploy.RemoteProgramRunDispatcher;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
@@ -97,21 +108,31 @@ import io.cdap.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
+import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
+import io.cdap.cdap.internal.events.EventPublishManager;
+import io.cdap.cdap.internal.events.EventPublisher;
+import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
+import io.cdap.cdap.internal.events.EventWriterProvider;
+import io.cdap.cdap.internal.events.MetricsProvider;
+import io.cdap.cdap.internal.events.ProgramStatusEventPublisher;
+import io.cdap.cdap.internal.events.SparkProgramStatusMetricsProvider;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
+import io.cdap.cdap.internal.tethering.TetheringClientHandler;
+import io.cdap.cdap.internal.tethering.TetheringHandler;
+import io.cdap.cdap.internal.tethering.TetheringServerHandler;
 import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -142,6 +163,13 @@ import java.util.List;
 public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public static final String NOAUTH_ARTIFACT_REPO = "noAuthArtifactRepo";
 
+  private final CConfiguration cConf;
+
+  @Inject
+  public AppFabricServiceRuntimeModule(CConfiguration cConf) {
+    this.cConf = cConf;
+  }
+
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
@@ -149,7 +177,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
-                           new AuthenticationContextModules().getMasterModule(),
                            BootstrapModules.getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -189,7 +216,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getStandaloneModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
-                           new AuthenticationContextModules().getMasterModule(),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
@@ -242,7 +268,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
-                           new AuthenticationContextModules().getMasterModule(),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
@@ -256,6 +281,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
+
+                               bind(ProgramRunDispatcher.class).to(RemoteProgramRunDispatcher.class)
+                                 .in(Scopes.SINGLETON);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -298,6 +326,23 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           })
       );
 
+      install(
+        new FactoryModuleBuilder()
+          .implement(Configurator.class, InMemoryConfigurator.class)
+          .build(Key.get(ConfiguratorFactory.class,
+                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_LOCAL)))
+      );
+      install(
+        new FactoryModuleBuilder()
+          .implement(Configurator.class, RemoteConfigurator.class)
+          .build(Key.get(ConfiguratorFactory.class,
+                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_REMOTE)))
+      );
+
+      bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+
+      bind(InMemoryProgramRunDispatcher.class).in(Scopes.SINGLETON);
+
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
 
@@ -306,6 +351,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProfileService.class).in(Scopes.SINGLETON);
+      bind(RunRecordMonitorService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(SystemAppManagementService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
@@ -330,6 +376,13 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       });
       bind(ProfileService.class).in(Scopes.SINGLETON);
       bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+
+      Multibinder<EventPublisher> eventPublishersBinder =
+        Multibinder.newSetBinder(binder(), EventPublisher.class);
+      eventPublishersBinder.addBinding().to(ProgramStatusEventPublisher.class);
+      bind(EventPublishManager.class).in(Scopes.SINGLETON);
+      bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class);
+      bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
@@ -361,6 +414,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ProfileHttpHandler.class);
       handlerBinder.addBinding().to(ProvisionerHttpHandler.class);
       handlerBinder.addBinding().to(BootstrapHttpHandler.class);
+      handlerBinder.addBinding().to(FileFetcherHttpHandlerInternal.class);
+      handlerBinder.addBinding().to(TetheringHandler.class);
+      handlerBinder.addBinding().to(TetheringServerHandler.class);
+      handlerBinder.addBinding().to(TetheringClientHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
@@ -401,8 +458,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     }
 
     /**
-     * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
-     * and turning off check for new versions.
+     * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore and
+     * turning off check for new versions.
      *
      * @param store JobStore.
      * @param cConf CConfiguration.
@@ -445,9 +502,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   /**
    * A Guice provider for the {@link UGIProvider} class based on the CDAP configuration.
-   *
-   * When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an
-   * {@link UnsupportedUGIProvider} will be used.
+   * <p>
+   * When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an {@link
+   * UnsupportedUGIProvider} will be used.
    */
   private static final class UGIProviderProvider implements Provider<UGIProvider> {
 

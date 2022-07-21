@@ -31,6 +31,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -79,7 +80,7 @@ public class SystemDatasetInstantiator implements Closeable {
 
   @Nullable
   public <T extends DatasetAdmin> T getDatasetAdmin(DatasetId datasetId) throws DatasetManagementException,
-    IOException {
+    IOException, UnauthorizedException {
     return datasetFramework.getAdmin(datasetId, parentClassLoader, classLoaderProvider);
   }
 

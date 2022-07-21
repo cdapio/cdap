@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2021 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,33 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
 import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.master.environment.DefaultMasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.auth.context.SystemAuthenticationContext;
+import io.cdap.cdap.security.auth.context.WorkerAuthenticationContext;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +51,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,6 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MasterEnvironmentMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(MasterEnvironmentMain.class);
+  private static TokenManager tokenManager;
 
   public static void main(String[] args) throws Exception {
     MainClassLoader classLoader = MainClassLoader.createFromContext();
@@ -106,8 +124,14 @@ public class MasterEnvironmentMain {
                                                + MasterEnvironmentRunnable.class);
         }
 
+        RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+          masterEnv.getDiscoveryServiceClientSupplier().get(),
+          getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
+
+        MasterEnvironmentRunnableContext runnableContext =
+          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory);
         @SuppressWarnings("unchecked")
-        MasterEnvironmentRunnable runnable = masterEnv.createRunnable(context,
+        MasterEnvironmentRunnable runnable = masterEnv.createRunnable(runnableContext,
                                                                       (Class<? extends MasterEnvironmentRunnable>) cls);
         AtomicBoolean completed = new AtomicBoolean();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -115,6 +139,7 @@ public class MasterEnvironmentMain {
             runnable.stop();
             Uninterruptibles.awaitUninterruptibly(shutdownLatch, 30, TimeUnit.SECONDS);
           }
+          Optional.ofNullable(tokenManager).ifPresent(TokenManager::stopAndWait);
         }));
         runnable.run(runnableArgs);
         completed.set(true);
@@ -128,4 +153,47 @@ public class MasterEnvironmentMain {
       shutdownLatch.countDown();
     }
   }
+
+  /**
+   * Return {@link InternalAuthenticator} with
+   *   {@link SystemAuthenticationContext} if cdap-secret is mounted (e.g. when only running system code / trusted code)
+   *   or {@link WorkerAuthenticationContext} if cdap-secret is not mounted (e.g. running untrusted user provided code)
+   */
+  private static InternalAuthenticator getInternalAuthenticator(CConfiguration cConf) {
+    File sConfFile = new File(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH));
+    Injector injector;
+    if (sConfFile.exists()) {
+      // cdap-secret is mounted and available, use system authentication context
+      injector = Guice.createInjector(
+        new IOModule(),
+        new ConfigModule(cConf),
+        CoreSecurityRuntimeModule.getDistributedModule(cConf),
+        new AuthenticationContextModules().getMasterModule());
+      if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
+        tokenManager = injector.getInstance(TokenManager.class);
+        tokenManager.startAndWait();
+      }
+    } else {
+      // cdap-secret is NOT mounted, use worker authentication context
+      injector = Guice.createInjector(
+        new IOModule(),
+        new ConfigModule(cConf),
+        CoreSecurityRuntimeModule.getDistributedModule(cConf),
+        new AuthenticationContextModules().getMasterWorkerModule());
+    }
+    return injector.getInstance(InternalAuthenticator.class);
+  }
+
+  /**
+   * Returns a new {@link RemoteAuthenticator} via injection.
+   * @return A new {@link RemoteAuthenticator} instance.
+   */
+  private static RemoteAuthenticator getRemoteAuthenticator(CConfiguration cConf) {
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getDefaultModule()
+    );
+    return injector.getInstance(RemoteAuthenticator.class);
+  }
 }
+

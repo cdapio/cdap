@@ -307,7 +307,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
    */
   private final class LogFileOffsetTransformIterator implements Iterator<ProcessorEvent<LogBufferFileOffset>> {
     private final BlockingQueue<LogBufferEvent> queue;
-    private int count = 0;
+    private int count;
 
     LogFileOffsetTransformIterator(BlockingQueue<LogBufferEvent> queue) {
       this.queue = queue;

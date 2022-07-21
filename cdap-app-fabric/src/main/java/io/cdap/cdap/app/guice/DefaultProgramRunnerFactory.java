@@ -32,8 +32,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.api.RunId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -48,6 +47,8 @@ import javax.annotation.Nullable;
  * The default implementation of {@link ProgramRunnerFactory} used inside app-fabric.
  */
 public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
+
+  public static final String PUBLISH_PROGRAM_STATE = "publishProgramState";
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultProgramRunnerFactory.class);
 
@@ -71,7 +72,7 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
   }
 
   @Inject(optional = true)
-  void setPublishProgramState(@Named("publishProgramState") boolean publishProgramState) {
+  void setPublishProgramState(@Named(PUBLISH_PROGRAM_STATE) boolean publishProgramState) {
     this.publishProgramState = publishProgramState;
   }
 
@@ -166,9 +167,8 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
     }
 
     @Override
-    public ProgramController createProgramController(TwillController twillController,
-                                                     ProgramId programId, RunId runId) {
-      return addStateChangeListener(controllerCreator.createProgramController(twillController, programId, runId));
+    public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+      return addStateChangeListener(controllerCreator.createProgramController(programRunId, twillController));
     }
   }
 }

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -42,9 +42,12 @@ import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
@@ -54,14 +57,17 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.utils.BatchingConsumer;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -73,12 +79,11 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
-import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -86,16 +91,16 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.scheduler.Scheduler;
-import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +110,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -114,10 +121,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -144,26 +152,31 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final MetadataServiceClient metadataServiceClient;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
   private final Impersonator impersonator;
   private final CapabilityReader capabilityReader;
+  private final int batchSize;
 
+  /**
+   * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice injection.
+   */
   @Inject
-  ApplicationLifecycleService(CConfiguration cConf,
+  public ApplicationLifecycleService(CConfiguration cConf,
                               Store store, Scheduler scheduler, UsageRegistry usageRegistry,
                               PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
                               OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataServiceClient metadataServiceClient,
-                              AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                              AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
                               MessagingService messagingService, Impersonator impersonator,
                               CapabilityReader capabilityReader) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
+    this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.store = store;
     this.scheduler = scheduler;
     this.usageRegistry = usageRegistry;
@@ -173,7 +186,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.managerFactory = managerFactory;
     this.metadataServiceClient = metadataServiceClient;
     this.ownerAdmin = ownerAdmin;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
     this.capabilityReader = capabilityReader;
@@ -191,54 +204,100 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Get all applications in the specified namespace, filtered to only include applications with an artifact name
+   * Scans all applications in the specified namespace, filtered to only include applications with an artifact name
    * in the set of specified names and an artifact version equal to the specified version. If the specified set
    * is empty, no filtering is performed on artifact name. If the specified version is null, no filtering is done
    * on artifact version.
    *
-   * @param namespace the namespace to get apps from
-   * @param artifactNames the set of valid artifact names. If empty, all artifact names are valid
-   * @param artifactVersion the artifact version to match. If null, all artifact versions are valid
-   * @return list of all applications in the namespace that match the specified artifact names and version
+   * @param namespace the namespace to scan apps from
+   * @param artifactNames the set of returned artifact names. If empty, all artifact names are returned
+   * @param artifactVersion the artifact version to match. If null, all artifact versions are returned
+   * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
    */
-  public List<ApplicationDetail> getApps(NamespaceId namespace, Set<String> artifactNames,
-                                         @Nullable String artifactVersion) throws Exception {
-    return getApps(namespace, getAppPredicate(artifactNames, artifactVersion));
+  public void scanApplications(NamespaceId namespace, Set<String> artifactNames,
+      @Nullable String artifactVersion,
+      Consumer<ApplicationDetail> consumer) {
+
+    List<ApplicationFilter> filters = getAppFilters(artifactNames, artifactVersion);
+    scanApplications(namespace, filters, consumer);
   }
 
   /**
-   * Get all applications in the specified namespace that satisfy the specified predicate.
+   * Scans all applications in the specified namespace, filtered to only include application details
+   * which satisfy the filters
    *
-   * @param namespace the namespace to get apps from
-   * @param predicate the predicate that must be satisfied in order to be returned
-   * @return list of all applications in the namespace that satisfy the specified predicate
+   * @param namespace the namespace to scan apps from
+   * @param filters the filters that must be satisfied  by ApplicationDetail in order to be returned
+   * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
    */
-  public List<ApplicationDetail> getApps(NamespaceId namespace,
-                                         Predicate<ApplicationDetail> predicate) throws Exception {
+  public void scanApplications(NamespaceId namespace, List<ApplicationFilter> filters,
+                               Consumer<ApplicationDetail> consumer) {
+    scanApplications(ScanApplicationsRequest.builder()
+      .setNamespaceId(namespace)
+      .addFilters(filters)
+      .build(), consumer);
+  }
 
-    Map<ApplicationId, ApplicationSpecification> appSpecs = new LinkedHashMap<>();
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-      appSpecs.put(namespace.app(appSpec.getName(), appSpec.getAppVersion()), appSpec);
+  /**
+   * Scans all applications in the specified namespace, filtered to only include application details
+   * which satisfy the filters
+   *
+   * @param request application scan request. Must name namespace filled
+   * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
+   * @return if limit was reached (true) or all items were scanned before reaching the limit (false)
+   * @throws IllegalArgumentException if scan request does not have namespace specified
+   */
+  public boolean scanApplications(ScanApplicationsRequest request, Consumer<ApplicationDetail> consumer) {
+    NamespaceId namespace = request.getNamespaceId();
+    if (namespace == null) {
+      throw new IllegalStateException("Application scan request without namespace");
     }
-    Set<? extends EntityId> visible = authorizationEnforcer.isVisible(appSpecs.keySet(),
-                                                                      authenticationContext.getPrincipal());
-    appSpecs.keySet().removeIf(id -> !visible.contains(id));
+    accessEnforcer.enforceOnParent(EntityType.DATASET, namespace,
+        authenticationContext.getPrincipal(), StandardPermission.LIST);
 
-    Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appSpecs.keySet());
-    List<ApplicationDetail> result = new ArrayList<>();
-    for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
-      ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(), owners.get(entry.getKey()));
-      try {
-        capabilityReader.checkAllEnabled(entry.getValue());
-      } catch (CapabilityNotAvailableException ex) {
-        LOG.debug("Application {} is ignored due to exception.", applicationDetail.getName(), ex);
-        continue;
-      }
-      if (predicate.test(applicationDetail)) {
-        result.add(filterApplicationDetail(entry.getKey(), applicationDetail));
-      }
+    try (
+        BatchingConsumer<Entry<ApplicationId, ApplicationSpecification>> batchingConsumer = new BatchingConsumer<>(
+            list -> processApplications(list, consumer), batchSize
+        )
+    ) {
+
+      return store.scanApplications(request, batchSize, (appId, appSpec) -> {
+              batchingConsumer.accept(new SimpleEntry<>(appId, appSpec));
+            });
     }
-    return result;
+  }
+
+  private void processApplications(List<Map.Entry<ApplicationId, ApplicationSpecification>> list,
+      Consumer<ApplicationDetail> consumer) {
+
+    Set<ApplicationId> appIds = list.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+
+    Set<? extends EntityId> visible = accessEnforcer.isVisible(appIds,
+        authenticationContext.getPrincipal());
+
+    list.removeIf(entry -> !visible.contains(entry.getKey()));
+    appIds.removeIf(id -> !visible.contains(id));
+
+    try {
+      Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appIds);
+
+      for (Map.Entry<ApplicationId, ApplicationSpecification> entry : list) {
+        ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(),
+            owners.get(entry.getKey()));
+
+        try {
+          capabilityReader.checkAllEnabled(entry.getValue());
+        } catch (CapabilityNotAvailableException ex) {
+          LOG.debug("Application {} is ignored due to exception.",
+              applicationDetail.getName(), ex);
+          continue;
+        }
+
+        consumer.accept(applicationDetail);
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -251,13 +310,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationDetail getAppDetail(ApplicationId appId) throws Exception {
     // TODO: CDAP-12473: filter based on the entity visibility in the app detail
     // user needs to pass the visibility check to get the app detail
-    AuthorizationUtil.ensureAccess(appId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    return filterApplicationDetail(appId, ApplicationDetail.fromSpec(appSpec, ownerPrincipal));
+    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appSpec, ownerPrincipal));
   }
 
   /**
@@ -269,7 +328,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if failed to get details.
    */
   public Map<ApplicationId, ApplicationDetail> getAppDetails(Collection<ApplicationId> appIds) throws Exception {
-    Set<? extends EntityId> visibleIds = authorizationEnforcer.isVisible(new HashSet<>(appIds),
+    Set<? extends EntityId> visibleIds = accessEnforcer.isVisible(new HashSet<>(appIds),
                                                                          authenticationContext.getPrincipal());
     Set<ApplicationId> filterIds = appIds.stream().filter(visibleIds::contains).collect(Collectors.toSet());
     Map<ApplicationId, ApplicationSpecification> appSpecs = store.getApplications(filterIds);
@@ -278,8 +337,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Map<ApplicationId, ApplicationDetail> result = new HashMap<>();
     for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
       ApplicationId appId = entry.getKey();
-      result.put(appId,
-                 filterApplicationDetail(appId, ApplicationDetail.fromSpec(entry.getValue(), principals.get(appId))));
+      result.put(appId, enforceApplicationDetailAccess(
+        appId, ApplicationDetail.fromSpec(entry.getValue(), principals.get(appId))));
     }
     return result;
   }
@@ -294,18 +353,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param zipOut the {@link ZipOutputStream} for writing out the application details
    */
   public void createAppDetailsArchive(ZipOutputStream zipOut) throws Exception {
-    authorizationEnforcer.enforce(new InstanceId(cConf.get(Constants.INSTANCE_NAME)),
-                                  authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(new InstanceId(cConf.get(Constants.INSTANCE_NAME)),
+                           authenticationContext.getPrincipal(), StandardPermission.GET);
 
     Set<NamespaceId> namespaces = new HashSet<>();
 
     JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(zipOut, StandardCharsets.UTF_8));
-    store.scanApplications(20, (appId, appSpec) -> {
+    store.scanApplications(batchSize, (appId, appSpec) -> {
       // Skip the SYSTEM namespace apps
       if (NamespaceId.SYSTEM.equals(appId.getParent())) {
         return;
       }
       try {
+        ApplicationDetail applicationDetail = enforceApplicationDetailAccess(
+          appId, ApplicationDetail.fromSpec(appSpec, null));
         // Add a directory for the namespace
         if (namespaces.add(appId.getParent())) {
           ZipEntry entry = new ZipEntry(appId.getNamespace() + "/");
@@ -314,11 +375,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         }
         ZipEntry entry = new ZipEntry(appId.getNamespace() + "/" + appId.getApplication() + ".json");
         zipOut.putNextEntry(entry);
-        GSON.toJson(ApplicationDetail.fromSpec(appSpec, null), ApplicationDetail.class, jsonWriter);
+        GSON.toJson(applicationDetail, ApplicationDetail.class, jsonWriter);
         jsonWriter.flush();
         zipOut.closeEntry();
 
-      } catch (IOException e) {
+      } catch (IOException | AccessException e) {
         throw new RuntimeException("Failed to add zip entry for application " + appId, e);
       }
     });
@@ -340,7 +401,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return whether the app version is allowed to be deployed
    */
   public boolean updateAppAllowed(ApplicationId appId) throws Exception {
-    AuthorizationUtil.ensureAccess(appId, authorizationEnforcer, authenticationContext.getPrincipal());
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       // App does not exist. Allow to create a new one
@@ -368,7 +429,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms updateApp(ApplicationId appId, AppRequest appRequest,
                                            ProgramTerminator programTerminator) throws Exception {
     // Check if the current user has admin privileges on it before updating.
-    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     // check that app exists
     ApplicationSpecification currentSpec = store.getApplication(appId);
@@ -489,7 +550,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public void upgradeApplication(ApplicationId appId, Set<ArtifactScope> allowedArtifactScopes, boolean allowSnapshot)
     throws Exception {
     // Check if the current user has admin privileges on it before updating.
-    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     // check that app exists
     ApplicationSpecification currentSpec = store.getApplication(appId);
     if (currentSpec == null) {
@@ -551,7 +612,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                           allowedArtifactScopes, allowSnapshot);
 
     try (CloseableClassLoader artifactClassLoader =
-      artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
+      artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor(),
                                                    classLoaderImpersonator)) {
       Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
       // Run config update logic for the application to generate updated config.
@@ -570,12 +631,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
     }
 
-
     // Deploy application with with potentially new app config and new artifact.
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), appId.getParent(),
-                                                             appClass, appId.getApplication(),
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
+                                                             appId.getParent(), appClass, appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig, ownerPrincipal,
-                                                             updateSchedules);
+                                                             updateSchedules, null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -616,13 +676,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
       return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal,
-                       updateSchedules);
+                       updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
       try {
         artifactRepository.deleteArtifact(artifactId);
-      } catch (IOException e2) {
+      } catch (Exception e2) {
         // if the delete fails, nothing we can do, just log it and continue on
         LOG.warn("Failed to delete artifact {} after deployment of artifact and application failed.", artifactId, e2);
         e.addSuppressed(e2);
@@ -687,7 +747,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable Boolean updateSchedules) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal,
-                     updateSchedules == null ? appUpdateSchedules : updateSchedules);
+                     updateSchedules == null ? appUpdateSchedules : updateSchedules, false, Collections.emptyMap());
   }
 
   /**
@@ -705,6 +765,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param ownerPrincipal the kerberos principal of the application owner
    * @param updateSchedules specifies if schedules of the workflow have to be updated,
    *                        if null value specified by the property "app.deploy.update.schedules" will be used.
+   * @param isPreview whether the app deployment is for preview
+   * @param userProps the user properties for the app deployment, this is basically used for preview deployment
    * @return information about the deployed application
    * @throws InvalidArtifactException if the artifact does not contain any application classes
    * @throws IOException if there was an IO error reading artifact detail from the meta store
@@ -717,7 +779,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
-                                           @Nullable Boolean updateSchedules) throws Exception {
+                                           @Nullable Boolean updateSchedules, boolean isPreview,
+                                           Map<String, String> userProps) throws Exception {
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
@@ -729,7 +792,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail.iterator().next(),
-                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules);
+                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules, isPreview,
+                     userProps);
   }
 
   /**
@@ -744,7 +808,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Map<ApplicationId, ApplicationSpecification> apps = new HashMap<>();
     for (ApplicationSpecification appSpec : allSpecs) {
       ApplicationId applicationId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
-      authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
+      accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
       apps.put(applicationId, appSpec);
     }
 
@@ -774,8 +838,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeApplication(ApplicationId appId) throws Exception {
-    // enforce ADMIN privileges on the app
-    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    // enforce DELETE privileges on the app
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     ensureNoRunningPrograms(appId);
     ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
@@ -883,7 +947,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
-                                            boolean updateSchedules) throws Exception {
+                                            boolean updateSchedules, boolean isPreview,
+                                            Map<String, String> userProps) throws Exception {
     // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
     // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
     // pipeline - LocalArtifactLoaderStage
@@ -898,7 +963,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // enforce that the current principal, if not the same as the owner principal, has the admin privilege on the
     // impersonated principal
     if (effectiveOwner != null) {
-      authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
+      accessEnforcer.enforce(effectiveOwner, requestingUser, AccessPermission.SET_OWNER);
     }
 
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
@@ -910,9 +975,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
     }
     // deploy application with newly added artifact
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
-                                                             appClass, appName, appVersion,
-                                                             configStr, ownerPrincipal, updateSchedules);
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
+      Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
+      artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
+      appVersion, configStr, ownerPrincipal, updateSchedules,
+      isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -1022,75 +1089,41 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Filter the {@link ApplicationDetail} by only returning the visible entities
+   * Enforces nessesary access on {@link ApplicationDetail}.
    */
-  private ApplicationDetail filterApplicationDetail(ApplicationId appId,
-                                                    ApplicationDetail applicationDetail) throws Exception {
+  private ApplicationDetail enforceApplicationDetailAccess(ApplicationId appId,
+                                                           ApplicationDetail applicationDetail) throws AccessException {
     Principal principal = authenticationContext.getPrincipal();
-    List<ProgramRecord> filteredPrograms =
-      AuthorizationUtil.isVisible(applicationDetail.getPrograms(), authorizationEnforcer, principal,
-                                  new Function<ProgramRecord, EntityId>() {
-                                    @Override
-                                    public EntityId apply(ProgramRecord input) {
-                                      return appId.program(input.getType(), input.getName());
-                                    }
-                                  }, null);
-    List<DatasetDetail> filteredDatasets =
-      AuthorizationUtil.isVisible(applicationDetail.getDatasets(), authorizationEnforcer, principal,
-                                  new Function<DatasetDetail, EntityId>() {
-                                    @Override
-                                    public EntityId apply(DatasetDetail input) {
-                                      return appId.getNamespaceId().dataset(input.getName());
-                                    }
-                                  }, null);
-    return new ApplicationDetail(applicationDetail.getName(), applicationDetail.getAppVersion(),
-                                 applicationDetail.getDescription(), applicationDetail.getConfiguration(),
-                                 filteredDatasets, filteredPrograms, applicationDetail.getPlugins(),
-                                 applicationDetail.getArtifact(), applicationDetail.getOwnerPrincipal());
-  }
-
-  // get filter for app specs by artifact name and version. if they are null, it means don't filter.
-  private Predicate<ApplicationDetail> getAppPredicate(Set<String> artifactNames, @Nullable String artifactVersion) {
-    if (artifactNames.isEmpty() && artifactVersion == null) {
-      return r -> true;
-    } else if (artifactNames.isEmpty()) {
-      return new ArtifactVersionPredicate(artifactVersion);
-    } else if (artifactVersion == null) {
-      return new ArtifactNamesPredicate(artifactNames);
-    } else {
-      return new ArtifactNamesPredicate(artifactNames).and(new ArtifactVersionPredicate(artifactVersion));
-    }
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    accessEnforcer.enforceOnParent(EntityType.DATASET, appId.getNamespaceId(), principal, StandardPermission.LIST);
+    return applicationDetail;
   }
 
   /**
-   * Returns true if the application artifact is in a whitelist of names
+   * Creates list of scan filters for artifact names / version
+   * @param artifactNames allow set of artifact names. All artifacts are allowed if empty
+   * @param artifactVersion allowed artifact version. Any version is allowed if null
+   * @return list of 0,1 or 2 filters
    */
-  private static class ArtifactNamesPredicate implements Predicate<ApplicationDetail> {
-    private final Set<String> names;
-
-    ArtifactNamesPredicate(Set<String> names) {
-      this.names = names;
+  public List<ApplicationFilter> getAppFilters(Set<String> artifactNames, @Nullable String artifactVersion) {
+    ImmutableList.Builder<ApplicationFilter> builder = ImmutableList.builder();
+    if (!artifactNames.isEmpty()) {
+      builder.add(new ApplicationFilter.ArtifactNamesInFilter(artifactNames));
     }
-
-    @Override
-    public boolean test(ApplicationDetail input) {
-      return names.contains(input.getArtifact().getName());
+    if (artifactVersion != null) {
+      builder.add(new ApplicationFilter.ArtifactVersionFilter(artifactVersion));
     }
+    return builder.build();
   }
 
-  /**
-   * Returns true if the application artifact is a specific version
-   */
-  private static class ArtifactVersionPredicate implements Predicate<ApplicationDetail> {
-    private final String version;
-
-    ArtifactVersionPredicate(String version) {
-      this.version = version;
+  public String decodeUserId(AuthenticationContext authenticationContext) {
+    String decodedUserId = "emptyUserId";
+    try {
+      byte[] decodedBytes = Base64.getDecoder().decode(authenticationContext.getPrincipal().getName());
+      decodedUserId = new String(decodedBytes);
+    } catch (Exception e) {
+      LOG.debug("Failed to decode userId with exception {}", e);
     }
-
-    @Override
-    public boolean test(ApplicationDetail input) {
-      return version.equals(input.getArtifact().getVersion());
-    }
+    return decodedUserId;
   }
 }

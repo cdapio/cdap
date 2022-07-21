@@ -20,7 +20,6 @@ import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
@@ -32,6 +31,10 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.netty.handler.codec.http.HttpRequest;
@@ -39,6 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,62 +55,84 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
 
   private final TransactionRunner txRunner;
   private final ProgramRunRecordFetcher runRecordFetcher;
-  private final LoadingCache<ProgramRunId, Boolean> programRunsCache;
+  private final LoadingCache<ProgramRunId, Optional<ProgramRunInfo>> programRunsCache;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   DirectRuntimeRequestValidator(CConfiguration cConf, TransactionRunner txRunner,
-                                ProgramRunRecordFetcher runRecordFetcher) {
+                                ProgramRunRecordFetcher runRecordFetcher,
+                                AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.txRunner = txRunner;
     this.runRecordFetcher = runRecordFetcher;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
 
     // Configure the cache with expiry the poll time.
-    // This helps reducing the actual lookup for a burst of requests within one poll interval,
+    // This helps reduce the actual lookup for a burst of requests within one poll interval,
     // but not to keep it too long so that data becomes stale.
     long pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.programRunsCache = CacheBuilder.newBuilder()
       .expireAfterWrite(pollTimeMillis, TimeUnit.MILLISECONDS)
-      .build(new CacheLoader<ProgramRunId, Boolean>() {
+      .build(new CacheLoader<ProgramRunId, Optional<ProgramRunInfo>>() {
+        /**
+         * For a programRunId this cache stores a {@link ProgramRunInfo} object only for valid programRunIds,
+         * i.e. this value will be Optional.empty() if the programRunId is invalid.
+         */
         @Override
-        public Boolean load(ProgramRunId programRunId) throws IOException {
-          return isValid(programRunId);
+        public Optional<ProgramRunInfo> load(ProgramRunId programRunId)
+          throws IOException, UnauthorizedException {
+          return getRunRecordStatusForProgramsInNonEndState(programRunId);
         }
       });
   }
 
   @Override
-  public void validate(ProgramRunId programRunId, HttpRequest request) throws BadRequestException {
-    boolean exists;
+  public ProgramRunInfo getProgramRunStatus(ProgramRunId programRunId, HttpRequest request)
+    throws BadRequestException {
+    accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    ProgramRunInfo programRunInfo;
     try {
-      exists = programRunsCache.get(programRunId);
+      programRunInfo = programRunsCache.get(programRunId)
+        .orElseThrow(() -> new BadRequestException("Program run " + programRunId + " is not valid"));
+    } catch (BadRequestException e) {
+      throw e;
     } catch (Exception e) {
       throw new ServiceUnavailableException(Constants.Service.RUNTIME, e);
     }
-    if (!exists) {
-      throw new BadRequestException("Program run " + programRunId + " is not valid");
-    }
+    return programRunInfo;
   }
 
-  /**
-   * Checks if the given {@link ProgramRunId} is valid.
-   */
-  private boolean isValid(ProgramRunId programRunId) throws IOException {
-    RunRecordDetail runRecord = TransactionRunners.run(txRunner, context -> {
-      return AppMetadataStore.create(context).getRun(programRunId);
-    }, IOException.class);
-
-    if (runRecord != null) {
-      return !runRecord.getStatus().isEndState();
-    }
-    // If it is not found in the local store, which should be very rare, try to fetch the run record remotely.
+  private Optional<ProgramRunInfo> getRunRecordStatusForProgramsInNonEndState(ProgramRunId programRunId)
+    throws IOException, UnauthorizedException {
     try {
+      RunRecordDetail runRecord = TransactionRunners.run(txRunner, context -> {
+        return AppMetadataStore.create(context).getRun(programRunId);
+      }, IOException.class);
+
+      if (runRecord != null) {
+        return runRecord.getStatus().isEndState() ? Optional.empty() : getValidRunRecordStatus(runRecord);
+      }
+      // If it is not found in the local store, which should be very rare, try to fetch the run record remotely.
       LOG.info("Remotely fetching program run details for {}", programRunId);
       runRecord = runRecordFetcher.getRunRecordMeta(programRunId);
       // Try to update the local store
       insertRunRecord(programRunId, runRecord);
-      return !runRecord.getStatus().isEndState();
+      return runRecord.getStatus().isEndState() ? Optional.empty() : getValidRunRecordStatus(runRecord);
     } catch (NotFoundException e) {
-      return false;
+      return Optional.empty();
     }
+  }
+
+  private Optional<ProgramRunInfo> getValidRunRecordStatus(RunRecordDetail runRecord) {
+    ProgramRunStatus programRunStatus = runRecord.getStatus();
+    if (programRunStatus != ProgramRunStatus.STOPPING) {
+      return Optional.of(new ProgramRunInfo(programRunStatus));
+    }
+
+    // For stopping state, encode the termination timestamp in seconds
+    long terminateTs = Optional.ofNullable(runRecord.getTerminateTs()).orElse(Long.MAX_VALUE);
+    return Optional.of(new ProgramRunInfo(terminateTs));
   }
 
   /**
@@ -120,7 +147,11 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     try {
       TransactionRunners.run(txRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.recordProgramProvisioning(programRunId, runRecord.getUserArgs(), runRecord.getSystemArgs(),
+        // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
+        // User and system args could be large and store them in local store can lead to unnecessary storage
+        // and processing overhead.
+        store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                        RuntimeMonitors.trimSystemArgs(runRecord.getSystemArgs()),
                                         runRecord.getSourceId(), runRecord.getArtifactId());
         store.recordProgramProvisioned(programRunId, 1, runRecord.getSourceId());
         store.recordProgramStart(programRunId, null, runRecord.getSystemArgs(), runRecord.getSourceId());
@@ -131,6 +162,12 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
           case SUSPENDED:
             store.recordProgramSuspend(programRunId, runRecord.getSourceId(),
                                        Objects.firstNonNull(runRecord.getSuspendTs(), System.currentTimeMillis()));
+            break;
+          case STOPPING:
+            store.recordProgramStopping(programRunId, runRecord.getSourceId(),
+                                        Objects.firstNonNull(runRecord.getStoppingTs(), System.currentTimeMillis()),
+                                        // if terminate timestamp is null we will shut down gracefully
+                                        Objects.firstNonNull(runRecord.getTerminateTs(), Long.MAX_VALUE));
             break;
           case COMPLETED:
           case KILLED:

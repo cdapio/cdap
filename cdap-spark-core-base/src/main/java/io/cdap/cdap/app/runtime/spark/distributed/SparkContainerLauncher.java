@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This class launches Spark YARN containers with classes loaded through the {@link SparkContainerClassLoader}.
@@ -64,13 +65,36 @@ public final class SparkContainerLauncher {
   };
 
   /**
+   * Main method is used as the entrypoint to launch classes in Kubernetes images.
+   * The first argument should be the name of the class to delegate to, which must have a main method.
+   * Every other argument will be passed into the delegate main method.
+   */
+  public static void main(String[] args) throws Exception {
+    launch(args[0], args.length > 1 ? Arrays.copyOfRange(args, 1, args.length) : new String[0], false, "k8s");
+  }
+
+  /**
    * Launches the given main class. The main class will be loaded through the {@link SparkContainerClassLoader}.
    *
    * @param mainClassName the main class to launch
    * @param args arguments for the main class
    */
-  @SuppressWarnings("unused")
   public static void launch(String mainClassName, String[] args) throws Exception {
+    launch(mainClassName, args, true, null);
+  }
+
+  /**
+   * Launches the given main class. The main class will be loaded through the {@link SparkContainerClassLoader}.
+   *
+   * @param mainClassName the main class to launch
+   * @param args arguments for the main class
+   * @param removeMainClass whether to remove the jar for the main class from the classloader
+   * @param masterEnvName name of the MasterEnvironment used to submit the Spark job. This will be used to setup
+   *   bindings for service discovery and other CDAP capabilities. If null, the default Hadoop implementations will
+   *   be used.
+   */
+  public static void launch(String mainClassName, String[] args, boolean removeMainClass,
+                            @Nullable String masterEnvName) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
     Set<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new LinkedHashSet<URL>());
@@ -78,7 +102,9 @@ public final class SparkContainerLauncher {
     // Remove the URL that contains the given main classname to avoid infinite recursion.
     // This is needed because we generate a class with the same main classname in order to intercept the main()
     // method call from the container launch script.
-    urls.remove(getURLByClass(systemClassLoader, mainClassName));
+    if (removeMainClass) {
+      urls.remove(getURLByClass(systemClassLoader, mainClassName));
+    }
 
     // Remove the first scala from the set of classpath. This ensure the one from Spark is used for spark
     removeNonSparkJar(systemClassLoader, "scala.language", urls);
@@ -118,8 +144,11 @@ public final class SparkContainerLauncher {
 
     // Get the SparkRuntimeContext to initialize all necessary services and logging context
     // Need to do it using the SparkRunnerClassLoader through reflection.
-    Object sparkRuntimeContext = classLoader.loadClass(SparkRuntimeContextProvider.class.getName())
-      .getMethod("get").invoke(null);
+    Class<?> sparkRuntimeContextProviderClass = classLoader.loadClass(SparkRuntimeContextProvider.class.getName());
+    if (masterEnvName != null) {
+      sparkRuntimeContextProviderClass.getMethod("setMasterEnvName", String.class).invoke(null, masterEnvName);
+    }
+    Object sparkRuntimeContext = sparkRuntimeContextProviderClass.getMethod("get").invoke(null);
 
     if (sparkRuntimeContext instanceof Closeable) {
       System.setSecurityManager(new SparkRuntimeSecurityManager((Closeable) sparkRuntimeContext));
@@ -264,7 +293,7 @@ public final class SparkContainerLauncher {
     try {
       logger.getClass().getMethod(level, String.class, Object[].class).invoke(logger, message, args);
     } catch (Exception e) {
-
+      // ignore
     }
   }
 

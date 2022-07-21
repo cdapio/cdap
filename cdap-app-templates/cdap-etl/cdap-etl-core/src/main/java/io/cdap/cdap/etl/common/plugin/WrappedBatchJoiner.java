@@ -35,7 +35,9 @@ import java.util.concurrent.Callable;
  * @param <INPUT_RECORD> type of input record. Must be a supported type
  * @param <OUT> type of output object
  */
-public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> {
+public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT>
+  extends BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT>
+  implements PluginWrapper<BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT>> {
   private final BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -123,5 +125,10 @@ public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner
     } finally {
       operationTimer.reset();
     }
+  }
+
+  @Override
+  public BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> getWrapped() {
+    return joiner;
   }
 }

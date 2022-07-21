@@ -158,7 +158,8 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("keep", new PluginPropertyField("keep", "input to keep", "string", true, false));
     properties.put("flagField", new PluginPropertyField("flagField", "name of the flag field", "string", false, true));
-    return new PluginClass(BatchJoiner.PLUGIN_TYPE, DupeFlagger.NAME, "", DupeFlagger.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName(NAME).setType(BatchJoiner.PLUGIN_TYPE)
+             .setDescription("").setClassName(DupeFlagger.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

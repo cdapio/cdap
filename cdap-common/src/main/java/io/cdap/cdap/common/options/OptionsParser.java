@@ -58,7 +58,7 @@ import java.util.TreeMap;
  */
 public final class OptionsParser {
 
-  private OptionsParser(){}
+  private OptionsParser() { }
 
   /**
    * Parses the annotations specified in <code>object</code> and matches them

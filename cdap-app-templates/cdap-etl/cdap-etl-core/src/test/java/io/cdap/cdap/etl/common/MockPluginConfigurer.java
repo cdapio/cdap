@@ -22,11 +22,14 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
-import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,8 +54,9 @@ public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer
       this.plugin = plugin;
       this.artifacts = new TreeMap<>();
       for (ArtifactId artifactId : artifacts) {
-        this.artifacts.put(artifactId, new PluginClass("type", "name", "desc", "clsname", "cfgfield",
-                                                       ImmutableMap.<String, PluginPropertyField>of()));
+        this.artifacts.put(artifactId, PluginClass.builder().setName("name").setType("type").setDescription("desc")
+                                         .setClassName("clsname").setConfigFieldName("cfgfield")
+                                         .setProperties(ImmutableMap.of()).build());
       }
     }
   }
@@ -84,6 +88,15 @@ public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                      PluginProperties properties, PluginSelector selector) {
     return null;
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    MacroParser macroParser = new MacroParser(evaluator, options);
+    Map<String, String> evaluated = new HashMap<>();
+    properties.forEach((key, val) -> evaluated.put(key, macroParser.parse(val)));
+    return evaluated;
   }
 
   @Override

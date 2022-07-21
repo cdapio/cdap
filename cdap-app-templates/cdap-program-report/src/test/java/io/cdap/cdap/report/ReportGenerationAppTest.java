@@ -30,6 +30,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.Tasks;
@@ -280,7 +281,8 @@ public class ReportGenerationAppTest extends TestBase {
   }
 
   private SparkManager deployAndStartReportingApplication(NamespaceId deployNamespace,
-                                                          Map<String, String> runtimeArguments) throws IOException {
+                                                          Map<String, String> runtimeArguments)
+    throws IOException, AccessException {
     // Trace the dependencies for the spark avro
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
@@ -306,7 +308,7 @@ public class ReportGenerationAppTest extends TestBase {
     // but spark-avro is not used directly in the application code, explicitly add a class DefaultSource
     // from spark-avro so that spark-avro and its dependencies will be included.
     bundler.createBundle(avroSparkBundle, DefaultSource.class);
-    File unJarDir = BundleJarUtil.unJar(avroSparkBundle, TEMP_FOLDER.newFolder());
+    File unJarDir = BundleJarUtil.prepareClassLoaderFolder(avroSparkBundle, TEMP_FOLDER::newFolder).getDir();
 
     ApplicationManager app = deployApplication(deployNamespace,
                                                ReportGenerationApp.class, new File(unJarDir, "lib").listFiles());

@@ -32,7 +32,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceTable;
 import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistries;
@@ -51,7 +51,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -120,14 +119,16 @@ public class DatasetTypeManager {
         DependencyTrackingRegistry reg;
 
         // 2. unpack jar and create class loader
-        File unpackedLocation = Files.createTempDirectory(Files.createDirectories(systemTempPath),
-                                                          datasetModuleId.getEntityName()).toFile();
+        ClassLoaderFolder classLoaderFolder = null;
         DirectoryClassLoader cl = null;
         try {
           // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
           if (jarLocation != null) {
-            BundleJarUtil.unJar(jarLocation, unpackedLocation);
-            cl = new DirectoryClassLoader(unpackedLocation, cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH),
+            classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+              jarLocation, () -> Files.createTempDirectory(Files.createDirectories(systemTempPath),
+                                                           datasetModuleId.getEntityName()).toFile());
+            cl = new DirectoryClassLoader(classLoaderFolder.getDir(),
+                                          cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH),
                                           FilterClassLoader.create(getClass().getClassLoader()), "lib");
           }
           reg = new DependencyTrackingRegistry(datasetModuleId, datasetTypeTable, cl, force);
@@ -143,15 +144,9 @@ public class DatasetTypeManager {
                     className, datasetModuleId, jarLocation);
           throw Throwables.propagate(e);
         } finally {
-          if (cl != null) {
-            // Close the ProgramClassLoader
-            Closeables.closeQuietly(cl);
-          }
-          try {
-            DirUtils.deleteDirectoryContents(unpackedLocation);
-          } catch (IOException e) {
-            LOG.warn("Failed to delete directory {}", unpackedLocation, e);
-          }
+          // Close the ProgramClassLoader
+          Closeables.closeQuietly(cl);
+          Closeables.closeQuietly(classLoaderFolder);
         }
 
         // 4. determine whether any type were removed from the module, and whether any other modules depend on them
@@ -336,7 +331,7 @@ public class DatasetTypeManager {
         } catch (Exception e) {
           // the only checked exception the try-catch throws is IOException
           Throwables.propagateIfInstanceOf(e, IOException.class);
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
 
         return true;
@@ -385,7 +380,7 @@ public class DatasetTypeManager {
           });
         } catch (Exception e) {
           // the callable throws no checked exceptions
-          Throwables.propagate(e);
+          throw Throwables.propagate(e);
         }
 
         // check if there are any instances that use types of these modules?

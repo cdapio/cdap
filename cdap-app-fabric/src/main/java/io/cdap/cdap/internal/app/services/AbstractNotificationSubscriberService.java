@@ -80,7 +80,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
   }
 
   @Override
-  protected Notification decodeMessage(Message message) throws Exception {
-    return GSON.fromJson(message.getPayloadAsString(), Notification.class);
+  protected Notification decodeMessage(Message message) {
+    return message.decodePayload(r -> GSON.fromJson(r, Notification.class));
   }
 }

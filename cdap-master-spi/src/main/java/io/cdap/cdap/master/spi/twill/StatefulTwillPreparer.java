@@ -23,7 +23,7 @@ import org.apache.twill.api.TwillRunnable;
  * Extension interface for {@link TwillPreparer} to implement if it supports stateful execution of
  * {@link TwillRunnable}.
  */
-public interface StatefulTwillPreparer extends TwillPreparer {
+public interface StatefulTwillPreparer extends DependentTwillPreparer {
 
   /**
    * Declares the given runnable with stateful execution.
@@ -33,5 +33,14 @@ public interface StatefulTwillPreparer extends TwillPreparer {
    * @param statefulDisk an optional list of {@link StatefulDisk} available for the runnable container
    * @return this {@link TwillPreparer}
    */
-  StatefulTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart, StatefulDisk... statefulDisk);
+  StatefulTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart,
+                                             StatefulDisk... statefulDisk);
+
+  /**
+   * Mount the provided disk name for the given runnable name as readonly volume.
+   * @param runnableName name of the {@link TwillRunnable}
+   * @param diskName name of the {@link StatefulDisk}
+   * @return @return this {@link TwillPreparer}
+   */
+  StatefulTwillPreparer withReadonlyDisk(String runnableName, String diskName);
 }

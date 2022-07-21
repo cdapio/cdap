@@ -57,6 +57,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
@@ -145,6 +146,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final MetadataPublisher metadataPublisher;
   private final FieldLineageWriter fieldLineageWriter;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final RemoteClientFactory remoteClientFactory;
 
   private volatile Thread runningThread;
   private boolean suspended;
@@ -159,7 +161,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  SecureStoreManager secureStoreManager, MessagingService messagingService,
                  ProgramStateWriter programStateWriter, MetadataReader metadataReader,
                  MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
-                 NamespaceQueryAdmin namespaceQueryAdmin) {
+                 NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory) {
     this.program = program;
     this.programOptions = options;
     this.workflowSpec = workflowSpec;
@@ -184,7 +186,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                     discoveryServiceClient, nodeStates, pluginInstantiator,
                                                     secureStore, secureStoreManager, messagingService, null,
                                                     metadataReader, metadataPublisher, namespaceQueryAdmin,
-                                                    fieldLineageWriter);
+                                                    fieldLineageWriter, remoteClientFactory);
     this.pluginInstantiator = pluginInstantiator;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
@@ -193,6 +195,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.metadataPublisher = metadataPublisher;
     this.fieldLineageWriter = fieldLineageWriter;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   @Override
@@ -422,7 +425,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                     pluginInstantiator, secureStore,
                                                                     secureStoreManager, messagingService,
                                                                     metadataReader, metadataPublisher,
-                                                                    namespaceQueryAdmin, fieldLineageWriter);
+                                                                    namespaceQueryAdmin, fieldLineageWriter,
+                                                                    remoteClientFactory);
     customActionExecutor = new CustomActionExecutor(context, instantiator, classLoader);
     status.put(node.getNodeId(), node);
     workflowStateWriter.addWorkflowNodeState(workflowRunId,
@@ -493,7 +497,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                   pluginInstantiator, secureStore, secureStoreManager,
                                                                   messagingService, node.getConditionSpecification(),
                                                                   metadataReader, metadataPublisher,
-                                                                  namespaceQueryAdmin, fieldLineageWriter);
+                                                                  namespaceQueryAdmin, fieldLineageWriter,
+                                                                  remoteClientFactory);
     final Iterator<WorkflowNode> iterator;
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
     Predicate<WorkflowContext> predicate = instantiator.get(

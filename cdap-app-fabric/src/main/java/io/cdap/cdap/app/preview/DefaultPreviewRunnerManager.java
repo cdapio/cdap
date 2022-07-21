@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
@@ -55,11 +55,12 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +80,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   private final Configuration previewHConf;
   private final SConfiguration previewSConf;
   private final int maxConcurrentPreviews;
-  private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
@@ -93,7 +94,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   DefaultPreviewRunnerManager(@Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
                               @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
                               @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
-                              SecureStore secureStore, DiscoveryService discoveryService,
+                              SecureStore secureStore,
+                              DiscoveryServiceClient discoveryServiceClient,
                               @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                               TransactionSystemClient transactionSystemClient,
                               PreviewRunnerModule previewRunnerModule,
@@ -104,7 +106,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     this.previewSConf = previewSConf;
     this.datasetFramework = datasetFramework;
     this.secureStore = secureStore;
-    this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.transactionSystemClient = transactionSystemClient;
     this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.POLLER_COUNT);
     this.previewRunnerServices = ConcurrentHashMap.newKeySet();
@@ -165,14 +167,15 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
    * Create injector for the given application id.
    */
   @VisibleForTesting
-  Injector createPreviewInjector() {
+  public Injector createPreviewInjector() {
     return Guice.createInjector(
       new ConfigModule(previewCConf, previewHConf, previewSConf),
       new IOModule(),
-      new AuthenticationContextModules().getMasterModule(),
+      RemoteAuthenticatorModules.getDefaultModule(),
+      new CoreSecurityRuntimeModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterWorkerModule(),
       new PreviewSecureStoreModule(secureStore),
-      new PreviewDiscoveryRuntimeModule(discoveryService),
-      new LocalLocationModule(),
+      new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
       new ConfigStoreModule(),
       previewRunnerModule,
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
@@ -188,7 +191,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
           bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
         }
       },
-    new MessagingServerRuntimeModule().getInMemoryModules(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
       Modules.override(new MetadataReaderWriterModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {

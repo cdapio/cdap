@@ -22,16 +22,19 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
@@ -43,8 +46,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -63,36 +68,49 @@ import javax.ws.rs.QueryParam;
 public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
 
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final ProfileService profileService;
   private final ProvisioningService provisioningService;
 
   @Inject
-  public ProfileHttpHandler(ProfileService profileService, ProvisioningService provisioningService) {
+  public ProfileHttpHandler(AccessEnforcer accessEnforcer,
+                            AuthenticationContext authenticationContext,
+                            ProfileService profileService,
+                            ProvisioningService provisioningService) {
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
     this.profileService = profileService;
     this.provisioningService = provisioningService;
   }
 
   @GET
   @Path("/profiles")
-  public void getSystemProfiles(HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(NamespaceId.SYSTEM, true)));
+  public void getSystemProfiles(HttpRequest request, HttpResponder responder) throws Exception {
+    NamespaceId namespaceId = NamespaceId.SYSTEM;
+    accessEnforcer.enforceOnParent(EntityType.PROFILE, namespaceId, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
+    List<Profile> profiles = verifyCpuLabelsProfiles(profileService.getProfiles(namespaceId, true),
+                                                     NamespaceId.SYSTEM);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
   }
 
   @GET
   @Path("/profiles/{profile-name}")
   public void getSystemProfile(HttpRequest request, HttpResponder responder,
-                               @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException {
+                               @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+      verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId)));
   }
 
   @PUT
   @Path("/profiles/{profile-name}")
   public void writeSystemProfile(FullHttpRequest request, HttpResponder responder,
-                                 @PathParam("profile-name") String profileName)
-    throws BadRequestException, IOException, MethodNotAllowedException {
+                                 @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    checkPutProfilePermissions(profileId);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -100,17 +118,19 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/profiles/{profile-name}/enable")
   public void enableSystemProfile(HttpRequest request, HttpResponder responder,
-                                  @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
-    profileService.enableProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
+                                  @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    profileService.enableProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
   @Path("/profiles/{profile-name}/disable")
   public void disableSystemProfile(HttpRequest request, HttpResponder responder,
-                                   @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
+                                   @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     profileService.disableProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -118,8 +138,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/profiles/{profile-name}")
   public void deleteSystemProfile(HttpRequest request, HttpResponder responder,
-                                  @PathParam("profile-name") String profileName)
-    throws BadRequestException, ProfileConflictException, NotFoundException, MethodNotAllowedException {
+                                  @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     profileService.deleteProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -131,11 +152,17 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles")
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
-                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem)
-    throws BadRequestException, MethodNotAllowedException {
+                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) throws Exception {
     NamespaceId namespace = getValidatedNamespace(namespaceId);
+    accessEnforcer.enforceOnParent(EntityType.PROFILE, namespace, authenticationContext.getPrincipal(),
+                                   StandardPermission.LIST);
     boolean include = Boolean.valueOf(includeSystem);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespace, include)));
+    if (include) {
+      accessEnforcer.enforceOnParent(EntityType.PROFILE, NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
+                                     StandardPermission.LIST);
+    }
+    List<Profile> profiles = verifyCpuLabelsProfiles(profileService.getProfiles(namespace, include), namespace);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
   }
 
   /**
@@ -145,10 +172,11 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException, MethodNotAllowedException {
+                         @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+      verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId)));
   }
 
   /**
@@ -158,9 +186,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void writeProfile(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
-                           @PathParam("profile-name") String profileName)
-    throws BadRequestException, IOException, MethodNotAllowedException {
+                           @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    checkPutProfilePermissions(profileId);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -174,9 +202,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("profile-name") String profileName)
-    throws BadRequestException, MethodNotAllowedException, NotFoundException, ProfileConflictException {
-    profileService.deleteProfile(getValidatedProfile(namespaceId, profileName));
+                            @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+    profileService.deleteProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -184,10 +213,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}/status")
   public void getProfileStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException, MethodNotAllowedException {
-    responder.sendJson(HttpResponseStatus.OK,
-      GSON.toJson(profileService.getProfile(getValidatedProfile(namespaceId, profileName)).getStatus()));
+                               @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId).getStatus()));
   }
 
   /**
@@ -198,9 +227,11 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}/disable")
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException, BadRequestException {
-          profileService.disableProfile(getValidatedProfile(namespaceId, profileName));
+                             @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    accessEnforcer.enforce(profileId,
+                           authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    profileService.disableProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -211,9 +242,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}/enable")
   public void enableProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
-    profileService.enableProfile(getValidatedProfile(namespaceId, profileName));
+                            @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    profileService.enableProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -244,6 +276,30 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  private List<Profile> verifyCpuLabelsProfiles(List<Profile> profileList, NamespaceId namespaceId)
+    throws BadRequestException,
+    MethodNotAllowedException {
+    List<Profile> verifiedProfiles = new ArrayList<>();
+    for (Profile profile : profileList) {
+      ProfileId profileId = getValidatedProfile(namespaceId, profile.getName());
+      verifiedProfiles.add(verifyCpuLabelsProfile(profile, profileId));
+    }
+    return verifiedProfiles;
+  }
+
+  private Profile verifyCpuLabelsProfile(Profile profile, ProfileId profileId) throws BadRequestException,
+    MethodNotAllowedException {
+    if (profile.getProvisioner().getTotalProcessingCpusLabel() == null) {
+        String label = getTotalProcessingCpusLabel(profile.getProvisioner());
+        profile.getProvisioner().setTotalProcessingCpusLabel(label);
+        //Native profile updates are not allowed
+        if (!profileId.equals(ProfileId.NATIVE)) {
+          profileService.saveProfile(profileId, profile);
+        }
+    }
+    return profile;
+  }
+
   private void writeProfile(ProfileId profileId, FullHttpRequest request)
     throws BadRequestException, IOException, MethodNotAllowedException {
     ProfileCreateRequest profileCreateRequest;
@@ -253,6 +309,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Unable to parse request body. Please make sure it is valid JSON", e);
     }
+    String totalProcessingCpusLabel = getTotalProcessingCpusLabel(profileCreateRequest.getProvisioner());
+    profileCreateRequest.getProvisioner().setTotalProcessingCpusLabel(totalProcessingCpusLabel);
     Profile profile =
       new Profile(profileId.getProfile(), profileCreateRequest.getLabel(), profileCreateRequest.getDescription(),
                   profileId.getScope(), profileCreateRequest.getProvisioner());
@@ -266,16 +324,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException(e.getMessage());
     }
     ProvisionerInfo provisionerInfo = request.getProvisioner();
-    Map<String, String> properties = new HashMap<>();
-    Collection<ProvisionerPropertyValue> provisionerProperties = provisionerInfo.getProperties();
-    if (provisionerProperties != null) {
-      for (ProvisionerPropertyValue value : provisionerProperties) {
-        if (value == null) {
-          continue;
-        }
-        properties.put(value.getName(), value.getValue());
-      }
-    }
+    Map<String, String> properties =  convertProvisionerProperties(provisionerInfo.getProperties());
+
     try {
       provisioningService.validateProperties(provisionerInfo.getName(), properties);
     } catch (NotFoundException e) {
@@ -284,6 +334,45 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
                                                   provisionerInfo.getName()), e);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
+    }
+  }
+
+  private String getTotalProcessingCpusLabel(ProvisionerInfo provisionerInfo) throws BadRequestException {
+    Map<String, String> properties = convertProvisionerProperties(provisionerInfo.getProperties());
+    try {
+      return provisioningService.getTotalProcessingCpusLabel(provisionerInfo.getName(), properties);
+    } catch (NotFoundException e) {
+      throw new BadRequestException(String.format("The specified provisioner %s does not exist, " +
+                                                    "thus cannot be associated with a profile",
+                                                  provisionerInfo.getName()), e);
+    }
+  }
+
+  private Map<String, String> convertProvisionerProperties(Collection<ProvisionerPropertyValue> provisionerProperties) {
+    Map<String, String> properties = new HashMap<>();
+    if (provisionerProperties != null) {
+      for (ProvisionerPropertyValue value : provisionerProperties) {
+        if (value == null) {
+          continue;
+        }
+        properties.put(value.getName(), value.getValue());
+      }
+    }
+    return properties;
+  }
+
+  private void checkPutProfilePermissions(ProfileId profileId) {
+    boolean profileExists;
+    try {
+      profileService.getProfile(profileId);
+      profileExists = true;
+    } catch (NotFoundException e) {
+      profileExists = false;
+    }
+    if (profileExists) {
+      accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    } else {
+      accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     }
   }
 }

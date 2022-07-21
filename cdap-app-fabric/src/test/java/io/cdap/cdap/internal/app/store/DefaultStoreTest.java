@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import io.cdap.cdap.AllProgramsApp;
@@ -43,6 +44,8 @@ import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.workflow.NodeStatus;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -65,6 +68,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
@@ -73,6 +77,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -842,6 +847,88 @@ public abstract class DefaultStoreTest {
 
     //All the 6 specs should have been deleted.
     Assert.assertEquals(0, specsToBeVerified.size());
+  }
+
+  @Test
+  public void testScanApplications() {
+    testScanApplications(store);
+  }
+
+  protected void testScanApplications(Store store) {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    int count = 100;
+    for (int i = 0; i < count; i++) {
+      String appName = "test" + i;
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+    }
+
+    List<ApplicationId> apps = new ArrayList<ApplicationId>();
+    store.scanApplications(20, (appId, spec) -> apps.add(appId));
+
+    Assert.assertEquals(count, apps.size());
+
+    //Reverse
+    List<ApplicationId> reverseApps = new ArrayList<>();
+    store.scanApplications(ScanApplicationsRequest.builder()
+                             .setSortOrder(SortOrder.DESC)
+                             .build(), 20, (appId, spec) -> reverseApps.add(appId));
+    Assert.assertEquals(Lists.reverse(apps), reverseApps);
+
+    //Second page
+    int firstPageSize = 10;
+    List<ApplicationId> restartApps = new ArrayList<>();
+    store.scanApplications(ScanApplicationsRequest.builder()
+                             .setScanFrom(apps.get(firstPageSize - 1))
+                             .build(), 20, (appId, spec) -> restartApps.add(appId));
+    Assert.assertEquals(apps.subList(firstPageSize, apps.size()), restartApps);
+  }
+
+  @Test
+  public void testScanApplicationsWithNamespace() {
+    testScanApplicationsWithNamespace(store);
+  }
+
+  public void testScanApplicationsWithNamespace(Store store) {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    int count = 100;
+    for (int i = 0; i < count / 2; i++) {
+      String appName = "test" + (2 * i);
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+      appName = "test" + (2 * i + 1);
+      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), appSpec);
+    }
+
+    List<ApplicationId> apps = new ArrayList<ApplicationId>();
+
+    ScanApplicationsRequest request = ScanApplicationsRequest.builder()
+      .setNamespaceId(NamespaceId.CDAP).build();
+
+    store.scanApplications(request, 20, (appId, spec) ->  {
+      apps.add(appId);
+    });
+
+    Assert.assertEquals(count / 2, apps.size());
+
+    //Reverse
+    List<ApplicationId> reverseApps = new ArrayList<>();
+    request = ScanApplicationsRequest.builder()
+      .setNamespaceId(NamespaceId.CDAP)
+      .setSortOrder(SortOrder.DESC)
+      .build();
+    store.scanApplications(request, 20, (appId, spec) -> reverseApps.add(appId));
+    Assert.assertEquals(Lists.reverse(apps), reverseApps);
+
+    //Second page
+    int firstPageSize = 10;
+    List<ApplicationId> restartApps = new ArrayList<>();
+    request = ScanApplicationsRequest.builder()
+      .setNamespaceId(NamespaceId.CDAP)
+      .setScanFrom(apps.get(firstPageSize - 1))
+      .build();
+    store.scanApplications(request, 20, (appId, spec) -> restartApps.add(appId));
+    Assert.assertEquals(apps.subList(firstPageSize, apps.size()), restartApps);
   }
 
   @Test

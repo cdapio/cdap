@@ -23,10 +23,14 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationConfigurer;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
 import io.cdap.cdap.api.service.Service;
@@ -40,11 +44,12 @@ import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
@@ -64,7 +69,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -76,6 +83,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   private final PluginFinder pluginFinder;
   private final PluginInstantiator pluginInstantiator;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
   private final Id.Artifact artifactId;
   private final String configuration;
   private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
@@ -86,26 +94,37 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
   private final Map<StructuredTableId, StructuredTableSpecification> systemTables = new HashMap<>();
   private final TriggerFactory triggerFactory;
+  private final RuntimeConfigurer runtimeConfigurer;
   private String name;
+  private Map<MetadataScope, Metadata> appMetadata;
   private String description;
 
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
-    this(namespace, artifactId, app, "", null, null);
+    this(namespace, artifactId, app, "", null, null, null, null,
+         new FeatureFlagsProvider() {
+         });
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
                               @Nullable PluginFinder pluginFinder,
-                              @Nullable PluginInstantiator pluginInstantiator) {
-    super(namespace, artifactId, pluginFinder, pluginInstantiator);
+                              @Nullable PluginInstantiator pluginInstantiator,
+                              @Nullable RuntimeConfigurer runtimeConfigurer,
+                              @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                              FeatureFlagsProvider featureFlagsProvider) {
+    super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+    featureFlagsProvider);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
     this.artifactId = artifactId;
     this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
+    this.appMetadata = new HashMap<>();
     this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
+    this.runtimeConfigurer = runtimeConfigurer;
+    this.runtimeInfo = runtimeInfo;
   }
 
   @Override
@@ -122,8 +141,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
     DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, deployNamespace, artifactId,
-                                                                           pluginFinder,
-                                                                           pluginInstantiator);
+        pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     mapReduce.configure(configurer);
     addDatasetsAndPlugins(configurer);
     MapReduceSpecification spec = configurer.createSpecification();
@@ -145,8 +163,10 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
         configurer = (DefaultSparkConfigurer) sparkRunnerClassLoader
           .loadClass("io.cdap.cdap.app.deploy.spark.DefaultExtendedSparkConfigurer")
           .getConstructor(Spark.class, Id.Namespace.class, Id.Artifact.class,
-                          PluginFinder.class, PluginInstantiator.class)
-          .newInstance(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                          PluginFinder.class, PluginInstantiator.class, 
+                          AppDeploymentRuntimeInfo.class, FeatureFlagsProvider.class)
+          .newInstance(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator, 
+            runtimeInfo, getFeatureFlagsProvider());
 
       } catch (Exception e) {
         // Ignore it and the configurer will be defaulted to DefaultSparkConfigurer
@@ -155,8 +175,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     }
 
     if (configurer == null) {
-      configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId,
-                                              pluginFinder, pluginInstantiator);
+      configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder,
+        pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     }
 
     spark.configure(configurer);
@@ -168,9 +188,9 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @Override
   public void addWorkflow(Workflow workflow) {
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
-    DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow, this,
-                                                                         deployNamespace, artifactId,
-                                                                         pluginFinder, pluginInstantiator);
+    DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow,
+        this, deployNamespace, artifactId, pluginFinder, pluginInstantiator,
+        runtimeInfo, getFeatureFlagsProvider());
     workflow.configure(configurer);
     WorkflowSpecification spec = configurer.createSpecification();
     addDatasetsAndPlugins(configurer);
@@ -192,8 +212,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
     DefaultSystemTableConfigurer systemTableConfigurer = new DefaultSystemTableConfigurer();
     DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
-                                                                       pluginFinder, pluginInstantiator,
-                                                                       systemTableConfigurer);
+      pluginFinder, pluginInstantiator, systemTableConfigurer, runtimeInfo, getFeatureFlagsProvider());
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -206,8 +225,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
     DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace, artifactId,
-                                                                     pluginFinder,
-                                                                     pluginInstantiator);
+      pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     worker.configure(configurer);
     addDatasetsAndPlugins(configurer);
     WorkerSpecification spec = configurer.createSpecification();
@@ -227,6 +245,16 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   }
 
   @Override
+  public void emitMetadata(Metadata metadata, MetadataScope scope) {
+    Metadata scopeMetadata = appMetadata.computeIfAbsent(scope, s -> new Metadata(new HashMap<>(), new HashSet<>()));
+    Map<String, String> properties = new HashMap<>(scopeMetadata.getProperties());
+    properties.putAll(metadata.getProperties());
+    Set<String> tags = new HashSet<>(scopeMetadata.getTags());
+    tags.addAll(metadata.getTags());
+    appMetadata.put(scope, new Metadata(properties, tags));
+  }
+
+  @Override
   public TriggerFactory getTriggerFactory() {
     return triggerFactory;
   }
@@ -240,6 +268,17 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
         programName, schedulableProgramType));
     }
     return new DefaultScheduleBuilder(scheduleName, programName, triggerFactory);
+  }
+
+  @Override
+  @Nullable
+  public RuntimeConfigurer getRuntimeConfigurer() {
+    return runtimeConfigurer;
+  }
+
+  @Override
+  public String getDeployedNamespace() {
+    return deployNamespace.getId();
   }
 
   /**
@@ -276,7 +315,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
       }
     }
 
-    return new DefaultApplicationSpecification(appName, appVersion, description,
+    return new DefaultApplicationSpecification(appName, appVersion, ProjectInfo.getVersion().toString(), description,
                                                configuration, artifactId,
                                                getDatasetModules(), getDatasetSpecs(),
                                                mapReduces, sparks, workflows, services,
@@ -285,6 +324,10 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   public Collection<StructuredTableSpecification> getSystemTables() {
     return systemTables.values();
+  }
+
+  public Map<MetadataScope, Metadata> getMetadata() {
+    return appMetadata;
   }
 
   /**

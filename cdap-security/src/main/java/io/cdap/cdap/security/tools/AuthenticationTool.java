@@ -29,7 +29,7 @@ import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.FileBasedKeyManager;
 import io.cdap.cdap.security.auth.KeyIdentifier;
 import io.cdap.cdap.security.auth.KeyIdentifierCodec;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -82,7 +82,7 @@ public class AuthenticationTool {
         new ConfigModule(cConf),
         new IOModule(),
         new InMemoryDiscoveryModule(),
-        SecurityModules.getDistributedModule(cConf));
+        CoreSecurityRuntimeModule.getDistributedModule(cConf));
 
       Codec<KeyIdentifier> codec = injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() { }));
       FileBasedKeyManager keyManager = new FileBasedKeyManager(injector.getInstance(CConfiguration.class),

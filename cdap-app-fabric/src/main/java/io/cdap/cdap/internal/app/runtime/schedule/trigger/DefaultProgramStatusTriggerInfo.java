@@ -16,15 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
-import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import org.apache.twill.api.RunId;
 
 import java.io.Externalizable;
@@ -42,10 +38,10 @@ import javax.annotation.Nullable;
 public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   implements ProgramStatusTriggerInfo, Externalizable {
 
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final long serialVersionUID = 1L;
 
   private String namespace;
-  private ApplicationSpecification applicationSpecification;
+  private String applicationName;
   private ProgramType programType;
   private String program;
   private RunId runId;
@@ -61,14 +57,14 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
     super(Type.PROGRAM_STATUS);
   }
 
-  public DefaultProgramStatusTriggerInfo(String namespace, ApplicationSpecification applicationSpecification,
+  public DefaultProgramStatusTriggerInfo(String namespace, String applicationName,
                                          ProgramType programType, String program,
                                          RunId runId, ProgramStatus programStatus,
                                          @Nullable WorkflowToken workflowToken,
                                          Map<String, String> runtimeArguments) {
     super(Type.PROGRAM_STATUS);
     this.namespace = namespace;
-    this.applicationSpecification = applicationSpecification;
+    this.applicationName = applicationName;
     this.programType = programType;
     this.program = program;
     this.runId = runId;
@@ -83,8 +79,8 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   }
 
   @Override
-  public ApplicationSpecification getApplicationSpecification() {
-    return applicationSpecification;
+  public String getApplicationName() {
+    return applicationName;
   }
 
   @Override
@@ -121,10 +117,7 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeUTF(namespace);
-
-    // Can't use writeUTF for app spec because it could be larger than 64K
-    out.writeObject(GSON.toJson(applicationSpecification));
-
+    out.writeUTF(applicationName);
     out.writeObject(programType);
     out.writeUTF(program);
     out.writeUTF(runId.getId());
@@ -142,8 +135,7 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     namespace = in.readUTF();
-    applicationSpecification = GSON.fromJson((String) in.readObject(), ApplicationSpecification.class);
-
+    applicationName = in.readUTF();
     programType = (ProgramType) in.readObject();
     program = in.readUTF();
     runId = RunIds.fromString(in.readUTF());

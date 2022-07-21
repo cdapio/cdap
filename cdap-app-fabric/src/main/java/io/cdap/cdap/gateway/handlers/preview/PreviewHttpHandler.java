@@ -24,6 +24,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
@@ -343,7 +344,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
   // Create the application ID for the supplied namespace and preview if its valid.
   // Validity is verified by checking its status in the store.
-  private ApplicationId validateAndGetAppId(String namespace, String preview) throws NotFoundException {
+  private ApplicationId validateAndGetAppId(String namespace, String preview)
+    throws NotFoundException, AccessException {
     ApplicationId applicationId = new ApplicationId(namespace, preview);
     previewManager.getStatus(applicationId);
     return applicationId;

@@ -21,19 +21,24 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.api.service.AbstractService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpContentConsumer;
 import io.cdap.cdap.api.service.http.HttpContentProducer;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
+import io.cdap.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -73,7 +78,7 @@ public class DynamicPluginServiceApp extends AbstractApplication {
   public static class DynamicPluginHandler extends AbstractHttpServiceHandler {
     private static final Gson GSON = new Gson();
     private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-    private boolean onFinishSuccessful = false;
+    private boolean onFinishSuccessful;
 
     @POST
     @Path("plugins/{name}/apply")
@@ -85,9 +90,36 @@ public class DynamicPluginServiceApp extends AbstractApplication {
         .addAll(properties)
         .build();
 
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(getNamespace(request));
+      PluginConfigurer pluginConfigurer = getContext().createServicePluginConfigurer(getNamespace(request));
       Function<PluginConfigurer, String> plugin =
         pluginConfigurer.usePlugin(PLUGIN_TYPE, name, UUID.randomUUID().toString(), pluginProperties);
+      if (plugin == null) {
+        responder.sendError(404, "Plugin " + name + " not found.");
+        return;
+      }
+
+      responder.sendString(plugin.apply(pluginConfigurer));
+    }
+
+    @POST
+    @Path("plugins/{name}/macro")
+    public void callPluginFunctionWithMacro(HttpServiceRequest request, HttpServiceResponder responder,
+                                            @PathParam("name") String name) {
+      MacroPluginRequest pluginRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
+                                                       MacroPluginRequest.class);
+      PluginProperties pluginProperties = PluginProperties.builder()
+                                            .addAll(pluginRequest.rawProperties)
+                                            .build();
+
+      TestMacroEvaluator macroEvaluator = new TestMacroEvaluator(pluginRequest.macroProperties, Collections.emptyMap());
+      MacroParserOptions options = MacroParserOptions.builder()
+                                     .skipInvalidMacros()
+                                     .setEscaping(false)
+                                     .build();
+      ServicePluginConfigurer pluginConfigurer = getContext().createServicePluginConfigurer(getNamespace(request));
+      Function<PluginConfigurer, String> plugin =
+        pluginConfigurer.usePlugin(PLUGIN_TYPE, name, UUID.randomUUID().toString(), pluginProperties,
+                                   new PluginSelector(), macroEvaluator, options);
       if (plugin == null) {
         responder.sendError(404, "Plugin " + name + " not found.");
         return;
@@ -102,10 +134,10 @@ public class DynamicPluginServiceApp extends AbstractApplication {
     public void producePluginFunction(HttpServiceRequest request, HttpServiceResponder responder) {
       PluginRequest pluginRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
                                                   PluginRequest.class);
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(getNamespace(request));
+      PluginConfigurer pluginConfigurer = getContext().createServicePluginConfigurer(getNamespace(request));
 
       HttpContentProducer producer = new HttpContentProducer() {
-        private boolean done = false;
+        private boolean done;
 
         @Override
         public ByteBuffer nextChunk(Transactional transactional) {
@@ -161,7 +193,7 @@ public class DynamicPluginServiceApp extends AbstractApplication {
     @POST
     @Path("consumer")
     public HttpContentConsumer callWithConsumer(HttpServiceRequest request, HttpServiceResponder responder) {
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(getNamespace(request));
+      PluginConfigurer pluginConfigurer = getContext().createServicePluginConfigurer(getNamespace(request));
       return new HttpContentConsumer() {
         private byte[] body = new byte[0];
         private PluginRequest pluginRequest;
@@ -225,6 +257,19 @@ public class DynamicPluginServiceApp extends AbstractApplication {
       this.errorName = errorName;
       this.goodProperties = goodProperties;
       this.errorProperties = errorProperties;
+    }
+  }
+
+  /**
+   * Request body of the 'macro' endpoint
+   */
+  public static class MacroPluginRequest {
+    private final Map<String, String> rawProperties;
+    private final Map<String, String> macroProperties;
+
+    public MacroPluginRequest(Map<String, String> rawProperties, Map<String, String> macroProperties) {
+      this.rawProperties = rawProperties;
+      this.macroProperties = macroProperties;
     }
   }
 }

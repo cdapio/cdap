@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2022 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
@@ -75,6 +76,9 @@ public abstract class MetricsTestBase {
     cConf.setInt(Constants.Metrics.QUEUE_SIZE, 1000);
     // Set it to really short delay for faster test
     cConf.setLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS, 5);
+    //Disable coarsing as it will be flacky on integration test level due to variable timing.
+    //It's tested on lower level
+    cConf.setInt(Constants.Metrics.COARSE_ROUND_FACTOR, 1);
 
     injector = Guice.createInjector(getModules());
     messagingService = injector.getInstance(MessagingService.class);
@@ -97,6 +101,7 @@ public abstract class MetricsTestBase {
   private List<Module> getModules() {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
+    modules.add(RemoteAuthenticatorModules.getNoOpModule());
     modules.add(new InMemoryDiscoveryModule());
     modules.add(new MessagingServerRuntimeModule().getInMemoryModules());
     modules.add(new MockMetricsWriterModule());

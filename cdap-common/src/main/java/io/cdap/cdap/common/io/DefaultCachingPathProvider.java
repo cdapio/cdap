@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -59,14 +60,14 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
         }
         try {
           Files.deleteIfExists(path);
-          LOG.debug("Removed cache file {}", path);
+          LOG.trace("Removed cache file {}", path);
         } catch (IOException e) {
           LOG.warn("Failed to delete cache file {}. An unused file may left behind.", path, e);
         }
         // Try to delete the parent directory. We ignore the failure as it can happen if the directory is not empty.
         try {
           if (Files.deleteIfExists(path.getParent())) {
-            LOG.debug("Removed cache directory {}", path.getParent());
+            LOG.trace("Removed cache directory {}", path.getParent());
           }
         } catch (IOException e) {
           LOG.trace("Failed to delete directory {}", path.getParent(), e);
@@ -134,7 +135,7 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
         long lastModified = Long.parseLong(fileName.substring(0, idx));
 
         cache.put(new CacheKey(fileName, lastModified), file.toPath());
-        LOG.debug("Populate cache with {}", file);
+        LOG.trace("Populate cache with {}", file);
       }
     }
   }
@@ -149,6 +150,24 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
     private CacheKey(String fileName, long lastModified) {
       this.fileName = fileName;
       this.lastModified = lastModified;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(fileName, lastModified);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      CacheKey that = (CacheKey) o;
+      return this.lastModified == that.lastModified &&
+          this.fileName.equals(that.fileName);
     }
 
     String getFileName() {

@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
+import io.cdap.cdap.common.io.Locations;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -78,6 +79,53 @@ public class BundleJarUtilTest {
     Assert.assertNotNull(jarEntry);
     try (Reader reader = new InputStreamReader(jarFile.getInputStream(jarEntry), Charsets.UTF_8)) {
       Assert.assertEquals(message, CharStreams.toString(reader));
+    }
+  }
+
+  @Test
+  public void testPrepareClassLoader() throws IOException {
+    // Create a file inside a sub-dir.
+    File dir = TEMP_FOLDER.newFolder();
+    File subDir = new File(dir, "subdir");
+    subDir.mkdirs();
+
+    String message = Strings.repeat("0123456789", 40);
+    File file1 = new File(subDir, "file1.jar");
+    Files.write(message, file1, Charsets.UTF_8);
+
+    // Create a jar of the top level directory
+    final File destArchive = new File(TEMP_FOLDER.newFolder(), "target.jar");
+    BundleJarUtil.createJar(dir, destArchive);
+
+    // Unpack the jar into a folder
+    File unpackedDir = BundleJarUtil.prepareClassLoaderFolder(Locations.toLocation(destArchive),
+                                                              TEMP_FOLDER::newFolder).getDir();
+
+    // Unpack from the unpacked folder again. It should return the same folder
+    try (ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(unpackedDir,
+                                                                                      TEMP_FOLDER::newFolder)) {
+      Assert.assertEquals(unpackedDir, classLoaderFolder.getDir());
+    }
+
+    // Closing the ClassLoaderFolder should have the original unpackedDir retained
+    Assert.assertTrue(unpackedDir.exists());
+  }
+
+  /**
+   * Helper method to recursively check if two directories are equal
+   */
+  private void areDirectoriesEqual(File dir1, File dir2) {
+    File[] dir1Files = dir1.listFiles();
+    File[] dir2Files = dir2.listFiles();
+    Assert.assertNotNull(dir1Files);
+    Assert.assertNotNull(dir2Files);
+    Assert.assertEquals(dir1Files.length, dir2Files.length);
+    for (int i = 0; i < dir1Files.length; i++) {
+      if (dir1Files[i].isDirectory()) {
+        areDirectoriesEqual(dir1Files[i], dir2Files[i]);
+        continue;
+      }
+      Assert.assertEquals(dir1Files[i].getName(), dir2Files[i].getName());
     }
   }
 

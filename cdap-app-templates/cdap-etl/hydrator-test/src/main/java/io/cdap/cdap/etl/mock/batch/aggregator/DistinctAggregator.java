@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.mock.batch.aggregator;
 
 import com.google.common.base.Splitter;
-import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -43,9 +42,7 @@ import java.util.Map;
  * Distinct aggregator.
  */
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
-@Name("Distinct")
-@Description("Deduplicates input records so that only provided fields are used to apply distinction on while other " +
-  "fields are projected out.")
+@Name(DistinctAggregator.NAME)
 public class DistinctAggregator extends BatchAggregator<StructuredRecord, StructuredRecord, StructuredRecord> {
   public static final String NAME = "Distinct";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
@@ -107,7 +104,6 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
    * Plugin Configuration.
    */
   public static class Conf extends PluginConfig {
-    @Description("Comma-separated list of fields to perform the distinct on.")
     private String fields;
 
     Iterable<String> getFields() {
@@ -118,13 +114,14 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
   public static ETLPlugin getPlugin(String field) {
     Map<String, String> properties = new HashMap<>();
     properties.put("fields", field);
-    return new ETLPlugin(DistinctAggregator.NAME, BatchAggregator.PLUGIN_TYPE, properties);
+    return new ETLPlugin(NAME, BatchAggregator.PLUGIN_TYPE, properties);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "DistinctAggregator", "", DistinctAggregator.class.getName(),
-                           "config", properties);
+    properties.put("fields", new PluginPropertyField("fields", "", "string", true, false));
+    return PluginClass.builder().setName(NAME).setType(BatchAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(DistinctAggregator.class.getName())
+             .setConfigFieldName("conf").setProperties(properties).build();
   }
 }

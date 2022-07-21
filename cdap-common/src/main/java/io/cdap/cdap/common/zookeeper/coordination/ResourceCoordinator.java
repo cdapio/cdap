@@ -230,7 +230,7 @@ public final class ResourceCoordinator extends AbstractService {
 
         try {
           ResourceRequirement requirement = CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(nodeData);
-          LOG.info("Get requirement {}", requirement);
+          LOG.debug("Get requirement {}", requirement);
 
           // See if the requirement changed.
           ResourceRequirement oldRequirement = requirements.get(requirement.getName());

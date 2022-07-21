@@ -34,6 +34,8 @@ import io.cdap.cdap.security.store.DummySecureStoreService;
 import io.cdap.cdap.security.store.FileSecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreUtils;
+import io.cdap.cdap.security.store.file.FileSecureStoreCodec;
+import io.cdap.cdap.security.store.file.SecureStoreDataCodecV2;
 import io.cdap.cdap.security.store.secretmanager.SecretManagerSecureStoreService;
 
 /**
@@ -47,6 +49,8 @@ public class SecureStoreServerModule extends PrivateModule {
     bind(SecureStoreService.class)
       .annotatedWith(Names.named(DELEGATE_SECURE_STORE_SERVICE))
       .toProvider(SecureStoreServiceProvider.class);
+    bind(FileSecureStoreCodec.class).to(SecureStoreDataCodecV2.class);
+    expose(FileSecureStoreCodec.class);
 
     bind(DefaultSecureStoreService.class).in(Scopes.SINGLETON);
     bind(SecureStore.class).to(DefaultSecureStoreService.class);

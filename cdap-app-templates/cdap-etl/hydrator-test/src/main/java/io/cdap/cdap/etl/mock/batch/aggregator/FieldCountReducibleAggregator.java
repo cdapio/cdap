@@ -44,7 +44,7 @@ import java.util.Map;
 @Name(FieldCountReducibleAggregator.NAME)
 public class FieldCountReducibleAggregator
   extends BatchReducibleAggregator<Object, StructuredRecord, StructuredRecord, StructuredRecord> {
-  public static final String NAME = "FieldCount Aggregator";
+  public static final String NAME = "FieldCountReducibleAggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Schema REDUCE_SCHEMA =
     Schema.recordOf("record", Schema.Field.of("fc", Schema.of(Schema.Type.LONG)));
@@ -110,10 +110,9 @@ public class FieldCountReducibleAggregator
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     schema = config.getSchema();
-    // should never happen, just done to test App correctness in unit tests
-    if (context.getOutputSchema() != null && !schema.equals(context.getOutputSchema())) {
-      throw new IllegalStateException("Output schema does not match what was set at configure time.");
-    }
+    // here we cannot compare the schema with context.getOutputSchema(). Because in spark streaming,
+    // context.getOutputSchema() is dependent on the stageSpec, which can be outdated due to checkpointing,
+    // the schema in the config should always be up-to-date since it has all the runtime arguments resolved.
   }
 
   private StructuredRecord combine(StructuredRecord value1, StructuredRecord value2) {
@@ -166,7 +165,8 @@ public class FieldCountReducibleAggregator
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, true));
     properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, true));
-    return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, "",
-                           FieldCountReducibleAggregator.class.getName(), "config", properties);
+    return PluginClass.builder().setName(NAME).setType(BatchReducibleAggregator.PLUGIN_TYPE)
+             .setDescription("").setClassName(FieldCountReducibleAggregator.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

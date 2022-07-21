@@ -17,11 +17,13 @@
 package io.cdap.cdap.internal.app.mapreduce;
 
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceConfigurer;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
@@ -32,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link MapReduceConfigurer}.
@@ -50,8 +53,11 @@ public final class DefaultMapReduceConfigurer extends AbstractConfigurer impleme
 
   public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                     PluginFinder pluginFinder,
-                                    PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
+                                    PluginInstantiator pluginInstantiator,
+                                    @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                                    FeatureFlagsProvider featureFlagsProvider
+                                    ) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
     this.mapReduce = mapReduce;
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";

@@ -20,9 +20,13 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
+import io.cdap.cdap.common.http.HttpHeaderNames;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpResponder;
@@ -40,13 +44,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricsReporterHook extends AbstractHandlerHook {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsReporterHook.class);
+  private static final String LATENCY_METRIC_NAME = "response.latency";
 
   private final String serviceName;
   private final LoadingCache<Map<String, String>, MetricsContext> collectorCache;
 
-  public MetricsReporterHook(MetricsCollectionService metricsCollectionService, String serviceName) {
-    this.serviceName = serviceName;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
+  public MetricsReporterHook(CConfiguration cConf,
+                             MetricsCollectionService metricsCollectionService, String serviceName) {
+    this.serviceName = serviceName;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (metricsCollectionService != null) {
       this.collectorCache = CacheBuilder.newBuilder()
         .expireAfterAccess(1, TimeUnit.HOURS)
@@ -69,6 +77,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     try {
       MetricsContext collector = collectorCache.get(createContext(handlerInfo));
       collector.increment("request.received", 1);
+      request.headers().add(HttpHeaderNames.CDAP_REQ_TIMESTAMP_HDR, System.nanoTime());
     } catch (Throwable e) {
       LOG.error("Got exception while getting collector", e);
     }
@@ -102,6 +111,15 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
       // todo: report metrics broken down by status
       collector.increment("response." + name, 1/*, "status:" + code*/);
+
+      // store response time metric
+      long currTime = System.nanoTime();
+      String startTimeStr = request.headers().get(HttpHeaderNames.CDAP_REQ_TIMESTAMP_HDR);
+      if (startTimeStr != null) {
+        long responseTimeNanos = currTime - Long.parseLong(startTimeStr);
+        collector.event(LATENCY_METRIC_NAME, responseTimeNanos);
+      }
+
     } catch (Throwable e) {
       LOG.error("Got exception while getting collector", e);
     }

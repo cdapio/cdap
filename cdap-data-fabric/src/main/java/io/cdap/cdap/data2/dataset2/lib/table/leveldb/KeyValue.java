@@ -114,12 +114,12 @@ public class KeyValue {
     }
   }
 
-  private byte [] bytes = null;
-  private int offset = 0;
-  private int length = 0;
+  private byte [] bytes;
+  private int offset;
+  private int length;
 
   // the row cached
-  private volatile byte [] rowCache = null;
+  private volatile byte [] rowCache;
 
   /**
    * Creates a KeyValue from the start of the specified byte array.
@@ -530,7 +530,7 @@ public class KeyValue {
   /**
    * Length of key portion.
    */
-  private int keyLength = 0;
+  private int keyLength;
 
   public int getKeyLength() {
     if (keyLength == 0) {
@@ -854,8 +854,8 @@ public class KeyValue {
    * Compare key portion of a {@link KeyValue}.
    */
   public static class KeyComparator {
-    volatile boolean ignoreTimestamp = false;
-    volatile boolean ignoreType = false;
+    volatile boolean ignoreTimestamp;
+    volatile boolean ignoreType;
 
     public int compare(byte[] left, int loffset, int llength, byte[] right,
         int roffset, int rlength) {

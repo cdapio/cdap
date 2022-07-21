@@ -164,7 +164,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
     private final ImmutableMap.Builder<String, CommandHandler> handlerBuilder;
     private final StringBuilder helpStringBuilder;
     private boolean hasHelp;
-    private int port = 0;
+    private int port;
 
     /**
      * Creates a builder for the give name.

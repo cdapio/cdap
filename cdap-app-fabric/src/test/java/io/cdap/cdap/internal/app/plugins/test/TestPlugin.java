@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.app.plugins.test;
 
 import com.google.common.base.Joiner;
 import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
@@ -30,6 +32,9 @@ import javax.annotation.Nullable;
  */
 @Plugin
 @Name("TestPlugin")
+@Metadata(
+  tags = {"tag1", "tag2", "tag3"},
+  properties = {@MetadataProperty(key = "k1", value = "v1"), @MetadataProperty(key = "k2", value = "v2")})
 public class TestPlugin implements Callable<String> {
 
   protected Config config;

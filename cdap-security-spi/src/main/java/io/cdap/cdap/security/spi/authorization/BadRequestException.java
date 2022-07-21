@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.spi.authorization;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.security.Role;
 
 import java.net.HttpURLConnection;
@@ -24,7 +25,7 @@ import java.net.HttpURLConnection;
 /**
  * Exception thrown on invalid input
  */
-public class BadRequestException extends Exception implements HttpErrorStatusProvider {
+public class BadRequestException extends AccessException implements HttpErrorStatusProvider {
   public BadRequestException(Role role) {
     super(String.format("%s not found.", role));
   }

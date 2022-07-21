@@ -17,7 +17,6 @@
 package io.cdap.cdap.gateway;
 
 import com.google.common.collect.ObjectArrays;
-import com.google.common.io.Files;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -163,7 +162,7 @@ public class GatewayFastTestsSuite extends GatewayTestBase {
     LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File destination = new File(DirUtils.createTempDir(tmpFolder), name);
-    Files.copy(Locations.newInputSupplier(appJar), destination);
+    Locations.linkOrCopy(appJar, destination);
     return destination;
   }
 

@@ -35,7 +35,7 @@ public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer, P
    * The provided class should have a {@code static void main(String[])} method. It can also implements
    * the {@code io.cdap.cdap.api.spark.SparkMain} interface for Spark program written in Scala or
    * the {@code io.cdap.cdap.api.spark.JavaSparkMain} for Spark program written in Java, as defined in the
-   * {@code cdap-api-spark} module.
+   * {@code cdap-api-spark*} module.
    *
    * @param className the fully qualified name of Spark program class.
    */

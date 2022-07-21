@@ -27,14 +27,23 @@ import java.util.Map;
  */
 public class MockMetrics implements Metrics {
   private final Map<String, Long> gauges = Maps.newHashMap();
-  private final Map<String, Integer> counts = Maps.newHashMap();
+  private final Map<String, Long> counts = Maps.newHashMap();
 
   @Override
   public void count(String s, int i) {
     if (counts.containsKey(s)) {
       counts.put(s, counts.get(s) + i);
     } else {
-      counts.put(s, i);
+      counts.put(s, (long) i);
+    }
+  }
+
+  @Override
+  public void countLong(String s, long l) {
+    if (counts.containsKey(s)) {
+      counts.put(s, counts.get(s) + l);
+    } else {
+      counts.put(s, l);
     }
   }
 
@@ -53,8 +62,8 @@ public class MockMetrics implements Metrics {
     return Collections.emptyMap();
   }
 
-  public int getCount(String metric) {
-    Integer count = counts.get(metric);
+  public long getCount(String metric) {
+    Long count = counts.get(metric);
     return count == null ? 0 : count;
   }
 

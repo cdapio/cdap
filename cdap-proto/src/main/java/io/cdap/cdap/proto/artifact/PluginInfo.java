@@ -36,13 +36,13 @@ public class PluginInfo extends PluginSummary {
   private final Map<String, PluginPropertyField> properties;
 
   public PluginInfo(PluginClass pluginClass, ArtifactSummary artifactSummary) {
-    this(pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(), pluginClass.getClassName(),
-         pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties());
+    this(pluginClass.getName(), pluginClass.getType(), pluginClass.getCategory(), pluginClass.getClassName(),
+         pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties(), pluginClass.getDescription());
   }
 
-  public PluginInfo(String name, String type, String description, String className, @Nullable String configFieldName,
-                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties) {
-    super(name, type, description, className, artifact);
+  public PluginInfo(String name, String type, String category, String className, @Nullable String configFieldName,
+                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties, String description) {
+    super(name, type, category, className, artifact, description);
     this.configFieldName = configFieldName;
     this.properties = properties;
   }

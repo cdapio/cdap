@@ -216,30 +216,8 @@
       ]
     },
     {
-      "label": "Worker Nodes",
+      "label": "Worker node configuration",
       "properties": [
-        {
-          "widget-type": "number",
-          "label": "Number of Primary Workers",
-          "name": "workerNumNodes",
-          "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
-          "widget-attributes": {
-            "default": 2,
-            "min": 1,
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "number",
-          "label": "Number of Secondary Workers",
-          "name": "secondaryWorkerNumNodes",
-          "description": "Secondary worker nodes contain a YARN NodeManager but not a HDFS DataNode. This is normally set to 0 unless an autoscale policy requires it to be higher.",
-          "widget-attributes": {
-            "default": 0,
-            "min": 0,
-            "size": "medium"
-          }
-        },
         {
           "widget-type": "select",
           "label": "Worker Machine Type",
@@ -322,6 +300,60 @@
       ]
     },
     {
+      "label": "Number of cluster workers",
+      "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Use predefined Autoscaling",
+          "name": "enablePredefinedAutoScaling",
+          "description": "Automates cluster resource management for processing. This is a recommended autoscaling policy.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Number of primary workers",
+          "name": "workerNumNodes",
+          "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
+          "widget-attributes": {
+            "default": 2,
+            "min": 1,
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Number of secondary workers",
+          "name": "secondaryWorkerNumNodes",
+          "description": "Secondary worker nodes contain a YARN NodeManager but not a HDFS DataNode. This is normally set to 0 unless an autoscale policy requires it to be higher.",
+          "widget-attributes": {
+            "default": 0,
+            "min": 0,
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Autoscaling policy",
+          "name": "autoScalingPolicy",
+          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
+          "widget-attributes": {
+            "placeholder": "projects/<gcp-project-id>/regions/<region>/autoscalingPolicies/<policy-name>"
+          }
+        }
+      ]
+    },
+    {
       "label": "Cluster Metadata",
       "properties": [
         {
@@ -345,6 +377,65 @@
           "widget-attributes" : {}
         }
 
+      ]
+    },
+    {
+      "label": "Shielded VMs",
+      "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Enable Secure Boot",
+          "name": "secureBootEnabled",
+          "description": "Defines whether the Dataproc VMs have Secure Boot enabled.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable vTPM",
+          "name": "vTpmEnabled",
+          "description": "Defines whether the Dataproc VMs have the virtual Trusted Platform Module (vTPM) enabled.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable Integrity Monitoring",
+          "name": "integrityMonitoringEnabled",
+          "description": "Defines whether Dataproc VMs have integrity monitoring enabled.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        }
       ]
     },
     {
@@ -372,7 +463,7 @@
           "widget-type": "textbox",
           "label": "GCS Bucket",
           "name": "gcsBucket",
-          "description": "The Cloud Storage bucket used by Cloud Dataproc to read/write cluster and job data",
+          "description": "Google Cloud Storage bucket used to stage job dependencies and config files for running pipelines in Google Cloud Dataproc",
           "widget-attributes": {
             "size": "medium"
           }
@@ -384,15 +475,6 @@
           "description": "The GCP customer managed encryption key (CMEK) name used by Cloud Dataproc",
           "widget-attributes": {
             "placeholder": "projects/<gcp-project-id>/locations/<key-location>/keyRings/<key-ring-name>/cryptoKeys/<key-name>"
-          }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Autoscaling Policy",
-          "name": "autoScalingPolicy",
-          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
-          "widget-attributes": {
-            "placeholder": "projects/<gcp-project-id>/regions/<region>/autoscalingPolicies/<policy-name>"
           }
         },
         {
@@ -419,13 +501,27 @@
           }
         },
         {
+          "widget-type": "keyvalue",
+          "label": "Labels",
+          "name": "clusterLabels",
+          "description": "Specifies labels for the Dataproc cluster being created.",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "delimiter": ";",
+            "kv-delimiter": "|",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value"
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "Max Idle Time",
           "name": "idleTTL",
           "description": "Configure Dataproc to delete the cluster if it has been idle for longer than this many minutes. Clusters are normally deleted directly after a run ends, but this delete may fail in rare situations. For example, if permissions are revoked in the middle of a run, or if there is a Dataproc outage. Use this to ensure that clusters are eventually deleted even if the instance is unable to delete the cluster for any reason.",
           "widget-attributes": {
             "placeholder": "time in minutes",
-            "size": "medium"
+            "size": "medium",
+            "default": 30
           }
         },
         {
@@ -562,6 +658,30 @@
             "default": "2",
             "size": "small"
           }
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "name": "Toggle condition for enabling autoscaling",
+      "condition": {
+        "property": "enablePredefinedAutoScaling",
+        "operator": "not equal to",
+        "value": "true"
+      },
+      "show": [
+        {
+          "name": "workerNumNodes",
+          "type": "property"
+        },
+        {
+          "name": "secondaryWorkerNumNodes",
+          "type": "property"
+        },
+        {
+          "name": "autoScalingPolicy",
+          "type": "property"
         }
       ]
     }

@@ -22,7 +22,6 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -30,6 +29,7 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -146,7 +146,7 @@ public class LineageClient {
    */
   public FieldLineageSummary getFieldLineage(DatasetId datasetId, long startTime, long endTime,
                                              String direction)
-    throws IOException, BadRequestException, NotFoundException, UnauthenticatedException {
+    throws IOException, BadRequestException, NotFoundException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("datasets/%s/lineage/allfieldlineage?start=%s&end=%s", datasetId.getDataset(),
                                 URLEncoder.encode(Long.toString(startTime), "UTF-8"),
                                 URLEncoder.encode(Long.toString(endTime), "UTF-8"));

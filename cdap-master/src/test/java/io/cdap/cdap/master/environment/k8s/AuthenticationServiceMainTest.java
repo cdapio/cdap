@@ -18,6 +18,7 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security;
 import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -48,6 +49,7 @@ public class AuthenticationServiceMainTest extends MasterServiceMainTestBase {
     cConf.set(Security.AUTH_HANDLER_CLASS, BasicAuthenticationHandler.class.getName());
     cConf.setBoolean(Security.KERBEROS_ENABLED, false);
     cConf.set(Security.BASIC_REALM_FILE, realmFile());
+    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, 0);
     MasterServiceMainTestBase.cConf = cConf;
 
     final SConfiguration sConf = SConfiguration.create();

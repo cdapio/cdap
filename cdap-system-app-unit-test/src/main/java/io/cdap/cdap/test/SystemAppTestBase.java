@@ -37,11 +37,11 @@ public class SystemAppTestBase extends TestBase {
     }
   }
 
-  public TransactionRunner getTransactionRunner() {
+  public static TransactionRunner getTransactionRunner() {
     return transactionRunner;
   }
 
-  public StructuredTableAdmin getStructuredTableAdmin() {
+  public static StructuredTableAdmin getStructuredTableAdmin() {
     return tableAdmin;
   }
 }

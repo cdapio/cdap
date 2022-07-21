@@ -76,7 +76,7 @@ public class SparkLogParser extends AbstractSpark implements JavaSparkMain {
       }
     ).mapPartitionsToPair(new PairFlatMapFunction<Iterator<Tuple2<LogKey, LogStats>>, String, String>() {
       @Override
-      public Iterable<Tuple2<String, String>> call(Iterator<Tuple2<LogKey, LogStats>> itor) throws Exception {
+      public Iterator<Tuple2<String, String>> call(Iterator<Tuple2<LogKey, LogStats>> itor) throws Exception {
         final Gson gson = new Gson();
         return Lists.newArrayList(
           Iterators.transform(itor, new Function<Tuple2<LogKey, LogStats>, Tuple2<String, String>>() {
@@ -84,7 +84,7 @@ public class SparkLogParser extends AbstractSpark implements JavaSparkMain {
             public Tuple2<String, String> apply(Tuple2<LogKey, LogStats> input) {
               return new Tuple2<>(gson.toJson(input._1()), gson.toJson(input._2()));
             }
-          }));
+          })).iterator();
       }
     });
 

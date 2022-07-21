@@ -137,7 +137,7 @@ final class CachingLocation implements LinkableLocation {
         // Ignore because the target cache path is already exist. This can happen when there is concurrent fetches.
         LOG.trace("Cache file already exists", e);
       }
-      LOG.debug("Cached location {} to {}", delegate, cachePath);
+      LOG.trace("Cached location {} to {}", delegate, cachePath);
       return new FileInputStream(cachePath.toFile());
     } catch (IOException e) {
       LOG.warn("Failed to cache location {}", delegate, e);

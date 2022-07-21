@@ -40,6 +40,7 @@ import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -79,6 +80,7 @@ public class MetricsAdminSubscriberServiceTest {
       new ConfigModule(cConf),
       new IOModule(),
       new InMemoryDiscoveryModule(),
+      new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       // Instead of using the standard MetricsClientRuntimeModule, we need to define custom bindings here

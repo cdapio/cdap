@@ -35,6 +35,7 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.logging.appender.LogMessage;
@@ -43,6 +44,7 @@ import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import io.cdap.cdap.logging.gateway.handlers.LogData;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -76,15 +78,17 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogsServiceMainTest.class);
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(LogOffset.class, new LogOffsetAdapter()).create();
-  private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() { }.getType();
+  private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() {
+  }.getType();
 
   @Test
   public void testLogsService() throws Exception {
     Injector injector = getServiceMainInstance(LogsServiceMain.class).getInjector();
     DiscoveryServiceClient client = injector.getInstance(DiscoveryServiceClient.class);
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
 
     // send logs to log saver
-    TestAppender testAppender = new TestAppender(client);
+    TestAppender testAppender = new TestAppender(remoteClientFactory);
     for (ILoggingEvent event : getLoggingEvents()) {
       testAppender.append(event);
     }
@@ -196,9 +200,10 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
     private final RemoteClient remoteClient;
     private final DatumWriter<List<ByteBuffer>> datumWriter;
 
-    private TestAppender(DiscoveryServiceClient client) {
-      this.remoteClient = new RemoteClient(client, Constants.Service.LOG_BUFFER_SERVICE,
-                                           new DefaultHttpRequestConfig(false), "/v1/logs");
+    private TestAppender(RemoteClientFactory remoteClientFactory) {
+      this.remoteClient = remoteClientFactory.createRemoteClient(
+        Constants.Service.LOGSAVER,
+        new DefaultHttpRequestConfig(false), "/v1/logs");
       this.loggingEventSerializer = new LoggingEventSerializer();
       this.datumWriter = new GenericDatumWriter<>(Schema.createArray(Schema.create(Schema.Type.BYTES)));
     }
@@ -217,7 +222,7 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
           throw new IOException("Append call failed with " + response.getResponseCode()
                                   + " " + response.getResponseMessage() + " " + response.getResponseBodyAsString());
         }
-      } catch (IOException e) {
+      } catch (IOException | UnauthorizedException e) {
         LOG.error("Failed to append log", e);
       }
     }

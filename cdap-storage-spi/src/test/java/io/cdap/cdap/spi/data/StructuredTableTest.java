@@ -25,6 +25,7 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.junit.After;
@@ -236,6 +237,11 @@ public abstract class StructuredTableTest {
         expected.add(Arrays.asList(Fields.intField(KEY, j), Fields.longField(KEY2, (long) j)));
       }
     }
+
+    // Add a singleton range that are not in the ranges constructed in the for-loop above.
+    ranges.add(Range.singleton(Collections.singleton(Fields.intField(KEY, 11))));
+    // The expected result should be after the 0-10 range.
+    expected.add(10, Arrays.asList(Fields.intField(KEY, 11), Fields.longField(KEY2, 11L)));
 
     // Scan without limit
     result = runMultiScan(ranges, Integer.MAX_VALUE, KEY, KEY2);
@@ -584,6 +590,105 @@ public abstract class StructuredTableTest {
                                                           Range.Bound.EXCLUSIVE));
       Assert.assertEquals(max, table.count(ranges));
     });
+  }
+
+  @Test
+  public void testUpdate() throws Exception {
+    List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, 1),
+                                            Fields.longField(KEY2, 2L),
+                                            Fields.stringField(STRING_COL, "str1"),
+                                            Fields.doubleField(DOUBLE_COL, (double) 1.0),
+                                            Fields.floatField(FLOAT_COL, (float) 1.0),
+                                            Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes")));
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.upsert(fields);
+    });
+
+    List<Field<?>> updates = Arrays.asList(Fields.intField(KEY, 1),
+                                           Fields.longField(KEY2, 2L),
+                                           Fields.stringField(STRING_COL, "str2"),
+                                           Fields.floatField(FLOAT_COL, (float) 2.0));
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.update(updates);
+    });
+    List<Field<?>> compoundKey = new ArrayList<>(2);
+    compoundKey.add(Fields.intField(KEY, 1));
+    compoundKey.add(Fields.longField(KEY2, 2L));
+    AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
+
+    List<String> columns = new ArrayList<>();
+    columns.add(STRING_COL);
+    columns.add(DOUBLE_COL);
+    columns.add(FLOAT_COL);
+    columns.add(BYTES_COL);
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      rowRef.set(table.read(compoundKey, columns));
+    });
+
+    Optional<StructuredRow> row = rowRef.get();
+    Assert.assertTrue(row.isPresent());
+    List<Field<?>> updatedFields = convertRowToFields(row.get(),
+                                                      fields.stream().map(Field::getName).collect(Collectors.toList()));
+    List<Field<?>> expectedFields = Arrays.asList(Fields.intField(KEY, 1),
+                                                  Fields.longField(KEY2, 2L),
+                                                  Fields.stringField(STRING_COL, "str2"),
+                                                  Fields.doubleField(DOUBLE_COL, (double) 1.0),
+                                                  Fields.floatField(FLOAT_COL, (float) 2.0),
+                                                  Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes")));
+    Assert.assertEquals(new HashSet<>(updatedFields), new HashSet<>(expectedFields));
+  }
+
+  @Test(expected = TransactionException.class)
+  public void testUpdatePrimaryKeyNotSpecified() throws Exception {
+    List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, 1),
+                                          Fields.longField(KEY2, 2L),
+                                          Fields.stringField(STRING_COL, "str1"),
+                                          Fields.doubleField(DOUBLE_COL, (double) 1.0),
+                                          Fields.floatField(FLOAT_COL, (float) 1.0),
+                                          Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes")));
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.upsert(fields);
+    });
+
+    // KEY2 is not specified, should raise TransactionException
+    List<Field<?>> updates = Arrays.asList(Fields.intField(KEY, 1),
+                                           Fields.floatField(FLOAT_COL, (float) 2.0));
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.update(updates);
+    });
+  }
+
+  @Test
+  public void testUpdateKeyNotFound() throws Exception {
+    List<Field<?>> updates = Arrays.asList(Fields.intField(KEY, 1),
+                                           Fields.longField(KEY2, 2L),
+                                           Fields.floatField(FLOAT_COL, (float) 2.0));
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.update(updates);
+    });
+
+    List<Field<?>> compoundKey = new ArrayList<>(2);
+    compoundKey.add(Fields.intField(KEY, 1));
+    compoundKey.add(Fields.longField(KEY2, 2L));
+    AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
+    List<String> columns = new ArrayList<>();
+    columns.add(STRING_COL);
+    columns.add(DOUBLE_COL);
+    columns.add(FLOAT_COL);
+    columns.add(BYTES_COL);
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      rowRef.set(table.read(compoundKey, columns));
+    });
+
+    Optional<StructuredRow> row = rowRef.get();
+    Assert.assertFalse(row.isPresent());
   }
 
   private List<Collection<Field<?>>> writeSimpleStructuredRows(int max, String suffix) throws Exception {

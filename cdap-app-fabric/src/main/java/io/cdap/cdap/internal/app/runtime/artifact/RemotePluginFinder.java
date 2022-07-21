@@ -27,10 +27,11 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.common.ArtifactNotFoundException;
-import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -39,17 +40,16 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.PluginInfo;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -59,30 +59,26 @@ import java.util.concurrent.TimeUnit;
 /**
  * Implementation of {@link PluginFinder} that use the artifact HTTP endpoints for finding plugins.
  */
-public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
-
+public class RemotePluginFinder implements PluginFinder {
   private static final Gson GSON = new Gson();
-  private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
+  private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() {
+  }.getType();
 
+  final RemoteClient remoteClientInternal;
   private final RemoteClient remoteClient;
-  private final RemoteClient remoteClientInternal;
-  private final boolean authorizationEnabled;
-  private final AuthenticationContext authenticationContext;
   private final LocationFactory locationFactory;
   private final RetryStrategy retryStrategy;
 
   @Inject
-  RemotePluginFinder(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                     AuthenticationContext authenticationContext,
-                     LocationFactory locationFactory) {
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false),
-                                         String.format("%s", Constants.Gateway.API_VERSION_3));
-    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
-    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
-    this.authenticationContext = authenticationContext;
+  public RemotePluginFinder(LocationFactory locationFactory, RemoteClientFactory remoteClientFactory) {
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      String.format("%s", Constants.Gateway.API_VERSION_3));
+    this.remoteClientInternal = remoteClientFactory.createRemoteClient(
+      Constants.Service.APP_FABRIC_HTTP,
+      new DefaultHttpRequestConfig(false),
+      String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
     this.locationFactory = locationFactory;
     this.retryStrategy = RetryStrategies.limit(30, RetryStrategies.fixDelay(2, TimeUnit.SECONDS));
   }
@@ -107,9 +103,10 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
           ArtifactSummary artifactSummary = info.getArtifact();
           io.cdap.cdap.api.artifact.ArtifactId pluginArtifactId = new io.cdap.cdap.api.artifact.ArtifactId(
             artifactSummary.getName(), new ArtifactVersion(artifactSummary.getVersion()), artifactSummary.getScope());
-          PluginClass pluginClass = new PluginClass(info.getType(), info.getName(), info.getDescription(),
-                                                    info.getClassName(), info.getConfigFieldName(),
-                                                    info.getProperties());
+          PluginClass pluginClass =
+            PluginClass.builder().setName(info.getName()).setType(info.getType())
+              .setDescription(info.getDescription()).setClassName(info.getClassName())
+              .setProperties(info.getProperties()).setConfigFieldName(info.getConfigFieldName()).build();
           plugins.put(pluginArtifactId, pluginClass);
         }
 
@@ -120,7 +117,8 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
 
         Location artifactLocation = getArtifactLocation(Artifacts.toProtoArtifactId(pluginNamespaceId,
                                                                                     selected.getKey()));
-        return Maps.immutableEntry(new ArtifactDescriptor(selected.getKey(), artifactLocation), selected.getValue());
+        return Maps.immutableEntry(new ArtifactDescriptor(pluginNamespaceId.getEntityName(),
+                                                          selected.getKey(), artifactLocation), selected.getValue());
       }, retryStrategy);
     } catch (PluginNotExistsException e) {
       throw e;
@@ -134,18 +132,22 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   /**
    * Gets a list of {@link PluginInfo} from the artifact extension endpoint.
    *
-   * @param namespaceId namespace of the call happening in
+   * @param namespaceId      namespace of the call happening in
    * @param parentArtifactId the parent artifact id
-   * @param pluginType the plugin type to look for
-   * @param pluginName the plugin name to look for
+   * @param pluginType       the plugin type to look for
+   * @param pluginName       the plugin name to look for
    * @return a list of {@link PluginInfo}
-   * @throws IOException if it failed to get the information
+   * @throws IOException              if it failed to get the information
    * @throws PluginNotExistsException if the given plugin type and name doesn't exist
    */
   private List<PluginInfo> getPlugins(NamespaceId namespaceId,
                                       ArtifactId parentArtifactId,
                                       String pluginType,
-                                      String pluginName) throws IOException, PluginNotExistsException {
+                                      String pluginName)
+    throws IOException, PluginNotExistsException, UnauthorizedException {
+    // replace the space in the name
+    // TODO: CDAP-18375 improve url encoding the our remote call
+    pluginName = pluginName.replace(" ", "%20");
     HttpRequest.Builder requestBuilder =
       remoteClient.requestBuilder(
         HttpMethod.GET,
@@ -156,49 +158,58 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
                         ? ArtifactScope.SYSTEM : ArtifactScope.USER,
                       NamespaceId.SYSTEM.equals(namespaceId.getNamespaceId())
                         ? ArtifactScope.SYSTEM : ArtifactScope.USER
-                      ));
-    // add header if auth is enabled
-    if (authorizationEnabled) {
-      requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
-    }
+        ));
 
     HttpResponse response = remoteClient.execute(requestBuilder.build());
 
-    if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
-    }
+    int responseCode = response.getResponseCode();
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      switch (responseCode) {
+        // throw retryable error if app fabric is not available, might be due to restarting
+        case HttpURLConnection.HTTP_BAD_GATEWAY:
+        case HttpURLConnection.HTTP_UNAVAILABLE:
+        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
+          throw new ServiceUnavailableException(
+            Constants.Service.APP_FABRIC_HTTP,
+            Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
+        case HttpURLConnection.HTTP_NOT_FOUND:
+          throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
 
-    if (response.getResponseCode() != 200) {
+      }
       throw new IllegalArgumentException("Failure in getting plugin information with type " + pluginType + " and name "
                                            + pluginName + " that extends " + parentArtifactId
-                                           + ". Reason is " + response.getResponseCode() + ": "
+                                           + ". Reason is " + responseCode + ": "
                                            + response.getResponseBodyAsString());
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), PLUGIN_INFO_LIST_TYPE);
   }
 
-
   /**
    * Retrieves the {@link Location} of a given artifact.
    */
-  @Override
-  public Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+  protected Location getArtifactLocation(ArtifactId artifactId)
+    throws IOException, ArtifactNotFoundException, UnauthorizedException {
     HttpRequest.Builder requestBuilder =
       remoteClientInternal.requestBuilder(
         HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",
                                       artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion()));
-    // add header if auth is enabled
-    if (authorizationEnabled) {
-      requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
-    }
 
     HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
 
-    if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new ArtifactNotFoundException(artifactId);
-    }
-    if (response.getResponseCode() != 200) {
+    int responseCode = response.getResponseCode();
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      switch (responseCode) {
+        // throw retryable error if app fabric is not available, might be due to restarting
+        case HttpURLConnection.HTTP_BAD_GATEWAY:
+        case HttpURLConnection.HTTP_UNAVAILABLE:
+        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
+          throw new ServiceUnavailableException(
+            Constants.Service.APP_FABRIC_HTTP,
+            Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
+        case HttpURLConnection.HTTP_NOT_FOUND:
+          throw new ArtifactNotFoundException(artifactId);
+      }
       throw new IOException("Exception while getting artifacts list: " + response.getResponseCode()
                               + ": " + response.getResponseBodyAsString());
     }

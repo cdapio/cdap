@@ -85,6 +85,8 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_DATASET = "dataset";
   private static final String BY_PROFILE = "profile";
   private static final String BY_COMPONENT = "component";
+  private static final String BY_SCHEDULE = "schedule";
+  private static final String BY_ONLY_COMPONENT = "only_component";
   private static final Map<String, AggregationAlias> AGGREGATIONS_ALIAS_DIMENSIONS =
     ImmutableMap.of(BY_WORKFLOW,
                     new AggregationAlias(ImmutableMap.of(Constants.Metrics.Tag.RUN_ID,
@@ -137,7 +139,8 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
                        Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.THREAD),
+                       Constants.Metrics.Tag.THREAD, Constants.Metrics.Tag.APP_ENTITY_TYPE,
+                       Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME),
       // i.e. for service only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE)));
@@ -184,7 +187,8 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE,
                        Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROGRAM_TYPE,
                        Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM,
-                       Constants.Metrics.Tag.RUN_ID),
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.PROVISIONER,
+                       Constants.Metrics.Tag.CLUSTER_STATUS, Constants.Metrics.Tag.EXISTING_STATUS),
       ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE)));
 
     // System components:
@@ -194,11 +198,22 @@ public class DefaultMetricStore implements MetricStore {
       // i.e. for components only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
+    aggs.put(BY_SCHEDULE, new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE),
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE)));
+
+    aggs.put(BY_ONLY_COMPONENT, new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT),
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
+
     AGGREGATIONS = Collections.unmodifiableMap(aggs);
   }
 
   @Inject
   DefaultMetricStore(MetricDatasetFactory dsFactory, CConfiguration cConf) {
+    int writeParallelism = cConf.getInt(Constants.Metrics.METRICS_TABLE_WRITE_PARRALELISM);
     int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS);
     int[] resolutions = minimumResolution < 60 ?
       new int[] {minimumResolution, 60, 3600, TOTALS_RESOLUTION} : new int[] {60, 3600, TOTALS_RESOLUTION};
@@ -221,7 +236,8 @@ public class DefaultMetricStore implements MetricStore {
     this.cube = Suppliers.memoize(new Supplier<Cube>() {
       @Override
       public Cube get() {
-        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS, AGGREGATIONS_ALIAS_DIMENSIONS);
+        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS, AGGREGATIONS_ALIAS_DIMENSIONS,
+                                           writeParallelism);
         cube.setMetricsCollector(metricsContext);
         return cube;
       }
@@ -255,6 +271,11 @@ public class DefaultMetricStore implements MetricStore {
       // todo improve this logic?
       for (MetricValue metric : metricValue.getMetrics()) {
         String measureName = (scope == null ? "system." : scope + ".") + metric.getName();
+        if (metric.getType() == MetricType.DISTRIBUTION) {
+          // TODO save distribution as multiple count metrics
+          // https://cdap.atlassian.net/browse/CDAP-18769
+          continue;
+        }
         MeasureType type = metric.getType() == MetricType.COUNTER ? MeasureType.COUNTER : MeasureType.GAUGE;
         metrics.add(new Measurement(measureName, type, metric.getValue()));
       }

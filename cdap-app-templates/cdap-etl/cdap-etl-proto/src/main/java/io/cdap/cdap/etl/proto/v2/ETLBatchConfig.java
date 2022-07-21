@@ -45,6 +45,11 @@ public final class ETLBatchConfig extends ETLConfig {
   // for backwards compatibility
   private final List<ETLStage> actions;
   private final Boolean service;
+  // config for connections
+  private final ConnectionConfig connectionConfig;
+  // support for SQL Engines
+  private final Boolean pushdownEnabled;
+  private final ETLTransformationPushdown transformationPushdown;
 
   private ETLBatchConfig(Set<ETLStage> stages,
                          Set<Connection> connections,
@@ -59,7 +64,11 @@ public final class ETLBatchConfig extends ETLConfig {
                          @Nullable Integer numOfRecordsPreview,
                          @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties,
-                         Boolean service, List<Object> comments) {
+                         Boolean service,
+                         @Nullable ConnectionConfig connectionConfig,
+                         List<Object> comments,
+                         @Nullable Boolean pushdownEnabled,
+                         @Nullable ETLTransformationPushdown transformationPushdown) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, engineProperties, comments);
     this.postActions = ImmutableList.copyOf(postActions);
@@ -69,6 +78,10 @@ public final class ETLBatchConfig extends ETLConfig {
     // field only exists for backwards compatibility -- used by convertOldConfig()
     this.actions = null;
     this.service = service;
+    this.connectionConfig = connectionConfig;
+    // fields related to SQL Engines
+    this.pushdownEnabled = pushdownEnabled;
+    this.transformationPushdown = transformationPushdown;
   }
 
   public boolean isService() {
@@ -76,6 +89,11 @@ public final class ETLBatchConfig extends ETLConfig {
       return false;
     }
     return service;
+  }
+
+  @Nullable
+  public ConnectionConfig getConnectionConfig() {
+    return connectionConfig;
   }
 
   /**
@@ -115,6 +133,15 @@ public final class ETLBatchConfig extends ETLConfig {
     return maxConcurrentRuns;
   }
 
+  public boolean isPushdownEnabled() {
+    return pushdownEnabled != null ? pushdownEnabled : false;
+  }
+
+  @Nullable
+  public ETLTransformationPushdown getTransformationPushdown() {
+    return transformationPushdown;
+  }
+
   /**
    * Updates current ETLBatchConfig by running update actions provided in context such as upgrading plugin artifact
    * versions.
@@ -131,7 +158,8 @@ public final class ETLBatchConfig extends ETLConfig {
     }
     return new ETLBatchConfig(upgradedStages, connections, postActions, resources, stageLoggingEnabled,
                               processTimingEnabled, engine, schedule, driverResources, clientResources,
-                              numOfRecordsPreview, maxConcurrentRuns, properties, service, comments);
+                              numOfRecordsPreview, maxConcurrentRuns, properties, service, connectionConfig, comments,
+                              pushdownEnabled, transformationPushdown);
   }
 
   @Override
@@ -152,13 +180,15 @@ public final class ETLBatchConfig extends ETLConfig {
       Objects.equals(schedule, that.schedule) &&
       Objects.equals(postActions, that.postActions) &&
       Objects.equals(actions, that.actions) &&
-      Objects.equals(maxConcurrentRuns, that.maxConcurrentRuns);
+      Objects.equals(maxConcurrentRuns, that.maxConcurrentRuns) &&
+      Objects.equals(transformationPushdown, that.transformationPushdown);
 
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), engine, schedule, postActions, actions, maxConcurrentRuns);
+    return Objects.hash(super.hashCode(), engine, schedule, postActions, actions, maxConcurrentRuns,
+                        transformationPushdown);
   }
 
   @Override
@@ -169,6 +199,7 @@ public final class ETLBatchConfig extends ETLConfig {
       ", maxConcurrentRuns=" + maxConcurrentRuns +
       ", postActions=" + postActions +
       ", actions=" + actions +
+      ", transformationPushdown=" + transformationPushdown +
       "} " + super.toString();
   }
 
@@ -189,15 +220,6 @@ public final class ETLBatchConfig extends ETLConfig {
   }
 
   /**
-   * @return the config used for the system service and not a pipeline.
-   */
-  public static ETLBatchConfig forSystemService() {
-    return new ETLBatchConfig(Collections.emptySet(), Collections.emptySet(), Collections.emptyList(),
-                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true,
-                              Collections.emptyList());
-  }
-
-  /**
    * Builder for creating configs.
    */
   public static class Builder extends ETLConfig.Builder<Builder> {
@@ -205,6 +227,8 @@ public final class ETLBatchConfig extends ETLConfig {
     private Engine engine;
     private List<ETLStage> endingActions;
     private Integer maxConcurrentRuns;
+    private Boolean pushdownEnabled;
+    private ETLTransformationPushdown transformationPushdown;
     // Only used for upgrade purpose.
     private List<Object> comments;
 
@@ -255,10 +279,21 @@ public final class ETLBatchConfig extends ETLConfig {
       return this;
     }
 
+    public Builder setPushdownEnabled(Boolean pushdownEnabled) {
+      this.pushdownEnabled = pushdownEnabled;
+      return this;
+    }
+
+    public Builder setTransformationPushdown(ETLTransformationPushdown transformationPushdown) {
+      this.transformationPushdown = transformationPushdown;
+      return this;
+    }
+
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview, maxConcurrentRuns, properties, false, comments);
+                                numOfRecordsPreview, maxConcurrentRuns, properties, false, null, comments,
+                                pushdownEnabled, transformationPushdown);
     }
   }
 }

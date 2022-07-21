@@ -22,11 +22,13 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.PermissionType;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
-import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.server.BasicAuthenticationHandler;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.cli.CLI;
@@ -49,6 +51,8 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Tests authorization CLI commands. These tests are in their own class because they need authorization enabled.
@@ -87,8 +91,10 @@ public class AuthorizationCLITest  {
       Location realmfile = locationFactory.create("realmfile");
       realmfile.createNew();
       File file = new File(AppJarHelper.createDeploymentJar(locationFactory,
-                                                            InMemoryAuthorizer.AuthorizableEntityId.class).toURI());
-      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class, file);
+                                                            InMemoryAccessController.AuthorizableEntityId.class)
+                             .toURI());
+      Location authExtensionJar = AppJarHelper.createDeploymentJar(
+        locationFactory, InMemoryAccessController.class, file);
       return new String[] {
         // We want to enable security, but bypass it for only testing authorization commands
         Constants.Security.ENABLED, "true",
@@ -131,7 +137,7 @@ public class AuthorizationCLITest  {
     // CLI command, the null is serialized to the String "null" which causes issues during enforcement, when the user
     // is received as null, and not the String "null".
     authorizationClient.grant(Authorizable.fromEntityId(INSTANCE_ID),
-                              SecurityRequestContext.toPrincipal(), Collections.singleton(Action.ADMIN));
+                              SecurityRequestContext.toPrincipal(), Collections.singleton(StandardPermission.UPDATE));
   }
 
   @Test
@@ -170,43 +176,64 @@ public class AuthorizationCLITest  {
     Assert.assertEquals(2, lines.size());
     Assert.assertEquals(role.getName(), lines.get(1));
 
-    // test grant action. also tests case insensitivity of Action and Principal.PrincipalType
-    CLITestBase.testCommandOutputContains(cli, String.format("grant actions %s on entity %s to %s %s",
-                                                             Action.READ.name().toLowerCase(), namespaceId.toString(),
+    // test grant permission. also tests case insensitivity of Permission and Principal.PrincipalType
+    CLITestBase.testCommandOutputContains(cli, String.format("grant permissions %s on entity %s to %s %s",
+                                                             StandardPermission.GET.name().toLowerCase(),
+                                                             namespaceId.toString(),
                                                              principal.getType().name().toLowerCase(),
                                                              principal.getName()),
-                                          String.format("Successfully granted action(s) '%s' on entity '%s' to %s '%s'",
-                                                        Action.READ, namespaceId.toString(), principal.getType(),
-                                                        principal.getName()));
+                                          String.format(
+                                            "Successfully granted permission(s) '%s' on entity '%s' to %s '%s'",
+                                            StandardPermission.GET, namespaceId.toString(),
+                                            principal.getType(), principal.getName()));
+
+    // test grant permission for application permission (dotted syntax)
+    CLITestBase.testCommandOutputContains(cli, String.format("grant permissions %s.%s on entity %s to %s %s",
+                                                             PermissionType.APPLICATION.name().toLowerCase(),
+                                                             ApplicationPermission.EXECUTE.name().toLowerCase(),
+                                                             namespaceId.toString(),
+                                                             principal.getType().name().toLowerCase(),
+                                                             principal.getName()),
+                                          String.format(
+                                            "Successfully granted permission(s) '%s' on entity '%s' to %s '%s'",
+                                            ApplicationPermission.EXECUTE,
+                                            namespaceId.toString(), principal.getType(),
+                                            principal.getName()));
 
     // test listing privilege
     output = CLITestBase.getCommandOutput(cli, String.format("list privileges for %s %s", principal.getType(),
                                                              principal.getName()));
-    lines = Arrays.asList(output.split("\\r?\\n"));
-    Assert.assertEquals(2, lines.size());
-    Assert.assertArrayEquals(new String[]{namespaceId.toString(), Action.READ.name()}, lines.get(1).split(","));
+    lines = Stream.of(output.split("\\r?\\n")).sorted().collect(Collectors.toList());
+    Assert.assertEquals(3, lines.size());
+    Assert.assertArrayEquals(new String[]{namespaceId.toString(), ApplicationPermission.EXECUTE.name()},
+                             lines.get(1).split(","));
+    Assert.assertArrayEquals(new String[]{namespaceId.toString(), StandardPermission.GET.name()},
+                             lines.get(2).split(","));
 
 
-    // test revoke actions
-    CLITestBase.testCommandOutputContains(cli, String.format("revoke actions %s on entity %s from %s %s", Action.READ,
+    // test revoke permissions
+    CLITestBase.testCommandOutputContains(cli, String.format("revoke permissions %s on entity %s from %s %s",
+                                                             StandardPermission.GET,
                                                              namespaceId.toString(), principal.getType(),
                                                              principal.getName()),
                                           String.format(
-                                            "Successfully revoked action(s) '%s' on entity '%s' for %s '%s'",
-                                            Action.READ, namespaceId.toString(), principal.getType(),
+                                            "Successfully revoked permission(s) '%s' on entity '%s' for %s '%s'",
+                                            StandardPermission.GET, namespaceId.toString(), principal.getType(),
                                             principal.getName()));
 
     // grant and perform revoke on the entity
-    CLITestBase.testCommandOutputContains(cli, String.format("grant actions %s on entity %s to %s %s", Action.READ,
+    CLITestBase.testCommandOutputContains(cli, String.format("grant permissions %s on entity %s to %s %s",
+                                                             StandardPermission.GET,
                                                              namespaceId.toString(), principal.getType(),
                                                              principal.getName()),
-                                          String.format("Successfully granted action(s) '%s' on entity '%s' to %s '%s'",
-                                                        Action.READ, namespaceId.toString(), principal.getType(),
-                                                        principal.getName()));
+                                          String.format(
+                                            "Successfully granted permission(s) '%s' on entity '%s' to %s '%s'",
+                                            StandardPermission.GET, namespaceId.toString(), principal.getType(),
+                                            principal.getName()));
 
     CLITestBase.testCommandOutputContains(cli, String.format("revoke all on entity %s ", namespaceId.toString()),
                                           String.format(
-                                            "Successfully revoked all actions on entity '%s' for all principals",
+                                            "Successfully revoked all permissions on entity '%s' for all principals",
                                             namespaceId.toString()));
 
 

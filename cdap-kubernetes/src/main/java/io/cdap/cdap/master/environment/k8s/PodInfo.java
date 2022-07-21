@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
-import io.kubernetes.client.models.V1EnvVar;
-import io.kubernetes.client.models.V1OwnerReference;
-import io.kubernetes.client.models.V1Volume;
-import io.kubernetes.client.models.V1VolumeMount;
+
+import io.kubernetes.client.openapi.models.V1EnvVar;
+import io.kubernetes.client.openapi.models.V1OwnerReference;
+import io.kubernetes.client.openapi.models.V1PodSecurityContext;
+import io.kubernetes.client.openapi.models.V1Volume;
+import io.kubernetes.client.openapi.models.V1VolumeMount;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +37,7 @@ public final class PodInfo {
   private final String podInfoDir;
   private final String labelsFile;
   private final String nameFile;
+  private final String namespaceFile;
   private final String uid;
   private final String uidFile;
   private final String namespace;
@@ -47,16 +50,20 @@ public final class PodInfo {
   private final String containerImage;
   private final List<V1VolumeMount> containerVolumeMounts;
   private final List<V1EnvVar> containerEnvironments;
+  private final V1PodSecurityContext securityContext;
+  private final String imagePullPolicy;
 
-  public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid, String uidFile,
+  public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid,
+                 String uidFile, String namespaceFile,
                  String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
                  String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
                  String containerImage, List<V1VolumeMount> containerVolumeMounts,
-                 List<V1EnvVar> containerEnvironments) {
+                 List<V1EnvVar> containerEnvironments, V1PodSecurityContext securityContext, String imagePullPolicy) {
     this.name = name;
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
     this.nameFile = nameFile;
+    this.namespaceFile = namespaceFile;
     this.uid = uid;
     this.uidFile = uidFile;
     this.namespace = namespace;
@@ -69,6 +76,8 @@ public final class PodInfo {
     this.containerImage = containerImage;
     this.containerVolumeMounts = Collections.unmodifiableList(new ArrayList<>(containerVolumeMounts));
     this.containerEnvironments = Collections.unmodifiableList(new ArrayList<>(containerEnvironments));
+    this.securityContext = securityContext;
+    this.imagePullPolicy = imagePullPolicy;
   }
 
   public String getName() {
@@ -93,6 +102,10 @@ public final class PodInfo {
 
   public String getUidFile() {
     return uidFile;
+  }
+
+  public String getNamespaceFile() {
+    return namespaceFile;
   }
 
   public String getNamespace() {
@@ -136,5 +149,13 @@ public final class PodInfo {
 
   public List<V1EnvVar> getContainerEnvironments() {
     return containerEnvironments;
+  }
+
+  public V1PodSecurityContext getSecurityContext() {
+    return securityContext;
+  }
+
+  public String getImagePullPolicy() {
+    return imagePullPolicy;
   }
 }

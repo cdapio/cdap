@@ -16,10 +16,13 @@
 
 package io.cdap.cdap.master.spi.environment;
 
+import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
+import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -58,12 +61,12 @@ public interface MasterEnvironment {
   /**
    * Creates a new instance of {@link MasterEnvironmentRunnable} from the given class name.
    *
-   * @param context a {@link MasterEnvironmentContext} to provide information about the CDAP environment
+   * @param context a {@link MasterEnvironmentRunnableContext} to provide access to CDAP resources.
    * @param runnableClass the {@link MasterEnvironmentRunnable} class to create an instance from
    * @return a new instance of the given class
    * @throws Exception if failed to create a new instance
    */
-  MasterEnvironmentRunnable createRunnable(MasterEnvironmentContext context,
+  MasterEnvironmentRunnable createRunnable(MasterEnvironmentRunnableContext context,
                                            Class<? extends MasterEnvironmentRunnable> runnableClass) throws Exception;
 
   /**
@@ -85,4 +88,28 @@ public interface MasterEnvironment {
    * Returns a {@link Supplier} of {@link TwillRunnerService} for running programs.
    */
   Supplier<TwillRunnerService> getTwillRunnerSupplier();
+
+  /**
+   * Returns a {@link SparkConfig} of this environment.
+   *
+   * @param sparkSubmitContext Spark submit context for master environment
+   * @throws Exception if there is any error in generating spark submit config
+   */
+  default SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
+    throw new UnsupportedOperationException("Method not implemented");
+  }
+
+  /**
+   * Called during namespace creation
+   */
+  default void onNamespaceCreation(String namespace, Map<String, String> properties) throws Exception {
+    // no-op by default
+  }
+
+  /**
+   * Called during namespace deletion
+   */
+  default void onNamespaceDeletion(String namespace, Map<String, String> properties) throws Exception {
+    // no-op by default
+  }
 }

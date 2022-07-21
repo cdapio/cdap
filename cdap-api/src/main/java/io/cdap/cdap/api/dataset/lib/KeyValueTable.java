@@ -248,7 +248,7 @@ public class KeyValueTable extends AbstractDataset implements
     final Scanner scanner = table.scan(startRow, stopRow);
 
     return new AbstractCloseableIterator<KeyValue<byte[], byte[]>>() {
-      private boolean closed = false;
+      private boolean closed;
       @Override
       protected KeyValue<byte[], byte[]> computeNext() {
         if (closed) {

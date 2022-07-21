@@ -33,12 +33,12 @@ import io.cdap.cdap.client.MetaClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.client.exception.DisconnectedException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.authentication.client.AuthenticationClient;
 import io.cdap.cdap.security.authentication.client.Credential;
 import io.cdap.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
@@ -266,7 +266,7 @@ public class CLIConfig implements TableRendererConfig {
       }
       checkConnection(clientConfig, connectionInfo, userAccessToken.getAccessToken());
       return userAccessToken;
-    } catch (IOException | JsonSyntaxException | UnauthenticatedException ignored) {
+    } catch (IOException | JsonSyntaxException | UnauthenticatedException | UnauthorizedException ignored) {
       // Fall through
     }
 

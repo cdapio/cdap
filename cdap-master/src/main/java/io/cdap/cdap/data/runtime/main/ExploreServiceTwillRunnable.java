@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -58,13 +59,13 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.RemotePrivilegesManager;
+import io.cdap.cdap.security.authorization.RemotePermissionManager;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapred.JobConf;
@@ -414,6 +415,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
   static Injector createInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new IOModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
@@ -437,7 +439,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
-          bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
+          bind(PermissionManager.class).to(RemotePermissionManager.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
       });

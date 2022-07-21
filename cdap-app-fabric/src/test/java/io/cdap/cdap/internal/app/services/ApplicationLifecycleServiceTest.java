@@ -17,13 +17,16 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
+import io.cdap.cdap.MetadataEmitApp;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -43,7 +46,6 @@ import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
 import io.cdap.cdap.internal.capability.CapabilityWriter;
-import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -53,6 +55,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
@@ -71,8 +74,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +94,6 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
   private static MetadataStorage metadataStorage;
-  private static MetadataSubscriberService metadataSubscriber;
   private static CapabilityWriter capabilityWriter;
 
   @BeforeClass
@@ -98,7 +102,6 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     metadataStorage = getInjector().getInstance(MetadataStorage.class);
-    metadataSubscriber = getInjector().getInstance(MetadataSubscriberService.class);
     capabilityWriter = getInjector().getInstance(CapabilityWriter.class);
   }
 
@@ -115,7 +118,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, MissingMapReduceWorkflowApp.class);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
 
     try {
@@ -168,7 +171,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appWithWorkflowClass);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
 
     //deploy app
@@ -191,20 +194,46 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
       .deployAppAndArtifact(NamespaceId.DEFAULT, appWithWorkflowClass.getSimpleName(), artifactId, appJarFile, null,
                             null, programId -> {
         }, true);
-    //Check for the capability metadata
+    // Check for the capability metadata
     ApplicationId appId = NamespaceId.DEFAULT.app(appWithWorkflowClass.getSimpleName());
-    Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
-                                                             MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
-    Map<String, String> metadataProperties = metadataStorage
-      .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
+    MetadataEntity appMetadataId = appId.toMetadataEntity();
+    Assert.assertFalse(metadataStorage.read(new Read(appMetadataId,
+                                                     MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
+    Map<String, String> metadataProperties =
+      metadataStorage.read(new Read(appMetadataId)).getProperties(MetadataScope.SYSTEM);
     String capabilityMetaData = metadataProperties.get(AppSystemMetadataWriter.CAPABILITY_TAG);
     Set<String> actual = Arrays.stream(capabilityMetaData.split(AppSystemMetadataWriter.CAPABILITY_DELIMITER))
-      .collect(Collectors.toSet());
+                           .collect(Collectors.toSet());
     Assert.assertEquals(expected, actual);
-    //Remove the application and verify that all metadata is removed
+
+    // Remove the application and verify that all metadata is removed
     applicationLifecycleService.removeApplication(appId);
-    Assert.assertEquals(true, metadataStorage.read(new Read(appId.toMetadataEntity(),
-                                                            MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
+    Assert.assertTrue(metadataStorage.read(new Read(appMetadataId)).isEmpty());
+  }
+
+  @Test
+  public void testMetadataEmitInConfigure() throws Exception {
+    deploy(MetadataEmitApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           NamespaceId.DEFAULT.getNamespace());
+
+    ApplicationId appId = NamespaceId.DEFAULT.app(MetadataEmitApp.NAME);
+
+    // check app user metadata gets emitted correctly
+    Metadata userMetadata = metadataStorage.read(new Read(appId.toMetadataEntity(), MetadataScope.USER));
+    Assert.assertEquals(MetadataEmitApp.USER_METADATA.getProperties(), userMetadata.getProperties(MetadataScope.USER));
+    Assert.assertEquals(MetadataEmitApp.USER_METADATA.getTags(), userMetadata.getTags(MetadataScope.USER));
+
+    Metadata systemMetadata = metadataStorage.read(new Read(appId.toMetadataEntity(), MetadataScope.SYSTEM));
+    // here system properties will contain what emitted in the app + the ones emitted by the platform,
+    // we only compare the ones emitted by the app
+    Map<String, String> sysProperties = systemMetadata.getProperties(MetadataScope.SYSTEM);
+    MetadataEmitApp.SYS_METADATA.getProperties().forEach((key, val) -> {
+      Assert.assertEquals(val, sysProperties.get(key));
+    });
+    // check the tags contain all the tags emitted by the app
+    Assert.assertTrue(systemMetadata.getTags(MetadataScope.SYSTEM).containsAll(MetadataEmitApp.SYS_METADATA.getTags()));
+    applicationLifecycleService.removeApplication(appId);
+    Assert.assertTrue(metadataStorage.read(new Read(appId.toMetadataEntity())).isEmpty());
   }
 
   /**
@@ -285,7 +314,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Location appJar = createDeploymentJar(locationFactory, AppWithProgramsUsingGuava.class);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
 
     applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName",
@@ -320,6 +349,42 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
     startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("fail.in.workflow.initialize", "true"));
     waitForRuns(1, workflow, ProgramRunStatus.FAILED);
+  }
+
+  @Test
+  public void testScanApplications() throws Exception {
+    createNamespace("ns1");
+    createNamespace("ns2");
+    createNamespace("ns3");
+
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns1");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns2");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns3");
+
+    List<ApplicationDetail> appDetails = new ArrayList<>();
+
+    applicationLifecycleService.scanApplications(new NamespaceId("ns1"), ImmutableSet.of(), null,
+        d -> appDetails.add(d));
+
+    Assert.assertEquals(appDetails.size(), 1);
+  }
+
+  @Test
+  public void testScanApplicationsWithFailingPredicate() throws Exception {
+    createNamespace("ns1");
+    createNamespace("ns2");
+    createNamespace("ns3");
+
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns1");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns2");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns3");
+
+    List<ApplicationDetail> appDetails = new ArrayList<>();
+
+    applicationLifecycleService.scanApplications(new NamespaceId("ns1"), ImmutableSet.of("name1"), "version1",
+        d -> appDetails.add(d));
+
+    Assert.assertEquals(appDetails.size(), 0);
   }
 
   @Test

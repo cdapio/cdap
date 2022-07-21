@@ -18,10 +18,13 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -32,6 +35,7 @@ import javax.annotation.Nullable;
 public class MacroParser {
   private static final Pattern ARGUMENT_DELIMITER = Pattern.compile(",");
   private static final int MAX_SUBSTITUTION_DEPTH = 10;
+  private static final Gson GSON = new Gson();
 
   private final MacroEvaluator macroEvaluator;
   private final boolean escapingEnabled;
@@ -126,6 +130,8 @@ public class MacroParser {
     if (endIndex < 0) {
       throw new InvalidMacroException(String.format("Could not find enclosing '}' for macro '%s'.",
                                                     str.substring(startIndex)));
+    } else if (endIndex == startIndex + 2) {
+      throw new InvalidMacroException("Macro expression cannot be empty");
     }
 
     // macroStr = 'macroFunction(macroArguments)' or just 'property' for ${property}
@@ -136,7 +142,7 @@ public class MacroParser {
 
     // determine whether to use a macro function or a property lookup
     if (argsStartIndex >= 0) {
-      return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex);
+      return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex, str);
     } else {
       macroStr = replaceEscapedSyntax(macroStr);
       if (lookupsEnabled) {
@@ -156,9 +162,40 @@ public class MacroParser {
     }
   }
 
-  private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr, int argsStartIndex) {
+  /**
+   * Use macro function to evaluate the macro string
+   *
+   * @param startIndex the start index of the macro string "$"
+   * @param endIndex the end index of the macro string
+   * @param macroStr the macro string to evaluate, without bracelet
+   * @param argsStartIndex the index of start parenthesis
+   * @param originalString the original string
+   */
+  private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr, int argsStartIndex,
+                                                 String originalString) {
     // check for closing ")" and allow escaping "\)" and doubly-escaping "\\)"
     int closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
+
+    // this can only happen if we skip invalid or disable look up, the original string will contain unevaluated
+    // macro, i.e {secure(${secure-key})}, in this case, the macroStr here will be "secure(${secure-key" and this
+    // closing index will always be < 0.
+    if ((!lookupsEnabled || skipInvalid) && closingParenIndex < 0) {
+      // get ")" index using original string starting from end index
+      int originalParenIndex = getFirstUnescapedTokenIndex(')', originalString, endIndex);
+      // if found valid one, get the new macro string without "${" and set the correct closing ")" index
+      if (originalParenIndex > endIndex) {
+        // update end index to be next character after ")"
+        endIndex = originalParenIndex + 1;
+        // macro string should skip the first 2 characters "${"
+        macroStr = originalString.substring(startIndex + 2, endIndex);
+        closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
+        // if this macro string contains unevaluated macros, there is no point to continue calling the macro function
+        if (getStartIndex(macroStr, macroStr.length()) >= 0) {
+          return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
+        }
+      }
+    }
+
     if (closingParenIndex < 0 || !macroStr.endsWith(")")) {
       throw new InvalidMacroException(String.format("Could not find enclosing ')' for macro arguments in '%s'.",
                                                     macroStr));
@@ -176,7 +213,22 @@ public class MacroParser {
     // if the whitelist is empty, that means no whitelist was set, so every function should be evaluated.
     if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(macroFunction))) {
       try {
-        return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
+        switch (macroEvaluator.evaluateAs(macroFunction)) {
+          case STRING:
+            return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
+          case MAP:
+            // evaluate the macro as map, and evaluate this map
+            Map<String, String> properties = macroEvaluator.evaluateMap(macroFunction, args);
+            Map<String, String> evaluated = new HashMap<>();
+            properties.forEach((key, val) -> {
+              evaluated.put(key, parse(val));
+            });
+            return new MacroMetadata(GSON.toJson(evaluated), startIndex, endIndex, true);
+          default:
+            // should not happen
+            throw new IllegalStateException("Unsupported macro object type, the supported types are string and map.");
+        }
+
       } catch (InvalidMacroException e) {
         if (!skipInvalid) {
           throw e;

@@ -28,8 +28,10 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultEmitter;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.plugin.JoinerBridge;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -41,7 +43,7 @@ import java.util.List;
  * @param <OUT> the type of output object
  */
 public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
-  implements FlatMapFunc<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> {
+  implements FlatMapFunction<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> {
   private final PluginFunctionContext pluginFunctionContext;
   private final FunctionCache functionCache;
   private transient TrackedTransform<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> joinFunction;
@@ -53,7 +55,7 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
   }
 
   @Override
-  public Iterable<OUT> call(Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input) throws Exception {
+  public Iterator<OUT> call(Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input) throws Exception {
     if (joinFunction == null) {
       BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner = functionCache.getValue(this::createInitializedJoiner);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),
@@ -65,7 +67,7 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
     }
     emitter.reset();
     joinFunction.transform(input, emitter);
-    return emitter.getEntries();
+    return emitter.getEntries().iterator();
   }
 
   private <K, V, O> BatchJoiner<K, V, O> createInitializedJoiner() throws Exception {

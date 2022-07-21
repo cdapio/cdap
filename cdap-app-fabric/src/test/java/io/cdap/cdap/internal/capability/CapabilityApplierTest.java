@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.capability;
 
-import com.google.common.io.Files;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -67,9 +67,10 @@ import java.util.UUID;
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     CConfiguration cConfiguration = getInjector().getInstance(CConfiguration.class);
     DiscoveryServiceClient client = getInjector().getInstance(DiscoveryServiceClient.class);
+    RemoteClientFactory remoteClientFactory = getInjector().getInstance(RemoteClientFactory.class);
     capabilityApplier = new CapabilityApplier(null, null,
                                               null, null, null,
-                                              null, client, cConfiguration);
+                                              null, cConfiguration, remoteClientFactory);
   }
 
   @AfterClass
@@ -181,7 +182,7 @@ import java.util.UUID;
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClass);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopyOverwrite(appJar, appJarFile);
     appJar.delete();
     artifactRepository.addArtifact(artifactId, appJarFile);
     //deploy app

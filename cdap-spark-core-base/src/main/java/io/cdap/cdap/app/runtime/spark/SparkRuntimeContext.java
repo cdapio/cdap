@@ -30,6 +30,7 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -41,11 +42,10 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
@@ -64,7 +64,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ServiceAnnouncer serviceAnnouncer;
   private final PluginFinder pluginFinder;
@@ -75,34 +75,34 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   // since outside of this class, the spark classloader is wrapped with a WeakReferenceDelegatorClassLoader
   @SuppressWarnings("unused")
   private SparkClassLoader sparkClassLoader;
+  private volatile Long terminationTime;
 
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
                       CConfiguration cConf, String hostname, TransactionSystemClient txClient,
                       DatasetFramework datasetFramework,
-                      DiscoveryServiceClient discoveryServiceClient,
                       MetricsCollectionService metricsCollectionService,
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
                       @Nullable PluginInstantiator pluginInstantiator,
                       SecureStore secureStore,
                       SecureStoreManager secureStoreManager,
-                      AuthorizationEnforcer authorizationEnforcer,
+                      AccessEnforcer accessEnforcer,
                       AuthenticationContext authenticationContext,
                       MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                       PluginFinder pluginFinder, LocationFactory locationFactory,
                       MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                       NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                      Closeable closeable) {
+                      RemoteClientFactory remoteClientFactory, Closeable closeable) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
-          discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
+          true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
     this.workflowProgramInfo = workflowProgramInfo;
-    this.authorizationEnforcer = authorizationEnforcer;
+    this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.serviceAnnouncer = serviceAnnouncer;
     this.pluginFinder = pluginFinder;
@@ -119,6 +119,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   @Override
   public void count(String metricName, int delta) {
     getMetrics().count(metricName, delta);
+  }
+
+  @Override
+  public void countLong(String metricName, long delta) {
+    getMetrics().countLong(metricName, delta);
   }
 
   @Override
@@ -148,6 +153,33 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public String getHostname() {
     return hostname;
+  }
+
+  /**
+   * Sets the timestamp for termination. The value must be {@code >= 0}.
+   *
+   * @param timestamp timestamp in milliseconds
+   */
+  public void setTerminationTime(long timestamp) {
+    if (timestamp < 0) {
+      throw new IllegalArgumentException("Graceful termination timeout must be >= 0");
+    }
+    this.terminationTime = timestamp;
+  }
+
+  /**
+   * Gets the graceful termination time.
+   *
+   * @return the timeout in milliseconds
+   * @throws IllegalStateException if the timeout was not set by the {@link #setGracefulTerminationTimeout(long)}
+   * before calling this method
+   */
+  public long getTerminationTime() {
+    Long timestamp = terminationTime;
+    if (timestamp == null) {
+      throw new IllegalStateException("Termination time is not available");
+    }
+    return timestamp;
   }
 
   private static SparkSpecification getSparkSpecification(Program program) {
@@ -194,10 +226,10 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   }
 
   /**
-   * Returns the {@link AuthorizationEnforcer} that can be used for this program.
+   * Returns the {@link AccessEnforcer} that can be used for this program.
    */
-  public AuthorizationEnforcer getAuthorizationEnforcer() {
-    return authorizationEnforcer;
+  public AccessEnforcer getAccessEnforcer() {
+    return accessEnforcer;
   }
 
   /**

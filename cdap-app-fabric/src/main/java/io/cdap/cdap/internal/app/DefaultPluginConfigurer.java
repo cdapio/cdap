@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.app;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
@@ -27,6 +30,7 @@ import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.FindPluginHelper;
+import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
@@ -47,11 +51,11 @@ import javax.annotation.Nullable;
  */
 public class DefaultPluginConfigurer implements PluginConfigurer {
 
+  protected final PluginInstantiator pluginInstantiator;
+  protected final Map<String, PluginWithLocation> plugins;
+  protected final NamespaceId pluginNamespaceId;
   private final ArtifactId artifactId;
-  private final NamespaceId pluginNamespaceId;
-  private final PluginInstantiator pluginInstantiator;
   private final PluginFinder pluginFinder;
-  private final Map<String, PluginWithLocation> plugins;
 
   public DefaultPluginConfigurer(ArtifactId artifactId, NamespaceId pluginNamespaceId,
                                  PluginInstantiator pluginInstantiator, PluginFinder pluginFinder) {
@@ -100,14 +104,18 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     }
   }
 
-  private Plugin addPlugin(String pluginType, String pluginName, String pluginId,
-                           PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
-    PluginWithLocation existing = plugins.get(pluginId);
-    if (existing != null) {
-      throw new IllegalArgumentException(String.format("Plugin of type %s, name %s was already added as id %s.",
-                                                       existing.getPlugin().getPluginClass().getType(),
-                                                       existing.getPlugin().getPluginClass().getName(), pluginId));
-    }
+  @Override
+  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    MacroParser macroParser = new MacroParser(evaluator, options);
+    Map<String, String> evaluated = new HashMap<>();
+    properties.forEach((key, val) -> evaluated.put(key, macroParser.parse(val)));
+    return evaluated;
+  }
+
+  protected Plugin addPlugin(String pluginType, String pluginName, String pluginId,
+                             PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
+    validateExistingPlugin(pluginId);
 
     final Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
     if (callerClasses.length < 3) {
@@ -150,5 +158,14 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     }
 
     throw exception == null ? new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName) : exception;
+  }
+
+  protected void validateExistingPlugin(String pluginId) {
+    PluginWithLocation existing = plugins.get(pluginId);
+    if (existing != null) {
+      throw new IllegalArgumentException(String.format("Plugin of type %s, name %s was already added as id %s.",
+                                                       existing.getPlugin().getPluginClass().getType(),
+                                                       existing.getPlugin().getPluginClass().getName(), pluginId));
+    }
   }
 }

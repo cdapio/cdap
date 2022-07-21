@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package io.cdap.cdap.internal.app.services.http;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -52,16 +52,17 @@ import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.common.utils.ImmutablePair;
@@ -78,6 +79,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -106,11 +108,13 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -211,6 +215,8 @@ public abstract class AppFabricTestBase {
   private static DatasetClient datasetClient;
   private static MetadataClient metadataClient;
   private static MetricStore metricStore;
+  private static RemoteClientFactory remoteClientFactory;
+  private static LogQueryService logQueryService;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -247,11 +253,8 @@ public abstract class AppFabricTestBase {
     }
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    structuredTableRegistry);
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
 
@@ -274,10 +277,14 @@ public abstract class AppFabricTestBase {
     metadataService.startAndWait();
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataSubscriberService.startAndWait();
+    logQueryService = injector.getInstance(LogQueryService.class);
+    logQueryService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
+    remoteClientFactory = new RemoteClientFactory(discoveryClient,
+                                                  new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
-    metadataServiceClient = new DefaultMetadataServiceClient(discoveryClient);
+    metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
     metricStore = injector.getInstance(MetricStore.class);
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
@@ -302,6 +309,7 @@ public abstract class AppFabricTestBase {
     serviceStore.stopAndWait();
     metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
+    logQueryService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
@@ -312,8 +320,7 @@ public abstract class AppFabricTestBase {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
-    cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    cConf.set(Constants.AppFabric.OUTPUT_DIR, tmpFolder.newFolder("output").getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     String updateSchedules = System.getProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES);
@@ -372,7 +379,7 @@ public abstract class AppFabricTestBase {
     if (headers != null) {
       builder.addHeaders(headers);
     }
-    builder.addHeader(Constants.Gateway.API_KEY, API_KEY);
+    addStandardHeaders(builder);
     return HttpRequests.execute(builder.build(), httpRequestConfig);
   }
 
@@ -391,7 +398,7 @@ public abstract class AppFabricTestBase {
     if (headers != null) {
       builder.addHeaders(headers);
     }
-    builder.addHeader(Constants.Gateway.API_KEY, API_KEY);
+    addStandardHeaders(builder);
 
     if (body != null) {
       builder.withBody(body);
@@ -401,7 +408,7 @@ public abstract class AppFabricTestBase {
 
   protected static HttpResponse doPut(String resource, @Nullable String body) throws Exception {
     HttpRequest.Builder builder = HttpRequest.put(getEndPoint(resource).toURL());
-    builder.addHeader(Constants.Gateway.API_KEY, API_KEY);
+    addStandardHeaders(builder);
     if (body != null) {
       builder.withBody(body);
     }
@@ -409,8 +416,17 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doDelete(String resource) throws Exception {
-    return HttpRequests.execute(HttpRequest.delete(getEndPoint(resource).toURL())
-                                  .addHeader(Constants.Gateway.API_KEY, API_KEY).build(), httpRequestConfig);
+    return HttpRequests.execute(addStandardHeaders(HttpRequest.delete(getEndPoint(resource).toURL()))
+                                  .build(), httpRequestConfig);
+  }
+
+  private static HttpRequest.Builder addStandardHeaders(HttpRequest.Builder builder) {
+    builder.addHeader(Constants.Gateway.API_KEY, API_KEY);
+    String userId = SecurityRequestContext.getUserId();
+    if (userId != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, userId);
+    }
+    return builder;
   }
 
   protected static <T> T readResponse(HttpResponse response, Type type) {
@@ -550,8 +566,6 @@ public abstract class AppFabricTestBase {
     manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, artifactVersion);
 
     File artifactJar = buildAppArtifact(application, application.getSimpleName(), manifest);
-    File expandDir = tmpFolder.newFolder();
-    BundleJarUtil.unJar(Locations.toLocation(artifactJar), expandDir);
 
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     HttpRequest.Builder builder = HttpRequest.post(getEndPoint(versionedApiPath).toURL())
@@ -592,8 +606,26 @@ public abstract class AppFabricTestBase {
 
   protected List<JsonObject> getAppList(String namespace) throws Exception {
     HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
+  }
+
+  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
+                                                 String filter) throws Exception {
+    String uri = "apps/?pageSize=" + pageSize;
+
+    if (token != null) {
+      uri += ("&pageToken=" + token);
+    }
+
+    if (!Strings.isNullOrEmpty(filter)) {
+      uri += ("&nameFilter=" + filter);
+    }
+
+    HttpResponse response = doGet(getVersionedAPIPath(uri,
+                                  Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    assertResponseCode(200, response);
+    return readResponse(response, JsonObject.class);
   }
 
   /**
@@ -612,14 +644,14 @@ public abstract class AppFabricTestBase {
       .collect(Collectors.toList());
     HttpResponse response = doPost(getVersionedAPIPath("appdetail", Constants.Gateway.API_VERSION_3_TOKEN, namespace),
                                    GSON.toJson(request));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
     return readResponse(response, new TypeToken<List<BatchApplicationDetail>>() { }.getType());
   }
 
   protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName);
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
     return readResponse(response, JsonObject.class);
   }
@@ -637,14 +669,14 @@ public abstract class AppFabricTestBase {
   protected Set<String> getAppVersions(String namespace, String appName) throws Exception {
     HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s/versions", appName),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
     return readResponse(response, SET_STRING_TYPE);
   }
 
   protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName, appVersion);
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
     return readResponse(response, JsonObject.class);
   }
@@ -667,13 +699,13 @@ public abstract class AppFabricTestBase {
 
   protected void deleteApp(Id.Application app, int expectedResponseCode) throws Exception {
     HttpResponse response = doDelete(getVersionedAPIPath("apps/" + app.getId(), app.getNamespaceId()));
-    Assert.assertEquals(expectedResponseCode, response.getResponseCode());
+    assertResponseCode(expectedResponseCode, response);
   }
 
   protected void deleteApp(ApplicationId app, int expectedResponseCode) throws Exception {
     HttpResponse response = doDelete(getVersionedAPIPath(
       String.format("/apps/%s/versions/%s", app.getApplication(), app.getVersion()), app.getNamespace()));
-    Assert.assertEquals(expectedResponseCode, response.getResponseCode());
+    assertResponseCode(expectedResponseCode, response);
   }
 
   protected void deleteApp(final Id.Application app, int expectedResponseCode,
@@ -686,14 +718,14 @@ public abstract class AppFabricTestBase {
   protected void deleteArtifact(Id.Artifact artifact, int expectedResponseCode) throws Exception {
     String path = String.format("artifacts/%s/versions/%s", artifact.getName(), artifact.getVersion().getVersion());
     HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
-    Assert.assertEquals(expectedResponseCode, response.getResponseCode());
+    assertResponseCode(expectedResponseCode, response);
   }
 
   protected List<Profile> listProfiles(NamespaceId namespace,
                                        boolean includeSystem, int expectedCode) throws Exception {
     HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles?includeSystem=%s",
                                                 namespace.getNamespace(), includeSystem));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
     if (expectedCode == HttpResponseStatus.OK.code()) {
       return GSON.fromJson(response.getResponseBodyAsString(), LIST_PROFILE);
     }
@@ -702,7 +734,7 @@ public abstract class AppFabricTestBase {
 
   protected List<Profile> listSystemProfiles(int expectedCode) throws Exception {
     HttpResponse response = doGet("/v3/profiles");
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
     if (expectedCode == HttpResponseStatus.OK.code()) {
       return GSON.fromJson(response.getResponseBodyAsString(), LIST_PROFILE);
     }
@@ -712,7 +744,7 @@ public abstract class AppFabricTestBase {
   protected Optional<Profile> getProfile(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles/%s",
                                                 profileId.getNamespace(), profileId.getProfile()));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
     if (expectedCode == HttpResponseStatus.OK.code()) {
       return Optional.of(GSON.fromJson(response.getResponseBodyAsString(), Profile.class));
     }
@@ -721,7 +753,7 @@ public abstract class AppFabricTestBase {
 
   protected Optional<Profile> getSystemProfile(String profileName, int expectedCode) throws Exception {
     HttpResponse response = doGet(String.format("/v3/profiles/%s", profileName));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
     if (expectedCode == HttpResponseStatus.OK.code()) {
       return Optional.of(GSON.fromJson(response.getResponseBodyAsString(), Profile.class));
     }
@@ -733,29 +765,29 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doPut(String.format("/v3/namespaces/%s/profiles/%s",
                                                 profileId.getNamespace(),
                                                 profileId.getProfile()), GSON.toJson(profile));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
   }
 
   protected void putSystemProfile(String profileName, Object profile, int expectedCode) throws Exception {
     HttpResponse response = doPut(String.format("/v3/profiles/%s", profileName), GSON.toJson(profile));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
   }
 
   protected void deleteProfile(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doDelete(String.format("/v3/namespaces/%s/profiles/%s",
                                                    profileId.getNamespace(), profileId.getProfile()));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
   }
 
   protected void deleteSystemProfile(String profileName, int expectedCode) throws Exception {
     HttpResponse response = doDelete(String.format("/v3/profiles/%s", profileName));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
   }
 
   protected Optional<ProfileStatus> getProfileStatus(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doGet(String.format("/v3/namespaces/%s/profiles/%s/status",
                                                 profileId.getNamespace(), profileId.getProfile()));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
     if (expectedCode == HttpResponseStatus.OK.code()) {
       return Optional.of(GSON.fromJson(response.getResponseBodyAsString(), ProfileStatus.class));
     }
@@ -765,18 +797,23 @@ public abstract class AppFabricTestBase {
   protected void enableProfile(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doPost(String.format("/v3/namespaces/%s/profiles/%s/enable", profileId.getNamespace(),
                                                  profileId.getProfile()));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
   }
 
   protected void disableProfile(ProfileId profileId, int expectedCode) throws Exception {
     HttpResponse response = doPost(String.format("/v3/namespaces/%s/profiles/%s/disable",
                                                  profileId.getNamespace(), profileId.getProfile()));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
+  }
+
+  protected void enableSystemProfile(String profileName, int expectedCode) throws Exception {
+    HttpResponse response = doPost(String.format("/v3/profiles/%s/enable", profileName));
+    assertResponseCode(expectedCode, response);
   }
 
   protected void disableSystemProfile(String profileName, int expectedCode) throws Exception {
     HttpResponse response = doPost(String.format("/v3/profiles/%s/disable", profileName));
-    Assert.assertEquals(expectedCode, response.getResponseCode());
+    assertResponseCode(expectedCode, response);
   }
 
   /**
@@ -843,7 +880,7 @@ public abstract class AppFabricTestBase {
   protected void startProgram(String path, String namespaceId, Map<String, String> args,
                               int expectedStatusCode) throws Exception {
     HttpResponse response = doPost(getVersionedAPIPath(path, namespaceId), GSON.toJson(args));
-    Assert.assertEquals(expectedStatusCode, response.getResponseCode());
+    assertResponseCode(expectedStatusCode, response);
   }
 
   /**
@@ -870,7 +907,7 @@ public abstract class AppFabricTestBase {
                                 program.getId());
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()),
                                    GSON.toJson(ImmutableMap.<String, String>of()));
-    Assert.assertEquals(expectedStatusCode, response.getResponseCode());
+    assertResponseCode(expectedStatusCode, response);
   }
 
   /**
@@ -928,7 +965,7 @@ public abstract class AppFabricTestBase {
                            String expectedMessage) throws Exception {
 
     HttpResponse response = doPost(getVersionedAPIPath(path, namespaceId));
-    Assert.assertEquals(expectedStatusCode, response.getResponseCode());
+    assertResponseCode(expectedStatusCode, response);
     if (expectedMessage != null) {
       Assert.assertEquals(expectedMessage, response.getResponseBodyAsString());
     }
@@ -978,11 +1015,11 @@ public abstract class AppFabricTestBase {
   private static void createNamespaces() throws Exception {
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
                                   GSON.toJson(TEST_NAMESPACE_META1));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
 
     response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
                      GSON.toJson(TEST_NAMESPACE_META2));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
   }
 
   protected String getProgramStatus(Id.Program program) throws Exception {
@@ -990,7 +1027,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected void programStatus(Id.Program program, int expectedStatus) throws Exception {
-    Assert.assertEquals(expectedStatus, programStatus(program).getResponseCode());
+    assertResponseCode(expectedStatus, programStatus(program));
   }
 
   private HttpResponse programStatus(Id.Program program) throws Exception {
@@ -1011,14 +1048,14 @@ public abstract class AppFabricTestBase {
                                 programId.getVersion(),
                                 programId.getType().getCategoryName(), programId.getProgram());
     HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespace()));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     Map<String, String> o = GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
     return o.get("status");
 
   }
 
   private String getStatus(HttpResponse response) {
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     Map<String, String> o = GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
     return o.get("status");
   }
@@ -1117,7 +1154,7 @@ public abstract class AppFabricTestBase {
   private List<ScheduleDetail> doGetSchedules(String namespace, String schedulesUrl) throws Exception {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, namespace);
     HttpResponse response = doGet(versionedUrl);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    assertResponseCode(HttpResponseStatus.OK.code(), response);
     return readResponse(response, Schedulers.SCHEDULE_DETAILS_TYPE);
   }
 
@@ -1155,7 +1192,7 @@ public abstract class AppFabricTestBase {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
     String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    assertResponseCode(HttpResponseStatus.OK.code(), response);
     return readResponse(response, ScheduleDetail.class);
   }
 
@@ -1171,7 +1208,7 @@ public abstract class AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               programId.getNamespace());
     HttpResponse response = doGet(versionedUrl);
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
   }
 
@@ -1195,7 +1232,7 @@ public abstract class AppFabricTestBase {
       .map(id -> new BatchProgram(id.getApplication(), id.getType(), id.getProgram()))
       .collect(Collectors.toList());
     HttpResponse response = doPost(versionedUrl, GSON.toJson(batchPrograms));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     return readResponse(response, new TypeToken<List<BatchProgramSchedule>>() { }.getType());
   }
 
@@ -1247,7 +1284,7 @@ public abstract class AppFabricTestBase {
       .collect(Collectors.toList());
 
     HttpResponse response = doPost(getVersionedAPIPath("runs", namespace.getNamespace()), GSON.toJson(request));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     return GSON.fromJson(response.getResponseBodyAsString(), BATCH_PROGRAM_RUNS_TYPE);
   }
 
@@ -1255,7 +1292,7 @@ public abstract class AppFabricTestBase {
     String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplicationId(),
                                 program.getType().getCategoryName(), program.getId(), status.name());
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }
 
@@ -1277,7 +1314,7 @@ public abstract class AppFabricTestBase {
                                 program.getVersion(), program.getType().getCategoryName(), program.getProgram(),
                                 status.toString());
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespace()));
-    Assert.assertEquals(200, response.getResponseCode());
+    assertResponseCode(200, response);
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }
 
@@ -1329,7 +1366,7 @@ public abstract class AppFabricTestBase {
 
   protected void setPreferences(String uri, Map<String, String> props, int expectedStatus) throws Exception {
     HttpResponse response = doPut(String.format("/v3/%s/preferences", uri), GSON.toJson(props));
-    Assert.assertEquals(expectedStatus, response.getResponseCode());
+    assertResponseCode(expectedStatus, response);
   }
 
   protected Map<String, String> getPreferences(String uri, boolean resolved, int expectedStatus) throws Exception {
@@ -1338,7 +1375,7 @@ public abstract class AppFabricTestBase {
       request += "?resolved=true";
     }
     HttpResponse response = doGet(request);
-    Assert.assertEquals(expectedStatus, response.getResponseCode());
+    assertResponseCode(expectedStatus, response);
     if (expectedStatus == 200) {
       return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
     }
@@ -1352,7 +1389,7 @@ public abstract class AppFabricTestBase {
       url += "?resolved=true";
     }
     HttpResponse response = doGet(url);
-    Assert.assertEquals(expectedResponseStatus.code(), response.getResponseCode());
+    assertResponseCode(expectedResponseStatus.code(), response);
     if (expectedResponseStatus != HttpResponseStatus.OK) {
       return null;
     }
@@ -1362,11 +1399,26 @@ public abstract class AppFabricTestBase {
 
   protected void deletePreferences(String uri, int expectedStatus) throws Exception {
     HttpResponse response = doDelete(String.format("/v3/%s/preferences", uri));
-    Assert.assertEquals(expectedStatus, response.getResponseCode());
+    assertResponseCode(expectedStatus, response);
   }
 
   protected File buildAppArtifact(Class<?> cls, String name) throws IOException {
     return buildAppArtifact(cls, name, new Manifest());
+  }
+
+  /**
+   * If the configuration has authorization enabled, e.g. with
+   * {@link io.cdap.cdap.internal.AppFabricTestHelper#enableAuthorization(CConfiguration, TemporaryFolder)}, allows
+   * to do calls with specific user.
+   */
+  protected <T extends Throwable> void doAs(String user, Retries.Runnable<T> action) throws T {
+    String currentId = SecurityRequestContext.getUserId();
+    try {
+      SecurityRequestContext.setUserId(user);
+      action.run();
+    } finally {
+      SecurityRequestContext.setUserId(currentId);
+    }
   }
 
   private File buildAppArtifact(Class<?> cls, String name, Manifest manifest) throws IOException {
@@ -1379,7 +1431,7 @@ public abstract class AppFabricTestBase {
 
   protected File buildAppArtifact(Class<?> cls, Manifest manifest, File destination) throws IOException {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
-    Files.copy(Locations.newInputSupplier(appJar), destination);
+    Locations.linkOrCopyOverwrite(appJar, destination);
     return destination;
   }
 
@@ -1433,4 +1485,10 @@ public abstract class AppFabricTestBase {
   private static String getFirstHeaderValue(HttpResponse response, String name) {
     return response.getHeaders().get(name).stream().findFirst().orElse(null);
   }
+
+  private static void assertResponseCode(int expectedCode, HttpResponse response) {
+    Assert.assertEquals("Wrong response code with message " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+  }
+
 }

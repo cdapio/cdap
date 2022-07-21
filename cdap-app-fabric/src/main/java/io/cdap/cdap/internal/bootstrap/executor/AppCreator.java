@@ -33,6 +33,8 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
+import java.util.Collections;
+
 /**
  * Creates an application if it doesn't already exist.
  */
@@ -63,7 +65,7 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
     try {
       appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
                                     artifactSummary, configString, x -> { },
-                                    ownerPrincipalId, arguments.canUpdateSchedules());
+                                    ownerPrincipalId, arguments.canUpdateSchedules(), false, Collections.emptyMap());
     } catch (NotFoundException | UnauthorizedException | InvalidArtifactException e) {
       // these exceptions are for sure not retry-able. It's hard to tell if the others are, so we just try retrying
       // up to the default time limit

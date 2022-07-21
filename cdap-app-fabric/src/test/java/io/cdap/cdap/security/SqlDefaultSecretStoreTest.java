@@ -16,22 +16,29 @@
 
 package io.cdap.cdap.security;
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
-import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import javax.sql.DataSource;
 
 /**
  * Tests {@link DefaultSecretStore} with Sql storage implementation.
@@ -45,15 +52,24 @@ public class SqlDefaultSecretStoreTest extends DefaultSecretStoreTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
-    DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
-    registry.initialize();
-    StructuredTableAdmin structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(registry, dataSource);
-    TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
-    store = new DefaultSecretStore(transactionRunner);
-    StoreDefinition.SecretStore.createTable(structuredTableAdmin, false);
+    CConfiguration cConf = CConfiguration.create();
+
+    pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocalLocationModule(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new StorageModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+        }
+      }
+    );
+
+    store = new DefaultSecretStore(injector.getInstance(TransactionRunner.class));
+    StoreDefinition.SecretStore.create(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass

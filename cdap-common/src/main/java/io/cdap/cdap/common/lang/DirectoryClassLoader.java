@@ -33,6 +33,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -134,7 +135,7 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
   }
 
   private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
-    for (File file : DirUtils.listFiles(dir, "jar")) {
+    for (File file : new TreeSet<>(DirUtils.listFiles(dir, "jar"))) {
       result.add(file.toURI().toURL());
     }
   }

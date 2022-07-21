@@ -875,7 +875,7 @@ public abstract class CLITestBase {
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File appJarFile =
       new File(tmpFolder, String.format("%s-1.0.%d.jar", cls.getSimpleName(), System.currentTimeMillis()));
-    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    Locations.linkOrCopy(deploymentJar, appJarFile);
     return appJarFile;
   }
 
@@ -980,7 +980,7 @@ public abstract class CLITestBase {
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File appJarFile =
       new File(tmpFolder, String.format("%s-1.0.jar", cls.getSimpleName()));
-    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    Locations.linkOrCopy(deploymentJar, appJarFile);
     return appJarFile;
   }
 }

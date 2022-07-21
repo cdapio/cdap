@@ -17,7 +17,10 @@
 package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
@@ -27,10 +30,12 @@ import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
+import javax.annotation.Nullable;
+
 /**
  * Configures a CDAP Application.
  */
-public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigurer {
+public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigurer, FeatureFlagsProvider {
 
   /**
    * Sets the name of the Application.
@@ -101,9 +106,41 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
   void schedule(ScheduleCreationSpec scheduleCreationSpec);
 
   /**
+   * Emit the given {@link Metadata} for the application in the given scope.
+   * Note the tags and properties emitted in SYSTEM scope will get overridden by the platform system metadata if
+   * the tags or property keys are same.
+   *
+   * @param metadata the metadata to emit
+   */
+  default void emitMetadata(Metadata metadata, MetadataScope scope) {
+    throw new UnsupportedOperationException("Emitting metadata for applications is not supported.");
+  }
+
+  /**
    * Get a TriggerFactory to get triggers.
    *
    * @return The {@link TriggerFactory} used to get triggers
    */
   TriggerFactory getTriggerFactory();
+
+  /**
+   * Return the runtime configurer that contains the runtime arguments and provides access for other runtime
+   * functionalities. This is used for the app to provide additional information for the newly generated app spec
+   * before each program run. This method will return null when the app initially gets deployed.
+   *
+   * @return the runtime configurer, or null if this is the initial deploy time.
+   */
+  @Nullable
+  default RuntimeConfigurer getRuntimeConfigurer() {
+    return null;
+  }
+
+  /**
+   * Return the namespace the app is deployed.
+   *
+   * @return the namespace the app is deployed
+   */
+  default String getDeployedNamespace() {
+    throw new UnsupportedOperationException("Getting deployed namespace is not supported");
+  }
 }

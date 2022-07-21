@@ -34,6 +34,7 @@ import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -48,7 +49,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -82,7 +83,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   // Each task should have it's own instance of MapReduceTaskContext so that different dataset instance will
   // be created for different task, which is needed in local mode since job runs with multiple threads
   private final LoadingCache<ContextCacheKey, BasicMapReduceTaskContext> taskContexts;
-  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MapReduceClassLoader mapReduceClassLoader;
 
@@ -101,7 +102,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   protected MapReduceTaskContextProvider(Injector injector, MapReduceClassLoader mapReduceClassLoader) {
     this.injector = injector;
     this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
-    this.authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    this.accessEnforcer = injector.getInstance(AccessEnforcer.class);
     this.authenticationContext = injector.getInstance(AuthenticationContext.class);
     this.mapReduceClassLoader = mapReduceClassLoader;
   }
@@ -179,6 +180,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     MetadataReader metadataReader = injector.getInstance(MetadataReader.class);
     MetadataPublisher metadataPublisher = injector.getInstance(MetadataPublisher.class);
     FieldLineageWriter fieldLineageWriter = injector.getInstance(FieldLineageWriter.class);
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
 
     return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
       @Override
@@ -250,9 +252,9 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           transaction, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
-          authorizationEnforcer, authenticationContext, messagingService, mapReduceClassLoader, metadataReader,
-          metadataPublisher, namespaceQueryAdmin, fieldLineageWriter
-        );
+          accessEnforcer, authenticationContext, messagingService, mapReduceClassLoader, metadataReader,
+          metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
+          remoteClientFactory);
       }
     };
   }

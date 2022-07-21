@@ -34,8 +34,8 @@ public abstract class SplitReaderAdapter<FROM_KEY, TO_KEY, FROM_VALUE, TO_VALUE>
   protected abstract TO_KEY convertKey(FROM_KEY key);
   protected abstract TO_VALUE convertValue(FROM_VALUE value);
 
-  private TO_KEY nextKey = null;
-  private TO_VALUE nextValue = null;
+  private TO_KEY nextKey;
+  private TO_VALUE nextValue;
 
   @Override
   public void initialize(Split split) throws InterruptedException {

@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -249,8 +250,13 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
 
     SharedResourceCache other = (SharedResourceCache) object;
-    return this.parentZnode.equals(other.parentZnode) &&
-      this.resources.equals(other.resources);
+    return Objects.equals(this.parentZnode, other.parentZnode) &&
+      Objects.equals(this.resources, other.resources);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(parentZnode, resources);
   }
 
   private String joinZNode(String parent, String name) {

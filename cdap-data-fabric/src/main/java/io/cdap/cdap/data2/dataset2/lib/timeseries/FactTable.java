@@ -49,8 +49,10 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -82,23 +84,23 @@ public final class FactTable implements Closeable {
 
   /**
    * Creates an instance of {@link FactTable}.
-   *
    * @param timeSeriesTable A table for storing facts information.
    * @param entityTable The table for storing dimension encoding mappings.
    * @param resolution Resolution in seconds
    * @param rollTime Number of resolution for writing to a new row with a new timebase.
-   *                 Meaning the differences between timebase of two consecutive rows divided by
-   *                 resolution seconds. It essentially defines how many columns per row in the table.
-   *                 This value should be < 65535.
+*                 Meaning the differences between timebase of two consecutive rows divided by
+*                 resolution seconds. It essentially defines how many columns per row in the table.
+   * @param coarseLagFactor
+   * @param coarseRoundFactor
    */
   public FactTable(MetricsTable timeSeriesTable,
-                   EntityTable entityTable, int resolution, int rollTime) {
+                   EntityTable entityTable, int resolution, int rollTime, int coarseLagFactor, int coarseRoundFactor) {
     // Two bytes for column name, which is a delta timestamp
     Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME, "Rolltime should be <= " + MAX_ROLL_TIME);
 
     this.entityTable = entityTable;
     this.timeSeriesTable = timeSeriesTable;
-    this.codec = new FactCodec(entityTable, resolution, rollTime);
+    this.codec = new FactCodec(entityTable, resolution, rollTime, coarseLagFactor, coarseRoundFactor);
     this.resolution = resolution;
     this.rollTime = rollTime;
     this.putCountMetric = "factTable." + resolution + ".put.count";
@@ -113,51 +115,51 @@ public final class FactTable implements Closeable {
     this.metrics = metrics;
   }
 
-  public void add(List<Fact> facts) {
+  public int add(List<Fact> facts) {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
-    NavigableMap<byte[], NavigableMap<byte[], Long>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    NavigableMap<byte[], NavigableMap<byte[], Long>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    Map<FactMeasurementKey, Long> gaugesTable = new HashMap<>();
+    Map<FactMeasurementKey, Long> incrementsTable = new HashMap<>();
+    long nowSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
     // this map is used to store metrics which was COUNTER type, but can be considered as GAUGE, which means it is
     // guaranteed to be a new row key in the underlying table.
-    NavigableMap<byte[], NavigableMap<byte[], Long>> incGaugeTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    Map<FactMeasurementKey, Long> incGaugeTable = new HashMap<>();
     // this map is used to store the updated timestamp for the cache
     Map<FactCacheKey, Long> cacheUpdates = new HashMap<>();
     for (Fact fact : facts) {
       for (Measurement measurement : fact.getMeasurements()) {
-        byte[] rowKey = codec.createRowKey(fact.getDimensionValues(), measurement.getName(), fact.getTimestamp());
-        byte[] column = codec.createColumn(fact.getTimestamp());
-
+        // round to the resolution timestamp
+        long tsToResolution = codec.roundToResolution(fact.getTimestamp(), nowSeconds);
+        FactMeasurementKey key = new FactMeasurementKey(tsToResolution,
+                                                        fact.getDimensionValues(),
+                                                        measurement.getName());
         if (MeasureType.COUNTER == measurement.getType()) {
           if (factCounterCache != null) {
-            // round to the resolution timestamp
-            long tsToResolution = fact.getTimestamp() / resolution * resolution;
             FactCacheKey cacheKey = new FactCacheKey(fact.getDimensionValues(), measurement.getName());
             Long existingTs = factCounterCache.getIfPresent(cacheKey);
 
             // if there is no existing ts or existing ts is greater than or equal to the current ts, this metric value
             // cannot be considered as a gauge, and we should update the incrementsTable
             if (existingTs == null || existingTs >= tsToResolution) {
-              inc(incrementsTable, rowKey, column, measurement.getValue());
+              inc(incrementsTable, key, measurement.getValue());
               // if the current ts is greater than existing ts, then we can consider this metric as a newly seen metric
               // and perform gauge on this metric
             } else {
-              inc(incGaugeTable, rowKey, column, measurement.getValue());
+              inc(incGaugeTable, key, measurement.getValue());
             }
 
             // if there is no existing value or the current ts is greater than the existing ts, the value in the cache
             // should be updated
             if (existingTs == null || existingTs < tsToResolution) {
               cacheUpdates.compute(
-                cacheKey, (key, oldValue) -> oldValue == null || tsToResolution > oldValue ? tsToResolution : oldValue);
+                cacheKey, (k, oldValue) -> oldValue == null || tsToResolution > oldValue ? tsToResolution : oldValue);
             }
           } else {
-            inc(incrementsTable, rowKey, column, measurement.getValue());
+            inc(incrementsTable, key, measurement.getValue());
           }
         } else {
           gaugesTable
-            .computeIfAbsent(rowKey, k -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR))
-            .put(column, measurement.getValue());
+            .put(key, measurement.getValue());
         }
       }
     }
@@ -166,12 +168,67 @@ public final class FactTable implements Closeable {
       gaugesTable.putAll(incGaugeTable);
       factCounterCache.putAll(cacheUpdates);
     }
+    // We use HashMap as a fast L0 cache that we create and throw out after each batch
+    Map<EntityTable.EntityName, Long> cache = new HashMap<>();
+    BiFunction<EntityTable.EntityName, Supplier<Long>, Long> cacheFunction = (name, loader) ->
+      cache.computeIfAbsent(name, nm -> loader.get());
     // todo: replace with single call, to be able to optimize rpcs in underlying table
-    timeSeriesTable.put(gaugesTable);
-    timeSeriesTable.increment(incrementsTable);
+    timeSeriesTable.put(toColumnarFormat(gaugesTable, nowSeconds, cacheFunction));
+    timeSeriesTable.increment(toColumnarFormat(incrementsTable, nowSeconds, cacheFunction));
     if (metrics != null) {
       metrics.increment(putCountMetric, gaugesTable.size());
       metrics.increment(incrementCountMetric, incrementsTable.size());
+    }
+    return gaugesTable.size() + incrementsTable.size();
+  }
+
+  private NavigableMap<byte[], NavigableMap<byte[], Long>> toColumnarFormat(
+    Map<FactMeasurementKey, Long> data, long nowSeconds,
+    BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
+
+    return data.entrySet().stream().collect(Collectors.groupingBy(
+      entry -> codec.createRowKey(entry.getKey().dimensionValues, entry.getKey().measurementName,
+                                  entry.getKey().timestamp, nowSeconds, fastCache),
+      () -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR),
+      Collectors.toMap(
+        entry -> codec.createColumn(entry.getKey().timestamp, nowSeconds),
+        entry -> entry.getValue(),
+        (u, v) -> {
+          throw new IllegalStateException(String.format("Duplicate key %s", u));
+          },
+        () -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR)
+      )
+    ));
+  }
+
+  private class FactMeasurementKey {
+    private final long timestamp;
+    private final List<DimensionValue> dimensionValues;
+    private final String measurementName;
+
+    private FactMeasurementKey(long timestamp, List<DimensionValue> dimensionValues, String measurementName) {
+      this.timestamp = timestamp;
+      this.dimensionValues = dimensionValues;
+      this.measurementName = measurementName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      FactMeasurementKey that = (FactMeasurementKey) o;
+      return timestamp == that.timestamp
+        && dimensionValues.equals(that.dimensionValues)
+        && measurementName.equals(that.measurementName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(timestamp, dimensionValues, measurementName);
     }
   }
 
@@ -251,14 +308,17 @@ public final class FactTable implements Closeable {
         List<byte[]> columns = Lists.newArrayList();
 
         boolean exhausted = false;
+        boolean fullRow = true;
         for (byte[] column : row.getColumns().keySet()) {
           long ts = codec.getTimestamp(row.getRow(), column);
           if (ts < scan.getStartTs()) {
+            fullRow = false;
             continue;
           }
 
           if (ts > scan.getEndTs()) {
             exhausted = true;
+            fullRow = false;
             break;
           }
 
@@ -266,7 +326,7 @@ public final class FactTable implements Closeable {
         }
 
         // todo: do deletes efficiently, in batches, not one-by-one
-        timeSeriesTable.delete(row.getRow(), columns.toArray(new byte[columns.size()][]));
+        timeSeriesTable.delete(row.getRow(), columns.toArray(new byte[columns.size()][]), fullRow);
 
         if (exhausted) {
           break;
@@ -338,10 +398,10 @@ public final class FactTable implements Closeable {
         }
         byte[] rowKey = rowResult.getRow();
         // filter out columns by time range (scan configuration only filters whole rows)
-        if (codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(startTs, startTs)) < startTs) {
           continue;
         }
-        if (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(endTs, endTs)) > endTs) {
           // we're done with scanner
           break;
         }
@@ -423,10 +483,10 @@ public final class FactTable implements Closeable {
         }
         byte[] rowKey = rowResult.getRow();
         // filter out columns by time range (scan configuration only filters whole rows)
-        if (codec.getTimestamp(rowKey, codec.createColumn(startTs)) < startTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(startTs, startTs)) < startTs) {
           continue;
         }
-        if (codec.getTimestamp(rowKey, codec.createColumn(endTs)) > endTs) {
+        if (codec.getTimestamp(rowKey, codec.createColumn(endTs, endTs)) > endTs) {
           // we're done with scanner
           break;
         }
@@ -477,19 +537,9 @@ public final class FactTable implements Closeable {
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(startRow, fuzzyRowMask)));
   }
 
-  // todo: shouldn't we aggregate "before" writing to FactTable? We could do it really efficient outside
-  //       also: the underlying datasets will do aggregation in memory anyways
-  private static void inc(NavigableMap<byte[], NavigableMap<byte[], Long>> incrementsTable,
-                          byte[] rowKey, byte[] column, long value) {
-    NavigableMap<byte[], Long> values = incrementsTable.computeIfAbsent(rowKey,
-                                                                        k -> new TreeMap<>(Bytes.BYTES_COMPARATOR));
-    Long oldValue = values.get(column);
-    long newValue = value;
-    if (oldValue != null) {
-      newValue += oldValue;
-    }
-
-    values.put(column, newValue);
+  private static void inc(Map<FactMeasurementKey, Long> incrementsTable,
+                          FactMeasurementKey key, long value) {
+    incrementsTable.compute(key, (k, prev) -> value + (prev == null ? 0 : prev));
   }
 
   class FactCacheKey {

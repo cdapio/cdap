@@ -25,8 +25,8 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetRuntimeContext;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 
 import java.io.IOException;
 import java.util.Map;
@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class NoSqlStructuredTableDatasetDefinition implements DatasetDefinition {
 
-  private static final AuthorizationEnforcer SYSTEM_NAMESPACE_ENFORCER = new NoOpAuthorizer();
+  private static final AccessEnforcer SYSTEM_NAMESPACE_ENFORCER = new NoOpAccessController();
   private static final DefaultDatasetRuntimeContext.DatasetAccessRecorder SYSTEM_NAMESPACE_ACCESS_RECORDER =
     new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
       @Override

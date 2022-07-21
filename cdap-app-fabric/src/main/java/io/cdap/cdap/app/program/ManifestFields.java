@@ -64,7 +64,7 @@ public final class ManifestFields {
    * matching the complete package information pattern.
    */
   private static final Pattern EXPORT_PACKAGE_PATTERN =
-    Pattern.compile("([\\w.]+)(?:;[\\w\\-.]+:?=(?:(?:\"(?:\\\\.|[^\\\"])+\")|[\\w\\-.]+))*,?");
+    Pattern.compile("([\\w.]+)(?:;[\\w\\-.]+:?=(?:(?:\"(?:\\\\.|[^\\\\\"]++)+\")|[\\w\\-.]+))*,?");
 
   /**
    * Parses the manifest {@link #EXPORT_PACKAGE} attribute and returns a set of export packages.

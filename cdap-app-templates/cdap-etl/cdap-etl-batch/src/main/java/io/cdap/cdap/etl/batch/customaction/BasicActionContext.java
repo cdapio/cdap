@@ -95,7 +95,8 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   }
 
   @Override
-  public void registerLineage(String referenceName, AccessType accessType) throws DatasetManagementException {
+  public void registerLineage(String referenceName, AccessType accessType)
+    throws DatasetManagementException {
     Supplier<Dataset> datasetSupplier =
       () -> Transactionals.execute(context, (TxCallable<Dataset>) ctx -> ctx.getDataset(referenceName));
     ExternalDatasets.registerLineage(admin, referenceName, accessType, null, datasetSupplier);

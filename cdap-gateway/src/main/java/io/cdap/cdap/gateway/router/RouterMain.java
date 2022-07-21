@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2021 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,10 +25,12 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.internal.Services;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -81,13 +83,6 @@ public class RouterMain extends DaemonMain {
         }
       }
 
-      // Initialize ZK client
-      String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
-      if (zookeeper == null) {
-        LOG.error("No ZooKeeper quorum provided.");
-        System.exit(1);
-      }
-
       Injector injector = createGuiceInjector(cConf);
       zkClientService = injector.getInstance(ZKClientService.class);
 
@@ -111,7 +106,7 @@ public class RouterMain extends DaemonMain {
                                                                     "ZooKeeper client. Please verify that the " +
                                                                     "ZooKeeper quorum settings are correct in " +
                                                                     "cdap-site.xml. Currently configured as: %s",
-                                                                    cConf.get(Constants.Zookeeper.QUORUM)));
+                                                                    zkClientService.getConnectString()));
     router.startAndWait();
     LOG.info("Router started.");
   }
@@ -131,10 +126,12 @@ public class RouterMain extends DaemonMain {
   static Injector createGuiceInjector(CConfiguration cConf) {
     return Guice.createInjector(
       new ConfigModule(cConf),
+      RemoteAuthenticatorModules.getDefaultModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new RouterModules().getDistributedModules(),
-      new SecurityModules().getDistributedModules(),
+      CoreSecurityRuntimeModule.getDistributedModule(cConf),
+      new ExternalAuthenticationModule(),
       new IOModule()
     );
   }

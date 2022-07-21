@@ -28,13 +28,14 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
+import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -73,7 +74,10 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
+  private final ProgramRunStatusMonitorService programRunStatusMonitorService;
+  private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
@@ -82,10 +86,12 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
+  private final EventPublishManager eventPublishManager;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
+  private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   /**
    * Construct the AppFabricServer with service factory and cConf coming from guice injection.
@@ -98,15 +104,20 @@ public class AppFabricServer extends AbstractIdleService {
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService,
                          RunRecordCorrectorService runRecordCorrectorService,
+                         ProgramRunStatusMonitorService programRunStatusMonitorService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
+                         ProgramStopSubscriberService programStopSubscriberService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          CoreSchedulerService coreSchedulerService,
                          ProvisioningService provisioningService,
                          BootstrapService bootstrapService,
                          SystemAppManagementService systemAppManagementService,
-                         TransactionRunner transactionRunner) {
+                         TransactionRunner transactionRunner,
+                         EventPublishManager eventPublishManager,
+                         RunRecordMonitorService runRecordCounterService,
+                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -118,13 +129,18 @@ public class AppFabricServer extends AbstractIdleService {
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
+    this.programStopSubscriberService = programStopSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
+    this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
+    this.eventPublishManager = eventPublishManager;
+    this.runRecordCounterService = runRecordCounterService;
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
   }
 
   /**
@@ -142,19 +158,23 @@ public class AppFabricServer extends AbstractIdleService {
         bootstrapService.start(),
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
+        programStopSubscriberService.start(),
         runRecordCorrectorService.start(),
-        coreSchedulerService.start()
+        programRunStatusMonitorService.start(),
+        coreSchedulerService.start(),
+        eventPublishManager.start(),
+        runRecordCounterService.start()
       )
     ).get();
 
     // Create handler hooks
     List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
-      .map(name -> new MetricsReporterHook(metricsCollectionService, name))
+      .map(name -> new MetricsReporterHook(cConf, metricsCollectionService, name))
       .collect(Collectors.toList());
 
     // Run http service on random port
-    NettyHttpService.Builder httpServiceBuilder = new CommonNettyHttpServiceBuilder(cConf,
-                                                                                    Constants.Service.APP_FABRIC_HTTP)
+    NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
+      .builder(Constants.Service.APP_FABRIC_HTTP)
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(handlerHooks)
       .setHttpHandlers(handlers)
@@ -192,8 +212,12 @@ public class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
+    programStopSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
+    programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
+    eventPublishManager.stopAndWait();
+    runRecordCounterService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

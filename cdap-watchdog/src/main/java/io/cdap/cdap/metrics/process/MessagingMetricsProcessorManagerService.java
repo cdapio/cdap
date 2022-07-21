@@ -25,12 +25,15 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.MetricsWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.Metrics;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metrics.process.loader.MetricsWriterProvider;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +45,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class MessagingMetricsProcessorManagerService extends AbstractIdleService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorManagerService.class);
+  private static final String METRICSWRITERS = "metricswriters";
   private final List<MessagingMetricsProcessorService> metricsProcessorServices;
   private final List<MetricsWriter> metricsWriters;
   private final CConfiguration cConf;
@@ -103,7 +108,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
   protected void startUp() throws Exception {
     MetricStoreMetricsWriter metricsWriter = new MetricStoreMetricsWriter(metricStore);
     DefaultMetricsWriterContext context = new DefaultMetricsWriterContext(metricsContext,
-      cConf, metricsWriter.getID());
+                                                                          cConf, metricsWriter.getID());
     metricsWriter.initialize(context);
     this.metricsWriters.add(metricsWriter);
 
@@ -111,11 +116,13 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
       MetricsWriter writer = metricsWriterEntry.getValue();
       this.metricsWriters.add(writer);
       DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
-        cConf, writer.getID());
-      writer.initialize(metricsWriterContext);
+                                                                                         cConf, writer.getID());
+      initializeMetricWriter(writer, metricsWriterContext);
     }
 
+    String processorKey = String.format("metrics.processor.%s", instanceId);
     for (MetricsWriter metricsExtension : this.metricsWriters) {
+      MetricsMetaKeyProvider topicIdMetricsKeyProvider = getKeyProvider(metricsExtension, cConf);
       metricsProcessorServices.add(new MessagingMetricsProcessorService(
         cConf,
         metricDatasetFactory,
@@ -126,13 +133,49 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
         topicNumbers,
         metricsContext,
         metricsProcessIntervalMillis,
-        instanceId));
+        instanceId,
+        new DefaultMetadataHandler(processorKey, topicIdMetricsKeyProvider),
+        topicIdMetricsKeyProvider));
 
     }
 
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
       processorService.startAndWait();
     }
+  }
+
+  @VisibleForTesting
+  void initializeMetricWriter(MetricsWriter writer,
+                              DefaultMetricsWriterContext metricsWriterContext) throws Exception {
+    File baseDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), METRICSWRITERS);
+    File initStateFile = new File(baseDir, writer.getID());
+    try {
+      writer.initialize(metricsWriterContext);
+      if (!initStateFile.exists()) {
+        baseDir.mkdirs();
+        boolean result = initStateFile.createNewFile();
+        LOG.info("Initialization for metric writer {} succeeded. Result of creating initStateFile {} is {}.",
+                 writer.getID(), initStateFile.getName(), result);
+      }
+    } catch (Exception e) {
+      //enforce at least one correct initialization
+      if (!initStateFile.exists()) {
+        throw new Exception(
+          "Initialization for metric writer " + writer.getID() + " failed. Please fix the errors to proceed.", e);
+      } else {
+        LOG.error("Initialization for metric writer {} failed. Recheck the configuration.", writer.getID(), e);
+      }
+    }
+  }
+
+  private MetricsMetaKeyProvider getKeyProvider(MetricsWriter writer, CConfiguration cConf) {
+    boolean useSubscriberInKey = getUseSubscriberInKey(writer, cConf);
+    return useSubscriberInKey ? new TopicSubscriberMetricsKeyProvider(writer.getID()) : new TopicIdMetricsKeyProvider();
+  }
+
+  private boolean getUseSubscriberInKey(MetricsWriter writer, CConfiguration cConf) {
+    String confKey = String.format(Constants.Metrics.WRITER_USE_SUBSCRIBER_METADATA_KEY, writer.getID());
+    return cConf.getBoolean(confKey, false);
   }
 
   @Override

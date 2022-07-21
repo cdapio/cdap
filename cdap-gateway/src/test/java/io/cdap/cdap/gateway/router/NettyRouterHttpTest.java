@@ -25,7 +25,8 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
-import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import org.apache.commons.net.DefaultSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.DiscoveryService;
@@ -74,7 +75,8 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
       SConfiguration sConfiguration = SConfiguration.create();
-      Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+      Injector injector = Guice.createInjector(new CoreSecurityRuntimeModule().getInMemoryModules(),
+                                               new ExternalAuthenticationModule(),
                                                new InMemoryDiscoveryModule(),
                                                new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);

@@ -20,5 +20,6 @@ package io.cdap.cdap.api.metrics;
  */
 public enum MetricType {
   COUNTER,
-  GAUGE
+  GAUGE,
+  DISTRIBUTION
 }

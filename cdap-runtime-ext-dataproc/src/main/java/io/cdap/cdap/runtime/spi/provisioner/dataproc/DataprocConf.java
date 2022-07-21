@@ -16,17 +16,17 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -43,6 +43,7 @@ final class DataprocConf {
 
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
+  static final String TOKEN_ENDPOINT_KEY = "token.endpoint";
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String NETWORK = "network";
@@ -54,17 +55,43 @@ final class DataprocConf {
   static final String SKIP_DELETE = "skipDelete";
   static final String IMAGE_VERSION = "imageVersion";
   static final String CUSTOM_IMAGE_URI = "customImageUri";
+  static final String ENCRYPTION_KEY_NAME = "encryptionKeyName";
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
   // The property name for the GCE cluster meta data
   // It can be overridden by profile runtime arguments (system.profile.properties.clusterMetaData)
-  static final String CLUSTER_MEATA_DATA = "clusterMetaData";
+  static final String CLUSTER_META_DATA = "clusterMetaData";
+  static final String CLUSTER_LABELS = "clusterLabels";
   // The property name for the serviceAccount that is passed to Dataproc when creating the Dataproc Cluster
   // Dataproc will pass it to GCE when creating the GCE cluster.
   // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
   static final String SERVICE_ACCOUNT = "serviceAccount";
+  static final String ROOT_URL = "root.url";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
+
+  static final String SECURE_BOOT_ENABLED = "secureBootEnabled";
+  static final String VTPM_ENABLED = "vTpmEnabled";
+  static final String INTEGRITY_MONITORING_ENABLED = "integrityMonitoringEnabled";
+  // Controls cluster reuse
+  static final String CLUSTER_REUSE_ENABLED = "clusterReuseEnabled";
+  // If cluster reuse is enabled, defines how much idle time should be left for cluster to be considered reusable
+  // E.g. with cluster idle timeout of 5 minutes and threshold of 3 minutes, cluster will be reusable for
+  // 2 minutes (5-3) after last job completion
+  static final String CLUSTER_REUSE_THRESHOLD_MINUTES = "clusterReuseThresholdMinutes";
+  static final int CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT = 3;
+  static final String CLUSTER_IDLE_TTL_MINUTES = "idleTTL";
+  static final int CLUSTER_IDLE_TTL_MINUTES_DEFAULT = 30;
+  static final String PREDEFINED_AUTOSCALE_ENABLED = "enablePredefinedAutoScaling";
+  static final String WORKER_NUM_NODES = "workerNumNodes";
+  static final String SECONDARY_WORKER_NUM_NODES = "secondaryWorkerNumNodes";
+  static final String AUTOSCALING_POLICY = "autoScalingPolicy";
+
+  public static final String COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT = "compute.request.connection.timeout.millis";
+  private static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
+  public static final String COMPUTE_HTTP_REQUEST_READ_TIMEOUT = "compute.request.read.timeout.millis";
+  private static final int COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT = 20000;
+
 
   private final String accountKey;
   private final String region;
@@ -75,6 +102,7 @@ final class DataprocConf {
   private final String subnet;
   private final String imageVersion;
   private final String customImageUri;
+  private final String rootUrl;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -105,29 +133,30 @@ final class DataprocConf {
   private final boolean stackdriverMonitoringEnabled;
   private final boolean componentGatewayEnabled;
   private final boolean skipDelete;
-  private final SSHPublicKey publicKey;
   private final Map<String, String> clusterProperties;
 
   private final Map<String, String> clusterMetaData;
+  private final Map<String, String> clusterLabels;
   private final List<String> networkTags;
   private final String initActions;
   private final String autoScalingPolicy;
   private final int idleTTLMinutes;
 
+  private final boolean secureBootEnabled;
+  private final boolean vTpmEnabled;
+  private final boolean integrityMonitoringEnabled;
+
   private final boolean runtimeJobManagerEnabled;
 
-  DataprocConf(DataprocConf conf, String network, String subnet) {
-    this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
-         conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB, conf.masterDiskType,
-         conf.masterMachineType, conf.workerNumNodes, conf.secondaryWorkerNumNodes, conf.workerCPUs,
-         conf.workerMemoryMB, conf.workerDiskGB, conf.workerDiskType, conf.workerMachineType,
-         conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
-         conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
-         conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.componentGatewayEnabled, conf.skipDelete, conf.publicKey, conf.imageVersion, conf.customImageUri,
-         conf.clusterMetaData, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
-         conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes);
-  }
+  private final String tokenEndpoint;
+
+  private final boolean clusterReuseEnabled;
+  private final long clusterReuseThresholdMinutes;
+  private final String clusterReuseKey;
+  private final boolean enablePredefinedAutoScaling;
+
+  private final int computeReadTimeout;
+  private final int computeConnectionTimeout;
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
@@ -139,16 +168,24 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable, boolean skipDelete,
-                       @Nullable SSHPublicKey publicKey, @Nullable String imageVersion,
+                       @Nullable String imageVersion,
                        @Nullable String customImageUri,
-                       @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
+                       @Nullable Map<String, String> clusterMetaData,
+                       @Nullable Map<String, String> clusterLabels, List<String> networkTags,
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
-                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy,
-                       int idleTTLMinutes) {
+                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes,
+                       @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
+                       boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
+                       long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
+                       boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
+                       @Nullable String rootUrl) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
     this.projectId = projectId;
+    this.clusterReuseEnabled = clusterReuseEnabled;
+    this.clusterReuseThresholdMinutes = clusterReuseThresholdMinutes;
+    this.clusterReuseKey = clusterReuseKey;
     this.networkHostProjectID = Strings.isNullOrEmpty(networkHostProjectId) ? projectId : networkHostProjectId;
     this.network = network;
     this.subnet = subnet;
@@ -177,16 +214,24 @@ final class DataprocConf {
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.componentGatewayEnabled = componentGatewayEnable;
     this.skipDelete = skipDelete;
-    this.publicKey = publicKey;
     this.imageVersion = imageVersion;
     this.customImageUri = customImageUri;
     this.clusterMetaData = clusterMetaData;
+    this.clusterLabels = clusterLabels;
     this.networkTags = networkTags;
     this.initActions = initActions;
     this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
     this.clusterProperties = clusterProperties;
     this.autoScalingPolicy = autoScalingPolicy;
     this.idleTTLMinutes = idleTTLMinutes;
+    this.tokenEndpoint = tokenEndpoint;
+    this.secureBootEnabled = secureBootEnabled;
+    this.vTpmEnabled = vTpmEnabled;
+    this.integrityMonitoringEnabled = integrityMonitoringEnabled;
+    this.enablePredefinedAutoScaling = enablePredefinedAutoScaling;
+    this.computeReadTimeout = computeReadTimeout;
+    this.computeConnectionTimeout = computeConnectionTimeout;
+    this.rootUrl = rootUrl;
   }
 
   String getRegion() {
@@ -228,6 +273,10 @@ final class DataprocConf {
     return masterDiskType;
   }
 
+  int getTotalMasterCpus() {
+    return masterCPUs * masterNumNodes;
+  }
+
   int getWorkerNumNodes() {
     return workerNumNodes;
   }
@@ -253,6 +302,11 @@ final class DataprocConf {
   }
 
   int getTotalWorkerCPUs() {
+    if (enablePredefinedAutoScaling) {
+      return workerCPUs *
+        (PredefinedAutoScaling.getMaxSecondaryWorkerInstances() + PredefinedAutoScaling.getPrimaryWorkerInstances());
+    }
+
     return workerCPUs * (workerNumNodes + secondaryWorkerNumNodes);
   }
 
@@ -317,13 +371,12 @@ final class DataprocConf {
     return skipDelete;
   }
 
-  @Nullable
-  SSHPublicKey getPublicKey() {
-    return publicKey;
-  }
-
   Map<String, String> getClusterMetaData() {
     return clusterMetaData;
+  }
+
+  Map<String, String> getClusterLabels() {
+    return clusterLabels;
   }
 
   List<String> getNetworkTags() {
@@ -355,18 +408,67 @@ final class DataprocConf {
     return idleTTLMinutes;
   }
 
+  @Nullable
+  public String getTokenEndpoint() {
+    return tokenEndpoint;
+  }
+
+  public boolean isSecureBootEnabled() {
+    return secureBootEnabled;
+  }
+
+  public boolean isvTpmEnabled() {
+    return vTpmEnabled;
+  }
+
+  public boolean isIntegrityMonitoringEnabled() {
+    return integrityMonitoringEnabled;
+  }
+
+  public boolean isClusterReuseEnabled() {
+    return clusterReuseEnabled;
+  }
+
+  public long getClusterReuseThresholdMinutes() {
+    return clusterReuseThresholdMinutes;
+  }
+
+  public boolean isPredefinedAutoScaleEnabled() {
+    return enablePredefinedAutoScaling;
+  }
+
+  public int getComputeReadTimeout() {
+    return computeReadTimeout;
+  }
+
+  public int getComputeConnectionTimeout() {
+    return computeConnectionTimeout;
+  }
+
+  public String getRootUrl() {
+    return rootUrl;
+  }
+
   /**
-   * @return GoogleCredential for use with Compute
+   * @return a key that should be used along with the profile name to filter clusters with the same configuration.
+   * Always returns a value if cluster reuse is enabled, returns null otherwise.
+   */
+  @Nullable
+  public String getClusterReuseKey() {
+    return clusterReuseKey;
+  }
+
+  /**
+   * @return GoogleCredentials for use with Compute
    * @throws IOException if there was an error reading the account key
    */
-  GoogleCredential getComputeCredential() throws IOException {
+  GoogleCredentials getComputeCredential() throws IOException {
     if (accountKey == null) {
-      return GoogleCredential.getApplicationDefault();
+      return ComputeEngineCredentials.getOrCreate(tokenEndpoint);
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-      return GoogleCredential.fromStream(is)
-        .createScoped(Collections.singleton(CLOUD_PLATFORM_SCOPE));
+      return GoogleCredentials.fromStream(is).createScoped(Collections.singleton(CLOUD_PLATFORM_SCOPE));
     }
   }
 
@@ -376,22 +478,11 @@ final class DataprocConf {
    */
   GoogleCredentials getDataprocCredentials() throws IOException {
     if (accountKey == null) {
-      return getComputeEngineCredentials();
+      return ComputeEngineCredentials.getOrCreate(tokenEndpoint);
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
       return GoogleCredentials.fromStream(is).createScoped(CLOUD_PLATFORM_SCOPE);
-    }
-  }
-
-  private static GoogleCredentials getComputeEngineCredentials() throws IOException {
-    try {
-      GoogleCredentials credentials = ComputeEngineCredentials.create();
-      credentials.refreshAccessToken();
-      return credentials;
-    } catch (IOException e) {
-      throw new IOException("Unable to get credentials from the environment. "
-                              + "Please explicitly set the account key.", e);
     }
   }
 
@@ -409,22 +500,14 @@ final class DataprocConf {
    * @throws IllegalArgumentException if it is an invalid config
    */
   static DataprocConf create(Map<String, String> properties) {
-    return create(properties, null);
-  }
-
-  /**
-   * Create the conf from a property map while also performing validation.
-   *
-   * @param publicKey an optional {@link SSHPublicKey} for the configuration
-   * @throws IllegalArgumentException if it is an invalid config
-   */
-  static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
+      String endPoint = getString(properties, TOKEN_ENDPOINT_KEY);
       try {
-        getComputeEngineCredentials();
+        ComputeEngineCredentials.getOrCreate(endPoint);
       } catch (IOException e) {
-        throw new IllegalArgumentException(e.getMessage(), e);
+        throw new IllegalArgumentException("Unable to get credentials from the environment. "
+                                             + "Please explicitly set the account key.", e);
       }
     }
     String projectId = getString(properties, PROJECT_ID_KEY);
@@ -465,13 +548,26 @@ final class DataprocConf {
       throw new IllegalArgumentException(
         String.format("Invalid config 'masterNumNodes' = %d. Master nodes must be either 1 or 3.", masterNumNodes));
     }
-    int workerNumNodes = getInt(properties, "workerNumNodes", 2);
+
+    int workerNumNodes = getInt(properties, WORKER_NUM_NODES, 2);
+    int secondaryWorkerNumNodes = getInt(properties, SECONDARY_WORKER_NUM_NODES, 0);
+    String autoScalingPolicy = getString(properties, AUTOSCALING_POLICY);
+
+    boolean enablePredefinedAutoScaling =
+      Boolean.parseBoolean(properties.getOrDefault(PREDEFINED_AUTOSCALE_ENABLED, "false"));
+
+    if (enablePredefinedAutoScaling) {
+      workerNumNodes = PredefinedAutoScaling.getPrimaryWorkerInstances();
+      secondaryWorkerNumNodes = PredefinedAutoScaling.getMinSecondaryWorkerInstances();
+      autoScalingPolicy = ""; // The policy will be created while cluster provisioning
+    }
+
     if (workerNumNodes == 1) {
       throw new IllegalArgumentException(
         "Invalid config 'workerNumNodes' = 1. Worker nodes must either be zero for a single node cluster, " +
           "or at least 2 for a multi node cluster.");
     }
-    int secondaryWorkerNumNodes = getInt(properties, "secondaryWorkerNumNodes", 0);
+
     if (secondaryWorkerNumNodes < 0) {
       throw new IllegalArgumentException(
         String.format("Invalid config 'secondaryWorkerNumNodes' = %d. The value must be 0 or greater.",
@@ -523,11 +619,14 @@ final class DataprocConf {
 
     String imageVersion = getString(properties, IMAGE_VERSION);
     String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
-    String gcpCmekKeyName = getString(properties, "encryptionKeyName");
+    String gcpCmekKeyName = getString(properties, ENCRYPTION_KEY_NAME);
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
-      DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_MEATA_DATA), ";", "\\|"));
+      DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_META_DATA), ";", "\\|"));
+
+    Map<String, String> clusterLabels = Collections.unmodifiableMap(
+      DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_LABELS), ";", "\\|"));
 
     String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags")).orElse("");
     List<String> networkTags = Collections.unmodifiableList(Arrays.stream(networkTagsProperty.split(","))
@@ -541,8 +640,39 @@ final class DataprocConf {
 
     String initActions = getString(properties, "initActions");
     boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
-    String autoScalingPolicy = getString(properties, "autoScalingPolicy");
-    int idleTTL = getInt(properties, "idleTTL", 0);
+    int idleTTL = getInt(properties, CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
+
+    String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
+    boolean secureBootEnabled = Boolean.parseBoolean(properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));
+    boolean vTpmEnabled = Boolean.parseBoolean(properties.getOrDefault(VTPM_ENABLED, "false"));
+    boolean integrityMonitoringEnabled = Boolean.parseBoolean(
+      properties.getOrDefault(INTEGRITY_MONITORING_ENABLED, "false"));
+
+    boolean clusterReuseEnabled = Boolean.parseBoolean(
+      properties.getOrDefault(CLUSTER_REUSE_ENABLED, "true"));
+    int clusterReuseThresholdMinutes = getInt(properties, CLUSTER_REUSE_THRESHOLD_MINUTES,
+                                              CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT);
+    String clusterReuseKey = null;
+    if (clusterReuseEnabled) {
+      try {
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        digest.update(properties.entrySet()
+                        .stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .map(e -> e.getKey() + "=" + e.getValue())
+                        .collect(Collectors.joining(","))
+                        .getBytes(StandardCharsets.UTF_8)
+        );
+        clusterReuseKey = String.format("%040x", new BigInteger(1, digest.digest()));
+      } catch (NoSuchAlgorithmException e) {
+        throw new IllegalStateException("SHA-1 algorithm is not available for cluster reuse", e);
+      }
+    }
+    int computeReadTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_READ_TIMEOUT,
+                                    COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT);
+    int computeConnectionTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+                                          COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT);
+    String rootUrl = getString(properties, ROOT_URL);
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -553,8 +683,11 @@ final class DataprocConf {
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
                             componentGatewayEnabled, skipDelete,
-                            publicKey, imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
-                            runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL);
+                            imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
+                            initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
+                            tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
+                            clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
+                            enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl);
   }
 
   // the UI never sends nulls, it only sends empty strings.

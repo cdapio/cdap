@@ -41,7 +41,7 @@ public abstract class TableUpdater {
   public final byte[] columnFamily;
   public final String rowType;
   public final Configuration conf;
-  public boolean tableExists = false;
+  public boolean tableExists;
 
   private class TimeValue {
     private long time;

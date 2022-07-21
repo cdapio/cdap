@@ -48,17 +48,19 @@ import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -70,7 +72,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -107,10 +110,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final NamespaceAdmin namespaceAdmin;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final ProgramStopSubscriberService programStopSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final StructuredTableAdmin structuredTableAdmin;
-  private final StructuredTableRegistry structuredTableRegistry;
   private final Path previewIdDirPath;
+  private final PreferencesFetcher preferencesFetcher;
 
   @Inject
   DefaultPreviewRunner(MessagingService messagingService,
@@ -125,10 +129,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        NamespaceAdmin namespaceAdmin,
                        MetricsCollectionService metricsCollectionService,
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
+                       ProgramStopSubscriberService programStopSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
-                       StructuredTableRegistry structuredTableRegistry,
-                       CConfiguration cConf) {
+                       CConfiguration cConf,
+                       PreferencesFetcher preferencesFetcher) {
     this.messagingService = messagingService;
     this.dsOpExecService = dsOpExecService;
     this.datasetService = datasetService;
@@ -141,10 +146,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.namespaceAdmin = namespaceAdmin;
     this.metricsCollectionService = metricsCollectionService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
+    this.programStopSubscriberService = programStopSubscriberService;
     this.levelDBTableService = levelDBTableService;
     this.structuredTableAdmin = structuredTableAdmin;
-    this.structuredTableRegistry = structuredTableRegistry;
     this.previewIdDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "previewid").toAbsolutePath();
+    this.preferencesFetcher = preferencesFetcher;
   }
 
   @Override
@@ -171,12 +177,19 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     DataTracerFactoryProvider.setDataTracerFactory(preview, dataTracerFactory);
 
     String config = request.getConfig() == null ? null : GSON.toJson(request.getConfig());
+    PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
+
+    PreferencesDetail preferences = preferencesFetcher.get(programId, true);
+    Map<String, String> userProps = new HashMap<>(preferences.getProperties());
+    if (previewConfig != null) {
+      userProps.putAll(previewConfig.getRuntimeArgs());
+    }
 
     try {
       LOG.debug("Deploying preview application for {}", programId);
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
                                             artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
-                                            request.canUpdateSchedules());
+                                            request.canUpdateSchedules(), true, userProps);
     } catch (Exception e) {
       PreviewStatus previewStatus = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, submitTimeMillis,
                                                       new BasicThrowable(e), null, null);
@@ -185,9 +198,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }
 
     LOG.debug("Starting preview for {}", programId);
-    final PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
-    ProgramController controller = programLifecycleService.start(
-      programId, previewConfig == null ? Collections.emptyMap() : previewConfig.getRuntimeArgs(), false);
+    ProgramController controller = programLifecycleService.start(programId, userProps, false, true);
 
     long startTimeMillis = System.currentTimeMillis();
     AtomicBoolean timeout = new AtomicBoolean();
@@ -295,7 +306,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting preview runner service");
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, false);
+    StoreDefinition.createAllTables(structuredTableAdmin);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
@@ -313,7 +324,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.start(),
       programRuntimeService.start(),
       metricsCollectionService.start(),
-      programNotificationSubscriberService.start()
+      programNotificationSubscriberService.start(),
+      programStopSubscriberService.start()
     ).get();
 
     Files.createDirectories(previewIdDirPath);
@@ -345,6 +357,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
+    programStopSubscriberService.stopAndWait();
     datasetService.stopAndWait();
     dsOpExecService.stopAndWait();
     if (messagingService instanceof Service) {

@@ -65,17 +65,17 @@ class RemoteExecutionTwillController implements TwillController {
   private final ScheduledExecutorService scheduler;
   private final RemoteProcessController remoteProcessController;
   private final RemoteExecutionService executionService;
-  private final long gracefulShutdownMillis;
   private final long pollCompletedMillis;
+  private final boolean terminateWithController;
   private volatile boolean terminateOnServiceStop;
 
   RemoteExecutionTwillController(CConfiguration cConf, ProgramRunId programRunId,
                                  CompletionStage<?> startupCompletionStage,
                                  RemoteProcessController remoteProcessController,
-                                 ScheduledExecutorService scheduler, RemoteExecutionService service) {
+                                 ScheduledExecutorService scheduler, RemoteExecutionService service,
+                                 boolean terminateWithController) {
     this.programRunId = programRunId;
     this.runId = RunIds.fromString(programRunId.getRun());
-    this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
     this.pollCompletedMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
 
     // On start up task succeeded, complete the started stage to unblock the onRunning()
@@ -107,6 +107,7 @@ class RemoteExecutionTwillController implements TwillController {
     this.scheduler = scheduler;
     this.remoteProcessController = remoteProcessController;
     this.executionService = service;
+    this.terminateWithController = terminateWithController;
   }
 
   public void release() {
@@ -148,24 +149,22 @@ class RemoteExecutionTwillController implements TwillController {
       return CompletableFuture.completedFuture(this);
     }
 
+    // graceful stop messages are handled by the RemoteClient.
+    // It will shut itself down, so this just needs to return a future that completes when the
+    // remote process is no longer running
+
     CompletableFuture<TwillController> result = completion.thenApply(r -> r);
     scheduler.execute(() -> {
       try {
-        remoteProcessController.terminate();
-
+        if (terminateWithController) {
+          remoteProcessController.terminate();
+        }
         // Poll for completion
-        long killTimeMillis = System.currentTimeMillis() + gracefulShutdownMillis + pollCompletedMillis * 5;
         scheduler.schedule(new Runnable() {
           @Override
           public void run() {
             try {
               if (!remoteProcessController.isRunning()) {
-                completion.complete(RemoteExecutionTwillController.this);
-                return;
-              }
-              // If the process is still running, kills it if it reaches the kill time.
-              if (System.currentTimeMillis() >= killTimeMillis) {
-                remoteProcessController.kill();
                 completion.complete(RemoteExecutionTwillController.this);
                 return;
               }

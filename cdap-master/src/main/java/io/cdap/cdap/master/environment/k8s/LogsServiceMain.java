@@ -21,7 +21,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -44,16 +46,15 @@ import io.cdap.cdap.logging.logbuffer.LogBufferService;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.service.LogQueryService;
-import io.cdap.cdap.logging.service.LogSaverStatusService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.http.HttpHandler;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +80,6 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
       new MessagingClientModule(),
       getDataFabricModule(),
       // Always use local table implementations, which use LevelDB.
@@ -103,15 +103,13 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
             .toInstance(1);
           bind(AppenderContext.class).to(DistributedAppenderContext.class);
 
+          // Bind the log buffer as the log saver service
+          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
+            (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
+          CommonHandlers.add(handlerBinder);
+
           bind(LogBufferService.class).in(Scopes.SINGLETON);
           expose(LogBufferService.class);
-
-          // Bind the status service
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
-            (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER));
-          CommonHandlers.add(handlerBinder);
-          bind(LogSaverStatusService.class).in(Scopes.SINGLETON);
-          expose(LogSaverStatusService.class);
         }
       }
     );
@@ -125,8 +123,11 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
     services.add(injector.getInstance(LogBufferService.class));
     // log handler
     services.add(injector.getInstance(LogQueryService.class));
-    // log saver status service
-    services.add(injector.getInstance(LogSaverStatusService.class));
+    // ZK client service
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
   }
 
   @Nullable

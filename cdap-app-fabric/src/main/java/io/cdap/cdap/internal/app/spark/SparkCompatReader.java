@@ -19,6 +19,8 @@ package io.cdap.cdap.internal.app.spark;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
  * Determines the SparkCompat version.
  */
 public class SparkCompatReader {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkCompatReader.class);
 
   private SparkCompatReader() {
     // no-op for helper class
@@ -34,7 +37,7 @@ public class SparkCompatReader {
 
   /**
    * Read {@link SparkCompat} from the system properties, environment, or the {@link CConfiguration}.
-   * Returns {@link SparkCompat#SPARK1_2_10} if it is not defined in any place.
+   * Tries to detect or falls back to {@link SparkCompat#SPARK2_2_11} if it is not defined in any place.
    *
    * @param cConf the {@link CConfiguration} for CDAP
    * @return the configured {@link SparkCompat}
@@ -48,7 +51,7 @@ public class SparkCompatReader {
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 
     if (compatStr == null) {
-      return SparkCompat.SPARK1_2_10;
+      return SparkCompat.SPARK2_2_11;
     }
 
     for (SparkCompat sparkCompat : SparkCompat.values()) {

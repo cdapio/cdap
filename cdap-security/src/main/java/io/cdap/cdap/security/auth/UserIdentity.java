@@ -30,11 +30,17 @@ import java.util.Map;
  */
 public class UserIdentity {
   static final class Schemas {
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();
     static {
       schemas.put(1, Schema.recordOf("AccessTokenIdentifier",
                                      Schema.Field.of("username", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("groups", Schema.arrayOf(Schema.of(Schema.Type.STRING))),
+                                     Schema.Field.of("issueTimestamp", Schema.of(Schema.Type.LONG)),
+                                     Schema.Field.of("expireTimestamp", Schema.of(Schema.Type.LONG))));
+      schemas.put(2, Schema.recordOf("AccessTokenIdentifier",
+                                     Schema.Field.of("username", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("identifierType", Schema.enumWith(IdentifierType.class)),
                                      Schema.Field.of("groups", Schema.arrayOf(Schema.of(Schema.Type.STRING))),
                                      Schema.Field.of("issueTimestamp", Schema.of(Schema.Type.LONG)),
                                      Schema.Field.of("expireTimestamp", Schema.of(Schema.Type.LONG))));
@@ -53,14 +59,39 @@ public class UserIdentity {
     }
   }
 
+  /**
+   * Identifies the type of {@link UserIdentity}. This is used to distinguish between access tokens generated
+   * for the external authentication server and the access tokens generated for use by internal services.
+   */
+  public enum IdentifierType {
+    /**
+     * INVALID represents access tokens which use a previous schema version
+     * without IdentifierType support.
+     */
+    INVALID,
+    /**
+     * EXTERNAL represents access tokens which may be issued to end-users.
+     * External access tokens are checked by the authorization extension.
+     */
+    EXTERNAL,
+    /**
+     * INTERNAL represents access tokens used by system services.
+     * Internal access tokens typically have higher-privileged access and are checked by the
+     * {@link io.cdap.cdap.security.authorization.InternalAccessEnforcer}.
+     */
+    INTERNAL
+  }
+
   private final String username;
+  private final IdentifierType identifierType;
   private final List<String> groups;
   private final long issueTimestamp;
   private final long expireTimestamp;
 
-  public UserIdentity(String username, Collection<String> groups, long issueTimestamp,
-                      long expireTimestamp) {
+  public UserIdentity(String username, IdentifierType identifierType, Collection<String> groups,
+                      long issueTimestamp, long expireTimestamp) {
     this.username = username;
+    this.identifierType = identifierType;
     this.groups = ImmutableList.copyOf(groups);
     this.issueTimestamp = issueTimestamp;
     this.expireTimestamp = expireTimestamp;
@@ -74,7 +105,18 @@ public class UserIdentity {
   }
 
   /**
-   * Returns the list of verified group memberships for this user identity.
+   * Returns the identifier type for this identity.
+   * The identifier type can be null for older access token schemas. In those cases, return INVALID type.
+   */
+  public IdentifierType getIdentifierType() {
+    if (identifierType == null) {
+      return IdentifierType.INVALID;
+    }
+    return identifierType;
+  }
+
+  /**
+   * Returns the list of verified group memberships for this identity.
    */
   public List<String> getGroups() {
     return groups;
@@ -119,6 +161,7 @@ public class UserIdentity {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("username", username)
+      .add("tokenType", identifierType)
       .add("groups", groups)
       .add("issueTimestamp", issueTimestamp)
       .add("expireTimestamp", expireTimestamp)

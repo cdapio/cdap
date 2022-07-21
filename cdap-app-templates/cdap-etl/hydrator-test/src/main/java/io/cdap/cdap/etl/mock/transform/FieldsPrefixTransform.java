@@ -103,8 +103,9 @@ public class FieldsPrefixTransform extends Transform<StructuredRecord, Structure
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("prefix", new PluginPropertyField("prefix", "", "string", true, false));
     properties.put("schemaStr", new PluginPropertyField("schemaStr", "", "string", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "FieldsPrefixTransform", "", FieldsPrefixTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("FieldsPrefixTransform").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(FieldsPrefixTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 
 }

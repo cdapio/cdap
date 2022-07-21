@@ -16,13 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -30,12 +27,10 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.common.twill.TwillAppNames;
+import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.Containers;
@@ -43,10 +38,8 @@ import io.cdap.cdap.proto.DistributedProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -56,8 +49,6 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,29 +68,22 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   private final TwillRunner twillRunner;
   private final Store store;
-  private final Impersonator impersonator;
   private final ProgramStateWriter programStateWriter;
 
   @Inject
-  DistributedProgramRuntimeService(CConfiguration cConf,
-                                   ProgramRunnerFactory programRunnerFactory,
-                                   TwillRunner twillRunner, Store store,
-                                   // for running a program, we only need EXECUTE on the program, there should be no
-                                   // privileges needed for artifacts
-                                   @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                     ArtifactRepository noAuthArtifactRepository,
-                                   Impersonator impersonator, ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
+  DistributedProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                   TwillRunner twillRunner, Store store, ProgramStateWriter programStateWriter,
+                                   ProgramRunDispatcherFactory programRunDispatcherFactory) {
+    super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory, true);
     this.twillRunner = twillRunner;
     this.store = store;
-    this.impersonator = impersonator;
     this.programStateWriter = programStateWriter;
   }
 
   @Override
   protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId,
                                           final Runnable cleanUpTask) {
-    SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(controller, programId, null);
+    SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(controller, programId, cleanUpTask);
 
     // Add a listener that publishes KILLED status notification when the YARN application is killed in case that
     // the KILLED status notification is not published from the YARN application container, so we don't need to wait
@@ -127,9 +111,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
       @Override
       public void alive() {
-        if (actualController instanceof AbstractTwillProgramController) {
-          cleanUpTask.run();
-        }
+        cleanUpTask.run();
       }
 
       @Override
@@ -141,22 +123,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  protected void copyArtifact(ArtifactId artifactId,
-                              final ArtifactDetail artifactDetail, final File targetFile) throws IOException {
-    try {
-      impersonator.doAs(artifactId, () -> {
-        Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
-        return null;
-      });
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      // should not happen
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public synchronized RuntimeInfo lookup(ProgramId programId, final RunId runId) {
+  public RuntimeInfo lookup(ProgramId programId, final RunId runId) {
     RuntimeInfo runtimeInfo = super.lookup(programId, runId);
     if (runtimeInfo != null) {
       return runtimeInfo;
@@ -164,7 +131,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     // Lookup the Twill RunId for the given run
     ProgramRunId programRunId = programId.run(runId.getId());
-    RunRecordDetail record = store.getRun(programRunId);
+    RunRecordDetail record;
+    synchronized (this) {
+      record = store.getRun(programRunId);
+    }
     if (record == null) {
       return null;
     }
@@ -178,7 +148,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
+  public Map<RunId, RuntimeInfo> list(ProgramType type) {
     Map<RunId, RuntimeInfo> result = new HashMap<>(super.list(type));
 
     // Table holds the Twill RunId and TwillController associated with the program matching the input type
@@ -214,9 +184,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    Collection<RunRecordDetail> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
-      record.getTwillRunId() != null
-        && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
+    Collection<RunRecordDetail> activeRunRecords;
+    synchronized (this) {
+      activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
+        record.getTwillRunId() != null
+          && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
+    }
 
     for (RunRecordDetail record : activeRunRecords) {
       String twillRunId = record.getTwillRunId();

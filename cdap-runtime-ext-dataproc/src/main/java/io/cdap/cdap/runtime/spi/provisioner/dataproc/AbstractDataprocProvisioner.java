@@ -16,10 +16,13 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.runtime.spi.VersionInfo;
+import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -42,6 +45,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -57,6 +62,18 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   private static final String BUCKET = "bucket";
   // Keys for looking up system properties
   private static final String LABELS_PROPERTY = "labels";
+  private static final Pattern SIMPLE_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)$");
+  private static final Pattern CLUSTER_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)-.*");
+  protected static final VersionInfo DATAPROC_1_5_VERSION = new DataprocImageVersion("1.5");
+  public static final String LABEL_VERSON = "cdap-version";
+  public static final String LABEL_PROFILE = "cdap-profile";
+  public static final String LABEL_REUSE_KEY = "cdap-reuse-key";
+  public static final String LABEL_REUSE_UNTIL = "cdap-reuse-until";
+  /**
+   * In reuse scenario we can't find "our" cluster by cluster name, so let's put it into the label
+   * @see {@link DataprocProvisioner#getAllocatedClusterName(ProvisionerContext)}
+   */
+  public static final String LABEL_RUN_KEY = "cdap-run-key";
 
   private final ProvisionerSpecification spec;
   private ProvisionerSystemContext systemContext;
@@ -109,12 +126,13 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   /**
-   * Gets the cluster name for the given context
+   * Gets the default cluster name for the given context. See {@link #getAllocatedClusterName} to get
+   * the name of actually allocated cluster (if any).
    *
    * @param context the context
    * @return a string that is a valid cluster name
    */
-  protected abstract String getClusterName(ProvisionerContext context);
+  protected abstract String getClusterName(ProvisionerContext context) throws Exception;
 
   /**
    * Performs the delete cluster action.
@@ -152,20 +170,24 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     if (!conf.isRuntimeJobManagerEnabled()) {
       return Optional.empty();
     }
-    String clusterName = getClusterName(context);
-    String projectId = conf.getProjectId();
-    String region = conf.getRegion();
-    String bucket = properties.get(BUCKET);
-
-    Map<String, String> systemLabels = getSystemLabels();
     try {
+      String clusterName = getClusterName(context);
+      String projectId = conf.getProjectId();
+      String region = conf.getRegion();
+      String bucket = properties.get(BUCKET);
+
+      Map<String, String> systemLabels = getSystemLabels();
       return Optional.of(
         new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
-                                                              DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
+                                                              getRootUrl(conf),
                                                               projectId, region, bucket, systemLabels)));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
+  }
+
+  protected String getRootUrl(DataprocConf conf) {
+    return Optional.ofNullable(conf.getRootUrl()).orElse(ClusterControllerSettings.getDefaultEndpoint());
   }
 
   @Override
@@ -181,7 +203,10 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     if (DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(property).find()) {
       return true;
     }
-    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, BUCKET).contains(property);
+    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY,
+                           DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
+                           DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+                           DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT).contains(property);
   }
 
   /**
@@ -222,9 +247,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     ProvisionerSystemContext systemContext = getSystemContext();
 
     // dataproc only allows label values to be lowercase letters, numbers, or dashes
-    String cdapVersion = systemContext.getCDAPVersion().toLowerCase();
-    cdapVersion = cdapVersion.replaceAll("\\.", "_");
-    labels.put("cdap-version", cdapVersion);
+    labels.put(LABEL_VERSON, getVersionLabel());
 
     String extraLabelsStr = systemContext.getProperties().get(LABELS_PROPERTY);
     // labels are expected to be in format:
@@ -234,6 +257,12 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     }
 
     return Collections.unmodifiableMap(labels);
+  }
+
+  protected String getVersionLabel() {
+    String cdapVersion = systemContext.getCDAPVersion().toLowerCase();
+    cdapVersion = cdapVersion.replaceAll("\\.", "_");
+    return cdapVersion;
   }
 
   /**
@@ -248,5 +277,28 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       projectId = getSystemContext().getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, projectId);
     }
     return projectId;
+  }
+
+  @Nullable
+  protected VersionInfo extractVersion(String imageVersion) {
+    try {
+      // Test simple version numbers (e.g. 1.3 1.5 2.0)
+      Matcher simpleVersionMatcher = SIMPLE_VERSION_PATTERN.matcher(imageVersion);
+      if (simpleVersionMatcher.matches()) {
+        String version = simpleVersionMatcher.group(1);
+        return new DataprocImageVersion(version);
+      }
+
+      // Test dataproc versions (e.g. 2.0.37-debian10)
+      Matcher clusterVersionMatcher = CLUSTER_VERSION_PATTERN.matcher(imageVersion);
+      if (clusterVersionMatcher.matches()) {
+        String version = clusterVersionMatcher.group(1);
+        return new DataprocImageVersion(version);
+      }
+    } catch (IllegalArgumentException iae) {
+      LOG.warn("Unable to determine dataproc image version for image version string {}", imageVersion, iae);
+    }
+
+    return null;
   }
 }

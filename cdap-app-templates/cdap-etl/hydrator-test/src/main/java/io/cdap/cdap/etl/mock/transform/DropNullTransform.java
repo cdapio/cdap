@@ -100,7 +100,8 @@ public class DropNullTransform extends Transform<StructuredRecord, StructuredRec
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "DropField", "", DropNullTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("DropField").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(DropNullTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

@@ -17,7 +17,9 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -42,8 +44,8 @@ import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +72,6 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
       new MessagingClientModule(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       new MetricsStoreModule(),
@@ -101,6 +102,10 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     services.add(injector.getInstance(MetricsQueryService.class));
     services.add(injector.getInstance(MetricsAdminSubscriberService.class));
     services.add(injector.getInstance(MetricsCleanUpService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
+    }
   }
 
   @Nullable
@@ -109,10 +114,5 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.METRICS);
-  }
-
-  @Override
-  protected void initializeDataSourceConnection(CConfiguration cConf) {
-    // no-op since we use leveldb for metrics
   }
 }

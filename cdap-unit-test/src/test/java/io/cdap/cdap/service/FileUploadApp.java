@@ -17,7 +17,6 @@
 package io.cdap.cdap.service;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
@@ -125,7 +124,7 @@ public class FileUploadApp extends AbstractApplication {
         @Override
         public void onFinish(HttpServiceResponder responder) throws Exception {
           channel.close();
-          String uploadedMd5 = BaseEncoding.base64().encode(messageDigest.digest());
+          String uploadedMd5 = java.util.Base64.getEncoder().encodeToString(messageDigest.digest());
           if (!md5.equals(uploadedMd5)) {
             throw new IllegalArgumentException("MD5 not match. Expected '" + md5 + "', received '" + uploadedMd5 + "'");
           }

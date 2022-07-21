@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2016 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-app-fabric</artifactId>
@@ -108,6 +108,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-event-writer-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-features</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-api</artifactId>
     </dependency>
@@ -132,7 +142,7 @@
       <artifactId>async-http-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
+      <groupId>io.cdap.twill</groupId>
       <artifactId>twill-yarn</artifactId>
     </dependency>
     <dependency>
@@ -218,11 +228,10 @@
       <artifactId>jul-to-slf4j</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.opentable.components</groupId>
-      <artifactId>otj-pg-embedded</artifactId>
-      <scope>test</scope>
+      <groupId>io.zonky.test</groupId>
+      <artifactId>embedded-postgres</artifactId>
     </dependency>
-   <dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minikdc</artifactId>
     </dependency>
@@ -233,7 +242,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-test</artifactId>
-      <version>6.5.0-SNAPSHOT</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -247,6 +256,11 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.11</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

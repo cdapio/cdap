@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.schedule;
 
 import io.cdap.cdap.api.ProgramStatus;
-import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import org.apache.twill.api.RunId;
@@ -36,9 +35,9 @@ public interface ProgramStatusTriggerInfo extends TriggerInfo {
   String getNamespace();
 
   /**
-   * @return The application specification of the application that contains the triggering program.
+   * @return The name of the application that contains the triggering program.
    */
-  ApplicationSpecification getApplicationSpecification();
+  String getApplicationName();
 
   /**
    * @return The program type of the triggering program.

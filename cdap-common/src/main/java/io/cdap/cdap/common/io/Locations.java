@@ -26,6 +26,7 @@ import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.FileUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.hadoop.conf.Configuration;
@@ -210,13 +211,29 @@ public final class Locations {
   /**
    * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If creation
    * of the hardlink failed or if the Location is not local, it will copy the the location to the given target path.
+   * Unlike {@link #linkOrCopy(Location, File)} will try to overwrite target file if it already exists.
    *
    * @param location location to hardlink or copy from
    * @param targetPath the target file path
    * @return the target path
    * @throws IOException if copying failed
    */
+  public static File linkOrCopyOverwrite(Location location, File targetPath) throws IOException {
+    targetPath.delete();
+    return linkOrCopy(location, targetPath);
+  }
+
+  /**
+   * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If creation
+   * of the hardlink failed or if the Location is not local, it will copy the the location to the given target path.
+   *
+   * @param location location to hardlink or copy from
+   * @param targetPath the target file path
+   * @return the target path
+   * @throws IOException if copying failed or file already exists
+   */
   public static File linkOrCopy(Location location, File targetPath) throws IOException {
+    Files.createDirectories(targetPath.toPath().getParent());
     URI uri = location.toURI();
     if ("file".equals(uri.getScheme())) {
       try {
@@ -253,7 +270,7 @@ public final class Locations {
   public static void unpack(Location archive, File targetDir) throws IOException {
     DirUtils.mkdirs(targetDir);
 
-    String extension = com.google.common.io.Files.getFileExtension(archive.getName()).toLowerCase();
+    String extension = FileUtils.getExtension(archive.getName()).toLowerCase();
     switch (extension) {
       case "zip":
       case "jar":

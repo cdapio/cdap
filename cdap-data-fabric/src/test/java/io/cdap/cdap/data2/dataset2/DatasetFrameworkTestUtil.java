@@ -40,6 +40,7 @@ import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -121,39 +122,42 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     return framework;
   }
 
-  public void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException {
+  public void addModule(DatasetModuleId moduleId, DatasetModule module)
+    throws DatasetManagementException, UnauthorizedException {
     framework.addModule(moduleId, module);
   }
 
-  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException {
+  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException, UnauthorizedException {
     framework.deleteModule(moduleId);
   }
 
   public void createInstance(String type, DatasetId datasetInstanceId, DatasetProperties properties)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, UnauthorizedException {
     framework.addInstance(type, datasetInstanceId, properties);
   }
 
   public void deleteInstance(DatasetId datasetInstanceId)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, UnauthorizedException {
     framework.deleteInstance(datasetInstanceId);
   }
 
   public <T extends Dataset> T getInstance(DatasetId datasetInstanceId)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
     return getInstance(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS);
   }
 
   public <T extends Dataset> T getInstance(DatasetId datasetInstanceId, Map<String, String> arguments)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, UnauthorizedException {
     return framework.getDataset(datasetInstanceId, arguments, null);
   }
 
-  public DatasetSpecification getSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getSpec(DatasetId datasetInstanceId)
+    throws DatasetManagementException, UnauthorizedException {
     return framework.getDatasetSpec(datasetInstanceId);
   }
 
-  public Collection<DatasetSpecificationSummary> list(NamespaceId namespace) throws DatasetManagementException {
+  public Collection<DatasetSpecificationSummary> list(NamespaceId namespace)
+    throws DatasetManagementException, UnauthorizedException {
     return framework.getInstances(namespace);
   }
 

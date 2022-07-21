@@ -48,6 +48,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
@@ -97,6 +98,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -105,6 +108,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 public class CoreSchedulerServiceTest extends AppFabricTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerServiceTest.class);
 
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
   private static final ApplicationId APP1_ID = NS_ID.app("app1");
@@ -376,7 +381,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     ArtifactId artifactId = ANOTHER_WORKFLOW.getNamespaceId().artifact("test", "1.0").toApiArtifactId();
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, "desc", null, artifactId,
+      AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, ProjectInfo.getVersion().toString(),
+      "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());
@@ -594,7 +600,14 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   private void waitForCompleteRuns(int numRuns, final ProgramId program) throws Exception {
-    Tasks.waitFor(numRuns, () ->  getRuns(program, ProgramRunStatus.COMPLETED), 30, TimeUnit.SECONDS);
+    try {
+      Tasks.waitFor(numRuns, () -> getRuns(program, ProgramRunStatus.COMPLETED), 30, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      LOG.info("waitForCompleteRuns raised an exception, {} runs expected for program {}", numRuns, program);
+      store.getRuns(program, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE)
+        .forEach((key, value) -> LOG.info("ProgramRunID: {}, RunRecordDetail: {}", key, value));
+      throw e;
+    }
   }
 
   private int getRuns(ProgramId workflowId, ProgramRunStatus status) {

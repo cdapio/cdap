@@ -16,11 +16,9 @@
 
 package io.cdap.cdap.spi.data.sql;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -42,18 +40,16 @@ public class SqlTransactionRunner implements TransactionRunner {
   private final DataSource dataSource;
   private final MetricsCollectionService metricsCollectionService;
   private final boolean emitTimeMetrics;
-
-  @VisibleForTesting
-  public SqlTransactionRunner(StructuredTableAdmin admin, DataSource dataSource) {
-    this(admin, dataSource, new NoOpMetricsCollectionService(), false);
-  }
+  private final int scanFetchSize;
 
   public SqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource,
-                              MetricsCollectionService metricsCollectionService, boolean emitTimeMetrics) {
+                              MetricsCollectionService metricsCollectionService,
+                              boolean emitTimeMetrics, int scanFetchSize) {
     this.admin = tableAdmin;
     this.dataSource = dataSource;
     this.metricsCollectionService = metricsCollectionService;
     this.emitTimeMetrics = emitTimeMetrics;
+    this.scanFetchSize = scanFetchSize;
   }
 
   @Override
@@ -71,7 +67,8 @@ public class SqlTransactionRunner implements TransactionRunner {
       metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_COUNT, 1L);
       connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
       connection.setAutoCommit(false);
-      runnable.run(new SqlStructuredTableContext(admin, connection, metricsCollector, emitTimeMetrics));
+      runnable.run(new SqlStructuredTableContext(admin, connection, metricsCollector, emitTimeMetrics,
+          this.scanFetchSize));
       connection.commit();
     } catch (Exception e) {
       Throwable cause = e.getCause();

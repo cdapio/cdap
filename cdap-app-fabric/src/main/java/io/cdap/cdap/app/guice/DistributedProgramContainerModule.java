@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,10 @@
 package io.cdap.cdap.app.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.runtime.Arguments;
@@ -32,6 +35,8 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -49,6 +54,7 @@ import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -56,6 +62,7 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.messaging.client.ClientMessagingService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
@@ -66,6 +73,8 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.CoreSecurityModule;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -114,12 +123,9 @@ public class DistributedProgramContainerModule extends AbstractModule {
   @Override
   protected void configure() {
     List<Module> modules = getCoreModules();
-    String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
 
-    AuthenticationContextModules authModules = new AuthenticationContextModules();
-    modules.add(principal == null
-                  ? authModules.getProgramContainerModule()
-                  : authModules.getProgramContainerModule(principal));
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
 
     install(Modules.override(modules).with(new AbstractModule() {
       @Override
@@ -133,7 +139,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
       }
     }));
 
-    bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+    bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
   }
 
   private List<Module> getCoreModules() {
@@ -155,10 +161,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
     modules.add(new NamespaceQueryAdminModule());
     modules.add(new DataSetsModules().getDistributedModules());
+    modules.add(new ProgramStateWriterModule(clusterMode, systemArgs.hasOption(ProgramOptionConstants.PEER_NAME)));
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
         bind(WorkflowStateWriter.class).to(MessagingWorkflowStateWriter.class);
 
         // don't need to perform any impersonation from within user programs
@@ -234,6 +240,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addOnPremiseModules(List<Module> modules) {
+    CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
+    modules.add(new AuthenticationContextModules().getMasterModule());
+    modules.add(coreSecurityModule);
+
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
@@ -243,6 +253,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
       return;
+    }
+
+    if (coreSecurityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
     }
 
     modules.add(new AbstractModule() {
@@ -261,16 +275,92 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   private void addIsolatedModules(List<Module> modules) {
     modules.add(new RemoteExecutionDiscoveryModule());
-    modules.add(new TMSLogAppenderModule());
+    // Use RemoteLogAppender if we're running in tethered mode so that logs get written to the log saver.
+    // Otherwise write to the TMSLogAppender, will be consumed by RuntimeClientService.
+    if (programOpts.getArguments().getOption(ProgramOptionConstants.PEER_NAME) != null) {
+      modules.add(new RemoteLogAppenderModule());
+    } else {
+      modules.add(new TMSLogAppenderModule());
+    }
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
       }
     });
+
+    // For execution within a remote cluster we use a token from a file passed to
+    // the driver or configuration passed from driver to workers, see
+    // io.cdap.cdap.security.auth.context.AuthenticationContextModules.loadRemoteCredentials
+    AuthenticationContextModules authModules = new AuthenticationContextModules();
+    String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+    if (principal == null) {
+      modules.add(authModules.getProgramContainerModule(cConf));
+    } else {
+      modules.add(authModules.getProgramContainerModule(cConf, principal));
+    }
   }
 
   private static String generateClientId(ProgramRunId programRunId, String instanceId) {
     return String.format("%s.%s.%s", programRunId.getParent(), programRunId.getRun(), instanceId);
+  }
+
+  /**
+   * A Guice module to provide {@link ProgramStateWriter} binding. In normal same cluster / remote cluster execution,
+   * it just publishes program states to TMS based on the discovery service. For tethered execution,
+   * it publishes program states to the TMS running in the current master environment,
+   * instead of using the normal discovery service that bind to talk to the originating CDAP instance.
+   */
+  private static final class ProgramStateWriterModule extends PrivateModule {
+
+    private final ClusterMode clusterMode;
+    private final boolean tethered;
+
+    private ProgramStateWriterModule(ClusterMode clusterMode, boolean tethered) {
+      this.clusterMode = clusterMode;
+      this.tethered = tethered;
+    }
+
+    @Override
+    protected void configure() {
+      MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+
+      if (clusterMode == ClusterMode.ISOLATED && tethered && masterEnv != null) {
+        bind(MasterEnvironment.class).toInstance(masterEnv);
+        bind(ProgramStateWriter.class).toProvider(ProgramStateWriterProvider.class);
+      } else {
+        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
+      }
+
+      expose(ProgramStateWriter.class);
+    }
+  }
+
+  /**
+   * A guice {@link Provider} for providing the binding for {@link ProgramStateWriter} that is used in tethered
+   * execution.
+   */
+  private static final class ProgramStateWriterProvider implements Provider<ProgramStateWriter> {
+
+    private final CConfiguration cConf;
+    private final MasterEnvironment masterEnv;
+    private final InternalAuthenticator internalAuthenticator;
+
+    @Inject
+    ProgramStateWriterProvider(CConfiguration cConf, MasterEnvironment masterEnv,
+                               InternalAuthenticator internalAuthenticator) {
+      this.cConf = cConf;
+      this.masterEnv = masterEnv;
+      this.internalAuthenticator = internalAuthenticator;
+    }
+
+    @Override
+    public ProgramStateWriter get() {
+      RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
+        masterEnv.getDiscoveryServiceClientSupplier().get(),
+        internalAuthenticator);
+
+      return new MessagingProgramStateWriter(cConf, new ClientMessagingService(cConf, remoteClientFactory));
+    }
   }
 }

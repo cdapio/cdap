@@ -33,6 +33,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -73,6 +74,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataPublisher metadataPublisher;
   private final FieldLineageWriter fieldLineageWriter;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final RemoteClientFactory remoteClientFactory;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -82,7 +84,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                SecureStoreManager secureStoreManager, MessagingService messagingService,
                                ProgramStateWriter programStateWriter, MetadataReader metadataReader,
                                MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
-                               NamespaceQueryAdmin namespaceQueryAdmin) {
+                               NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.metricsCollectionService = metricsCollectionService;
@@ -99,6 +101,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataPublisher = metadataPublisher;
     this.fieldLineageWriter = fieldLineageWriter;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.remoteClientFactory = remoteClientFactory;
   }
 
   @Override
@@ -135,7 +138,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                  txClient, workflowStateWriter, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService,
                                                  programStateWriter, metadataReader, metadataPublisher,
-                                                 fieldLineageWriter, namespaceQueryAdmin);
+                                                 fieldLineageWriter, namespaceQueryAdmin, remoteClientFactory);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.

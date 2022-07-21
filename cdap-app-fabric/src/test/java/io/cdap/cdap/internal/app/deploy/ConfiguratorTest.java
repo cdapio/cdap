@@ -18,14 +18,15 @@ package io.cdap.cdap.internal.app.deploy;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
-import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.runtime.DummyProgramRunnerFactory;
@@ -33,8 +34,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.test.AppJarHelper;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
@@ -42,13 +44,13 @@ import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
-import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -65,16 +67,14 @@ import java.util.concurrent.TimeUnit;
  * Tests the configurators.
  *
  * NOTE: Until we can build the JAR it's difficult to test other configurators
- * {@link io.cdap.cdap.internal.app.deploy.InMemoryConfigurator} &
- * {@link io.cdap.cdap.internal.app.deploy.SandboxConfigurator}
+ * {@link io.cdap.cdap.internal.app.deploy.InMemoryConfigurator}
  */
 public class ConfiguratorTest {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static CConfiguration conf;
-  private static AuthorizationEnforcer authEnforcer;
+  private static AccessEnforcer authEnforcer;
   private static AuthenticationContext authenticationContext;
 
   @BeforeClass
@@ -84,8 +84,15 @@ public class ConfiguratorTest {
     Injector injector = Guice.createInjector(new ConfigModule(conf),
                                              new AuthorizationTestModule(),
                                              new AuthorizationEnforcementModule().getInMemoryModules(),
-                                             new AuthenticationContextModules().getNoOpModule());
-    authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+                                             new AuthenticationContextModules().getNoOpModule(),
+                                             new AbstractModule() {
+                                               @Override
+                                               protected void configure() {
+                                                 bind(MetricsCollectionService.class)
+                                                   .to(NoOpMetricsCollectionService.class);
+                                               }
+                                             });
+    authEnforcer = injector.getInstance(AccessEnforcer.class);
     authenticationContext = injector.getInstance(AuthenticationContext.class);
   }
 
@@ -105,31 +112,31 @@ public class ConfiguratorTest {
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
 
+    AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
+      NamespaceId.DEFAULT, new ApplicationClass(AllProgramsApp.class.getName(), "", null),
+      null, null, null);
+
     // Create a configurator that is testable. Provide it a application.
-    try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(
-             appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
-                                            new DefaultImpersonator(cConf, null)))) {
-      Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
-                                                           AllProgramsApp.class.getName(), pluginFinder,
-                                                           artifactClassLoader, null, null, "");
-      // Extract response from the configurator.
-      ListenableFuture<ConfigResponse> result = configurator.config();
-      ConfigResponse response = result.get(10, TimeUnit.SECONDS);
-      Assert.assertNotNull(response);
+    Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
+                                                         artifactRepo, null, appDeploymentInfo);
+    // Extract response from the configurator.
+    ListenableFuture<ConfigResponse> result = configurator.config();
+    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
 
-      // Deserialize the JSON spec back into Application object.
-      AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
-      ApplicationSpecification specification = appSpecInfo.getAppSpec();
-      Assert.assertNotNull(specification);
-      Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
-
-      ApplicationSpecification expectedSpec = Specifications.from(new AllProgramsApp());
-      for (ProgramType programType : ProgramType.values()) {
-        Assert.assertEquals(expectedSpec.getProgramsByType(programType), specification.getProgramsByType(programType));
-      }
-      Assert.assertEquals(expectedSpec.getDatasets(), specification.getDatasets());
+    AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalStateException("Failed to deploy application");
     }
+    ApplicationSpecification specification = appSpecInfo.getAppSpec();
+    Assert.assertNotNull(specification);
+    Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
+
+    ApplicationSpecification expectedSpec = Specifications.from(new AllProgramsApp());
+    for (ProgramType programType : ProgramType.values()) {
+      Assert.assertEquals(expectedSpec.getProgramsByType(programType), specification.getProgramsByType(programType));
+    }
+    Assert.assertEquals(expectedSpec.getDatasets(), specification.getDatasets());
   }
 
   @Test
@@ -148,42 +155,52 @@ public class ConfiguratorTest {
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
+
+    AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
+      NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
+      null, null, new Gson().toJson(config));
+
     // Create a configurator that is testable. Provide it an application.
-    try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(
-             appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
-                                            new DefaultImpersonator(cConf, null)))) {
+    Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
+                                                         artifactRepo, null, appDeploymentInfo);
 
-      Configurator configuratorWithConfig =
-        new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-                                 pluginFinder, artifactClassLoader, null, null, new Gson().toJson(config));
+    ListenableFuture<ConfigResponse> result = configurator.config();
+    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
 
-      ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
-      ConfigResponse response = result.get(10, TimeUnit.SECONDS);
-      Assert.assertNotNull(response);
-
-      AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
-      ApplicationSpecification specification = appSpecInfo.getAppSpec();
-      Assert.assertNotNull(specification);
-      Assert.assertEquals(1, specification.getDatasets().size());
-      Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
-
-      Configurator configuratorWithoutConfig = new InMemoryConfigurator(
-        conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-        pluginFinder, artifactClassLoader, null, null, null);
-      result = configuratorWithoutConfig.config();
-      response = result.get(10, TimeUnit.SECONDS);
-      Assert.assertNotNull(response);
-
-      specification = GSON.fromJson(response.getResponse(), AppSpecInfo.class).getAppSpec();
-      Assert.assertNotNull(specification);
-      Assert.assertEquals(1, specification.getDatasets().size());
-      Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
-      Assert.assertNotNull(specification.getProgramSchedules().get(ConfigTestApp.SCHEDULE_NAME));
-
-      ProgramStatusTrigger trigger = (ProgramStatusTrigger) specification.getProgramSchedules()
-                                                                         .get(ConfigTestApp.SCHEDULE_NAME).getTrigger();
-      Assert.assertEquals(trigger.getProgramId().getProgram(), ConfigTestApp.WORKFLOW_NAME);
+    AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalStateException("Failed to deploy application");
     }
+    ApplicationSpecification specification = appSpecInfo.getAppSpec();
+    Assert.assertNotNull(specification);
+    Assert.assertEquals(1, specification.getDatasets().size());
+    Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
+
+    // Create a deployment info without the app configuration
+    appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
+      NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
+      null, null, null);
+
+    Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, pluginFinder,
+                                                                      new DefaultImpersonator(cConf, null),
+                                                                      artifactRepo, null, appDeploymentInfo);
+    result = configuratorWithoutConfig.config();
+    response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
+
+    appSpecInfo = response.getAppSpecInfo();
+    if (appSpecInfo == null) {
+      throw new IllegalStateException("Failed to deploy application");
+    }
+    specification = appSpecInfo.getAppSpec();
+    Assert.assertNotNull(specification);
+    Assert.assertEquals(1, specification.getDatasets().size());
+    Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
+    Assert.assertNotNull(specification.getProgramSchedules().get(ConfigTestApp.SCHEDULE_NAME));
+
+    ProgramStatusTrigger trigger = (ProgramStatusTrigger) specification.getProgramSchedules()
+                                                                       .get(ConfigTestApp.SCHEDULE_NAME).getTrigger();
+    Assert.assertEquals(trigger.getProgramId().getProgram(), ConfigTestApp.WORKFLOW_NAME);
   }
 }

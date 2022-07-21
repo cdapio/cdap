@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2021 Cask Data, Inc.
+ * Copyright © 2017-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,17 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
+import io.cdap.cdap.api.retry.Idempotency;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -42,6 +47,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -52,26 +58,23 @@ public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
 
+  private final InternalAuthenticator internalAuthenticator;
   private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
-  private volatile RemoteAuthenticator authenticator;
+  private final RemoteAuthenticator remoteAuthenticator;
 
-  public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
-                      HttpRequestConfig httpRequestConfig, String basePath) {
-    this(discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
-  }
-
-  public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
-                      HttpRequestConfig httpRequestConfig, String basePath,
-                      @Nullable RemoteAuthenticator authenticator) {
+  RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
+               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
+               RemoteAuthenticator remoteAuthenticator) {
+    this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
-    this.authenticator = authenticator;
+    this.remoteAuthenticator = remoteAuthenticator;
   }
 
   /**
@@ -86,6 +89,11 @@ public class RemoteClient {
     return HttpRequest.builder(method, resolve(resource));
   }
 
+  private void setAuthHeader(BiConsumer<String, String> headerSetter, String header, String credentialType,
+                             String credentialValue) {
+    headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
+  }
+
   /**
    * Perform the request, returning the response. If there was a ConnectException while making the request,
    * a ServiceUnavailableException is thrown.
@@ -96,24 +104,13 @@ public class RemoteClient {
    * @throws ServiceUnavailableException if there was a ConnectException while making the request, or if the response
    *                                     was a 503
    */
-  public HttpResponse execute(HttpRequest request) throws IOException {
+  public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
     HttpRequest httpRequest = request;
     URL rewrittenURL = rewriteURL(request.getURL());
+    Multimap<String, String> headers = setHeader(request);
 
-    // Add Authorization header and use a rewritten URL if needed
-    RemoteAuthenticator authenticator = getAuthenticator();
-    if (authenticator != null || !rewrittenURL.equals(request.getURL())) {
-      Multimap<String, String> headers = request.getHeaders();
-      if (authenticator != null) {
-        headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
-        if (headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-          headers.put(HttpHeaders.AUTHORIZATION,
-                      String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
-        }
-      }
-      httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
-                                    request.getBody(), request.getBodyLength());
-    }
+    httpRequest = new HttpRequest(request.getMethod(), rewrittenURL,
+                                  headers, request.getBody(), request.getBodyLength());
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
@@ -133,6 +130,56 @@ public class RemoteClient {
   }
 
   /**
+   * Perform the request, returning the response. Wraps exceptions from {@link RemoteClient#execute(HttpRequest)} into
+   * {@link RetryableException} that are retryable for idempotent operations.
+   *
+   * @param request the request to perform
+   * @param idempotency the type of idempotency
+   * @return the response
+   * @throws IOException if there was an IOException while performing the non-idempotent request
+   */
+  public HttpResponse execute(HttpRequest request, Idempotency idempotency) throws IOException {
+    switch (idempotency) {
+      case IDEMPOTENT:
+        return executeIdempotent(request);
+      case AUTO:
+        HttpMethod method = request.getMethod();
+        if (method == HttpMethod.GET || method == HttpMethod.PUT || method == HttpMethod.DELETE) {
+          return executeIdempotent(request);
+        } // fall through
+      default:
+        return execute(request);
+    }
+  }
+
+  private HttpResponse executeIdempotent(HttpRequest request) {
+    try {
+      return execute(request);
+    } catch (IOException e) {
+      throw new RetryableException(e);
+    }
+  }
+
+  /**
+   * Makes a streaming {@link HttpRequest} and consumes the response using the {@link HttpContentConsumer} provided
+   * in the request. It retries on failure.
+   */
+  public void executeStreamingRequest(HttpRequest request) throws IOException, UnauthorizedException {
+    URL rewrittenURL = rewriteURL(request.getURL());
+    Multimap<String, String> headers = setHeader(request);
+
+    HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
+                                              request.getBody(), request.getBodyLength(), request.getConsumer());
+    HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
+
+    if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new IOException(String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
+                                          httpResponse.getResponseCode()));
+    }
+    httpResponse.consumeContent();
+  }
+
+  /**
    * Opens a {@link HttpURLConnection} for the given resource path.
    */
   public HttpURLConnection openConnection(String resource) throws IOException {
@@ -144,11 +191,16 @@ public class RemoteClient {
     urlConn.setConnectTimeout(httpRequestConfig.getConnectTimeout());
     urlConn.setReadTimeout(httpRequestConfig.getReadTimeout());
     urlConn.setDoInput(true);
-    RemoteAuthenticator authenticator = getAuthenticator();
-    if (authenticator != null) {
-      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
-                                 String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
+    if (remoteAuthenticator != null) {
+      Credential credential = remoteAuthenticator.getCredentials();
+      if (credential != null) {
+        setAuthHeader(urlConn::setRequestProperty, HttpHeaders.AUTHORIZATION, credential.getType().getQualifiedName(),
+                      credential.getValue());
+      }
     }
+
+    internalAuthenticator.applyInternalAuthenticationHeaders(urlConn::setRequestProperty);
+
     return urlConn;
   }
 
@@ -182,8 +234,8 @@ public class RemoteClient {
       return rewriteURL(uri.toURL());
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
-      throw new IllegalStateException(String.format("Discovered service %s, but it announced malformed URL %s",
-                                                    discoverableServiceName, uri), e);
+      throw new IllegalStateException(
+        String.format("Discovered service %s, but it announced malformed URL %s", discoverableServiceName, uri), e);
     }
   }
 
@@ -195,11 +247,12 @@ public class RemoteClient {
    * @return a generic error message about the failure
    */
   public String createErrorMessage(HttpRequest request, @Nullable String body) {
-    String headers = request.getHeaders() == null ?
-      "null" : Joiner.on(",").withKeyValueSeparator("=").join(request.getHeaders().entries());
+    String headers = request.getHeaders() == null ? "null" : Joiner.on(",")
+      .withKeyValueSeparator("=")
+      .join(request.getHeaders().entries());
     return String.format("Error making request to %s service at %s while doing %s with headers %s%s.",
-                         discoverableServiceName, request.getURL(), request.getMethod(),
-                         headers, body == null ? "" : " and body " + body);
+                         discoverableServiceName, request.getURL(), request.getMethod(), headers,
+                         body == null ? "" : " and body " + body);
   }
 
   /**
@@ -226,17 +279,21 @@ public class RemoteClient {
     }
   }
 
-  /**
-   * Returns an optional {@link RemoteAuthenticator} for the call.
-   */
-  @Nullable
-  private RemoteAuthenticator getAuthenticator() {
-    RemoteAuthenticator authenticator = this.authenticator;
-    if (authenticator != null) {
-      return authenticator;
+  private Multimap<String, String> setHeader(HttpRequest request) throws IOException {
+    Multimap<String, String> headers = request.getHeaders();
+    headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
+
+    // Add Authorization header and use a rewritten URL if needed
+    if (remoteAuthenticator != null && headers.keySet().stream()
+      .noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+      Credential credential = remoteAuthenticator.getCredentials();
+      if (credential != null) {
+        setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, credential.getType().getQualifiedName(),
+                      credential.getValue());
+      }
     }
-    // No need to synchronize as the get default method is thread safe and we don't need a singleton for authenticator
-    this.authenticator = authenticator = RemoteAuthenticator.getDefaultAuthenticator();
-    return authenticator;
+
+    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+    return headers;
   }
 }

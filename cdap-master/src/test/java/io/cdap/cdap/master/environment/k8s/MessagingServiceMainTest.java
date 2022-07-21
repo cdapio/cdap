@@ -18,6 +18,7 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.client.ClientMessagingService;
@@ -25,7 +26,6 @@ import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -46,11 +46,11 @@ public class MessagingServiceMainTest extends MasterServiceMainTestBase {
   public void testMessagingService() throws Exception {
     // Discover the TMS endpoint
     Injector injector = getServiceMainInstance(MessagingServiceMain.class).getInjector();
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
 
     // Use a separate TMS client to create topic, then publish and then poll some messages
     TopicId topicId = NamespaceId.SYSTEM.topic("test");
-    MessagingService messagingService = new ClientMessagingService(discoveryServiceClient, true);
+    MessagingService messagingService = new ClientMessagingService(remoteClientFactory, true);
     messagingService.createTopic(new TopicMetadata(topicId));
 
     // Publish 10 messages

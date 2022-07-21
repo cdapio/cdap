@@ -44,4 +44,12 @@ public class VisibilityRequest {
   public Set<EntityId> getEntityIds() {
     return entityIds;
   }
+
+  @Override
+  public String toString() {
+    return "VisibilityRequest {" +
+      "entityIds=" + entityIds +
+      ", principal=" + principal +
+      '}';
+  }
 }

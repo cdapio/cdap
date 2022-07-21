@@ -29,6 +29,7 @@ import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -48,6 +49,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.lang.FieldVisitor;
@@ -66,6 +68,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,6 +80,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -98,6 +103,7 @@ public class PluginInstantiator implements Closeable {
     .put("short", short.class)
     .put("string", String.class)
     .build();
+  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final LoadingCache<ClassLoaderKey, PluginClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
@@ -105,6 +111,7 @@ public class PluginInstantiator implements Closeable {
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
   private final boolean ownedParentClassLoader;
+  private final Gson gson;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
     this(cConf, parentClassLoader, pluginDir, true);
@@ -123,6 +130,8 @@ public class PluginInstantiator implements Closeable {
       .build(new ClassLoaderCacheLoader());
     this.parentClassLoader = filterClassloader ? PluginClassLoader.createParent(parentClassLoader) : parentClassLoader;
     this.ownedParentClassLoader = filterClassloader;
+    // Don't use a static Gson object to avoid caching of classloader, which can cause classloader leakage.
+    this.gson = new GsonBuilder().setFieldNamingStrategy(new PluginFieldNamingStrategy()).create();
   }
 
   /**
@@ -135,7 +144,11 @@ public class PluginInstantiator implements Closeable {
   public void addArtifact(Location artifactLocation, ArtifactId destArtifact) throws IOException {
     File destFile = new File(pluginDir, Artifacts.getFileName(destArtifact));
     if (!destFile.exists()) {
-      Locations.linkOrCopy(artifactLocation, destFile);
+      if ("file".equals(artifactLocation.toURI().getScheme()) && artifactLocation.isDirectory()) {
+        Files.createSymbolicLink(destFile.toPath(), Paths.get(artifactLocation.toURI()));
+      } else {
+        Locations.linkOrCopy(artifactLocation, destFile);
+      }
     }
   }
 
@@ -147,7 +160,7 @@ public class PluginInstantiator implements Closeable {
    *
    * @see PluginClassLoader
    */
-  public ClassLoader getArtifactClassLoader(ArtifactId artifactId) throws IOException {
+  public PluginClassLoader getArtifactClassLoader(ArtifactId artifactId) throws IOException {
     try {
       return classLoaders.get(new ClassLoaderKey(artifactId));
     } catch (ExecutionException e) {
@@ -228,6 +241,25 @@ public class PluginInstantiator implements Closeable {
    */
   public <T> T newInstance(Plugin plugin, @Nullable MacroEvaluator macroEvaluator)
     throws IOException, ClassNotFoundException, InvalidMacroException {
+    return newInstance(plugin, macroEvaluator, null);
+  }
+
+  /**
+   * Creates a new instance of the given plugin class with all property macros substituted if a MacroEvaluator is given.
+   * At runtime, plugin property fields that are macro-enabled and contain macro syntax will remain in the macroFields
+   * set in the plugin config.
+   * @param plugin {@link Plugin}
+   * @param macroEvaluator the MacroEvaluator that performs macro substitution
+   * @param options macro parser options
+   * @param <T> Type of the plugin
+   * @return a new plugin instance with macros substituted
+   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   * @throws InvalidPluginConfigException if the PluginConfig could not be created from the plugin properties
+   */
+  public <T> T newInstance(
+    Plugin plugin, @Nullable MacroEvaluator macroEvaluator,
+    @Nullable MacroParserOptions options) throws IOException, ClassNotFoundException, InvalidMacroException {
     ClassLoader classLoader = getPluginClassLoader(plugin);
     PluginClass pluginClass = plugin.getPluginClass();
     @SuppressWarnings("unchecked")
@@ -246,7 +278,7 @@ public class PluginInstantiator implements Closeable {
       Object config = instantiatorFactory.get(configFieldType).create();
 
       // perform macro substitution if an evaluator is provided, collect fields with macros only at configure time
-      PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator);
+      PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator, options);
       Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
       PluginProperties rawProperties = plugin.getProperties();
@@ -267,7 +299,8 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
-  public PluginProperties substituteMacros(Plugin plugin, @Nullable MacroEvaluator macroEvaluator) {
+  public PluginProperties substituteMacros(Plugin plugin, @Nullable MacroEvaluator macroEvaluator,
+                                           @Nullable MacroParserOptions options) {
     Map<String, String> properties = new HashMap<>();
     Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
 
@@ -287,13 +320,35 @@ public class PluginInstantiator implements Closeable {
                                                       .setEscaping(field.isMacroEscapingEnabled())
                                                       .build());
           macroParser.parse(propertyValue);
+
+          // if the field is a nested field and it has macro in it, there are two scenarios:
+          // 1. the field itself needs to get evaluated, for example, ${conn(test)}
+          // 2. the field itself is already a map json string, but some field inside the map is a macro, for example,
+          //    secure macros.
+          if (!field.getChildren().isEmpty() && trackingMacroEvaluator.hasMacro()) {
+            try {
+              Map<String, String> childMap = gson.fromJson(propertyValue, MAP_STRING_TYPE);
+              // if this is already a map, this is scenario 2, we need to get the default value for the field
+              // one by one depending on if there is a macro in it
+              trackingMacroEvaluator.reset();
+              Map<String, String> substitutedChildMap = new HashMap<>();
+              childMap.forEach((name, value) -> {
+                macroParser.parse(value);
+                substitutedChildMap.put(name, getOriginalOrDefaultValue(
+                  value, name, pluginPropertyFieldMap.get(name).getType(), trackingMacroEvaluator));
+              });
+              propertyValue = gson.toJson(substitutedChildMap);
+            } catch (JsonSyntaxException e) {
+              // this is scenario 1, just continue
+            }
+          }
           propertyValue = getOriginalOrDefaultValue(propertyValue, property.getKey(), field.getType(),
                                                     trackingMacroEvaluator);
         } else {
-          MacroParser macroParser = new MacroParser(macroEvaluator,
-                                                    MacroParserOptions.builder()
-                                                      .setEscaping(field.isMacroEscapingEnabled())
-                                                      .build());
+          MacroParserOptions parserOptions = options == null ? MacroParserOptions.builder()
+                                                                 .setEscaping(field.isMacroEscapingEnabled())
+                                                                 .build() : options;
+          MacroParser macroParser = new MacroParser(macroEvaluator, parserOptions);
           propertyValue = macroParser.parse(propertyValue);
         }
       }
@@ -340,13 +395,38 @@ public class PluginInstantiator implements Closeable {
           if (trackingMacroEvaluator.hasMacro()) {
             macroFields.add(pluginEntry.getKey());
             trackingMacroEvaluator.reset();
+
+            if (pluginField.getChildren().isEmpty()) {
+              continue;
+            }
+
+            // if the field is a nested field and it has macro in it, there are two scenarios:
+            // 1. the field itself needs to get evaluated, for example, ${conn(test)}
+            // 2. the field itself is already a map json string, but some field inside the map is a macro, for example,
+            //    secure macros.
+            try {
+              Map<String, String> childMap = gson.fromJson(macroValue, MAP_STRING_TYPE);
+              // if this is already a map, this is scenario 2, we need to check the fields one by one
+              macroFields.remove(pluginEntry.getKey());
+              childMap.forEach((name, value) -> {
+                if (value != null) {
+                  macroParser.parse(value);
+                  if (trackingMacroEvaluator.hasMacro()) {
+                    macroFields.add(name);
+                  }
+                  trackingMacroEvaluator.reset();
+                }
+              });
+            } catch (JsonSyntaxException e) {
+              // this is scenario 1, then mark all the fields inside the field as macro
+              macroFields.addAll(pluginField.getChildren());
+            }
           }
         }
       }
     }
     return macroFields;
   }
-
 
   /**
    * Creates a new plugin instance and optionally setup the {@link PluginConfig} field.
@@ -442,13 +522,14 @@ public class PluginInstantiator implements Closeable {
 
     @Override
     public PluginClassLoader load(ClassLoaderKey key) throws Exception {
-      File unpackedDir = DirUtils.createTempDir(tmpDir);
       File artifact = new File(pluginDir, Artifacts.getFileName(key.artifact));
-      BundleJarUtil.unJar(Locations.toLocation(artifact), unpackedDir);
+      ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+        Locations.toLocation(artifact), () -> DirUtils.createTempDir(tmpDir));
 
       Iterator<ArtifactId> parentIter = key.parents.iterator();
       if (!parentIter.hasNext()) {
-        return new PluginClassLoader(key.artifact, unpackedDir, parentClassLoader);
+        return new PluginClassLoader(key.artifact, classLoaderFolder.getDir(),
+                                     artifact.getAbsolutePath(), parentClassLoader);
       }
 
       List<ArtifactId> parentsOfParent = new ArrayList<>(key.parents.size() - 1);
@@ -473,7 +554,7 @@ public class PluginInstantiator implements Closeable {
       PluginClassLoader parentPluginCL = getPluginClassLoader(parentArtifact, parentsOfParent);
       ClassLoader parentCL =
         new CombineClassLoader(parentPluginCL.getParent(), parentPluginCL.getExportPackagesClassLoader());
-      return new PluginClassLoader(key.artifact, unpackedDir, parentCL);
+      return new PluginClassLoader(key.artifact, classLoaderFolder.getDir(), artifact.getAbsolutePath(), parentCL);
     }
   }
 
@@ -511,7 +592,7 @@ public class PluginInstantiator implements Closeable {
       this.invalidProperties = new HashSet<>();
 
       // Don't use a static Gson object to avoid caching of classloader, which can cause classloader leakage.
-      this.gson = new Gson();
+      this.gson = new GsonBuilder().setFieldNamingStrategy(new PluginFieldNamingStrategy()).create();
     }
 
     @Override
@@ -541,22 +622,77 @@ public class PluginInstantiator implements Closeable {
       Name nameAnnotation = field.getAnnotation(Name.class);
       String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
-      // if the property is required and it's not a macro and the property doesn't exist
+      // if the property is required and it's not a macro and the property doesn't exist and it is not an config
+      // that is consisted of a collection of configs
+      Set<String> children = pluginPropertyField.getChildren();
       if (pluginPropertyField.isRequired()
-          && !macroFields.contains(name)
-          && properties.getProperties().get(name) == null) {
+            && !macroFields.contains(name)
+            && properties.getProperties().get(name) == null
+            && children.isEmpty()) {
         missingProperties.add(name);
         return;
       }
+
       String value = properties.getProperties().get(name);
+
+      // if the value is null but this field is consisted of children, look up all the child properties to build
+      // the config
+      if (value == null && !children.isEmpty()) {
+        Map<String, String> childProperties = new HashMap<>();
+        boolean missing = false;
+        for (String child : children) {
+          PluginPropertyField childProperty = pluginClass.getProperties().get(child);
+          // if child property is required and it is missing, add it to missing properties and continue
+          if (childProperty.isRequired() && !macroFields.contains(child) &&
+                !properties.getProperties().containsKey(child)) {
+            missingProperties.add(child);
+            missing = true;
+            continue;
+          }
+          childProperties.put(child, properties.getProperties().get(child));
+        }
+
+        // if missing any required field, return here
+        if (missing) {
+          return;
+        }
+        value = gson.toJson(childProperties);
+      }
+
       if (pluginPropertyField.isRequired() || value != null) {
         try {
-          field.set(instance, convertValue(name, declareType,
-                                           declareTypeToken.resolveType(field.getGenericType()), value));
+          Object convertedValue = convertValue(name, declareType,
+                                               declareTypeToken.resolveType(field.getGenericType()), value);
+
+          // set the remaining plugin properties field
+          if (!children.isEmpty() && convertedValue instanceof PluginConfig) {
+            PluginConfig config = (PluginConfig) convertedValue;
+            setChildPluginConfigField(config, "properties", PluginProperties.builder().addAll(
+              properties.getProperties().entrySet().stream()
+                .filter(entry -> children.contains(entry.getKey()))
+                // Collectors.toMap does not take null entry value, so use HashMap instead
+                .collect(HashMap::new, (map, entry)-> map.put(entry.getKey(),
+                                                              entry.getValue()), HashMap::putAll)).build());
+            setChildPluginConfigField(config, "rawProperties", PluginProperties.builder().addAll(
+              rawProperties.getProperties().entrySet().stream()
+                .filter(entry -> children.contains(entry.getKey()))
+                .collect(HashMap::new, (map, entry)-> map.put(entry.getKey(),
+                                                              entry.getValue()), HashMap::putAll)).build());
+            setChildPluginConfigField(config, "macroFields",
+                                      macroFields.stream().filter(children::contains).collect(Collectors.toSet()));
+          }
+          field.set(instance, convertedValue);
         } catch (Exception e) {
           invalidProperties.add(new InvalidPluginProperty(name, e));
         }
       }
+    }
+
+    private void setChildPluginConfigField(PluginConfig config, String fieldName,
+                                           Object fieldVal) throws NoSuchFieldException, IllegalAccessException {
+      Field childField = PluginConfig.class.getDeclaredField(fieldName);
+      childField.setAccessible(true);
+      childField.set(config, fieldVal);
     }
 
     /**

@@ -24,6 +24,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
@@ -50,7 +51,7 @@ public class MapReduceContextConfigTest {
       hConf.setInt(String.valueOf(i), i);
     }
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", "desc", appCfg.toString(),
+      "name", ProjectInfo.getVersion().toString(), "desc", appCfg.toString(),
       new ArtifactId("artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER),
       Collections.emptyMap(),
       Collections.emptyMap(),
@@ -85,8 +86,9 @@ public class MapReduceContextConfigTest {
     }
     Set<ArtifactId> parents = new LinkedHashSet<>();
     Plugin filePlugin1 = new Plugin(parents, artifactId,
-                                    new PluginClass("type", "name", "desc", "clsname", "cfgfield",
-                                                    Collections.emptyMap()),
+                                    PluginClass.builder().setName("name").setType("type").setDescription("desc")
+                                      .setClassName("clsname").setConfigFieldName("cfgfield")
+                                      .setProperties(Collections.emptyMap()).build(),
                                     PluginProperties.builder().addAll(properties).build());
     mockPlugins.put("File1", filePlugin1);
     hConf.set(MapReduceContextConfig.HCONF_ATTR_PLUGINS, GSON.toJson(mockPlugins));

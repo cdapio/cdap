@@ -91,7 +91,9 @@ public class MockSink extends SparkSink<StructuredRecord> {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
-    return new PluginClass(SparkSink.PLUGIN_TYPE, "Mock", "", MockSink.class.getName(), "config", properties);
+    return PluginClass.builder().setName("Mock").setType(SparkSink.PLUGIN_TYPE)
+             .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 
   /**

@@ -16,13 +16,12 @@
 package io.cdap.cdap.common.http;
 
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -37,9 +36,16 @@ import org.slf4j.LoggerFactory;
 public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
-  private String currentUserId;
-  private String currentUserCredential;
-  private String currentUserIP;
+  private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
+  private static final Credential EMPTY_USER_CREDENTIAL = new Credential("CDAP-empty-user-credential",
+                                                                         Credential.CredentialType.INTERNAL);
+  private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
+
+  private final boolean internalAuthEnabled;
+
+  public AuthenticationChannelHandler(boolean internalAuthEnabled) {
+    this.internalAuthEnabled = internalAuthEnabled;
+  }
 
   /**
    * Decode the AccessTokenIdentifier passed as a header and set it in a ThreadLocal.
@@ -47,31 +53,69 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
    */
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    SecurityRequestContext.reset();
+
+    // Only set SecurityRequestContext for the HttpRequest but not for subsequence chunks.
+    // We cannot set a default/placeholder value until CDAP-18773
+    // is fixed since we may perform auth checks in the thread processing the last chunk.
     if (msg instanceof HttpRequest) {
+
+      String currentUserID = null;
+      Credential currentUserCredential = null;
+      String currentUserIP = null;
+
+      if (internalAuthEnabled) {
+        // When internal auth is enabled, all requests should typically have user id and credential
+        // associated with them, for instance, end user credential for user originated ones and
+        // internal system credential for system originated requests. If there is none, set
+        // default empty user id and credential.
+        currentUserID = EMPTY_USER_ID;
+        currentUserCredential = EMPTY_USER_CREDENTIAL;
+        currentUserIP = EMPTY_USER_IP;
+      }
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) msg;
-      currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
-      currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
-      String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
+      String userID = request.headers().get(Constants.Security.Headers.USER_ID);
+      if (userID != null) {
+        currentUserID = userID;
+      }
+      String userIP = request.headers().get(Constants.Security.Headers.USER_IP);
+      if (userIP != null) {
+        currentUserIP = userIP;
+      }
+      String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {
-          LOG.warn("Invalid Authorization header format for {}@{}", currentUserId, currentUserIP);
+          LOG.error("Invalid Authorization header format for {}@{}", currentUserID, currentUserIP);
+          if (internalAuthEnabled) {
+            throw new IllegalArgumentException("Invalid Authorization header format");
+          }
         } else {
-          currentUserCredential = authHeader.substring(idx + 1).trim();
-          SecurityRequestContext.setUserCredential(currentUserCredential);
+          String credentialTypeStr = authHeader.substring(0, idx);
+          try {
+            Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(credentialTypeStr);
+            String credentialValue = authHeader.substring(idx + 1).trim();
+            currentUserCredential = new Credential(credentialValue, credentialType);
+            SecurityRequestContext.setUserCredential(currentUserCredential);
+          } catch (IllegalArgumentException e) {
+            LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
+            throw e;
+          }
         }
       }
-
-      SecurityRequestContext.setUserId(currentUserId);
-      SecurityRequestContext.setUserIP(currentUserIP);
-    } else if (msg instanceof HttpContent) {
-      SecurityRequestContext.setUserId(currentUserId);
+      LOG.trace("Got user ID '{}' user IP '{}' from IP '{}' and authorization header length '{}'",
+                userID, userIP, ctx.channel().remoteAddress(), authHeader == null ? "NULL" : authHeader.length());
+      SecurityRequestContext.setUserId(currentUserID);
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     }
 
-    ctx.fireChannelRead(msg);
+    try {
+      ctx.fireChannelRead(msg);
+    } finally {
+      SecurityRequestContext.reset();
+    }
   }
 
   @Override

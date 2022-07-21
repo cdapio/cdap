@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.LongConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -83,7 +84,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @Inject
   RuntimeClientService(CConfiguration cConf, MessagingService messagingService,
                        RuntimeClient runtimeClient, ProgramRunId programRunId) {
-    super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
+    super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
@@ -142,6 +143,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @VisibleForTesting
   long getProgramFinishTime() {
     return programFinishTime;
+  }
+
+  /**
+   * Accepts a Runnable and passes it to RuntimeClient
+   * @param stopper a {@link LongConsumer} with the termination timestamp in seconds as the argument
+   */
+  public void onProgramStopRequested(LongConsumer stopper) {
+    runtimeClient.onProgramStopRequested(stopper);
   }
 
   /**
@@ -323,7 +332,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      */
     private long findProgramFinishTime(List<Message> messages) {
       for (Message message : messages) {
-        Notification notification = GSON.fromJson(message.getPayloadAsString(), Notification.class);
+        Notification notification = message.decodePayload(r -> GSON.fromJson(r, Notification.class));
         if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
           continue;
         }

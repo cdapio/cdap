@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -105,6 +106,17 @@ public interface Store {
    *                 when the current program run status is reached
    */
   void setRunning(ProgramRunId id, long runTime, @Nullable String twillRunId, byte[] sourceId);
+
+  /**
+   * Logs stopping of a program run and persists program status to {@link ProgramRunStatus#STOPPING}.
+   *
+   * @param id run id of the program
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached
+   * @param stoppingTime stopping timestamp in seconds
+   * @param terminateTs timestamp at which program should be in an end state calculated using graceful shutdown period
+   */
+  void setStopping(ProgramRunId id, byte[] sourceId, long stoppingTime, long terminateTs);
 
   /**
    * Logs end of program run and sets the run status to one of: {@link ProgramRunStatus#COMPLETED},
@@ -221,6 +233,15 @@ public interface Store {
   int countActiveRuns(@Nullable Integer limit);
 
   /**
+   * Scans for active (i.e STARTING or RUNNING or SUSPENDED) run records
+   *
+   * @param txBatchSize maximum number of applications to scan in one transaction to
+   *                    prevent holding a single transaction for too long
+   * @param consumer a {@link Consumer} to consume each application being scanned
+   */
+  void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer);
+
+  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
    * @param namespaceId the namespace id to match against
    * @return map of logged runs
@@ -312,6 +333,18 @@ public interface Store {
    * @param consumer a {@link BiConsumer} to consume each application being scanned
    */
   void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer);
+
+  /**
+   * Scans for applications according to the parameters passed in request
+   *
+   * @param request  parameters defining filters and sorting
+   * @param txBatchSize maximum number of applications to scan in one transaction to
+   *                    prevent holding a single transaction for too long
+   * @param consumer a {@link BiConsumer} to consume each application being scanned
+   * @return if limit was reached (true) or all items were scanned before reaching the limit (false)
+   */
+  boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
+                        BiConsumer<ApplicationId, ApplicationSpecification> consumer);
 
   /**
    * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.

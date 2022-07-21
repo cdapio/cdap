@@ -22,6 +22,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -39,7 +40,7 @@ public abstract class AbstractTestManager implements TestManager {
 
   @Override
   public ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
-                                              File... bundleEmbeddedJars) {
+                                              File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 

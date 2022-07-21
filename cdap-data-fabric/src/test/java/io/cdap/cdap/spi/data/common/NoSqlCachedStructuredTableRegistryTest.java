@@ -16,16 +16,17 @@
 
 package io.cdap.cdap.spi.data.common;
 
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
@@ -34,9 +35,10 @@ import org.junit.ClassRule;
  */
 public class NoSqlCachedStructuredTableRegistryTest extends CachedStructuredTableRegistryTest {
   @ClassRule
-  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+  public static final DatasetFrameworkTestUtil DS_FRAMEWORK_UTIL = new DatasetFrameworkTestUtil();
 
   private static TransactionManager txManager;
+  private static NoSqlStructuredTableRegistry noSqlRegistry;
   private static StructuredTableRegistry registry;
 
   @BeforeClass
@@ -45,12 +47,12 @@ public class NoSqlCachedStructuredTableRegistryTest extends CachedStructuredTabl
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
 
-
-    CConfiguration cConf = dsFrameworkUtil.getConfiguration();
+    CConfiguration cConf = DS_FRAMEWORK_UTIL.getConfiguration();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
-    registry =
-      dsFrameworkUtil.getInjector().getInstance(StructuredTableRegistry.class);
-    Assert.assertTrue(registry instanceof CachedStructuredTableRegistry);
+
+    noSqlRegistry = new NoSqlStructuredTableRegistry(DS_FRAMEWORK_UTIL.getInjector().getInstance(
+      Key.get(DatasetDefinition.class, Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))));
+    registry = new CachedStructuredTableRegistry(noSqlRegistry);
   }
 
   @Override
@@ -60,7 +62,7 @@ public class NoSqlCachedStructuredTableRegistryTest extends CachedStructuredTabl
 
   @Override
   protected StructuredTableRegistry getNonCachedStructuredTableRegistry() {
-    return dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableRegistry.class);
+    return noSqlRegistry;
   }
 
   @AfterClass

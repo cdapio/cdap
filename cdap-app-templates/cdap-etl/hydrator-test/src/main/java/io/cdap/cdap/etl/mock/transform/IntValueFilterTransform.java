@@ -83,7 +83,8 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
     properties.put("value", new PluginPropertyField("value", "", "int", true, false));
-    return new PluginClass(Transform.PLUGIN_TYPE, "IntValueFilter", "", IntValueFilterTransform.class.getName(),
-                           "config", properties);
+    return PluginClass.builder().setName("IntValueFilter").setType(Transform.PLUGIN_TYPE)
+             .setDescription("").setClassName(IntValueFilterTransform.class.getName()).setProperties(properties)
+             .setConfigFieldName("config").build();
   }
 }

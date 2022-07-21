@@ -58,7 +58,7 @@ public class KafkaServerMain extends DaemonMain {
   public void init(String[] args) {
     CConfiguration cConf = CConfiguration.create();
 
-    String zkConnectStr = cConf.get(Constants.Zookeeper.QUORUM);
+    String zkConnectStr = Constants.Zookeeper.getZKQuorum(cConf);
     String zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
     if (zkNamespace != null) {
@@ -69,7 +69,7 @@ public class KafkaServerMain extends DaemonMain {
                               String.format("Connection timed out while trying to start ZooKeeper client. Please " +
                                             "verify that the ZooKeeper quorum settings are correct in " +
                                             "cdap-site.xml. Currently configured as: %s",
-                                            cConf.get(Constants.Zookeeper.QUORUM)));
+                                            client.getConnectString()));
 
         String path = "/" + zkNamespace;
         LOG.info(String.format("Creating zookeeper namespace %s", path));

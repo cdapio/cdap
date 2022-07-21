@@ -51,6 +51,7 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -60,6 +61,11 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.AccessTokenCodec;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.UserIdentity;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.hadoop.conf.Configuration;
@@ -95,8 +101,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -125,6 +133,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillRunnerService.class);
   private static final Gson GSON = new Gson();
+  //We can have really long jobs, so the tokens would be long-lived
+  private static final long DEFAULT_EXPIRATION = TimeUnit.DAYS.toMillis(365);
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -136,6 +146,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   private final RuntimeServiceSocksProxyAuthenticator serviceSocksProxyAuthenticator;
   private final Map<ProgramRunId, RemoteExecutionTwillController> controllers;
   private final Lock controllersLock;
+  private final AccessTokenCodec accessTokenCodec;
+  private final TokenManager tokenManager;
 
   private LocationCache locationCache;
   private Path cachePath;
@@ -147,13 +159,17 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                     LocationFactory locationFactory,
                                     ProvisioningService provisioningService,
                                     ProgramStateWriter programStateWriter,
-                                    TransactionRunner transactionRunner) {
+                                    TransactionRunner transactionRunner,
+                                    AccessTokenCodec accessTokenCodec,
+                                    TokenManager tokenManager) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.txRunner = transactionRunner;
+    this.accessTokenCodec = accessTokenCodec;
+    this.tokenManager = tokenManager;
     this.controllers = new ConcurrentHashMap<>();
     this.controllersLock = new ReentrantLock();
     this.serviceSocksProxyAuthenticator = new RuntimeServiceSocksProxyAuthenticator();
@@ -162,18 +178,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   @Override
   public void start() {
-    try {
-      // Use local directory for caching generated jar files
-      Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                       cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
-      cachePath = Files.createTempDirectory(tempDir, "runner.cache");
-      locationCache = new BasicLocationCache(Locations.toLocation(cachePath));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
-                                                 Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
+    doInitialize();
     long startMillis = System.currentTimeMillis();
     scheduler.execute(new Runnable() {
       @Override
@@ -186,6 +191,21 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         initializeControllers(startMillis);
       }
     });
+  }
+
+  final void doInitialize() {
+    try {
+      // Use local directory for caching generated jar files
+      Path tempDir = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                       cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
+      cachePath = Files.createTempDirectory(tempDir, "runner.cache");
+      locationCache = new BasicLocationCache(Locations.toLocation(cachePath));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
+                                                 Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
   }
 
   @Override
@@ -321,17 +341,22 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                        ProgramOptions programOpts, TwillSpecification twillSpec,
                                        LocationCache locationCache, TwillControllerFactory controllerFactory) {
 
-    Location serviceProxySecretLocation = null;
+    Location keysDirLocation = getKeysDirLocation(programOpts, locationFactory);
+    Map<String, Location> secretFiles = new HashMap<>();
     if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RuntimeMonitorType.SSH) {
-      serviceProxySecretLocation = generateAndSaveServiceProxySecret(programRunId,
-                                                                     getKeysDirLocation(programOpts, locationFactory));
+      secretFiles.put(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
+                      generateAndSaveServiceProxySecret(programRunId, keysDirLocation));
+    }
+    if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      secretFiles.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
+                      generateAndSaveRuntimeToken(programRunId, keysDirLocation));
     }
 
     RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId, programOpts).orElse(null);
     // Use RuntimeJobManager to launch the remote process if it is supported
     if (jobManager != null) {
       return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
-                                         serviceProxySecretLocation,
+                                         secretFiles,
                                          locationCache, locationFactory,
                                          controllerFactory,
                                          () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
@@ -341,7 +366,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     // Use SSH if there is no RuntimeJobManager
     ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
     return new RemoteExecutionTwillPreparer(cConf, hConf, clusterKeyInfo.getCluster(), clusterKeyInfo.getSSHConfig(),
-                                            serviceProxySecretLocation,
+                                            secretFiles,
                                             twillSpec, programRunId, programOpts,
                                             locationCache, locationFactory, controllerFactory);
   }
@@ -355,6 +380,28 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       serviceSocksProxy.startAndWait();
     }
     return serviceSocksProxy.getBindAddress().getPort();
+  }
+
+  /**
+   * Generates a runtime token to talk back from the execution cluster to CDAP instance.
+   */
+  private Location generateAndSaveRuntimeToken(ProgramRunId programRunId, Location keysDir) {
+    try {
+      long currentTimestamp = System.currentTimeMillis();
+      //TODO: Use a better identity & expiration
+      UserIdentity identity = new UserIdentity(Constants.Security.Authentication.RUNTIME_IDENTITY,
+                                               UserIdentity.IdentifierType.INTERNAL, Collections.emptyList(),
+                                               currentTimestamp, currentTimestamp + DEFAULT_EXPIRATION);
+      AccessToken accessToken = tokenManager.signIdentifier(identity);
+      byte[] encodedAccessToken = Base64.getEncoder().encode(accessTokenCodec.encode(accessToken));
+      Location location = keysDir.append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+      try (OutputStream os = location.getOutputStream()) {
+        os.write(encodedAccessToken);
+      }
+      return location;
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to generate runtime token for " + programRunId, e);
+    }
   }
 
   /**
@@ -397,7 +444,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
    */
   private void initializeControllers(long startMillis) {
     int limit = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
-    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor.");
+    RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf,
+                                                                    Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
     AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
     AtomicInteger count = new AtomicInteger();
     AtomicBoolean completed = new AtomicBoolean();
@@ -439,17 +487,30 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
    * service.
    */
   private boolean createControllerIfNeeded(RunRecordDetail runRecordDetail) {
+    // Controller only needs to be created for program runs in RUNNING or SUSPENDED state.
+    // Program runs in PENDING and STARTING state will eventually start and controller will be created later.
+    if (runRecordDetail.getStatus() != ProgramRunStatus.RUNNING
+      && runRecordDetail.getStatus() != ProgramRunStatus.SUSPENDED) {
+      LOG.debug("Skip creating controller for run {} with status {}", runRecordDetail.getProgramRunId(),
+                runRecordDetail.getStatus());
+      return false;
+    }
+    TwillController twillController = createTwillControllerFromRunRecord(runRecordDetail);
+    return twillController != null;
+  }
+
+  public TwillController createTwillControllerFromRunRecord(RunRecordDetail runRecordDetail) {
     Map<String, String> systemArgs = runRecordDetail.getSystemArgs();
     try {
       ClusterMode clusterMode = ClusterMode.valueOf(systemArgs.getOrDefault(ProgramOptionConstants.CLUSTER_MODE,
                                                                             ClusterMode.ON_PREMISE.name()));
       if (clusterMode != ClusterMode.ISOLATED) {
         LOG.debug("Ignore run {} of non supported cluster mode {}", runRecordDetail.getProgramRunId(), clusterMode);
-        return false;
+        return null;
       }
     } catch (IllegalArgumentException e) {
       LOG.warn("Ignore run record with an invalid cluster mode", e);
-      return false;
+      return null;
     }
 
     ProgramOptions programOpts = new SimpleProgramOptions(runRecordDetail.getProgramRunId().getParent(),
@@ -457,8 +518,28 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                           new BasicArguments(runRecordDetail.getUserArgs()));
     // Creates a controller via the controller factory.
     // Since there is no startup start needed, the timeout is arbitrarily short
-    new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
-    return true;
+    return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
+  }
+
+  protected void monitorController(ProgramRunId programRunId, CompletableFuture<Void> startupTaskCompletion,
+                                RemoteExecutionTwillController controller,
+                                RemoteExecutionService remoteExecutionService) {
+    startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+
+    // On this controller termination, make sure it is removed from the controllers map and have resources released.
+    controller.onTerminated(() -> {
+      if (controllers.remove(programRunId, controller)) {
+        controller.complete();
+      }
+    }, scheduler);
+  }
+
+  protected void addController(ProgramRunId programRunId, RemoteExecutionTwillController controller) {
+    controllers.put(programRunId, controller);
+  }
+
+  protected RemoteExecutionTwillController getController(ProgramRunId programRunId) {
+    return controllers.get(programRunId);
   }
 
   private final class ControllerFactory implements TwillControllerFactory {
@@ -476,7 +557,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       // Make sure we don't run the startup task and create controller if there is already one existed.
       controllersLock.lock();
       try {
-        RemoteExecutionTwillController controller = controllers.get(programRunId);
+        RemoteExecutionTwillController controller = getController(programRunId);
         if (controller != null) {
           return controller;
         }
@@ -545,7 +626,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         }
 
         LOG.debug("Created controller for program run {}", programRunId);
-        controllers.put(programRunId, controller);
+        addController(programRunId, controller);
         return controller;
       } finally {
         controllersLock.unlock();
@@ -562,12 +643,23 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       RemoteExecutionService remoteExecutionService = createRemoteExecutionService(programRunId, programOpts,
                                                                                    processController);
 
+      // TODO: (CDAP-19047) rework the contract here to be cleaner instead of implementation specific
+      // If this is a tethered run, the RemoteProcessController needs to be used to gracefully stop the run
+      // Otherwise, stopping is handled by the RuntimeClient to have the program shut itself down,
+      // so the RemoteProcessController doesn't need to explicit stop anything
+      Map<String, String> systemArguments = programOpts.getArguments().asMap();
+      String provisionerName = SystemArguments.getProfileProvisioner(systemArguments);
+      String peerName = systemArguments.get(ProgramOptionConstants.PEER_NAME);
+      boolean useControllerToStop = TetheringProvisioner.TETHERING_NAME.equals(provisionerName) &&
+        peerName == null;
       // Create the controller and start the runtime monitor when the startup task completed successfully.
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(cConf, programRunId,
                                                                                      startupTaskCompletion,
                                                                                      processController,
-                                                                                     scheduler, remoteExecutionService);
-      startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+                                                                                     scheduler, remoteExecutionService,
+                                                                                     useControllerToStop);
+
+      monitorController(programRunId, startupTaskCompletion, controller, remoteExecutionService);
       return controller;
     }
 

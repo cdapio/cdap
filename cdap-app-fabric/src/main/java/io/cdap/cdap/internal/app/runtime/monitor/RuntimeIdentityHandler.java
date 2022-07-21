@@ -16,19 +16,38 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ChannelInboundHandler} for properly propagating runtime identity to calls to other system services.
  */
 public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
-  private static final String RUNTIME_IDENTITY = "runtime";
+  private static final Logger AUDIT_LOGGER = LoggerFactory
+    .getLogger(Constants.RuntimeMonitor.MONITOR_AUDIT_LOGGER_NAME);
+
+  private static final String EMPTY_RUNTIME_TOKEN =
+    String.format("%s %s", Credential.CREDENTIAL_TYPE_INTERNAL, "empty-runtime-token");
+
+  private final boolean enforceAuthenticatedRequests;
+  private final boolean auditLogEnabled;
+
+  public RuntimeIdentityHandler(CConfiguration cConf) {
+    this.enforceAuthenticatedRequests = SecurityUtil.isInternalAuthEnabled(cConf);
+    this.auditLogEnabled = cConf.getBoolean(Constants.RuntimeMonitor.MONITOR_AUDIT_LOG_ENABLED);
+  }
 
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -38,14 +57,29 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
     }
 
     HttpRequest request = (HttpRequest) msg;
-    // TODO(CDAP-17754): This is a placeholder for proper runtime identity propagation.
-    // For now, only support propagating the system-level root principal.
+
     request.headers().remove(HttpHeaderNames.AUTHORIZATION);
-    request.headers().set(Constants.Security.Headers.USER_ID, RUNTIME_IDENTITY);
+    request.headers().set(Constants.Security.Headers.USER_ID, Constants.Security.Authentication.RUNTIME_IDENTITY);
     String clientIP = Networks.getIP(ctx.channel().remoteAddress());
     if (clientIP != null) {
       request.headers().set(Constants.Security.Headers.USER_IP, clientIP);
+    } else {
+      request.headers().remove(Constants.Security.Headers.USER_IP);
+    }
+    if (enforceAuthenticatedRequests && !request.headers().contains(Constants.Security.Headers.RUNTIME_TOKEN)) {
+      request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN, EMPTY_RUNTIME_TOKEN);
     }
     ctx.fireChannelRead(msg);
+  }
+
+  private void auditLogIfNeeded(HttpRequest request, Channel channel, int code) {
+    if (!auditLogEnabled) {
+      return;
+    }
+
+    AuditLogEntry logEntry = new AuditLogEntry(request, Networks.getIP(channel.remoteAddress()));
+    logEntry.setResponse(code, -1);
+
+    AUDIT_LOGGER.trace(logEntry.toString());
   }
 }

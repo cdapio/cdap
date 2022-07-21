@@ -25,6 +25,7 @@ import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 
@@ -39,7 +40,7 @@ public abstract class MetaTableUtil {
     this.dsFramework = framework;
   }
 
-  public Table getMetaTable() throws IOException, DatasetManagementException {
+  public Table getMetaTable() throws IOException, DatasetManagementException, UnauthorizedException {
     DatasetId metaTableInstanceId = NamespaceId.SYSTEM.dataset(getMetaTableName());
     return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
                                            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS);

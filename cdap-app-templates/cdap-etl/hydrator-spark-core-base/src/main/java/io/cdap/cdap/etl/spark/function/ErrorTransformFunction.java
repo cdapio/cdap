@@ -21,6 +21,9 @@ import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import java.util.Iterator;
 
 /**
  * Function that uses an ErrorTransform to perform a flatmap.
@@ -29,7 +32,7 @@ import io.cdap.cdap.etl.spark.CombinedEmitter;
  * @param <T> type of input object
  * @param <U> type of output object
  */
-public class ErrorTransformFunction<T, U> implements FlatMapFunc<ErrorRecord<T>, RecordInfo<Object>> {
+public class ErrorTransformFunction<T, U> implements FlatMapFunction<ErrorRecord<T>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
   private final FunctionCache functionCache;
   private transient TrackedTransform<ErrorRecord<T>, U> transform;
@@ -41,7 +44,7 @@ public class ErrorTransformFunction<T, U> implements FlatMapFunc<ErrorRecord<T>,
   }
 
   @Override
-  public Iterable<RecordInfo<Object>> call(ErrorRecord<T> inputError) throws Exception {
+  public Iterator<RecordInfo<Object>> call(ErrorRecord<T> inputError) throws Exception {
     if (transform == null) {
       ErrorTransform<T, U> plugin = pluginFunctionContext.createAndInitializePlugin(functionCache);
       transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
@@ -51,6 +54,6 @@ public class ErrorTransformFunction<T, U> implements FlatMapFunc<ErrorRecord<T>,
     }
     emitter.reset();
     transform.transform(inputError, emitter);
-    return emitter.getEmitted();
+    return emitter.getEmitted().iterator();
   }
 }

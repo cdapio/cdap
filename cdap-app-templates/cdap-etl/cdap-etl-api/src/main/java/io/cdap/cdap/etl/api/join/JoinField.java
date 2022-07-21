@@ -74,7 +74,7 @@ public class JoinField {
 
   @Override
   public String toString() {
-    return "Field{" +
+    return "JoinField{" +
       "stage='" + stageName + '\'' +
       ", field='" + fieldName + '\'' +
       ", alias='" + alias + '\'' +

@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.spark.join;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
 
@@ -38,10 +39,12 @@ public class JoinRequest {
   private final List<JoinCollection> toJoin;
   private final Integer numPartitions;
   private final JoinDistribution distribution;
+  private final JoinDefinition joinDefinition;
 
   public JoinRequest(String stageName, String leftStage, List<String> leftKey, Schema leftSchema, boolean leftRequired,
                      boolean nullSafe, List<JoinField> fields, Schema outputSchema, List<JoinCollection> toJoin,
-                     @Nullable Integer numPartitions, @Nullable JoinDistribution distribution) {
+                     @Nullable Integer numPartitions, @Nullable JoinDistribution distribution,
+                     JoinDefinition joinDefinition) {
     this.stageName = stageName;
     this.leftStage = leftStage;
     this.leftKey = leftKey;
@@ -53,6 +56,7 @@ public class JoinRequest {
     this.toJoin = toJoin;
     this.numPartitions = numPartitions;
     this.distribution = distribution;
+    this.joinDefinition = joinDefinition;
   }
 
   @Nullable
@@ -103,5 +107,9 @@ public class JoinRequest {
 
   public boolean isDistributionEnabled() {
     return distribution != null && toJoin.size() == 1;
+  }
+
+  public JoinDefinition getJoinDefinition() {
+    return joinDefinition;
   }
 }

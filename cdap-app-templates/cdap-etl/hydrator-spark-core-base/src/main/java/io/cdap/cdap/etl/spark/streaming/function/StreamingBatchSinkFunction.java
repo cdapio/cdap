@@ -29,17 +29,15 @@ import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.batch.SparkBatchSinkContext;
 import io.cdap.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import io.cdap.cdap.etl.spark.function.BatchSinkFunction;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
-import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +50,7 @@ import java.util.Set;
  *
  * @param <T> type of object in the rdd
  */
-public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time, Void> {
+public class StreamingBatchSinkFunction<T> implements VoidFunction2<JavaRDD<T>, Time> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamingBatchSinkFunction.class);
   private final JavaSparkExecutionContext sec;
   private final StageSpec stageSpec;
@@ -65,7 +63,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
   }
 
   @Override
-  public Void call(JavaRDD<T> data, Time batchTime) throws Exception {
+  public void call(JavaRDD<T> data, Time batchTime) throws Exception {
 
     final long logicalStartTime = batchTime.milliseconds();
     MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
@@ -98,11 +96,9 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
                                                                               pipelineRuntime.getArguments().asMap(),
                                                                               batchTime.milliseconds(),
                                                                               new NoopStageStatisticsCollector());
-      PairFlatMapFunc<T, Object, Object> sinkFunction =
-        new BatchSinkFunction<T, Object, Object>(pluginFunctionContext, functionCache);
 
-      Set<String> outputNames = sinkFactory.writeFromRDD(data.flatMapToPair(Compat.convert(sinkFunction)),
-                                                         sec, stageName);
+      Set<String> outputNames = sinkFactory.writeFromRDD(data.flatMapToPair(
+        new BatchSinkFunction<T, Object, Object>(pluginFunctionContext, functionCache)), sec, stageName);
       sec.execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
@@ -135,6 +131,5 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         });
       }
     }
-    return null;
   }
 }

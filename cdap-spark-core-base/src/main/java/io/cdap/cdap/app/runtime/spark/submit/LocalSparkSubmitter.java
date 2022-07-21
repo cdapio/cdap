@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,7 +48,7 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected void triggerShutdown() {
+  protected void triggerShutdown(long timeout, TimeUnit timeoutTimeUnit) {
     // We just stop the SparkMainWrapper directly. Through the SparkClassLoader, we make sure that Spark
     // sees the same SparkMainWrapper class as this one
     SparkMainWrapper.stop();

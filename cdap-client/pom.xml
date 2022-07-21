@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.5.0-SNAPSHOT</version>
+    <version>6.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-client</artifactId>
@@ -60,27 +60,27 @@
           <artifactId>libthrift</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-discovery-api</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-discovery-core</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-common</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-yarn</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-core</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.twill</groupId>
+          <groupId>io.cdap.twill</groupId>
           <artifactId>twill-zookeeper</artifactId>
         </exclusion>
         <exclusion>

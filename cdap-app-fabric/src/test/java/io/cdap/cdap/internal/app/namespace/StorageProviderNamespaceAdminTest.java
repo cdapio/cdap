@@ -29,7 +29,6 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.NamespaceStore;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.tephra.TransactionManager;
@@ -43,6 +42,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
@@ -80,8 +80,7 @@ public class StorageProviderNamespaceAdminTest {
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
     // Define all StructuredTable before starting any services that need StructuredTable
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
@@ -178,6 +177,57 @@ public class StorageProviderNamespaceAdminTest {
     // but custom namespace location should still exists
     Assert.assertTrue(custom.exists());
     Assert.assertTrue(custom.delete());
+  }
+
+  @Test
+  public void testLocalNamespaceWithExistingDirectory() throws Exception {
+    // Ensure a namespace creation with an existing folder completes successfully
+    NamespaceId existingFolderNamespace = new NamespaceId("exists");
+    File existingNamespaceFolder = TEMP_FOLDER.newFolder(existingFolderNamespace.getNamespace());
+    existingNamespaceFolder.mkdirs();
+    NamespaceMeta existingFolderNamespaceMeta = new NamespaceMeta.Builder()
+      .setName(existingFolderNamespace.getNamespace()).build();
+
+    namespaceStore.create(existingFolderNamespaceMeta);
+    storageProviderNamespaceAdmin.create(existingFolderNamespaceMeta);
+    storageProviderNamespaceAdmin.delete(existingFolderNamespace);
+    namespaceStore.delete(existingFolderNamespace);
+  }
+
+  @Test
+  public void testLocalStorageProviderNamespaceAdminWithExistingDataDirectory() throws Exception {
+    // Ensure a namespace creation with an existing folder and data subdirectory completes successfully
+    NamespaceId existingFolderNamespace = new NamespaceId("existsdata");
+    File existingNamespaceFolder = TEMP_FOLDER.newFolder(existingFolderNamespace.getNamespace());
+    existingNamespaceFolder.mkdirs();
+    File existingNamespaceDataFolder = Paths.get(existingNamespaceFolder.getPath(), "data").toFile();
+    existingNamespaceDataFolder.mkdirs();
+
+    NamespaceMeta existingFolderNamespaceMeta = new NamespaceMeta.Builder()
+      .setName(existingFolderNamespace.getNamespace()).build();
+
+    namespaceStore.create(existingFolderNamespaceMeta);
+    storageProviderNamespaceAdmin.create(existingFolderNamespaceMeta);
+    storageProviderNamespaceAdmin.delete(existingFolderNamespace);
+    namespaceStore.delete(existingFolderNamespace);
+  }
+
+  @Test
+  public void testLocalStorageProviderNamespaceAdminWithExistingTempDirectory() throws Exception {
+    // Ensure a namespace creation with an existing folder and temp subdirectory completes successfully
+    NamespaceId existingFolderNamespace = new NamespaceId("existstemp");
+    File existingNamespaceFolder = TEMP_FOLDER.newFolder(existingFolderNamespace.getNamespace());
+    existingNamespaceFolder.mkdirs();
+    File existingNamespaceTempFolder = Paths.get(existingNamespaceFolder.getPath(), "temp").toFile();
+    existingNamespaceTempFolder.mkdirs();
+
+    NamespaceMeta existingFolderNamespaceMeta = new NamespaceMeta.Builder()
+      .setName(existingFolderNamespace.getNamespace()).build();
+
+    namespaceStore.create(existingFolderNamespaceMeta);
+    storageProviderNamespaceAdmin.create(existingFolderNamespaceMeta);
+    storageProviderNamespaceAdmin.delete(existingFolderNamespace);
+    namespaceStore.delete(existingFolderNamespace);
   }
 
   @AfterClass

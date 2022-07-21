@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    *
    * @return List of {@link ScheduleDetail}.
    */
-  List<ScheduleDetail> getProgramSchedules();
+  List<ScheduleDetail> getProgramSchedules() throws UnauthorizedException;
 
   /**
    * Get the {@link ScheduleManager} instance to manage the schedule
@@ -56,7 +57,7 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @return the {@link WorkflowTokenDetail} for the specified workflow run
    */
   WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
-                               @Nullable String key) throws NotFoundException;
+                               @Nullable String key) throws NotFoundException, UnauthorizedException;
 
   /**
    * Returns the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified node.
@@ -68,7 +69,7 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @return the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified node.
    */
   WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
-                                         @Nullable String key) throws NotFoundException;
+                                         @Nullable String key) throws NotFoundException, UnauthorizedException;
 
   /**
    * Get node stated for the specified Workflow run.
@@ -77,5 +78,6 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @return {@link Map} of node name to the {@link WorkflowNodeStateDetail}
    * @throws NotFoundException when the specified Workflow run is not found
    */
-  Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId) throws NotFoundException;
+  Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId)
+    throws NotFoundException, UnauthorizedException;
 }

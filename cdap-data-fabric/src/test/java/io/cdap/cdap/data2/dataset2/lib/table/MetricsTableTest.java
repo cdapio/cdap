@@ -236,7 +236,20 @@ public abstract class MetricsTableTest {
 
   @Test
   public void testDelete() throws Exception {
-    MetricsTable table = getTable("testDelete");
+    testDelete(null);
+  }
+
+  @Test
+  public void testDeleteFullRow() throws Exception {
+    testDelete(true);
+  }
+
+  @Test
+  public void testDeleteNonFullRow() throws Exception {
+    testDelete(false);
+  }
+  public void testDelete(Boolean fullRow) throws Exception {
+    MetricsTable table = getTable("testDelete" + fullRow);
     NavigableMap<byte[], SortedMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < 1024; i++) {
       writes.put(Bytes.toBytes(i << 22), mapOf(A, Bytes.toLong(X)));
@@ -251,7 +264,11 @@ public abstract class MetricsTableTest {
     // verify these three are there, and delete them
     for (byte[] row : toDelete) {
       Assert.assertArrayEquals(X, table.get(row, A));
-      table.delete(row, new byte[][] {A});
+      if (fullRow == null) {
+        table.delete(row, new byte[][]{A});
+      } else {
+        table.delete(row, new byte[][]{A}, fullRow);
+      }
     }
     // verify these three are now gone.
     for (byte[] row : toDelete) {

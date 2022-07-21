@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -25,6 +26,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
@@ -39,9 +41,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -51,9 +55,10 @@ import javax.annotation.Nullable;
  * a running program.
  */
 public class RuntimeProgramStatusSubscriberService extends AbstractNotificationSubscriberService {
+  public static final String SUBSCRIBER = "runtime";
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeProgramStatusSubscriberService.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   @Inject
   RuntimeProgramStatusSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -69,12 +74,12 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
   @Nullable
   @Override
   protected String loadMessageId(StructuredTableContext context) throws IOException {
-    return getAppMetadataStore(context).retrieveSubscriberState(getTopicId().getTopic(), "runtime");
+    return getAppMetadataStore(context).retrieveSubscriberState(getTopicId().getTopic(), SUBSCRIBER);
   }
 
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId) throws IOException {
-    getAppMetadataStore(context).persistSubscriberState(getTopicId().getTopic(), "runtime", messageId);
+    getAppMetadataStore(context).persistSubscriberState(getTopicId().getTopic(), SUBSCRIBER, messageId);
   }
 
   @Override
@@ -105,8 +110,7 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
     ProgramRunId programRunId;
     ProgramRunStatus programRunStatus;
     try {
-      programRunId = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID),
-                                                ProgramRunId.class);
+      programRunId = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID), ProgramRunId.class);
       if (programRunId == null) {
         throw new IllegalArgumentException("Missing program run id from notification");
       }
@@ -125,8 +129,12 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
     switch (programRunStatus) {
       case STARTING: {
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-        store.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
-                                        programOptions.getArguments().asMap(), sourceId, null);
+        // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
+        // User and system args could be large and store them in local store can lead to unnecessary storage
+        // and processing overhead.
+        store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                        RuntimeMonitors.trimSystemArgs(programOptions.getArguments().asMap()),
+                                        sourceId, null);
         store.recordProgramProvisioned(programRunId, 0, sourceId);
         store.recordProgramStart(programRunId, null, programOptions.getArguments().asMap(), sourceId);
         break;
@@ -141,6 +149,11 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         store.recordProgramSuspend(programRunId, sourceId,
                                    Optional.ofNullable(properties.get(ProgramOptionConstants.SUSPEND_TIME))
                                      .map(Long::parseLong).orElse(System.currentTimeMillis()));
+        break;
+      case STOPPING:
+        store.recordProgramStopping(programRunId, sourceId,
+                                    getTimeSeconds(properties, ProgramOptionConstants.STOPPING_TIME, Long.MAX_VALUE),
+                                    getTimeSeconds(properties, ProgramOptionConstants.TERMINATE_TIME, Long.MAX_VALUE));
         break;
       case RESUMING:
         store.recordProgramResumed(programRunId, sourceId,
@@ -158,13 +171,13 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         store.deleteRunIfTerminated(programRunId, sourceId);
         break;
       case REJECTED: {
-        ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
         ProgramDescriptor programDescriptor =
           GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
-
-        store.recordProgramRejected(programRunId, programOptions.getUserArguments().asMap(),
-                                    programOptions.getArguments().asMap(), sourceId,
-                                    programDescriptor.getArtifactId().toApiArtifactId());
+        // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
+        // User and system args could be large and store them in local store can lead to unnecessary storage
+        // and processing overhead.
+        store.recordProgramRejected(programRunId, Collections.emptyMap(), Collections.emptyMap(),
+                                    sourceId, programDescriptor.getArtifactId().toApiArtifactId());
         // We don't need to retain records for terminated programs, hence just delete it
         store.deleteRunIfTerminated(programRunId,  sourceId);
         break;
@@ -177,5 +190,18 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
    */
   private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
     return AppMetadataStore.create(context);
+  }
+
+  /**
+   * Returns timestamp in seconds from the given option key in the property map. It assumes the timestamp
+   * stored in the property is in milliseconds.
+   *
+   * @param properties the property map to get the value from
+   * @param option the name of the property
+   * @param defaultValue the default value to return if there is no such property.
+   */
+  private long getTimeSeconds(Map<String, String> properties, String option, long defaultValue) {
+    String timeString = properties.get(option);
+    return (timeString == null) ? defaultValue : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
   }
 }

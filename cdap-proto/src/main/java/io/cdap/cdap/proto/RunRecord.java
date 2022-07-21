@@ -52,6 +52,16 @@ public class RunRecord {
   @SerializedName("resume")
   private final Long resumeTs;
 
+  @Nullable
+  @SerializedName("stopping")
+  private final Long stoppingTs;
+
+  // the timestamp at which the program
+  // must be stopped, ideally in the future
+  @Nullable
+  @SerializedName("terminate")
+  private final Long terminateTs;
+
   @SerializedName("status")
   private final ProgramRunStatus status;
 
@@ -64,35 +74,42 @@ public class RunRecord {
   @SerializedName("profile")
   private final ProfileId profileId;
 
+  // the name of the tethered peer that the program was initiated by, if any
+  @SerializedName("peerName")
+  private final String peerName;
+
   /**
    * @deprecated use {@link #builder()} instead.
    */
   @Deprecated
-  public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
-                   @Nullable Long suspendTs, @Nullable Long resumeTs,
-                   ProgramRunStatus status, @Nullable Map<String, String> properties,
-                   ProgramRunCluster cluster, ProfileId profileId) {
+  public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, @Nullable Long suspendTs,
+                   @Nullable Long resumeTs, @Nullable Long stoppingTs, @Nullable Long terminateTs,
+                   ProgramRunStatus status, @Nullable Map<String, String> properties, ProgramRunCluster cluster,
+                   ProfileId profileId, @Nullable String peerName) {
     this.pid = pid;
     this.startTs = startTs;
     this.runTs = runTs;
     this.stopTs = stopTs;
     this.suspendTs = suspendTs;
     this.resumeTs = resumeTs;
+    this.stoppingTs = stoppingTs;
+    this.terminateTs = terminateTs;
     this.status = status;
     this.properties = properties == null ? Collections.emptyMap() :
       Collections.unmodifiableMap(new LinkedHashMap<>(properties));
     this.cluster = cluster;
     this.profileId = profileId;
+    this.peerName = peerName;
   }
 
   /**
    * @deprecated use {@link #builder(RunRecord)} instead.
    */
   public RunRecord(RunRecord otherRunRecord) {
-    this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(),
-         otherRunRecord.getStopTs(), otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(),
-         otherRunRecord.getStatus(), otherRunRecord.getProperties(),
-         otherRunRecord.getCluster(), otherRunRecord.getProfileId());
+    this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(), otherRunRecord.getStopTs(),
+         otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(), otherRunRecord.getStoppingTs(),
+         otherRunRecord.getTerminateTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
+         otherRunRecord.getCluster(), otherRunRecord.getProfileId(), otherRunRecord.getPeerName());
   }
 
   public String getPid() {
@@ -123,6 +140,16 @@ public class RunRecord {
     return resumeTs;
   }
 
+  @Nullable
+  public Long getStoppingTs() {
+    return stoppingTs;
+  }
+
+  @Nullable
+  public Long getTerminateTs() {
+    return terminateTs;
+  }
+
   public ProgramRunStatus getStatus() {
     return status;
   }
@@ -139,6 +166,11 @@ public class RunRecord {
   public ProfileId getProfileId() {
     // for backward compatibility, return native profile if the profile id is null
     return profileId == null ? ProfileId.NATIVE : profileId;
+  }
+
+  @Nullable
+  public String getPeerName() {
+    return peerName;
   }
 
   @Override
@@ -158,15 +190,19 @@ public class RunRecord {
       Objects.equals(this.stopTs, that.stopTs) &&
       Objects.equals(this.suspendTs, that.suspendTs) &&
       Objects.equals(this.resumeTs, that.resumeTs) &&
+      Objects.equals(this.stoppingTs, that.stoppingTs) &&
+      Objects.equals(this.terminateTs, that.terminateTs) &&
       Objects.equals(this.status, that.status) &&
       Objects.equals(this.properties, that.properties) &&
       Objects.equals(this.cluster, that.cluster) &&
-      Objects.equals(this.profileId, that.profileId);
+      Objects.equals(this.profileId, that.profileId) &&
+      Objects.equals(this.peerName, that.peerName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
+    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs, status,
+                        properties, cluster, profileId, peerName);
   }
 
   @Override
@@ -178,10 +214,13 @@ public class RunRecord {
       ", stopTs=" + stopTs +
       ", suspendTs=" + suspendTs +
       ", resumeTs=" + resumeTs +
+      ", stoppingTs=" + stoppingTs +
+      ", terminateTs=" + terminateTs +
       ", status=" + status +
       ", properties=" + properties +
       ", cluster=" + cluster +
       ", profile=" + profileId +
+      ", peerName=" + peerName +
       '}';
   }
 
@@ -214,9 +253,12 @@ public class RunRecord {
     protected Long stopTs;
     protected Long suspendTs;
     protected Long resumeTs;
+    protected Long stoppingTs;
+    protected Long terminateTs;
     protected Map<String, String> properties;
     protected ProgramRunCluster cluster;
     protected ProfileId profileId;
+    protected String peerName;
 
     protected Builder() {
       properties = new HashMap<>();
@@ -229,10 +271,13 @@ public class RunRecord {
       runTs = other.getRunTs();
       suspendTs = other.getSuspendTs();
       resumeTs = other.getResumeTs();
+      stoppingTs = other.getStoppingTs();
+      terminateTs = other.getTerminateTs();
       stopTs = other.getStopTs();
       properties = new HashMap<>(other.getProperties());
       cluster = other.getCluster();
       profileId = other.getProfileId();
+      peerName = other.getPeerName();
     }
 
     public T setStatus(ProgramRunStatus status) {
@@ -270,6 +315,16 @@ public class RunRecord {
       return (T) this;
     }
 
+    public T setStoppingTime(Long stoppingTs) {
+      this.stoppingTs = stoppingTs;
+      return (T) this;
+    }
+
+    public T setTerminateTs(Long terminateTs) {
+      this.terminateTs = terminateTs;
+      return (T) this;
+    }
+
     public T setProperties(Map<String, String> properties) {
       this.properties.clear();
       this.properties.putAll(properties);
@@ -286,6 +341,11 @@ public class RunRecord {
       return (T) this;
     }
 
+    public T setPeerName(String peerName) {
+      this.peerName = peerName;
+      return (T) this;
+    }
+
     public RunRecord build() {
       if (pid == null) {
         throw new IllegalArgumentException("Run record run id must be specified.");
@@ -299,7 +359,8 @@ public class RunRecord {
       if (status == null) {
         throw new IllegalArgumentException("Run record status must be specified.");
       }
-      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
+      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
+                           status, properties, cluster, profileId, peerName);
     }
   }
 }

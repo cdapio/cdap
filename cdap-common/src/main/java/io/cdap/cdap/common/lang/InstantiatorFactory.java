@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import io.cdap.cdap.internal.lang.Reflections;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Constructor;
@@ -174,17 +173,23 @@ public final class InstantiatorFactory {
   }
 
   private <T> Instantiator<T> getByUnsafe(final TypeToken<T> type) {
+    //We do introspection once and then just use reflection to set field values
+    Map<Field, Object> fieldsToInitialize = FieldCollector.getFieldsWithDefaults(type);
+
     return new Instantiator<T>() {
       @Override
       public T create() {
         try {
           Object instance = UNSAFE.allocateInstance(type.getRawType());
-          Reflections.visit(instance, type.getType(), new FieldInitializer());
+          for (Map.Entry<Field, Object> e : fieldsToInitialize.entrySet()) {
+            e.getKey().set(instance, e.getValue());
+          }
           return (T) instance;
-        } catch (InstantiationException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
           throw Throwables.propagate(e);
         }
       }
     };
   }
+
 }

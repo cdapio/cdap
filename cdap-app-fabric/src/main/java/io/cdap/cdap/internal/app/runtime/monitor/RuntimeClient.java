@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.common.BadRequestException;
@@ -26,6 +27,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -33,12 +36,13 @@ import io.cdap.common.http.HttpMethod;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +50,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.LongConsumer;
 import java.util.zip.GZIPOutputStream;
 import javax.ws.rs.core.MediaType;
 
@@ -53,18 +59,21 @@ import javax.ws.rs.core.MediaType;
  * The client for talking to the {@link RuntimeServer}.
  */
 public class RuntimeClient {
-
+  
+  private static final Gson GSON = new Gson();
   static final int CHUNK_SIZE = 1 << 15;  // 32K
 
   private final boolean compression;
   private final RemoteClient remoteClient;
+  private final CompletableFuture<Long> stopFuture;
 
   @Inject
-  public RuntimeClient(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
+  public RuntimeClient(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
     this.compression = cConf.getBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED);
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.RUNTIME,
-                                         new DefaultHttpRequestConfig(false),
-                                         Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces/");
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+      Constants.Service.RUNTIME,
+      new DefaultHttpRequestConfig(false),
+      Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces/");
 
     // Validate the schema is what as expected by the logic of this client.
     // This is to make sure unit test will fail if schema is changed without changing the logic in this class.
@@ -75,6 +84,7 @@ public class RuntimeClient {
     if (schema.getType() != Schema.Type.ARRAY || schema.getElementType().getType() != Schema.Type.BYTES) {
       throw new IllegalStateException("MonitorRequest schema should be an array of bytes");
     }
+    this.stopFuture = new CompletableFuture<>();
   }
 
   /**
@@ -113,9 +123,29 @@ public class RuntimeClient {
       }
 
       throwIfError(programRunId, urlConn);
+      try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
+        ProgramRunInfo programRunInfo = GSON.fromJson(reader, ProgramRunInfo.class);
+        if (programRunInfo.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
+          stopFuture.complete(programRunInfo.getTerminateTimestamp());
+        }
+      }
     } finally {
       closeURLConnection(urlConn);
     }
+  }
+
+  /**
+   * Sets the consumer to run on the program being requested to stop.
+   *
+   * @param stopper A {@link LongConsumer} that will be executed in a daemon thread,
+   *                with the termination timestamp in seconds as the argument
+   */
+  public void onProgramStopRequested(LongConsumer stopper) {
+    stopFuture.thenAcceptAsync(stopper::accept, command -> {
+      Thread t = new Thread(command, "stop-program");
+      t.setDaemon(true);
+      t.start();
+    });
   }
 
   /**

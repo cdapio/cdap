@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,22 +16,32 @@
 
 package io.cdap.cdap.proto.security;
 
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
  * enforced. The cache stores whether the enforce succeeded or failed.
+ *
+ * Action may be empty in the case of isVisible checks for single entities.
  */
 public class AuthorizationPrivilege {
   private final EntityId entityId;
-  private final Action action;
+  private final Set<Permission> permissions;
   private final Principal principal;
+  private final EntityType childEntityType;
 
-  public AuthorizationPrivilege(Principal principal, EntityId entityId, Action action) {
+  public AuthorizationPrivilege(Principal principal, EntityId entityId, Set<? extends Permission> permissions,
+                                EntityType childEntityType) {
     this.entityId = entityId;
-    this.action = action;
+    this.permissions = Collections.unmodifiableSet(permissions);
+    this.childEntityType = childEntityType;
     this.principal = principal;
   }
 
@@ -43,8 +53,16 @@ public class AuthorizationPrivilege {
     return entityId;
   }
 
-  public Action getAction() {
-    return action;
+  public Set<Permission> getPermissions() {
+    return permissions;
+  }
+  /**
+   * @return child entity type for {@link AccessEnforcer#enforceOnParent(EntityType, EntityId, Principal, Permission)}
+   * checks.
+   */
+  @Nullable
+  public EntityType getChildEntityType() {
+    return childEntityType;
   }
 
   @Override
@@ -56,21 +74,23 @@ public class AuthorizationPrivilege {
       return false;
     }
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
-    return Objects.equals(entityId, that.entityId) && action == that.action &&
+    return Objects.equals(entityId, that.entityId) && permissions.equals(that.permissions) &&
+      Objects.equals(childEntityType, that.childEntityType) &&
       Objects.equals(principal, that.principal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, action, principal);
+    return Objects.hash(entityId, permissions, principal, childEntityType);
   }
 
   @Override
   public String toString() {
-    return "AuthorizationPrivilege{" +
+    return "AuthorizationPrivilege {" +
       "entityId=" + entityId +
-      ", action=" + action +
+      ", permissions=" + permissions +
       ", principal=" + principal +
+      ", childEntityType=" + childEntityType +
       '}';
   }
 }

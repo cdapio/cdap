@@ -48,10 +48,12 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
 
   @Inject
   public RetryingSqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource,
-                                      MetricsCollectionService metricsCollectionService, CConfiguration cConf) {
+                                      MetricsCollectionService metricsCollectionService, CConfiguration cConf,
+                                      int scanFetchSize) {
     this.transactionRunner =
       new SqlTransactionRunner(tableAdmin, dataSource, metricsCollectionService,
-                               cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED));
+                               cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED),
+                               scanFetchSize);
     this.metricsCollectionService = metricsCollectionService;
   }
 

@@ -18,10 +18,10 @@ package io.cdap.cdap.spi.data;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Defines admin operations on a {@link StructuredTable}.
@@ -38,13 +38,23 @@ public interface StructuredTableAdmin {
   void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException;
 
   /**
-   * Get the {@link StructuredTableSpecification} corresponding to the given table id.
+   * Checks if the given table exists.
    *
-   * @param tableId the table id
-   * @return the specification for the table
+   * @param tableId the name of the table
+   * @return {@code true} if the table exists, {@code false} otherwise.
+   * @throws IOException if there is an error check the table existence
    */
-  @Nullable
-  StructuredTableSpecification getSpecification(StructuredTableId tableId);
+  boolean exists(StructuredTableId tableId) throws IOException;
+
+  /**
+   * Gets the {@link StructuredTableSchema} of the given table.
+   *
+   * @param tableId the name of the table
+   * @return the {@link StructuredTableSchema} of the table
+   * @throws IOException if there is an error for getting the table schema
+   * @throws TableNotFoundException if the table doesn't exist
+   */
+  StructuredTableSchema getSchema(StructuredTableId tableId) throws IOException, TableNotFoundException;
 
   /**
    * Drop the StructuredTable synchronously. After this method is called, the existing table will get deleted. If the

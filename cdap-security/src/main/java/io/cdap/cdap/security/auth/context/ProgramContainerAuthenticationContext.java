@@ -25,7 +25,6 @@ import org.apache.hadoop.security.UserGroupInformation;
  * determined based on the {@link UserGroupInformation} of the user running the program.
  */
 class ProgramContainerAuthenticationContext implements AuthenticationContext {
-
   private final Principal principal;
 
   ProgramContainerAuthenticationContext(Principal principal) {

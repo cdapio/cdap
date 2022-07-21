@@ -23,75 +23,96 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.DefaultAppConfigurer;
+import io.cdap.cdap.app.DefaultAppRuntimeConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import javax.annotation.Nullable;
 
 /**
- * In Memory Configurator doesn't spawn a external process, but
- * does this in memory.
- *
- * @see SandboxConfigurator
+ * In Memory Configurator doesn't spawn a external process, but does this in memory.
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final CConfiguration cConf;
   private final String applicationName;
   private final String applicationVersion;
   private final String configString;
   private final File baseUnpackDir;
+
   // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
   // if the artifact is a system artifact, the namespace will be the system namespace.
   private final Id.Namespace appNamespace;
 
   private final PluginFinder pluginFinder;
-  private final ClassLoader artifactClassLoader;
   private final String appClassName;
   private final Id.Artifact artifactId;
+  private final RemoteClientFactory remoteClientFactory;
+  private final AppDeploymentRuntimeInfo runtimeInfo;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
-  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
-                              String appClassName, PluginFinder pluginFinder,
-                              ClassLoader artifactClassLoader,
-                              @Nullable String applicationName, @Nullable String applicationVersion,
-                              @Nullable String configString) {
+  // These fields are needed to create the classLoader in the config method
+  private final ArtifactRepository artifactRepository;
+  private final Location artifactLocation;
+  private final Impersonator impersonator;
+
+  @Inject
+  public InMemoryConfigurator(CConfiguration cConf, PluginFinder pluginFinder, Impersonator impersonator,
+                              ArtifactRepository artifactRepository, RemoteClientFactory remoteClientFactory,
+                              @Assisted AppDeploymentInfo deploymentInfo) {
     this.cConf = cConf;
-    this.appNamespace = appNamespace;
-    this.artifactId = artifactId;
-    this.appClassName = appClassName;
-    this.applicationName = applicationName;
-    this.applicationVersion = applicationVersion;
-    this.configString = configString == null ? "" : configString;
     this.pluginFinder = pluginFinder;
-    this.artifactClassLoader = artifactClassLoader;
+    this.appNamespace = Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId());
+    this.artifactId = Id.Artifact.fromEntityId(deploymentInfo.getArtifactId());
+    this.appClassName = deploymentInfo.getApplicationClassName();
+    this.applicationName = deploymentInfo.getApplicationName();
+    this.applicationVersion = deploymentInfo.getApplicationVersion();
+    this.configString = deploymentInfo.getConfigString() == null ? "" : deploymentInfo.getConfigString();
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+
+    this.impersonator = impersonator;
+    this.artifactRepository = artifactRepository;
+    this.artifactLocation = deploymentInfo.getArtifactLocation();
+    this.remoteClientFactory = remoteClientFactory;
+    this.runtimeInfo = deploymentInfo.getRuntimeInfo();
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   /**
@@ -104,26 +125,35 @@ public final class InMemoryConfigurator implements Configurator {
    */
   @Override
   public ListenableFuture<ConfigResponse> config() {
-    SettableFuture<ConfigResponse> result = SettableFuture.create();
 
-    try {
-      Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
+    // Create the classloader
+    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
+    try (CloseableClassLoader classLoader =
+           artifactRepository.createArtifactClassLoader(new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                                                                               artifactId.toArtifactId(),
+                                                                               artifactLocation),
+                                                        classLoaderImpersonator)) {
+      SettableFuture<ConfigResponse> result = SettableFuture.create();
+
+      Object appMain = classLoader.loadClass(appClassName).newInstance();
       if (!(appMain instanceof Application)) {
         throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
-          appMain.getClass().getName()));
+                                                      appMain.getClass().getName()));
       }
 
-      Application app = (Application) appMain;
-      ConfigResponse response = createResponse(app);
+      Application<?> app = (Application<?>) appMain;
+      ConfigResponse response = createResponse(app, classLoader);
       result.set(response);
 
       return result;
+
     } catch (Throwable t) {
       return Futures.immediateFailedFuture(t);
     }
   }
 
-  private <T extends Config> ConfigResponse createResponse(Application<T> app) throws Exception {
+  private <T extends Config> ConfigResponse createResponse(Application<T> app,
+                                                           ClassLoader artifactClassLoader) throws Exception {
     // This Gson cannot be static since it is used to deserialize user class.
     // Gson will keep a static map to class, hence will leak the classloader
     Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
@@ -134,8 +164,15 @@ public final class InMemoryConfigurator implements Configurator {
     try (
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
-      configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
-                                            configString, pluginFinder, pluginInstantiator);
+
+      RuntimeConfigurer runtimeConfigurer =
+        runtimeInfo != null ? new DefaultAppRuntimeConfigurer(
+          appNamespace.getId(), remoteClientFactory, runtimeInfo.getUserArguments(),
+          runtimeInfo.getExistingAppSpec()) : null;
+      configurer = new DefaultAppConfigurer(
+        appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer, runtimeInfo,
+        featureFlagsProvider);
+
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (configString.isEmpty()) {
@@ -181,14 +218,12 @@ public final class InMemoryConfigurator implements Configurator {
               "Missing Spark related class " + missingClass +
                 ". Configured to use Spark located at " + System.getenv(Constants.SPARK_HOME) +
                 ", which may be incompatible with the one required by the application", t);
-
           }
           // If Spark is available or the missing class is not a spark related class,
           // then the missing class is most likely due to some missing library in the artifact jar
           throw new InvalidArtifactException(
             "Missing class " + missingClass +
               ". It may be caused by missing dependency jar(s) in the artifact jar.", t);
-
         }
         throw t;
       }
@@ -200,10 +235,7 @@ public final class InMemoryConfigurator implements Configurator {
       }
     }
     ApplicationSpecification specification = configurer.createSpecification(applicationName, applicationVersion);
-    AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables());
-
-    // Convert the specification to JSON.
-    // We write the Application specification to output file in JSON format.
-    return new DefaultConfigResponse(0, GSON.toJson(appSpecInfo));
+    AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables(), configurer.getMetadata());
+    return new DefaultConfigResponse(0, appSpecInfo);
   }
 }

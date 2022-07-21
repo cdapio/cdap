@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -42,6 +43,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -58,6 +60,7 @@ import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.TokenManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
@@ -67,7 +70,6 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.Constants;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -123,7 +125,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private TwillContext context;
   private CompletableFuture<ProgramController> controllerFuture;
   private CompletableFuture<ProgramController.State> programCompletion;
-  private long maxStopSeconds;
 
   /**
    * Constructor.
@@ -197,8 +198,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     cConf.clear();
     cConf.addResource(new File(systemArgs.getOption(ProgramOptionConstants.CDAP_CONF_FILE)).toURI().toURL());
 
-    maxStopSeconds = cConf.getLong(io.cdap.cdap.common.conf.Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
-
     Injector injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
 
     // Initialize log appender
@@ -226,12 +225,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new File(systemArgs.getOption(ProgramOptionConstants.APP_SPEC_FILE)), ApplicationSpecification.class);
 
     // Expand the program jar for creating classloader
-    File programJarDir = BundleJarUtil.unJar(
-      programJarLocation, new File("expanded." + System.currentTimeMillis() + programJarLocation.getName()));
+    ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+      programJarLocation, () -> new File("expanded." + System.currentTimeMillis() + programJarLocation.getName()));
 
     program = Programs.create(cConf, programRunner,
                               new ProgramDescriptor(programOptions.getProgramId(), appSpec), programJarLocation,
-                              programJarDir);
+                              classLoaderFolder.getDir());
   }
 
   @Override
@@ -322,11 +321,15 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // systematic failure such that program runner is not reacting correctly
       ProgramController controller = controllerFuture.get(5, TimeUnit.SECONDS);
 
-      LOG.info("Stopping runnable: {}.", name);
+      LOG.info("Stopping program run {}.", programRunId);
 
-      // Give some time for the program to stop
-      controller.stop().get(maxStopSeconds == 0L ? Constants.APPLICATION_MAX_STOP_SECONDS : maxStopSeconds,
-                            TimeUnit.SECONDS);
+      // Stop the program and block until the graceful shutdown timeout
+      ListenableFuture<ProgramController> stopFuture = controller.stop(context.getTerminationTimeoutMillis(),
+                                                                       TimeUnit.MILLISECONDS);
+      long startTime = System.currentTimeMillis();
+      stopFuture.get(context.getTerminationTimeoutMillis(), TimeUnit.MILLISECONDS);
+      LOG.debug("Program {} stop completed after {} ms", programRunId, System.currentTimeMillis() - startTime);
+
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw Throwables.propagate(e);
     }
@@ -439,8 +442,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   private void addOnPremiseServices(Injector injector, ProgramOptions programOptions,
                                     MetricsCollectionService metricsCollectionService, Collection<Service> services) {
-    for (Class<? extends Service> cls : Arrays.asList(ZKClientService.class,
-                                                      KafkaClientService.class, BrokerService.class)) {
+    for (Class<? extends Service> cls : Arrays.asList(ZKClientService.class, KafkaClientService.class,
+                                                      BrokerService.class, TokenManager.class)) {
       Binding<? extends Service> binding = injector.getExistingBinding(Key.get(cls));
       if (binding != null) {
         services.add(binding.getProvider().get());

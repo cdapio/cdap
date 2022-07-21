@@ -173,8 +173,68 @@ public class LevelDBTableCore {
     db.write(batch, service.getWriteOptions());
   }
 
+  /**
+   * Write the value at the target row and column with the max version {@link KeyValue.LATEST_TIMESTAMP}.
+   * as a result it hides any value written with equal or smaller version.
+   */
+  public void putDefaultVersion(byte[] row, byte[] column, byte[] value) throws IOException {
+    getDB().put(createPutKey(row, column, KeyValue.LATEST_TIMESTAMP), value);
+  }
+
+  /**
+   * Write the value at the target row and column with the specified version.
+   */
   public void put(byte[] row, byte[] column, byte[] value, long version) throws IOException {
     getDB().put(createPutKey(row, column, version), value);
+  }
+
+  /**
+   * Read the value at the target row and column with the max version {@link KeyValue.LATEST_TIMESTAMP}.
+   */
+  @Nullable
+  public byte[] getDefaultVersion(byte[] row, byte[] column) throws IOException {
+    return getDB().get(createPutKey(row, column, KeyValue.LATEST_TIMESTAMP));
+  }
+
+  /**
+   * Read the value at the target row and column with the specified version.
+   */
+  @Nullable
+  public byte[] get(byte[] row, byte[] column, long version) throws IOException {
+    return getDB().get(createPutKey(row, column, version));
+  }
+
+  /**
+   * Read the latest (i.e. highest version) value at the target row and column.
+   * When transaction is provided, the version returned is the latest committed value.
+   */
+  @Nullable
+  public byte[] getLatest(byte[] row, byte[] col, @Nullable Transaction tx) throws IOException {
+    byte[] startKey = createStartKey(row, col);
+    byte[] endKey = createEndKey(row, upperBound(col));
+    byte[] val = null;
+    try (DBIterator iterator = getDB().iterator()) {
+      iterator.seek(startKey);
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+
+        // If we have reached past the endKey, nothing is found. Break out of the loop.
+        if (KeyValue.KEY_COMPARATOR.compare(entry.getKey(), endKey) >= 0) {
+          break;
+        }
+
+        KeyValue kv = KeyValue.fromKey(entry.getKey());
+
+        // Determine if this KV is visible
+        if (tx != null && !tx.isVisible(kv.getTimestamp())) {
+          continue;
+        }
+
+        val = entry.getValue();
+        break;
+      }
+    }
+    return val;
   }
 
   public void undo(Map<byte[], ? extends Map<byte[], ?>> persisted, long version) throws IOException {
@@ -205,7 +265,7 @@ public class LevelDBTableCore {
 
     DBIterator iterator = getDB().iterator();
     seekToStart(iterator, startRow);
-    byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
+    byte[] endKey = stopRow == null ? null : createStartKey(stopRow);
     return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
 
@@ -248,7 +308,7 @@ public class LevelDBTableCore {
 
 
   /**
-   * Read one row of the table. This is used both by getRow() and by Scanner.next().
+   * Read one row of the table at the latest or highest version. This is used both by getRow() and by Scanner.next().
    * @param iterator An iterator over the database. This is passed in such that the caller can reuse the same
    *                 iterator if scanning multiple rows.
    * @param endKey An upper bound for the (leveldb) keys to read. This method never reads past that key.
@@ -331,8 +391,32 @@ public class LevelDBTableCore {
   }
 
   /**
+   * Delete the cell at specified row and column with max version {@link KeyValue.LATEST_TIMESTAMP}.
+   */
+  public void deleteDefaultVersion(byte[] row, byte[] column) throws IOException {
+    getDB().delete(createPutKey(row, column, KeyValue.LATEST_TIMESTAMP));
+  }
+
+  /**
+   * Delete the cell at specified row and column with specified version.
+   */
+  public void delete(byte[] row, byte[] column, long version) throws IOException {
+    getDB().delete(createPutKey(row, column, version));
+  }
+
+  /**
    * Delete a list of rows from the table entirely, disregarding transactions.
+   * This includes all columns and all versions of cells for each specified row.
+   *
+   * Note that this operation could be quite slow when there are large number of columns
+   * or versions for cells in these roles. Moreover, such deletions are converted to
+   * tombstones or deletion-markers that can slow subsequent scan operations over
+   * overlapping ranges, thus leading to performance issues, unless these deletions
+   * are compacted away, so be cautious when calling this function over a larger number of
+   * rows or rows with wide columns and large number of versions.
+   *
    * @param toDelete the row keys to delete
+   *
    */
   public void deleteRows(Collection<byte[]> toDelete) throws IOException {
     if (toDelete.isEmpty()) {
@@ -386,7 +470,7 @@ public class LevelDBTableCore {
     DB db = getDB();
     DBIterator iterator = db.iterator();
     seekToStart(iterator, startRow);
-    byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
+    byte[] endKey = stopRow == null ? null : createStartKey(stopRow);
 
     DBIterator deleteIterator = db.iterator();
     seekToStart(deleteIterator, startRow);
@@ -538,10 +622,6 @@ public class LevelDBTableCore {
 
   private static byte[] createStartKey(byte[] row) { // the first possible key of a row
     return KeyValue.getKey(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
-  }
-
-  private static byte[] createEndKey(byte[] row) {
-    return createStartKey(row); // the first key of the stop is the first to be excluded
   }
 
   private static byte[] createStartKey(byte[] row, byte[] column) {
