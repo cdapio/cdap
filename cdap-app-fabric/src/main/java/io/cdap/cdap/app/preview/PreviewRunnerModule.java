@@ -48,6 +48,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
 import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
+import io.cdap.cdap.internal.app.preview.PreviewPluginFinder;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
@@ -57,7 +58,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryWithLo
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.capability.CapabilityStatusStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -117,9 +117,9 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(ArtifactRepository.class).annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
 
 
-    // Use remote implementation to fetch plugin metadata from AppFab.
-    // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
-    bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+    // Use preview implementation to fetch plugin metadata from AppFab.
+    // Preview implementation internally uses artifact localizer to fetch and cache artifacts locally.
+    bind(PluginFinder.class).to(PreviewPluginFinder.class);
     expose(PluginFinder.class);
 
     // Read artifact locations from disk when using artifact localizer due to shared mounted read-only PD.
