@@ -29,10 +29,12 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Beta;
@@ -170,7 +172,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -260,6 +261,9 @@ public class TestBase {
     capabilityFolder.mkdir();
     cConf.set(Constants.Capability.CONFIG_DIR, capabilityFolder.getAbsolutePath());
     cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
+
+    // Set artifact localizer to use random port
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, 0);
 
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
@@ -410,10 +414,15 @@ public class TestBase {
     metadataSubscriberService.startAndWait();
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
     artifactLocalizerService.startAndWait();
+    // NOTE: As the artifact localizer client does not use service discovery for port discovery,
+    // We need to set the port after starting the localizer service.
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
+    // Set the artifact localizer port for the preview conf as well
+    injector.getInstance(Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
+      .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
+
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
-    if (previewRunnerManager instanceof Service) {
-      ((Service) previewRunnerManager).startAndWait();
-    }
+    previewRunnerManager.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     preferencesService = injector.getInstance(PreferencesService.class);
@@ -572,13 +581,6 @@ public class TestBase {
 
     // Set spark compat
     cConf.set(Constants.AppFabric.SPARK_COMPAT, getCurrentSparkCompat().getCompat());
-
-    // NOTE: As the artifact localizer client does not use service discovery for port discovery, we need to randomly
-    // generate a port ahead of time. This should have a success rate (i.e. no port conflicts) of ~97%+. We ignore
-    // the first 1024 ports as they typically require root privileges to bind to.
-    int artifactLocalizerServicePort = SecureRandom.getInstanceStrong().nextInt(65536 - 1024) + 1024;
-    LOG.info("Binding artifact localizer service to port {}", artifactLocalizerServicePort);
-    cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerServicePort);
 
     return cConf;
   }

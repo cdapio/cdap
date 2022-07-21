@@ -67,6 +67,11 @@ public class ArtifactLocalizerService extends AbstractIdleService {
     this.cleaner = new ArtifactLocalizerCleaner(Paths.get(cacheDir).resolve("artifacts"), cacheCleanupInterval);
   }
 
+  @VisibleForTesting
+  public int getPort() {
+    return httpService.getBindAddress().getPort();
+  }
+
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting ArtifactLocalizerService");

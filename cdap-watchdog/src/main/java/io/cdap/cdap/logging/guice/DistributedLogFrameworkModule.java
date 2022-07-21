@@ -50,7 +50,7 @@ public class DistributedLogFrameworkModule extends PrivateModule {
 
     // Bind the status service
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
-      (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER));
+      (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
     CommonHandlers.add(handlerBinder);
     bind(LogSaverStatusService.class).in(Scopes.SINGLETON);
     expose(LogSaverStatusService.class);
