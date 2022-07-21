@@ -18,7 +18,6 @@ package io.cdap.cdap.k8s.common;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Range;
-import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.ApiClient;
@@ -36,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,7 +43,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -76,10 +73,10 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
   private final String namespace;
   private final Random random;
   private final Type resourceType;
-  private final AtomicReference<Watchable<DynamicKubernetesObject>> watch;
-  private final CachingResourceChangeListener<T> changeListener;
+  private final CachingResourceChangeListener changeListener;
   private volatile boolean stopped;
   private volatile ApiClient apiClient;
+  private Watchable<DynamicKubernetesObject> watch;
 
   protected AbstractWatcherThread(String threadName, String namespace, String group, String version, String plural) {
     this(threadName, namespace, group, version, plural, null);
@@ -99,8 +96,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
     // Resolve <T> to form the concrete type for Watch.Response<T>
     this.resourceType = TypeToken.of(getClass()).resolveType(
       AbstractWatcherThread.class.getTypeParameters()[0]).getType();
-    this.watch = new AtomicReference<>();
-    this.changeListener = new CachingResourceChangeListener<>(this);
+    this.changeListener = new CachingResourceChangeListener();
     this.apiClient = apiClient;
   }
 
@@ -114,12 +110,15 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
   }
 
   /**
-   * Close the existing watch. Children class call can this method to force closing the existing watch.
+   * Close the existing watch. Children class can call this method to force closing the existing watch.
    */
   @VisibleForTesting
-  protected final void closeWatch() {
+  protected final synchronized void closeWatch() {
     try {
-      Closeables.close(watch.getAndSet(null), true);
+      if (watch != null) {
+        watch.close();
+      }
+      watch = null;
     } catch (IOException e) {
       LOG.trace("Exception raised when closing watch", e);
     }
@@ -239,53 +238,34 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
 
     ApiClient apiClient = getApiClient();
     DynamicKubernetesApi api = new DynamicKubernetesApi(group, version, plural, apiClient);
+    DynamicKubernetesListObject listObject;
+    Watchable<DynamicKubernetesObject> watch;
 
-    ListOptions options = new ListOptions();
-    updateListOptions(options);
+    synchronized (this) {
+      ListOptions options = new ListOptions();
+      updateListOptions(options);
 
-    KubernetesApiResponse<DynamicKubernetesListObject> listResult = api.list(namespace, options);
+      KubernetesApiResponse<DynamicKubernetesListObject> listResult = api.list(namespace, options);
 
-    // Throw exception if the list call failed
-    listResult.throwsApiException();
+      // Throw exception if the list call failed
+      listResult.throwsApiException();
 
-    DynamicKubernetesListObject listObject = listResult.getObject();
-    String resourceVersion = listObject.getMetadata().getResourceVersion();
+      listObject = listResult.getObject();
+      String resourceVersion = listObject.getMetadata().getResourceVersion();
 
-    LOG.debug("Fetched '{}/{}/{}' list with resource version as {}", group, version, plural, resourceVersion);
+      LOG.trace("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural, resourceVersion);
 
-    Map<String, T> cachedResources = changeListener.getCachedResources();
-    Set<String> currentSet = new HashSet<>(cachedResources.keySet());
-
-    // Add existing resources
-    for (DynamicKubernetesObject obj : listObject.getItems()) {
-      String name = obj.getMetadata().getName();
-      T resource = decodeResource(obj);
-
-      // If the resource is not known before, emit an add event
-      if (!currentSet.remove(name)) {
-        changeListener.resourceAdded(resource);
-      } else if (!Objects.equals(resource, cachedResources.get(name))) {
-        // Otherwise, if there is changes in the resource, emit a modified event
-        changeListener.resourceModified(resource);
-      }
+      // Create the new watch
+      // It is important to use the same ListOptions (for selector) as the one used in the list call above
+      options.setResourceVersion(resourceVersion);
+      watch = wrapWatchableClose(api.watch(namespace, options));
+      this.watch = watch;
     }
 
-    // Emit deleted event for resources that were deleted
-    for (String deleted : currentSet) {
-      T resource = cachedResources.get(deleted);
-      if (resource != null) {
-        changeListener.resourceDeleted(resource);
-      }
-    }
-
-    LOG.debug("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural, resourceVersion);
-
-    // Create the new watch
-    options = new ListOptions();
-    updateListOptions(options);
-    options.setResourceVersion(resourceVersion);
-    Watchable<DynamicKubernetesObject> watch = wrapWatchableClose(api.watch(namespace, options));
-    Closeables.close(this.watch.getAndSet(watch), true);
+    // Notify the listener based on the initial list of resources.
+    // This has to be done after setting the watch field such that if there is a close call, the watch will get closed
+    // recreated again from the run() method.
+    changeListener.updateResources(listObject);
     return watch;
   }
 
@@ -326,40 +306,67 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
 
   /**
    * A {@link ResourceChangeListener} that memorize all resources it received.
-   * 
-   * @param <T> type of the resource
    */
-  private static final class CachingResourceChangeListener<T extends KubernetesObject>
-    implements ResourceChangeListener<T> {
+  private final class CachingResourceChangeListener implements ResourceChangeListener<T> {
 
-    private final ResourceChangeListener<T> delegate;
     private final Map<String, T> resources;
 
-    private CachingResourceChangeListener(ResourceChangeListener<T> delegate) {
-      this.delegate = delegate;
+    private CachingResourceChangeListener() {
       this.resources = new HashMap<>();
     }
 
     @Override
     public void resourceAdded(T resource) {
+      LOG.trace("Resource added: {} {}", resourceType, resource.getMetadata().getName());
       resources.put(resource.getMetadata().getName(), resource);
-      delegate.resourceAdded(resource);
+      AbstractWatcherThread.this.resourceAdded(resource);
     }
 
     @Override
     public void resourceModified(T resource) {
+      LOG.trace("Resource modified: {} {}", resourceType, resource.getMetadata().getName());
       resources.put(resource.getMetadata().getName(), resource);
-      delegate.resourceModified(resource);
+      AbstractWatcherThread.this.resourceModified(resource);
     }
 
     @Override
     public void resourceDeleted(T resource) {
+      LOG.trace("Resource deleted: {} {}", resourceType, resource.getMetadata().getName());
       resources.remove(resource.getMetadata().getName());
-      delegate.resourceDeleted(resource);
+      AbstractWatcherThread.this.resourceDeleted(resource);
     }
 
-    Map<String, T> getCachedResources() {
-      return Collections.unmodifiableMap(resources);
+    /**
+     * Updates the resources and fire events based on the difference between the cached resources and the given
+     * list of resources.
+     *
+     * @param listObject the list of resources to compare against the cache
+     * @throws IOException if failed to decode the resource object
+     */
+    void updateResources(DynamicKubernetesListObject listObject) throws IOException {
+      Set<String> currentSet = new HashSet<>(resources.keySet());
+
+      // Add existing resources
+      for (DynamicKubernetesObject obj : listObject.getItems()) {
+        String name = obj.getMetadata().getName();
+        T resource = decodeResource(obj);
+
+        // If the resource is not known before, emit an add event
+        if (!currentSet.remove(name)) {
+          resourceAdded(resource);
+        } else if (!Objects.equals(resource, resources.get(name))) {
+          // Otherwise, if there is changes in the resource, emit a modified event
+          resourceModified(resource);
+        }
+      }
+
+      // Emit deleted event for resources that were deleted
+      for (String deleted : currentSet) {
+        T resource = resources.get(deleted);
+        if (resource != null) {
+          resourceDeleted(resource);
+        }
+      }
     }
   }
 }
