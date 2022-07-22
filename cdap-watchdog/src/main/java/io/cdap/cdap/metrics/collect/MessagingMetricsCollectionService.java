@@ -105,6 +105,11 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
 
   private void publishMetric(Iterable<TopicPayload> topicPayloads) throws IOException, UnauthorizedException {
     for (TopicPayload topicPayload : topicPayloads) {
+      String metricMessage = "sending message to " + topicPayload.topicId + "\n";
+      for (Map.Entry<String, String> entry : topicPayload.metricsTags.entrySet()) {
+        metricMessage += "key = " + entry.getKey() + ", value = " + entry.getValue() + "\n";
+      }
+      LOG.error( metricMessage);
       topicPayload.publish(messagingService);
     }
   }
