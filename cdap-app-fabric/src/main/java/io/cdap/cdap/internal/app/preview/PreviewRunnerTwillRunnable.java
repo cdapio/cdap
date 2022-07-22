@@ -66,7 +66,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
-import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -265,8 +264,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         //  preview runners do not have to talk directly to app-fabric for artifacts to prevent hot-spotting.
         bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
         bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
-        // Use artifact localizer client
-        bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+        // Use artifact localizer client for preview.
+        bind(PluginFinder.class).to(PreviewPluginFinder.class);
         bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
         // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
