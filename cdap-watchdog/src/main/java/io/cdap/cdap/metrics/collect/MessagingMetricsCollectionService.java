@@ -109,7 +109,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       for (Map.Entry<String, String> entry : topicPayload.metricsTags.entrySet()) {
         metricMessage += "key = " + entry.getKey() + ", value = " + entry.getValue() + "\n";
       }
-      LOG.error( metricMessage);
+      LOG.error(metricMessage);
       topicPayload.publish(messagingService);
     }
   }
