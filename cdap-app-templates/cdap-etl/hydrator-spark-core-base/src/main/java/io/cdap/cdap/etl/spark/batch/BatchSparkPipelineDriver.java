@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
@@ -81,9 +80,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -131,35 +127,25 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
     String sourceStageName = stageSpec.getName();
 
-    // Supplier for Spark backed implementation
-    Supplier<SparkCollection<RecordInfo<Object>>> sparkCollectionSupplier =
-      getSparkCollectionSupplier(stageSpec, collector);
-
-    // If the SQL Engine is initialized, and the stage is a SQL Engine compatible Input stage, return a Future
-    // Collection which will try to execute the SQL Input operation before falling back into the Spark implementation.
+    // If the SQL Engine is initialized, and the stage is a SQL Engine compatible Input stage, return a SQLBacked
+    // Collection which will try to execute the SQL Input operation and fail the pipeline in case of any sql failure
     if (sqlEngineAdapter != null && sourceFactory.getSQLEngineInput(sourceStageName) != null) {
       SQLEngineInput sourceSQLEngineInput = sourceFactory.getSQLEngineInput(sourceStageName);
 
-      // Create read task to read using the SQL engine input
-      Supplier<SQLBackedCollection<RecordInfo<Object>>> sourceReadTask = getSQLSourceReadTask(sourceStageName,
-                                                                                              sourceSQLEngineInput);
-
-      // Execute read task using the SQL Engine.
-      Future<SQLBackedCollection<RecordInfo<Object>>> sqlCollectionFuture =
-        sqlEngineAdapter.submitTask(sourceReadTask);
-
-      // Create supplier used to fetch records from the read task when needed.
-      Supplier<SparkCollection<RecordInfo<Object>>> sqlCollectionSupplier =
-        getSqlCollectionSupplier(sqlCollectionFuture);
-
-      // Return future collection containing the method to read from the SQL engine and a fallback using the Spark
-      // collection
-      return new LazySparkCollection<>(sqlCollectionSupplier,
-                                       sparkCollectionSupplier);
+      SQLBackedCollection<RecordInfo<Object>> sqlBackedCollection = getSourceSQLBackedCollection(sourceStageName,
+                                                                                          sourceSQLEngineInput);
+      return sqlBackedCollection;
+    } else {
+      // If SQl engine is not initiated : use default spark method (RDDCollection)
+      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+      FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
+        new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
+      this.functionCacheFactory = functionCacheFactory;
+      return new RDDCollection<>(sec, functionCacheFactory, jsc,
+                                 new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
+                                   .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
+                                   .flatMap(sourceFunction));
     }
-
-    // Return the collection
-    return sparkCollectionSupplier.get();
   }
 
   @Override
@@ -438,68 +424,19 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     return sqlEngineAdapter.getSQLRelationalEngine();
   }
 
-  protected Supplier<SparkCollection<RecordInfo<Object>>> getSparkCollectionSupplier(
-    StageSpec stageSpec, StageStatisticsCollector collector) {
-    return (Supplier<SparkCollection<RecordInfo<Object>>>) () -> {
-      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-      FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
-        new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
-      return new RDDCollection<>(sec, functionCacheFactory, jsc,
-                                 new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
-                                   .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
-                                   .flatMap(sourceFunction)
-      );
-    };
-  }
-
   /**
-   * Supplier which contains logic to read a {@link SQLEngineInput} using the SQL engine adapter.
-   * If the input could not be read successfully, the result is null.
+   * Contains logic to read a {@link SQLEngineInput} using the SQL engine adapter.
    * @param stageName Stage name to read
    * @param input SQL Input specification
-   * @return task which returns a {@link SQLBackedCollection} representing the records from this SQL input, or null
-   * if the operation was not successful.
+   * @return a {@link SQLBackedCollection} representing the records from this SQL input
    */
-  protected Supplier<SQLBackedCollection<RecordInfo<Object>>> getSQLSourceReadTask(String stageName,
-                                                                                   SQLEngineInput input) {
-    return () -> {
-      // Execute read operation using the stage input.
-      SQLEngineJob<SQLDataset> readJob = sqlEngineAdapter.read(stageName, input);
-      sqlEngineAdapter.waitForJobAndThrowException(readJob);
-      SQLDataset dataset = readJob.waitFor();
-
-      // If the dataset is valid, the read operation succeeded
-      if (dataset.isValid()) {
-        // Return SQLEngineCollection instance representing this dataset.
-        SQLEngineCollection<Object> sqlCollection =
-          new SQLEngineCollection<>(sec, functionCacheFactory, jsc, new SQLContext(jsc), datasetContext,
-                                    sinkFactory, stageName, sqlEngineAdapter,  readJob);
-        return (SQLBackedCollection<RecordInfo<Object>>) mapToRecordInfoCollection(stageName, sqlCollection);
-      }
-
-      // If the operation did not succeed, return null.
-      return null;
-    };
-  }
-
-  /**
-   * Supplier which contains logic to wait for a {@link Future} operation which generates a {@link SQLBackedCollection}
-   * @param future future task to wait for
-   * @return task which returns the output of the supplied future, or rethrows an exception if the execution was not
-   * successful.
-   */
-  protected Supplier<SparkCollection<RecordInfo<Object>>> getSqlCollectionSupplier(
-    Future<SQLBackedCollection<RecordInfo<Object>>> future) {
-   return () -> {
-      try {
-        // Try to resolve the SQL collection
-        return future.get();
-      } catch (ExecutionException | InterruptedException e) {
-        LOG.error("Exception when waiting for a FutureSparkCollection to resolve", e);
-        Throwables.propagate(e);
-      }
-
-      return null;
-    };
+  protected SQLBackedCollection<RecordInfo<Object>> getSourceSQLBackedCollection(String stageName,
+                                                                                 SQLEngineInput input) {
+    // Execute read operation using the stage input.
+    SQLEngineJob<SQLDataset> readJob = sqlEngineAdapter.read(stageName, input);
+    SQLEngineCollection<Object> sqlCollection =
+      new SQLEngineCollection<>(sec, functionCacheFactory, jsc, new SQLContext(jsc), datasetContext,
+                                sinkFactory, stageName, sqlEngineAdapter,  readJob);
+    return (SQLBackedCollection<RecordInfo<Object>>) mapToRecordInfoCollection(stageName, sqlCollection);
   }
 }
