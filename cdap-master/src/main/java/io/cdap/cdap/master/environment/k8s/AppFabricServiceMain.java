@@ -158,6 +158,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                 RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
+    services.add(new RetryOnStartFailureService(() -> injector.getInstance(NamespaceInitializerService.class),
+                                                RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
 
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));

@@ -16,25 +16,48 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
+import io.cdap.cdap.k8s.identity.GCPWorkloadIdentityCredential;
+import io.cdap.cdap.k8s.util.KubeUtil;
+import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.namespace.NamespaceDetail;
+import io.cdap.cdap.master.spi.namespace.NamespaceListener;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillApplication;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.kubernetes.client.common.KubernetesObject;
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
+import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
+import io.kubernetes.client.openapi.models.V1ClusterRoleBindingBuilder;
+import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobStatus;
+import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1ResourceQuota;
+import io.kubernetes.client.openapi.models.V1ResourceQuotaSpec;
+import io.kubernetes.client.openapi.models.V1RoleBinding;
+import io.kubernetes.client.openapi.models.V1RoleBindingBuilder;
+import io.kubernetes.client.openapi.models.V1RoleRefBuilder;
+import io.kubernetes.client.openapi.models.V1Secret;
+import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
+import io.kubernetes.client.openapi.models.V1SubjectBuilder;
+import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
@@ -59,6 +82,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -93,16 +118,35 @@ import javax.annotation.Nullable;
  *
  * cdap.twill.app=[literal app name]
  */
-public class KubeTwillRunnerService implements TwillRunnerService {
+public class KubeTwillRunnerService implements TwillRunnerService, NamespaceListener {
 
   static final String START_TIMEOUT_ANNOTATION = "cdap.app.start.timeout.millis";
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillRunnerService.class);
 
   static final String APP_LABEL = "cdap.twill.app";
+  @VisibleForTesting
+  static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY =
+    "workload.identity.gcp.service.account.email";
+  private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
+  private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
+  private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
   private static final String RUN_ID_LABEL = "cdap.twill.run.id";
   private static final String RUNNER_LABEL = "cdap.twill.runner";
   private static final String RUNNER_LABEL_VAL = "k8s";
+  private static final String WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME
+    = "cdap-workload-launcher-namespace-role-binding";
+  private static final String WORKLOAD_LAUNCHER_CLUSTER_ROLE_BINDING_FORMAT
+    = "cdap-workload-launcher-cluster-role-binding-%s";
+  private static final String RBAC_V1_API_GROUP = "rbac.authorization.k8s.io";
+  private static final String CLUSTER_ROLE_KIND = "ClusterRole";
+  private static final String SERVICE_ACCOUNT_KIND = "ServiceAccount";
+  private static final String WORKLOAD_IDENTITY_DATA_KEY = "config";
+  private static final String WORKLOAD_IDENTITY_AUDIENCE_FORMAT = "identitynamespace:%s:%s";
+  private static final String WORKLOAD_IDENTITY_IMPERSONATION_URL_FORMAT = "https://iamcredentials.googleapis.com/" +
+    "v1/projects/-/serviceAccounts/%s:generateAccessToken";
+  private static final String WORKLOAD_IDENTITY_TOKEN_URL = "https://sts.googleapis.com/v1/token";
+  public static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
 
   private final MasterEnvironmentContext masterEnvContext;
   private final String kubeNamespace;
@@ -117,16 +161,28 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final int jobCleanBatchSize;
   private final String selector;
   private final boolean enableMonitor;
+  private final Gson gson;
+  private final String workloadLauncherRoleNameForNamespace;
+  private final String workloadLauncherRoleNameForCluster;
   private ApiClient apiClient;
   private CoreV1Api coreV1Api;
   private ScheduledExecutorService monitorScheduler;
   private ScheduledExecutorService jobCleanerService;
+  private boolean workloadIdentityEnabled;
+  private String workloadIdentityPool;
+  private String workloadIdentityProvider;
+  private RbacAuthorizationV1Api rbacV1Api;
 
   public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext,
                                 String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
                                 PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
                                 int jobCleanupIntervalMins, int jobCleanBatchSize,
-                                boolean enableMonitor) {
+                                boolean enableMonitor,
+                                boolean workloadIdentityEnabled,
+                                String workloadLauncherRoleNameForNamespace,
+                                String workloadLauncherRoleNameForCluster,
+                                String workloadIdentityPool,
+                                String workloadIdentityProvider) {
     this.masterEnvContext = masterEnvContext;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -143,6 +199,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     this.jobCleanupIntervalMins = jobCleanupIntervalMins;
     this.jobCleanBatchSize = jobCleanBatchSize;
     this.enableMonitor = enableMonitor;
+    this.workloadIdentityEnabled = workloadIdentityEnabled;
+    this.workloadLauncherRoleNameForNamespace = workloadLauncherRoleNameForNamespace;
+    this.workloadLauncherRoleNameForCluster = workloadLauncherRoleNameForCluster;
+    this.workloadIdentityPool = workloadIdentityPool;
+    this.workloadIdentityProvider = workloadIdentityProvider;
+    this.gson = new Gson();
   }
 
   @Override
@@ -226,21 +288,13 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     try {
       apiClient = Config.defaultClient();
       coreV1Api = new CoreV1Api(apiClient);
+      rbacV1Api = new RbacAuthorizationV1Api(apiClient);
       if (!enableMonitor) {
         return;
       }
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
-      Map<Type, AppResourceWatcherThread<?>> typeMap = ImmutableMap.of(
-        V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(kubeNamespace, selector),
-        V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(kubeNamespace, selector),
-        V1Job.class, AppResourceWatcherThread.createJobWatcher(kubeNamespace, selector)
-      );
-      typeMap.values().forEach(watcher -> {
-        watcher.addListener(new AppResourceChangeListener<>());
-        watcher.start();
-      });
-      resourceWatchers.put(kubeNamespace, typeMap);
+      addAndStartWatchers(kubeNamespace);
 
       // start job cleaner service
       jobCleanerService =
@@ -253,16 +307,411 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   }
 
   @Override
+  public void onStart(Collection<NamespaceDetail> namespaceDetails) {
+    for (NamespaceDetail namespaceDetail : namespaceDetails) {
+      String namespace = namespaceDetail.getProperties().get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+      if (namespace != null) {
+        addAndStartWatchers(namespace);
+      }
+    }
+  }
+
+  @Override
+  public void onNamespaceCreation(NamespaceDetail namespaceDetail) throws Exception {
+    String cdapNamespace = namespaceDetail.getName();
+    Map<String, String> properties = namespaceDetail.getProperties();
+    if (NamespaceId.isReserved(cdapNamespace)) {
+      return;
+    }
+
+    String namespace = properties.get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+    if (namespace == null || namespace.isEmpty()) {
+      throw new IOException(String.format("Cannot create Kubernetes namespace for %s because no name was provided",
+                                          cdapNamespace));
+    }
+    // Kubernetes namespace must be a lowercase RFC 1123 label, consisting of lower case alphanumeric characters or '-'
+    // and must start and end with an alphanumeric character
+    KubeUtil.validateRFC1123LabelName(namespace);
+    findOrCreateKubeNamespace(namespace, cdapNamespace);
+    updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
+    copyVolumes(namespace, cdapNamespace);
+    createWorkloadServiceAccount(namespace, cdapNamespace);
+    if (workloadIdentityEnabled) {
+      String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
+      if (workloadIdentityServiceAccountEmail != null && !workloadIdentityServiceAccountEmail.isEmpty()) {
+        findOrCreateWorkloadIdentityConfigMap(namespace, workloadIdentityServiceAccountEmail);
+      }
+    }
+    addAndStartWatchers(cdapNamespace);
+  }
+
+  @Override
+  public void onNamespaceDeletion(NamespaceDetail namespaceDetail) throws Exception {
+    String namespace = namespaceDetail.getProperties().get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+    if (namespace != null && !namespace.isEmpty()) {
+      deleteKubeNamespace(namespace, namespaceDetail.getName());
+      stopAndRemoveWatchers(namespace);
+    }
+  }
+
+  /**
+   * Checks if namespace already exists from the same CDAP instance. Otherwise, creates a new Kubernetes namespace.
+   */
+  private void findOrCreateKubeNamespace(String namespace, String cdapNamespace) throws Exception {
+    try {
+      V1Namespace existingNamespace = coreV1Api.readNamespace(namespace, null, null, null);
+      if (existingNamespace.getMetadata() == null) {
+        throw new IOException(String.format("Kubernetes namespace %s exists but was not created by CDAP", namespace));
+      }
+      Map<String, String> labels = existingNamespace.getMetadata().getLabels();
+      if (labels == null || !cdapNamespace.equals(labels.get(CDAP_NAMESPACE_LABEL))) {
+        throw new IOException(String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
+                                            namespace, cdapNamespace));
+      }
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new IOException("Error occurred while checking if Kubernetes namespace already exists. Error code = "
+                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+      }
+      createKubeNamespace(namespace, cdapNamespace);
+    }
+  }
+
+  private void createKubeNamespace(String namespace, String cdapNamespace) throws Exception {
+    V1Namespace namespaceObject = new V1Namespace();
+    namespaceObject.setMetadata(new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    try {
+      coreV1Api.createNamespace(namespaceObject, null, null, null);
+      LOG.debug("Created Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
+    } catch (ApiException e) {
+      try {
+        deleteKubeNamespace(namespace, cdapNamespace);
+      } catch (IOException deletionException) {
+        e.addSuppressed(deletionException);
+      }
+      throw new IOException("Error occurred while creating Kubernetes namespace. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  /**
+   * Updates resource quota if it already exists in the Kubernetes namespace. Otherwise, creates a new resource quota.
+   */
+  private void updateOrCreateResourceQuota(String namespace, String cdapNamespace, Map<String, String> properties)
+    throws Exception {
+
+    String kubeCpuLimit = properties.get(NAMESPACE_CPU_LIMIT_PROPERTY);
+    String kubeMemoryLimit = properties.get(NAMESPACE_MEMORY_LIMIT_PROPERTY);
+    Map<String, Quantity> hardLimitMap = new HashMap<>();
+    if (kubeCpuLimit != null && !kubeCpuLimit.isEmpty()) {
+      hardLimitMap.put("limits.cpu", new Quantity(kubeCpuLimit));
+    }
+    if (kubeMemoryLimit != null && !kubeMemoryLimit.isEmpty()) {
+      hardLimitMap.put("limits.memory", new Quantity(kubeMemoryLimit));
+    }
+    if (hardLimitMap.isEmpty()) {
+      // no resource limits to create
+      return;
+    }
+
+    V1ResourceQuota resourceQuota = new V1ResourceQuota();
+    resourceQuota.setMetadata(new V1ObjectMeta()
+                                .name(RESOURCE_QUOTA_NAME)
+                                .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    resourceQuota.setSpec(new V1ResourceQuotaSpec().hard(hardLimitMap));
+    try {
+      V1ResourceQuota existingResourceQuota = coreV1Api.readNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace,
+                                                                                    null, null, null);
+      if (existingResourceQuota.getMetadata() == null) {
+        throw new IOException(String.format("%s exists but was not created by CDAP", RESOURCE_QUOTA_NAME));
+      }
+      Map<String, String> labels = existingResourceQuota.getMetadata().getLabels();
+      if (labels == null || !cdapNamespace.equals(labels.get(CDAP_NAMESPACE_LABEL))) {
+        throw new IOException(String.format("%s exists but was not created by CDAP namespace %s",
+                                            RESOURCE_QUOTA_NAME, cdapNamespace));
+      }
+      if (!hardLimitMap.equals(existingResourceQuota.getSpec().getHard())) {
+        coreV1Api.replaceNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace, resourceQuota,
+                                                 null, null, null);
+      }
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new IOException("Error occurred while checking or updating Kubernetes resource quota. Error code = "
+                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+      }
+      createKubeResourceQuota(namespace, resourceQuota);
+    }
+  }
+
+  private void createKubeResourceQuota(String namespace, V1ResourceQuota resourceQuota) throws Exception {
+    try {
+      coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null);
+      LOG.debug("Created resource quota for Kubernetes namespace {}", namespace);
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while creating Kubernetes resource quota. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  /**
+   * Copy volumes into the new namespace for deployments created via the KubeTwillRunnerService
+   * TODO: (CDAP-18956) improve this logic to be for each pipeline run
+   */
+  private void copyVolumes(String namespace, String cdapNamespace) throws IOException {
+    try {
+      for (V1Volume volume : podInfo.getVolumes()) {
+        if (volume.getConfigMap() != null) {
+          String configMapName = volume.getConfigMap().getName();
+          V1ConfigMap existingMap = coreV1Api.readNamespacedConfigMap(configMapName, podInfo.getNamespace(),
+                                                                      null, null, null);
+          V1ConfigMap configMap = new V1ConfigMap().data(existingMap.getData())
+            .metadata(new V1ObjectMeta().name(configMapName).putLabelsItem(CDAP_NAMESPACE_LABEL,
+                                                                           cdapNamespace));
+          try {
+            coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
+          } catch (ApiException e) {
+            if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+              throw e;
+            }
+            LOG.warn("The configmap already exists '{}:{}' : {}. Ignoring creation of the configmap.", namespace,
+                     configMapName, e.getResponseBody());
+          }
+          LOG.debug("Created configMap {} in Kubernetes namespace {}", configMapName, namespace);
+        }
+
+        if (volume.getSecret() != null) {
+          String secretName = volume.getSecret().getSecretName();
+          V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName, podInfo.getNamespace(),
+                                                                   null, null, null);
+          V1Secret secret = new V1Secret().data(existingSecret.getData()).type(existingSecret.getType())
+            .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL,
+                                                                        cdapNamespace));
+          try {
+            coreV1Api.createNamespacedSecret(namespace, secret, null, null, null);
+          } catch (ApiException e) {
+            if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+              throw e;
+            }
+            LOG.warn("The secret '{}:{}' already exists : {}. Ignoring creation of the secret.", namespace,
+                     secret.getMetadata().getName(), e.getResponseBody());
+          }
+          LOG.debug("Created secret {} in Kubernetes namespace {}", secretName, namespace);
+        }
+      }
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while copying volumes. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  /**
+   * Create service account and role bindings required for workload pod.
+   * TODO: (CDAP-18956) improve this logic to be for each pipeline run
+   */
+  private void createWorkloadServiceAccount(String namespace, String cdapNamespace) throws IOException {
+    try {
+      // Create service account for workload pod
+      // TODO(CDAP-19149): Cleanup strong coupling currently present in CDAP service accounts to avoid copying.
+      String serviceAccountName = podInfo.getServiceAccountName();
+      createServiceAccount(namespace, cdapNamespace, serviceAccountName);
+
+      // Create namespace-specific role-binding for the workload service account
+      createNamespacedRoleBinding(WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME, CLUSTER_ROLE_KIND,
+                                  workloadLauncherRoleNameForNamespace, namespace, serviceAccountName, cdapNamespace);
+
+      // Create cluster-wide role-binding for the workload service account
+      String workloadLauncherClusterRoleBindingName = String.format(WORKLOAD_LAUNCHER_CLUSTER_ROLE_BINDING_FORMAT,
+                                                                    namespace);
+      createClusterRoleBinding(workloadLauncherClusterRoleBindingName, workloadLauncherRoleNameForCluster, namespace,
+                               serviceAccountName, cdapNamespace);
+
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while creating service account or role binding. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  private void createServiceAccount(String namespace, String cdapNamespace, String serviceAccountName)
+    throws ApiException {
+    V1ServiceAccount serviceAccount = new V1ServiceAccount()
+      .metadata(new V1ObjectMeta().name(serviceAccountName)
+                  .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    try {
+      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null);
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+        throw e;
+      }
+      LOG.warn("The service account '{}:{}' already exists : {}. Ignoring creation of the service account.", namespace,
+               serviceAccountName, e.getResponseBody());
+    }
+    LOG.info("Created serviceAccount {} in Kubernetes namespace {}", serviceAccountName, namespace);
+  }
+
+  private void createNamespacedRoleBinding(String bindingName, String roleKind, String roleName, String namespace,
+                                           String serviceAccountName, String cdapNamespace) throws ApiException {
+    KubeUtil.validatePathSegmentName(bindingName);
+    V1RoleBinding namespaceWorkloadLauncherBinding = new V1RoleBindingBuilder()
+      .withMetadata(new V1ObjectMetaBuilder()
+                      .withNamespace(namespace)
+                      .withName(bindingName)
+                      .build().putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace))
+      .withRoleRef(new V1RoleRefBuilder()
+                     .withApiGroup(RBAC_V1_API_GROUP)
+                     .withKind(roleKind)
+                     .withName(roleName).build())
+      .withSubjects(new V1SubjectBuilder()
+                      .withKind(SERVICE_ACCOUNT_KIND)
+                      .withName(serviceAccountName).build())
+      .build();
+    try {
+      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding, null, null, null);
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+        throw e;
+      }
+      LOG.warn("The role binding '{}:{}' already exists : {}. Ignoring creation of the role binding.", namespace,
+               bindingName, e.getResponseBody());
+    }
+
+    LOG.info("Created namespace role binding '{}' in k8s namespace '{}' for service account '{}'",
+             bindingName, serviceAccountName, serviceAccountName);
+  }
+
+  private void createClusterRoleBinding(String bindingName, String roleName, String serviceAccountNamespace,
+                                        String serviceAccountName, String cdapNamespace) throws ApiException {
+    KubeUtil.validatePathSegmentName(bindingName);
+    V1ClusterRoleBinding clusterWorkloadLauncherBinding = new V1ClusterRoleBindingBuilder()
+      .withMetadata(new V1ObjectMetaBuilder()
+                      .withName(bindingName).build().putLabelsItem(
+                        CDAP_NAMESPACE_LABEL, cdapNamespace))
+      .withRoleRef(new V1RoleRefBuilder()
+                     .withApiGroup(RBAC_V1_API_GROUP)
+                     .withKind(CLUSTER_ROLE_KIND)
+                     .withName(roleName).build())
+      .withSubjects(new V1SubjectBuilder()
+                      .withKind(SERVICE_ACCOUNT_KIND)
+                      .withNamespace(serviceAccountNamespace)
+                      .withName(serviceAccountName).build())
+      .build();
+    try {
+      rbacV1Api.createClusterRoleBinding(clusterWorkloadLauncherBinding, null, null, null);
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+        throw e;
+      }
+      LOG.warn("The cluster role binding '{}' already exists : {}. Ignoring creation of the cluster role binding.",
+               bindingName, e.getResponseBody());
+    }
+
+    LOG.info("Created cluster role binding '{}' for service account '{}' in k8s namespace '{}'", bindingName,
+             serviceAccountName, serviceAccountNamespace);
+  }
+
+  /**
+   * Deletes Kubernetes namespace created by CDAP and associated resources if they exist.
+   */
+  private void deleteKubeNamespace(String namespace, String cdapNamespace) throws Exception {
+    try {
+      V1Namespace namespaceObject = coreV1Api.readNamespace(namespace, null, null, null);
+      if (namespaceObject.getMetadata() != null) {
+        Map<String, String> namespaceLabels = namespaceObject.getMetadata().getLabels();
+        if (namespaceLabels != null && namespaceLabels.get(CDAP_NAMESPACE_LABEL)
+          .equals(cdapNamespace)) {
+          // PropagationPolicy is set to background cascading deletion. Kubernetes deletes the owner object immediately
+          // and the controller cleans up the dependent objects in the background.
+          coreV1Api.deleteNamespace(namespace, null, null, 0, null, "Background", null);
+          LOG.info("Deleted Kubernetes namespace and associated resources for {}", namespace);
+          return;
+        }
+      }
+      LOG.debug("Kubernetes namespace {} was not deleted because it was not created by CDAP namespace {}",
+                namespace, cdapNamespace);
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+        LOG.debug("Kubernetes namespace {} was not deleted because it was not found", namespace);
+      } else {
+        throw new IOException("Error occurred while deleting Kubernetes namespace. Error code = "
+                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+      }
+    }
+  }
+
+  /**
+   * Finds or creates the ConfigMap which stores the GCP credentials for Fleet Workload Identity.
+   * For details, see steps 6-7 of
+   * https://cloud.google.com/anthos/multicluster-management/fleets/workload-identity#impersonate_a_service_account
+   */
+  private void findOrCreateWorkloadIdentityConfigMap(String k8sNamespace, String workloadIdentityGCPServiceAccountEmail)
+    throws ApiException, IOException {
+    // Check if workload identity config map already exists
+    try {
+      coreV1Api.readNamespacedConfigMap(k8sNamespace, KubeMasterEnvironment.WORKLOAD_IDENTITY_CONFIGMAP_NAME,
+                                        null, false, false);
+      // Workload identity config map already exists, so return early
+      LOG.debug("Workload identity config found, returning without creating it...");
+      return;
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+        LOG.debug("Creating workload identity config map for kubernetes namespace {}", k8sNamespace);
+      } else {
+        throw new IOException("Failed to fetch existing workload identity config map. Error code = " + e.getCode() +
+                                ", Body = " + e.getResponseBody(), e);
+      }
+    }
+
+    String workloadIdentityAudience = String.format(WORKLOAD_IDENTITY_AUDIENCE_FORMAT, workloadIdentityPool,
+                                                    workloadIdentityProvider);
+    String workloadIdentityImpersonationURL = String.format(WORKLOAD_IDENTITY_IMPERSONATION_URL_FORMAT,
+                                                            workloadIdentityGCPServiceAccountEmail);
+    GCPWorkloadIdentityCredential credential =
+      new GCPWorkloadIdentityCredential(GCPWorkloadIdentityCredential.CredentialType.EXTERNAL_ACCOUNT,
+                                        workloadIdentityAudience, workloadIdentityImpersonationURL,
+                                        GCPWorkloadIdentityCredential.TokenType.JWT, WORKLOAD_IDENTITY_TOKEN_URL,
+                                        KubeMasterEnvironment.WORKLOAD_IDENTITY_CREDENTIAL_KSA_SOURCE_PATH);
+    String workloadIdentityCredentialJSON = gson.toJson(credential);
+    Map<String, String> workloadIdentityConfigMapData = new HashMap<>();
+    workloadIdentityConfigMapData.put(WORKLOAD_IDENTITY_DATA_KEY, workloadIdentityCredentialJSON);
+    V1ConfigMap configMap = new V1ConfigMap()
+      .metadata(new V1ObjectMeta().namespace(k8sNamespace).name(KubeMasterEnvironment.WORKLOAD_IDENTITY_CONFIGMAP_NAME))
+      .data(workloadIdentityConfigMapData);
+    coreV1Api.createNamespacedConfigMap(k8sNamespace, configMap, null, null, null);
+  }
+
+  @Override
   public void stop() {
     if (jobCleanerService != null) {
       jobCleanerService.shutdownNow();
     }
-    resourceWatchers.values().forEach(typeMap -> {
-      typeMap.values().forEach(AbstractWatcherThread::close);
-    });
+    stopAndRemoveWatchers();
     if (monitorScheduler != null) {
       monitorScheduler.shutdownNow();
     }
+  }
+
+  @VisibleForTesting
+  void setCoreV1Api(CoreV1Api coreV1Api) {
+    this.coreV1Api = coreV1Api;
+  }
+
+  @VisibleForTesting
+  void setRbacV1Api(RbacAuthorizationV1Api rbacV1Api) {
+    this.rbacV1Api = rbacV1Api;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityEnabled() {
+    this.workloadIdentityEnabled = true;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityPool(String workloadIdentityPool) {
+    this.workloadIdentityPool = workloadIdentityPool;
+  }
+
+  @VisibleForTesting
+  void setWorkloadIdentityProvider(String workloadIdentityProvider) {
+    this.workloadIdentityProvider = workloadIdentityProvider;
   }
 
   /**
@@ -590,17 +1039,43 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   }
 
   /**
-   * Create and start job watcher for the given Kubernetes namespace
+   * Create and start watchers for the given Kubernetes namespace
    */
-  public void addAndStartJobWatcher(String namespace) {
+  private synchronized void addAndStartWatchers(String namespace) {
     if (resourceWatchers.containsKey(namespace)) {
       return;
     }
-    LOG.info("Adding job watcher for namespace {}", namespace);
-    AppResourceWatcherThread<?> watcherThread = AppResourceWatcherThread.createJobWatcher(namespace, selector);
-    watcherThread.addListener(new AppResourceChangeListener<>());
-    watcherThread.start();
-    resourceWatchers.put(namespace, ImmutableMap.of(V1Job.class, watcherThread));
+    Map<Type, AppResourceWatcherThread<?>> typeMap = new HashMap<>();
+    typeMap.put(V1Job.class, AppResourceWatcherThread.createJobWatcher(namespace, selector));
+    // We only create deployments and stateful in the system namespace, so only add watchers for them in that namespace
+    if (namespace.equals(kubeNamespace)) {
+      typeMap.put(V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(namespace, selector));
+      typeMap.put(V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(namespace, selector));
+    }
+    typeMap.values().forEach(watcher -> {
+      watcher.addListener(new AppResourceChangeListener<>());
+      watcher.start();
+    });
+    resourceWatchers.put(namespace, typeMap);
+  }
+
+  /**
+   * Stop and remove watchers for the given Kubernetes namespace
+   */
+  private synchronized void stopAndRemoveWatchers(String namespace) {
+    if (!resourceWatchers.containsKey(namespace)) {
+      LOG.warn("Job watcher does not exist for namespace {}", namespace);
+      return;
+    }
+    resourceWatchers.get(namespace).values().forEach(AbstractWatcherThread::close);
+    resourceWatchers.remove(namespace);
+  }
+
+  /**
+   * Stop and remove watchers for all Kubernetes namespaces
+   */
+  private synchronized void stopAndRemoveWatchers() {
+    resourceWatchers.keySet().forEach(this::stopAndRemoveWatchers);
   }
 
   /**
@@ -625,7 +1100,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       }
       String namespace = meta.getNamespace();
       // If it is newly added controller, monitor it.
-      addAndStartJobWatcher(namespace);
+      addAndStartWatchers(namespace);
       return monitorController(this, timeout, timeoutUnit, controller,
                                resourceWatchers.get(namespace).get(resourceType),
                                resourceType, controller.getStartedFuture());
