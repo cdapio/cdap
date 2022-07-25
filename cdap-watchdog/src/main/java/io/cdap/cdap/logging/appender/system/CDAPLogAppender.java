@@ -151,9 +151,25 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
           Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("log-clean-up"));
         FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(context.getTransactionRunner());
         LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner, context.getLocationFactory(),
+                                               logFileManager.getLogsDirectoryLocation(),
                                                TimeUnit.DAYS.toMillis(fileRetentionDurationDays),
+                                               LogCleaner.FOLDER_CLEANUP_BATCH_SIZE,
                                                fileCleanupBatchSize);
-        scheduledExecutorService.scheduleAtFixedRate(logCleaner, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
+        scheduledExecutorService.execute(new Runnable() {
+          @Override
+          public void run() {
+            long delayInMillis = -1L;
+            try {
+              delayInMillis = logCleaner.run();
+            } finally {
+              if (delayInMillis < 0) {
+                scheduledExecutorService.schedule(this, logCleanupIntervalMins, TimeUnit.MINUTES);
+              } else {
+                scheduledExecutorService.schedule(this, delayInMillis, TimeUnit.MILLISECONDS);
+              }
+            }
+          }
+        });
       }
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
       throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +

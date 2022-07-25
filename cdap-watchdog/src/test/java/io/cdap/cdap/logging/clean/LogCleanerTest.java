@@ -46,10 +46,13 @@ import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -58,7 +61,16 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+@RunWith(JUnitParamsRunner.class)
 public class LogCleanerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -75,25 +87,25 @@ public class LogCleanerTest {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new NonCustomLocationUnitTestModule(),
-      new TransactionModules().getInMemoryModules(),
-      new LocalLogAppenderModule(),
-      new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getNoOpModule(),
-      new StorageModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+        new ConfigModule(cConf, hConf),
+        new NonCustomLocationUnitTestModule(),
+        new TransactionModules().getInMemoryModules(),
+        new LocalLogAppenderModule(),
+        new DataSetsModules().getInMemoryModules(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule(),
+        new StorageModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+          }
         }
-      }
     );
 
     txManager = injector.getInstance(TransactionManager.class);
@@ -107,29 +119,151 @@ public class LogCleanerTest {
   }
 
   @Test
-  public void testLogCleanup() throws Exception {
+  @Parameters({
+      "Delete all expired files, -5000, -4980, 1, 100, 50, 0, 0" ,
+      "Delete all expired files less than batch size, -50000, -49800, 10, 100, 10, 11, 1",
+      "No expired files to delete, 50000, 52000, 500, 100, 50, 0, 5",
+      "Delete expired files leave remaining, -50000, 50000, 20000, 100, 50, 0, 3"
+  })
+  public void testLogFileCleanup(String description, int startTimeOffset, int endTimeOffset,
+      int timeStep, int retentionDurationMs, int fileCleanupBatchSize,
+      int expiredFileCount, int unexpiredFileCount) throws Exception {
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     long currentTime = System.currentTimeMillis();
-    LogPathIdentifier logPathIdentifier = new LogPathIdentifier("testNs", "testApp", "testEntity");
+    LogPathIdentifier logPathIdentifier = new LogPathIdentifier("testNs",
+        "testApp",
+        UUID.randomUUID().toString());
     FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(transactionRunner);
-    long startTime = currentTime - 5000;
     Location dirLocation = locationFactory.create("logs");
     dirLocation.mkdirs();
-    // create 20 files, add them in past time range
-    for (int i = 0; i < 20; i++) {
-      Location location = dirLocation.append("test" + i);
+
+    // Create logs files for the timestamps.
+    for (int i = startTimeOffset; i <= endTimeOffset; i += timeStep) {
+      long time = currentTime + i;
+      Location location = getLocation(dirLocation, logPathIdentifier);
+      location.mkdirs();
+      location = location.append("test" + i + ".avro");
       location.createNew();
-      fileMetaDataWriter.writeMetaData(logPathIdentifier, startTime + i, startTime + i, location);
+      fileMetaDataWriter.writeMetaData(logPathIdentifier, time, time, location);
     }
 
-    Assert.assertEquals(20, dirLocation.list().size());
-    LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner, locationFactory, 100, 60);
+    // Run log cleaner.
+    LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner,
+        locationFactory,
+        dirLocation,
+        retentionDurationMs,
+        10,
+        fileCleanupBatchSize);
     logCleaner.run();
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
-    // all meta data should be deleted
-    Assert.assertEquals(0, fileMetaDataReader.listFiles(logPathIdentifier, 0, System.currentTimeMillis()).size());
-    // we are not asserting file existence as the delete could fail and we don't guarantee file deletion.
+
+    // Assert on the count of expired and unexpired files remaining.
+    Assert.assertEquals(expiredFileCount,
+        fileMetaDataReader.listFiles(logPathIdentifier, 0, System.currentTimeMillis()).size());
+    Assert.assertEquals(unexpiredFileCount,
+        fileMetaDataReader.listFiles(logPathIdentifier, System.currentTimeMillis(), Long.MAX_VALUE).size());
+
+    // Assert for log folder deletion.
+    // If no files are expected to remain, then folder should be deleted.
+    boolean folderExists = (expiredFileCount + unexpiredFileCount != 0);
+    Location location = getLocation(dirLocation, logPathIdentifier);
+    Assert.assertEquals(location.exists(), folderExists);
+  }
+
+  @Test
+  @Parameters({
+      "2, 3600000, 2",
+      "10, 3600000, 10",
+      "100, -1, 10"
+  })
+  public void testLogFolderCleanup(int folderCleanupBatchSize,
+      long expectedDelayInMillis,
+      int expectedDeleteCount) throws IOException {
+    // Create log folders and files
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
+    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    Location logFolder = locationFactory.create("logs");
+    logFolder.mkdirs();
+
+    List<String> children = Arrays.asList("/A/A", "/A/B", "/A/C", "/B/A", "/B/B", "/B/C", "/C/A", "/C/B", "/C/C");
+    for (String child : children) {
+      Location location = logFolder.append(child);
+      location.mkdirs();
+      if (child.equals("/B/B")) {
+        location.append("test.log").createNew();
+      }
+    }
+
+    // Run log folder cleaner
+    LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner,
+        locationFactory,
+        logFolder,
+        100,
+        folderCleanupBatchSize,
+        10);
+
+    // Assert for the returned response for delay in next schedule
+    Assert.assertEquals(expectedDelayInMillis, logCleaner.run());
+
+    // Assert if folders exists
+    children = Arrays.asList("/A", "/A/A", "/A/B", "/A/C", "/B/A", "/B/B", "/B/C", "/C", "/C/A", "/C/B", "/C/C");
+    int deletedCount = 0;
+    for (String child : children) {
+      Location location = logFolder.append(child);
+      if (child.equals("/B/B")) {
+        Assert.assertTrue(location.append("test.log").exists());
+      } else {
+        if (!location.exists()) {
+          deletedCount++;
+        }
+      }
+    }
+
+    // Assert for the deleted folder count
+    Assert.assertEquals(expectedDeleteCount, deletedCount);
+  }
+
+  @Test
+  public void testLogFolderCleanupExclusion() throws IOException {
+    // Create log folders and files
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
+    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    Location logFolder = locationFactory.create("logs");
+    logFolder.mkdirs();
+
+    for (int day = 0; day < 4; day++) {
+      long time = System.currentTimeMillis();
+      long millisInDay = 1000 * 60 * 60 * 24;
+      String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(time - day * millisInDay));
+      Location location = logFolder.append(date);
+      location.mkdirs();
+    }
+
+    // Run log folder cleaner
+    LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner,
+        locationFactory,
+        logFolder,
+        100,
+        10,
+        10);
+    logCleaner.run();
+
+    // Assert for the remaining folder count
+    Assert.assertEquals(2, logFolder.list().size());
+  }
+
+  private Location getLocation(Location logsDirectoryLocation, LogPathIdentifier logPathIdentifier) throws IOException {
+    long currentTime = System.currentTimeMillis();
+    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(currentTime));
+    Location contextLocation =
+        logsDirectoryLocation.append(logPathIdentifier.getNamespaceId())
+            .append(date)
+            .append(logPathIdentifier.getPathId1())
+            .append(logPathIdentifier.getPathId2());
+    return contextLocation;
   }
 }
