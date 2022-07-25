@@ -147,6 +147,7 @@
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
+    <pragmatists.version>1.0.5</pragmatists.version>
     <kafka.version>0.8.2.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
     <logback.version>1.0.9</logback.version>
@@ -1334,6 +1335,12 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>pl.pragmatists</groupId>
+        <artifactId>JUnitParams</artifactId>
+        <version>${pragmatists.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
