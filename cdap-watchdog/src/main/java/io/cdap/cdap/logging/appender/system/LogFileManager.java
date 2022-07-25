@@ -43,8 +43,9 @@ import javax.annotation.Nullable;
 /**
  * Class including logic for getting log file to write to. Used by {@link CDAPLogAppender}
  */
-final class LogFileManager implements Flushable, Syncable {
+public final class LogFileManager implements Flushable, Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(LogFileManager.class);
+  private static final String LOG_DIRECTORY_DATE_FORMAT = "yyyy-MM-dd";
 
   private final String dirPermissions;
   private final String filePermissions;
@@ -66,6 +67,10 @@ final class LogFileManager implements Flushable, Syncable {
     this.fileMetaDataWriter = fileMetaDataWriter;
     this.logsDirectoryLocation = locationFactory.create("logs");
     this.outputStreamMap = new HashMap<>();
+  }
+
+  public Location getLogsDirectoryLocation() {
+    return logsDirectoryLocation;
   }
 
   /**
@@ -216,7 +221,7 @@ final class LogFileManager implements Flushable, Syncable {
   private TimeStampLocation getLocation(LogPathIdentifier logPathIdentifier) throws IOException {
     ensureDirectoryCheck(logsDirectoryLocation);
     long currentTime = System.currentTimeMillis();
-    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(currentTime));
+    String date = formatLogDirectoryName(currentTime);
     Location contextLocation =
       logsDirectoryLocation.append(logPathIdentifier.getNamespaceId())
         .append(date)
@@ -252,5 +257,9 @@ final class LogFileManager implements Flushable, Syncable {
         ", timeStamp=" + timeStamp +
         '}';
     }
+  }
+
+  public static String formatLogDirectoryName(long timestamp) {
+    return new SimpleDateFormat(LogFileManager.LOG_DIRECTORY_DATE_FORMAT).format(new Date(timestamp));
   }
 }
