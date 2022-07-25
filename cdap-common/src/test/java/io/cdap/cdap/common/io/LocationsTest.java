@@ -108,6 +108,25 @@ public class LocationsTest {
     location2 = Locations.getLocationFromAbsolutePath(locationFactory, location1.toURI().getPath());
     Assert.assertEquals(location1.toURI(), location2.toURI());
   }
+
+  @Test
+  public void testLocationComparator() {
+    LocationFactory locationFactory = new LocalLocationFactory(new File(File.separator));
+    Object[][] testCases = new Object[][] {
+        {"/parent1/child1", "/parent1/child1", 0},
+        {"/parent1/child1/", "/parent1/child1/", 0},
+        {"/parent1/child1", "/parent1/child1/", 0},
+        {"/parent1/child1/", "/parent1/child1", 0},
+        {"/parent1/child", "/parent1/child1", -1},
+        {"/parent1/child1", "/parent1/child", 1}};
+
+    for (Object[] testCase : testCases) {
+      Location location1 = locationFactory.create((String) testCase[0]);
+      Location location2 = locationFactory.create((String) testCase[1]);
+      int expected = (int) testCase[2];
+      Assert.assertEquals(expected, Locations.LOCATION_COMPARATOR.compare(location1, location2));
+    }
+  }
 }
 
 

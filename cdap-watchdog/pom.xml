@@ -137,6 +137,11 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>pl.pragmatists</groupId>
+      <artifactId>JUnitParams</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-fabric</artifactId>
       <version>${project.version}</version>

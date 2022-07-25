@@ -53,7 +53,7 @@ public class LogPathIdentifier {
    * first part of path id
    * @return first path id of logging context in a namespace
    */
-  String getPathId1() {
+  public String getPathId1() {
     return pathId1;
   }
 
@@ -61,7 +61,7 @@ public class LogPathIdentifier {
    * second part of path id - used by {@link LogFileManager} to create directory
    * @return second path id of logging context in a namespace
    */
-  String getPathId2() {
+  public String getPathId2() {
     return pathId2;
   }
 
