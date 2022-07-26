@@ -25,6 +25,7 @@ import io.cdap.cdap.k8s.common.DefaultLocalFileProvider;
 import io.cdap.cdap.k8s.common.LocalFileProvider;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
+import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -39,14 +40,12 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
-import io.kubernetes.client.openapi.models.V1ConfigMapProjection;
 import io.kubernetes.client.openapi.models.V1ConfigMapVolumeSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
-import io.kubernetes.client.openapi.models.V1KeyToPath;
 import io.kubernetes.client.openapi.models.V1ObjectFieldSelector;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
@@ -55,12 +54,8 @@ import io.kubernetes.client.openapi.models.V1OwnerReferenceBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
-import io.kubernetes.client.openapi.models.V1ProjectedVolumeSource;
-import io.kubernetes.client.openapi.models.V1SecretVolumeSource;
-import io.kubernetes.client.openapi.models.V1ServiceAccountTokenProjection;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
-import io.kubernetes.client.openapi.models.V1VolumeProjection;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Yaml;
 import io.kubernetes.client.util.generic.options.ListOptions;
@@ -119,7 +114,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String JOB_CLEANUP_INTERVAL = "program.container.cleaner.interval.mins";
   private static final String JOB_CLEANUP_BATCH_SIZE = "program.container.cleaner.batch.size";
 
-  private static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
+  public static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
   // Label for the container name
   private static final String CONTAINER_LABEL = "master.environment.k8s.container.label";
@@ -155,23 +150,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
 
   // Workload Identity Constants
-  private static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
-  private static final String WORKLOAD_IDENTITY_ENABLED = "master.environment.k8s.workload.identity.enabled";
-  private static final String WORKLOAD_IDENTITY_POOL = "master.environment.k8s.workload.identity.pool";
-  private static final String WORKLOAD_IDENTITY_PROVIDER = "master.environment.k8s.workload.identity.provider";
-  private static final String WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS
+  // Needed to be read from KubeTwillPreparer.
+  public static final String WORKLOAD_IDENTITY_ENABLED = "master.environment.k8s.workload.identity.enabled";
+  public static final String WORKLOAD_IDENTITY_POOL = "master.environment.k8s.workload.identity.pool";
+  public static final String WORKLOAD_IDENTITY_PROVIDER = "master.environment.k8s.workload.identity.provider";
+  public static final String WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS
     = "master.environment.k8s.workload.identity.service.account.token.ttl.seconds";
-  private static final long WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS_DEFAULT = 172800L;
-  public static final String WORKLOAD_IDENTITY_CONFIGMAP_NAME = "workload-identity-config";
-  private static final String WORKLOAD_IDENTITY_PROJECTED_VOLUME_NAME = "gcp-ksa";
-  private static final String WORKLOAD_IDENTITY_CONFIGMAP_KEY = "config";
-  private static final String WORKLOAD_IDENTITY_CONFIGMAP_FILE = "google-application-credentials.json";
-  private static final String WORKLOAD_IDENTITY_CREDENTIAL_DIR = "/var/run/secrets/tokens/gcp-ksa";
-  private static final String WORKLOAD_IDENTITY_CREDENTIAL_KSA_PATH = "token";
-  public static final String WORKLOAD_IDENTITY_CREDENTIAL_KSA_SOURCE_PATH = WORKLOAD_IDENTITY_CREDENTIAL_DIR + "/" +
-    WORKLOAD_IDENTITY_CREDENTIAL_KSA_PATH;
-  private static final String WORKLOAD_IDENTITY_CREDENTIAL_GSA_SOURCE_PATH = WORKLOAD_IDENTITY_CREDENTIAL_DIR + "/" +
-    WORKLOAD_IDENTITY_CONFIGMAP_FILE;
 
   // Workload Launcher Constants
   /**
@@ -191,7 +175,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_WORKLOAD_LAUNCHER_NAMESPACE_ROLE_NAME = "cdap-workload-launcher";
   private static final String DEFAULT_WORKLOAD_LAUNCHER_CLUSTER_ROLE_NAME = "cdap-cluster-workload-launcher";
 
-  private static final String DEFAULT_NAMESPACE = "default";
+  public static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
   private static final String DEFAULT_CONTAINER_LABEL = "cdap.container";
   private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
@@ -243,7 +227,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String workloadIdentityPool;
   private long workloadIdentityServiceAccountTokenTTLSeconds;
   private String programCpuMultiplier;
-  private List<V1SecretVolumeSource> secretVolumes;
+  private String cdapInstallNamespace;
 
   public KubeMasterEnvironment() {
     gson = new Gson();
@@ -274,16 +258,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       if (workloadIdentityProvider == null) {
         missingConfig = WORKLOAD_IDENTITY_PROVIDER;
       }
-      workloadIdentityServiceAccountTokenTTLSeconds = WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS_DEFAULT;
-      String confWorkloadIdentityTokenTTL = conf.get(WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS);
-      if (confWorkloadIdentityTokenTTL != null) {
-        workloadIdentityServiceAccountTokenTTLSeconds = Long.parseLong(confWorkloadIdentityTokenTTL);
-      }
-      if (workloadIdentityServiceAccountTokenTTLSeconds <= 0) {
-        throw new IllegalArgumentException(String.format("Workload identity k8s service account token TTL '%d' " +
-                                                           "cannot be less than zero",
-                                                         workloadIdentityServiceAccountTokenTTLSeconds));
-      }
+      workloadIdentityServiceAccountTokenTTLSeconds = WorkloadIdentityUtil
+        .convertWorkloadIdentityTTLFromString(conf.get(WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS));
       if (missingConfig != null) {
         throw new IllegalArgumentException(String.format("Missing expected workload identity config '%s'",
                                                          missingConfig));
@@ -308,7 +284,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     Map<String, String> podLabels = podInfo.getLabels();
 
     String namespace = podInfo.getNamespace();
-    String cdapNamespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
+    cdapInstallNamespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
     additionalSparkConfs = getSparkConfigurations(conf);
     programCpuMultiplier = conf.getOrDefault(PROGRAM_CPU_MULTIPLIER, DEFAULT_PROGRAM_CPU_MULTIPLIER);
 
@@ -326,7 +302,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     // Services are publish to K8s with a prefix
     String resourcePrefix = "cdap-" + instanceName + "-";
-    discoveryService = new KubeDiscoveryService(cdapNamespace, "cdap-" + instanceName + "-", podLabels,
+    discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-", podLabels,
                                                 podInfo.getOwnerReferences());
 
     // Optionally creates the pod killer task
@@ -432,7 +408,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Create pod template with config maps and add to spark conf.
     sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE,
                      getDriverPodTemplate(podInfo, sparkSubmitContext).getAbsolutePath());
-    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE, getExecutorPodTemplateFile().getAbsolutePath());
+    sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE,
+                     getExecutorPodTemplateFile(sparkSubmitContext).getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
 
     Map<String, String> submitConfigs = sparkSubmitContext.getConfig();
@@ -681,8 +658,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       mountHostSecretVolumes(podInfo, driverPodSpec);
 
       if (workloadIdentityEnabled) {
-        setupWorkloadIdentityForPodSpec(driverPodSpec, workloadIdentityPool,
-                                        workloadIdentityServiceAccountTokenTTLSeconds);
+        setupWorkloadIdentityForPodSpecIfExists(sparkSubmitContext, driverPodSpec, workloadIdentityPool,
+                                                workloadIdentityServiceAccountTokenTTLSeconds);
       }
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating pod spec. Error code = "
@@ -694,7 +671,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return serializePodTemplate(driverPod);
   }
 
-  private File getExecutorPodTemplateFile() throws Exception {
+  private File getExecutorPodTemplateFile(SparkSubmitContext sparkSubmitContext) throws Exception {
     V1Pod executorPod = new V1Pod();
     V1PodSpec executorPodSpec = createBasePodSpec();
     executorPod.setSpec(executorPodSpec);
@@ -712,8 +689,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     mountHostSecretVolumes(podInfo, executorPodSpec);
 
     if (workloadIdentityEnabled) {
-      setupWorkloadIdentityForPodSpec(executorPodSpec, workloadIdentityPool,
-                                      workloadIdentityServiceAccountTokenTTLSeconds);
+      setupWorkloadIdentityForPodSpecIfExists(sparkSubmitContext, executorPodSpec, workloadIdentityPool,
+                                              workloadIdentityServiceAccountTokenTTLSeconds);
     }
 
     // Create spark template file. We do not delete it because pod will get deleted at the end of job completion.
@@ -837,32 +814,30 @@ public class KubeMasterEnvironment implements MasterEnvironment {
    *
    * @param podSpec The pod spec to setup workload identity for.
    */
-  private static void setupWorkloadIdentityForPodSpec(V1PodSpec podSpec, String workloadIdentityPool,
-                                                      long workloadIdentityServiceAccountTokenTTLSeconds) {
+  private void setupWorkloadIdentityForPodSpecIfExists(SparkSubmitContext sparkSubmitContext, V1PodSpec podSpec,
+                                                              String workloadIdentityPool,
+                                                              long workloadIdentityServiceAccountTokenTTLSeconds) {
+    // If the namespace service account does not exist, do not attempt to mount the ConfigMap.
+    // If the program is executing in the install namespace, always mount the ConfigMap.
+    String executionNamespace = sparkSubmitContext.getConfig().getOrDefault(NAMESPACE_PROPERTY,
+                                                                            podInfo.getNamespace());
+    String workloadIdentityServiceAccount = sparkSubmitContext.getConfig()
+      .get(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
+    if (!WorkloadIdentityUtil.shouldMountWorkloadIdentity(cdapInstallNamespace, executionNamespace,
+                                                         workloadIdentityServiceAccount)) {
+      return;
+    }
+
     // Mount volume to expected directory
-    V1ServiceAccountTokenProjection serviceAccountTokenProjection = new V1ServiceAccountTokenProjection()
-      .path(WORKLOAD_IDENTITY_CREDENTIAL_KSA_PATH)
-      .expirationSeconds(workloadIdentityServiceAccountTokenTTLSeconds)
-      .audience(workloadIdentityPool);
-    V1ConfigMapProjection configMapProjection = new V1ConfigMapProjection()
-      .name(WORKLOAD_IDENTITY_CONFIGMAP_NAME)
-      .optional(false)
-      .addItemsItem(new V1KeyToPath().key(WORKLOAD_IDENTITY_CONFIGMAP_KEY)
-                      .path(WORKLOAD_IDENTITY_CONFIGMAP_FILE));
-    podSpec.addVolumesItem(new V1Volume().name(WORKLOAD_IDENTITY_PROJECTED_VOLUME_NAME)
-                             .projected(new V1ProjectedVolumeSource()
-                                          .defaultMode(420)
-                                          .addSourcesItem(new V1VolumeProjection()
-                                                            .serviceAccountToken(serviceAccountTokenProjection))
-                                          .addSourcesItem(new V1VolumeProjection()
-                                                            .configMap(configMapProjection))));
+    V1Volume workloadIdentityVolume = WorkloadIdentityUtil
+      .generateWorkloadIdentityVolume(workloadIdentityServiceAccountTokenTTLSeconds, workloadIdentityPool);
+
+    podSpec.addVolumesItem(workloadIdentityVolume);
     for (V1Container container : podSpec.getContainers()) {
       // Mount projected volume
-      container.addVolumeMountsItem(new V1VolumeMount().name(WORKLOAD_IDENTITY_PROJECTED_VOLUME_NAME)
-                                      .mountPath(WORKLOAD_IDENTITY_CREDENTIAL_DIR).readOnly(true));
+      container.addVolumeMountsItem(WorkloadIdentityUtil.generateWorkloadIdentityVolumeMount());
       // Setup environment variables
-      container.addEnvItem(new V1EnvVar().name("GOOGLE_APPLICATION_CREDENTIALS")
-                             .value(WORKLOAD_IDENTITY_CREDENTIAL_GSA_SOURCE_PATH));
+      container.addEnvItem(WorkloadIdentityUtil.generateWorkloadIdentityEnvVar());
     }
   }
 
@@ -1016,5 +991,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setProgramCpuMultiplier(String programCpuMultiplier) {
     this.programCpuMultiplier = programCpuMultiplier;
+  }
+
+  @VisibleForTesting
+  void setCDAPInstallNamespace(String cdapInstallNamespace) {
+    this.cdapInstallNamespace = cdapInstallNamespace;
   }
 }
