@@ -25,6 +25,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcherContext;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
@@ -44,7 +45,6 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
-import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
@@ -117,17 +117,17 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   @Override
-  public ProgramController dispatchProgram(ProgramRunDispatcherInfo programRunDispatcherInfo) throws Exception {
-    RunId runId = programRunDispatcherInfo.getRunId();
+  public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext) throws Exception {
+    RunId runId = dispatcherContext.getRunId();
     LOG.debug("Dispatching Program Run operation for Run ID: {}", runId.getId());
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ProgramRunDispatcherTask.class.getName())
-      .withParam(GSON.toJson(programRunDispatcherInfo)).build();
+      .withParam(GSON.toJson(dispatcherContext)).build();
     remoteTaskExecutor.runTask(request);
-    ProgramId programId = programRunDispatcherInfo.getProgramDescriptor().getProgramId();
+    ProgramId programId = dispatcherContext.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(runId);
-    ClusterMode clusterMode = ProgramRunners.getClusterMode(programRunDispatcherInfo.getProgramOptions());
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(dispatcherContext.getProgramOptions());
 
-    boolean tetheredRun = programRunDispatcherInfo
+    boolean tetheredRun = dispatcherContext
       .getProgramOptions().getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
     ProgramRunnerFactory runnerFactory = programRunnerFactory;
     if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
@@ -138,8 +138,8 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     ProgramRunner runner = runnerFactory.create(programId.getType());
     if (!(runner instanceof ProgramControllerCreator)) {
       String msg = String.format("Program %s with runid %s uses an unsupported controller for remote dispatching.",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
+                                 dispatcherContext.getProgramDescriptor().getProgramId(),
+                                 dispatcherContext.getRunId());
       throw new UnsupportedOperationException(msg);
     }
 
@@ -155,8 +155,8 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     }
     if (programController == null) {
       String msg = String.format("Unable to create controller for Program %s with runid %s",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
+                                 dispatcherContext.getProgramDescriptor().getProgramId(),
+                                 dispatcherContext.getRunId());
       throw new Exception(msg);
     }
     return programController;

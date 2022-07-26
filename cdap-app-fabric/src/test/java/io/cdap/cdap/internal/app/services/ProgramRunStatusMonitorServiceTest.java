@@ -106,7 +106,13 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), currentTimeInSecs, currentTimeInSecs);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, new NoOpProgramStateWriter(), null, false) {
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
+
       @Nullable
       public RuntimeInfo lookup(ProgramId programId, RunId runId) {
         return getRuntimeInfo(programId, latch);
@@ -170,7 +176,13 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
                       currentTimeInSecs + currentTimeInSecs);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, new NoOpProgramStateWriter(), null, false) {
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
+
       @Nullable
       public RuntimeInfo lookup(ProgramId programId, RunId runId) {
         return getRuntimeInfo(programId, latch);
@@ -200,7 +212,13 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
                      Bytes.toBytes(sourceId.getAndIncrement()));
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, new NoOpProgramStateWriter(), null, false) {
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
+
       @Nullable
       public RuntimeInfo lookup(ProgramId programId, RunId runId) {
         return getRuntimeInfo(programId, latch);
@@ -231,7 +249,13 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), currentTimeInSecs, currentTimeInSecs);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, new NoOpProgramStateWriter(), null, false) {
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
+
       @Nullable
       public RuntimeInfo lookup(ProgramId programId, RunId runId) {
         return getRuntimeInfo(programId, latch);

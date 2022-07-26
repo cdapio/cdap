@@ -72,6 +72,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -330,34 +331,33 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String contentType = "application/octet-stream";
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
     Storage storage = getStorageClient();
-    boolean preConditionFailure = false;
 
-    LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{} ", localFile.getSize(), localFile.getURI(),
-              bucket, targetFilePath);
     Bucket bucketObj = storage.get(bucket);
-    if (bucketObj != null) {
-      LOG.debug("File's Location type : {} and Location : {}. ", bucketObj.getLocationType(), bucketObj.getLocation());
+    if (bucketObj == null) {
+      throw new IOException("GCS bucket '" + bucket + "'does not exists");
     }
+
+    LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{} of {} bucket type located at {}",
+              localFile.getSize(), localFile.getURI(), bucket, targetFilePath,
+              bucketObj.getLocationType(), bucketObj.getLocation());
     try {
-      uploadFileUtil(localFile.getURI(), storage, blobInfo, Storage.BlobWriteOption.doesNotExist());
+      long start = System.nanoTime();
+      uploadToGCS(localFile.getURI(), storage, blobInfo, Storage.BlobWriteOption.doesNotExist());
+      long end = System.nanoTime();
+      LOG.debug("Successfully uploaded file {} to gs://{}/{} in {} ms.",
+                localFile.getURI(), bucket, targetFilePath, TimeUnit.NANOSECONDS.toMillis(end - start));
     } catch (StorageException e) {
-      if (e.getCode() == HttpURLConnection.HTTP_PRECON_FAILED) {
-        // Precondition fails means the blob already exists, most likely happens due to retries
-        // https://cloud.google.com/storage/docs/request-preconditions#special-case
-        // Overwrite the file
-        preConditionFailure = true;
-        Blob blob = storage.get(blobId);
-        BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
-        uploadFileUtil(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
-      } else {
+      if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
         throw e;
       }
-    }
-    if (preConditionFailure) {
-      LOG.debug("File : {} already exists which can happen due to retries, the file was overwritten",
-                localFile.getURI());
-    } else {
-      LOG.debug("Successfully Uploaded file : {}.", localFile.getURI());
+      // Precondition fails means the blob already exists, most likely happens due to retries
+      // https://cloud.google.com/storage/docs/request-preconditions#special-case
+      // Overwrite the file
+      Blob blob = storage.get(blobId);
+      BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
+      uploadToGCS(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
+      LOG.debug("Successfully uploaded file {} to gs://{}/{} by overwriting due to conflict",
+                localFile.getURI(), bucket, targetFilePath);
     }
 
     return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
@@ -369,8 +369,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    *
    * Uploads the file to GCS bucket.
    */
-  private void uploadFileUtil(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
-                              Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
+  private void uploadToGCS(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
+                           Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
     try (InputStream inputStream = openStream(localFileUri);
          WriteChannel writer = storage.writer(blobInfo, blobWriteOptions)) {
       ByteStreams.copy(inputStream, Channels.newOutputStream(writer));

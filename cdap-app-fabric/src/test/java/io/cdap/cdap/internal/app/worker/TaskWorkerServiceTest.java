@@ -89,7 +89,7 @@ public class TaskWorkerServiceTest {
     SConfiguration sConf = createSConf();
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
@@ -113,7 +113,7 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 5);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
@@ -131,7 +131,7 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
@@ -164,7 +164,7 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
 
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), (namespaceId, retryStrategy) -> null, metricsCollectionService,
+      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service

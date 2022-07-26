@@ -135,7 +135,12 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     };
 
     ProgramRuntimeService noOpRuntimeSerivce = new AbstractProgramRuntimeService(
-      cConf, null, new NoOpProgramStateWriter(), null, false) {
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
 
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
@@ -237,7 +242,12 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     // Use a ProgramRuntimeService that only reports running state based on a set of know ids
     final Map<ProgramId, RunId> runningSet = new HashMap<>();
     ProgramRuntimeService programRuntimeService = new AbstractProgramRuntimeService(
-      cConf, null, new NoOpProgramStateWriter(), null, false) {
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
 
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {

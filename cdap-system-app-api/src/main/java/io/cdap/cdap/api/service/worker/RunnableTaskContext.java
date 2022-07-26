@@ -18,9 +18,13 @@ package io.cdap.cdap.api.service.worker;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
@@ -28,6 +32,10 @@ import javax.annotation.Nullable;
  * This context is used for writing back the result of {@link RunnableTask} execution.
  */
 public class RunnableTaskContext {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RunnableTaskContext.class);
+
+  private final String className;
   private final ExposedByteArrayOutputStream outputStream;
   @Nullable
   private final String param;
@@ -40,18 +48,28 @@ public class RunnableTaskContext {
   @Nullable
   private final SystemAppTaskContext systemAppTaskContext;
 
+  private final AtomicBoolean cleanupTaskExecuted;
+
   private boolean terminateOnComplete;
 
-  public RunnableTaskContext(@Nullable String param, @Nullable RunnableTaskRequest embeddedRequest,
-                             @Nullable String namespace, @Nullable ArtifactId artifactId,
-                             @Nullable SystemAppTaskContext systemAppTaskContext) {
-    this.param = param;
-    this.embeddedRequest = embeddedRequest;
-    this.namespace = namespace;
-    this.artifactId = artifactId;
+  private Runnable cleanupTask;
+
+  public RunnableTaskContext(RunnableTaskRequest taskRequest) {
+    this(taskRequest, null);
+  }
+
+  public RunnableTaskContext(RunnableTaskRequest taskRequest, @Nullable SystemAppTaskContext systemAppTaskContext) {
+    Optional<RunnableTaskParam> taskParam = Optional.ofNullable(taskRequest.getParam());
+
+    this.className = taskRequest.getClassName();
+    this.param = taskParam.map(RunnableTaskParam::getSimpleParam).orElse(null);
+    this.embeddedRequest = taskParam.map(RunnableTaskParam::getEmbeddedTaskRequest).orElse(null);
+    this.namespace = taskRequest.getNamespace();
+    this.artifactId = taskRequest.getArtifactId();
     this.systemAppTaskContext = systemAppTaskContext;
-    this.outputStream = new ExposedByteArrayOutputStream();
     this.terminateOnComplete = true;
+    this.outputStream = new ExposedByteArrayOutputStream();
+    this.cleanupTaskExecuted = new AtomicBoolean(false);
   }
 
   public void writeResult(byte[] data) throws IOException {
@@ -59,6 +77,20 @@ public class RunnableTaskContext {
       outputStream.reset();
     }
     outputStream.write(data);
+  }
+
+  public void setCleanupTask(Runnable cleanupTask) {
+    this.cleanupTask = cleanupTask;
+  }
+
+  public void executeCleanupTask() {
+    if (cleanupTaskExecuted.compareAndSet(false, true)) {
+      try {
+        Optional.ofNullable(cleanupTask).ifPresent(Runnable::run);
+      } catch (Exception e) {
+        LOG.warn("Exception raised when executing cleanup task", e);
+      }
+    }
   }
 
   /**
@@ -79,6 +111,10 @@ public class RunnableTaskContext {
 
   public ByteBuffer getResult() {
     return outputStream.toByteBuffer();
+  }
+
+  public String getClassName() {
+    return className;
   }
 
   @Nullable
@@ -106,50 +142,4 @@ public class RunnableTaskContext {
     return systemAppTaskContext;
   }
 
-  public static Builder getBuilder() {
-    return new Builder();
-  }
-
-  /**
-   * Builder for RunnableTaskContext
-   */
-  public static class Builder {
-    private RunnableTaskParam param;
-    @Nullable
-    private String namespace;
-    @Nullable
-    private ArtifactId artifactId;
-    @Nullable
-    private SystemAppTaskContext systemAppTaskContext;
-
-    private Builder() {
-
-    }
-
-    public Builder withParam(RunnableTaskParam param) {
-      this.param = param;
-      return this;
-    }
-
-    public Builder withNamespace(@Nullable String namespace) {
-      this.namespace = namespace;
-      return this;
-    }
-
-    public Builder withArtifactId(@Nullable ArtifactId artifactId) {
-      this.artifactId = artifactId;
-      return this;
-    }
-
-    public Builder withTaskSystemAppContext(@Nullable SystemAppTaskContext
-                                              systemAppTaskContext) {
-      this.systemAppTaskContext = systemAppTaskContext;
-      return this;
-    }
-
-    public RunnableTaskContext build() {
-      return new RunnableTaskContext(param.getSimpleParam(), param.getEmbeddedTaskRequest(), namespace, artifactId,
-                                     systemAppTaskContext);
-    }
-  }
 }
