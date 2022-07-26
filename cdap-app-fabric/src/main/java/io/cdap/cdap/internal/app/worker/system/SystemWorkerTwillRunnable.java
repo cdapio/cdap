@@ -27,7 +27,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -99,8 +98,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * The {@link TwillRunnable} for running {@link SystemWorkerService}.
@@ -122,9 +119,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
     List<Module> modules = new ArrayList<>();
 
-    ExecutorService cleanupExecutorService = Executors
-      .newFixedThreadPool(cConf.getInt(Constants.SystemWorker.CLEANUP_THREADS));
-
     CoreSecurityModule coreSecurityModule = new FileBasedCoreSecurityModule() {
       @Override
       protected void bindKeyManager(Binder binder) {
@@ -144,14 +138,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       // Always use local table implementations, which use LevelDB.
       // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
       new DataSetServiceModules().getStandaloneModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(ExecutorService.class)
-            .annotatedWith(Names.named(Constants.SystemWorker.CLEANUP_EXECUTOR_SERVICE_BINDING))
-            .toInstance(cleanupExecutorService);
-        }
-      },
       // The Dataset set modules are only needed to satisfy dependency injection
       new DataSetsModules().getStandaloneModules(),
       new MessagingClientModule(),

@@ -33,6 +33,7 @@ import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcherContext;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.Program;
@@ -57,7 +58,6 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
@@ -168,12 +168,12 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   @Override
-  public ProgramController dispatchProgram(ProgramRunDispatcherInfo programRunDispatcherInfo) throws Exception {
-    RunId runId = programRunDispatcherInfo.getRunId();
+  public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext) throws Exception {
+    RunId runId = dispatcherContext.getRunId();
     LOG.debug("Preparing to dispatch program run: {}", runId);
-    ProgramDescriptor programDescriptor = programRunDispatcherInfo.getProgramDescriptor();
-    ProgramOptions options = programRunDispatcherInfo.getProgramOptions();
-    boolean isDistributed = programRunDispatcherInfo.isDistributed();
+    ProgramDescriptor programDescriptor = dispatcherContext.getProgramDescriptor();
+    ProgramOptions options = dispatcherContext.getProgramOptions();
+    boolean isDistributed = dispatcherContext.isDistributed();
     ProgramId programId = programDescriptor.getProgramId();
     ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
     boolean tetheredRun = options.getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
@@ -202,7 +202,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     // Creates the ProgramRunner based on the cluster mode
     ProgramRunner runner = progRunnerFactory.create(programId.getType());
+    dispatcherContext.addCleanupTask(createCleanupTask(runner));
+
     File tempDir = createTempDirectory(programId, runId);
+    dispatcherContext.addCleanupTask(createCleanupTask(tempDir));
 
     // Get the artifact details and save it into the program options.
     ArtifactId artifactId = programDescriptor.getArtifactId();
@@ -282,7 +285,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     // Create and run the program
     Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
                                               tempDir, tetheredRun);
-    programRunDispatcherInfo.getCleanUpTask().set(createCleanupTask(tempDir, runner, executableProgram));
+    dispatcherContext.addCleanupTask(createCleanupTask(executableProgram));
     return runner.run(executableProgram, updatedOptions);
   }
 
@@ -345,7 +348,6 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     // TODO: (CDAP-19150) remove Location usage from ArtifactDetail
     Location programJarLocation = artifactDetail.getDescriptor().getLocation();
-    ClassLoaderFolder classLoaderFolder;
     try {
       // If the program jar is not a directory, take a snapshot of the jar file to avoid mutation.
       if (!programJarLocation.isDirectory()) {
@@ -363,16 +365,16 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         }
       }
       // Unpack the JAR file
-      classLoaderFolder = BundleJarUtil
-        .prepareClassLoaderFolder(programJarLocation,
-                                  () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());
+      ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+        programJarLocation, () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());
+
+      return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception e) {
       // should not happen
       throw Throwables.propagate(e);
     }
-    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId, ArtifactRepository artifactRepository)

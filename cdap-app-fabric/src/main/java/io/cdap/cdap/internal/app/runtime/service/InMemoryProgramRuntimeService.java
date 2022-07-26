@@ -49,7 +49,12 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   InMemoryProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                 ProgramStateWriter programStateWriter,
                                 ProgramRunDispatcherFactory programRunDispatcherFactory) {
-    super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory, false);
+    super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory);
+  }
+
+  @Override
+  protected boolean isDistributed() {
+    return false;
   }
 
   @Override

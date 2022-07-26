@@ -478,8 +478,6 @@ public final class Constants {
     public static final String CONTAINER_COUNT = "system.worker.container.count";
     public static final String CONTAINER_JVM_OPTS = "system.worker.container.jvm.opts";
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
-    public static final String CLEANUP_EXECUTOR_SERVICE_BINDING = "cleanup.executor.service";
-    public static final String CLEANUP_THREADS = "system.worker.cleanup.threads";
     public static final String DISPATCH_PROGRAM_TYPES = "system.worker.dispatch.program.types";
     public static final String HTTP_CLIENT_READ_TIMEOUT_MS = "system.worker.http.client.read.timeout.ms";
     public static final String HTTP_CLIENT_CONNECTION_TIMEOUT_MS = "system.worker.http.client.connection.timeout.ms";

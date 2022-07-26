@@ -16,35 +16,30 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcherContext;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
-import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
-
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Implementation of {@link RunnableTask} to execute Program-run operation in a system worker.
@@ -61,30 +56,28 @@ public class ProgramRunDispatcherTask implements RunnableTask {
     .create();
 
   private final Injector injector;
-  private final ExecutorService executorService;
 
   @Inject
-  ProgramRunDispatcherTask(Injector injector,
-                           @Named(Constants.SystemWorker.CLEANUP_EXECUTOR_SERVICE_BINDING)
-                             ExecutorService executorService) {
+  ProgramRunDispatcherTask(Injector injector) {
     this.injector = injector;
-    this.executorService = executorService;
   }
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
-    ProgramRunDispatcherInfo programRunDispatcherInfo =
-      GSON.fromJson(context.getParam(), ProgramRunDispatcherInfo.class);
+    // Need to copy the instance to restore transient fields
+    ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(
+      GSON.fromJson(context.getParam(), ProgramRunDispatcherContext.class));
+    context.setCleanupTask(dispatcherContext::executeCleanupTasks);
+
     ProgramRunDispatcher dispatcher = injector.getInstance(InMemoryProgramRunDispatcher.class);
-    ProgramController programController = dispatcher.dispatchProgram(programRunDispatcherInfo);
-    if (Objects.isNull(programController)) {
-      String msg = String.format("Unable to dispatch Program %s with runid %s",
-                                 programRunDispatcherInfo.getProgramDescriptor().getProgramId(),
-                                 programRunDispatcherInfo.getRunId());
-      throw Throwables.propagate(new Throwable(msg));
+    ProgramController programController = dispatcher.dispatchProgram(dispatcherContext);
+
+    if (programController == null) {
+      ProgramRunId programRunId =
+        dispatcherContext.getProgramDescriptor().getProgramId().run(dispatcherContext.getRunId());
+      throw new IllegalStateException("Failed to dispatch program run " + programRunId);
     }
-    // Result doesn't matter since we just need an HTTP 200 response or an exception in case of an error(handled above).
+    // Result doesn't matter since we just need to return with 200 status or throw an exception
     context.writeResult(new byte[0]);
-    executorService.submit(programRunDispatcherInfo.getCleanUpTask().get());
   }
 }
