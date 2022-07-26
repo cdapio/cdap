@@ -21,6 +21,7 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -171,12 +172,17 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final Map<String, Set<String>> readonlyDisks;
   private final Map<String, Map<String, String>> runnableConfigs;
   private final Map<String, StringBuilder> runnableJVMOptions;
+  private final String cdapInstallNamespace;
+  private final boolean workloadIdentityEnabled;
+  private final long workloadIdentityKSATTL;
+  private final String workloadIdentityPool;
 
   private String schedulerQueue;
   private String mainRunnableName;
   private Set<String> dependentRunnableNames;
   private String serviceAccountName;
   private String programRuntimeNamespace;
+  private String workloadIdentityServiceAccount;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -217,6 +223,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       }
       return builder;
     }));
+    this.workloadIdentityServiceAccount = null;
+    Map<String, String> cConf = masterEnvContext.getConfigurations();
+    this.cdapInstallNamespace = cConf.getOrDefault(KubeMasterEnvironment.NAMESPACE_KEY,
+                                                   KubeMasterEnvironment.DEFAULT_NAMESPACE);
+    this.workloadIdentityEnabled = Boolean.parseBoolean(cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_ENABLED));
+    String confTTLStr = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS);
+    this.workloadIdentityKSATTL = WorkloadIdentityUtil.convertWorkloadIdentityTTLFromString(confTTLStr);
+    this.workloadIdentityPool = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_POOL);
   }
 
   @Override
@@ -335,6 +349,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   public TwillPreparer withConfiguration(Map<String, String> config) {
     if (config.containsKey(KubeMasterEnvironment.NAMESPACE_PROPERTY)) {
       programRuntimeNamespace = config.get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+    }
+    if (config.containsKey(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY)) {
+      workloadIdentityServiceAccount = config
+        .get(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
     }
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
@@ -944,14 +962,31 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private V1PodSpec createPodSpec(Type resourceType, Location runtimeConfigLocation,
                                   Map<String, RuntimeSpecification> runtimeSpecs,
                                   String restartPolicy, List<String> args, V1VolumeMount... extraMounts) {
+    V1Volume podInfoVolume = createPodInfoVolume(podInfo);
+    V1Volume workDirVolume = new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource());
+
     String workDir = "/workDir-" + twillRunId.getId();
 
-    V1Volume podInfoVolume = createPodInfoVolume(podInfo);
+    List<V1Volume> additionalVolumes = new ArrayList<>();
+    additionalVolumes.add(podInfoVolume);
+    additionalVolumes.add(workDirVolume);
 
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
     V1ResourceRequirements initContainerResourceRequirements =
       createResourceRequirements(resourceType, mainRuntimeSpec.getResourceSpecification());
+
+    // Setup the container environment. Inherit everything from the current pod except workload identity env vars.
+    Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
+      .filter(envVar -> !envVar.getName().equals(WorkloadIdentityUtil.WORKLOAD_IDENTITY_ENV_VAR_KEY))
+      .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
+    // Add all environments of the the main runnable for the init container.
+    if (environments.get(runnableName) != null) {
+      initContainerEnvirons.putAll(environments.get(runnableName));
+    }
+    // Add JVM options to environment.
+    initContainerEnvirons.put(JAVA_OPTS_KEY, masterEnvContext.getConfigurations()
+      .getOrDefault(FILE_LOCALIZER_JVM_OPTS, FILE_LOCALIZER_DEFAULT_JVM_OPTS));
 
     // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
     List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
@@ -961,6 +996,19 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     volumeMounts.add(new V1VolumeMount().name("workdir").mountPath(workDir));
     volumeMounts.addAll(Arrays.asList(extraMounts));
 
+    // Add workload identity volume, volume mount, and environment variable if applicable.
+    // If running in the installation namespace, always mount workload identity ConfigMap.
+    if (workloadIdentityEnabled && WorkloadIdentityUtil.shouldMountWorkloadIdentity(cdapInstallNamespace,
+                                                                                    programRuntimeNamespace,
+                                                                                    workloadIdentityServiceAccount)) {
+      additionalVolumes.add(WorkloadIdentityUtil.generateWorkloadIdentityVolume(workloadIdentityKSATTL,
+                                                                                workloadIdentityPool));
+      volumeMounts.add(WorkloadIdentityUtil.generateWorkloadIdentityVolumeMount());
+
+      V1EnvVar workloadIdentityEnvVar = WorkloadIdentityUtil.generateWorkloadIdentityEnvVar();
+      initContainerEnvirons.put(workloadIdentityEnvVar.getName(), workloadIdentityEnvVar.getValue());
+    }
+
     // Mount all volumes including cdap-secret for init container as it runs system/trusted code.
     List<V1VolumeMount> initContainerVolumeMounts = new ArrayList<>(volumeMounts);
     // Mount all except cdap-secret for main container by default. If requested, cdap-secret will
@@ -968,17 +1016,6 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     List<V1VolumeMount> containerVolumeMounts =
       volumeMounts.stream().filter(v -> !v.getName().equals(KubeMasterEnvironment.SECURITY_CONFIG_NAME))
         .collect(Collectors.toList());
-
-    // Setup the container environment. Inherit everything from the current pod.
-    Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
-      .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
-    // Add all environments of the the main runnable for the init container.
-    if (environments.get(runnableName) != null) {
-      initContainerEnvirons.putAll(environments.get(runnableName));
-    }
-    // Add JVM options to environment.
-    initContainerEnvirons.put(JAVA_OPTS_KEY, masterEnvContext.getConfigurations()
-      .getOrDefault(FILE_LOCALIZER_JVM_OPTS, FILE_LOCALIZER_DEFAULT_JVM_OPTS));
 
     V1PodSpecBuilder podSpecBuilder = new V1PodSpecBuilder();
     if (schedulerQueue != null) {
@@ -992,8 +1029,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .withServiceAccountName(serviceAccountName)
       .withRuntimeClassName(podInfo.getRuntimeClassName())
       .addAllToVolumes(podInfo.getVolumes())
-      .addToVolumes(podInfoVolume,
-                    new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource()))
+      .addAllToVolumes(additionalVolumes)
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(),
                                           podInfo.getImagePullPolicy(), workDir, initContainerResourceRequirements,
                                           initContainerVolumeMounts, initContainerEnvirons, FileLocalizer.class,
@@ -1007,8 +1043,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   private List<V1Container> createContainers(Type resourceType, Map<String, RuntimeSpecification> runtimeSpecs,
                                              String workDir, List<V1VolumeMount> volumeMounts, List<String> args) {
-    // Setup the container environment. Inherit everything from the current pod.
+    // Setup the container environment. Inherit everything from the current pod except workload identity env vars.
     Map<String, String> environs = podInfo.getContainerEnvironments().stream()
+      .filter(envVar -> !envVar.getName().equals(WorkloadIdentityUtil.WORKLOAD_IDENTITY_ENV_VAR_KEY))
       .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
 
     List<V1Container> containers = new ArrayList<>();
@@ -1017,6 +1054,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     environs.putAll(environments.get(runnableName));
     // Add JVM options to environment.
     environs.put(JAVA_OPTS_KEY, runnableJVMOptions.get(runnableName).toString());
+    // Add workload identity environment variable if applicable.
+    if (workloadIdentityEnabled && WorkloadIdentityUtil.shouldMountWorkloadIdentity(cdapInstallNamespace,
+                                                                                    programRuntimeNamespace,
+                                                                                    workloadIdentityServiceAccount)) {
+      V1EnvVar workloadIdentityEnvVar = WorkloadIdentityUtil.generateWorkloadIdentityEnvVar();
+      environs.put(workloadIdentityEnvVar.getName(), workloadIdentityEnvVar.getValue());
+    }
 
     List<V1VolumeMount> mounts;
 
