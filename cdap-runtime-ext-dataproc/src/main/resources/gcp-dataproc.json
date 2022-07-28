@@ -146,7 +146,7 @@
               "n2d",
               "e2"
             ],
-            "default": "n1",
+            "default": "n2",
             "size": "medium"
           }
         },
@@ -230,7 +230,7 @@
               "n2d",
               "e2"
             ],
-            "default": "n1",
+            "default": "n2",
             "size": "medium"
           }
         },
