@@ -23,34 +23,49 @@
 # Then build the image:
 #
 # docker build --no-cache --build-arg base_image=<image> \
-#   --build-arg cdap_version=`mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec` \
 #   -f cdap-spark-core3_2.12/src/k8s/Dockerfile \
 #   . -t <image>:<tag>
-
 ARG base_image
 
-FROM ${base_image}
+# create source tarball and download connectors, their dependencies, and their licenses
+FROM openjdk:8-jdk AS sources
+ENV DIR /cdap/build
+COPY . $DIR/
+RUN tar -zcvf /tmp/cdap-build-sources.tar.gz --exclude='.git*' --exclude='node_modules' --exclude='target' $DIR && \
+  apt-get update && \
+  apt-get -y install curl && \
+  mkdir -p /tmp/connectors && \
+  curl -L -o /tmp/connectors/gcs-connector-hadoop2-2.2.5.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-hadoop2-2.2.5.jar && \
+  # start aws dependency
+  curl -L -o /tmp/connectors/hadoop-aws-3.2.0.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.2.0/hadoop-aws-3.2.0.jar && \
+  curl -L -o /tmp/connectors/aws-java-sdk-bundle-1.11.199.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.199/aws-java-sdk-bundle-1.11.199.jar && \
+  curl -L -o /tmp/connectors/jets3t-0.9.4.jar  https://repo1.maven.org/maven2/net/java/dev/jets3t/jets3t/0.9.4/jets3t-0.9.4.jar && \
+  curl -L -o /tmp/connectors/commons-lang-2.6.jar  https://repo1.maven.org/maven2/commons-lang/commons-lang/2.6/commons-lang-2.6.jar && \
+  # end aws dependency
+  mkdir -p /tmp/LICENSES && \
+  mkdir /tmp/LICENSES/gcs-connector-hadoop2-2.2.5 && curl -L -o /tmp/LICENSES/gcs-connector-hadoop2-2.2.5/LICENSE https://raw.githubusercontent.com/GoogleCloudDataproc/hadoop-connectors/v2.2.5/LICENSE && \
+  mkdir /tmp/LICENSES/hadoop-aws-3.2.0 && jar xvf /tmp/connectors/hadoop-aws-3.2.0.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/hadoop-aws-3.2.0 && rm -r ./META-INF && \
+  mkdir /tmp/LICENSES/aws-java-sdk-bundle-1.11.199 && jar xvf /tmp/connectors/aws-java-sdk-bundle-1.11.199.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/aws-java-sdk-bundle-1.11.199 && rm -r ./META-INF && \
+  mkdir /tmp/LICENSES/jets3t-0.9.4 && curl -L -o /tmp/LICENSES/jets3t-0.9.4/LICENSE https://raw.githubusercontent.com/mondain/jets3t/master/LICENSE && \
+  mkdir /tmp/LICENSES/commons-lang-2.6 && jar xvf /tmp/connectors/commons-lang-2.6.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/commons-lang-2.6 && rm -r ./META-INF
 
-ARG cdap_version
+FROM ${base_image} AS build
 
 # copy cdap-spark-core and its dependencies
 COPY cdap-spark-core3_2.12/target/k8s /opt/cdap/cdap-spark-core
 # spark base image sets user to spark_uid, which doesn't have permission to do anything in the RUN command
 USER root
-# download gcs-connector and make a symlink for the cdap-spark-core.jar without the cdap version
+# make a symlink for the cdap-spark-core.jar without the cdap version
 # this is so that it can be referred to as a hardcoded value local:/opt/cdap/cdap-spark-core/cdap-spark-core.jar
 # for the Spark job jar
-RUN apt-get update && \
-  apt-get -y install curl && \
-  curl -L -o /opt/cdap/cdap-spark-core/lib/gcs-connector-hadoop2-2.2.5.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-hadoop2-2.2.5.jar && \
-  # start aws dependency
-  curl -L -o /opt/cdap/cdap-spark-core/lib/hadoop-aws-3.2.0.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.2.0/hadoop-aws-3.2.0.jar && \
-  curl -L -o /opt/cdap/cdap-spark-core/lib/aws-java-sdk-bundle-1.11.199.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.199/aws-java-sdk-bundle-1.11.199.jar && \
-  curl -L -o /opt/cdap/cdap-spark-core/lib/jets3t-0.9.4.jar  https://repo1.maven.org/maven2/net/java/dev/jets3t/jets3t/0.9.4/jets3t-0.9.4.jar && \
-  curl -L -o /opt/cdap/cdap-spark-core/lib/commons-lang-2.6.jar  https://repo1.maven.org/maven2/commons-lang/commons-lang/2.6/commons-lang-2.6.jar && \
-  # end aws dependency
-  ln -s /opt/cdap/cdap-spark-core/io.cdap.cdap.cdap-spark-core3_2.12-${cdap_version}.jar /opt/cdap/cdap-spark-core/cdap-spark-core.jar && \
+RUN ln -s /opt/cdap/cdap-spark-core/io.cdap.cdap.cdap-spark-core3_2.12-*.jar /opt/cdap/cdap-spark-core/cdap-spark-core.jar && \
   mkdir -p /etc/cdap/conf
+# copy source code tarball, connectors, and licenses
+COPY cdap-distributions/src/COPYRIGHT /opt/cdap/LICENSES
+COPY --from=sources /tmp/cdap-build-sources.tar.gz /opt/cdap/cdap-build-sources.tar.gz
+COPY --from=sources /tmp/connectors /opt/cdap/cdap-spark-core/lib/
+COPY --from=sources /tmp/LICENSES /opt/cdap/LICENSES/
+
 USER ${spark_uid}
 
 # copy k8s master environment spi for service discovery
