@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
@@ -48,6 +49,7 @@ import com.google.common.io.ByteStreams;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.TooManyRequestsException;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
@@ -221,6 +223,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count", e);
+      if (e instanceof ResourceExhaustedException) {
+        // Throw TooManyRequestsException to signify throttling.
+        throw new TooManyRequestsException(String.format(
+          "Dataproc cluster %s can't accept more jobs presently, try after some time.", clusterName), e);
+      }
       throw new Exception(String.format("Error while launching job %s on cluster %s",
                                         getJobId(runInfo), clusterName), e);
     } finally {

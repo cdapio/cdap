@@ -403,6 +403,18 @@ public class ProgramNotificationSubscriberServiceTest {
     });
     checkProgramStatus(artifactId, runId3, ProgramRunStatus.STOPPING);
     heartbeatDatasetStatusCheck(stopTime, ProgramRunStatus.KILLED);
+
+    ProgramRunId runId4 = programId.run(RunIds.generate());
+    TransactionRunners.run(transactionRunner, context -> {
+      programStateWriter.start(runId4, programOptions, null, programDescriptor);
+    });
+    checkProgramStatus(artifactId, runId4, ProgramRunStatus.STARTING);
+    TransactionRunners.run(transactionRunner, context -> {
+      programStateWriter.reject(runId4, programOptions, programDescriptor,
+          "internal", new Throwable("program rejected"));
+    });
+    // rejected status check.
+    checkProgramStatus(artifactId, runId4, ProgramRunStatus.REJECTED);
   }
 
   private void checkProgramStatus(ArtifactId artifactId, ProgramRunId runId, ProgramRunStatus expectedStatus)

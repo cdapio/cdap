@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,8 +68,9 @@ public enum ProgramRunStatus {
         // FAILED happens if the run failed while starting
         // COMPLETED happens somehow? Not sure when we expect this but we test that this transition can happen
         // SUSPENDED happens if you suspend while starting. Not sure why this is allowed, seems wrong (CDAP-13551)
+        // REJECTED happens if the runtime job manager rejects the job due to throttling.
         return status == RUNNING || status == STOPPING || status == SUSPENDED || status == COMPLETED ||
-          status == KILLED || status == FAILED;
+            status == KILLED || status == FAILED || status == REJECTED;
       case RUNNING:
         // SUSPENDED happens if the run was suspended
         // STOPPING happens if the run was manually stopped gracefully(may include a timeout)

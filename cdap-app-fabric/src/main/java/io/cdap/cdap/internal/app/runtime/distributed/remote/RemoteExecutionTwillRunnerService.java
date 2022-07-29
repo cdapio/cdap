@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,9 +23,11 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -48,6 +50,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxyAuthenticator;
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -59,6 +62,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
+import io.cdap.cdap.runtime.spi.provisioner.TooManyRequestsException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.security.auth.AccessToken;
@@ -617,7 +621,26 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
               } catch (Exception e) {
                 LOG.warn("Force termination of remote process for {} failed", programRunId, e);
               }
-              programStateWriter.error(programRunId, throwable);
+              // Update the state to rejected if failure is due to throttling,
+              // otherwise update to failed.
+              if (throwable instanceof TooManyRequestsException) {
+                Store store = new DefaultStore(txRunner);
+                try {
+                  ProgramDescriptor descriptor = store.loadProgram(programOpts.getProgramId());
+                  programStateWriter.reject(
+                      programRunId, programOpts, descriptor,
+                      Constants.Security.Authentication.RUNTIME_IDENTITY, throwable);
+                } catch (Exception e) {
+                  // Transition to failed state (old behavior) if there are errors
+                  // while transitioning to rejected state.
+                  LOG.warn(
+                    "Error while transitioning {} to 'rejected', transitioning to 'failed' instead.", programRunId, e);
+                  throwable.addSuppressed(e);
+                  programStateWriter.error(programRunId, throwable);
+                }
+              } else {
+                programStateWriter.error(programRunId, throwable);
+              }
             }
           });
         } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -427,18 +427,30 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                     messageIdBytes, runnables);
         break;
       case REJECTED:
+        RunRecordDetail runRecordDetail = appMetadataStore.getRun(programRunId);
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-        ProgramDescriptor programDescriptor =
-          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
-        recordedRunRecord = appMetadataStore.recordProgramRejected(
-          programRunId, programOptions.getUserArguments().asMap(),
-          programOptions.getArguments().asMap(), messageIdBytes, programDescriptor.getArtifactId().toApiArtifactId());
-        writeToHeartBeatTable(recordedRunRecord,
-                              RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
-                              programHeartbeatTable);
-        getEmitMetricsRunnable(programRunId, recordedRunRecord, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS,
-                               null).ifPresent(runnables::add);
-        runRecordMonitorService.removeRequest(programRunId, true);
+        ProgramDescriptor programDescriptor = GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR),
+            ProgramDescriptor.class);
+
+        // If program is rejected before provisioning, don't handle program completion.
+        if (runRecordDetail == null) {
+          recordedRunRecord = appMetadataStore.recordProgramRejected(
+              programRunId, programOptions.getUserArguments().asMap(),
+              programOptions.getArguments().asMap(), messageIdBytes,
+              programDescriptor.getArtifactId().toApiArtifactId());
+          writeToHeartBeatTable(
+              recordedRunRecord,
+              RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
+              programHeartbeatTable);
+          getEmitMetricsRunnable(
+              programRunId, recordedRunRecord, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS, null)
+              .ifPresent(runnables::add);
+          runRecordMonitorService.removeRequest(programRunId, true);
+        } else {
+          recordedRunRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
+              programRunId, programRunStatus, notification,
+              messageIdBytes, runnables);
+        }
         break;
       default:
         // This should not happen
@@ -450,9 +462,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       // We need to publish the message so that the trigger subscriber can pick it up and start the trigger if
       // necessary
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
-      // for any status that represents completion of a job that was actually started (excludes rejected jobs)
+      // for any status that represents completion of a job that was actually started
       // publish the deprovisioning event(s).
-      if (programRunStatus.isEndState() && programRunStatus != ProgramRunStatus.REJECTED) {
+      if (programRunStatus.isEndState()) {
         // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
         // instead, we just record the state as deprovisioned without notifying the provisioner
         // and we will emit the program status metrics for it
