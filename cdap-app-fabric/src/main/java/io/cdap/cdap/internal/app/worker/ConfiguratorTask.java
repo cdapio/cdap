@@ -14,6 +14,7 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -74,17 +75,22 @@ public class ConfiguratorTask implements RunnableTask {
     this.cConf = cConf;
   }
 
-  @Override
-  public void run(RunnableTaskContext context) throws Exception {
-    AppDeploymentInfo deploymentInfo = GSON.fromJson(context.getParam(), AppDeploymentInfo.class);
-
-    Injector injector = Guice.createInjector(
+  @VisibleForTesting
+  public static Injector createInjector(CConfiguration cConf) {
+    return Guice.createInjector(
       new ConfigModule(cConf),
       RemoteAuthenticatorModules.getDefaultModule(),
       new LocalLocationModule(),
       new ConfiguratorTaskModule(),
       new AuthenticationContextModules().getMasterWorkerModule()
     );
+  }
+
+  @Override
+  public void run(RunnableTaskContext context) throws Exception {
+    AppDeploymentInfo deploymentInfo = GSON.fromJson(context.getParam(), AppDeploymentInfo.class);
+
+    Injector injector = createInjector(cConf);
     ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class).configure(deploymentInfo);
     AppSpecInfo appSpecInfo = result.getAppSpecInfo();
 

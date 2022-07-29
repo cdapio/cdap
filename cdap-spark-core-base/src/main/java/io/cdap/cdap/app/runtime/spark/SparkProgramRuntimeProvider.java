@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Binding;
 import com.google.inject.BindingAnnotation;
+import com.google.inject.ConfigurationException;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -253,12 +254,18 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
         paramTypeKey = Key.get(paramType);
       }
 
-      // If the classloader of the parameter is the same as the Spark ClassLoader, we need to create the
-      // instance manually instead of getting through the Guice Injector to avoid ClassLoader leakage
-      if (paramTypeKey.getTypeLiteral().getRawType().getClassLoader() == sparkClassLoader) {
-        args[i] = createInstance(injector, paramTypeKey, sparkClassLoader);
-      } else {
-        args[i] = injector.getInstance(paramTypeKey);
+      try {
+        // If the classloader of the parameter is the same as the Spark ClassLoader, we need to create the
+        // instance manually instead of getting through the Guice Injector to avoid ClassLoader leakage
+        if (paramTypeKey.getTypeLiteral().getRawType().getClassLoader() == sparkClassLoader) {
+          args[i] = createInstance(injector, paramTypeKey, sparkClassLoader);
+        } else {
+          args[i] = injector.getInstance(paramTypeKey);
+        }
+      } catch (ConfigurationException e) {
+        // Wrap the Guice ConfigurationException with information on what class is getting bound to allow for debugging.
+        throw new RuntimeException(String.format("Failed to bind paramTypeKey '%s' for paramType '%s' in key '%s'",
+                                                 paramTypeKey, paramType, key), e);
       }
     }
 
