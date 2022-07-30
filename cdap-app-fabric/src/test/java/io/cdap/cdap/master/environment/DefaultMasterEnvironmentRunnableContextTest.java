@@ -68,7 +68,7 @@ public class DefaultMasterEnvironmentRunnableContextTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
       (DiscoveryServiceClient) discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()));
-    context = new DefaultMasterEnvironmentRunnableContext(locationFactory, remoteClientFactory);
+    context = new DefaultMasterEnvironmentRunnableContext(locationFactory, remoteClientFactory, null);
 
     httpService = NettyHttpService.builder(Constants.Service.APP_FABRIC_HTTP)
       .setHttpHandlers(new MockHttpHandler())

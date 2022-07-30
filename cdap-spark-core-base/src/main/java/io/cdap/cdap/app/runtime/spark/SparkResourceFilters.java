@@ -44,8 +44,12 @@ public final class SparkResourceFilters {
 
     @Override
     public boolean acceptResource(final String resource) {
-      // All Spark API, Spark, Scala, Akka and Kryo classes should come from parent.
+      // All Spark API, Spark Core, Spark, Scala, Akka and Kryo classes should come from parent.
       if (resource.startsWith("io/cdap/cdap/api/spark/")) {
+        return true;
+      }
+      // Needed for SparkTwillRunnable
+      if (resource.startsWith("io/cdap/cdap/app/runtime/spark/")) {
         return true;
       }
       if (resource.startsWith("scala/")) {
@@ -79,6 +83,10 @@ public final class SparkResourceFilters {
     @Override
     public boolean acceptPackage(final String packageName) {
       if (packageName.equals("io.cdap.cdap.api.spark") || packageName.startsWith("io.cdap.cdap.api.spark.")) {
+        return true;
+      }
+      if (packageName.equals("io.cdap.cdap.app.runtime.spark")
+        || packageName.startsWith("io.cdap.cdap.app.runtime.spark.")) {
         return true;
       }
       if (packageName.equals("scala") || packageName.startsWith("scala.")) {
