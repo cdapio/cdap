@@ -41,6 +41,7 @@ import io.cdap.cdap.app.program.Programs;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -125,6 +126,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private final RemoteClientFactory remoteClientFactory;
   private final PluginFinder pluginFinder;
   private final ArtifactRepository noAuthArtifactRepository;
+  private final ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory;
+
   private RemoteAuthenticator remoteAuthenticator;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private String hostname;
@@ -135,7 +138,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                                       LocationFactory locationFactory, RemoteClientFactory remoteClientFactory,
                                       @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                         ArtifactRepository artifactRepository,
-                                      PluginFinder pluginFinder) {
+                                      PluginFinder pluginFinder,
+                                      ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory) {
     this.cConf = cConf;
     this.programRunnerFactory = programRunnerFactory;
     this.impersonator = impersonator;
@@ -143,6 +147,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     this.remoteClientFactory = remoteClientFactory;
     this.noAuthArtifactRepository = artifactRepository;
     this.pluginFinder = pluginFinder;
+    this.programRunnerClassLoaderFactory = programRunnerClassLoaderFactory;
   }
 
   /**
@@ -197,7 +202,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                                                                    basePath);
       RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(locationFactory,
                                                                                                    client);
-      artifactRepository = new RemoteArtifactRepository(cConf, artifactRepositoryReader, progRunnerFactory);
+      artifactRepository = new RemoteArtifactRepository(cConf, artifactRepositoryReader,
+                                                        programRunnerClassLoaderFactory);
     }
 
     // Creates the ProgramRunner based on the cluster mode

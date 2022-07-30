@@ -68,4 +68,14 @@ public interface ProgramRuntimeProvider {
    * @return whether the specified program type is supported
    */
   boolean isSupported(ProgramType programType, CConfiguration cConf);
+
+  /**
+   * Directly creates a ClassLoader for the given program type.
+   * This is useful if you need the program class loader but do not need to run a program.
+   *
+   * @param cConf The configuration to use
+   * @param programType The type of program
+   * @return a {@link ClassLoader} for the given program runner
+   */
+  ClassLoader createProgramClassLoader(CConfiguration cConf, ProgramType programType);
 }

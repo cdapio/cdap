@@ -36,7 +36,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
-import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ArtifactRangeNotFoundException;
@@ -108,11 +108,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
                                    ArtifactRepositoryReader artifactRepositoryReader,
                                    MetadataServiceClient metadataServiceClient,
-                                   ProgramRunnerFactory programRunnerFactory,
+                                   ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory,
                                    Impersonator impersonator) {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerClassLoaderFactory);
     this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
     this.systemArtifactDirs = new HashSet<>();
     this.maxArtifactLoadParallelism = cConf.getInt(Constants.AppFabric.SYSTEM_ARTIFACTS_MAX_PARALLELISM);

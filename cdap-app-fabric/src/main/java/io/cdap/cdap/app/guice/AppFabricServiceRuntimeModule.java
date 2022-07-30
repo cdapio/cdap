@@ -41,6 +41,7 @@ import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -360,6 +361,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       install(new PrivateModule() {
         @Override
         protected void configure() {
+          bind(ProgramRunnerClassLoaderFactory.class).to(DefaultProgramRunnerClassLoaderFactory.class)
+            .in(Scopes.SINGLETON);
+          expose(ProgramRunnerClassLoaderFactory.class);
           // ArtifactRepositoryReader is required by DefaultArtifactRepository.
           // Keep ArtifactRepositoryReader private to minimize the scope of the binding visibility.
           bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);

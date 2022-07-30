@@ -19,9 +19,7 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
-import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
-import io.cdap.cdap.app.runtime.ProgramRunner;
-import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
@@ -48,12 +46,12 @@ final class ArtifactClassLoaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactClassLoaderFactory.class);
 
   private final CConfiguration cConf;
-  private final ProgramRunnerFactory programRunnerFactory;
+  private final ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory;
   private final File tmpDir;
 
-  ArtifactClassLoaderFactory(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory) {
+  ArtifactClassLoaderFactory(CConfiguration cConf, ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory) {
     this.cConf = cConf;
-    this.programRunnerFactory = programRunnerFactory;
+    this.programRunnerClassLoaderFactory = programRunnerClassLoaderFactory;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -69,34 +67,29 @@ final class ArtifactClassLoaderFactory {
    *         all temporary resources created for the classloader will be removed
    */
   CloseableClassLoader createClassLoader(File unpackDir) {
-    ProgramRunner programRunner = null;
+    ClassLoader sparkClassLoader = null;
     try {
       // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
       // It is needed because we don't know what program types that an artifact might have.
       // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
-      programRunner = programRunnerFactory.create(ProgramType.SPARK);
+      sparkClassLoader = programRunnerClassLoaderFactory.createProgramClassLoader(cConf, ProgramType.SPARK);
     } catch (Exception e) {
       // If Spark is not supported, exception is expected. We'll use the default filter.
-      LOG.trace("Spark is not supported. Not using ProgramClassLoader from Spark", e);
+      LOG.debug("Spark is not supported. Not using ProgramClassLoader from Spark");
+      LOG.trace("Caught exception from ProgramRunnerClassLoaderFactory:", e);
     }
 
-    ProgramClassLoader programClassLoader = null;
-    if (programRunner instanceof ProgramClassLoaderProvider) {
-      programClassLoader = new ProgramClassLoader(
-        cConf, unpackDir, ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent());
-    }
-    if (programClassLoader == null) {
+    ProgramClassLoader programClassLoader;
+    if (sparkClassLoader == null) {
       programClassLoader = new ProgramClassLoader(cConf, unpackDir,
                                                   FilterClassLoader.create(getClass().getClassLoader()));
+    } else {
+      programClassLoader = new ProgramClassLoader(cConf, unpackDir, sparkClassLoader);
     }
 
     final ClassLoader finalProgramClassLoader = programClassLoader;
-    final ProgramRunner finalProgramRunner = programRunner;
     return new CloseableClassLoader(programClassLoader, () -> {
       Closeables.closeQuietly((Closeable) finalProgramClassLoader);
-      if (finalProgramRunner instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) finalProgramRunner);
-      }
     });
   }
 

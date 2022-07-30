@@ -27,6 +27,8 @@ import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerClassLoaderFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -107,6 +109,7 @@ public class PreviewRunnerModule extends PrivateModule {
   protected void configure() {
     // Use remote implementation to fetch artifact metadata from AppFab.
     // Remote implementation internally uses artifact localizer to fetch and cache artifacts locally.
+    bind(ProgramRunnerClassLoaderFactory.class).to(DefaultProgramRunnerClassLoaderFactory.class);
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class);
     bind(ArtifactRepository.class).to(RemoteArtifactRepositoryWithLocalization.class);
     expose(ArtifactRepository.class);

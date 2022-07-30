@@ -27,7 +27,7 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.app.program.ManifestFields;
-import io.cdap.cdap.app.runtime.DummyProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.DummyProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -73,7 +73,7 @@ public class DefaultArtifactInspectorTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
-    classLoaderFactory = new ArtifactClassLoaderFactory(cConf, new DummyProgramRunnerFactory());
+    classLoaderFactory = new ArtifactClassLoaderFactory(cConf, new DummyProgramRunnerClassLoaderFactory());
     artifactInspector = new DefaultArtifactInspector(cConf, classLoaderFactory,
                                                      new DefaultImpersonator(cConf, null));
   }

@@ -17,10 +17,10 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
-import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramRunner;
-import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
@@ -59,7 +59,7 @@ public class ConfiguratorTaskModule extends AbstractModule {
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
     bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class);
     bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
-    bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+    bind(ProgramRunnerClassLoaderFactory.class).to(DefaultProgramRunnerClassLoaderFactory.class).in(Scopes.SINGLETON);
 
     bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
     bind(UGIProvider.class).to(CurrentUGIProvider.class);

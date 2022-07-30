@@ -22,8 +22,10 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.OptionalBinder;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
@@ -56,6 +58,7 @@ public class SystemAppModule extends AbstractModule {
 
     bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
+    bind(ProgramRunnerClassLoaderFactory.class).to(DefaultProgramRunnerClassLoaderFactory.class).in(Scopes.SINGLETON);
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
     bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);

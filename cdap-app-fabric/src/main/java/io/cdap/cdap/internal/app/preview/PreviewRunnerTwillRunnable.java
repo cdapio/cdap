@@ -33,13 +33,13 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.deploy.Configurator;
-import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.app.runtime.ProgramRunner;
-import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -269,8 +269,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
         // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
-        // Need ProgramRunnerFactory for the RemoteArtifactRepository
-        bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        // Need ProgramRunnerClassLoaderFactory for the RemoteArtifactRepository
+        bind(ProgramRunnerClassLoaderFactory.class).to(DefaultProgramRunnerClassLoaderFactory.class)
+          .in(Scopes.SINGLETON);
         MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
         bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
         bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);

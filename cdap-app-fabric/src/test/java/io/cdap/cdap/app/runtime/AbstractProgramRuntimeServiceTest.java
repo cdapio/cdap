@@ -487,7 +487,7 @@ public class AbstractProgramRuntimeServiceTest {
                                     Program program, LocationFactory locationFactory,
                                     RemoteClientFactory remoteClientFactory,
                                     boolean tetheredRun) {
-      super(cConf, programRunnerFactory, null, locationFactory, remoteClientFactory, null, null);
+      super(cConf, programRunnerFactory, null, locationFactory, remoteClientFactory, null, null, null);
       this.program = program;
       this.tetheredRun = tetheredRun;
     }

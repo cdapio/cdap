@@ -85,6 +85,23 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
   }
 
   @Override
+  public ClassLoader createProgramClassLoader(CConfiguration cConf, ProgramType type) {
+    Preconditions.checkArgument(type == ProgramType.SPARK, "Unsupported program type %s. Only %s is supported",
+                                type, ProgramType.SPARK);
+    boolean rewriteCheckpointTempFileName =
+      cConf.getBoolean(SparkRuntimeUtils.SPARK_STREAMING_CHECKPOINT_REWRITE_ENABLED);
+    boolean rewriteYarnClient = cConf.getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
+
+    try {
+      ClassLoader sparkClassloader = sparkClassloader = createClassLoader(filterScalaClasses, rewriteYarnClient,
+                                                                          rewriteCheckpointTempFileName);
+      return new FilterClassLoader(sparkClassloader, SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
   public ProgramRunner createProgramRunner(ProgramType type, Mode mode, Injector injector) {
     Preconditions.checkArgument(type == ProgramType.SPARK, "Unsupported program type %s. Only %s is supported",
                                 type, ProgramType.SPARK);
