@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.app.runtime.spark.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
@@ -27,12 +27,10 @@ import io.cdap.cdap.app.guice.UnsupportedPluginFinder;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
-import io.cdap.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnable;
-import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
@@ -49,12 +47,15 @@ public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunn
 
   @Override
   protected ProgramRunner createProgramRunner(Injector injector) {
-    // Inside the TwillRunanble, we use the "Local" SparkRunner, since we need to actually submit the job.
+    // Inside the TwillRunnable, we use the "Local" SparkRunner, since we need to actually submit the job.
     // The actual execution mode of the job is governed by the framework configuration,
     // which is in the hConf we shipped from DistributedSparkProgramRunner
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    return new SparkProgramRuntimeProvider(SparkCompatReader.get(cConf)) { }
-      .createProgramRunner(ProgramType.SPARK, ProgramRuntimeProvider.Mode.LOCAL, injector);
+    ProgramRuntimeProviderLoader runtimeProviderLoader = injector.getInstance(ProgramRuntimeProviderLoader.class);
+    ProgramRuntimeProvider sparkProgramRuntimeProvider = runtimeProviderLoader.get(ProgramType.SPARK);
+    ProgramRunner programRunner = sparkProgramRuntimeProvider.createProgramRunner(ProgramType.SPARK,
+                                                                                  ProgramRuntimeProvider.Mode.LOCAL,
+                                                                                  injector);
+    return programRunner;
   }
 
   @VisibleForTesting
@@ -75,3 +76,4 @@ public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunn
     });
   }
 }
+

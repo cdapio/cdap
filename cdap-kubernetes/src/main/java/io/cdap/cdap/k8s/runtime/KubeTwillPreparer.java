@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2021 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -732,7 +732,17 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     V1Deployment deployment = buildDeployment(metadata, runtimeSpecs, runtimeConfigLocation);
 
-    deployment = appsApi.createNamespacedDeployment(programRuntimeNamespace, deployment, "true", null, null);
+    try {
+      deployment = appsApi.createNamespacedDeployment(programRuntimeNamespace, deployment, "true", null, null);
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.warn("The kubernetes deployment already exists : {}. Ignoring resubmission of the deployment.",
+                 e.getResponseBody());
+      } else {
+        LOG.error("Failed to create kubernetes deployment: {}", e.getResponseBody());
+        throw e;
+      }
+    }
     LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
     return deployment.getMetadata();
   }
@@ -748,7 +758,17 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpecs, runtimeConfigLocation, statefulRunnable);
 
-    statefulSet = appsApi.createNamespacedStatefulSet(programRuntimeNamespace, statefulSet, "true", null, null);
+    try {
+      statefulSet = appsApi.createNamespacedStatefulSet(programRuntimeNamespace, statefulSet, "true", null, null);
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.warn("The kubernetes statefulset already exists : {}. Ignoring resubmission of the statefulset.",
+                 e.getResponseBody());
+      } else {
+        LOG.error("Failed to create kubernetes statefulset: {}", e.getResponseBody());
+        throw e;
+      }
+    }
     LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
     return statefulSet.getMetadata();
   }

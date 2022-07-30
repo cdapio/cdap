@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramLaunchConfig;
+import io.cdap.cdap.internal.app.runtime.distributed.SparkTwillRunnable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.SparkCompat;

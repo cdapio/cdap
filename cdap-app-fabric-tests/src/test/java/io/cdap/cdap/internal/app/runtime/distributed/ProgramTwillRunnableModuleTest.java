@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.runtime.spark.SparkProgramRunner;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
-import io.cdap.cdap.app.runtime.spark.distributed.SparkTwillRunnable;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.test.MockTwillContext;
