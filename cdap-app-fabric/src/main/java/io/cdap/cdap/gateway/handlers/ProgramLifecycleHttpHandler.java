@@ -296,23 +296,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("program-type") String type,
                                   @PathParam("program-id") String programId,
-                                  @PathParam("run-id") String runId,
-                                  @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
+                                  @PathParam("run-id") String runId) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
-    Integer gracefulShutdownSecsInt;
-    try {
-      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
-    } catch (IllegalArgumentException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return;
-    }
     try {
       RunIds.fromString(runId);
     } catch (Exception e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
-    lifecycleService.stop(program, runId, gracefulShutdownSecsInt);
+    lifecycleService.stop(program, runId, null);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -1306,15 +1298,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/stop")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void stopPrograms(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId,
-                           @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
-    Integer gracefulShutdownSecsInt;
-    try {
-      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
-    } catch (IllegalArgumentException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return;
-    }
+                           @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
     List<BatchProgramResult> issuedStops = new ArrayList<>(programs.size());
@@ -1322,7 +1306,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                          program.getProgramId());
       try {
-        Collection<ProgramRunId> stoppedRuns = lifecycleService.issueStop(programId, null, gracefulShutdownSecsInt);
+        Collection<ProgramRunId> stoppedRuns = lifecycleService.issueStop(programId, null, null);
         for (ProgramRunId stoppedRun : stoppedRuns) {
           issuedStops.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, stoppedRun.getRun()));
         }
