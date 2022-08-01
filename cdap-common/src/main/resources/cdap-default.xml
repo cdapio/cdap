@@ -179,7 +179,7 @@
 
   <property>
     <name>namespaces.creation.hook.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Whether to invoke a master environment-specific method hook upon namespace creation.
     </description>
