@@ -511,25 +511,24 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     }
 
     public UriPattern match(HttpRequest httpRequest) {
-      long startMs = System.currentTimeMillis();
+      long startNs = System.nanoTime();
       String uri = httpRequest.uri();
       String method = httpRequest.method().name();
-      httpRequest.method().name();
       for (UriRegex uriRegex : uriRegexList) {
         if (!method.equals(uriRegex.uriPattern.httpMethod)) {
           continue;
         }
         Matcher matcher = uriRegex.pattern.matcher(uri);
         if (matcher.find()) {
-          long endMs = System.currentTimeMillis();
-          long latency = endMs - startMs;
-          LOG.error("--- --- latency = " + latency);
+          long endNs = System.nanoTime();
+          long latency = endNs - startNs;
+          LOG.error("latency = " + latency);
           return uriRegex.uriPattern;
         }
       }
-      long endMs = System.currentTimeMillis();
-      long latency = endMs - startMs;
-      LOG.error("--- --- latency = " + latency);
+      long endNs = System.nanoTime();
+      long latency = endNs - startNs;
+      LOG.error("latency = " + latency);
       return UriPattern.NONE;
     }
   }
