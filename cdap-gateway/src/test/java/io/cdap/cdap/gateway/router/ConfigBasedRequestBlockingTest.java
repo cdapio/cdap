@@ -21,6 +21,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -66,7 +67,8 @@ public class ConfigBasedRequestBlockingTest {
     router = new NettyRouter(cConf, SConfiguration.create(), InetAddress.getLoopbackAddress(),
                              new RouterServiceLookup(cConf, discoveryService, new RouterPathLookup()),
                              successValidator,
-                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
+                             new NoOpMetricsCollectionService());
     router.startAndWait();
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new AuditLogTest.TestHandler()).build();

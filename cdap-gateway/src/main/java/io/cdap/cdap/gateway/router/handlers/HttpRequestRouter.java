@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.router.handlers;
 
+import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.HandlerException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,6 +26,7 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.Channels;
 import io.cdap.cdap.gateway.router.RouterServiceLookup;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -60,11 +64,16 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
@@ -83,11 +92,16 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   private int inflightRequests;
   private MessageSender currentMessageSender;
   private ChannelFutureListener failureResponseListener;
+  private MetricsCollectionService metricsCollectionService;
+  private UriMatcher uriMatcher;
 
-  public HttpRequestRouter(CConfiguration cConf, RouterServiceLookup serviceLookup) {
+  public HttpRequestRouter(CConfiguration cConf, RouterServiceLookup serviceLookup,
+                           MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.serviceLookup = serviceLookup;
     this.messageSenders = new HashMap<>();
+    this.metricsCollectionService = metricsCollectionService;
+    this.uriMatcher = new UriMatcher();
   }
 
   @Override
@@ -118,13 +132,22 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         // Disable read until sending of this request object is completed successfully
         // This is for handling the initial connection delay
         inboundChannel.config().setAutoRead(false);
+        Discoverable discoverable = getDiscoverable(request);
+        UriPattern uriPattern = uriMatcher.match(request);
+        boolean match = UriPattern.NONE == uriPattern ? false : true;
         writeCompletedListener = new ChannelFutureListener() {
           @Override
           public void operationComplete(ChannelFuture future) throws Exception {
             if (future.isSuccess()) {
               inboundChannel.config().setAutoRead(true);
+              if (match) {
+                emitSuccessMetrics(uriPattern.name(), discoverable.getName());
+              }
             } else {
               getFailureResponseListener(inboundChannel).operationComplete(future);
+              if (match) {
+                emitFailureMetrics(uriPattern.name(), discoverable.getName());
+              }
             }
           }
         };
@@ -141,6 +164,25 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     } finally {
       ReferenceCountUtil.release(msg);
     }
+  }
+
+  private void emitSuccessMetrics(String uriName, String component) {
+    MetricsContext metricsContext = metricsCollectionService.getContext(getContext(uriName,
+                                                                                   component));
+    metricsContext.increment("router.success", 1);
+  }
+
+  private void emitFailureMetrics(String uriName, String component) {
+    MetricsContext metricsContext = metricsCollectionService.getContext(getContext(uriName,
+                                                                                   component));
+    metricsContext.increment("router.failure", 1);
+  }
+
+  private Map<String, String> getContext(String uriName, String component) {
+    return ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.COMPONENT, component,
+        Constants.Metrics.Tag.URI_NAME, uriName);
   }
 
   @Override
@@ -459,4 +501,64 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
       channel.write(message).addListener(writeCompletedListener);
     }
   }
+
+  private static class UriMatcher {
+    private List<UriRegex> uriRegexList;
+
+    UriMatcher() {
+      uriRegexList = new ArrayList<>();
+      Arrays.asList(UriPattern.values()).forEach(uri -> uriRegexList.add(new UriRegex(uri)));
+    }
+
+    public UriPattern match(HttpRequest httpRequest) {
+      long startMs = System.currentTimeMillis();
+      String uri = httpRequest.uri();
+      String method = httpRequest.method().name();
+      httpRequest.method().name();
+      for (UriRegex uriRegex : uriRegexList) {
+        if (!method.equals(uriRegex.uriPattern.httpMethod)) {
+          continue;
+        }
+        Matcher matcher = uriRegex.pattern.matcher(uri);
+        if (matcher.find()) {
+          long endMs = System.currentTimeMillis();
+          long latency = endMs - startMs;
+          LOG.error("--- --- latency = " + latency);
+          return uriRegex.uriPattern;
+        }
+      }
+      long endMs = System.currentTimeMillis();
+      long latency = endMs - startMs;
+      LOG.error("--- --- latency = " + latency);
+      return UriPattern.NONE;
+    }
+  }
+
+  private static class UriRegex {
+    private Pattern pattern;
+    private UriPattern uriPattern;
+
+    UriRegex(UriPattern uriPattern) {
+      this.uriPattern = uriPattern;
+      pattern = Pattern.compile(uriPattern.pattern);
+    }
+  }
+
+  private enum UriPattern {
+    //Add new regex patterns here
+    PIPELINE_START("/apps/(\\w+)/(\\w+)/(\\w+)/(\\w+)$", "POST"),
+    PIPELINE_START_VERSION("/apps/(\\w+)/versions/(\\w+)/(\\w+)/(\\w+)/(\\w+)$", "POST"),
+    PIPELINE_START_ALL("/start$", "POST"),
+    NONE("none", "none"); //do we need this?
+
+    private final String pattern;
+    private final String httpMethod;
+
+    UriPattern(String pattern, String httpMethod) {
+      this.pattern = pattern;
+      this.httpMethod = httpMethod;
+    }
+  }
+
+
 }

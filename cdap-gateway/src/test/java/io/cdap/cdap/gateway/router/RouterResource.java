@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -72,7 +73,7 @@ class RouterResource extends ExternalResource {
     router =
       new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                       new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService, new RouterPathLookup()),
-                      mockValidator, extractor, discoveryServiceClient);
+                      mockValidator, extractor, discoveryServiceClient, new NoOpMetricsCollectionService());
     router.startAndWait();
   }
 
