@@ -493,7 +493,12 @@ public final class SparkPackageUtils {
 
   private static boolean uploadToLocation(Location frameworkLocation, File archive, Location writeLockLocation)
     throws IOException {
-    if (!writeLockLocation.createNew()) {
+    try {
+      if (!writeLockLocation.createNew()) {
+        return false;
+      }
+    } catch (IOException e) {
+      LOG.debug("Failed to upload spark framework artifact while creating lock file and will be retried.", e);
       return false;
     }
 
