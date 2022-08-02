@@ -17,15 +17,18 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
+import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -38,6 +41,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -58,7 +62,13 @@ public class ConfiguratorTaskModule extends AbstractModule {
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
     bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class);
-    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.LOCAL);
+    // Since we don't actually use SparkProgramRuntimeProvider to run a spark program here, we provide no-op
+    // implementations for all classes required by DistributedSparkProgramRunner.
+    // We use ProgramRuntimeProvider.Mode.DISTRIBUTED to reduce the number of required modules because LOCAL requires
+    // more complex bindings.
+    bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
+    bind(ClusterMode.class).toInstance(ClusterMode.ON_PREMISE);
+    bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(NoopTwillRunnerService.class);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
     bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
