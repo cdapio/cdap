@@ -20,6 +20,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
+import io.cdap.cdap.internal.app.worker.SystemAppTask;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.ProgramType;
@@ -46,4 +47,20 @@ public class SparkProgramRuntimeProviderTest {
 
     MasterEnvironments.setMasterEnvironment(tmpMasterEnv);
   }
+
+  @Test
+  public void testSystemAppTaskInjector() throws Exception {
+    MasterEnvironment masterEnvironment = new MockMasterEnvironment();
+    masterEnvironment.initialize(null);
+    MasterEnvironment tmpMasterEnv = MasterEnvironments.setMasterEnvironment(masterEnvironment);
+
+    Injector injector = SystemAppTask.createInjector(CConfiguration.create());
+    ServiceLoader<ProgramRuntimeProvider> serviceLoader = ServiceLoader.load(ProgramRuntimeProvider.class);
+    SparkProgramRuntimeProvider runtimeProvider = (SparkProgramRuntimeProvider) serviceLoader.iterator().next();
+    runtimeProvider.createProgramRunner(ProgramType.SPARK, injector.getInstance(ProgramRuntimeProvider.Mode.class),
+                                        injector);
+
+    MasterEnvironments.setMasterEnvironment(tmpMasterEnv);
+  }
+
 }

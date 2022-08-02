@@ -149,7 +149,7 @@ public class SystemAppTask implements RunnableTask {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf) {
+  public static Injector createInjector(CConfiguration cConf) {
     return Guice.createInjector(
       new IOModule(),
       CoreSecurityRuntimeModule.getDistributedModule(cConf),
