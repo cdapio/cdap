@@ -66,6 +66,7 @@ public class ConfiguratorTaskModule extends AbstractModule {
     // implementations for all classes required by DistributedSparkProgramRunner.
     // We use ProgramRuntimeProvider.Mode.DISTRIBUTED to reduce the number of required modules because LOCAL requires
     // more complex bindings.
+    // TODO(CDAP-19459): Remove this entirely after refactoring ArtifactClassLoaderFactory to not use ProgramRunner.
     bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
     bind(ClusterMode.class).toInstance(ClusterMode.ON_PREMISE);
     bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(NoopTwillRunnerService.class);
