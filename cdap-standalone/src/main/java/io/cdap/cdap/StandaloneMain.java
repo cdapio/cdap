@@ -26,6 +26,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
@@ -72,6 +73,7 @@ import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
@@ -158,6 +160,7 @@ public class StandaloneMain {
   private final PreviewRunnerManager previewRunnerManager;
   private final MetadataStorage metadataStorage;
   private final RuntimeServer runtimeServer;
+  private final ArtifactLocalizerService artifactLocalizerService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -188,6 +191,8 @@ public class StandaloneMain {
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
     runtimeServer = injector.getInstance(RuntimeServer.class);
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, 0);
+    artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
 
     if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
       txService = injector.getInstance(InMemoryTransactionService.class);
@@ -280,6 +285,13 @@ public class StandaloneMain {
       throw new Exception("Failed to start Application Fabric");
     }
 
+    artifactLocalizerService.startAndWait();
+    // NOTE: As the artifact localizer client does not use service discovery for port discovery,
+    // We need to set the port after starting the localizer service.
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
+    // Set the artifact localizer port for the preview conf as well
+    injector.getInstance(Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
+      .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
     previewHttpServer.startAndWait();
     previewRunnerManager.startAndWait();
 
@@ -341,6 +353,7 @@ public class StandaloneMain {
       serviceStore.stopAndWait();
       previewRunnerManager.stopAndWait();
       previewHttpServer.stopAndWait();
+      artifactLocalizerService.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       runtimeServer.stopAndWait();
