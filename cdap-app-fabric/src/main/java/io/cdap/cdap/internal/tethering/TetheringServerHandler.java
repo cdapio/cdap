@@ -247,6 +247,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       for (Notification notification : notificationList) {
         messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), programStatusTopic,
                                                        GSON.toJson(notification));
+        LOG.debug("Received notification {}", notification);
       }
     } catch (TopicNotFoundException | IOException e) {
       throw new BadRequestException("Unable to publish program status update", e);

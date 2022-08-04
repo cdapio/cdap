@@ -178,6 +178,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                                     "Peer %s doesn't have an endpoint", peer.getName());
         String lastControlMessageId = peerToLastControlMessageIds.get(peer.getName());
         List<Notification> notificationList = peerToNotifications.get(peer.getName());
+        LOG.debug("Sending notifications {} to peer {}", notificationList, peer.getName());
         String content = GSON.toJson(new TetheringControlChannelRequest(lastControlMessageId, notificationList));
         String path = appendPath(Objects.requireNonNull(peer.getEndpoint()), CONNECT_CONTROL_CHANNEL + instanceName);
         URI peerUri = new URI(peer.getEndpoint()).resolve(path);
