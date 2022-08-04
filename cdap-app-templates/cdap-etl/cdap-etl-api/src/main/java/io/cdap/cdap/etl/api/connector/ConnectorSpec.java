@@ -31,10 +31,14 @@ public class ConnectorSpec {
   // schema is null when the connector is unable to retrieve it from the resource
   private final Schema schema;
   private final Set<PluginSpec> relatedPlugins;
+  private final Set<String> availableSampleTypes;
 
-  private ConnectorSpec(@Nullable Schema schema, Set<PluginSpec> relatedPlugins) {
+  private ConnectorSpec(@Nullable Schema schema,
+                        Set<PluginSpec> relatedPlugins,
+                        @Nullable Set<String> availableSampleTypes) {
     this.schema = schema;
     this.relatedPlugins = relatedPlugins;
+    this.availableSampleTypes = availableSampleTypes;
   }
 
   @Nullable
@@ -44,6 +48,11 @@ public class ConnectorSpec {
 
   public Set<PluginSpec> getRelatedPlugins() {
     return relatedPlugins;
+  }
+
+  @Nullable
+  public Set<String> getAvailableSampleTypes() {
+    return availableSampleTypes;
   }
 
   @Override
@@ -57,13 +66,14 @@ public class ConnectorSpec {
     }
 
     ConnectorSpec that = (ConnectorSpec) o;
-    return Objects.equals(schema, that.schema) &&
-             Objects.equals(relatedPlugins, that.relatedPlugins);
+    return Objects.equals(schema, that.schema)
+            && Objects.equals(relatedPlugins, that.relatedPlugins)
+            && Objects.equals(availableSampleTypes, that.availableSampleTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schema, relatedPlugins);
+    return Objects.hash(schema, relatedPlugins, availableSampleTypes);
   }
 
   /**
@@ -79,9 +89,11 @@ public class ConnectorSpec {
   public static class Builder {
     private Schema schema;
     private Set<PluginSpec> relatedPlugins;
+    private final Set<String> availableSampleTypes;
 
     public Builder() {
       this.relatedPlugins = new HashSet<>();
+      this.availableSampleTypes = new HashSet<>();
     }
 
     public Builder setSchema(@Nullable Schema schema) {
@@ -100,8 +112,19 @@ public class ConnectorSpec {
       return this;
     }
 
+    public Builder setAvailableSampleTypes(@Nullable Set<String> availableSampleTypes) {
+      this.availableSampleTypes.clear();
+      this.availableSampleTypes.addAll(availableSampleTypes);
+      return this;
+    }
+
+    public Builder addAvailableSampleType(String sampleType) {
+      this.availableSampleTypes.add(sampleType);
+      return this;
+    }
+
     public ConnectorSpec build() {
-      return new ConnectorSpec(schema, relatedPlugins);
+      return new ConnectorSpec(schema, relatedPlugins, availableSampleTypes);
     }
   }
 }
