@@ -35,10 +35,18 @@ public class ConnectorSpec {
 
   private ConnectorSpec(@Nullable Schema schema,
                         Set<PluginSpec> relatedPlugins,
-                        @Nullable Set<String> availableSampleTypes) {
+                        Set<String> availableSampleTypes) {
     this.schema = schema;
     this.relatedPlugins = relatedPlugins;
-    this.availableSampleTypes = availableSampleTypes;
+    if (availableSampleTypes != null) {
+      this.availableSampleTypes = availableSampleTypes;
+    } else {
+      this.availableSampleTypes = new HashSet<String>();
+    }
+  }
+
+  private ConnectorSpec(@Nullable Schema schema, Set<PluginSpec> relatedPlugins) {
+    this(schema, relatedPlugins, null);
   }
 
   @Nullable
@@ -50,7 +58,6 @@ public class ConnectorSpec {
     return relatedPlugins;
   }
 
-  @Nullable
   public Set<String> getAvailableSampleTypes() {
     return availableSampleTypes;
   }
@@ -112,7 +119,7 @@ public class ConnectorSpec {
       return this;
     }
 
-    public Builder setAvailableSampleTypes(@Nullable Set<String> availableSampleTypes) {
+    public Builder setAvailableSampleTypes(Set<String> availableSampleTypes) {
       this.availableSampleTypes.clear();
       this.availableSampleTypes.addAll(availableSampleTypes);
       return this;
