@@ -27,13 +27,27 @@ import java.util.Set;
  */
 public class ConnectorDetail {
   private final Set<PluginDetail> relatedPlugins;
+  private final Set<String> availableSampleTypes;
+
+  public ConnectorDetail(Set<PluginDetail> relatedPlugins, Set<String> availableSampleTypes) {
+    this.relatedPlugins = relatedPlugins;
+    if (availableSampleTypes != null) {
+      this.availableSampleTypes = availableSampleTypes;
+    } else {
+      this.availableSampleTypes = new HashSet<String>();
+    }
+  }
 
   public ConnectorDetail(Set<PluginDetail> relatedPlugins) {
-    this.relatedPlugins = relatedPlugins;
+    this(relatedPlugins, null);
   }
 
   public Set<PluginDetail> getRelatedPlugins() {
     return relatedPlugins;
+  }
+
+  public Set<String> getAvailableSampleTypes() {
+    return availableSampleTypes;
   }
 
   @Override
@@ -47,11 +61,12 @@ public class ConnectorDetail {
     }
 
     ConnectorDetail that = (ConnectorDetail) o;
-    return Objects.equals(relatedPlugins, that.relatedPlugins);
+    return Objects.equals(relatedPlugins, that.relatedPlugins)
+            && Objects.equals(availableSampleTypes, that.availableSampleTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(relatedPlugins);
+    return Objects.hash(relatedPlugins, availableSampleTypes);
   }
 }
