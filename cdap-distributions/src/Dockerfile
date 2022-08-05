@@ -20,7 +20,7 @@ MAINTAINER Cask Data <ops@cask.co>
 # update system
 RUN apt-get update && \
   apt-get dist-upgrade -y && \
-  apt-get install -y curl
+  apt-get install -y curl dpkg-sig
 
 # grab gosu for easy step-down from root
 ENV GOSU_VERSION 1.7
@@ -43,7 +43,9 @@ COPY packer/scripts /tmp/scripts
 COPY packer/files /tmp/files
 
 # Install Chef, setup APT, run Chef cdap::sdk recipe, then clean up
-RUN curl -vL http://chef.io/chef/install.sh | bash -s -- -v 13.8.5 && \
+RUN curl -O https://packages.chef.io/files/stable/chef/13.8.5/ubuntu/16.04/chef_13.8.5-1_amd64.deb && \
+    dpkg-sig --verify chef_13.8.5-1_amd64.deb && \
+    dpkg -i chef_13.8.5-1_amd64.deb && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
     chef-solo -o cdap::sdk -j /tmp/files/cdap-sdk.json && \
     for i in remove-chef.sh sdk-cleanup.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
