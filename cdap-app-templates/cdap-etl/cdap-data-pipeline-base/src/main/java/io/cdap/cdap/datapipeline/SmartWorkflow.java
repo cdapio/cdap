@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ApplicationConfigurer;
+import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.dataset.lib.FileSet;
@@ -89,9 +90,11 @@ import io.cdap.cdap.etl.planner.PipelinePlan;
 import io.cdap.cdap.etl.planner.PipelinePlanner;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.etl.proto.v2.ETLTransformationPushdown;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.batch.ETLSpark;
+import io.cdap.cdap.etl.spec.PipelineArguments;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -153,7 +156,7 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   public SmartWorkflow(ETLBatchConfig config, Set<String> supportedPluginTypes,
                        ApplicationConfigurer applicationConfigurer) {
-    this.config = config;
+    this.config = getConfigFromRuntimeArgs(applicationConfigurer, config);
     this.supportedPluginTypes = supportedPluginTypes;
     this.applicationConfigurer = applicationConfigurer;
     this.phaseNum = 1;
@@ -451,19 +454,22 @@ public class SmartWorkflow extends AbstractWorkflow {
     postActions = new LinkedHashMap<>();
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
                          BatchPipelineSpec.class);
+    boolean processTimingEnabled = PipelineArguments.isProcessTimingEnabled(pipelineRuntime.getArguments().asMap(),
+                                                                            spec.isProcessTimingEnabled());
+
     stageSpecs = new HashMap<>();
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context, context.getNamespace());
     PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
                                                             spec.isStageLoggingEnabled(),
-                                                            spec.isProcessTimingEnabled());
+                                                            processTimingEnabled);
     for (ActionSpec actionSpec : spec.getEndingActions()) {
       String stageName = actionSpec.getName();
       postActions.put(stageName, pluginContext.newPluginInstance(stageName, macroEvaluator));
       stageSpecs.put(stageName, StageSpec.builder(stageName, actionSpec.getPluginSpec())
         .setStageLoggingEnabled(spec.isStageLoggingEnabled())
-        .setProcessTimingEnabled(spec.isProcessTimingEnabled())
+        .setProcessTimingEnabled(processTimingEnabled)
         .setMaxPreviewRecords(spec.getNumOfRecordsPreview())
         .build());
     }
@@ -683,9 +689,21 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
+    // overide spec with runtime arguments
+    boolean processTimingEnabled = spec.isProcessTimingEnabled();
+    Map<String, String> properties = spec.getProperties();
+
+    // runtime configurer is null at deployment
+    if (applicationConfigurer != null && applicationConfigurer.getRuntimeConfigurer() != null) {
+      Map<String, String> runtimeArguments = applicationConfigurer.getRuntimeConfigurer().getRuntimeArguments();
+      processTimingEnabled = PipelineArguments.isProcessTimingEnabled(runtimeArguments,
+                                                                      spec.isProcessTimingEnabled());
+      properties = PipelineArguments.getEngineProperties(runtimeArguments, spec.getProperties());
+    } 
+
     return new BatchPhaseSpec(programName, phase, spec.getResources(), spec.getDriverResources(),
-                              spec.getClientResources(), spec.isStageLoggingEnabled(), spec.isProcessTimingEnabled(),
-                              phaseConnectorDatasets, spec.getNumOfRecordsPreview(), spec.getProperties(),
+                              spec.getClientResources(), spec.isStageLoggingEnabled(), processTimingEnabled,
+                              phaseConnectorDatasets, spec.getNumOfRecordsPreview(), properties,
                               !plan.getConditionPhaseBranches().isEmpty(), spec.getSqlEngineStageSpec());
   }
 
@@ -754,5 +772,33 @@ public class SmartWorkflow extends AbstractWorkflow {
     // publisher to the local datasets for it, so that we can publish alerts in destroy()
     properties.put(Constants.CONNECTOR_DATASETS, GSON.toJson(connectorDatasets));
     setProperties(properties);
+  }
+
+  private ETLBatchConfig getConfigFromRuntimeArgs(ApplicationConfigurer applicationConfigurer,
+                                                  ETLBatchConfig originalConfig) {
+    if (applicationConfigurer == null || applicationConfigurer.getRuntimeConfigurer() == null) {
+      return originalConfig;
+    }
+    RuntimeConfigurer runtimeConfigurer = applicationConfigurer.getRuntimeConfigurer();
+    Map<String, String> runtimeArguments = runtimeConfigurer.getRuntimeArguments();
+    if (!runtimeArguments.containsKey(PipelineArguments.PIPELINE_CONFIG_OVERWRITE)) {
+      return originalConfig;
+    }
+    boolean processTimingEnabled = PipelineArguments.isProcessTimingEnabled(runtimeArguments,
+                                                  originalConfig.isProcessTimingEnabled());
+    Map<String, String> properties = PipelineArguments.getEngineProperties(runtimeArguments,
+                                                                          originalConfig.getProperties());
+    boolean pushdownEnabled = PipelineArguments.isPushdownEnabled(runtimeArguments, originalConfig.isPushdownEnabled());
+    ETLTransformationPushdown transformationPushdown = PipelineArguments.getTransformationPushdown(runtimeArguments,
+                                                                 originalConfig.getTransformationPushdown());
+    // overwrite config using runtimeargs
+    ETLBatchConfig.Builder builder = new ETLBatchConfig.Builder(originalConfig);
+    if (!processTimingEnabled) {
+      builder.disableProcessTiming();
+    }
+    builder.setProperties(properties)
+      .setPushdownEnabled(pushdownEnabled)
+      .setTransformationPushdown(transformationPushdown);
+    return builder.build();
   }
 }

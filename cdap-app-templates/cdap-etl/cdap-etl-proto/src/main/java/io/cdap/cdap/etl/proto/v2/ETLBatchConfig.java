@@ -233,7 +233,7 @@ public final class ETLBatchConfig extends ETLConfig {
     private List<Object> comments;
 
     private Builder() {
-      this(null);
+      this((String) null);
       this.comments = new ArrayList<>();
     }
 
@@ -246,6 +246,24 @@ public final class ETLBatchConfig extends ETLConfig {
       this.schedule = schedule;
       this.engine = Engine.MAPREDUCE;
       this.endingActions = new ArrayList<>();
+    }
+
+    public Builder(ETLBatchConfig config) {
+      super();
+      this.stages = config.getStages();
+      this.connections = config.getConnections();
+      this.endingActions = config.getPostActions();
+      this.processTimingEnabled = config.isProcessTimingEnabled();
+      this.engine = config.getEngine();
+      this.schedule = config.getSchedule();
+      this.driverResources = config.getDriverResources();
+      this.clientResources = config.getClientResources();
+      this.numOfRecordsPreview = config.getNumOfRecordsPreview();
+      this.maxConcurrentRuns = config.getMaxConcurrentRuns();
+      this.properties = config.getProperties();
+      this.comments = config.getComments();
+      this.pushdownEnabled = config.isPushdownEnabled();
+      this.transformationPushdown = config.getTransformationPushdown();
     }
 
     public Builder setTimeSchedule(String schedule) {
