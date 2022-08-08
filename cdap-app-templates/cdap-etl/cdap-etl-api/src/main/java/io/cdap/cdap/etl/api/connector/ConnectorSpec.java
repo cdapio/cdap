@@ -41,7 +41,7 @@ public class ConnectorSpec {
     if (supportedSampleTypes != null) {
       this.supportedSampleTypes = supportedSampleTypes;
     } else {
-      this.supportedSampleTypes = new HashSet<String>();
+      this.supportedSampleTypes = new HashSet<>();
     }
   }
 
