@@ -27,14 +27,14 @@ import java.util.Set;
  */
 public class ConnectorDetail {
   private final Set<PluginDetail> relatedPlugins;
-  private final Set<String> availableSampleTypes;
+  private final Set<String> supportedSampleTypes;
 
-  public ConnectorDetail(Set<PluginDetail> relatedPlugins, Set<String> availableSampleTypes) {
+  public ConnectorDetail(Set<PluginDetail> relatedPlugins, Set<String> supportedSampleTypes) {
     this.relatedPlugins = relatedPlugins;
-    if (availableSampleTypes != null) {
-      this.availableSampleTypes = availableSampleTypes;
+    if (supportedSampleTypes != null) {
+      this.supportedSampleTypes = supportedSampleTypes;
     } else {
-      this.availableSampleTypes = new HashSet<String>();
+      this.supportedSampleTypes = new HashSet<String>();
     }
   }
 
@@ -46,8 +46,8 @@ public class ConnectorDetail {
     return relatedPlugins;
   }
 
-  public Set<String> getAvailableSampleTypes() {
-    return availableSampleTypes;
+  public Set<String> getSupportedSampleTypes() {
+    return supportedSampleTypes;
   }
 
   @Override
@@ -62,11 +62,11 @@ public class ConnectorDetail {
 
     ConnectorDetail that = (ConnectorDetail) o;
     return Objects.equals(relatedPlugins, that.relatedPlugins)
-            && Objects.equals(availableSampleTypes, that.availableSampleTypes);
+            && Objects.equals(supportedSampleTypes, that.supportedSampleTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(relatedPlugins, availableSampleTypes);
+    return Objects.hash(relatedPlugins, supportedSampleTypes);
   }
 }

@@ -31,17 +31,17 @@ public class ConnectorSpec {
   // schema is null when the connector is unable to retrieve it from the resource
   private final Schema schema;
   private final Set<PluginSpec> relatedPlugins;
-  private final Set<String> availableSampleTypes;
+  private final Set<String> supportedSampleTypes;
 
   private ConnectorSpec(@Nullable Schema schema,
                         Set<PluginSpec> relatedPlugins,
-                        Set<String> availableSampleTypes) {
+                        Set<String> supportedSampleTypes) {
     this.schema = schema;
     this.relatedPlugins = relatedPlugins;
-    if (availableSampleTypes != null) {
-      this.availableSampleTypes = availableSampleTypes;
+    if (supportedSampleTypes != null) {
+      this.supportedSampleTypes = supportedSampleTypes;
     } else {
-      this.availableSampleTypes = new HashSet<String>();
+      this.supportedSampleTypes = new HashSet<String>();
     }
   }
 
@@ -58,8 +58,8 @@ public class ConnectorSpec {
     return relatedPlugins;
   }
 
-  public Set<String> getAvailableSampleTypes() {
-    return availableSampleTypes;
+  public Set<String> getSupportedSampleTypes() {
+    return supportedSampleTypes;
   }
 
   @Override
@@ -75,12 +75,12 @@ public class ConnectorSpec {
     ConnectorSpec that = (ConnectorSpec) o;
     return Objects.equals(schema, that.schema)
             && Objects.equals(relatedPlugins, that.relatedPlugins)
-            && Objects.equals(availableSampleTypes, that.availableSampleTypes);
+            && Objects.equals(supportedSampleTypes, that.supportedSampleTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schema, relatedPlugins, availableSampleTypes);
+    return Objects.hash(schema, relatedPlugins, supportedSampleTypes);
   }
 
   /**
@@ -96,11 +96,11 @@ public class ConnectorSpec {
   public static class Builder {
     private Schema schema;
     private Set<PluginSpec> relatedPlugins;
-    private final Set<String> availableSampleTypes;
+    private final Set<String> supportedSampleTypes;
 
     public Builder() {
       this.relatedPlugins = new HashSet<>();
-      this.availableSampleTypes = new HashSet<>();
+      this.supportedSampleTypes = new HashSet<>();
     }
 
     public Builder setSchema(@Nullable Schema schema) {
@@ -119,19 +119,19 @@ public class ConnectorSpec {
       return this;
     }
 
-    public Builder setAvailableSampleTypes(Set<String> availableSampleTypes) {
-      this.availableSampleTypes.clear();
-      this.availableSampleTypes.addAll(availableSampleTypes);
+    public Builder setSupportedSampleTypes(Set<String> supportedSampleTypes) {
+      this.supportedSampleTypes.clear();
+      this.supportedSampleTypes.addAll(supportedSampleTypes);
       return this;
     }
 
-    public Builder addAvailableSampleType(String sampleType) {
-      this.availableSampleTypes.add(sampleType);
+    public Builder addSupportedSampleType(String sampleType) {
+      this.supportedSampleTypes.add(sampleType);
       return this;
     }
 
     public ConnectorSpec build() {
-      return new ConnectorSpec(schema, relatedPlugins, availableSampleTypes);
+      return new ConnectorSpec(schema, relatedPlugins, supportedSampleTypes);
     }
   }
 }
