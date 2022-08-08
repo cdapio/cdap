@@ -104,6 +104,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     return Collections.unmodifiableSet(connections == null ? new HashSet<Connection>() : connections);
   }
 
+  public List<Object> getComments() {
+    return comments == null ? new ArrayList<>() : comments;
+  }
+
   public Resources getResources() {
     return resources == null ? new Resources(1024, 1) : resources;
   }
@@ -246,6 +250,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
    */
   @SuppressWarnings("unchecked")
   public abstract static class Builder<T extends Builder> {
+    protected List<Object> comments;
     public static final Resources DEFAULT_TEST_RESOURCES = new Resources(2048, 1);
     protected Set<ETLStage> stages;
     protected Set<Connection> connections;
@@ -266,6 +271,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
       this.properties = new HashMap<>();
+      this.comments = new ArrayList<>();
     }
 
     public T addStage(ETLStage stage) {
@@ -330,6 +336,11 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     public T setProperties(Map<String, String> properties) {
       this.properties = new HashMap<>(properties);
+      return (T) this;
+    }
+
+    public T setComments(List<Object> comments) {
+      this.comments = comments;
       return (T) this;
     }
   }
