@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.MetricRetrievalException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
@@ -78,7 +79,7 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
   }
 
   @Override
-  public ExecutionMetrics[] retrieveMetrics(ProgramRunId runId) {
+  public ExecutionMetrics[] retrieveMetrics(ProgramRunId runId) throws MetricRetrievalException {
     if (!runId.getType().equals(ProgramType.SPARK)) {
       return new ExecutionMetrics[]{ExecutionMetrics.emptyMetrics()};
     }
@@ -120,8 +121,7 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
         t -> t instanceof RetryableException);
     } catch (Exception e) {
       emitMetrics(runId, startTime, false);
-      logger.error("Retries failed for extracting metrics. ", e);
-      return new ExecutionMetrics[]{};
+      throw new MetricRetrievalException(e);
     }
   }
 
