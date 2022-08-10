@@ -63,6 +63,7 @@ public final class Schema implements Serializable {
     DOUBLE(true),
     BYTES(true),
     STRING(true),
+    FIXED(true),
 
     ENUM(false),
 
@@ -70,6 +71,7 @@ public final class Schema implements Serializable {
     MAP(false),
     RECORD(false),
     UNION(false);
+
 
     private final boolean simpleType;
 
@@ -992,6 +994,8 @@ public final class Schema implements Serializable {
           return type == Type.INT || type == Type.LONG || type == Type.FLOAT;
         case STRING:
           return type != Type.NULL && type != Type.BYTES;
+        case FIXED:
+          return type == Type.FIXED;
         case UNION:
           for (Schema targetSchema : target.unionSchemas) {
             if (checkCompatible(targetSchema, recordCompared)) {
