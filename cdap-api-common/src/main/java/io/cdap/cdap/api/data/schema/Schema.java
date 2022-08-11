@@ -26,6 +26,7 @@ import java.io.ObjectStreamException;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +51,7 @@ public final class Schema implements Serializable {
   private static final long serialVersionUID = -1891891892562027345L;
   private int precision;
   private int scale;
-  private int fixedSize;
+  private ByteBuffer fixedValue;
 
   private String fixedName;
 
@@ -334,7 +335,7 @@ public final class Schema implements Serializable {
     if (!type.isSimpleType()) {
       throw new IllegalArgumentException("Type " + type + " is not a simple type.");
     }
-    return new Schema(type, null, null, null, null, null, null, null, null, null, 0, 0, 0);
+    return new Schema(type, null, null, null, null, null, null, null, null, null, 0, 0, null);
   }
 
   /**
@@ -344,7 +345,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} with the given logical type.
    */
   public static Schema of(LogicalType logicalType) {
-    return new Schema(logicalType.type, logicalType, null, null, null, null, null, null, null, null, 0, 0, 0);
+    return new Schema(logicalType.type, logicalType, null, null, null, null, null, null, null, null, 0, 0, null);
   }
 
   /**
@@ -364,18 +365,18 @@ public final class Schema implements Serializable {
    */
   public static Schema decimalOf(int precision, int scale) {
     return new Schema(Type.BYTES, LogicalType.DECIMAL, null, null, null,
-                      null, null, null, null, null, precision, scale, 0);
+                      null, null, null, null, null, precision, scale, null);
   }
 
   /**
    * Creates a {@link Schema} for Fixed logical type with provided precision and scale.
-   * @param fixedSize is the size of fixed type
+   * @param fixedValue is the value of fixed type
    * @param fixedName is the name of fixed type
    * @return A {@link Schema} with the fixed logical type
    */
-  public static Schema fixedOf(int fixedSize, String fixedName) {
+  public static Schema fixedOf(ByteBuffer fixedValue, String fixedName) {
     return new Schema(Type.BYTES, LogicalType.FIXED, null, null, null, null,
-       null, fixedName, null, null, 0, 0, fixedSize);
+       null, fixedName, null, null, 0, 0, fixedValue);
   }
 
   /**
@@ -435,7 +436,7 @@ public final class Schema implements Serializable {
     if (enumName == null && uniqueValues.isEmpty()) {
       throw new IllegalArgumentException("No enum value provided.");
     }
-    return new Schema(Type.ENUM, null, enumName, uniqueValues, null, null, null, null, null, null, 0, 0, 0);
+    return new Schema(Type.ENUM, null, enumName, uniqueValues, null, null, null, null, null, null, 0, 0, null);
   }
 
   /**
@@ -460,7 +461,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} of {@link Type#ARRAY ARRAY} type.
    */
   public static Schema arrayOf(Schema componentSchema) {
-    return new Schema(Type.ARRAY, null, null, null, componentSchema, null, null, null, null, null, 0, 0, 0);
+    return new Schema(Type.ARRAY, null, null, null, componentSchema, null, null, null, null, null, 0, 0, null);
   }
 
   /**
@@ -470,7 +471,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} of {@link Type#MAP MAP} type.
    */
   public static Schema mapOf(Schema keySchema, Schema valueSchema) {
-    return new Schema(Type.MAP, null, null, null, null, keySchema, valueSchema, null, null, null, 0, 0, 0);
+    return new Schema(Type.MAP, null, null, null, null, keySchema, valueSchema, null, null, null, 0, 0, null);
   }
 
   /**
@@ -485,7 +486,7 @@ public final class Schema implements Serializable {
     if (name == null) {
       throw new IllegalArgumentException("Record name cannot be null.");
     }
-    return new Schema(Type.RECORD, null, null, null, null, null, null, name, null, null, 0, 0, 0);
+    return new Schema(Type.RECORD, null, null, null, null, null, null, name, null, null, 0, 0, null);
   }
 
   /**
@@ -550,7 +551,7 @@ public final class Schema implements Serializable {
     if (fieldMap.isEmpty()) {
       throw new IllegalArgumentException("No record field provided for " + name);
     }
-    return new Schema(Type.RECORD, null, null, null, null, null, null, name, fieldMap, null, 0, 0, 0);
+    return new Schema(Type.RECORD, null, null, null, null, null, null, name, fieldMap, null, 0, 0, null);
   }
 
   /**
@@ -605,7 +606,7 @@ public final class Schema implements Serializable {
         "A union is not allowed to contain more than one array, but it contains %d schemas: %s",
         arraySchemas.size(), arraySchemas));
     }
-    return new Schema(Type.UNION, null, null, null, null, null, null, null, null, schemaList, 0, 0, 0);
+    return new Schema(Type.UNION, null, null, null, null, null, null, null, null, schemaList, 0, 0, null);
   }
 
   private final Type type;
@@ -643,11 +644,11 @@ public final class Schema implements Serializable {
                  @Nullable Schema keySchema, @Nullable Schema valueSchema,            // Not null for map type
                  @Nullable String recordName, @Nullable Map<String, Field> fieldMap,  // Not null for record type
                  @Nullable List<Schema> unionSchemas,                                 // Not null for union type
-                 int precision, int scale, int fixedSize) {
+                 int precision, int scale, ByteBuffer fixedValue) {
     if (logicalType == LogicalType.DECIMAL && precision <= 0) {
       throw new IllegalArgumentException("Schema for logical type decimal must be created using decimalOf() method.");
     }
-    this.fixedSize = fixedSize;
+    this.fixedValue = fixedValue;
     this.type = type;
     this.logicalType = logicalType;
     Map.Entry<Map<String, Integer>, Map<Integer, String>> enumValuesIndexes = createIndex(enumValues);
@@ -838,7 +839,7 @@ public final class Schema implements Serializable {
   }
 
   public int getFixedSize() {
-    return fixedSize;
+    return fixedValue.array().length;
   }
 
   public String getFixedName() {
@@ -885,7 +886,7 @@ public final class Schema implements Serializable {
         case DATETIME:
           return String.format("datetime in ISO-8601 format without timezone");
         case FIXED:
-          return String.format("Fixed type of name %s and size %d", fixedName, fixedSize);
+          return String.format("Fixed type of name %s", fixedName);
       }
     }
 
