@@ -255,6 +255,18 @@ public class StructuredRecord implements Serializable {
     }
   }
 
+  @Nullable
+  public ByteBuffer getFixed(String fieldName) {
+    Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
+      EnumSet.of(LogicalType.FIXED));
+    Object value = fields.get(fieldName);
+    if (value == null || logicalTypeSchema == null) {
+      return null;
+    }
+
+   return (ByteBuffer) value;
+  }
+
   /**
    * Get zoned date and time represented by the field.
    *
@@ -525,6 +537,29 @@ public class StructuredRecord implements Serializable {
       }
       // Save as ISO-8601 format without the offset
       fields.put(fieldName, localDateTime.format(DateTimeFormatter.ISO_DATE_TIME));
+      return this;
+    }
+
+    /**
+     * Sets the java.nio.ByteBuffer for a Fixed datatype field.
+     *
+     * @param fieldName String field name
+     * @param byteBuffer {@link ByteBuffer} value , is nullable
+     * @return {@link Builder} for the StructuredRecord
+     */
+    public Builder setFixed(String fieldName, @Nullable ByteBuffer byteBuffer) {
+      Schema logicalSchema = validateAndGetLogicalTypeSchema(validateAndGetField(fieldName, byteBuffer),
+        EnumSet.of(LogicalType.FIXED));
+      if (byteBuffer == null) {
+        fields.put(fieldName, null);
+        return this;
+      }
+      if (byteBuffer.array().length !=  logicalSchema.getFixedSize()) {
+        throw new UnexpectedFormatException(
+          String.format("Field '%s' has size '%d' which is not equal to schema size '%d'.",
+            fieldName, byteBuffer.array().length, logicalSchema.getFixedSize()));
+      }
+      fields.put(fieldName, byteBuffer);
       return this;
     }
 

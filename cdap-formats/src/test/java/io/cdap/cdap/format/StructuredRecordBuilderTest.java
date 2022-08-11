@@ -26,6 +26,7 @@ import org.junit.rules.ExpectedException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -233,6 +234,21 @@ public class StructuredRecordBuilderTest {
       .set("name", "test")
       .setDecimal("d", null).build();
     Assert.assertNull(record.getDecimal("d"));
+  }
+
+  @Test
+  public void testFixedLogicalType() {
+    Schema schema = Schema.recordOf(Schema.Field.of("Fixed",
+        Schema.nullableOf(Schema.fixedOf(5, "fixedName"))),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[5]);
+    StructuredRecord record = StructuredRecord.builder(schema)
+      .setFixed("Fixed", byteBuffer)
+      .set("name", "test").build();
+    Assert.assertEquals(byteBuffer, record.getFixed("Fixed"));
+
+
+
   }
 
   @Test

@@ -30,8 +30,9 @@ public class SchemaTest {
     Field stringField = Field.of("stringField", Schema.of(Schema.Type.STRING));
     Field longField = Field.of("numericField", Schema.of(Schema.Type.LONG));
     Field booleanField = Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN));
+    Field fixedField = Field.of("fixedField", Schema.fixedOf(5, "fixedName"));
     Field namelessRecordField = Field.of("namelessRecord", Schema.recordOf(booleanField));
-    Field recordField = Field.of("namedRecord", Schema.recordOf("namedRecord", stringField, longField));
+    Field recordField = Field.of("namedRecord", Schema.recordOf("namedRecord", stringField, longField, fixedField));
     return Schema.recordOf(recordField, namelessRecordField);
   }
 
@@ -39,7 +40,8 @@ public class SchemaTest {
     Field stringField = Field.of("stringField", Schema.of(Schema.Type.STRING));
     Field booleanField = Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN));
     Field namelessRecordField = Field.of("namelessRecord", Schema.recordOf(booleanField));
-    Field recordField = Field.of("namedRecord", Schema.recordOf("namedRecord", stringField));
+    Field fixedField = Field.of("fixedField", Schema.fixedOf(5, "fixedName"));
+    Field recordField = Field.of("namedRecord", Schema.recordOf("namedRecord", stringField, fixedField));
     return Schema.recordOf(recordField, namelessRecordField);
   }
 
