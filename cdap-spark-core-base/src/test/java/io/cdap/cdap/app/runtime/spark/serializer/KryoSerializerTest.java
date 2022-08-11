@@ -290,6 +290,7 @@ public class KryoSerializerTest {
                            Schema.Field.of("timeMillis", Schema.of(Schema.LogicalType.TIME_MILLIS)),
                            Schema.Field.of("timestampMillis", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
                            Schema.Field.of("nullField", Schema.of(Schema.Type.NULL)),
+                           Schema.Field.of("fixed", Schema.fixedOf(5, "a"),
                            Schema.Field
                              .of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.INT))),
                            Schema.Field
