@@ -17,18 +17,14 @@
 package io.cdap.cdap.logging.clean;
 
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.logging.appender.system.LogFileManager;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * cleanup expired log files
@@ -37,10 +33,8 @@ public class LogCleaner {
   public static final int FOLDER_CLEANUP_BATCH_SIZE = 100000;
 
   private static final Logger LOG = LoggerFactory.getLogger(LogCleaner.class);
-  private static final long MILLISECONDS_IN_DAY = TimeUnit.DAYS.toMillis(1);
   private static final long DEFAULT_DELAY_IN_MILLIS = -1L;
   private static final long FOLDER_CLEANUP_DELAY_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
-  private static final int EXCLUDE_FOLDER_CLEANUP_DAYS = 2;
 
   private final FileMetadataCleaner fileMetadataCleaner;
   private final LocationFactory locationFactory;
@@ -99,21 +93,16 @@ public class LogCleaner {
     LOG.info("Starting log folder cleanup");
     try {
       long startTime = System.currentTimeMillis();
-      LOG.debug("Starting log folder cleanup");
+      LOG.debug("Starting log folder cleanup {}", startTime);
       folderCleanupCount = 0;
 
-      // TODO: (CDAP-19437): Exclude recent log folders during cleanups in LogCleaner service.
-      // For now exclude folders for current date and current date - 1.
-      long currentTime = System.currentTimeMillis();
-      Set<String> excludeFolders = new HashSet<String>();
-      for (int day = 0; day < EXCLUDE_FOLDER_CLEANUP_DAYS; day++) {
-        long time = currentTime - day * MILLISECONDS_IN_DAY;
-        String date = LogFileManager.formatLogDirectoryName(time);
-        excludeFolders.add(date);
+      // Exclude folders which were last modified within retention period.
+      // Clean up stale empty folders inside logs folder.
+      long checkpointTimestamp = startTime - retentionDurationMs;
+      for (Location location : logsDirectoryLocation.list()) {
+        cleanupFoldersIfEmpty(location, checkpointTimestamp);
       }
 
-      // Clean up empty folders
-      cleanupEmptyFolders(logsDirectoryLocation, excludeFolders);
       LOG.debug("Completed cleaning up {} log folders in {} ms", folderCleanupCount,
           System.currentTimeMillis() - startTime);
     } catch (IOException ex) {
@@ -130,26 +119,23 @@ public class LogCleaner {
    *         folders are cleaned up, true otherwise.
    * @throws IOException
    */
-  private boolean cleanupEmptyFolders(@Nullable Location location, Set<String> excludeFolders) throws IOException {
-    if (location == null) {
-      return true;
-    }
-    if (!location.isDirectory()) {
-      // Parent directory has files.
-      return false;
-    }
-    if (excludeFolders.contains(location.getName())) {
-      // No need to traverse excluded folders
-      return false;
-    }
-    if (folderCleanupCount >= folderCleanupBatchSize) {
+  private boolean cleanupFoldersIfEmpty(Location location, long checkpointTimestamp) throws IOException {
+    // Cleanup in not required in cases where:
+    // 1. Parent directory has files.
+    // 2. Folder is within retention period.
+    // 3. Cleanup count is greater than or equal to batch size.
+    if (!location.isDirectory()
+        || folderCleanupCount >= folderCleanupBatchSize) {
       return false;
     }
 
     boolean isEmpty = true;
-    List<Location> children = location.list();
-    for (Location child : children) {
-      if (!cleanupEmptyFolders(child, excludeFolders)) {
+    List<Location> childLocations = location.list();
+    for (Location childLocation : childLocations) {
+      if (childLocation.lastModified() > checkpointTimestamp) {
+        isEmpty = false;
+      }
+      if (!cleanupFoldersIfEmpty(childLocation, checkpointTimestamp)) {
         isEmpty = false;
         if (folderCleanupCount >= folderCleanupBatchSize) {
           break;
