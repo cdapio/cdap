@@ -20,9 +20,6 @@ import io.cdap.cdap.api.data.schema.Schema.Field;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
-
-
 /**
  * Test Schema Class
  */
@@ -32,7 +29,7 @@ public class SchemaTest {
     Field stringField = Field.of("stringField", Schema.of(Schema.Type.STRING));
     Field longField = Field.of("numericField", Schema.of(Schema.Type.LONG));
     Field booleanField = Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN));
-    Field fixedField = Field.of("fixedField", Schema.fixedOf(ByteBuffer.wrap("testFixed".getBytes()), "fixedName"));
+    Field fixedField = Field.of("fixedField", Schema.fixedOf(4, "fixedName"));
     Field namelessRecordField = Field.of("namelessRecord", Schema.recordOf(booleanField));
     Field recordField = Field.of("namedRecord", Schema.recordOf("namedRecord", stringField, longField, fixedField));
     return Schema.recordOf(recordField, namelessRecordField);
@@ -42,7 +39,7 @@ public class SchemaTest {
     Field stringField = Field.of("stringField", Schema.of(Schema.Type.STRING));
     Field booleanField = Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN));
     Field namelessRecordField = Field.of("namelessRecord", Schema.recordOf(booleanField));
-    Field fixedField = Field.of("fixedField", Schema.fixedOf(ByteBuffer.wrap("testFixed".getBytes()), "fixedName"));
+    Field fixedField = Field.of("fixedField", Schema.fixedOf(4, "fixedName"));
     Field recordField = Field.of("namedRecord", Schema.recordOf("namedRecord", stringField, fixedField));
     return Schema.recordOf(recordField, namelessRecordField);
   }

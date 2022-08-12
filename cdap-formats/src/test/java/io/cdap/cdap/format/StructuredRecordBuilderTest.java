@@ -239,16 +239,25 @@ public class StructuredRecordBuilderTest {
   @Test
   public void testFixedLogicalType() {
     Schema schema = Schema.recordOf(Schema.Field.of("Fixed",
-        Schema.nullableOf(Schema.fixedOf(ByteBuffer.wrap("test".getBytes()), "fixedName"))),
+        Schema.nullableOf(Schema.fixedOf(4, "fixedName"))),
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes());
     StructuredRecord record = StructuredRecord.builder(schema)
       .setFixed("Fixed", byteBuffer)
       .set("name", "test").build();
     Assert.assertEquals(byteBuffer, record.getFixed("Fixed"));
+  }
 
-
-
+  @Test
+  public void testInvalidFixedLogicalType() {
+    Schema schema = Schema.recordOf(Schema.Field.of("Fixed",
+        Schema.nullableOf(Schema.fixedOf(3, "fixedName"))),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes());
+    thrown.expect(UnexpectedFormatException.class);
+    StructuredRecord record = StructuredRecord.builder(schema)
+      .setFixed("Fixed", byteBuffer)
+      .set("name", "test").build();
   }
 
   @Test

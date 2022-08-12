@@ -263,8 +263,13 @@ public class StructuredRecord implements Serializable {
     if (value == null || logicalTypeSchema == null) {
       return null;
     }
-
-   return (ByteBuffer) value;
+    ByteBuffer byteBuffer = (ByteBuffer) value;
+    if (logicalTypeSchema.getFixedSize() != byteBuffer.remaining()) {
+      throw new UnexpectedFormatException(
+        String.format("Field '%s' has size '%d' which is not equal to schema size '%d'.",
+          fieldName, byteBuffer.remaining(), logicalTypeSchema.getFixedSize()));
+    }
+   return byteBuffer;
   }
 
   /**
@@ -554,10 +559,10 @@ public class StructuredRecord implements Serializable {
         fields.put(fieldName, null);
         return this;
       }
-      if (byteBuffer.array().length !=  logicalSchema.getFixedSize()) {
+      if (byteBuffer.remaining() !=  logicalSchema.getFixedSize()) {
         throw new UnexpectedFormatException(
           String.format("Field '%s' has size '%d' which is not equal to schema size '%d'.",
-            fieldName, byteBuffer.array().length, logicalSchema.getFixedSize()));
+            fieldName, byteBuffer.remaining(), logicalSchema.getFixedSize()));
       }
       fields.put(fieldName, byteBuffer);
       return this;
