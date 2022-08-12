@@ -32,7 +32,13 @@ RUN apt-get install -y --no-install-recommends git && \
     "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" > \
     /usr/local/bin/gosu.asc && \
   export GNUPGHOME="$(mktemp -d)" && \
-  gpg --keyserver pgp.mit.edu --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && \
+  for server in $(shuf -e ha.pool.sks-keyservers.net \
+                          hkp://p80.pool.sks-keyservers.net:80 \
+                          keyserver.ubuntu.com \
+                          hkp://keyserver.ubuntu.com:80 \
+                          pgp.mit.edu) ; do \
+      gpg --keyserver "$server" --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && break || : ; \
+  done && \
   gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu && \
   rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc && \
   chmod +x /usr/local/bin/gosu && \
