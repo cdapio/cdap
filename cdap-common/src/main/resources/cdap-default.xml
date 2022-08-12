@@ -5346,6 +5346,14 @@
   </property>
 
   <property>
+    <name>feature.lifecycle.management.edit.enabled</name>
+    <value>false</value>
+    <description>
+      Enables Design-time Lifecycle Management for applications.
+    </description>
+  </property>
+
+  <property>
     <name>feature.pushdown.transformation.groupby.enabled</name>
     <value>true</value>
     <description>
