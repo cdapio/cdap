@@ -48,6 +48,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Duration;
+import com.google.protobuf.Empty;
 import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
@@ -156,6 +157,7 @@ abstract class DataprocClient implements AutoCloseable {
                                          boolean privateInstance, @Nullable SSHPublicKey publicKey)
     throws RetryableProvisionException, InterruptedException, IOException {
 
+    String operationId = null;
     try {
       Map<String, String> metadata = new HashMap<>();
       if (publicKey != null) {
@@ -305,19 +307,20 @@ abstract class DataprocClient implements AutoCloseable {
 
       OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
         client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster);
+      operationId = operationFuture.getName();
       return operationFuture.getMetadata().get();
     } catch (ExecutionException e) {
       cleanUpClusterAfterCreationFailure(name);
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
-        throw handleApiException((ApiException) cause);
+        throw handleApiException(operationId, (ApiException) cause);
       }
-      throw new DataprocRuntimeException(cause);
+      throw new DataprocRuntimeException(operationId, cause);
     }
   }
 
-  private void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
-                                 boolean privateInstance) throws RetryableProvisionException, IOException {
+  protected void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
+                                   boolean privateInstance) throws RetryableProvisionException, IOException {
     String network = conf.getNetwork();
     String systemNetwork = null;
     try {
@@ -603,14 +606,16 @@ abstract class DataprocClient implements AutoCloseable {
    */
   Optional<ClusterOperationMetadata> deleteCluster(String name)
     throws RetryableProvisionException, InterruptedException {
+    String operationId = null;
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
         .setClusterName(name)
         .setProjectId(conf.getProjectId())
         .setRegion(conf.getRegion())
         .build();
-
-      return Optional.of(client.deleteClusterAsync(request).getMetadata().get());
+      OperationFuture<Empty, ClusterOperationMetadata> operationFuture = client.deleteClusterAsync(request);
+      operationId = operationFuture.getName();
+      return Optional.of(operationFuture.getMetadata().get());
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
@@ -634,9 +639,9 @@ abstract class DataprocClient implements AutoCloseable {
         } catch (Exception e1) {
           // if there was an error getting the cluster information, ignore it and handle the original delete error
         }
-        throw handleApiException((ApiException) cause);
+        throw handleApiException(operationId, (ApiException) cause);
       }
-      throw new DataprocRuntimeException(cause);
+      throw new DataprocRuntimeException(operationId, cause);
     }
   }
 
@@ -866,6 +871,14 @@ abstract class DataprocClient implements AutoCloseable {
       throw new RetryableProvisionException(e);
     }
     throw new DataprocRuntimeException(e);
+  }
+
+  private RetryableProvisionException handleApiException(@Nullable String operationId, ApiException e)
+    throws RetryableProvisionException {
+    if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
+      throw new DataprocRetryableException(operationId, e);
+    }
+    throw new DataprocRuntimeException(operationId, e);
   }
 
   //Throws retryable Exception for the cases that are transient in nature
