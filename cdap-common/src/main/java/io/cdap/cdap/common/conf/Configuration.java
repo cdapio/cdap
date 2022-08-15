@@ -655,7 +655,9 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   public int getInt(String name) {
     String valueString = getTrimmed(name);
-    Preconditions.checkNotNull(valueString);
+    if (valueString == null) {
+      throw new NullPointerException(String.format("%s is missing.", name));
+    }
     String hexString = getHexDigits(valueString);
     if (hexString != null) {
       return Integer.parseInt(hexString, 16);
@@ -709,7 +711,9 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   public long getLong(String name) {
     String valueString = getTrimmed(name);
-    Preconditions.checkNotNull(valueString);
+    if (valueString == null) {
+      throw new NullPointerException(String.format("%s is missing.", name));
+    }
     String hexString = getHexDigits(valueString);
     if (hexString != null) {
       return Long.parseLong(hexString, 16);

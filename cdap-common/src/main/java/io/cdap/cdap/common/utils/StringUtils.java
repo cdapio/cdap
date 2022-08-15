@@ -45,5 +45,4 @@ public class StringUtils {
     }
     return str.trim().split("\\s*,\\s*");
   }
-
 }

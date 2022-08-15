@@ -27,7 +27,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
@@ -47,7 +46,7 @@ public class SparkProgramStatusMetricsProviderTest {
     new ProgramRunId("ns", "app", ProgramType.SPARK, "test", mockedRunId);
 
   @BeforeClass
-  public static void setupClass() throws IOException {
+  public static void setupClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     metricsProvider = new SparkProgramStatusMetricsProvider(cConf, new NoOpMetricsCollectionService());
   }

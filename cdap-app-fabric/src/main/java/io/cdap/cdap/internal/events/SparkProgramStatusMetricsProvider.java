@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.events;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -25,6 +26,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.events.http.SparkApplicationsResponse;
 import io.cdap.cdap.internal.events.http.SparkApplicationsStagesResponse;
 import io.cdap.cdap.proto.ProgramType;
@@ -65,6 +67,8 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
   private final CConfiguration cConf;
   private final HttpRequestConfig httpRequestConfig;
   private final Integer maxTerminationMinutes;
+  private final RetryStrategy retryStrategy;
+  private final String sparkHistoricBaseURL;
   private MetricsCollectionService metricsCollectionService;
 
   @Inject
@@ -76,6 +80,13 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
     this.maxTerminationMinutes = cConf.getInt(Constants.Spark.SPARK_METRICS_PROVIDER_MAX_TERMINATION_MINUTES, 5);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
+                                                           Constants.Spark.SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX
+    );
+    this.sparkHistoricBaseURL = cConf.get(Constants.Spark.SPARK_METRICS_PROVIDER_HOST);
+    if (Strings.isNullOrEmpty(sparkHistoricBaseURL)) {
+      throw new IllegalArgumentException("Spark metrics host is missing.");
+    }
   }
 
   @Override
@@ -85,7 +96,6 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
     }
     long startTime = System.currentTimeMillis();
     String runIdStr = runId.getRun();
-    String sparkHistoricBaseURL = cConf.get(Constants.Spark.SPARK_METRICS_PROVIDER_HOST);
     String applicationsURL = String.format("%s%s?minEndDate=%s", sparkHistoricBaseURL,
                                            sparkApplicationsEndpoint, generateMaxTerminationDateParam());
     try {
@@ -117,8 +127,7 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
             logger.warn("Error retrieving application response", e);
             throw new RetryableException(e);
           }
-        }, RetryStrategies.fromConfiguration(this.cConf, Constants.Spark.SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX),
-        t -> t instanceof RetryableException);
+        }, retryStrategy, t -> t instanceof RetryableException);
     } catch (Exception e) {
       emitMetrics(runId, startTime, false);
       throw new MetricRetrievalException(e);
