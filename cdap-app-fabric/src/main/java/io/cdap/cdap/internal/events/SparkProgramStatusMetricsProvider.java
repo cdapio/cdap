@@ -85,6 +85,10 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
     long startTime = System.currentTimeMillis();
     String runIdStr = runId.getRun();
     String sparkHistoricBaseURL = cConf.get(Constants.Spark.SPARK_METRICS_PROVIDER_HOST);
+    if (sparkHistoricBaseURL == null || sparkHistoricBaseURL == "") {
+      logger.error("Error fetching event framework metrics due to \"spark.metrics.host\" is missing");
+      return null;
+    }
     String applicationsURL = String.format("%s%s?minEndDate=%s", sparkHistoricBaseURL,
                                            sparkApplicationsEndpoint, generateMaxTerminationDateParam());
     try {
@@ -120,7 +124,7 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
         t -> t instanceof RetryableException);
     } catch (Exception e) {
       emitMetrics(runId, startTime, false);
-      logger.error("Retries failed for extracting metrics. ", e);
+      logger.error("Retries failed for extracting metrics. ", e.getClass() + ": " + e.getMessage());
       return new ExecutionMetrics[]{};
     }
   }
