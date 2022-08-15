@@ -16,8 +16,11 @@
 
 package io.cdap.cdap.internal.events;
 
+import io.cdap.cdap.common.MetricRetrievalException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -40,6 +43,8 @@ public class SparkProgramStatusMetricsProviderTest {
   private final String mockedApplicationJson = "mocked_spark_applications_response.json";
   private final String mockedStagesJson = "mocked_spark_stages_response.json";
   private final String mockedStagesSeveralStagesJson = "mocked_spark_stages_response_several_stages.json";
+  private final ProgramRunId mockProgramRunId =
+    new ProgramRunId("ns", "app", ProgramType.SPARK, "test", mockedRunId);
 
   @BeforeClass
   public static void setupClass() throws IOException {
@@ -66,6 +71,16 @@ public class SparkProgramStatusMetricsProviderTest {
     String responseStr = loadMockedResponseAsString(mockedStagesSeveralStagesJson);
     ExecutionMetrics[] metrics = metricsProvider.extractMetrics(responseStr);
     Assert.assertArrayEquals(metrics, getMockedMetricsSeveralStages());
+  }
+
+  @Test
+  public void testRetriveMetricsFail() throws MetricRetrievalException {
+    try {
+      ExecutionMetrics[] metrics = metricsProvider.retrieveMetrics(mockProgramRunId);
+      Assert.fail("Expected an Exception");
+    } catch (MetricRetrievalException e) {
+      //expected
+    }
   }
 
   private String loadMockedResponseAsString(String mockedFile) {
