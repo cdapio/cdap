@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.api.lineage.field;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -28,15 +31,20 @@ import javax.annotation.Nullable;
 public class EndPoint {
   private final String namespace;
   private final String name;
+  private final Map<String, String> properties;
 
   private EndPoint(String name) {
-    this.namespace = null;
-    this.name = name;
+    this(null, name, Collections.emptyMap());
   }
 
   private EndPoint(String namespace, String name) {
+    this(namespace, name, Collections.emptyMap());
+  }
+
+  private EndPoint(String namespace, String name, Map<String, String> properties) {
     this.namespace = namespace;
     this.name = name;
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   /**
@@ -53,6 +61,13 @@ public class EndPoint {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * @return the properties of the {@link EndPoint}. e.g. location
+   */
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
   /**
@@ -76,6 +91,18 @@ public class EndPoint {
     return new EndPoint(namespace, name);
   }
 
+  /**
+   * Return the EndPoint as defined by the provided namespace, name and properties.
+   *
+   * @param namespace the name of the namespace
+   * @param name the name of the EndPoint
+   * @param properties the properties of the EndPoint. e.g. location
+   * @return the EndPoint
+   */
+  public static EndPoint of(String namespace, String name, Map<String, String> properties) {
+    return new EndPoint(namespace, name, properties);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -88,12 +115,13 @@ public class EndPoint {
     EndPoint that = (EndPoint) o;
 
     return Objects.equals(namespace, that.namespace)
-      && Objects.equals(name, that.name);
+      && Objects.equals(name, that.name)
+      && Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespace, name);
+    return Objects.hash(namespace, name, properties);
   }
 
   @Override
@@ -101,6 +129,7 @@ public class EndPoint {
     return "EndPoint{" +
       "namespace='" + namespace + '\'' +
       ", name='" + name + '\'' +
+      ", properties='" + properties + '\'' +
       '}';
   }
 }
