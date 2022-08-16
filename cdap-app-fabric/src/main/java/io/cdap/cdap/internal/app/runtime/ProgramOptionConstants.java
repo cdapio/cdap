@@ -57,6 +57,8 @@ public final class ProgramOptionConstants {
 
   public static final String LOGICAL_START_TIME = "logical.start.time";
 
+  public static final String RUN_ID_MACRO = "run.id";
+
   public static final String HEART_BEAT_TIME = "heartbeat.time";
 
   public static final String END_TIME = "endTime";

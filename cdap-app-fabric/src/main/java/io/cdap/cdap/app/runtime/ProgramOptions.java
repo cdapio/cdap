@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -59,8 +60,9 @@ public interface ProgramOptions {
    */
   static ProgramOptions fromNotification(Notification notification, Gson gson) {
     Map<String, String> properties = notification.getProperties();
-    ProgramId programId = gson.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID),
-                                        ProgramRunId.class).getParent();
+    ProgramRunId programRunId = gson.fromJson(properties.get(ProgramOptionConstants.PROGRAM_RUN_ID),
+                                              ProgramRunId.class);
+    ProgramId programId = programRunId.getParent();
 
     String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
     String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
@@ -70,7 +72,8 @@ public interface ProgramOptions {
 
     boolean debug = Boolean.parseBoolean(debugString);
     Map<String, String> userArguments = userArgumentsString == null ?
-      Collections.emptyMap() : gson.fromJson(userArgumentsString, stringStringMap);
+      new HashMap<>() : gson.fromJson(userArgumentsString, stringStringMap);
+    userArguments.putIfAbsent(ProgramOptionConstants.RUN_ID_MACRO, programRunId.getRun());
     Map<String, String> systemArguments = systemArgumentsString == null ?
       Collections.emptyMap() : gson.fromJson(systemArgumentsString, stringStringMap);
 

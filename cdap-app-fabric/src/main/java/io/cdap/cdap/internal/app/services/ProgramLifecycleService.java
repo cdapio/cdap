@@ -643,6 +643,8 @@ public class ProgramLifecycleService {
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
+    ProgramRunId programRunId = programId.run(RunIds.generate());
+    userArgs.putIfAbsent(ProgramOptionConstants.RUN_ID_MACRO, programRunId.getRun());
 
     authorizePipelineRuntimeImpersonation(userArgs);
 
@@ -650,7 +652,6 @@ public class ProgramLifecycleService {
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramOptions options = new SimpleProgramOptions(programId, systemArguments, userArguments, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
-    ProgramRunId programRunId = programId.run(RunIds.generate());
 
     checkCapability(programDescriptor);
 
@@ -688,7 +689,6 @@ public class ProgramLifecycleService {
   ProgramController startInternal(ProgramDescriptor programDescriptor,
                                   ProgramOptions programOptions, ProgramRunId programRunId) {
     RunId runId = RunIds.fromString(programRunId.getRun());
-
     synchronized (this) {
       RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
       if (runtimeInfo != null) {
