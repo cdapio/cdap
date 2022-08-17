@@ -92,6 +92,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -214,6 +215,18 @@ public class TetheringServerHandlerTest {
           .build()).build();
   }
 
+  @After
+  public void tearDown() throws IOException {
+    // Delete tethering if it exists
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.DELETE,
+                                                      config.resolveURL("tethering/connections/xyz"));
+
+    HttpResponse response = HttpRequests.execute(builder.build());
+    int responseCode = response.getResponseCode();
+    Assert.assertTrue(responseCode == HttpResponseStatus.OK.code() ||
+                        responseCode == HttpResponseStatus.NOT_FOUND.code());
+  }
+
   @Test
   public void testAcceptTether() throws IOException, InterruptedException {
     // Tethering is initiated by peer
@@ -228,37 +241,30 @@ public class TetheringServerHandlerTest {
     expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, REQUEST_TIME, DESCRIPTION,
                           TetheringConnectionStatus.INACTIVE);
 
-    // Server should respond with 404 because tether is still pending.
-    expectTetheringControlResponse("xyz", HttpResponseStatus.NOT_FOUND);
+    TetheringControlResponseV2 expectedResponse = new TetheringControlResponseV2(Collections.emptyList(),
+                                                                                 TetheringStatus.PENDING);
+    // Tethering status on server side should be PENDING.
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK, GSON.toJson(expectedResponse));
 
-    // User accepts tethering
+    // User accepts tethering on the server
     acceptTethering();
+    // Tethering status should become ACTIVE
     expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
                           TetheringConnectionStatus.ACTIVE);
 
-    // Duplicate accept tethering should be ignored
-    acceptTethering();
-    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
-    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
-                          TetheringConnectionStatus.ACTIVE);
-
-    // Reject tethering should be ignored
-    rejectTethering();
-    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
-
-    // Tethering initiation should be ignored
-    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
-    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
-    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
-                          TetheringConnectionStatus.ACTIVE);
+    // Duplicate accept tethering should fail
+    TetheringActionRequest request = new TetheringActionRequest("accept");
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/connections/xyz"))
+      .withBody(GSON.toJson(request));
+    HttpResponse response = HttpRequests.execute(builder.build());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
     // Wait until we don't receive any control messages from the peer for upto the timeout interval.
     Thread.sleep(cConf.getInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS) * 1000);
+    // Tethering connection status should become INACTIVE
     expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
                           TetheringConnectionStatus.INACTIVE);
-
-    // Delete tethering
-    deleteTethering();
   }
 
   @Test
@@ -271,34 +277,18 @@ public class TetheringServerHandlerTest {
 
     // User rejects tethering
     rejectTethering();
-    // Server should return 403 when tethering is rejected.
-    expectTetheringControlResponse("xyz", HttpResponseStatus.FORBIDDEN);
-    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, REQUEST_TIME, null,
-                          TetheringConnectionStatus.ACTIVE);
-
-
-    // Duplicate reject tethering should be ignored
-    rejectTethering();
-    expectTetheringControlResponse("xyz", HttpResponseStatus.FORBIDDEN);
-    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, REQUEST_TIME, null,
-                          TetheringConnectionStatus.ACTIVE);
-
-    // Accept tethering should be ignored
-    acceptTethering();
-    expectTetheringControlResponse("xyz", HttpResponseStatus.FORBIDDEN);
-    expectTetheringStatus("xyz", TetheringStatus.REJECTED, NAMESPACES, REQUEST_TIME, null,
-                          TetheringConnectionStatus.ACTIVE);
-
-    // Delete tethering
-    deleteTethering();
+    // Tethering should be deleted
+    expectTetheringDeleted("xyz");
   }
 
   @Test
   public void testConnectControlChannelUnknownPeer() throws IOException {
     HttpRequest request = HttpRequest.builder(HttpMethod.POST,
-                                              config.resolveURL("/tethering/controlchannels/bad_peer")).build();
+                                              config.resolveURL("/tethering/channels/bad_peer")).build();
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+    TetheringControlResponseV2 controlResponse = GSON.fromJson(response.getResponseBodyAsString(),
+                                                               TetheringControlResponseV2.class);
+    Assert.assertEquals(TetheringStatus.NOT_FOUND, controlResponse.getTetheringStatus());
   }
 
   @Test
@@ -314,20 +304,26 @@ public class TetheringServerHandlerTest {
       .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
-
-    // Delete tethering
-    deleteTethering();
   }
 
   @Test
   public void testTetheringTopic() throws IOException, TopicNotFoundException {
     // Create tethering
     createTethering("xyz", NAMESPACES, REQUEST_TIME, null);
+    // User accepts tethering
+    acceptTethering();
 
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                                 topicPrefix + "xyz");
     // Per-peer messaging topic should be created
     TopicMetadata metadata = messagingService.getTopic(topic);
+    Assert.assertEquals(topic, metadata.getTopicId());
+
+    // Delete the messaging topic
+    messagingService.deleteTopic(topic);
+    // The topic should be recreated when a control message is received
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
+    metadata = messagingService.getTopic(topic);
     Assert.assertEquals(topic, metadata.getTopicId());
 
     // Delete tethering
@@ -352,13 +348,10 @@ public class TetheringServerHandlerTest {
 
     // control message with invalid message id should return BAD_REQUEST
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
-                                                      config.resolveURL("tethering/controlchannels/xyz"));
+                                                      config.resolveURL("tethering/channels/xyz"));
     builder.withBody(GSON.toJson(new TetheringControlChannelRequest("abcd", null)));
     HttpResponse response = HttpRequests.execute(builder.build());
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
-
-    // Delete tethering
-    deleteTethering();
   }
 
   @Test
@@ -387,7 +380,7 @@ public class TetheringServerHandlerTest {
 
     // Add program update Notifications to body
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
-                                                      config.resolveURL("tethering/controlchannels/xyz"));
+                                                      config.resolveURL("tethering/channels/xyz"));
     ProgramRunId programRunId = new ProgramRunId("system", "app", ProgramType.SPARK, "program", "run");
     Notification programUpdate = new Notification(Notification.Type.PROGRAM_STATUS,
                                                   ImmutableMap.of(ProgramOptionConstants.PROGRAM_RUN_ID,
@@ -406,9 +399,6 @@ public class TetheringServerHandlerTest {
       Map<String, String> properties = notification.getProperties();
       Assert.assertEquals(GSON.toJson(programRunId), properties.get(ProgramOptionConstants.PROGRAM_RUN_ID));
     }
-
-    // Delete tethering
-    deleteTethering();
   }
 
   @Test
@@ -416,7 +406,10 @@ public class TetheringServerHandlerTest {
     // Create and accept tethering
     createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
     acceptTethering();
-    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
+    TetheringControlResponseV2 expectedResponse = new TetheringControlResponseV2(Collections.emptyList(),
+                                                                                 TetheringStatus.ACCEPTED);
+
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK, GSON.toJson(expectedResponse));
 
     // Queue up a couple of messages for the peer
     MessagePublisher publisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
@@ -445,32 +438,56 @@ public class TetheringServerHandlerTest {
 
     // Poll the server
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
-                                                      config.resolveURL("tethering/controlchannels/xyz"))
+                                                      config.resolveURL("tethering/channels/xyz"))
       .withBody(GSON.toJson(new TetheringControlChannelRequest(null, null)));
 
     // Response should contain 2 messages
     HttpResponse response = HttpRequests.execute(builder.build());
-    TetheringControlResponse[] controlResponses = GSON.fromJson(response.getResponseBodyAsString(),
-                                                                TetheringControlResponse[].class);
+    TetheringControlResponseV2 controlResponse = GSON.fromJson(response.getResponseBodyAsString(),
+                                                               TetheringControlResponseV2.class);
+    List<TetheringControlMessageWithId> controlMessages = controlResponse.getControlMessages();
+
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    Assert.assertEquals(2, controlResponses.length);
-    Assert.assertEquals(message1, controlResponses[0].getControlMessage());
-    Assert.assertEquals(message2, controlResponses[1].getControlMessage());
+    Assert.assertEquals(2, controlMessages.size());
+    Assert.assertEquals(message1, controlMessages.get(0).getControlMessage());
+    Assert.assertEquals(message2, controlMessages.get(1).getControlMessage());
 
     // Poll again with lastMessageId set to id of last message received from the server
-    String lastMessageId = controlResponses[1].getLastMessageId();
+    String lastMessageId = controlMessages.get(1).getMessageId();
     builder = HttpRequest.builder(HttpMethod.POST,
-                                  config.resolveURL("tethering/controlchannels/xyz"))
+                                  config.resolveURL("tethering/channels/xyz"))
       .withBody(GSON.toJson(new TetheringControlChannelRequest(lastMessageId, null)));
 
-    // There should be no more messages queued up for this client, so we should just get a keepalive.
+    // There should be no more messages queued up for this client
     response = HttpRequests.execute(builder.build());
-    controlResponses = GSON.fromJson(response.getResponseBodyAsString(),
-                                     TetheringControlResponse[].class);
+    controlResponse = GSON.fromJson(response.getResponseBodyAsString(),
+                                     TetheringControlResponseV2.class);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    Assert.assertEquals(1, controlResponses.length);
-    Assert.assertEquals(TetheringControlMessage.Type.KEEPALIVE, controlResponses[0].getControlMessage().getType());
-    Assert.assertEquals(lastMessageId, controlResponses[0].getLastMessageId());
+    Assert.assertEquals(0, controlResponse.getControlMessages().size());
+  }
+
+  @Test
+  public void testControlMessagesNotSentWhenTetheringNotAccepted() throws Exception {
+    // Create tethering, but don't accept it
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
+
+    // Queue up a message for the peer
+    TetheringControlMessage controlMessage = new TetheringControlMessage(TetheringControlMessage.Type.KEEPALIVE,
+                                                                         new byte[0]);
+    MessagePublisher publisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
+    String topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    String topic = topicPrefix + "xyz";
+    publisher.publish(NamespaceId.SYSTEM.getNamespace(), topic, GSON.toJson(controlMessage));
+
+    // Poll the server
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/channels/xyz"))
+      .withBody(GSON.toJson(new TetheringControlChannelRequest(null, null)));
+    HttpResponse response = HttpRequests.execute(builder.build());
+    // Response should not contain any messages because the peer is in PENDING state
+    TetheringControlResponseV2 controlResponse = GSON.fromJson(response.getResponseBodyAsString(),
+                                                               TetheringControlResponseV2.class);
+    Assert.assertTrue(controlResponse.getControlMessages().isEmpty());
   }
 
   @Test
@@ -504,6 +521,112 @@ public class TetheringServerHandlerTest {
     deleteTetheringProfile("profile2");
   }
 
+  @Test
+  public void testUpdateTetheringConnectionForAcceptedPeer() throws IOException {
+    // Create tethering
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
+
+    // User accepts tethering
+    acceptTethering();
+
+    TetheringControlResponseV2 expectedResponse = new TetheringControlResponseV2(Collections.emptyList(),
+                                                                                 TetheringStatus.ACCEPTED);
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK, GSON.toJson(expectedResponse));
+    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.ACTIVE);
+
+    // Client removes and recreates tethering with a different list of namespaces and description.
+    long requestTime = System.currentTimeMillis();
+    List<NamespaceAllocation> updatedNamespaces = Collections.singletonList(
+      new NamespaceAllocation("default", null, null));
+    String updatedDescription = "recreated tethering connection";
+    createTethering("xyz", updatedNamespaces, requestTime, updatedDescription);
+    // Tethering connection should have the new list of namespaces and description.
+    // Tethering status should be ACCEPTED as the tethering request was accepted previously.
+    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, updatedNamespaces, requestTime, updatedDescription,
+                          TetheringConnectionStatus.ACTIVE);
+  }
+
+  @Test
+  public void testUpdateTetheringConnectionForPendingPeer() throws IOException {
+    // Create tethering
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
+
+    TetheringControlResponseV2 expectedResponse = new TetheringControlResponseV2(Collections.emptyList(),
+                                                                                 TetheringStatus.PENDING);
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK, GSON.toJson(expectedResponse));
+    expectTetheringStatus("xyz", TetheringStatus.PENDING, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.ACTIVE);
+
+    // Client removes and recreates tethering with a different list of namespaces and description.
+    long requestTime = System.currentTimeMillis();
+    List<NamespaceAllocation> updatedNamespaces = Collections.singletonList(
+      new NamespaceAllocation("default", null, null));
+    String updatedDescription = "recreated tethering connection";
+    createTethering("xyz", updatedNamespaces, requestTime, updatedDescription);
+    // Tethering connection should have the new list of namespaces and description.
+    // Tethering status should be PENDING as the tethering request was accepted previously.
+    expectTetheringStatus("xyz", TetheringStatus.PENDING, updatedNamespaces, requestTime, updatedDescription,
+                          TetheringConnectionStatus.ACTIVE);
+  }
+
+  @Test
+  public void testPeerDeletedDuringTetheringConnectionUpdate() throws IOException, InterruptedException {
+    // Create tethering
+    createTethering("xyz", NAMESPACES, REQUEST_TIME, DESCRIPTION);
+
+    // User accepts tethering
+    acceptTethering();
+
+    expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
+    expectTetheringStatus("xyz", TetheringStatus.ACCEPTED, NAMESPACES, REQUEST_TIME, DESCRIPTION,
+                          TetheringConnectionStatus.ACTIVE);
+
+    // Delete tethering
+    Thread thread = new Thread(() -> {
+      try {
+        deleteTethering();
+      } catch (IOException e) {
+        Assert.fail("Failed to delete tethering");
+      }
+    });
+    thread.start();
+
+    // Resend the tethering request concurrently with tethering deletion operation.
+    // Depending on the ordering we may or may not end with a tethering connection configured,
+    // but all operations should be successful.
+    long requestTime = System.currentTimeMillis();
+    List<NamespaceAllocation> updatedNamespaces = Collections.singletonList(
+      new NamespaceAllocation("default", null, null));
+    String updatedDescription = "recreated tethering connection";
+    createTethering("xyz", updatedNamespaces, requestTime, updatedDescription);
+    thread.join();
+  }
+
+  @Test
+  public void testPollUnknownPeer() throws Exception {
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/channels/xyz"))
+      .withBody(GSON.toJson(new TetheringControlChannelRequest(null, null)));
+    HttpResponse resp = HttpRequests.execute(builder.build());
+    Assert.assertEquals(404, resp.getResponseCode());
+    TetheringControlResponseV2 controlResponse = GSON.fromJson(resp.getResponseBodyAsString(StandardCharsets.UTF_8),
+                                                               TetheringControlResponseV2.class);
+    Assert.assertEquals(TetheringStatus.NOT_FOUND, controlResponse.getTetheringStatus());
+  }
+
+  @Test
+  public void testAcceptUnknownPeer() throws Exception {
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/connections/xyz"))
+      .withBody(GSON.toJson(new TetheringActionRequest("accept")));
+    HttpResponse resp = HttpRequests.execute(builder.build());
+    Assert.assertEquals(404, resp.getResponseCode());
+    TetheringControlResponseV2 controlResponse = GSON.fromJson(resp.getResponseBodyAsString(StandardCharsets.UTF_8),
+                                                               TetheringControlResponseV2.class);
+    Assert.assertEquals(TetheringStatus.NOT_FOUND, controlResponse.getTetheringStatus());
+  }
+
   private void createTetheringProfile(String profileName, String peer) throws MethodNotAllowedException {
     List<ProvisionerPropertyValue> provisionerProperties = new ArrayList<>();
     provisionerProperties.add(new ProvisionerPropertyValue(TetheringConf.TETHERED_INSTANCE_PROPERTY, peer,
@@ -525,12 +648,30 @@ public class TetheringServerHandlerTest {
   }
 
   private void expectTetheringControlResponse(String peerName, HttpResponseStatus status) throws IOException {
+    expectTetheringControlResponse(peerName, status, null);
+  }
+
+  private void expectTetheringControlResponse(String peerName, HttpResponseStatus status,
+                                              @Nullable String message) throws IOException {
 
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
-                                                      config.resolveURL("tethering/controlchannels/" + peerName));
+                                                      config.resolveURL("tethering/channels/" + peerName));
     builder.withBody(GSON.toJson(new TetheringControlChannelRequest(null, null)));
     HttpResponse response = HttpRequests.execute(builder.build());
     Assert.assertEquals(status.code(), response.getResponseCode());
+    if (message != null) {
+      Assert.assertEquals(message, response.getResponseBodyAsString(StandardCharsets.UTF_8));
+    }
+  }
+
+  private void expectTetheringDeleted(String peerName) throws IOException {
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.POST,
+                                                      config.resolveURL("tethering/channels/" + peerName));
+    builder.withBody(GSON.toJson(new TetheringControlChannelRequest(null, null)));
+    HttpResponse response = HttpRequests.execute(builder.build());
+    TetheringControlResponseV2 controlResponse = GSON.fromJson(response.getResponseBodyAsString(),
+                                                               TetheringControlResponseV2.class);
+    Assert.assertEquals(TetheringStatus.NOT_FOUND, controlResponse.getTetheringStatus());
   }
 
   private void createTethering(String peerName, List<NamespaceAllocation> namespaces,

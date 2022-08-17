@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * Contains last TetheringControlMessage received and list of program status update notifications.
  */
 public class TetheringControlChannelRequest {
+  @Nullable
   private final String lastControlMessageId;
   private final List<Notification> notificationList;
 
@@ -39,6 +40,7 @@ public class TetheringControlChannelRequest {
     this.notificationList = notificationList;
   }
 
+  @Nullable
   public String getLastControlMessageId() {
     return lastControlMessageId;
   }

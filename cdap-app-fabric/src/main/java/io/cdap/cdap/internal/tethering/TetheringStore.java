@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
@@ -51,10 +52,11 @@ public class TetheringStore {
   }
 
   /**
-   * Adds a peer.
+   * Adds a peer if it doesn't already exist.
    *
    * @param peerInfo peer information
    * @throws IOException if inserting into the table fails
+   * @throws PeerAlreadyExistsException if peer information already exists
    */
   public void addPeer(PeerInfo peerInfo) throws IOException, PeerAlreadyExistsException {
     TransactionRunners.run(transactionRunner, context -> {
@@ -66,17 +68,49 @@ public class TetheringStore {
         PeerInfo peer = getPeerInfo(row.get());
         throw new PeerAlreadyExistsException(peer.getName(), peer.getTetheringStatus());
       }
-      Collection<Field<?>> fields = new ArrayList<>();
-      fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_NAME_FIELD, peerInfo.getName()));
-      fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_URI_FIELD, peerInfo.getEndpoint()));
-      fields.add(Fields.stringField(StoreDefinition.TetheringStore.TETHERING_STATE_FIELD,
-                                    peerInfo.getTetheringStatus().toString()));
-      fields.add(Fields.longField(StoreDefinition.TetheringStore.REQUEST_TIME_FIELD, peerInfo.getRequestTime()));
-      fields.add(Fields.longField(StoreDefinition.TetheringStore.LAST_CONNECTION_TIME_FIELD, 0L));
-      fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_METADATA_FIELD,
-                                    GSON.toJson(peerInfo.getMetadata())));
-      tetheringTable.upsert(fields);
+      writePeerInternal(peerInfo, context);
     }, IOException.class, PeerAlreadyExistsException.class);
+  }
+
+  /**
+   * Adds peer information if it doesn't already exist, updates peer metadata otherwise.
+   *
+   * @param peerInfo peer information
+   * @throws IOException if writing to the table fails
+   * @return true if the peer doesn't already exist, false otherwise
+   */
+  public boolean writePeer(PeerInfo peerInfo) throws IOException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable tetheringTable = context.getTable(StoreDefinition.TetheringStore.TETHERING);
+      Optional<StructuredRow> row = getPeerInternal(tetheringTable, peerInfo.getName());
+      if (!row.isPresent()) {
+        writePeerInternal(peerInfo, context);
+        return true;
+      } else {
+        PeerInfo existingPeerInfo = getPeerInfo(row.get());
+        PeerInfo peerInfoToWrite = new PeerInfo(peerInfo.getName(), peerInfo.getEndpoint(),
+                                                existingPeerInfo.getTetheringStatus(), peerInfo.getMetadata(),
+                                                peerInfo.getRequestTime(), existingPeerInfo.getLastConnectionTime());
+        writePeerInternal(peerInfoToWrite, context);
+        return false;
+      }
+    }, IOException.class);
+  }
+
+  private void writePeerInternal(PeerInfo peerInfo, StructuredTableContext context) throws IOException {
+    Collection<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_NAME_FIELD, peerInfo.getName()));
+    fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_URI_FIELD, peerInfo.getEndpoint()));
+    fields.add(Fields.stringField(StoreDefinition.TetheringStore.TETHERING_STATE_FIELD,
+                                  peerInfo.getTetheringStatus().toString()));
+    fields.add(Fields.stringField(StoreDefinition.TetheringStore.PEER_METADATA_FIELD,
+                                  GSON.toJson(peerInfo.getMetadata())));
+    fields.add(Fields.longField(StoreDefinition.TetheringStore.REQUEST_TIME_FIELD, peerInfo.getRequestTime()));
+    fields.add(Fields.longField(StoreDefinition.TetheringStore.LAST_CONNECTION_TIME_FIELD,
+                                peerInfo.getLastConnectionTime()));
+
+    StructuredTable tetheringTable = context.getTable(StoreDefinition.TetheringStore.TETHERING);
+    tetheringTable.upsert(fields);
   }
 
   /**
@@ -142,8 +176,10 @@ public class TetheringStore {
   public void deletePeer(String peerName) throws IOException, PeerNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable tetheringTable = context.getTable(StoreDefinition.TetheringStore.TETHERING);
-      // throw PeerNotFoundException if peer doesn't exist
-      getPeer(tetheringTable, peerName);
+      Optional<StructuredRow> row = getPeerInternal(tetheringTable, peerName);
+      if (!row.isPresent()) {
+        throw new PeerNotFoundException(peerName);
+      }
       tetheringTable
         .delete(Collections.singleton(Fields.stringField(StoreDefinition.TetheringStore.PEER_NAME_FIELD, peerName)));
     }, IOException.class, PeerNotFoundException.class);
@@ -180,19 +216,18 @@ public class TetheringStore {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable tetheringTable = context
         .getTable(StoreDefinition.TetheringStore.TETHERING);
-      Optional<StructuredRow> row = getPeer(tetheringTable, peerName);
+      Optional<StructuredRow> row = getPeerInternal(tetheringTable, peerName);
+      if (!row.isPresent()) {
+        throw new PeerNotFoundException(peerName);
+      }
       return getPeerInfo(row.get());
     }, PeerNotFoundException.class, IOException.class);
   }
 
-  private Optional<StructuredRow> getPeer(StructuredTable tetheringTable, String peerName)
-    throws IOException, PeerNotFoundException {
+  private Optional<StructuredRow> getPeerInternal(StructuredTable tetheringTable, String peerName)
+    throws IOException {
     Collection<Field<?>> key = ImmutableList.of(
       Fields.stringField(StoreDefinition.TetheringStore.PEER_NAME_FIELD, peerName));
-    Optional<StructuredRow> row = tetheringTable.read(key);
-    if (!row.isPresent()) {
-      throw new PeerNotFoundException(peerName);
-    }
     return tetheringTable.read(key);
   }
 
