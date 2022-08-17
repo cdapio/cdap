@@ -176,7 +176,7 @@ public class StructuredRecordStringConverter {
     if (fieldSchema.getType() == Schema.Type.BYTES) {
       try {
         if (fieldSchema.getLogicalType() == Schema.LogicalType.FIXED) {
-          builder.setFixed(fieldName, ByteBuffer.wrap((part).getBytes()));
+          builder.set(fieldName, ByteBuffer.wrap((part).getBytes()));
         } else {
           builder.set(fieldName, FormatUtils.base64Decode(part));
         }
