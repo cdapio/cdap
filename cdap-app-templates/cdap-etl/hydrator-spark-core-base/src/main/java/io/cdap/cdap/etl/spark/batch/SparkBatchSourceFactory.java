@@ -110,9 +110,6 @@ public final class SparkBatchSourceFactory {
     }
     sqlInputs.put(alias, sqlEngineInput);
     addStageInput(stageName, alias);
-
-    // Add fallback input as well
-    addInput(stageName, sqlEngineInput.getFallbackInput());
   }
 
   private void duplicateAliasCheck(String alias) {

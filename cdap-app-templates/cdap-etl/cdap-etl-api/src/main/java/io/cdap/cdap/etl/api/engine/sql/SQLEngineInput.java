@@ -28,18 +28,15 @@ public class SQLEngineInput extends Input {
   private final String stageName;
   private final String sqlEngineClassName;
   private final Map<String, String> arguments;
-  private final Input fallbackInput;
 
   public SQLEngineInput(String name,
                         String stageName,
                         String sqlEngineClassName,
-                        Map<String, String> arguments,
-                        Input fallbackInput) {
+                        Map<String, String> arguments) {
     super(name);
     this.stageName = stageName;
     this.sqlEngineClassName = sqlEngineClassName;
     this.arguments = arguments;
-    this.fallbackInput = fallbackInput;
   }
 
   /**
@@ -65,14 +62,6 @@ public class SQLEngineInput extends Input {
    */
   public Map<String, String> getArguments() {
     return arguments;
-  }
-
-  /**
-   * Gets the fallback input for this SQL engine input
-   * @return fallback input
-   */
-  public Input getFallbackInput() {
-    return fallbackInput;
   }
 
   @Override

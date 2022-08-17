@@ -24,7 +24,6 @@ import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
@@ -155,7 +154,6 @@ public class MockSourceWithReadCapability extends BatchSource<byte[], Row, Struc
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
-    Input fallbackInput = Input.ofDataset(config.connectionConfig.tableName);
     if (config.metadataOperations != null) {
       // if there are metadata operations to be performed then apply them
       processsMetadata(context);
@@ -163,8 +161,7 @@ public class MockSourceWithReadCapability extends BatchSource<byte[], Row, Struc
     context.setInput(new SQLEngineInput(NAME,
                                         NAME,
                                         MockSQLEngineWithCapabilities.class.getName(),
-                                        Collections.emptyMap(),
-                                        fallbackInput));
+                                        Collections.emptyMap()));
   }
 
   /**
