@@ -29,13 +29,17 @@ import java.io.IOException;
 @Beta
 public interface StructuredTableAdmin {
   /**
-   * Create a StructuredTable using the {@link StructuredTableSpecification}.
+   * If the table does not exist, create a StructuredTable using the {@link StructuredTableSpecification}.
+   * If the table exists, check the columns and update the schema if necessary
+   * using the {@link StructuredTableSpecification}.
+   * Currently, only non-primary keys are allowed to be added to the existing table schema.
+   * The passed in StructuredTableSpecification has to be backward compatible with the existing table schema.
    *
    * @param spec table specification
    * @throws IOException if there is an error creating the table
-   * @throws TableAlreadyExistsException if the table already exists
+   * @throws TableSchemaIncompatibleException if the new table schema is incompatible with the existing one
    */
-  void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException;
+  void createOrUpdate(StructuredTableSpecification spec) throws IOException, TableSchemaIncompatibleException;
 
   /**
    * Checks if the given table exists.

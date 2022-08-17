@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.spi.data.common;
 
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
@@ -83,14 +82,6 @@ public abstract class StructuredTableRegistryTest {
     registry.registerSpecification(SPEC2);
     Assert.assertEquals(SPEC2, registry.getSpecification(TABLE2));
     Assert.assertFalse(registry.isEmpty());
-
-    // Re-registering table1 should fail
-    try {
-      registry.registerSpecification(SPEC1);
-      Assert.fail("Expected re-registration to fail");
-    } catch (TableAlreadyExistsException e) {
-      // Expected
-    }
 
     // Remove spec for table1, and try again to register
     registry.removeSpecification(TABLE1);

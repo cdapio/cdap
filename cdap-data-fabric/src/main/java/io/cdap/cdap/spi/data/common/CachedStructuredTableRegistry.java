@@ -19,7 +19,6 @@ package io.cdap.cdap.spi.data.common;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.slf4j.Logger;
@@ -56,7 +55,7 @@ public class CachedStructuredTableRegistry implements StructuredTableRegistry {
 
   @Override
   public void registerSpecification(StructuredTableSpecification specification)
-    throws IOException, TableAlreadyExistsException {
+    throws IOException {
     delegate.registerSpecification(specification);
     specCache.invalidate(specification.getTableId());
   }

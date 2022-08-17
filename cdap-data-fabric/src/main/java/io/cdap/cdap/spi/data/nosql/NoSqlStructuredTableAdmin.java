@@ -25,8 +25,8 @@ import io.cdap.cdap.api.dataset.lib.IndexedTable;
 import io.cdap.cdap.api.dataset.lib.IndexedTableDefinition;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -62,9 +62,11 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
-  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
+  public void createOrUpdate(StructuredTableSpecification spec)
+    throws IOException, TableSchemaIncompatibleException {
     if (exists(spec.getTableId())) {
-      throw new TableAlreadyExistsException(spec.getTableId());
+      updateTable(spec);
+      return;
     }
     LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
     DatasetAdmin indexTableAdmin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec, null);
@@ -87,6 +89,24 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
       throw new TableNotFoundException(tableId);
     }
     return new StructuredTableSchema(spec);
+  }
+
+  private void updateTable(StructuredTableSpecification spec)
+    throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
+    StructuredTableId tableId = spec.getTableId();
+    StructuredTableSpecification existingSpec = registry.getSpecification(tableId);
+    if (existingSpec == null) {
+      throw new TableNotFoundException(tableId);
+    }
+    if (existingSpec.equals(spec)) {
+      LOG.trace("The table schema is already up to date: {}", tableId);
+      return;
+    }
+    StructuredTableSchema existingSchema = new StructuredTableSchema(existingSpec);
+    if (!existingSchema.isCompatible(spec)) {
+      throw new TableSchemaIncompatibleException(tableId);
+    }
+    registry.registerSpecification(spec);
   }
 
   @Override
