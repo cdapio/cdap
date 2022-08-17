@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,34 +17,16 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.common.base.Throwables;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 
 import javax.annotation.Nullable;
 
 /**
- * A {@link RuntimeException} that wraps exceptions from Dataproc operation and provide a {@link #toString()}
- * implementation that doesn't include this exception class name and with the root cause error message.
+ * An exception thrown while performing a Dataproc operation that may succeed after a retry.
  */
-public class DataprocRuntimeException extends RuntimeException {
-
-  public DataprocRuntimeException(String message) {
-    super(message);
-  }
-
-  public DataprocRuntimeException(Throwable cause) {
-    super(createMessage(cause), cause);
-  }
-
-  public DataprocRuntimeException(@Nullable String operationId, Throwable cause) {
+public class DataprocRetryableException extends RetryableProvisionException  {
+  public DataprocRetryableException(@Nullable String operationId, Throwable cause) {
     super(createMessage(operationId, cause), cause);
-  }
-
-  @Override
-  public String toString() {
-    return getMessage();
-  }
-
-  private static String createMessage(Throwable cause) {
-    return createMessage(null, cause);
   }
 
   private static String createMessage(@Nullable String operationId, Throwable cause) {
