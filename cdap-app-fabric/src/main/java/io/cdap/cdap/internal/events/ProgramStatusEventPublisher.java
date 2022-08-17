@@ -213,7 +213,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
       CompletableFuture.supplyAsync(() -> {
         try {
           return metricsProvider.retrieveMetrics(runId);
-        } catch (MetricRetrievalException e) {
+        } catch (MetricRetrievalException | NullPointerException e) {
           LOG.error("Error retrieving metrics from provider. ", e);
           return new ExecutionMetrics[]{};
         }

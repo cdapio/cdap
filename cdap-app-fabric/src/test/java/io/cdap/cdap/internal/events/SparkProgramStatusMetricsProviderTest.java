@@ -48,6 +48,12 @@ public class SparkProgramStatusMetricsProviderTest {
   @BeforeClass
   public static void setupClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set("spark.metrics.host", " http://mock-sparkhistory:18080");
+    cConf.set("spark.metrics.strategy.retry.policy.base.delay.ms", "5000");
+    cConf.set("spark.metrics.strategy.retry.policy.max.delay.ms", "10000");
+    cConf.set("spark.metrics.strategy.retry.policy.max.retries", "1");
+    cConf.set("spark.metrics.strategy.retry.policy.max.time.secs", "30");
+    cConf.set("spark.metrics.strategy.retry.policy.type", "exponential.backoff");
     metricsProvider = new SparkProgramStatusMetricsProvider(cConf, new NoOpMetricsCollectionService());
   }
 

@@ -133,34 +133,28 @@ public final class RetryStrategies {
       return RetryStrategies.noRetry();
     }
 
-    int maxRetries;
-    long maxTimeSecs;
-    long baseDelay;
-    long maxDelay;
-
     try {
-      maxRetries = cConf.getInt(maxRetriesKey);
-      maxTimeSecs = cConf.getLong(maxTimeKey);
-      baseDelay = cConf.getLong(baseDelayKey);
-      maxDelay = cConf.getLong(maxDelayKey);
-    } catch (NullPointerException e) {
-      throw new IllegalArgumentException(e.getMessage());
-    }
+      int maxRetries = cConf.getInt(maxRetriesKey);
+      long maxTimeSecs = cConf.getLong(maxTimeKey);
+      long baseDelay = cConf.getLong(baseDelayKey);
 
-    RetryStrategy baseStrategy;
-    switch (type) {
-      case FIXED_DELAY:
-        baseStrategy = RetryStrategies.fixDelay(baseDelay, TimeUnit.MILLISECONDS);
-        break;
-      case EXPONENTIAL_BACKOFF:
-        baseStrategy = RetryStrategies.exponentialDelay(baseDelay, maxDelay, TimeUnit.MILLISECONDS);
-        break;
-      default:
-        // not possible
-        throw new IllegalStateException("Unknown retry type " + type);
-    }
+      RetryStrategy baseStrategy;
+      switch (type) {
+        case FIXED_DELAY:
+          baseStrategy = RetryStrategies.fixDelay(baseDelay, TimeUnit.MILLISECONDS);
+          break;
+        case EXPONENTIAL_BACKOFF:
+          baseStrategy = RetryStrategies.exponentialDelay(baseDelay, cConf.getLong(maxDelayKey), TimeUnit.MILLISECONDS);
+          break;
+        default:
+          // not possible
+          throw new IllegalStateException("Unknown retry type " + type);
+      }
 
-    return RetryStrategies.limit(maxRetries, RetryStrategies.timeLimit(maxTimeSecs, TimeUnit.SECONDS, baseStrategy));
+      return RetryStrategies.limit(maxRetries, RetryStrategies.timeLimit(maxTimeSecs, TimeUnit.SECONDS, baseStrategy));
+    } catch (NullPointerException | NumberFormatException e) {
+      throw new IllegalStateException("Incorrect retry configuration", e);
+    }
   }
 
   private RetryStrategies() {
