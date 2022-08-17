@@ -372,7 +372,7 @@ public class StructuredRecord implements Serializable {
       Schema fixedLogicalTypeSchema = getLogicalTypeSchema(field.getSchema(), EnumSet.of(LogicalType.FIXED));
 
       //check if field is a fixed LogicalType
-      if (fixedLogicalTypeSchema != null) {
+      if (value != null && fixedLogicalTypeSchema != null) {
         ByteBuffer byteBuffer = null;
         if (value instanceof ByteBuffer) {
           byteBuffer = (ByteBuffer) value;

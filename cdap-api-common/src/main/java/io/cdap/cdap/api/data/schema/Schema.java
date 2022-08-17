@@ -685,7 +685,7 @@ public final class Schema implements Serializable {
    */
   @Nullable
   public LogicalType getLogicalType() {
-    return this.logicalType;
+    return logicalType;
   }
 
   /**

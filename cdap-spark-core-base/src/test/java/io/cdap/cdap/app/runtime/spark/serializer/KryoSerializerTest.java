@@ -29,7 +29,6 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -227,7 +226,7 @@ public class KryoSerializerTest {
       .set("nullField", null)
       .set("map", ImmutableMap.of("1", 1, "2", 2, "3", 3))
       .set("union", null)
-      .set("fixed", ByteBuffer.wrap(new byte[4]))
+      .set("fixed", new byte[]{1, 2, 3, 4})
       .set("node", StructuredRecord.builder(schema.getField("node").getSchema()).build())
       .build();
 
@@ -292,7 +291,7 @@ public class KryoSerializerTest {
                            Schema.Field.of("timeMillis", Schema.of(Schema.LogicalType.TIME_MILLIS)),
                            Schema.Field.of("timestampMillis", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
                            Schema.Field.of("nullField", Schema.of(Schema.Type.NULL)),
-                           Schema.Field.of("fixed", Schema.of(Schema.LogicalType.FIXED)),
+                           Schema.Field.of("fixed", Schema.fixedOf(4, "name")),
                            Schema.Field
                              .of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.INT))),
                            Schema.Field
