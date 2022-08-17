@@ -23,8 +23,8 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -91,7 +91,7 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
   }
 
   @Override
-  public void registerSpecification(StructuredTableSpecification specification) throws TableAlreadyExistsException {
+  public void registerSpecification(StructuredTableSpecification specification) {
     initIfNeeded();
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable registry = context.getTable(REGISTRY);
@@ -99,14 +99,15 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
       Optional<StructuredRow> optional =
         registry.read(Collections.singleton(Fields.stringField(TABLE_NAME_FIELD, tableId.getName())));
       if (optional.isPresent()) {
-        throw new TableAlreadyExistsException(tableId);
+        LOG.debug("Updating table specification {}", specification);
+      } else {
+        LOG.debug("Registering table specification {}", specification);
       }
-      LOG.debug("Registering table specification {}", specification);
       registry.upsert(
         Arrays.asList(Fields.stringField(TABLE_NAME_FIELD, tableId.getName()),
                       Fields.stringField(TABLE_SPEC_FIELD, GSON.toJson(specification)))
       );
-    }, TableAlreadyExistsException.class);
+    });
   }
 
   @Override
@@ -182,10 +183,9 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
       PostgreSqlStructuredTableAdmin admin = new PostgreSqlStructuredTableAdmin(noOpRegistry, dataSource);
       if (!admin.tableExists(REGISTRY)) {
         LOG.info("Creating SQL table {}", REGISTRY);
-        admin.create(SPEC);
+        admin.createOrUpdate(SPEC);
       }
-    } catch (TableAlreadyExistsException e) {
-      // Looks like the table was created concurrently by some other process
+    } catch (TableSchemaIncompatibleException e) {
       LOG.debug(String.format("Got exception when trying to create table %s", REGISTRY), e);
     }
   }
@@ -195,7 +195,7 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
     StructuredTableAdmin specAdmin =
       new StructuredTableAdmin() {
         @Override
-        public void create(StructuredTableSpecification spec) {
+        public void createOrUpdate(StructuredTableSpecification spec) {
           throw new UnsupportedOperationException("Unexpected DDL operation during registry usage!!");
         }
 
@@ -217,6 +217,6 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
     // The metrics collection service might not get started at this moment,
     // so inject a NoopMetricsCollectionService.
     return new SqlTransactionRunner(specAdmin, dataSource, new NoOpMetricsCollectionService(), false,
-        this.scanFetchSize);
+                                    this.scanFetchSize);
   }
 }

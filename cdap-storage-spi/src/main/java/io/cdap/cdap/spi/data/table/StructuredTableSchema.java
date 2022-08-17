@@ -120,13 +120,13 @@ public class StructuredTableSchema {
   public int hashCode() {
     return Objects.hash(tableId, fields, primaryKeys, indexes);
   }
-  
+
   /**
    * Checks if this schema is compatible with the given {@link StructuredTableSpecification}. They are compatible if
    *
    * <ol>
    *   <li>
-   *     This schema contains all the fields in the specification.
+   *     The new specification contains all the fields in the existing schema.
    *   </li>
    *   <li>
    *     Each schema field has data type that can store the corresponding spec field data without losing precision.
@@ -135,7 +135,7 @@ public class StructuredTableSchema {
    *     They have the same set of primary keys.
    *   </li>
    *   <li>
-   *     They have the same set of indexes.
+   *     This new specification contains all the indexes in the existing schema.
    *   </li>
    * </ol>
    *
@@ -143,14 +143,39 @@ public class StructuredTableSchema {
    * @return {@code true} if this schema is compatible with the given specification, otherwise return {@code false}
    */
   public boolean isCompatible(StructuredTableSpecification spec) {
-    for (FieldType field : spec.getFieldTypes()) {
-      FieldType.Type type = getType(field.getName());
-      if (type == null || !type.isCompatible(field.getType())) {
+    return isCompatible(new StructuredTableSchema(spec));
+  }
+
+  /**
+   * Checks if this schema is compatible with the given {@link StructuredTableSchema}. They are compatible if
+   *
+   * <ol>
+   *   <li>
+   *     The new schema contains all the fields in the existing schema.
+   *   </li>
+   *   <li>
+   *     Each schema field has data type that can store the corresponding spec field data without losing precision.
+   *   </li>
+   *   <li>
+   *     They have the same set of primary keys.
+   *   </li>
+   *   <li>
+   *     The new schema contains all the indexes in the existing schema.
+   *   </li>
+   * </ol>
+   *
+   * @param schema the {@link StructuredTableSchema} to check for compatibility
+   * @return {@code true} if this schema is compatible with the given schema, otherwise return {@code false}
+   */
+  public boolean isCompatible(StructuredTableSchema schema) {
+    for (String field : getFieldNames()) {
+      FieldType.Type type = schema.getType(field);
+      if (type == null || !getType(field).isCompatible(type)) {
         return false;
       }
     }
 
-    return getPrimaryKeys().equals(spec.getPrimaryKeys())
-      && getIndexes().equals(new HashSet<>(spec.getIndexes()));
+    return getPrimaryKeys().equals(schema.getPrimaryKeys())
+      && schema.getIndexes().containsAll(getIndexes());
   }
 }

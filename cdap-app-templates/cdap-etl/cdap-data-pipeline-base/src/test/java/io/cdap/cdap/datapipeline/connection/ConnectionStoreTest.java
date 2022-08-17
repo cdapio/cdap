@@ -47,7 +47,7 @@ public class ConnectionStoreTest extends SystemAppTestBase {
 
   @BeforeClass
   public static void setupTest() throws Exception {
-    getStructuredTableAdmin().create(ConnectionStore.CONNECTION_TABLE_SPEC);
+    getStructuredTableAdmin().createOrUpdate(ConnectionStore.CONNECTION_TABLE_SPEC);
     connectionStore = new ConnectionStore(getTransactionRunner());
   }
 

@@ -17,7 +17,7 @@
 package io.cdap.cdap.store;
 
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
@@ -79,13 +79,9 @@ public final class StoreDefinition {
 
     StructuredTableId tableId = spec.getTableId();
     try {
-      if (!admin.exists(tableId)) {
-        admin.create(spec);
-      }
-    } catch (TableAlreadyExistsException e) {
-      if (!admin.getSchema(tableId).isCompatible(spec)) {
-        throw new IllegalStateException("Table " + tableId + " already exists with an incompatible schema", e);
-      }
+      admin.createOrUpdate(spec);
+    } catch (TableSchemaIncompatibleException e) {
+      throw new IllegalStateException("Table " + tableId + " already exists with an incompatible schema", e);
     }
   }
 
@@ -356,8 +352,9 @@ public final class StoreDefinition {
       createIfNotExists(tableAdmin, PROVISIONER_STORE_SPEC);
     }
   }
+
   /**
-   *  Defines schema for AppMetadata tables
+   * Defines schema for AppMetadata tables
    */
   public static final class AppMetadataStore {
 
@@ -847,7 +844,7 @@ public final class StoreDefinition {
   }
 
   /**
-   *  Schema for usage table
+   * Schema for usage table
    */
   public static final class UsageStore {
     public static final StructuredTableId USAGES = new StructuredTableId("usages");
@@ -878,10 +875,10 @@ public final class StoreDefinition {
 
   /**
    * Schema for field lineage.
-   *
+   * <p>
    * Endpoint checksum table is used to store endpoints/properties of endpoints to a checksum. Checksum can then be
    * used the query the other tables. Also contains the program run info for that checksum.
-   *
+   * <p>
    * The remaining tables store various endpoint data keyed by checksum.
    */
   public static final class FieldLineageStore {
