@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -96,6 +97,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
 
   /**
    * Sends control commands to the client and receives program status updates from the client.
+   * NOTE: This endpoint is deprecated in favor of POST /tethering/channels/{peer}.
    */
   @POST
   @Path("/tethering/controlchannels/{peer}")
@@ -142,6 +144,52 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   }
 
   /**
+   * Sends control commands to the client and receives program status updates from the client.
+   */
+  @POST
+  @Path("/tethering/channels/{peer}")
+  public void pollControlChannel(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
+    throws IOException, NotImplementedException, BadRequestException, TopicNotFoundException {
+    checkTetheringServerEnabled();
+    PeerInfo peerInfo;
+    try {
+      peerInfo = store.getPeer(peer);
+    } catch (PeerNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           GSON.toJson(new TetheringControlResponseV2(Collections.emptyList(),
+                                                                      TetheringStatus.NOT_FOUND)));
+      return;
+    }
+    store.updatePeerTimestamp(peer);
+    TetheringStatus tetheringStatus = peerInfo.getTetheringStatus();
+    if (tetheringStatus != TetheringStatus.ACCEPTED) {
+      // Don't send control messages to a peer that's not in ACCEPTED state.
+      TetheringControlResponseV2 response = new TetheringControlResponseV2(Collections.emptyList(),
+                                                                           tetheringStatus);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
+      return;
+    }
+
+    String messageId = processRequestContent(request, peer);
+    List<TetheringControlMessageWithId> controlMessages;
+    try {
+      controlMessages = getControlMessages(peer, messageId);
+    } catch (TopicNotFoundException e) {
+      // This can only happen if we added the peer during tethering creation, but crashed before creating the topic.
+      // Recreate the topic and pull control messages again.
+      TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(), topicPrefix + peer);
+      createTopicIfNeeded(topic);
+      controlMessages = getControlMessages(peer, messageId);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(String.format("Invalid message id %s", messageId));
+    }
+
+    TetheringControlResponseV2 response = new TetheringControlResponseV2(controlMessages,
+                                                                         tetheringStatus);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
+  }
+
+  /**
    * Creates a tethering with a client.
    */
   @PUT
@@ -154,16 +202,6 @@ public class TetheringServerHandler extends AbstractHttpHandler {
 
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringConnectionRequest tetherRequest = GSON.fromJson(content, TetheringConnectionRequest.class);
-    TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                                  topicPrefix + peer);
-    try {
-      messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
-    } catch (TopicAlreadyExistsException e) {
-      LOG.warn("Topic {} already exists", topicId);
-    } catch (IOException e) {
-      LOG.error("Failed to create topic {}", topicId, e);
-      throw e;
-    }
 
     // We don't need to keep track of the client metadata on the server side.
     PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaceAllocations(), Collections.emptyMap(),
@@ -171,19 +209,11 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     // We don't store the peer endpoint on the server side because the connection is initiated by the client.
     PeerInfo peerInfo = new PeerInfo(peer, null, TetheringStatus.PENDING, peerMetadata,
                                      tetherRequest.getRequestTime());
-    try {
-      store.addPeer(peerInfo);
-    } catch (PeerAlreadyExistsException pae) {
-      // Peer is already configured, treat this as a no-op.
-      responder.sendStatus(HttpResponseStatus.OK);
-      return;
-    } catch (Exception e) {
-      try {
-        messagingService.deleteTopic(topicId);
-      } catch (Exception ex) {
-        e.addSuppressed(ex);
-      }
-      throw new IOException("Failed to create tethering with peer " + peer, e);
+    if (store.writePeer(peerInfo)) {
+      // Peer doesn't already exist. Create tethering topic.
+      TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
+                                    topicPrefix + peer);
+      createTopicIfNeeded(topicId);
     }
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -194,21 +224,54 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   @POST
   @Path("/tethering/connections/{peer}")
   public void tetheringAction(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws NotImplementedException, BadRequestException, PeerNotFoundException, IOException {
+    throws NotImplementedException, BadRequestException, IOException {
+    checkTetheringServerEnabled();
+
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringActionRequest tetheringActionRequest = GSON.fromJson(content, TetheringActionRequest.class);
-    TetheringStatus tetheringStatus;
+    PeerInfo peerInfo;
+    try {
+      peerInfo = store.getPeer(peer);
+    } catch (PeerNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           GSON.toJson(new TetheringControlResponseV2(Collections.emptyList(),
+                                                                      TetheringStatus.NOT_FOUND)));
+      return;
+    }
+    if (peerInfo.getTetheringStatus() != TetheringStatus.PENDING) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
     switch (tetheringActionRequest.getAction()) {
       case "accept":
-        tetheringStatus = TetheringStatus.ACCEPTED;
+        store.updatePeerStatus(peerInfo.getName(), TetheringStatus.ACCEPTED);
+        responder.sendStatus(HttpResponseStatus.OK);
         break;
       case "reject":
-        tetheringStatus = TetheringStatus.REJECTED;
+        deleteTethering(peer);
+        responder.sendStatus(HttpResponseStatus.OK);
         break;
       default:
         throw new BadRequestException(String.format("Invalid action: %s", tetheringActionRequest.getAction()));
     }
-    updateTetherStatus(responder, peer, tetheringStatus);
+  }
+
+  private List<TetheringControlMessageWithId> getControlMessages(String peer, @Nullable String afterMessageId)
+    throws TopicNotFoundException, IOException {
+    MessageFetcher fetcher = messagingContext.getMessageFetcher();
+    TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(), topicPrefix + peer);
+    int batchSize = cConf.getInt(Constants.Tethering.CONTROL_MESSAGE_BATCH_SIZE);
+    List<TetheringControlMessageWithId> messages = new ArrayList<>();
+    try (CloseableIterator<Message> iterator =
+           fetcher.fetch(topic.getNamespace(), topic.getTopic(), batchSize, afterMessageId)) {
+      while (iterator.hasNext()) {
+        Message message = iterator.next();
+        TetheringControlMessage controlMessage = GSON.fromJson(message.getPayloadAsString(StandardCharsets.UTF_8),
+                                                               TetheringControlMessage.class);
+        messages.add(new TetheringControlMessageWithId(controlMessage, message.getId()));
+      }
+    }
+    return messages;
   }
 
   private void checkTetheringServerEnabled() throws NotImplementedException {
@@ -217,17 +280,21 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     }
   }
 
-  private void updateTetherStatus(HttpResponder responder, String peer, TetheringStatus newStatus)
-    throws NotImplementedException, PeerNotFoundException, IOException {
-    checkTetheringServerEnabled();
-    PeerInfo peerInfo = store.getPeer(peer);
-    if (peerInfo.getTetheringStatus() == TetheringStatus.PENDING) {
-      store.updatePeerStatus(peerInfo.getName(), newStatus);
-    } else {
-      LOG.info("Cannot update tether state to {} as current state state is {}",
-               newStatus, peerInfo.getTetheringStatus());
+  private void deleteTethering(String peer) throws IOException {
+    try {
+      store.deletePeer(peer);
+    } catch (PeerNotFoundException e) {
+      // Peer doesn't exist, nothing to do here
     }
-    responder.sendStatus(HttpResponseStatus.OK);
+    TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
+                                topicPrefix + peer);
+    try {
+      // If topic deletion fails here, the client will receive any leftover messages if it recreates tethering.
+      // TODO(CDAP-19612): figure out how to handle this case better.
+      messagingService.deleteTopic(topic);
+    } catch (TopicNotFoundException e) {
+      LOG.info("Topic {} was not found", topic.getTopic());
+    }
   }
 
   /**
@@ -260,5 +327,13 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to publish program status update", e);
     }
     return lastControlMessageId;
+  }
+
+  private void createTopicIfNeeded(TopicId topicId) throws IOException {
+    try {
+      messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
+    } catch (TopicAlreadyExistsException ex) {
+      // no-op
+    }
   }
 }
