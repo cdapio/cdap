@@ -123,6 +123,7 @@
     <cdap.common.version>0.13.0</cdap.common.version>
     <cdap.client.version>1.4.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
+    <commons.collections.version>3.2.2</commons.collections.version>
     <commons.compress.version>1.18</commons.compress.version>
     <commons.lang3.version>3.5</commons.lang3.version>
     <dropwizard.version>3.1.2</dropwizard.version>
@@ -1753,6 +1754,11 @@
             <artifactId>gson</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>${commons.collections.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
