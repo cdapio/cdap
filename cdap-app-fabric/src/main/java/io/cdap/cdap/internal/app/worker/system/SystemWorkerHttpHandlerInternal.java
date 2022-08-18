@@ -22,7 +22,6 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
-import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -43,11 +42,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
@@ -63,9 +58,7 @@ import javax.ws.rs.core.MediaType;
 public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
-      new BasicThrowableCodec()).create();
-  private static final String SUCCESS = "success";
-  private static final String FAILURE = "failure";
+                                                                         new BasicThrowableCodec()).create();
   private final int requestLimit;
 
   private final RunnableTaskLauncher runnableTaskLauncher;
@@ -84,15 +77,6 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
   }
 
-  private void emitMetrics(TaskDetails taskDetails) {
-    long time = System.currentTimeMillis() - taskDetails.getStartTime();
-    Map<String, String> metricTags = new HashMap<>();
-    metricTags.put(Constants.Metrics.Tag.CLASS, taskDetails.getClassName());
-    metricTags.put(Constants.Metrics.Tag.STATUS, taskDetails.isSuccess() ? SUCCESS : FAILURE);
-    metricsCollectionService.getContext(metricTags).increment(Constants.Metrics.SystemWorker.REQUEST_COUNT, 1L);
-    metricsCollectionService.getContext(metricTags).gauge(Constants.Metrics.SystemWorker.REQUEST_LATENCY_MS, time);
-  }
-
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
@@ -101,33 +85,33 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
 
-
     long startTime = System.currentTimeMillis();
-    String className = null;
+    RunnableTaskRequest runnableTaskRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+                                                            RunnableTaskRequest.class);
+    RunnableTaskContext runnableTaskContext = new RunnableTaskContext(runnableTaskRequest);
     try {
-      RunnableTaskRequest runnableTaskRequest =
-          GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), RunnableTaskRequest.class);
-      className = getTaskClassName(runnableTaskRequest);
-      RunnableTaskContext runnableTaskContext = runnableTaskLauncher.launchRunnableTask(runnableTaskRequest);
-      TaskDetails taskDetails = new TaskDetails(true, className, startTime);
-      emitMetrics(taskDetails);
-      responder.sendContent(HttpResponseStatus.OK,
-          new RunnableTaskBodyProducer(runnableTaskContext, taskDetails),
-          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
-    } catch (ClassNotFoundException | ClassCastException ex) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-    } catch (Exception ex) {
-      LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
-    }
-    requestProcessedCount.decrementAndGet();
-  }
+      runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
+    } catch (Exception e) {
+      new TaskDetails(metricsCollectionService, startTime, false, null).emitMetrics(false);
 
-  private String getTaskClassName(RunnableTaskRequest runnableTaskRequest) {
-    return Optional.ofNullable(runnableTaskRequest.getParam())
-        .map(RunnableTaskParam::getEmbeddedTaskRequest)
-        .map(RunnableTaskRequest::getClassName)
-        .orElse(runnableTaskRequest.getClassName());
+      if (e instanceof ClassNotFoundException || e instanceof ClassCastException) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
+      } else {
+        LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), e);
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
+      }
+
+      runnableTaskContext.executeCleanupTask();
+      requestProcessedCount.decrementAndGet();
+      return;
+    }
+
+    TaskDetails taskDetails = new TaskDetails(metricsCollectionService, startTime,
+                                              runnableTaskContext.isTerminateOnComplete(), runnableTaskRequest);
+    responder.sendContent(HttpResponseStatus.OK,
+                          new RunnableTaskBodyProducer(runnableTaskContext, taskDetails),
+                          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+                                                       MediaType.APPLICATION_OCTET_STREAM));
   }
 
   /**
@@ -139,13 +123,13 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     return GSON.toJson(basicThrowable);
   }
 
-  private static class RunnableTaskBodyProducer extends BodyProducer {
-    private final ByteBuffer response;
+  private class RunnableTaskBodyProducer extends BodyProducer {
+    private final RunnableTaskContext context;
     private final TaskDetails taskDetails;
     private boolean done;
 
     RunnableTaskBodyProducer(RunnableTaskContext context, TaskDetails taskDetails) {
-      this.response = context.getResult();
+      this.context = context;
       this.taskDetails = taskDetails;
     }
 
@@ -156,15 +140,22 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       }
 
       done = true;
-      return Unpooled.wrappedBuffer(response);
+      return Unpooled.wrappedBuffer(context.getResult());
     }
 
     @Override
-    public void finished() {}
+    public void finished() {
+      context.executeCleanupTask();
+      taskDetails.emitMetrics(true);
+      requestProcessedCount.decrementAndGet();
+    }
 
     @Override
     public void handleError(@Nullable Throwable cause) {
       LOG.error("Error when sending chunks", cause);
+      context.executeCleanupTask();
+      taskDetails.emitMetrics(false);
+      requestProcessedCount.decrementAndGet();
     }
   }
 }

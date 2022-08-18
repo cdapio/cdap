@@ -4898,14 +4898,6 @@
   </property>
 
   <property>
-    <name>system.worker.cleanup.threads</name>
-    <value>1</value>
-    <description>
-      Size of the thread pool for program run dispatch cleanups.
-    </description>
-  </property>
-
-  <property>
     <name>system.worker.container.num.cores</name>
     <value>1</value>
     <description>
