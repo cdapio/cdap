@@ -66,7 +66,6 @@ import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec.Port;
-import io.cdap.cdap.etl.spark.batch.FutureCollection;
 import io.cdap.cdap.etl.spark.batch.SQLBackedCollection;
 import io.cdap.cdap.etl.spark.batch.WrappableCollection;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
@@ -230,12 +229,6 @@ public abstract class SparkPipelineRunner {
         SparkCollection<Object> inputRecords = port == null ?
           emittedRecords.get(inputStageName).outputRecords :
           emittedRecords.get(inputStageName).outputPortRecords.get(port);
-
-        // Resolve a Future Spark Collection if needed before further processing. This allows us to determine if a
-        // future collection is either a SQLBackedCollection or a SparkCollection before proceeding.
-        if (inputRecords instanceof FutureCollection) {
-          inputRecords = ((FutureCollection<Object>) inputRecords).resolve();
-        }
 
         inputDataCollections.put(inputStageName, inputRecords);
       }

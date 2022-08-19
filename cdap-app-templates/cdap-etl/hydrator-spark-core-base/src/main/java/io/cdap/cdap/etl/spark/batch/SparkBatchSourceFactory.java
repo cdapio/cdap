@@ -119,12 +119,13 @@ public final class SparkBatchSourceFactory {
     }
   }
 
-  public SQLEngineInput getSQLEngineInput(String stageName) {
+  public SQLEngineInput getSQLEngineInput(String stageName, String sqlEngineClassName) {
     return !sourceInputs.containsKey(stageName) ? null :
       sourceInputs.get(stageName)
         .stream()
         .map(sqlInputs::get)
         .filter(java.util.Objects::nonNull)
+        .filter(input -> sqlEngineClassName.equals(input.getSqlEngineClassName()))
         .findFirst()
         .orElse(null);
   }

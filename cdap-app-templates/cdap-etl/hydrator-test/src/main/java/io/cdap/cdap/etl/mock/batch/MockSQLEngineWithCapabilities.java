@@ -220,11 +220,6 @@ public class MockSQLEngineWithCapabilities extends BatchSQLEngine<Object, Object
       public long getNumRows() {
         return "users".equals(readRequest.getDatasetName()) ? 1234 : 4321;
       }
-
-      @Override
-      public boolean isValid() {
-        return true;
-      }
     });
   }
 

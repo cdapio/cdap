@@ -127,25 +127,31 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
     String sourceStageName = stageSpec.getName();
 
-    // If the SQL Engine is initialized, and the stage is a SQL Engine compatible Input stage, return a SQLBacked
-    // Collection which will try to execute the SQL Input operation and fail the pipeline in case of any sql failure
-    if (sqlEngineAdapter != null && sourceFactory.getSQLEngineInput(sourceStageName) != null) {
-      SQLEngineInput sourceSQLEngineInput = sourceFactory.getSQLEngineInput(sourceStageName);
+    // Check if the SQL Engine is inialized and look for compatible sources
+    if (sqlEngineAdapter != null) {
+      // If the SQL Engine is initialized, and the stage is a compatible Input stage for this SQL engine, return a
+      // SQLBacked Collection which will try to execute the SQL Input operation and fail the pipeline in case of any
+      // sql failure
+      if (sourceFactory.getSQLEngineInput(sourceStageName, sqlEngineAdapter.getSQLEngineClassName()) != null) {
+        LOG.info("Source stage {} is compatible with SQL Engine.", sourceStageName);
+        SQLEngineInput sourceSQLEngineInput = sourceFactory.getSQLEngineInput(sourceStageName,
+                                                                              sqlEngineAdapter.getSQLEngineClassName());
 
-      SQLBackedCollection<RecordInfo<Object>> sqlBackedCollection = getSourceSQLBackedCollection(sourceStageName,
-                                                                                          sourceSQLEngineInput);
-      return sqlBackedCollection;
-    } else {
-      // If SQl engine is not initiated : use default spark method (RDDCollection)
-      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-      FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
-        new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
-      this.functionCacheFactory = functionCacheFactory;
-      return new RDDCollection<>(sec, functionCacheFactory, jsc,
-                                 new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
-                                   .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
-                                   .flatMap(sourceFunction));
+        return getSourceSQLBackedCollection(sourceStageName, sourceSQLEngineInput);
+      } else {
+        LOG.debug("Source stage {} is not compatible with SQL Engine.", sourceStageName);
+      }
     }
+
+    // If SQL engine is not initiated : use default spark method (RDDCollection)
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
+      new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
+    this.functionCacheFactory = functionCacheFactory;
+    return new RDDCollection<>(sec, functionCacheFactory, jsc,
+                               new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
+                                 .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
+                                 .flatMap(sourceFunction));
   }
 
   @Override
