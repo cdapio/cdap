@@ -17,10 +17,10 @@
 package io.cdap.cdap.etl.api.engine.sql.request;
 
 import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 
 import java.io.Serializable;
+import javax.annotation.Nullable;
 
 /**
  * A request to perform read operation
@@ -39,16 +39,16 @@ public class SQLReadResult implements Serializable {
    * @param result result of this read operation
    * @param sqlDataset the SQL Dataset
    */
-  public SQLReadResult(String datasetName,
+  protected SQLReadResult(String datasetName,
                        SQLReadOperationResult result,
-                       SQLDataset sqlDataset) {
+                       @Nullable SQLDataset sqlDataset) {
     this.datasetName = datasetName;
     this.result = result;
     this.sqlDataset = sqlDataset;
   }
 
   /**
-   * Utility method to create an instance with a successful result
+   * Utility method to create a successful SQL Read Result
    * @param datasetName dataset name
    * @param sqlDataset the SQL Dataset
    * @return new instance with a Success result and the number of specified records.
@@ -58,21 +58,21 @@ public class SQLReadResult implements Serializable {
   }
 
   /**
-   * Utility method to create an instance with an unsupported result
+   * Utility method to create an unsupported SQL Read Result
    * @param datasetName dataset name
    * @return new instance with an unsupported result status and no output records.
    */
   public static SQLReadResult unsupported(String datasetName) {
-    return new SQLReadResult(datasetName, SQLReadOperationResult.UNSUPPORTED, InvalidSQLDataset.get());
+    return new SQLReadResult(datasetName, SQLReadOperationResult.UNSUPPORTED, null);
   }
 
   /**
-   * Utility method to create an instance with a failed result
+   * Utility method to create a failed SQL Read Result
    * @param datasetName dataset name
    * @return new instance with an unsupported failed status and no output records.
    */
-  public static SQLReadResult faiure(String datasetName) {
-    return new SQLReadResult(datasetName, SQLReadOperationResult.FAILURE, InvalidSQLDataset.get());
+  public static SQLReadResult failure(String datasetName) {
+    return new SQLReadResult(datasetName, SQLReadOperationResult.FAILURE, null);
   }
 
   /**
@@ -91,8 +91,9 @@ public class SQLReadResult implements Serializable {
 
   /**
    * Get the SQL Dataset instance
-   * @return
+   * @return SQL Dataset if the operation is successful, null otherwise
    */
+  @Nullable
   public SQLDataset getSqlDataset() {
     return sqlDataset;
   }
@@ -109,36 +110,5 @@ public class SQLReadResult implements Serializable {
     SUCCESS,
     FAILURE,
     UNSUPPORTED
-  }
-
-  /**
-   * Represents an invalid SQL dataset resulting from a failed read operation
-   */
-  private static class InvalidSQLDataset implements SQLDataset {
-    static final InvalidSQLDataset INSTANCE = new InvalidSQLDataset();
-
-    @Override
-    public long getNumRows() {
-      return -1;
-    }
-
-    @Override
-    public String getDatasetName() {
-      return null;
-    }
-
-    @Override
-    public Schema getSchema() {
-      return null;
-    }
-
-    @Override
-    public boolean isValid() {
-      return false;
-    }
-
-    public static InvalidSQLDataset get() {
-      return INSTANCE;
-    }
   }
 }

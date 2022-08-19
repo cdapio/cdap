@@ -503,23 +503,11 @@ public class BatchSQLEngineAdapter implements Closeable {
     SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.PUSH);
     SQLEngineJobKey execJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.EXECUTE);
 
-    // Check if the read job was successful. If so, return this dataset
-    // Otherwise, this stage will be pushed using the standard push workflow.
     if (jobs.containsKey(readJobKey)) {
       SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(readJobKey);
       waitForJobAndThrowException(job);
-      SQLDataset readDataset = job.waitFor();
-
-      // If the read dataset is invalid, this stage could not be read directly.
-      // This stage might have still been pushed using the standard push workflow, so we check next.
-      if (readDataset.isValid()) {
-        return readDataset;
-      }
-    }
-
-    // Check if this is a push or execution job.
-    // If no job is found, thrown an exception.
-    if (jobs.containsKey(pushJobKey)) {
+      return job.waitFor();
+    } else if (jobs.containsKey(pushJobKey)) {
       SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
       waitForJobAndThrowException(job);
       return job.waitFor();
@@ -858,16 +846,18 @@ public class BatchSQLEngineAdapter implements Closeable {
       LOG.debug("Read dataset {} from {} was {}",
                 datasetName,
                 sqlEngineInput,
-                readResult.isSuccessful() ? "completed" : "refused");
+                readResult.isSuccessful() ? "completed" : "unsuccessful");
 
-      // If the result was successful, add stage metrics.
-      if (readResult.isSuccessful()) {
-        DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, datasetName);
-        StageStatisticsCollector statisticsCollector = statsCollectors.get(datasetName);
-
-        countRecordsIn(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
-        countRecordsOut(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
+      // If the read operation is not successful, throw a SQLEngineException.
+      if (!readResult.isSuccessful()) {
+        throw new SQLEngineException("Unable to read input stage " + datasetName + " from SQL Engine.");
       }
+
+      // Count input stage metrics
+      DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, datasetName);
+      StageStatisticsCollector statisticsCollector = statsCollectors.get(datasetName);
+      countRecordsIn(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
+      countRecordsOut(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
 
       // Return the SQLDataset instance from the read result.
       return readResult.getSqlDataset();
@@ -918,6 +908,16 @@ public class BatchSQLEngineAdapter implements Closeable {
    */
   public <T> CompletableFuture<T> submitTask(Supplier<T> supplier) {
     return CompletableFuture.supplyAsync(supplier, executorService);
+  }
+
+  /**
+   * Returns the name of the SQL Engine class that is managed by this adapter.
+   *
+   * This is useful to ensure that only compatible inputs are supplied to the SQL engine.
+   * @return SQL Engine class name
+   */
+  public String getSQLEngineClassName() {
+    return sqlEngine.getClass().getName();
   }
 
   /**

@@ -26,12 +26,4 @@ public interface SQLDataset extends SQLDatasetDescription {
    */
   long getNumRows();
 
-  /**
-   * Method to determine if this SQL dataset is a valid dataset that is correctly pushed into the SQL engine
-   * @return boolean specifying if this stage is pushed into the SQL engine
-   */
-  default boolean isValid() {
-    return true;
-  }
-
 }
