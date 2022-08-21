@@ -37,6 +37,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -132,6 +133,7 @@ public class LocalApplicationManagerTest {
       .setArtifactLocation(jarLoc)
       .setNamespaceId(NamespaceId.DEFAULT)
       .setApplicationClass(applicationClass)
+      .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
       .build();
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
@@ -149,6 +151,7 @@ public class LocalApplicationManagerTest {
       .setArtifactLocation(deployedJar)
       .setNamespaceId(NamespaceId.DEFAULT)
       .setApplicationClass(applicationClass)
+      .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
       .build();
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(info).get();
 
@@ -179,6 +182,7 @@ public class LocalApplicationManagerTest {
       .setApplicationClass(applicationClass)
       .setAppName("MyApp")
       .setConfigString(GSON.toJson(config))
+      .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
       .build();
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
@@ -195,6 +199,7 @@ public class LocalApplicationManagerTest {
       .setApplicationClass(applicationClass)
       .setAppName("BadApp")
       .setConfigString(GSON.toJson("invalid"))
+      .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
       .build();
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
@@ -210,6 +215,7 @@ public class LocalApplicationManagerTest {
       .setNamespaceId(NamespaceId.DEFAULT)
       .setApplicationClass(applicationClass)
       .setAppName("CustomDSApp")
+      .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
       .build();
 
     try {

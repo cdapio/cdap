@@ -350,8 +350,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     String appClassName = systemArguments.get(ProgramOptionConstants.APPLICATION_CLASS);
     Location programJarLocation = Locations.toLocation(
       new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
-
-
+    
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(programDescriptor.getArtifactId())
       .setArtifactLocation(programJarLocation)

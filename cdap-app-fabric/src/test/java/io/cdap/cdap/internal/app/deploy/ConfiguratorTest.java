@@ -111,7 +111,7 @@ public class ConfiguratorTest {
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
-
+    
     AppDeploymentInfo appDeploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(artifactId.toEntityId())
       .setArtifactLocation(appJar)
@@ -158,7 +158,7 @@ public class ConfiguratorTest {
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
-
+    
     AppDeploymentInfo appDeploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(artifactId.toEntityId())
       .setArtifactLocation(appJar)

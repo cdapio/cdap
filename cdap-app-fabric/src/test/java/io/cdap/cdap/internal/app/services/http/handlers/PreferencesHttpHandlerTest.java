@@ -22,10 +22,13 @@ import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.gateway.handlers.PreferencesHttpHandler;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
@@ -48,9 +51,12 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     store = getInjector().getInstance(Store.class);
   }
 
-  private void addApplication(String namespace, Application app) {
+  private void addApplication(String namespace, Application app) throws ConflictException {
     ApplicationSpecification appSpec = Specifications.from(app);
-    store.addApplication(new ApplicationId(namespace, appSpec.getName()), appSpec);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
+                                               new ChangeDetail(null, null, null,
+                                                                System.currentTimeMillis()));
+    store.addApplication(new ApplicationId(namespace, appSpec.getName()), meta);
   }
 
   @Test

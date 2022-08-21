@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.store;
 import com.google.common.base.Objects;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 
 /**
  * Holds application metadata
@@ -28,10 +29,12 @@ public class ApplicationMeta {
 
   private final String id;
   private final ApplicationSpecification spec;
+  private final ChangeDetail change;
 
-  public ApplicationMeta(String id, ApplicationSpecification spec) {
+  public ApplicationMeta(String id, ApplicationSpecification spec, ChangeDetail change) {
     this.id = id;
     this.spec = spec;
+    this.change = change;
   }
 
   public String getId() {
@@ -42,11 +45,16 @@ public class ApplicationMeta {
     return spec;
   }
 
+  public ChangeDetail getChange() {
+    return change;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("id", id)
       .add("spec", ADAPTER.toJson(spec))
+      .add("change", change)
       .toString();
   }
 }

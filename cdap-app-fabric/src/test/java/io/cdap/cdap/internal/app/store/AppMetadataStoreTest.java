@@ -29,6 +29,7 @@ import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -77,6 +78,7 @@ public abstract class AppMetadataStoreTest {
 
   private final AtomicInteger sourceId = new AtomicInteger();
   private final AtomicLong runIdTime = new AtomicLong();
+  private final Long creationTimeMillis = System.currentTimeMillis();
 
   @Before
   public void before() {
@@ -923,8 +925,10 @@ public abstract class AppMetadataStoreTest {
       String appName = "test" + i;
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
-        store.writeApplication(NamespaceId.SYSTEM.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
+        store.writeApplication(NamespaceId.SYSTEM.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
       });
     }
     TransactionRunners.run(transactionRunner, context -> {
@@ -960,7 +964,8 @@ public abstract class AppMetadataStoreTest {
       String appName = "test" + i;
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
       });
     }
 
@@ -989,7 +994,8 @@ public abstract class AppMetadataStoreTest {
       String appName = "test" + i;
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
       });
     }
 
@@ -1111,14 +1117,16 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
-                               defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+                               defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
       });
 
       String cdapAppName = "test" + (2 * i + 1);
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.CDAP.getNamespace(),
-                               cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+                               cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
       });
     }
 
@@ -1147,14 +1155,16 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
-            defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+            defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
       });
 
       String cdapAppName = "test" + (2 * i + 1);
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.CDAP.getNamespace(),
-            cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec);
+            cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec,
+                               new ChangeDetail(null, null, null, creationTimeMillis));
       });
     }
 

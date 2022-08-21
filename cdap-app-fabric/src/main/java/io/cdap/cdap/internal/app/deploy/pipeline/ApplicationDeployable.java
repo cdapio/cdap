@@ -21,6 +21,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -50,6 +51,8 @@ public class ApplicationDeployable {
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
+  @Nullable
+  private final ChangeDetail changeDetail;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
@@ -57,7 +60,8 @@ public class ApplicationDeployable {
                                ApplicationDeployScope applicationDeployScope,
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap());
+         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
+         null);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -68,7 +72,7 @@ public class ApplicationDeployable {
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables,
-                               Map<MetadataScope, Metadata> metadata) {
+                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -80,6 +84,7 @@ public class ApplicationDeployable {
     this.systemTables = systemTables;
     this.applicationClass = applicationClass;
     this.metadata = metadata;
+    this.changeDetail = changeDetail;
   }
 
   /**
@@ -158,5 +163,13 @@ public class ApplicationDeployable {
    */
   public Map<MetadataScope, Metadata> getMetadata() {
     return metadata;
+  }
+
+  /**
+   * Returns the change details of the application
+   */
+  @Nullable
+  public ChangeDetail getChangeDetail() {
+    return changeDetail;
   }
 }

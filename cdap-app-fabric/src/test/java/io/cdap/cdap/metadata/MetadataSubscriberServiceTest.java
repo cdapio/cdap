@@ -68,6 +68,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.internal.profile.ProfileService;
@@ -80,6 +81,7 @@ import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -443,7 +445,10 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // app must exist before assigning the profile for the namespace, otherwise the app's
     // programs will not receive the profile metadata.
     Store store = injector.getInstance(DefaultStore.class);
-    store.addApplication(appId, appSpec);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
+                                               new ChangeDetail(null, null, null,
+                                                                System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
@@ -584,7 +589,10 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(workflowId.toMetadataEntity())).getProperties());
 
     Store store = injector.getInstance(DefaultStore.class);
-    store.addApplication(appId, appSpec);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
+                                               new ChangeDetail(null, null, null,
+                                                                System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds

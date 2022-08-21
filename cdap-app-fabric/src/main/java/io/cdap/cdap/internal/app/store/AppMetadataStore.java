@@ -35,6 +35,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -47,6 +48,7 @@ import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -235,8 +237,7 @@ public class AppMetadataStore {
   public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     return getApplicationSpecificationTable().read(fields)
-      .map(r -> GSON.fromJson(r.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
-                              ApplicationMeta.class))
+      .map(r -> decodeRow(r))
       .orElse(null);
   }
 
@@ -343,6 +344,30 @@ public class AppMetadataStore {
     return getApplicationSpecificationTable().count(ranges);
   }
 
+  @Nullable
+  public ApplicationMeta getLatest(NamespaceId namespaceId, String appName) throws IOException {
+    Range range = getNamespaceAndApplicationRange(namespaceId.getNamespace(), appName);
+    // scan based on: latest field set to true
+    Field<?> indexField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().scan(range, 1, indexField)) {
+      if (iterator.hasNext()) {
+        // There must be only one entry corresponding to latest = true
+        return decodeRow(iterator.next());
+      }
+    }
+    // To handle apps added prior to 6.8.0, which have latest = null in the table, a deterministic choice for a version
+    // needs to be made. The app corresponding to the smallest version-id string is made as a choice.
+    try (CloseableIterator<StructuredRow> iterator = getApplicationSpecificationTable()
+      .scan(range, 1, SortOrder.ASC)) {
+      if (iterator.hasNext()) {
+        return decodeRow(iterator.next());
+      }
+    }
+    // This is the case when when the app currently doesn't exist
+    return null;
+  }
+
   public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) throws IOException {
     return scanWithRange(
       getNamespaceAndApplicationRange(namespaceId, appId),
@@ -426,9 +451,62 @@ public class AppMetadataStore {
   }
 
 
-  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec)
-    throws IOException {
-    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)));
+  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec,
+                               ChangeDetail change) throws IOException {
+    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec, null)),
+                               change.getCreationTimeMillis(), change.getAuthor(), change.getDescription());
+  }
+
+  /**
+   * Persisting a new application version in the table.
+   *
+   * @param id the application id
+   * @param appMeta the application metadata to be written
+   * @throws IOException if failed to write app
+   * @throws ConflictException if parent-version provided in the request doesn't match the latest version, do not allow
+   * app to be created
+   */
+  public void createApplicationVersion(ApplicationId id, ApplicationMeta appMeta) 
+    throws IOException, ConflictException {
+    // Fetch the latest version
+    String parentVersion = appMeta.getChange().getParentVersion();
+    ApplicationMeta latest = getLatest(id.getNamespaceId(), id.getApplication());
+    String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
+    if (!deployAppAllowed(parentVersion, latest)) {
+      throw new ConflictException(String.format("Cannot deploy the application because parent version '%s' does not " +
+                                                  "match the latest version '%s'.", parentVersion, latestVersion));
+    }
+    // When the app does not exist -it is not an edit).
+    if (latest != null) {
+      List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
+                                                        latest.getSpec().getAppVersion());
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "false"));
+      getApplicationSpecificationTable().upsert(fields);
+    }
+    // Add a new version of the app
+    writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(), appMeta.getChange());
+  }
+
+  /**
+   * To determine whether the app is allowed to be deployed:
+   * Do not deploy when the parent version is not the latest.
+   *
+   * @param parentVersion the version of the application from which the app is deployed
+   * @param latest the application meta of the latest version
+   * @return whether the app version is allowed to be deployed
+   */
+  private boolean deployAppAllowed(@Nullable String parentVersion, @Nullable ApplicationMeta latest)  {
+    if (parentVersion == null) {
+      return true;
+    }
+    // App does not exist
+    if (latest == null) {
+      // parent version should be null when the app does not exist
+      return parentVersion == null;
+    }
+    String latestVersion = latest.getSpec().getAppVersion();
+    // If latest version is the parent version then we allow deploy
+    return latestVersion.equals(parentVersion);
   }
 
   public void deleteApplication(String namespaceId, String appId, String versionId)
@@ -455,8 +533,9 @@ public class AppMetadataStore {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Application {} exists in mds with specification {}", appId, GSON.toJson(existing));
     }
-    ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec);
-    writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated));
+    // creation time cannot be null  - will be written to app-spec but won't be added to table
+    ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec, null);
+    updateApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated));
   }
 
   /**
@@ -1811,6 +1890,13 @@ public class AppMetadataStore {
     return fields;
   }
 
+  private List<Field<?>> getApplicationKeys(String namespaceId, String appId) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
+    return fields;
+  }
+
   private Range getNamespaceRange(String namespaceId) {
     return Range.singleton(
       ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId)));
@@ -1823,7 +1909,20 @@ public class AppMetadataStore {
         Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, applicationId)));
   }
 
-  private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized)
+  private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized,
+                                          long creationTimeMillis, @Nullable String author,
+                                          @Nullable String changeSummary)
+    throws IOException {
+    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.AUTHOR_FIELD, author));
+    fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, creationTimeMillis));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD, changeSummary));
+    getApplicationSpecificationTable().upsert(fields);
+  }
+
+  private void updateApplicationSerialized(String namespaceId, String appId, String versionId, String serialized)
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
@@ -1861,6 +1960,17 @@ public class AppMetadataStore {
       }
     }
     return result;
+  }
+
+  private ApplicationMeta decodeRow(StructuredRow row) {
+    String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
+    String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
+    long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
+    ApplicationMeta meta = GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
+                                         ApplicationMeta.class);
+    ApplicationSpecification spec = meta.getSpec();
+    String id = meta.getId();
+    return new ApplicationMeta(id, spec, new ChangeDetail(changeSummary, null, author, creationTimeMillis));
   }
 
   private void writeToStructuredTableWithPrimaryKeys(
