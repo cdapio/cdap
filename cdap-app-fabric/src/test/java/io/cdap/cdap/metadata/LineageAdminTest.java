@@ -479,7 +479,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                 nodes,
                                 Collections.emptyMap(), Collections.emptyMap());
     ApplicationSpecification appSpec =
-      new DefaultApplicationSpecification("testApp", ProjectInfo.getVersion().toString(), "dummy app", null,
+      new DefaultApplicationSpecification("testApp", ProjectInfo.getVersion().toString(), "dummy app",
+                              null, null,
                                           NamespaceId.DEFAULT.artifact("testArtifact",
                                                                        "1.0").toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
@@ -652,7 +653,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                 nodes,
                                 Collections.emptyMap(), Collections.emptyMap());
     ApplicationSpecification appSpec =
-      new DefaultApplicationSpecification("testLocalDatasets", ProjectInfo.getVersion().toString(), "dummy app", null,
+      new DefaultApplicationSpecification("testLocalDatasets", ProjectInfo.getVersion().toString(),
+                                          "dummy app", null, null,
                                           NamespaceId.DEFAULT.artifact("testArtifact",
                                                                        "1.0").toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),

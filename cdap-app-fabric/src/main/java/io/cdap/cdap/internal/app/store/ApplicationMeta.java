@@ -28,6 +28,7 @@ public class ApplicationMeta {
 
   private final String id;
   private final ApplicationSpecification spec;
+  // TODO: add creation time, owner and latest fields from the table
 
   public ApplicationMeta(String id, ApplicationSpecification spec) {
     this.id = id;

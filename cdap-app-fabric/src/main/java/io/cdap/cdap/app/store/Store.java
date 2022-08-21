@@ -28,6 +28,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
@@ -299,6 +300,15 @@ public interface Store {
    */
   void addApplication(ApplicationId id, ApplicationSpecification specification);
 
+  /**
+   * Creates new application if it doesn't exist. Updates existing one otherwise.
+   *
+   * @param id            application id
+   * @param specification application specification to store
+   * @param owner         user name (owner) of the application version
+   */
+  void addApplication(ApplicationId id, ApplicationSpecification specification, String owner);
+
 
   /**
    * Return a list of program specifications that are deleted comparing the specification in the store with the
@@ -364,6 +374,14 @@ public interface Store {
    * @return collection of all application specs of all the application versions
    */
   Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id);
+
+  /**
+   * Returns the latest version of an application
+   *
+   * @param id application id
+   * @return The metadata information of the latest application version.
+   */
+  ApplicationMeta getLatestAppVersion(ApplicationId id);
 
   /**
    * Returns a list of all versions' ApplicationId's of the application by id

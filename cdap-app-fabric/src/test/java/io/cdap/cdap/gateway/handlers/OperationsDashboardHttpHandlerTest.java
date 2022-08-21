@@ -289,7 +289,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                 Collections.emptyMap());
     ApplicationSpecification dummyAppSpec1 =
       new DefaultApplicationSpecification(APP1_ID.getApplication(), ProjectInfo.getVersion().toString(),
-                                          "dummy app", null,
+                                          "dummy app", null, null,
                                           ARTIFACT_ID1.toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),
@@ -305,7 +305,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                 Collections.emptyMap());
     ApplicationSpecification dummyAppSpec2 =
       new DefaultApplicationSpecification(APP2_ID.getApplication(), ProjectInfo.getVersion().toString(),
-                                          "dummy app", null,
+                                          "dummy app", null, null,
                                           ARTIFACT_ID2.toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),

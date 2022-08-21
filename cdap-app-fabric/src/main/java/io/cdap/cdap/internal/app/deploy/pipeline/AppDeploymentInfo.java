@@ -50,7 +50,7 @@ public class AppDeploymentInfo {
   private final boolean updateSchedules;
   @Nullable
   private final AppDeploymentRuntimeInfo runtimeInfo;
-
+  
   /**
    * Creates a new {@link Builder}.
    */

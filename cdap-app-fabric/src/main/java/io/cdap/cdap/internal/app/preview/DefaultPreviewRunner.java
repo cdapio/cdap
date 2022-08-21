@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
@@ -177,6 +178,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     DataTracerFactoryProvider.setDataTracerFactory(preview, dataTracerFactory);
 
     String config = request.getConfig() == null ? null : GSON.toJson(request.getConfig());
+    LinkedTreeMap<String, String> versionRequestObject = (LinkedTreeMap<String, String>) request.getVersion();
+    String changeSummary = versionRequestObject == null ? null : versionRequestObject.get("changeSummary");
     PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
 
     PreferencesDetail preferences = preferencesFetcher.get(programId, true);
@@ -188,7 +191,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     try {
       LOG.debug("Deploying preview application for {}", programId);
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
-                                            artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
+                                            artifactSummary, config, changeSummary, NOOP_PROGRAM_TERMINATOR, null,
                                             request.canUpdateSchedules(), true, userProps);
     } catch (Exception e) {
       PreviewStatus previewStatus = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, submitTimeMillis,

@@ -64,6 +64,12 @@ public interface ApplicationSpecification {
   String getConfiguration();
 
   /**
+   * @return Change summary entered by the user during the update of the Application.
+   */
+  @Nullable
+  String getChangeSummary();
+
+  /**
    * @return Description of the Application.
    */
   String getDescription();

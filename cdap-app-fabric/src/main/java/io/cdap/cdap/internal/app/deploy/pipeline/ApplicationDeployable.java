@@ -50,6 +50,8 @@ public class ApplicationDeployable {
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
+  @Nullable
+  private final String owner;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
@@ -57,7 +59,7 @@ public class ApplicationDeployable {
                                ApplicationDeployScope applicationDeployScope,
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap());
+         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(), null);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -68,7 +70,7 @@ public class ApplicationDeployable {
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables,
-                               Map<MetadataScope, Metadata> metadata) {
+                               Map<MetadataScope, Metadata> metadata, @Nullable String owner) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -80,6 +82,7 @@ public class ApplicationDeployable {
     this.systemTables = systemTables;
     this.applicationClass = applicationClass;
     this.metadata = metadata;
+    this.owner = owner;
   }
 
   /**
@@ -158,5 +161,12 @@ public class ApplicationDeployable {
    */
   public Map<MetadataScope, Metadata> getMetadata() {
     return metadata;
+  }
+
+  /**
+   * Returns the owner (user name) of the version of the application
+   */
+  public String getOwner() {
+    return owner;
   }
 }

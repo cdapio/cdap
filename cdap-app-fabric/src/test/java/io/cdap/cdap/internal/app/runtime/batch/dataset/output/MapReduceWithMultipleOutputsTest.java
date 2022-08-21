@@ -66,6 +66,7 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
 
     Assert.assertEquals(ImmutableList.of("1 65", "2 53", "3 101"),
                         readFromOutput(outputFileSet, "large_purchases"));
+    deleteApp(app.getApplicationId());
   }
 
   private List<String> readFromOutput(FileSet fileSet, String relativePath) throws IOException {
@@ -81,5 +82,6 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
     // will fail because it configured two outputs with the same alias
     Assert.assertFalse(runProgram(app,
                                   AppWithMapReduceUsingMultipleOutputs.InvalidMapReduce.class, new BasicArguments()));
+    deleteApp(app.getApplicationId());
   }
 }

@@ -208,7 +208,7 @@ public class RemoteConfiguratorTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1.0.0");
 
     // Don't update the artifacts map so that the fetching of artifact would fail.
-
+    
     AppDeploymentInfo info = AppDeploymentInfo.builder()
       .setArtifactId(artifactId)
       .setArtifactLocation(appJar)
@@ -231,7 +231,7 @@ public class RemoteConfiguratorTest {
     artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.getNamespace(),
                                                                         artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
-
+    
     AppDeploymentInfo info = AppDeploymentInfo.builder()
       .setArtifactId(artifactId)
       .setArtifactLocation(appJar)
