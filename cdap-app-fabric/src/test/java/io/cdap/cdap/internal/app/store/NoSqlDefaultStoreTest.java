@@ -18,10 +18,10 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.spi.data.SortOrder;
-import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import org.junit.AfterClass;
@@ -41,12 +41,12 @@ public class NoSqlDefaultStoreTest extends DefaultStoreTest {
   }
 
   @Test
-  public void testScanApplicationsWithSmallReorderBatch() throws TransactionException {
+  public void testScanApplicationsWithSmallReorderBatch() throws ConflictException {
     testScanApplications(getDescOrderUnsupportedStore());
   }
 
   @Test
-  public void testScanApplicationsWithNamespaceWithSmallReorderBatch() throws TransactionException {
+  public void testScanApplicationsWithNamespaceWithSmallReorderBatch() throws ConflictException {
     testScanApplicationsWithNamespace(getDescOrderUnsupportedStore());
   }
 
@@ -56,7 +56,7 @@ public class NoSqlDefaultStoreTest extends DefaultStoreTest {
    * {@link UnsupportedOperationException}. Store in this case should fall back to resorting in memory.
    * It will also use a small batch size to test multiple reorder batches
    */
-  private Store getDescOrderUnsupportedStore() throws TransactionException {
+  private Store getDescOrderUnsupportedStore() throws ConflictException {
     TransactionRunner runner = injector.getInstance(TransactionRunner.class);
     Store store = new DefaultStore(runner, 20);
     return store;

@@ -64,8 +64,9 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
 
     try {
       appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                    artifactSummary, configString, x -> { },
-                                    ownerPrincipalId, arguments.canUpdateSchedules(), false, Collections.emptyMap());
+                                    artifactSummary, configString, arguments.getChange(), x -> { },
+                                    ownerPrincipalId, arguments.canUpdateSchedules(), false,
+                                    Collections.emptyMap());
     } catch (NotFoundException | UnauthorizedException | InvalidArtifactException e) {
       // these exceptions are for sure not retry-able. It's hard to tell if the others are, so we just try retrying
       // up to the default time limit

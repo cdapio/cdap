@@ -39,6 +39,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -427,10 +428,10 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationSpecification spec) {
-    TransactionRunners.run(transactionRunner, context -> {
-      getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec);
-    });
+  public void addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
+      TransactionRunners.run(transactionRunner, context -> {
+        getAppMetadataStore(context).createApplicationVersion(id, meta);
+      }, ConflictException.class);
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
@@ -571,6 +572,14 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
+  public ApplicationMeta getApplicationMetadata(ApplicationId id) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getApplicationMeta(getAppMetadataStore(context), id);
+    });
+  }
+
+  @Nullable
+  @Override
   public ApplicationSpecification getApplication(ApplicationId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getApplicationSpec(getAppMetadataStore(context), id);
@@ -698,6 +707,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  @Nullable
+  public ApplicationMeta getLatest(NamespaceId namespace, String appName) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getLatest(namespace, appName);
+    });
+  }
+
+  @Override
   public Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
@@ -728,8 +745,13 @@ public class DefaultStore implements Store {
 
   private ApplicationSpecification getApplicationSpec(AppMetadataStore mds, ApplicationId id)
     throws IOException, TableNotFoundException {
-    ApplicationMeta meta = mds.getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
+    ApplicationMeta meta = getApplicationMeta(mds, id);
     return meta == null ? null : meta.getSpec();
+  }
+
+  private ApplicationMeta getApplicationMeta(AppMetadataStore mds, ApplicationId id)
+    throws IOException, TableNotFoundException {
+    return mds.getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
   }
 
   private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,

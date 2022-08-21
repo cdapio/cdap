@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -50,6 +51,8 @@ public class AppDeploymentInfo {
   private final boolean updateSchedules;
   @Nullable
   private final AppDeploymentRuntimeInfo runtimeInfo;
+  @Nullable
+  private final ChangeDetail changeDetail;
 
   /**
    * Creates a new {@link Builder}.
@@ -72,13 +75,15 @@ public class AppDeploymentInfo {
       .setConfigString(other.configString)
       .setOwnerPrincipal(other.ownerPrincipal)
       .setUpdateSchedules(other.updateSchedules)
-      .setRuntimeInfo(other.runtimeInfo);
+      .setRuntimeInfo(other.runtimeInfo)
+      .setChangeDetail(other.changeDetail);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                            @Nullable ChangeDetail changeDetail) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -89,6 +94,7 @@ public class AppDeploymentInfo {
     this.updateSchedules = updateSchedules;
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
+    this.changeDetail = changeDetail;
   }
 
   /**
@@ -171,6 +177,14 @@ public class AppDeploymentInfo {
   }
 
   /**
+   * Returns the change detail {@code null} if it is not provided.
+   */
+  @Nullable
+  public ChangeDetail getChangeDetail() {
+    return changeDetail;
+  }
+
+  /**
    * Builder class for the {@link AppDeploymentInfo}.
    */
   public static final class Builder {
@@ -186,6 +200,8 @@ public class AppDeploymentInfo {
     // The default behavior of update schedules is to update schedule on deployment.
     private boolean updateSchedules = true;
     private AppDeploymentRuntimeInfo runtimeInfo;
+    @Nullable
+    private ChangeDetail changeDetail;
 
     private Builder() {
       // Only for the builder() method to use
@@ -248,6 +264,11 @@ public class AppDeploymentInfo {
       return this;
     }
 
+    public Builder setChangeDetail(@Nullable ChangeDetail changeDetail) {
+      this.changeDetail = changeDetail;
+      return this;
+    }
+
     public AppDeploymentInfo build() {
       if (artifactId == null) {
         throw new IllegalStateException("Missing artifact ID");
@@ -262,7 +283,8 @@ public class AppDeploymentInfo {
         throw new IllegalStateException("Missing application class");
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
-                                   appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo);
+                                   appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
+                                   changeDetail);
     }
   }
 }
