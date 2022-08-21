@@ -28,6 +28,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -112,6 +113,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -183,9 +185,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer create(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
-    throws BadRequestException, NamespaceNotFoundException, AccessException {
+          throws Exception {
 
-    ApplicationId applicationId = validateApplicationId(namespaceId, appId);
+    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, UUID.randomUUID().toString());
 
     try {
       return deployAppFromArtifact(applicationId);
@@ -319,7 +321,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the info associated with the application.
+   * Returns the latest version info associated with the application.
    */
   @GET
   @Path("/apps/{app-id}")
@@ -327,9 +329,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") final String namespaceId,
                          @PathParam("app-id") final String appId)
     throws Exception {
-
-    ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
+      ApplicationId applicationId = validateApplicationId(namespaceId, appId);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson
+              (applicationLifecycleService.getAppLatestVersionDetail(applicationId)));
   }
 
   /**
@@ -683,10 +685,21 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           String configString = config == null ? null :
             config instanceof String ? (String) config : GSON.toJson(config);
 
+          Object parentVersionObject = appRequest.getParentVersion();
+          String parentVersion = parentVersionObject == null ? null :
+                  parentVersionObject instanceof String ? (String) parentVersionObject : GSON.toJson(config);
+
+          LinkedTreeMap<String, String> versionRequestObject = (LinkedTreeMap<String, String>) appRequest.getVersion();
+          String changeSummary = versionRequestObject == null ? null : versionRequestObject.get("changeSummary");
+
           try {
+            if (!applicationLifecycleService.deployAppAllowed(appId, parentVersion)) {
+              throw new Exception("Can't deploy the application because the parent version is not the latest.");
+            }
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                  artifactSummary, configString, createProgramTerminator(),
-                                                  ownerPrincipalId, appRequest.canUpdateSchedules(), false,
+                                                  artifactSummary, configString, changeSummary,
+                                                  createProgramTerminator(), ownerPrincipalId,
+                                                  appRequest.canUpdateSchedules(), false,
                                                   Collections.emptyMap());
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {

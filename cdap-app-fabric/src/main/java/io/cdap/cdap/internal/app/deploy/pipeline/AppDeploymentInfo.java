@@ -40,6 +40,10 @@ public class AppDeploymentInfo {
   private final String appName;
   private final String appVersion;
   private final String configString;
+  @Nullable
+  private final String changeSummary;
+  @Nullable
+  private final String owner;
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
@@ -48,36 +52,45 @@ public class AppDeploymentInfo {
 
   public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
     this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
-         info.configString, info.ownerPrincipal, info.updateSchedules, info.runtimeInfo);
+         info.configString, info.changeSummary, info.owner, info.ownerPrincipal,
+            info.updateSchedules, info.runtimeInfo);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString) {
-    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
-         true, null);
+                           @Nullable String configString, @Nullable String changeSummary,
+                           @Nullable String owner) {
+    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, changeSummary,
+            owner, null, true, null);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                           @Nullable String configString, @Nullable String changeSummary,
+                           @Nullable String owner,
+                           @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
-         appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo);
+         appName, appVersion, configString, changeSummary, owner, ownerPrincipal,
+            updateSchedules, runtimeInfo);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            String applicationClassName, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                           @Nullable String configString,  @Nullable String changeSummary,
+                           @Nullable String owner,
+                           @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion, configString,
-         ownerPrincipal, updateSchedules, runtimeInfo);
+    this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion,
+            configString, changeSummary, owner, ownerPrincipal, updateSchedules, runtimeInfo);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             @Nullable ApplicationClass applicationClass, String applicationClassName,
                             @Nullable String appName, @Nullable String appVersion,
-                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                            @Nullable String configString, @Nullable String changeSummary,
+                            @Nullable String owner, 
+                            @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
@@ -85,6 +98,8 @@ public class AppDeploymentInfo {
     this.appName = appName;
     this.appVersion = appVersion;
     this.configString = configString;
+    this.changeSummary = changeSummary;
+    this.owner = owner;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
     this.applicationClass = applicationClass;
@@ -155,6 +170,22 @@ public class AppDeploymentInfo {
   @Nullable
   public String getConfigString() {
     return configString;
+  }
+
+  /**
+   * Returns the change summary string provided for the application deployment or {@code null} if it is not provided.
+   */
+  @Nullable
+  public String getChangeSummary() {
+    return changeSummary;
+  }
+
+  /**
+   * @return The owner (username) who created the version of the Application.
+   */
+  @Nullable
+  public String getOwner() {
+    return owner;
   }
 
   /**

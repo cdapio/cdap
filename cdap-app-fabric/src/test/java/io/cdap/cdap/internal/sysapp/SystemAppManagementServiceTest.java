@@ -131,6 +131,6 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     // Program ID still stays the same.
     waitState(serviceId1, RUNNING);
     Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
-    assertProgramRuns(serviceId1, ProgramRunStatus.KILLED, 1);
+    assertProgramRuns(serviceId1, ProgramRunStatus.KILLED, 0);
   }
 }

@@ -35,6 +35,7 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -173,6 +174,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
                                                                           Collections.emptyMap(), false);
     Assert.assertEquals(ProjectInfo.getVersion().toString(),
                         options.getArguments().getOption(Constants.APP_CDAP_VERSION));
+    deleteAppAndData(NamespaceId.DEFAULT.app(AllProgramsApp.NAME));
   }
 
   @Test
@@ -213,5 +215,11 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
       profileService.disableProfile(profileId);
       profileService.deleteProfile(profileId);
     }
+    deleteAppAndData(NamespaceId.DEFAULT.app(AllProgramsApp.NAME));
+  }
+
+  private void deleteAppAndData(ApplicationId applicationId) throws Exception {
+    deleteApp(applicationId, 200);
+    deleteNamespaceData(applicationId.getNamespace());
   }
 }

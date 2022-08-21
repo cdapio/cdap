@@ -77,6 +77,7 @@ import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -275,6 +276,11 @@ public class AppFabricTestHelper {
     deployApplication(namespace, applicationClz, config, null, cConf);
   }
 
+  public static void deleteApplication(ApplicationId appId, CConfiguration cConf) throws Exception { 
+    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
+    appFabricClient.deleteApplication(appId);
+  }
+
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        @Nullable String config, @Nullable KerberosPrincipalId ownerPrincipal,
                                        CConfiguration cConf) throws Exception {
@@ -316,7 +322,8 @@ public class AppFabricTestHelper {
     AppDeploymentInfo info = new AppDeploymentInfo(Artifacts.toProtoArtifactId(namespaceId, artifactId),
                                                    deployedJar, namespaceId,
                                                    applicationClass, null, null,
-                                                   config == null ? null : new Gson().toJson(config));
+                                                   config == null ? null : new Gson().toJson(config),
+                                                  null, null);
     return getLocalManager().deploy(info).get();
   }
 

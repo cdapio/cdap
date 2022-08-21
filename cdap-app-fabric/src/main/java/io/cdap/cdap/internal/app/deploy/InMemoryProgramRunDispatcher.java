@@ -309,7 +309,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     AppDeploymentInfo deploymentInfo =
       new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(), programId.getNamespaceId(),
                             appClass, existingAppSpec.getName(), existingAppSpec.getAppVersion(),
-                            existingAppSpec.getConfiguration(), null, false,
+                            existingAppSpec.getConfiguration(), existingAppSpec.getChangeSummary(), null,
+              null,  false,
                             new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
                                                          options.getArguments().asMap()));
     Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator, artifactRepository,

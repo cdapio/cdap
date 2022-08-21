@@ -188,7 +188,7 @@ import java.util.UUID;
     //deploy app
     applicationLifecycleService
       .deployApp(NamespaceId.DEFAULT, appName, TEST_VERSION, artifactId,
-                 null, programId -> {
+                 null, null, programId -> {
         });
   }
 }

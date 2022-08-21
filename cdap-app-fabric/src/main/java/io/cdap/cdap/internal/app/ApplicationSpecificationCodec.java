@@ -52,6 +52,9 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     if (src.getAppCDAPVersion() != null) {
       jsonObj.add("appCDAPVersion", new JsonPrimitive(src.getAppCDAPVersion()));
     }
+    if (src.getChangeSummary() != null) {
+      jsonObj.add("changeSummary", new JsonPrimitive(src.getChangeSummary()));
+    }
     if (src.getConfiguration() != null) {
       jsonObj.add("configuration", new JsonPrimitive(src.getConfiguration()));
     }
@@ -85,6 +88,10 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
       : null;
 
     String description = jsonObj.get("description").getAsString();
+    String changeSummary = null;
+    if (jsonObj.has("changeSummary")) {
+      changeSummary = jsonObj.get("changeSummary").getAsString();
+    }
     String configuration = null;
     if (jsonObj.has("configuration")) {
       configuration = jsonObj.get("configuration").getAsString();
@@ -113,7 +120,8 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               WorkerSpecification.class);
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
 
-    return new DefaultApplicationSpecification(name, appVersion, appCDAPVersion, description, configuration, artifactId,
+    return new DefaultApplicationSpecification(name, appVersion, appCDAPVersion, description, changeSummary,
+                                               configuration, artifactId,
                                                datasetModules, datasetInstances,
                                                mapReduces, sparks,
                                                workflows, services, programSchedules, workers, plugins);

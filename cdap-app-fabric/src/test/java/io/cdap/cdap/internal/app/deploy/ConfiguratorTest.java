@@ -114,7 +114,7 @@ public class ConfiguratorTest {
 
     AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
       NamespaceId.DEFAULT, new ApplicationClass(AllProgramsApp.class.getName(), "", null),
-      null, null, null);
+      null, null, null, null, null);
 
     // Create a configurator that is testable. Provide it a application.
     Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
@@ -158,7 +158,7 @@ public class ConfiguratorTest {
 
     AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
       NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
-      null, null, new Gson().toJson(config));
+            null, null, new Gson().toJson(config), null, null);
 
     // Create a configurator that is testable. Provide it an application.
     Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
@@ -180,7 +180,7 @@ public class ConfiguratorTest {
     // Create a deployment info without the app configuration
     appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
       NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
-      null, null, null);
+      null, null, null, null, null);
 
     Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, pluginFinder,
                                                                       new DefaultImpersonator(cConf, null),

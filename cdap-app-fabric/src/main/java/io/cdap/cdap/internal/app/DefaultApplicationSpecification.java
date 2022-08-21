@@ -45,6 +45,8 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Nullable
   private final String appCDAPVersion;
   private final String description;
+  @Nullable
+  private final String changeSummary;
   private final String configuration;
   private final ArtifactId artifactId;
   private final Map<String, String> datasetModules;
@@ -59,6 +61,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public DefaultApplicationSpecification(String name,
                                          @Nullable String appCDAPVersion, String description,
+                                         @Nullable String changeSummary,
                                          String configuration,
                                          ArtifactId artifactId,
                                          Map<String, String> datasetModules,
@@ -70,13 +73,14 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
-    this(name, ApplicationId.DEFAULT_VERSION, appCDAPVersion, description, configuration, artifactId, datasetModules,
-         datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
-         plugins);
+    this(name, ApplicationId.DEFAULT_VERSION, appCDAPVersion, description, changeSummary, configuration, artifactId,
+            datasetModules, datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
+            plugins);
   }
 
   public DefaultApplicationSpecification(String name, String appVersion,
                                          @Nullable String appCDAPVersion, String description,
+                                         @Nullable String changeSummary,
                                          String configuration,
                                          ArtifactId artifactId,
                                          Map<String, String> datasetModules,
@@ -92,6 +96,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.appVersion = appVersion;
     this.appCDAPVersion = appCDAPVersion;
     this.description = description;
+    this.changeSummary = changeSummary;
     this.configuration = configuration;
     this.artifactId = artifactId;
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
@@ -125,6 +130,12 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public String getConfiguration() {
     return configuration;
+  }
+
+  @Nullable
+  @Override
+  public String getChangeSummary() {
+    return changeSummary;
   }
 
   @Override

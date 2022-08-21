@@ -31,12 +31,13 @@ public class AppRequest<T> {
   private final ArtifactSummary artifact;
   private final T config;
   private final T configuration;
+  private final T parentVersion;
+  private final T version;
   private final PreviewConfig preview;
   @SerializedName("principal")
   private final String ownerPrincipal;
   @SerializedName("app.deploy.update.schedules")
   private final Boolean updateSchedules;
-
 
   public AppRequest(ArtifactSummary artifact) {
     this(artifact, null);
@@ -56,17 +57,20 @@ public class AppRequest<T> {
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
                     @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules) {
-    this(artifact, config, preview, ownerPrincipal, updateSchedules, null);
+    this(artifact, config, preview, ownerPrincipal, updateSchedules, null, null, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
-                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration) {
+                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration,
+                    @Nullable T parentVersion, @Nullable T version) {
     this.artifact = artifact;
     this.config = config;
     this.preview = preview;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
     this.configuration = configuration;
+    this.parentVersion = parentVersion;
+    this.version = version;
   }
 
   public ArtifactSummary getArtifact() {
@@ -76,6 +80,16 @@ public class AppRequest<T> {
   @Nullable
   public T getConfig() {
     return config != null ? config : configuration;
+  }
+
+  @Nullable
+  public T getVersion() {
+    return version;
+  }
+
+  @Nullable
+  public T getParentVersion() {
+    return parentVersion;
   }
 
   @Nullable

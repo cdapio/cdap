@@ -174,8 +174,9 @@ public class RemoteConfiguratorTest {
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
-                                                   new ApplicationClass(AllProgramsApp.class.getName(), "", null),
-                                                   null, null, null);
+                                                   new ApplicationClass(AllProgramsApp.class.getName(), "",
+                                                           null), null, null,
+                                                  null, null, null);
 
     Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
 
@@ -208,8 +209,10 @@ public class RemoteConfiguratorTest {
     // Don't update the artifacts map so that the fetching of artifact would fail.
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
-                                                   new ApplicationClass(AllProgramsApp.class.getName(), "", null),
-                                                   null, null, null);
+                                                   new ApplicationClass(AllProgramsApp.class.getName(), "",
+                                                           null),
+                                                   null, null,
+                                                  null, null, null);
 
     Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
 
@@ -228,8 +231,10 @@ public class RemoteConfiguratorTest {
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
-                                                   new ApplicationClass(ConfigTestApp.class.getName(), "", null),
-                                                   "BadApp", null, GSON.toJson("invalid"));
+                                                   new ApplicationClass(ConfigTestApp.class.getName(), "",
+                                                           null),
+                                                   "BadApp", null, GSON.toJson("invalid"),
+            null, null);
 
     Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
 

@@ -426,9 +426,11 @@ public class AppMetadataStore {
   }
 
 
-  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec)
+  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec,
+                               long created, String owner)
     throws IOException {
-    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)));
+    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)), created,
+            owner);
   }
 
   public void deleteApplication(String namespaceId, String appId, String versionId)
@@ -456,7 +458,11 @@ public class AppMetadataStore {
       LOG.trace("Application {} exists in mds with specification {}", appId, GSON.toJson(existing));
     }
     ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec);
-    writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated));
+    // Generate the creation time for the version of the app.
+    long created = System.currentTimeMillis();
+    // TODO: add owner info 
+    writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated),
+            created, null);
   }
 
   /**
@@ -1811,6 +1817,13 @@ public class AppMetadataStore {
     return fields;
   }
 
+  private List<Field<?>> getApplicationKeys(String namespaceId, String appId) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
+    return fields;
+  }
+
   private Range getNamespaceRange(String namespaceId) {
     return Range.singleton(
       ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId)));
@@ -1823,10 +1836,12 @@ public class AppMetadataStore {
         Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, applicationId)));
   }
 
-  private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized)
+  private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized,
+                                          long created, String owner)
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
+    // TODO: Add owner, creation time and latest fields
     getApplicationSpecificationTable().upsert(fields);
   }
 

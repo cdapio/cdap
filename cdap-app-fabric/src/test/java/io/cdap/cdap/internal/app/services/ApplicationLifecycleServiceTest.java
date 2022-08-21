@@ -250,8 +250,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     deploy(AllProgramsApp.class, HttpResponseStatus.FORBIDDEN.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            TEST_NAMESPACE2, "bob/somehost.net@somekdc.net");
 
-    // although trying to re-deploy the app with same owner should work
-    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+    // Introducing in LCM: Deployment fails if there are no new changes detected
+    deploy(AllProgramsApp.class, HttpResponseStatus.BAD_REQUEST.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            TEST_NAMESPACE2, ownerPrincipal);
 
     // delete, otherwise it conflicts with other tests
@@ -275,12 +275,12 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     deploy(AllProgramsApp.class, HttpResponseStatus.FORBIDDEN.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            impNsMeta.getName(), "bob/somehost.net@somekdc.net");
 
-    // although trying to re-deploy the app with namespace principal should work
-    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+    // Introducing in LCM: Deployment fails if there are no new changes detected
+    deploy(AllProgramsApp.class, HttpResponseStatus.BAD_REQUEST.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            impNsMeta.getName(), nsPrincipal);
 
-    // re-deploy without any owner should also work
-    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+    // Introducing in LCM: Deployment fails if there are no new changes detected
+    deploy(AllProgramsApp.class, HttpResponseStatus.BAD_REQUEST.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            impNsMeta.getName());
 
     // cleanup
@@ -299,8 +299,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     deploy(AllProgramsApp.class, HttpResponseStatus.FORBIDDEN.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            impNsMeta.getName(), impNsMeta.getConfig().getPrincipal());
 
-    // although redeploy with same app principal should work
-    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+    // Introducing in LCM: Deployment fails if there are no new changes detected
+    deploy(AllProgramsApp.class, HttpResponseStatus.BAD_REQUEST.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            impNsMeta.getName(), "bob/somehost.net@somekdc.net");
 
     // delete, otherwise it conflicts with other tests
@@ -367,6 +367,10 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
         d -> appDetails.add(d));
 
     Assert.assertEquals(appDetails.size(), 1);
+    deleteAppAndData(new NamespaceId("ns1").app(AllProgramsApp.NAME));
+    deleteAppAndData(new NamespaceId("ns2").app(AllProgramsApp.NAME));
+    deleteAppAndData(new NamespaceId("ns3").app(AllProgramsApp.NAME));
+
   }
 
   @Test
@@ -385,6 +389,10 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
         d -> appDetails.add(d));
 
     Assert.assertEquals(appDetails.size(), 0);
+    // delete, otherwise it conflicts with other tests
+    deleteAppAndData(new NamespaceId("ns1").app(AllProgramsApp.NAME));
+    deleteAppAndData(new NamespaceId("ns2").app(AllProgramsApp.NAME));
+    deleteAppAndData(new NamespaceId("ns3").app(AllProgramsApp.NAME));
   }
 
   @Test
@@ -428,6 +436,11 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
         Assert.assertTrue(appSpec.getProgramsByType(record.getType().getApiProgramType()).contains(record.getName()));
       }
     }
+
+    // delete, otherwise it conflicts with other tests
+    deleteAppAndData(new NamespaceId("ns1").app(AllProgramsApp.NAME));
+    deleteAppAndData(new NamespaceId("ns2").app(AllProgramsApp.NAME));
+    deleteAppAndData(new NamespaceId("ns3").app(AllProgramsApp.NAME));
   }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {

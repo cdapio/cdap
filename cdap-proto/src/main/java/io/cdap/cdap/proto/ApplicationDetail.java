@@ -35,6 +35,8 @@ public class ApplicationDetail {
   private final String name;
   private final String appVersion;
   private final String description;
+  @Nullable
+  private final String changeSummary;
   private final String configuration;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
@@ -46,6 +48,7 @@ public class ApplicationDetail {
   public ApplicationDetail(String name,
                            String appVersion,
                            String description,
+                           @Nullable String changeSummary,
                            String configuration,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
@@ -55,6 +58,7 @@ public class ApplicationDetail {
     this.name = name;
     this.appVersion = appVersion;
     this.description = description;
+    this.changeSummary = changeSummary;
     this.configuration = configuration;
     this.datasets = datasets;
     this.programs = programs;
@@ -76,6 +80,10 @@ public class ApplicationDetail {
 
   public String getConfiguration() {
     return configuration;
+  }
+
+  public String getChangeSummary() {
+    return changeSummary;
   }
 
   public List<DatasetDetail> getDatasets() {
@@ -139,7 +147,7 @@ public class ApplicationDetail {
     // in the meantime, we don't want this api call to null pointer exception.
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
-    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), spec.getConfiguration(),
-                                 datasets, programs, plugins, summary, ownerPrincipal);
+    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), spec.getChangeSummary(), 
+            spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
   }
 }
