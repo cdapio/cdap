@@ -367,29 +367,43 @@ public class StructuredRecord implements Serializable {
      * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
      *                                   value is given
      */
-    public Builder set(String fieldName, @Nullable Object value) {
-      Schema.Field field = validateAndGetField(fieldName, value);
-      Schema fixedLogicalTypeSchema = getLogicalTypeSchema(field.getSchema(), EnumSet.of(LogicalType.FIXED));
 
-      //check if field is a fixed LogicalType
-      if (value != null && fixedLogicalTypeSchema != null) {
+    private boolean checkAndSetLogicalSchema(Schema schema, String fieldName, @Nullable Object value) {
+      schema = getLogicalTypeSchema(schema, EnumSet.of(LogicalType.FIXED));
+      if (schema == null) {
+        return false;
+      }
+      if (schema.getLogicalType().equals(LogicalType.FIXED)) {
+        setFixedLogicalTypeSchema(schema, fieldName, value);
+        return true;
+      }
+      return false;
+    }
+    private void setFixedLogicalTypeSchema(Schema schema, String fieldName, @Nullable Object value) {
+      if (schema.getLogicalType().equals(LogicalType.FIXED)) {
         ByteBuffer byteBuffer = null;
         if (value instanceof ByteBuffer) {
           byteBuffer = (ByteBuffer) value;
         } else if (value instanceof byte[]) {
           byteBuffer = ByteBuffer.wrap((byte[]) value);
         }
-        if (byteBuffer.remaining() !=  fixedLogicalTypeSchema.getFixedSize()) {
+        if (byteBuffer.remaining() !=  schema.getFixedSize()) {
           throw new UnexpectedFormatException(
             String.format("Field '%s' has size '%d' which is not equal to schema size '%d'.",
-              fieldName, byteBuffer.remaining(), field.getSchema().getFixedSize()));
+              fieldName, byteBuffer.remaining(), schema.getFixedSize()));
         }
         fields.put(fieldName, byteBuffer);
-      } else {
-        fields.put(fieldName, value);
       }
-      return this;
 
+    }
+    public Builder set(String fieldName, @Nullable Object value) {
+      Schema.Field field = validateAndGetField(fieldName, value);
+      if (value != null && field != null && field.getSchema().getLogicalType() != null &&
+        checkAndSetLogicalSchema(field.getSchema(), fieldName, value)) {
+        return this;
+      }
+      fields.put(fieldName, value);
+      return this;
     }
 
     /**
@@ -703,6 +717,8 @@ public class StructuredRecord implements Serializable {
       return field;
     }
   }
+
+
 
   @Override
   public boolean equals(Object o) {
