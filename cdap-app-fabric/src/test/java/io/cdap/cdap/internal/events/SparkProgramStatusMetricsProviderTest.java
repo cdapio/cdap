@@ -49,6 +49,7 @@ public class SparkProgramStatusMetricsProviderTest {
   @BeforeClass
   public static void setupClass() throws IOException {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set("spark.metrics.host", "http://mocked-sparkhistory:18080");
     metricsProvider = new SparkProgramStatusMetricsProvider(cConf, new NoOpMetricsCollectionService());
   }
 
