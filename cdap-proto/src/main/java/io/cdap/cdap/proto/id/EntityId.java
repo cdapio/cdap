@@ -65,7 +65,7 @@ public abstract class EntityId {
   // Allow '.' and hyphens for artifact ids.
   private static final Pattern artifactIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
   // Allow '.' and '$' for dataset ids since they can be fully qualified class names
-  private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
+  private static final Pattern datasetIdPattern = Pattern.compile("[$:\\.a-zA-Z0-9_-]+");
   // Only allow alphanumeric and _ character for namespace
   private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   // Allow '.' for versionId
