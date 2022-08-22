@@ -389,8 +389,8 @@ public class StructuredRecord implements Serializable {
         }
         if (byteBuffer.remaining() !=  schema.getFixedSize()) {
           throw new UnexpectedFormatException(
-            String.format("Field '%s' has a length of '%d' but schema expect a length of '%d'", fieldName,
-              byteBuffer.remaining(), schema.getFixedSize()));
+            String.format("Field '%s' has size '%d' which is not equal to schema size '%d'.",
+              fieldName, byteBuffer.remaining(), schema.getFixedSize()));
         }
         fields.put(fieldName, byteBuffer);
       }
