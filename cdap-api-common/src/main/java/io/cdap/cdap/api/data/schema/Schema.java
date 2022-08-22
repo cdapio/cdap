@@ -885,7 +885,7 @@ public final class Schema implements Serializable {
         case DATETIME:
           return String.format("datetime in ISO-8601 format without timezone");
         case FIXED:
-          return String.format("Fixed type of name %s", fixedName);
+          return String.format("Fixed type of name %s and size %d", fixedName, fixedSize);
       }
     }
 

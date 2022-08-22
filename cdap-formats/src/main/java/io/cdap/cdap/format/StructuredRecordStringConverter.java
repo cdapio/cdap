@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
@@ -176,7 +175,7 @@ public class StructuredRecordStringConverter {
     if (fieldSchema.getType() == Schema.Type.BYTES) {
       try {
         if (fieldSchema.getLogicalType() == Schema.LogicalType.FIXED) {
-          builder.set(fieldName, ByteBuffer.wrap((part).getBytes()));
+          builder.set(fieldName, FormatUtils.base64Decode(part));
         } else {
           builder.set(fieldName, FormatUtils.base64Decode(part));
         }

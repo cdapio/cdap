@@ -238,9 +238,9 @@ public class StructuredRecordBuilderTest {
 
   @Test
   public void testFixedLogicalTypeWithByteBuffer() {
-    Schema schema = Schema.recordOf(Schema.Field.of("Fixed",
-        Schema.nullableOf(Schema.fixedOf(4, "fixedName"))),
-      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    Schema schema = Schema.recordOf(
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("Fixed", Schema.fixedOf(4, "fixedName")));
     ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes());
     StructuredRecord record = StructuredRecord.builder(schema)
       .set("Fixed", byteBuffer)
@@ -250,10 +250,10 @@ public class StructuredRecordBuilderTest {
 
   @Test
   public void testFixedLogicalTypeWithByteArray() {
-    Schema schema = Schema.recordOf(Schema.Field.of("Fixed",
-        Schema.nullableOf(Schema.fixedOf(6, "fixedName"))),
-      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
-    byte[] bytes = {1, 2, 3, 4, 5, 6};
+    Schema schema = Schema.recordOf(
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("Fixed", Schema.fixedOf(6, "fixedName")));
+    byte[] bytes = "tested".getBytes();
     StructuredRecord record = StructuredRecord.builder(schema)
       .set("Fixed", bytes)
       .set("name", "test").build();
@@ -262,13 +262,12 @@ public class StructuredRecordBuilderTest {
 
   @Test
   public void testInvalidFixedLogicalType() {
-    Schema schema = Schema.recordOf(Schema.Field.of("Fixed",
-        Schema.nullableOf(Schema.fixedOf(3, "fixedName"))),
-      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
-    ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes());
+    Schema schema = Schema.recordOf(
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("Fixed", Schema.fixedOf(3, "fixedName")));
     thrown.expect(UnexpectedFormatException.class);
-    StructuredRecord record = StructuredRecord.builder(schema)
-      .set("Fixed", byteBuffer)
+    StructuredRecord.builder(schema)
+      .set("Fixed", "byteBuffer".getBytes())
       .set("name", "test").build();
   }
 
