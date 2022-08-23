@@ -237,6 +237,17 @@ public class StructuredRecordBuilderTest {
   }
 
   @Test
+  public void testFixedLogicalTypeWithNull() {
+    Schema schema = Schema.recordOf(
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("Fixed", Schema.nullableOf(Schema.fixedOf(4, "fixedName"))));
+    StructuredRecord record = StructuredRecord.builder(schema)
+      .set("Fixed", null)
+      .set("name", "test").build();
+    Assert.assertNull(record.get("Fixed"));
+  }
+
+  @Test
   public void testFixedLogicalTypeWithByteBuffer() {
     Schema schema = Schema.recordOf(
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
