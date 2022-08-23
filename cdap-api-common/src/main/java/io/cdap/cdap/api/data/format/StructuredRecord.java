@@ -359,15 +359,15 @@ public class StructuredRecord implements Serializable {
     }
 
     /**
-     * Set the field to the given value.
+     * Check and set if the given schema has logical type.
      *
-     * @param fieldName name of the field to set
+     * @param schema is to check the logicalType
+     * @param fieldName
      * @param value value for the field
      * @return this builder
      * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
      *                                   value is given
      */
-
     private boolean checkAndSetLogicalSchema(Schema schema, String fieldName, @Nullable Object value) {
       schema = getLogicalTypeSchema(schema, EnumSet.of(LogicalType.FIXED));
       if (schema == null) {
@@ -379,6 +379,15 @@ public class StructuredRecord implements Serializable {
       }
       return false;
     }
+
+    /**
+     * Set the schema field of logical type fixed to the given value of type byte array or ByteBuffer
+     *
+     * @param schema is to check if logical type is FIXED
+     * @param fieldName name of the field to set
+     * @param value value for the field
+     * @throws UnexpectedFormatException if the field and schema size differ
+     */
     private void setFixedLogicalTypeSchema(Schema schema, String fieldName, @Nullable Object value) {
       if (schema.getLogicalType().equals(LogicalType.FIXED)) {
         ByteBuffer byteBuffer = null;
@@ -396,6 +405,16 @@ public class StructuredRecord implements Serializable {
       }
 
     }
+
+    /**
+     * Set the field to the given value.
+     *
+     * @param fieldName name of the field to set
+     * @param value value for the field
+     * @return this builder
+     * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
+     *                                   value is given
+     */
     public Builder set(String fieldName, @Nullable Object value) {
       Schema.Field field = validateAndGetField(fieldName, value);
       if (value != null && field != null && field.getSchema().getLogicalType() != null
