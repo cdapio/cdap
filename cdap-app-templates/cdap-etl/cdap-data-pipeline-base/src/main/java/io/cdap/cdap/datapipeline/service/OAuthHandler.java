@@ -55,8 +55,6 @@ import javax.ws.rs.QueryParam;
  */
 public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   private static final String API_VERSION = "v1";
-  private static final String CLIENT_ID = "{CLIENT_ID}";
-  private static final String REDIRECT_URL = "{REDIRECT_URL}";
   private static final Gson GSON = new GsonBuilder()
     .setPrettyPrinting()
     .create();
@@ -73,12 +71,21 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   @Path(API_VERSION + "/oauth/provider/{provider}/authurl")
   public void getAuthURL(HttpServiceRequest request, HttpServiceResponder responder,
                          @PathParam("provider") String provider,
-                         @QueryParam("redirect_url") String redirectURL) {
+                         @QueryParam("redirect_uri") String redirectURI) {
     try {
       OAuthProvider oauthProvider = getProvider(provider);
-      String response = oauthProvider.getLoginURL()
-          .replace(CLIENT_ID, oauthProvider.getClientCredentials().getClientId())
-          .replace(REDIRECT_URL, redirectURL);
+
+      String formatURL = "%s";
+      String loginUrl = oauthProvider.getLoginURL();
+      if (!loginUrl.contains("?")) {
+        formatURL += "?";
+      } else if (!loginUrl.endsWith("&")) {
+        formatURL += "&";
+      }
+      formatURL += "client_id=%s&redirect_uri=%s";
+
+      String response = String.format(
+          formatURL, loginUrl, oauthProvider.getClientCredentials().getClientId(), redirectURI);
       responder.sendString(response);
     } catch (OAuthServiceException e) {
       e.respond(responder);
@@ -274,7 +281,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     try {
       return HttpRequest.post(new URL(provider.getTokenRefreshURL()))
           .withBody(String.format(
-              "code=%s&grant_type=authorization_code&redirect_uri=%s&client_id=%s&client_secret=%s",
+              "code=%s&redirect_uri=%s&client_id=%s&client_secret=%s&grant_type=authorization_code",
               code, redirectURI, clientCreds.getClientId(), clientCreds.getClientSecret()))
           .build();
     } catch (MalformedURLException e) {
