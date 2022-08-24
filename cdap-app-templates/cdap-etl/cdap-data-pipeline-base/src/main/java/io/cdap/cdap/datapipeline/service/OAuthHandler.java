@@ -139,10 +139,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       try {
         putOAuthCredentialRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
                 PutOAuthCredentialRequest.class);
-        if (putOAuthCredentialRequest.getOneTimeCode().isEmpty()) {
+        if (putOAuthCredentialRequest.getOneTimeCode() == null) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
         }
-        if (putOAuthCredentialRequest.getRedirectURI().isEmpty()) {
+        if (putOAuthCredentialRequest.getRedirectURI() == null) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing redirect URI");
         }
       } catch (JsonSyntaxException e) {
@@ -175,7 +175,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON: " + e.getMessage(), e);
       }
 
-      if (refreshTokenResponse.getRefreshToken().isEmpty()) {
+      if (refreshTokenResponse.getRefreshToken() == null) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body did not contain refresh token");
       }
@@ -225,7 +225,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       } catch (JsonSyntaxException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error parsing JSON response", e);
       }
-      if (refreshTokenResponse.getAccessToken().isEmpty()) {
+      if (refreshTokenResponse.getAccessToken() == null) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body does not have refresh token");
       }
