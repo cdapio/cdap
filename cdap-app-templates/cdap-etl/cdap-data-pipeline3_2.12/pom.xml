@@ -108,10 +108,16 @@
     <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-http</artifactId>
+      <version>${cdap.common.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.6</version>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>

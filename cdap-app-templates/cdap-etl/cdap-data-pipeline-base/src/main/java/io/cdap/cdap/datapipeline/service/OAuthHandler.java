@@ -37,6 +37,7 @@ import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -49,6 +50,8 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 
 /**
  * OAuth handler.
@@ -71,7 +74,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   @Path(API_VERSION + "/oauth/provider/{provider}/authurl")
   public void getAuthURL(HttpServiceRequest request, HttpServiceResponder responder,
                          @PathParam("provider") String provider,
-                         @QueryParam("redirect_uri") String redirectURI) {
+                         @QueryParam("redirect_uri") String redirectURI,
+                         @QueryParam("redirect_url") String redirectURL) {
     try {
       OAuthProvider oauthProvider = getProvider(provider);
 
@@ -83,6 +87,11 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         formatURL += "&";
       }
       formatURL += "client_id=%s&redirect_uri=%s";
+
+      // Maintaining backward compatibility for the apps using "redirect_url" parameter.
+      if (StringUtils.isEmpty(redirectURI)) {
+        redirectURI = redirectURL;
+      }
 
       String response = String.format(
           formatURL, loginUrl, oauthProvider.getClientCredentials().getClientId(), redirectURI);
@@ -139,10 +148,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       try {
         putOAuthCredentialRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
                 PutOAuthCredentialRequest.class);
-        if (putOAuthCredentialRequest.getOneTimeCode() == null) {
+        if (StringUtils.isEmpty(putOAuthCredentialRequest.getOneTimeCode())) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
         }
-        if (putOAuthCredentialRequest.getRedirectURI() == null) {
+        if (StringUtils.isEmpty(putOAuthCredentialRequest.getRedirectURI())) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing redirect URI");
         }
       } catch (JsonSyntaxException e) {
@@ -175,7 +184,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON: " + e.getMessage(), e);
       }
 
-      if (refreshTokenResponse.getRefreshToken() == null) {
+      if (StringUtils.isEmpty(refreshTokenResponse.getRefreshToken())) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body did not contain refresh token");
       }
@@ -225,7 +234,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       } catch (JsonSyntaxException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error parsing JSON response", e);
       }
-      if (refreshTokenResponse.getAccessToken() == null) {
+      if (StringUtils.isEmpty(refreshTokenResponse.getAccessToken())) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body does not have refresh token");
       }
@@ -271,8 +280,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON", e);
     }
 
-    return refreshTokenResponse.getAccessToken() != null &&
-        !refreshTokenResponse.getAccessToken().isEmpty();
+    return !StringUtils.isEmpty(refreshTokenResponse.getAccessToken());
   }
 
   private HttpRequest createGetRefreshTokenRequest(OAuthProvider provider, String code, String redirectURI)
@@ -283,6 +291,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
           .withBody(String.format(
               "code=%s&redirect_uri=%s&client_id=%s&client_secret=%s&grant_type=authorization_code",
               code, redirectURI, clientCreds.getClientId(), clientCreds.getClientSecret()))
+          .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
           .build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
