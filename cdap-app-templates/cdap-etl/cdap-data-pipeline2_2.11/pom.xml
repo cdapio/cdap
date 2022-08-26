@@ -108,7 +108,6 @@
     <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-http</artifactId>
-      <version>${cdap.common.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
