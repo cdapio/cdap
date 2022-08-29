@@ -29,6 +29,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.FieldOperationTypeAdapter;
 import io.cdap.cdap.etl.common.PhaseSpec;
@@ -82,6 +83,7 @@ public class SparkPreparer extends AbstractSparkPreparer {
     throws TransactionFailureException, InstantiationException, IOException {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
+    fqns = new HashMap<>();
 
     File configFile = File.createTempFile("HydratorSpark", ".config");
     if (!configFile.getParentFile().exists()) {
@@ -115,6 +117,7 @@ public class SparkPreparer extends AbstractSparkPreparer {
       }
       // Put the collected field operations in workflow token
       token.put(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN, GSON.toJson(stageOperations));
+      token.put("FQNS", GSON.toJson(fqns));
     }
     return finishers;
   }
@@ -125,7 +128,12 @@ public class SparkPreparer extends AbstractSparkPreparer {
     ContextProvider<SparkBatchSourceContext> contextProvider =
       dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, stageSpec);
     return new SubmitterPlugin<>(stageName, context, batchSource, contextProvider,
-                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
+                                 ctx -> {
+                                   stageOperations.put(stageName, ctx.getFieldOperations());
+                                   ctx.getFieldOperations().stream().forEach(op -> {
+                                     fqns.put(stageName, ((FieldReadOperation) op).getSource().getName());
+                                   });
+                                 });
   }
 
   @Override

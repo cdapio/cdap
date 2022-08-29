@@ -70,6 +70,7 @@ public abstract class PipelinePhasePreparer {
   protected final MacroEvaluator macroEvaluator;
   protected final PipelineRuntime pipelineRuntime;
   protected Map<String, List<FieldOperation>> stageOperations;
+  protected Map<String, String> fqns;
 
   public PipelinePhasePreparer(PluginContext pluginContext, Metrics metrics, MacroEvaluator macroEvaluator,
                                PipelineRuntime pipelineRuntime) {
