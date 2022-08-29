@@ -24,7 +24,6 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
-import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -35,7 +34,6 @@ import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineInput;
-import io.cdap.cdap.etl.api.engine.sql.SQLEngineInputTypeAdapter;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
@@ -92,7 +90,6 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
     .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
-    .registerTypeAdapter(Input.class, new SQLEngineInputTypeAdapter())
     .create();
 
   private transient JavaSparkContext jsc;
