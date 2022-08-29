@@ -37,7 +37,6 @@ import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -89,7 +88,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       formatURL += "client_id=%s&redirect_uri=%s";
 
       // Maintaining backward compatibility for the apps using "redirect_url" parameter.
-      if (StringUtils.isEmpty(redirectURI)) {
+      if (redirectURI == null || redirectURI.isEmpty()) {
         redirectURI = redirectURL;
       }
 
@@ -148,10 +147,12 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       try {
         putOAuthCredentialRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
                 PutOAuthCredentialRequest.class);
-        if (StringUtils.isEmpty(putOAuthCredentialRequest.getOneTimeCode())) {
+        if (putOAuthCredentialRequest.getOneTimeCode() == null ||
+            putOAuthCredentialRequest.getOneTimeCode().isEmpty()) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
         }
-        if (StringUtils.isEmpty(putOAuthCredentialRequest.getRedirectURI())) {
+        if (putOAuthCredentialRequest.getRedirectURI() == null ||
+            putOAuthCredentialRequest.getRedirectURI().isEmpty()) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing redirect URI");
         }
       } catch (JsonSyntaxException e) {
@@ -184,7 +185,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON: " + e.getMessage(), e);
       }
 
-      if (StringUtils.isEmpty(refreshTokenResponse.getRefreshToken())) {
+      if (refreshTokenResponse.getRefreshToken() == null || refreshTokenResponse.getRefreshToken().isEmpty()) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body did not contain refresh token");
       }
@@ -234,7 +235,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       } catch (JsonSyntaxException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error parsing JSON response", e);
       }
-      if (StringUtils.isEmpty(refreshTokenResponse.getAccessToken())) {
+      if (refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty()) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body does not have refresh token");
       }
@@ -280,7 +281,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON", e);
     }
 
-    return !StringUtils.isEmpty(refreshTokenResponse.getAccessToken());
+    return !(refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty());
   }
 
   private HttpRequest createGetRefreshTokenRequest(OAuthProvider provider, String code, String redirectURI)
