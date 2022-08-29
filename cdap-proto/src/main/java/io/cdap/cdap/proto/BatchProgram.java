@@ -26,15 +26,25 @@ public class BatchProgram {
   protected final String appId;
   protected final ProgramType programType;
   protected final String programId;
+  protected final String appVersion;
+
+  public BatchProgram(String appId, ProgramType programType, String programId, String appVersion) {
+    this.appId = appId;
+    this.programType = programType;
+    this.programId = programId;
+    this.appVersion = appVersion;
+  }
 
   public BatchProgram(String appId, ProgramType programType, String programId) {
     this.appId = appId;
     this.programType = programType;
     this.programId = programId;
+    this.appVersion = "-SNAPSHOT";
   }
 
   public static BatchProgram from(ProgramRecord programRecord) {
-    return new BatchProgram(programRecord.getApp(), programRecord.getType(), programRecord.getName());
+    return new BatchProgram(programRecord.getApp(), programRecord.getType(), programRecord.getName(),
+                            programRecord.getAppVersion());
   }
 
   public String getAppId() {

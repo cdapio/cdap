@@ -1029,7 +1029,8 @@ public class ProgramLifecycleService {
                                     List<ProgramRecord> programRecords) throws Exception {
     for (ProgramSpecification programSpec : programSpecs) {
       if (hasAccess(namespaceId.app(appId).program(type, programSpec.getName()))) {
-        programRecords.add(new ProgramRecord(type, appId, programSpec.getName(), programSpec.getDescription()));
+        programRecords.add(new ProgramRecord(type, appId, programSpec.getName(), programSpec.getDescription(),
+                                             namespaceId.app(appId).getVersion()));
       }
     }
   }

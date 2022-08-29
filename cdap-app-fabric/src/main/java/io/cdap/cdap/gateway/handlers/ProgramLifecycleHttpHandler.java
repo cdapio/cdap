@@ -1580,7 +1580,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = programHistory.getProgramId();
       Exception exception = programHistory.getException();
       BatchProgram batchProgram = new BatchProgram(programId.getApplication(), programId.getType(),
-                                                   programId.getProgram());
+                                                   programId.getProgram(), programId.getVersion());
       if (exception == null) {
         response.add(new BatchProgramHistory(batchProgram, HttpResponseStatus.OK.code(), null,
                                              programHistory.getRuns()));

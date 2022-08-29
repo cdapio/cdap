@@ -1229,7 +1229,7 @@ public abstract class AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
 
     List<BatchProgram> batchPrograms = programIds.stream()
-      .map(id -> new BatchProgram(id.getApplication(), id.getType(), id.getProgram()))
+      .map(id -> new BatchProgram(id.getApplication(), id.getType(), id.getProgram(), id.getVersion()))
       .collect(Collectors.toList());
     HttpResponse response = doPost(versionedUrl, GSON.toJson(batchPrograms));
     assertResponseCode(200, response);
@@ -1280,7 +1280,8 @@ public abstract class AppFabricTestBase {
 
   protected List<BatchProgramHistory> getProgramRuns(NamespaceId namespace, List<ProgramId> programs) throws Exception {
     List<BatchProgram> request = programs.stream()
-      .map(program -> new BatchProgram(program.getApplication(), program.getType(), program.getProgram()))
+      .map(program -> new BatchProgram(program.getApplication(), program.getType(), program.getProgram(),
+                                       program.getVersion()))
       .collect(Collectors.toList());
 
     HttpResponse response = doPost(getVersionedAPIPath("runs", namespace.getNamespace()), GSON.toJson(request));

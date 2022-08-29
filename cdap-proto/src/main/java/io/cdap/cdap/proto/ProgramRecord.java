@@ -24,12 +24,22 @@ public class ProgramRecord {
   private final String app;
   private final String name;
   private final String description;
+  private final String appVersion;
 
   public ProgramRecord(ProgramType type, String app, String name, String description) {
     this.type = type;
     this.app = app;
     this.name = name;
     this.description = description;
+    this.appVersion = "-SNAPSHOT";
+  }
+
+  public ProgramRecord(ProgramType type, String app, String name, String description, String appVersion) {
+    this.type = type;
+    this.app = app;
+    this.name = name;
+    this.description = description;
+    this.appVersion = appVersion;
   }
 
   public ProgramType getType() {
@@ -46,5 +56,9 @@ public class ProgramRecord {
 
   public String getDescription() {
     return description;
+  }
+
+  public String getAppVersion() {
+    return appVersion;
   }
 }
