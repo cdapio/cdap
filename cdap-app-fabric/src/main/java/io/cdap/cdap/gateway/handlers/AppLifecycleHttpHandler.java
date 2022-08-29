@@ -399,9 +399,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") final String namespaceId,
                                @PathParam("app-id") final String appId,
                                @PathParam("version-id") final String versionId) throws Exception {
-    ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
-    applicationLifecycleService.removeApplication(id);
-    responder.sendStatus(HttpResponseStatus.OK);
+    if (configuration.getBoolean(Constants.AppFabric.APP_VERSION_DELETION_ENABLED, false)) {
+      ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
+      applicationLifecycleService.removeApplication(id);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } else {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+              "Deletion of specific app version is not allowed.");
+    }
   }
 
   /**

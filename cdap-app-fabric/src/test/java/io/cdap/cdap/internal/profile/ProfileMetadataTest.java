@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.profile;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -191,7 +192,7 @@ public class ProfileMetadataTest extends AppFabricTestBase {
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
+      AppFabricTestBase.cConfiguration.setBoolean(Constants.AppFabric.APP_VERSION_DELETION_ENABLED, true);
       deletePreferences(getPreferenceURI(), 200);
       deleteApp(defaultAppId, 200);
 

@@ -265,6 +265,9 @@ public final class Constants {
     // This config is not present in the cdap-default.xml as it is only set internally by CDAP.
     public static final String PROGRAM_REMOTE_RUNNER = "app.program.remote.runner";
 
+    //  A boolean value cConf entry to tell whether the deletion of app versions is enabled or not.
+    public static final String APP_VERSION_DELETION_ENABLED = "app.version.deletion.enabled";
+
     /**
      * Guice named bindings.
      */

@@ -103,6 +103,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     metadataStorage = getInjector().getInstance(MetadataStorage.class);
     capabilityWriter = getInjector().getInstance(CapabilityWriter.class);
+    AppFabricTestBase.cConfiguration.setBoolean(Constants.AppFabric.APP_VERSION_DELETION_ENABLED, true);
   }
 
   @AfterClass
