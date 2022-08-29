@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.etl.api.aggregation.DeduplicateAggregationDefinition;
 import io.cdap.cdap.etl.api.aggregation.GroupByAggregationDefinition;
+import io.cdap.cdap.etl.api.aggregation.WindowsAggregationDefinition;
 
 import java.util.Map;
 
@@ -89,5 +90,9 @@ public interface Relation {
    */
   default Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
     return new InvalidRelation("Deduplicate is unsupported");
+  }
+
+  default Relation window(WindowsAggregationDefinition aggregationDefinition) {
+    return new InvalidRelation("Windows is unsupported");
   }
 }
