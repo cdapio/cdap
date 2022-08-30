@@ -63,6 +63,7 @@ import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.SQLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,6 +150,13 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return joinedInputs.flatMap(new JoinMergeFunction<>(
       pluginFunctionContext, functionCacheFactory.newCache()));
+  }
+
+  @Override
+  protected void processInSource(StageSpec stageSpec, FunctionCache.Factory functionCacheFactory,
+                                 StageStatisticsCollector collector,
+                                 VoidFunction<SparkCollection<RecordInfo<Object>>> processingFunction) {
+    throw new UnsupportedOperationException("Operation not supported");
   }
 
   @Override

@@ -20,6 +20,8 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.streaming.api.java.JavaDStream;
 
 import java.io.Serializable;
@@ -69,4 +71,10 @@ public abstract class StreamingSource<T> implements PipelineConfigurable,
   public int getRequiredExecutors() {
     return 1;
   }
+
+  public void  processAtLeastOnce(StreamingContext context, VoidFunction<JavaRDD<T>>  processingFunction) throws Exception{
+    // no-op
+  }
+
+
 }

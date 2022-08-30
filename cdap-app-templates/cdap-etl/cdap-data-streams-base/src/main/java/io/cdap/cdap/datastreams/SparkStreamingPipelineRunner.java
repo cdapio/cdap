@@ -39,6 +39,8 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRunner;
+import io.cdap.cdap.etl.spark.batch.RDDCollection;
+import io.cdap.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
@@ -52,6 +54,8 @@ import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinOn;
 import io.cdap.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -83,27 +87,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                           FunctionCache.Factory functionCacheFactory,
                                                           StageStatisticsCollector collector) throws Exception {
-    StreamingSource<Object> source;
-    if (checkpointsDisabled) {
-      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-      source = pluginFunctionContext.createPlugin();
-    } else {
-      // check for macros in any StreamingSource. If checkpoints are enabled,
-      // SparkStreaming will serialize all InputDStreams created in the checkpoint, which means
-      // the InputDStream is deserialized directly from the checkpoint instead of instantiated through CDAP.
-      // This means there isn't any way for us to perform macro evaluation on sources when they are loaded from
-      // checkpoints. We can work around this in all other pipeline stages by dynamically instantiating the
-      // plugin in all DStream functions, but can't for InputDStreams because the InputDStream constructor
-      // adds itself to the context dag. Yay for constructors with global side effects.
-      // TODO: (HYDRATOR-1030) figure out how to do this at configure time instead of run time
-      MacroEvaluator macroEvaluator = new ErrorMacroEvaluator(
-        "Due to spark limitations, macro evaluation is not allowed in streaming sources when checkpointing " +
-          "is enabled.");
-      PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
-                                                                   spec.isStageLoggingEnabled(),
-                                                                   spec.isProcessTimingEnabled());
-      source = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
-    }
+    StreamingSource<Object> source = getStreamingSource(stageSpec, collector);
 
     DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
     StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, streamingContext);
@@ -117,6 +101,30 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       .map(new WrapOutputTransformFunction<>(stageSpec.getName()));
     return new DStreamCollection<>(sec, functionCacheFactory, outputDStream);
   }
+
+  private StreamingSource<Object> getStreamingSource(StageSpec stageSpec,
+                                                     StageStatisticsCollector collector) throws Exception {
+    if (checkpointsDisabled) {
+      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+      return pluginFunctionContext.createPlugin();
+    }
+    // check for macros in any StreamingSource. If checkpoints are enabled,
+    // SparkStreaming will serialize all InputDStreams created in the checkpoint, which means
+    // the InputDStream is deserialized directly from the checkpoint instead of instantiated through CDAP.
+    // This means there isn't any way for us to perform macro evaluation on sources when they are loaded from
+    // checkpoints. We can work around this in all other pipeline stages by dynamically instantiating the
+    // plugin in all DStream functions, but can't for InputDStreams because the InputDStream constructor
+    // adds itself to the context dag. Yay for constructors with global side effects.
+    // TODO: (HYDRATOR-1030) figure out how to do this at configure time instead of run time
+    MacroEvaluator macroEvaluator = new ErrorMacroEvaluator(
+      "Due to spark limitations, macro evaluation is not allowed in streaming sources when checkpointing " +
+        "is enabled.");
+    PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                 spec.isStageLoggingEnabled(),
+                                                                 spec.isProcessTimingEnabled());
+    return pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
+  }
+
 
   @Override
   protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec,
@@ -141,6 +149,38 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     JavaDStream<Object> result = pairDStream.transform(
       new DynamicJoinMerge<>(dynamicDriverContext, functionCacheFactory.newCache()));
     return new DStreamCollection<>(sec, functionCacheFactory, result);
+  }
+
+  @Override
+  protected void processInSource(StageSpec stageSpec, FunctionCache.Factory functionCacheFactory,
+                                 StageStatisticsCollector collector,
+                                 VoidFunction<SparkCollection<RecordInfo<Object>>> processingFunction) throws
+    Exception {
+    StreamingSource<Object> streamingSource = getStreamingSource(stageSpec, collector);
+    StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, streamingContext);
+    DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
+    VoidFunction<JavaRDD<Object>> wrappedProcessingFunction = new VoidFunction<JavaRDD<Object>>() {
+
+      @Override
+      public void call(JavaRDD<Object> rdd) throws Exception {
+        //JavaRDD rdd = objectSparkCollection.getUnderlying();
+        if (dataTracer.isEnabled()) {
+          // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
+          rdd = new LimitingFunction<>(spec.getNumOfRecordsPreview()).call(rdd);
+        }
+        rdd = new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer).call(
+          rdd);
+        JavaRDD<RecordInfo<Object>> wrapped = rdd.map(new WrapOutputTransformFunction<>(stageSpec.getName()));
+        RDDCollection<RecordInfo<Object>> rddCollection = new RDDCollection<RecordInfo<Object>>(sec,
+                                                                                                functionCacheFactory,
+                                                                                                streamingContext.sparkContext(),
+                                                                                                null, null,
+                                                                                                new SparkBatchSinkFactory(),
+                                                                                                wrapped);
+        processingFunction.call(rddCollection);
+      }
+    };
+    streamingSource.processAtLeastOnce(sourceContext, wrappedProcessingFunction);
   }
 
   @Override

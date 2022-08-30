@@ -38,6 +38,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
   private final boolean isUnitTest;
   private final String checkpointDirectory;
   private final String pipelineId;
+  private final boolean saveState;
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
                                   Resources resources, Resources driverResources, Resources clientResources,
@@ -45,7 +46,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
                                   String extraJavaOpts, int numOfRecordsPreview,
                                   boolean stopGracefully, Map<String, String> properties,
                                   boolean checkpointsDisabled, boolean isUnitTest, String checkpointDirectory,
-                                  String pipelineId, Set<String> connectionsUsed, Engine engine) {
+                                  String pipelineId, Set<String> connectionsUsed, Engine engine, boolean saveState) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, properties, connectionsUsed, engine);
     this.batchIntervalMillis = batchIntervalMillis;
@@ -55,6 +56,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     this.isUnitTest = isUnitTest;
     this.checkpointDirectory = checkpointDirectory;
     this.pipelineId = pipelineId;
+    this.saveState = saveState;
   }
 
   public long getBatchIntervalMillis() {
@@ -146,6 +148,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     private boolean isUnitTest;
     private String checkpointDirectory;
     private String pipelineId;
+    private boolean saveState;
 
     public Builder(long batchIntervalMillis) {
       this(batchIntervalMillis, UUID.randomUUID().toString());
@@ -185,13 +188,18 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setSaveState(boolean saveState) {
+      this.saveState = saveState;
+      return this;
+    }
+
     @Override
     public DataStreamsPipelineSpec build() {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                          stageLoggingEnabled, processTimingEnabled, batchIntervalMillis, extraJavaOpts,
                                          numOfRecordsPreview, stopGracefully, properties,
                                          checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId,
-                                         connectionsUsed, Engine.SPARK);
+                                         connectionsUsed, Engine.SPARK, saveState);
     }
   }
 }
