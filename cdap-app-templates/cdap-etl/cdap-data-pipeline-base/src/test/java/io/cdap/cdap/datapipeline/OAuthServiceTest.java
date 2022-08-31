@@ -49,8 +49,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     HttpResponse getResponse = makeGetCall("provider/testprovider/authurl");
     Assert.assertEquals(200, getResponse.getResponseCode());
     String authURL = getResponse.getResponseBodyAsString();
-    Assert.assertEquals("http://www.example.com/login?response_type=code"
-        + "&client_id=clientid&redirect_uri=null&scope=refresh_token%20api", authURL);
+    Assert.assertEquals("http://www.example.com/login?client_id=clientid&redirect_uri=null", authURL);
   }
 
   @Test
