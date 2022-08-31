@@ -113,7 +113,7 @@ public final class ConnectionUtils {
     spec.getRelatedPlugins().forEach(pluginSpec -> relatedPlugins.add(
       new PluginDetail(pluginSpec.getName(), pluginSpec.getType(), pluginSpec.getProperties(), artifact,
                        spec.getSchema())));
-    return new ConnectorDetail(relatedPlugins);
+    return new ConnectorDetail(relatedPlugins, spec.getSupportedSampleTypes());
   }
 
   /**
