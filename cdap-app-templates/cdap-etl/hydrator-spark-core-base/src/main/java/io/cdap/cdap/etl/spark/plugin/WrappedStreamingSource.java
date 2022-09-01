@@ -31,12 +31,13 @@ import java.util.concurrent.Callable;
  * are setup correctly.
  *
  * @param <T> type of object contained in the stream
+ * @param <S> type of object contained in the stream
  */
-public class WrappedStreamingSource<T> extends StreamingSource<T> {
-  private final StreamingSource<T> source;
+public class WrappedStreamingSource<T, S> extends StreamingSource<T, S> {
+  private final StreamingSource<T, S> source;
   private final Caller caller;
 
-  public WrappedStreamingSource(StreamingSource<T> source, Caller caller) {
+  public WrappedStreamingSource(StreamingSource<T, S> source, Caller caller) {
     this.source = source;
     this.caller = caller;
   }
@@ -74,6 +75,16 @@ public class WrappedStreamingSource<T> extends StreamingSource<T> {
       @Override
       public JavaDStream<T> call() throws Exception {
         return source.getStream(context);
+      }
+    });
+  }
+
+  @Override
+  public JavaDStream<S> getStatefulStream(StreamingContext context) throws Exception {
+    return caller.call(new Callable<JavaDStream<S>>() {
+      @Override
+      public JavaDStream<S> call() throws Exception {
+        return source.getStatefulStream(context);
       }
     });
   }

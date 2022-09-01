@@ -93,7 +93,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
 
     for (StageSpec stageSpec : spec.getStages()) {
       if (StreamingSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
-        StreamingSource<Object> streamingSource = pluginContext.newPluginInstance(stageSpec.getName());
+        StreamingSource<Object, Object> streamingSource = pluginContext.newPluginInstance(stageSpec.getName());
         numSources = numSources + streamingSource.getRequiredExecutors();
       }
     }

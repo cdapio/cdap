@@ -23,6 +23,7 @@ import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
@@ -30,15 +31,22 @@ import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.plugin.JoinerBridge;
+import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRunner;
+import io.cdap.cdap.etl.spark.batch.RDDCollection;
+import io.cdap.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
@@ -49,17 +57,25 @@ import io.cdap.cdap.etl.spark.streaming.PairDStreamCollection;
 import io.cdap.cdap.etl.spark.streaming.function.CountingTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinOn;
+import io.cdap.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Driver for running pipelines using Spark Streaming.
@@ -70,6 +86,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   private final JavaStreamingContext streamingContext;
   private final DataStreamsPipelineSpec spec;
   private final boolean checkpointsDisabled;
+
+  private static final Logger LOG = LoggerFactory.getLogger(SparkStreamingPipelineRunner.class);
 
   public SparkStreamingPipelineRunner(JavaSparkExecutionContext sec, JavaStreamingContext streamingContext,
                                       DataStreamsPipelineSpec spec, boolean checkpointsDisabled) {
@@ -83,7 +101,24 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                           FunctionCache.Factory functionCacheFactory,
                                                           StageStatisticsCollector collector) throws Exception {
-    StreamingSource<Object> source;
+    StreamingSource<Object, Object> source = createPluginInstance(stageSpec, collector);
+
+    DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
+    StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, streamingContext);
+    JavaDStream<Object> javaDStream = source.getStream(sourceContext);
+    if (dataTracer.isEnabled()) {
+      // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
+      javaDStream = javaDStream.transform(new LimitingFunction<>(spec.getNumOfRecordsPreview()));
+    }
+    JavaDStream<RecordInfo<Object>> outputDStream = javaDStream
+      .transform(new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer))
+      .map(new WrapOutputTransformFunction<>(stageSpec.getName()));
+    return new DStreamCollection<>(sec, functionCacheFactory, outputDStream);
+  }
+
+  private StreamingSource<Object, Object> createPluginInstance(StageSpec stageSpec,
+                                                               StageStatisticsCollector collector) throws Exception {
+    StreamingSource<Object, Object> source;
     if (checkpointsDisabled) {
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
       source = pluginFunctionContext.createPlugin();
@@ -104,18 +139,109 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
                                                                    spec.isProcessTimingEnabled());
       source = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
     }
+    return source;
+  }
 
-    DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
-    StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, streamingContext);
-    JavaDStream<Object> javaDStream = source.getStream(sourceContext);
-    if (dataTracer.isEnabled()) {
-      // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
-      javaDStream = javaDStream.transform(new LimitingFunction<>(spec.getNumOfRecordsPreview()));
+  @Override
+  public void runStatefulPipeline(PhaseSpec phaseSpec, String sourcePluginType,
+                                  JavaSparkExecutionContext sec,
+                                  Map<String, Integer> stagePartitions,
+                                  PluginContext pluginContext,
+                                  Map<String, StageStatisticsCollector> collectors,
+                                  Set<String> uncombinableSinks,
+                                  boolean consolidateStages,
+                                  boolean cacheFunctions) throws Exception {
+    PipelinePhase pipelinePhase = phaseSpec.getPhase();
+    BasicArguments arguments = new BasicArguments(sec);
+    FunctionCache.Factory functionCacheFactory = FunctionCache.Factory.newInstance(cacheFunctions);
+    MacroEvaluator macroEvaluator =
+      new DefaultMacroEvaluator(arguments,
+                                sec.getLogicalStartTime(),
+                                sec.getSecureStore(),
+                                sec.getServiceDiscoverer(),
+                                sec.getNamespace());
+    Map<String, EmittedRecords> emittedRecords = new HashMap<>();
+
+    // should never happen, but removes warning
+    if (pipelinePhase.getDag() == null) {
+      throw new IllegalStateException("Pipeline phase has no connections.");
     }
-    JavaDStream<RecordInfo<Object>> outputDStream = javaDStream
-      .transform(new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer))
-      .map(new WrapOutputTransformFunction<>(stageSpec.getName()));
-    return new DStreamCollection<>(sec, functionCacheFactory, outputDStream);
+
+    Set<String> uncombinableStages = new HashSet<>(uncombinableSinks);
+    for (String uncombinableType : UNCOMBINABLE_PLUGIN_TYPES) {
+      pipelinePhase.getStagesOfType(uncombinableType).stream()
+        .map(StageSpec::getName)
+        .forEach(s -> uncombinableStages.add(s));
+    }
+
+    CombinerDag groupedDag = new CombinerDag(pipelinePhase.getDag(), uncombinableStages);
+    Map<String, Set<String>> groups = consolidateStages ? groupedDag.groupNodes() : Collections.emptyMap();
+    if (!groups.isEmpty()) {
+      LOG.debug("Stage consolidation is on.");
+      int groupNum = 1;
+      for (Set<String> group : groups.values()) {
+        LOG.debug("Group{}: {}", groupNum, group);
+        groupNum++;
+      }
+    }
+    Set<String> branchers = new HashSet<>();
+    for (String stageName : groupedDag.getNodes()) {
+      if (groupedDag.getNodeOutputs(stageName).size() > 1) {
+        branchers.add(stageName);
+      }
+    }
+    Set<String> shufflers = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE).stream()
+      .map(StageSpec::getName)
+      .collect(Collectors.toSet());
+
+    //Process source separately
+    String source = groupedDag.getTopologicalOrder().get(0);
+    StageSpec stageSpec = pipelinePhase.getStage(source);
+    StageStatisticsCollector collector = collectors.get(source) == null ? new NoopStageStatisticsCollector()
+      : collectors.get(source);
+    StreamingSource<Object, Object> pluginInstance = createPluginInstance(stageSpec, collector);
+    StreamingContext sourceStreamingContext = new DefaultStreamingContext(stageSpec, sec, streamingContext);
+    DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
+    JavaDStream<Object> statefulStream = pluginInstance.getStatefulStream(sourceStreamingContext);
+    statefulStream.foreachRDD((javaRDD, time) -> {
+      if (dataTracer.isEnabled()) {
+        // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
+        javaRDD = new LimitingFunction<>(spec.getNumOfRecordsPreview()).call(javaRDD);
+      }
+      javaRDD = new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer).call(
+        javaRDD);
+      JavaRDD<RecordInfo<Object>> wrapped = javaRDD.map(new WrapOutputTransformFunction<>(stageSpec.getName()));
+      RDDCollection<RecordInfo<Object>> rddCollection = new RDDCollection<>(sec,
+                                                                            functionCacheFactory,
+                                                                            streamingContext.sparkContext(),
+                                                                            null, null,
+                                                                            new SparkBatchSinkFactory(),
+                                                                            wrapped);
+      EmittedRecords.Builder emittedBuilder = EmittedRecords.builder();
+      EmittedRecords.Builder builder = addEmitted(emittedBuilder, pipelinePhase, stageSpec, rddCollection, groupedDag,
+                                                  branchers, shufflers, false, false);
+      emittedRecords.put(source, builder.build());
+      processDag(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
+                 functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups, branchers, shufflers);
+    });
+  }
+
+  //TODO - Do this for all sinks
+  @Override
+  protected Runnable getSinkTask(FunctionCache.Factory functionCacheFactory, StageSpec stageSpec,
+                                 SparkCollection<Object> stageData, PluginFunctionContext pluginFunctionContext) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          //TODO - get time from dstream
+          new StreamingBatchSinkFunction<>(sec, stageSpec, functionCacheFactory.newCache()).call(
+            stageData.getUnderlying(), Time.apply(System.currentTimeMillis()));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
   }
 
   @Override

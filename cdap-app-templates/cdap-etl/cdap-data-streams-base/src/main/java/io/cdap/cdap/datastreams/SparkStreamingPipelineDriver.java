@@ -290,7 +290,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
           sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.TRUE.toString()));
         boolean shouldCacheFunctions = Boolean.parseBoolean(
           sec.getRuntimeArguments().getOrDefault(Constants.CACHE_FUNCTIONS, Boolean.TRUE.toString()));
-        runner.runPipeline(phaseSpec, StreamingSource.PLUGIN_TYPE, sec, Collections.emptyMap(),
+        runner.runStatefulPipeline(phaseSpec, StreamingSource.PLUGIN_TYPE, sec, Collections.emptyMap(),
                            pluginContext, Collections.emptyMap(), uncombinableSinks, shouldConsolidateStages,
                            shouldCacheFunctions);
       } catch (Exception e) {

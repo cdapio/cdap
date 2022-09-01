@@ -55,10 +55,11 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = StreamingSource.PLUGIN_TYPE)
 @Name("Mock")
-public class MockSource extends StreamingSource<StructuredRecord> {
+public class MockSource extends StreamingSource<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Gson GSON = new Gson();
-  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() {
+  }.getType();
 
   private final Conf conf;
 
@@ -191,7 +192,7 @@ public class MockSource extends StreamingSource<StructuredRecord> {
     properties.put("intervalMillis", new PluginPropertyField("intervalMillis", "", "long", false, false));
     properties.put("referenceName", new PluginPropertyField("referenceName", "", "string", false, false));
     return PluginClass.builder().setName("Mock").setType(StreamingSource.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockSource.class.getName()).setProperties(properties)
-             .setConfigFieldName("conf").build();
+      .setDescription("").setClassName(MockSource.class.getName()).setProperties(properties)
+      .setConfigFieldName("conf").build();
   }
 }

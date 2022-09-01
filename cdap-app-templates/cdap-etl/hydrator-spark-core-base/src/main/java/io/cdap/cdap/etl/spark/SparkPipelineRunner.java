@@ -109,7 +109,7 @@ import javax.annotation.Nullable;
  */
 public abstract class SparkPipelineRunner {
   private static final Logger LOG = LoggerFactory.getLogger(SparkPipelineRunner.class);
-  private static final Set<String> UNCOMBINABLE_PLUGIN_TYPES = ImmutableSet.of(
+  protected static final Set<String> UNCOMBINABLE_PLUGIN_TYPES = ImmutableSet.of(
     BatchJoiner.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, Constants.Connector.PLUGIN_TYPE,
     SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
@@ -371,6 +371,227 @@ public abstract class SparkPipelineRunner {
     if (error != null) {
       throw Throwables.propagate(error);
     }
+  }
+
+  public void runStatefulPipeline(PhaseSpec phaseSpec, String sourcePluginType,
+                                  JavaSparkExecutionContext sec,
+                                  Map<String, Integer> stagePartitions,
+                                  PluginContext pluginContext,
+                                  Map<String, StageStatisticsCollector> collectors,
+                                  Set<String> uncombinableSinks,
+                                  boolean consolidateStages,
+                                  boolean cacheFunctions) throws Exception {
+
+  }
+
+  protected void processDag(PhaseSpec phaseSpec, String sourcePluginType, JavaSparkExecutionContext sec,
+                          Map<String, Integer> stagePartitions, PluginContext pluginContext,
+                          Map<String, StageStatisticsCollector> collectors, PipelinePhase pipelinePhase,
+                          FunctionCache.Factory functionCacheFactory, MacroEvaluator macroEvaluator,
+                          Map<String, EmittedRecords> emittedRecords, CombinerDag groupedDag,
+                          Map<String, Set<String>> groups, Set<String> branchers,
+                          Set<String> shufflers) throws Exception {
+    Collection<Runnable> sinkRunnables = new ArrayList<>();
+    List<String> topologicalOrder = groupedDag.getTopologicalOrder();
+    for (int i = 1; i < topologicalOrder.size(); i++) {
+      String stageName = topologicalOrder.get(i);
+      if (groups.containsKey(stageName)) {
+        sinkRunnables.add(handleGroup(sec, phaseSpec, groups.get(stageName), groupedDag.getNodeInputs(stageName),
+                                      emittedRecords, collectors));
+        continue;
+      }
+
+      StageSpec stageSpec = pipelinePhase.getStage(stageName);
+      String pluginType = stageSpec.getPluginType();
+
+      EmittedRecords.Builder emittedBuilder = EmittedRecords.builder();
+
+      // don't want to do an additional filter for stages that can emit errors,
+      // but aren't connected to an ErrorTransform
+      // similarly, don't want to do an additional filter for alerts when the stage isn't connected to
+      // an AlertPublisher
+      boolean hasErrorOutput = false;
+      boolean hasAlertOutput = false;
+      Set<String> outputs = pipelinePhase.getStageOutputs(stageName);
+      for (String output : outputs) {
+        String outputPluginType = pipelinePhase.getStage(output).getPluginType();
+        //noinspection ConstantConditions
+        if (ErrorTransform.PLUGIN_TYPE.equals(outputPluginType)) {
+          hasErrorOutput = true;
+        } else if (AlertPublisher.PLUGIN_TYPE.equals(outputPluginType)) {
+          hasAlertOutput = true;
+        }
+      }
+
+      SparkCollection<Object> stageData = null;
+
+      Map<String, SparkCollection<Object>> inputDataCollections = new HashMap<>();
+      Set<String> stageInputs = pipelinePhase.getStageInputs(stageName);
+      for (String inputStageName : stageInputs) {
+        StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
+        if (inputStageSpec == null) {
+          // means the input to this stage is in a separate phase. For example, it is an action.
+          continue;
+        }
+        String port = null;
+        // if this stage is a connector like c1.connector, the outputPorts will contain the original 'c1' as
+        // a key, but not 'c1.connector'. Similarly, if the input stage is a connector, it won't have any output ports
+        // however, this is fine since we know that the output of a connector stage is always normal output,
+        // not errors or alerts or output port records
+        if (!Constants.Connector.PLUGIN_TYPE.equals(inputStageSpec.getPluginType()) &&
+          !Constants.Connector.PLUGIN_TYPE.equals(pluginType)) {
+          port = inputStageSpec.getOutputPorts().get(stageName).getPort();
+        }
+        SparkCollection<Object> inputRecords = port == null ?
+          emittedRecords.get(inputStageName).outputRecords :
+          emittedRecords.get(inputStageName).outputPortRecords.get(port);
+        inputDataCollections.put(inputStageName, inputRecords);
+      }
+
+      // if this stage has multiple inputs, and is not a joiner plugin, or an error transform
+      // initialize the stageRDD as the union of all input RDDs.
+      if (!inputDataCollections.isEmpty()) {
+        Iterator<SparkCollection<Object>> inputCollectionIter = inputDataCollections.values().iterator();
+        stageData = inputCollectionIter.next();
+        // don't union inputs records if we're joining or if we're processing errors
+        while (!BatchJoiner.PLUGIN_TYPE.equals(pluginType) && !ErrorTransform.PLUGIN_TYPE.equals(pluginType)
+          && inputCollectionIter.hasNext()) {
+          stageData = stageData.union(inputCollectionIter.next());
+        }
+      }
+
+      boolean isConnectorSource =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSources().contains(stageName);
+      boolean isConnectorSink =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSinks().contains(stageName);
+
+      StageStatisticsCollector collector = collectors.get(stageName) == null ? new NoopStageStatisticsCollector()
+        : collectors.get(stageName);
+
+      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+
+      if (stageData == null) {
+
+        // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
+        // null in the other else-if conditions
+        if (sourcePluginType.equals(pluginType) || isConnectorSource) {
+          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, functionCacheFactory, collector);
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+        } else {
+          throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
+        }
+
+      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
+        sinkRunnables.add(getSinkTask(functionCacheFactory, stageSpec, stageData, pluginFunctionContext));
+      } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
+
+        SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
+        sinkRunnables.add(stageData.createStoreTask(stageSpec, sparkSink));
+
+      } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
+
+        // union all the alerts coming into this stage
+        SparkCollection<Alert> inputAlerts = null;
+        for (String inputStage : stageInputs) {
+          SparkCollection<Alert> inputErrorsFromStage = emittedRecords.get(inputStage).alertRecords;
+          if (inputErrorsFromStage == null) {
+            continue;
+          }
+          if (inputAlerts == null) {
+            inputAlerts = inputErrorsFromStage;
+          } else {
+            inputAlerts = inputAlerts.union(inputErrorsFromStage);
+          }
+        }
+
+        if (inputAlerts != null) {
+          inputAlerts.publishAlerts(stageSpec, collector);
+        }
+
+      } else if (ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
+
+        // union all the errors coming into this stage
+        SparkCollection<ErrorRecord<Object>> inputErrors = null;
+        for (String inputStage : stageInputs) {
+          SparkCollection<ErrorRecord<Object>> inputErrorsFromStage = emittedRecords.get(inputStage).errorRecords;
+          if (inputErrorsFromStage == null) {
+            continue;
+          }
+          if (inputErrors == null) {
+            inputErrors = inputErrorsFromStage;
+          } else {
+            inputErrors = inputErrors.union(inputErrorsFromStage);
+          }
+        }
+
+        if (inputErrors != null) {
+          SparkCollection<RecordInfo<Object>> combinedData = inputErrors.flatMap(
+            stageSpec,
+            new ErrorTransformFunction<Object, Object>(pluginFunctionContext, functionCacheFactory.newCache()));
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
+        }
+
+      } else {
+        Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
+        Optional<EmittedRecords.Builder> declarativeBuilder = tryRelationalTransform(
+          pipelinePhase, groupedDag, branchers, shufflers, stageName, stageSpec, emittedBuilder,
+          hasErrorOutput, hasAlertOutput, stageData, inputDataCollections, plugin);
+
+        if (declarativeBuilder.isPresent()) {
+          emittedBuilder = declarativeBuilder.get();
+        } else {
+          emittedBuilder = transform(
+            emittedBuilder, stagePartitions, pipelinePhase, functionCacheFactory, groupedDag, branchers, shufflers,
+            stageName, stageSpec, pluginType, hasErrorOutput, hasAlertOutput,
+            stageData, inputDataCollections, collector, pluginFunctionContext, plugin);
+        }
+
+      }
+
+      emittedRecords.put(stageName, emittedBuilder.build());
+    }
+
+    boolean shouldWriteInParallel = Boolean.parseBoolean(
+      sec.getRuntimeArguments().get("pipeline.spark.parallel.sinks.enabled"));
+    if (!shouldWriteInParallel) {
+      for (Runnable runnable : sinkRunnables) {
+        runnable.run();
+      }
+      return;
+    }
+
+    Collection<Future> sinkFutures = new ArrayList<>(sinkRunnables.size());
+    ExecutorService executorService = Executors.newFixedThreadPool(sinkRunnables.size(), new ThreadFactoryBuilder()
+      .setNameFormat("pipeline-sink-task")
+      .build());
+    for (Runnable runnable : sinkRunnables) {
+      sinkFutures.add(executorService.submit(runnable));
+    }
+
+    Throwable error = null;
+    Iterator<Future> futureIter = sinkFutures.iterator();
+    for (Future future : sinkFutures) {
+      try {
+        future.get();
+      } catch (ExecutionException e) {
+        error = e.getCause();
+        break;
+      } catch (InterruptedException e) {
+        break;
+      }
+    }
+    executorService.shutdownNow();
+    if (error != null) {
+      throw Throwables.propagate(error);
+    }
+  }
+
+  protected Runnable getSinkTask(FunctionCache.Factory functionCacheFactory, StageSpec stageSpec,
+                                 SparkCollection<Object> stageData, PluginFunctionContext pluginFunctionContext) {
+    return stageData.createStoreTask(stageSpec, new BatchSinkFunction(pluginFunctionContext,
+                                                                      functionCacheFactory.newCache()));
   }
 
   /**
@@ -1013,7 +1234,7 @@ public abstract class SparkPipelineRunner {
     return collection.map(new RecordInfoWrapper<>(stageName));
   }
 
-  private EmittedRecords.Builder addEmitted(EmittedRecords.Builder builder, PipelinePhase pipelinePhase,
+  protected EmittedRecords.Builder addEmitted(EmittedRecords.Builder builder, PipelinePhase pipelinePhase,
                                             StageSpec stageSpec, SparkCollection<RecordInfo<Object>> stageData,
                                             Dag dag, Set<String> branchers, Set<String> shufflers,
                                             boolean hasErrors, boolean hasAlerts) {
@@ -1072,7 +1293,7 @@ public abstract class SparkPipelineRunner {
   /**
    * Holds all records emitted by a stage.
    */
-  private static class EmittedRecords {
+  protected static class EmittedRecords {
     private final SparkCollection<RecordInfo<Object>> rawData;
     private final Map<String, SparkCollection<Object>> outputPortRecords;
     private final SparkCollection<Object> outputRecords;
@@ -1091,11 +1312,11 @@ public abstract class SparkPipelineRunner {
       this.alertRecords = alertRecords;
     }
 
-    private static Builder builder() {
+    public static Builder builder() {
       return new Builder();
     }
 
-    private static class Builder {
+    public static class Builder {
       private SparkCollection<RecordInfo<Object>> rawData;
       private Map<String, SparkCollection<Object>> outputPortRecords;
       private SparkCollection<Object> outputRecords;
@@ -1131,7 +1352,7 @@ public abstract class SparkPipelineRunner {
         return this;
       }
 
-      private EmittedRecords build() {
+      public EmittedRecords build() {
         return new EmittedRecords(rawData, outputPortRecords, outputRecords, errorRecords, alertRecords);
       }
     }

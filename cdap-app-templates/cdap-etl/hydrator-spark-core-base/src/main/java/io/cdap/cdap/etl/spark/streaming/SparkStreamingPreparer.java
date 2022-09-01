@@ -66,7 +66,7 @@ public class SparkStreamingPreparer extends AbstractSparkPreparer {
   protected SubmitterPlugin createStreamingSource(PipelinePluginInstantiator pluginInstantiator,
                                                   StageSpec stageSpec) throws InstantiationException {
     String stageName = stageSpec.getName();
-    StreamingSource<?> streamingSource = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+    StreamingSource<?, ?> streamingSource = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
     ContextProvider<DefaultStreamingSourceContext> contextProvider =
       dsContext -> new DefaultStreamingSourceContext(pipelineRuntime, stageSpec, dsContext, context);
     return new SubmitterPlugin<>(stageName, context, streamingSource, contextProvider,

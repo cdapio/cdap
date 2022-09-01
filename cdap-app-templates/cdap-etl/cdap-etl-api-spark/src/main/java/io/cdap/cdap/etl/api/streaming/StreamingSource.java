@@ -28,9 +28,10 @@ import java.io.Serializable;
  * Source for Spark Streaming pipelines.
  *
  * @param <T> type of object contained in the stream
+ * @param <S> type of object contained in the stateful stream
  */
 @Beta
-public abstract class StreamingSource<T> implements PipelineConfigurable,
+public abstract class StreamingSource<T, S> implements PipelineConfigurable,
   SubmitterLifecycle<StreamingSourceContext>, Serializable {
 
   public static final String PLUGIN_TYPE = "streamingsource";
@@ -44,6 +45,10 @@ public abstract class StreamingSource<T> implements PipelineConfigurable,
    * @return the stream to read from.
    */
   public abstract JavaDStream<T> getStream(StreamingContext context) throws Exception;
+
+  public JavaDStream<S> getStatefulStream(StreamingContext context) throws Exception {
+    throw new UnsupportedOperationException();
+  }
 
   @Override
   public void prepareRun(StreamingSourceContext context) throws Exception {
