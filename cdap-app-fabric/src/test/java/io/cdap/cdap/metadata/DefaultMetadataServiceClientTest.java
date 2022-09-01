@@ -79,6 +79,23 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
                         getMetadataProperties(createEntity, MetadataScope.USER));
     Assert.assertEquals(testMetadata.getTags(MetadataScope.USER),
                         getMetadataTags(createEntity, MetadataScope.USER));
+
+    // confirm that recreating a metadata will generate brand-new tags and properties
+    final Metadata overwrite = new Metadata(
+      ImmutableSet.of(new ScopedName(MetadataScope.SYSTEM, "tag0"),
+                      new ScopedName(MetadataScope.USER, "c")),
+      ImmutableMap.of(new ScopedName(MetadataScope.SYSTEM, "key0"), "val0",
+                      new ScopedName(MetadataScope.SYSTEM, "key1"), "val1",
+                      new ScopedName(MetadataScope.USER, "z"), "4"));
+    createMetadataMutation(new MetadataMutation.Create(createEntity, overwrite, CREATE_DIRECTIVES));
+    Assert.assertEquals(overwrite.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(createEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(overwrite.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(createEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(overwrite.getProperties(MetadataScope.USER),
+                        getMetadataProperties(createEntity, MetadataScope.USER));
+    Assert.assertEquals(overwrite.getTags(MetadataScope.USER),
+                        getMetadataTags(createEntity, MetadataScope.USER));
   }
 
   @Test
