@@ -110,6 +110,16 @@ public final class ProgramOptionConstants {
   public static final String PLUGIN_DIR = "pluginDir";
 
   /**
+   * Option to hash value of local file path of a directory containing plugins artifacts.
+   */
+  public static final String PLUGIN_DIR_HASH = "pluginDirHash";
+
+  /**
+   * Option to cacheable file names.
+   */
+  public static final String CACHEABLE_FILES = "cacheableFiles";
+
+  /**
    * Option to a local file path of a JAR file containing plugins artifacts.
    */
   public static final String PLUGIN_ARCHIVE = "pluginArchive";

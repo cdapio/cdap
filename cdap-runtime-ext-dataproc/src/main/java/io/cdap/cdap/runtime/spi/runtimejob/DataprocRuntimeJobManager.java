@@ -45,6 +45,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -184,9 +185,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     // TODO: CDAP-16408 use fixed directory for caching twill, application, artifact jars
     File tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
-    // on dataproc bucket the run root will be <bucket>/cdap-job/<runid>/. All the files for this run will be copied
-    // under that base dir.
+    // In dataproc bucket, the run root will be <bucket>/cdap-job/<runid>/. All the files without _cache_ in their
+    // filename for this run will be copied under that base dir.
     String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runInfo.getRun());
+    // In dataproc bucket, the shared folder for artifacts will be <bucket>/cdap-job/cached-artifacts.
+    // All instances of CacheableLocalFile will be copied to the shared folder if they do not exist.
+    String cacheRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, DataprocUtils.CDAP_CACHED_ARTIFACTS);
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
@@ -194,9 +198,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
       for (LocalFile fileToUpload : localFiles) {
-        String targetFilePath = getPath(runRootPath, fileToUpload.getName());
+        boolean isCacheable = fileToUpload instanceof CacheableLocalFile;
+        String targetFilePath = getPath(isCacheable ? cacheRootPath :
+                                          runRootPath, fileToUpload.getName());
         uploadFutures.add(
-          provisionerContext.execute(() -> uploadFile(bucket, targetFilePath, fileToUpload)).toCompletableFuture());
+          provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
+              uploadFile(bucket, targetFilePath, fileToUpload))
+            .toCompletableFuture());
       }
       List<LocalFile> uploadedFiles = new ArrayList<>();
       for (Future<LocalFile> uploadFuture : uploadFutures) {
@@ -320,6 +328,38 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     localFiles.sort(Comparator.comparingLong(LocalFile::getSize).reversed());
 
     return localFiles;
+  }
+
+  private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
+                                        LocalFile localFile) throws IOException, StorageException {
+    Storage storage = getStorageClient();
+    BlobId blobId = BlobId.of(bucket, targetFilePath);
+    Blob blob = storage.get(blobId);
+    LocalFile result;
+
+    if (blob != null && blob.exists()) {
+      result = new DefaultLocalFile(localFile.getName(),
+                                    URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
+                                    localFile.getLastModified(), localFile.getSize(),
+                                    localFile.isArchive(), localFile.getPattern());
+      LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
+                localFile.getURI(), bucket, targetFilePath);
+
+    } else {
+      result = uploadFile(bucket, targetFilePath, localFile);
+    }
+
+    long start = System.nanoTime();
+    String contentType = "application/octet-stream";
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+      .setCustomTime(System.currentTimeMillis())
+      .setContentType(contentType).build();
+
+    storage.update(blobInfo);
+
+    LOG.debug("Successfully set custom time for gs://{}/{} in {} ms.", bucket, targetFilePath,
+              TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+    return result;
   }
 
   /**
