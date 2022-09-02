@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.runtimejob.LocalFileDescription;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import org.apache.twill.api.LocalFile;
 
@@ -33,11 +34,11 @@ import java.util.Map;
 public class DefaultRuntimeJobInfo implements RuntimeJobInfo {
 
   private final ProgramRunInfo info;
-  private final Collection<? extends LocalFile> files;
+  private final Collection<LocalFileDescription> files;
   private final Map<String, String> jvmProperties;
 
 
-  public DefaultRuntimeJobInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files,
+  public DefaultRuntimeJobInfo(ProgramRunId programRunId, Collection<LocalFileDescription> files,
                                Map<String, String> jvmProperties) {
     this.info = new ProgramRunInfo.Builder()
       .setNamespace(programRunId.getNamespace())
@@ -56,7 +57,7 @@ public class DefaultRuntimeJobInfo implements RuntimeJobInfo {
   }
 
   @Override
-  public Collection<? extends LocalFile> getLocalizeFiles() {
+  public Collection<LocalFileDescription> getLocalizeFiles() {
     return files;
   }
 
