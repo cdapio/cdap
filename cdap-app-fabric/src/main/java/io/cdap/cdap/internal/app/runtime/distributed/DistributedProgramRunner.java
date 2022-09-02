@@ -574,6 +574,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     Map<String, String> newSystemArgs = new HashMap<>(systemArgs.asMap());
     newSystemArgs.putAll(extraSystemArgs);
 
+    String pluginDirFileName = PLUGIN_DIR;
+    String pluginArchiveFileName = PLUGIN_ARCHIVE;
     if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
       // If the archive already exists locally, we just need to re-localize it to remote containers
       File archiveFile = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
@@ -591,17 +593,36 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         BundleJarUtil.addToArchive(localDir, jarOut);
       }
 
+      String pluginDirHash = "";
+      if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR_HASH)) {
+        // if hash value for plugins has been provided, we append it to filename.
+        pluginDirHash = systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR_HASH);
+        newSystemArgs.remove(ProgramOptionConstants.PLUGIN_DIR_HASH);
+        pluginDirFileName = String.format("%s_%s", PLUGIN_DIR, pluginDirHash);
+        pluginArchiveFileName = PLUGIN_ARCHIVE.replace(".jar", String.format("_%s%s", pluginDirHash, ".jar"));
+
+        Set<String> cacheableFiles;
+        if (newSystemArgs.containsKey(ProgramOptionConstants.CACHEABLE_FILES)) {
+          cacheableFiles = GSON.fromJson(newSystemArgs.get(ProgramOptionConstants.CACHEABLE_FILES), HashSet.class);
+        } else {
+          cacheableFiles = new HashSet<>();
+        }
+        cacheableFiles.add(pluginDirFileName);
+        cacheableFiles.add(pluginArchiveFileName);
+        newSystemArgs.put(ProgramOptionConstants.CACHEABLE_FILES, GSON.toJson(cacheableFiles));
+      }
+
       // Localize plugins to two files, one expanded into a directory, one not.
-      localizeResources.put(PLUGIN_DIR, new LocalizeResource(archiveFile, true));
-      localizeResources.put(PLUGIN_ARCHIVE, new LocalizeResource(archiveFile, false));
+      localizeResources.put(pluginDirFileName, new LocalizeResource(archiveFile, true));
+      localizeResources.put(pluginArchiveFileName, new LocalizeResource(archiveFile, false));
     }
 
     // Add/rename the entries in the system arguments
-    if (localizeResources.containsKey(PLUGIN_DIR)) {
-      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, PLUGIN_DIR);
+    if (localizeResources.containsKey(pluginDirFileName)) {
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, pluginDirFileName);
     }
-    if (localizeResources.containsKey(PLUGIN_ARCHIVE)) {
-      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, PLUGIN_ARCHIVE);
+    if (localizeResources.containsKey(pluginArchiveFileName)) {
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, pluginArchiveFileName);
     }
 
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),
