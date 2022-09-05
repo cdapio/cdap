@@ -22,8 +22,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.explore.client.ExploreFacade;
-import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -43,17 +41,14 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
 
   private final CConfiguration cConf;
   private final NamespacePathLocator namespacePathLocator;
-  private final ExploreFacade exploreFacade;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
 
   AbstractStorageProviderNamespaceAdmin(CConfiguration cConf,
                                         NamespacePathLocator namespacePathLocator,
-                                        ExploreFacade exploreFacade,
                                         NamespaceQueryAdmin namespaceQueryAdmin) {
     this.cConf = cConf;
     this.namespacePathLocator = namespacePathLocator;
-    this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
@@ -62,27 +57,11 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
    *
    * @param namespaceMeta {@link NamespaceMeta} for the namespace to create
    * @throws IOException if there are errors while creating the namespace in the File System
-   * @throws ExploreException if there are errors while creating the namespace in Hive
    * @throws SQLException if there are errors while creating the namespace in Hive
    */
   @Override
-  public void create(NamespaceMeta namespaceMeta) throws IOException, ExploreException, SQLException {
-
+  public void create(NamespaceMeta namespaceMeta) throws IOException, SQLException {
     createLocation(namespaceMeta);
-
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      try {
-        exploreFacade.createNamespace(namespaceMeta);
-      } catch (ExploreException | SQLException e) {
-        try {
-          // if we failed to create a namespace in explore then delete the earlier created location for the namespace
-          deleteLocation(namespaceMeta.getNamespaceId());
-        } catch (Exception e2) {
-          e.addSuppressed(e2);
-        }
-        throw e;
-      }
-    }
   }
 
   /**
@@ -90,17 +69,11 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
    *
    * @param namespaceId {@link NamespaceId} for the namespace to delete
    * @throws IOException if there are errors while deleting the namespace in the File System
-   * @throws ExploreException if there are errors while deleting the namespace in Hive
    * @throws SQLException if there are errors while deleting the namespace in Hive
    */
   @Override
-  public void delete(NamespaceId namespaceId) throws IOException, ExploreException, SQLException {
-
+  public void delete(NamespaceId namespaceId) throws IOException, SQLException {
     deleteLocation(namespaceId);
-
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      exploreFacade.removeNamespace(namespaceId);
-    }
   }
 
   private void deleteLocation(NamespaceId namespaceId) throws IOException {

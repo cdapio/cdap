@@ -48,7 +48,6 @@ import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -98,7 +97,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       new DataSetsModules().getStandaloneModules(),
       new MetricsStoreModule(),
       new MessagingClientModule(),
-      new ExploreClientModule(),
       new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),

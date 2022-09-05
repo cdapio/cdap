@@ -24,7 +24,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionOutput;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
-import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
@@ -124,7 +123,6 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
       try (Writer writer = new OutputStreamWriter(location3.append("file").getOutputStream())) {
         writer.write("3,3\n");
       }
-      ((PartitionedFileSetDataset) pfs).addPartitionToExplore(KEY_4, path3);
       pfsManager.flush();
       validate();
     }

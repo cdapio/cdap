@@ -46,7 +46,6 @@ import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -118,7 +117,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new DataSetsModules().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new KafkaLogAppenderModule(),
-      new ExploreClientModule(),
       new MetadataServiceModule(),
       new AuditModule(),
       new EntityVerifierModule(),

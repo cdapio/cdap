@@ -27,7 +27,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.twill.AbortOnTimeoutEventHandler;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.hive.ExploreUtils;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -50,7 +49,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -58,9 +56,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * TwillApplication wrapper for Master Services running in YARN.
@@ -166,12 +161,6 @@ public class MasterTwillApplication implements TwillApplication {
       runnableSetter = addTransactionService(runnableSetter);
     }
 
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      LOG.info("Adding explore runnable.");
-      runnableSetter = addExploreService(runnableSetter);
-    } else {
-      LOG.info("Explore module disabled - will not launch explore runnable.");
-    }
     return runnableSetter
       .withOrder()
       .begin(Constants.Service.MESSAGING_SERVICE, Constants.Service.TRANSACTION, Constants.Service.DATASET_EXECUTOR)
@@ -222,15 +211,6 @@ public class MasterTwillApplication implements TwillApplication {
     return addResources(Constants.Service.DATASET_EXECUTOR,
                         builder.add(new DatasetOpExecutorServerTwillRunnable(Constants.Service.DATASET_EXECUTOR,
                                                                              CCONF_NAME, HCONF_NAME), resourceSpec));
-  }
-
-  private Builder.RunnableSetter addExploreService(Builder.MoreRunnable builder) {
-    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Explore.CONTAINER_VIRTUAL_CORES,
-                                                                     Constants.Explore.CONTAINER_MEMORY_MB,
-                                                                     Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-    return addResources(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                        builder.add(new ExploreServiceTwillRunnable(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                                                    CCONF_NAME, HCONF_NAME), resourceSpec));
   }
 
   private Builder.RunnableSetter addMessaging(Builder.MoreRunnable builder) {
@@ -370,46 +350,6 @@ public class MasterTwillApplication implements TwillApplication {
           return !yarnAppJarFiles.contains(file);
         }
       });
-
-    // Create a zip file that contains all explore jar files.
-    // Upload and localizing one big file is fast than many small one.
-    Path exploreArchive = Files.createTempFile(tempDir, "explore.archive", ".zip");
-    Set<String> addedJar = new HashSet<>();
-
-    try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(exploreArchive))) {
-      zos.setLevel(Deflater.NO_COMPRESSION);
-
-      for (File file : exploreFiles) {
-        if (file.getName().endsWith(".tgz") || file.getName().endsWith(".gz")) {
-          // It's an archive, hence localize it archive so that it will be expanded to a directory on the container
-          localizeResources.put(file.getName(), new LocalizeResource(file, true));
-          // Includes the expanded directory, jars under that directory and jars under the "lib" to classpath
-          extraClassPath.add(file.getName());
-          extraClassPath.add(file.getName() + "/*");
-          extraClassPath.add(file.getName() + "/lib/*");
-        } else {
-          // For jar file, add it to explore archive
-          File targetFile = tempDir.resolve(System.currentTimeMillis() + "-" + file.getName()).toFile();
-          File resultFile = ExploreServiceUtils.patchHiveClasses(file, targetFile);
-          if (resultFile == targetFile) {
-            LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", file, resultFile);
-          }
-
-          // don't add duplicate jar
-          if (addedJar.add(resultFile.getName())) {
-            zos.putNextEntry(new ZipEntry(resultFile.getName()));
-            Files.copy(resultFile.toPath(), zos);
-            extraClassPath.add(
-              ExploreServiceTwillRunnable.EXPLORE_ARCHIVE_NAME + File.separator + resultFile.getName());
-          }
-        }
-      }
-    }
-
-    if (!addedJar.isEmpty()) {
-      localizeResources.put(ExploreServiceTwillRunnable.EXPLORE_ARCHIVE_NAME,
-                            new LocalizeResource(exploreArchive.toFile(), true));
-    }
 
     // Explore also depends on MR, hence adding MR jars to the classpath.
     // Depending on how the cluster is configured, we might need to localize the MR framework tgz as well.

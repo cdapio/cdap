@@ -34,7 +34,6 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.startup.CheckRunner;
 import io.cdap.cdap.common.startup.ConfigurationLogger;
 import io.cdap.cdap.data.runtime.main.ClientVersions;
-import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -63,9 +62,6 @@ public class MasterStartupTool {
     LOG.info("  HBase version: {}", ClientVersions.getHBaseVersion());
     LOG.info("  ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
     LOG.info("  Kafka version: {}", ClientVersions.getKafkaVersion());
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      LOG.info("  Hive version: {}", ExploreServiceUtils.getHiveVersion());
-    }
     LOG.info("CDAP version: {}", ClientVersions.getCdapVersion());
     LOG.info("CDAP HBase compat version: {}", ClientVersions.getCdapHBaseCompatVersion());
     LOG.info("CDAP Spark compat version: {}", SparkCompatReader.get(cConf));

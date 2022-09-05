@@ -33,8 +33,6 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.security.DefaultSecretStore;
-import io.cdap.cdap.explore.client.ExploreClient;
-import io.cdap.cdap.explore.client.MockExploreClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
@@ -139,9 +137,6 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(AccessEnforcer.class);
     bind(ContextAccessEnforcer.class).toInstance(contextAccessEnforcer);
     expose(ContextAccessEnforcer.class);
-    // bind explore client to mock.
-    bind(ExploreClient.class).to(MockExploreClient.class);
-    expose(ExploreClient.class);
     bind(ProgramRuntimeProviderLoader.class).toInstance(programRuntimeProviderLoader);
     expose(ProgramRuntimeProviderLoader.class);
     bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);

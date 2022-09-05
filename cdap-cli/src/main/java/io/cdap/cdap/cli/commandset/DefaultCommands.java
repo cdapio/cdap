@@ -19,7 +19,6 @@ package io.cdap.cdap.cli.commandset;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import io.cdap.cdap.cli.command.ExecuteQueryCommand;
 import io.cdap.cdap.cli.command.PreferencesCommandSet;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
@@ -33,7 +32,6 @@ public class DefaultCommands extends CommandSet<Command> {
   public DefaultCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
-        .add(injector.getInstance(ExecuteQueryCommand.class))
         .build(),
       ImmutableList.<CommandSet<Command>>builder()
         .add(injector.getInstance(GeneralCommands.class))

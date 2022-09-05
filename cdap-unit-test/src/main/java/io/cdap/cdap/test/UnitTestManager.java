@@ -41,15 +41,12 @@ import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.StickyEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.explore.jdbc.ExploreConnectionParams;
-import io.cdap.cdap.explore.jdbc.ExploreDriver;
 import io.cdap.cdap.internal.AppFabricClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
@@ -385,9 +382,6 @@ public class UnitTestManager extends AbstractTestManager {
 
   @Override
   public Connection getQueryClient(NamespaceId namespace) throws Exception {
-    // this makes sure the Explore JDBC driver is loaded
-    Class.forName(ExploreDriver.class.getName());
-
     Discoverable discoverable = new StickyEndpointStrategy(() ->
       discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
 
@@ -400,11 +394,6 @@ public class UnitTestManager extends AbstractTestManager {
     int port = address.getPort();
 
     Map<String, String> params = new HashMap<>();
-    params.put(ExploreConnectionParams.Info.NAMESPACE.getName(), namespace.getNamespace());
-    params.put(ExploreConnectionParams.Info.SSL_ENABLED.getName(),
-               Boolean.toString(URIScheme.HTTPS.isMatch(discoverable)));
-    params.put(ExploreConnectionParams.Info.VERIFY_SSL_CERT.getName(), Boolean.toString(false));
-
     String connectString = String.format("%s%s:%d?%s", Constants.Explore.Jdbc.URL_PREFIX, host, port,
                                          Joiner.on('&').withKeyValueSeparator("=").join(params));
 

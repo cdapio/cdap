@@ -80,11 +80,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-explore</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>

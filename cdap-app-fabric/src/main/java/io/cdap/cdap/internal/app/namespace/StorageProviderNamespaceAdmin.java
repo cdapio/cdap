@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
-import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 
@@ -35,7 +34,7 @@ public interface StorageProviderNamespaceAdmin {
    * @param namespaceMeta {@link NamespaceMeta} for the namespace to create
    * @throws IOException if there are errors while creating the namespace
    */
-  void create(NamespaceMeta namespaceMeta) throws IOException, ExploreException, SQLException;
+  void create(NamespaceMeta namespaceMeta) throws IOException, SQLException;
 
   /**
    * Delete a namespace from the storage providers.
@@ -44,5 +43,5 @@ public interface StorageProviderNamespaceAdmin {
    * @param namespaceId {@link NamespaceId} for the namespace to delete
    * @throws IOException if there are errors while deleting the namespace
    */
-  void delete(NamespaceId namespaceId) throws IOException, ExploreException, SQLException;
+  void delete(NamespaceId namespaceId) throws IOException, SQLException;
 }

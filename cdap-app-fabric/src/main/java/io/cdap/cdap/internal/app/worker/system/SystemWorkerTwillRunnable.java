@@ -58,7 +58,6 @@ import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.FireAndForgetTwillRunnerService;
@@ -141,7 +140,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       // The Dataset set modules are only needed to satisfy dependency injection
       new DataSetsModules().getStandaloneModules(),
       new MessagingClientModule(),
-      new ExploreClientModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())

@@ -44,7 +44,6 @@ import io.cdap.cdap.data2.metadata.system.DelegateSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.SystemMetadata;
 import io.cdap.cdap.data2.metadata.system.SystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
-import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
@@ -85,7 +84,6 @@ public class DatasetInstanceService {
   private final DatasetTypeService noAuthDatasetTypeService;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
-  private final ExploreFacade exploreFacade;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final OwnerAdmin ownerAdmin;
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
@@ -101,7 +99,7 @@ public class DatasetInstanceService {
                                 @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE)
                                   DatasetTypeService noAuthDatasetTypeService,
                                 DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
+                                DatasetOpExecutor opExecutorClient,
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AccessEnforcer accessEnforcer,
                                 AuthenticationContext authenticationContext,
@@ -110,7 +108,6 @@ public class DatasetInstanceService {
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
     this.instanceManager = instanceManager;
-    this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ownerAdmin = ownerAdmin;
     this.metadataServiceClient = metadataServiceClient;
@@ -339,9 +336,6 @@ public class DatasetInstanceService {
       LOG.trace("Publishing system metadata for creation of dataset {}: {}", name, metadata);
       publishMetadata(datasetId, metadata);
       LOG.trace("Published system metadata for creation of dataset {}", name);
-
-      // Enable explore
-      enableExplore(datasetId, spec, props);
     } catch (Exception e) {
       // there was a problem in creating the dataset instance so delete the owner if it got added earlier
       ownerAdmin.delete(datasetId); // safe to call for entities which does not have an owner too
@@ -389,7 +383,6 @@ public class DatasetInstanceService {
     instanceManager.add(instance.getParent(), spec);
     metaCache.invalidate(instance);
 
-    updateExplore(instance, datasetProperties, existing, spec);
     publishAudit(instance, AuditType.UPDATE);
     publishMetadata(instance, response.getMetadata());
   }
@@ -546,8 +539,6 @@ public class DatasetInstanceService {
   private void dropDataset(DatasetId instance, DatasetSpecification spec) throws Exception {
     LOG.info("Deleting dataset {}.{}", instance.getNamespace(), instance.getEntityName());
 
-    disableExplore(instance, spec);
-
     if (!instanceManager.delete(instance)) {
       throw new DatasetNotFoundException(instance);
     }
@@ -568,45 +559,6 @@ public class DatasetInstanceService {
     publishAudit(instance, AuditType.DELETE);
     // deletes the owner principal for the entity if one was stored during creation
     ownerAdmin.delete(instance);
-  }
-
-  private void disableExplore(DatasetId datasetInstance, DatasetSpecification spec) {
-    // Disable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-1393
-    try {
-      exploreFacade.disableExploreDataset(datasetInstance, spec);
-    } catch (Exception e) {
-      LOG.error("Cannot disable Explore for dataset instance {}", datasetInstance, e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-    }
-  }
-
-  private void enableExplore(DatasetId datasetInstance, DatasetSpecification spec,
-                             DatasetInstanceConfiguration creationProperties) {
-    // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-1393
-    try {
-      LOG.trace("Enabling explore for dataset {}", datasetInstance.getDataset());
-      exploreFacade.enableExploreDataset(datasetInstance, spec, false);
-      LOG.trace("Enabled explore for dataset {}", datasetInstance.getDataset());
-    } catch (Exception e) {
-      LOG.error("Cannot enable Explore for dataset instance {} of type {} with properties {}",
-                datasetInstance, creationProperties.getTypeName(), creationProperties.getProperties(), e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-    }
-  }
-
-  private void updateExplore(DatasetId datasetInstance, DatasetProperties creationProperties,
-                             DatasetSpecification oldSpec, DatasetSpecification newSpec) {
-    // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-1393
-    try {
-      exploreFacade.updateExploreDataset(datasetInstance, oldSpec, newSpec);
-    } catch (Exception e) {
-      LOG.error("Cannot update Explore for dataset instance {} with old properties {} and new properties {}",
-                datasetInstance, oldSpec.getOriginalProperties(), creationProperties.getProperties(), e);
-      // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-    }
   }
 
   /**

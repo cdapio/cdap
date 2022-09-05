@@ -23,7 +23,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -42,7 +41,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
-import io.cdap.cdap.explore.client.ExploreFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,7 +166,7 @@ public class PartitionedFileSetDefinition
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
     return new PartitionedFileSetAdmin(
-      datasetContext, spec, getExploreProvider(),
+      datasetContext, spec,
       ImmutableMap.<String, DatasetAdmin>of(
         FILESET_NAME,
         filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
@@ -190,8 +188,7 @@ public class PartitionedFileSetDefinition
     IndexedTable table = indexedTableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME),
                                                     arguments, classLoader);
 
-    return new PartitionedFileSetDataset(datasetContext, spec.getName(), partitioning, fileset, table, spec, arguments,
-                                         getExploreProvider());
+    return new PartitionedFileSetDataset(datasetContext, spec.getName(), partitioning, fileset, table, spec, arguments);
   }
 
   // if the arguments do not contain an output location, generate one from the partition key (if present)
@@ -209,20 +206,5 @@ public class PartitionedFileSetDefinition
       }
     }
     return arguments;
-  }
-
-  protected Provider<ExploreFacade> getExploreProvider() {
-    return new Provider<ExploreFacade>() {
-      @Override
-      public ExploreFacade get() {
-        try {
-          return injector.getInstance(ExploreFacade.class);
-        } catch (Exception e) {
-          // since explore is optional for this dataset, ignore but log it
-          LOG.warn(String.format("Unable to get explore facade from injector for %s dataset.", getName()), e);
-          return null;
-        }
-      }
-    };
   }
 }

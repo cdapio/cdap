@@ -24,8 +24,6 @@ import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
-import io.cdap.cdap.explore.client.ExploreFacade;
-import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -54,9 +52,9 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
   @Inject
   DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
                                            NamespacePathLocator namespacePathLocator,
-                                           ExploreFacade exploreFacade, HBaseTableUtil tableUtil,
+                                           HBaseTableUtil tableUtil,
                                            NamespaceQueryAdmin namespaceQueryAdmin) {
-    super(cConf, namespacePathLocator, exploreFacade, namespaceQueryAdmin);
+    super(cConf, namespacePathLocator, namespaceQueryAdmin);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -64,7 +62,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
   }
 
   @Override
-  public void create(NamespaceMeta namespaceMeta) throws IOException, ExploreException, SQLException {
+  public void create(NamespaceMeta namespaceMeta) throws IOException, SQLException {
     // create filesystem directory
     super.create(namespaceMeta);
     // skip namespace creation in HBase for default namespace
@@ -115,7 +113,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
 
   @SuppressWarnings("ConstantConditions")
   @Override
-  public void delete(NamespaceId namespaceId) throws IOException, ExploreException, SQLException {
+  public void delete(NamespaceId namespaceId) throws IOException, SQLException {
     // delete namespace directory from filesystem
     super.delete(namespaceId);
     if (NamespaceId.DEFAULT.equals(namespaceId)) {
