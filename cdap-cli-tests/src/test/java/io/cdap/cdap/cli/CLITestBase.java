@@ -40,7 +40,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.DatasetTypeClient;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.client.QueryClient;
 import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.app.FakeDataset;
 import io.cdap.cdap.client.app.FakePlugin;
@@ -56,7 +55,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -217,8 +215,6 @@ public abstract class CLITestBase {
   abstract CLIMain getCliMain();
 
   abstract CLIConfig getCliConfig();
-
-  abstract QueryClient getQueryClient();
 
   private void testCommandOutputContains(String command,
                                          final String expectedOutput) throws Exception {
@@ -598,7 +594,6 @@ public abstract class CLITestBase {
     final String rootDirectory = rootdir.getAbsolutePath();
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
-    createHiveDB(hiveDatabase);
     // initially only default namespace should be present
     NamespaceMeta defaultNs = NamespaceMeta.DEFAULT;
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
@@ -654,7 +649,6 @@ public abstract class CLITestBase {
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    command = String.format("delete namespace %s", name);
 //    testCommandOutputContains(command, String.format("Namespace '%s' deleted successfully.", name));
-    dropHiveDb(hiveDatabase);
   }
 
   @Test
@@ -923,27 +917,6 @@ public abstract class CLITestBase {
         return null;
       }
     });
-  }
-
-  private void createHiveDB(String hiveDb) throws Exception {
-    QueryClient queryClient = getQueryClient();
-    ListenableFuture<ExploreExecutionResult> future =
-      queryClient.execute(NamespaceId.DEFAULT, "create database " + hiveDb);
-    assertExploreQuerySuccess(future);
-    future = queryClient.execute(NamespaceId.DEFAULT, "describe database " + hiveDb);
-    assertExploreQuerySuccess(future);
-  }
-
-  private void dropHiveDb(String hiveDb) throws Exception {
-    QueryClient queryClient = getQueryClient();
-    assertExploreQuerySuccess(queryClient.execute(NamespaceId.DEFAULT, "drop database " + hiveDb));
-  }
-
-  private void assertExploreQuerySuccess(
-    ListenableFuture<ExploreExecutionResult> dbCreationFuture) throws Exception {
-    ExploreExecutionResult exploreExecutionResult = dbCreationFuture.get(10, TimeUnit.SECONDS);
-    QueryStatus status = exploreExecutionResult.getStatus();
-    Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
   }
 
   private static File createPluginConfig() throws IOException {

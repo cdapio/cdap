@@ -19,7 +19,6 @@ package io.cdap.cdap.cli;
 import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.client.QueryClient;
 import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
@@ -36,7 +35,6 @@ import java.net.URI;
 public class CLIMainLinkTest extends CLITestBase {
 
   private static ProgramClient programClient;
-  private static QueryClient queryClient;
   private static CLIConfig cliConfig;
   private static CLIMain cliMain;
   private static CLI cli;
@@ -48,7 +46,6 @@ public class CLIMainLinkTest extends CLITestBase {
                                                     false, null, LaunchOptions.DEFAULT.getUri());
     cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
-    queryClient = new QueryClient(cliConfig.getClientConfig());
 
     cli = cliMain.getCLI();
 
@@ -86,10 +83,5 @@ public class CLIMainLinkTest extends CLITestBase {
   @Override
   CLIConfig getCliConfig() {
     return cliConfig;
-  }
-
-  @Override
-  QueryClient getQueryClient() {
-    return queryClient;
   }
 }

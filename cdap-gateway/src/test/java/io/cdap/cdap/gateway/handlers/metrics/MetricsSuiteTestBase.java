@@ -43,7 +43,6 @@ import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
@@ -160,7 +159,6 @@ public abstract class MetricsSuiteTestBase {
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new ExploreClientModule(),
       new NamespaceAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),

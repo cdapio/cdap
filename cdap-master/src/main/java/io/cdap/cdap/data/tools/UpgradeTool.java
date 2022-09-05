@@ -66,7 +66,6 @@ import io.cdap.cdap.data2.metadata.writer.NoOpLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.data2.util.hbase.CoprocessorManager;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -198,7 +197,6 @@ public class UpgradeTool {
         }
       ),
       new TwillModule(),
-      new ExploreClientModule(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),

@@ -73,9 +73,6 @@ import io.cdap.cdap.data2.util.hbase.ConfigurationWriter;
 import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import io.cdap.cdap.explore.client.ExploreClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
-import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.hive.ExploreUtils;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -253,7 +250,6 @@ public class MasterServiceMain extends DaemonMain {
   public void init(String[] args) {
     resetShutdownTime();
     cleanupTempDir();
-    checkExploreRequirements();
   }
 
   @Override
@@ -451,17 +447,6 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
-   * Check that if Explore is enabled, the correct jars are present on master node,
-   * and that the distribution of Hive is supported.
-   */
-  private void checkExploreRequirements() {
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      // This check will throw an exception if Hive is not present or if it's distribution is unsupported
-      ExploreServiceUtils.checkHiveSupport(cConf);
-    }
-  }
-
-  /**
    * Performs Kerberos login if security is enabled.
    */
   private void login(CConfiguration cConf) {
@@ -570,7 +555,6 @@ public class MasterServiceMain extends DaemonMain {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new MessagingClientModule(),
-      new ExploreClientModule(),
       new AuditModule(),
       CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new AuthenticationContextModules().getMasterModule(),
@@ -614,7 +598,6 @@ public class MasterServiceMain extends DaemonMain {
     private AccessControllerInstantiator accessControllerInstantiator;
     private TwillRunnerService twillRunner;
     private TwillRunnerService remoteExecutionTwillRunner;
-    private ExploreClient exploreClient;
     private LogAppenderInitializer logAppenderInitializer;
     private MetadataStorage metadataStorage;
 
@@ -639,10 +622,6 @@ public class MasterServiceMain extends DaemonMain {
 
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
-
-      if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-        exploreClient = injector.getInstance(ExploreClient.class);
-      }
 
       try {
         // Define all StructuredTable before starting any services that need StructuredTable
@@ -743,7 +722,6 @@ public class MasterServiceMain extends DaemonMain {
       services.clear();
       Closeables.closeQuietly(metadataStorage);
       Closeables.closeQuietly(accessControllerInstantiator);
-      Closeables.closeQuietly(exploreClient);
       Closeables.closeQuietly(logAppenderInitializer);
     }
 

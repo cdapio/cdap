@@ -27,7 +27,6 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Provider;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
@@ -70,8 +69,6 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.data.RuntimeProgramContext;
 import io.cdap.cdap.data.RuntimeProgramContextAware;
 import io.cdap.cdap.data2.dataset2.lib.file.FileSetDataset;
-import io.cdap.cdap.explore.client.ExploreFacade;
-import io.cdap.cdap.proto.id.DatasetId;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
@@ -133,13 +130,9 @@ public class PartitionedFileSetDataset extends AbstractDataset
   protected final FileSet files;
   protected final DatasetSpecification spec;
   protected final boolean isExternal;
-  private final boolean exploreEnabled;
   protected final Map<String, String> runtimeArguments;
   protected final Partitioning partitioning;
   private final IndexedTable partitionsTable;
-  private final Provider<ExploreFacade> exploreFacadeProvider;
-
-  private final DatasetId datasetInstanceId;
 
   // Keep track of all partitions' being added/dropped in this transaction, so we can rollback their paths,
   // if necessary.
@@ -154,18 +147,14 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
                                    Partitioning partitioning, FileSet fileSet, IndexedTable partitionTable,
-                                   DatasetSpecification spec, Map<String, String> arguments,
-                                   Provider<ExploreFacade> exploreFacadeProvider) {
+                                   DatasetSpecification spec, Map<String, String> arguments) {
     super(name, partitionTable);
     this.files = fileSet;
     this.partitionsTable = partitionTable;
     this.spec = spec;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
-    this.exploreEnabled = FileSetProperties.isExploreEnabled(spec.getProperties());
     this.runtimeArguments = arguments;
     this.partitioning = partitioning;
-    this.exploreFacadeProvider = exploreFacadeProvider;
-    this.datasetInstanceId = new DatasetId(datasetContext.getNamespaceId(), name);
   }
 
   @Override
@@ -274,15 +263,12 @@ public class PartitionedFileSetDataset extends AbstractDataset
     if (srcLocation.exists()) {
       srcLocation.renameTo(files.getLocation(operation.getRelativePath()));
     }
-    // recreating the partition in Hive only makes sense if the rename succeeds
-    addPartitionToExplore(operation.getPartitionKey(), operation.getRelativePath());
   }
 
   private void undoPartitionCreate(AddPartitionOperation operation) throws Exception {
     Exception caughtExn = null;
     if (operation.isExplorePartitionCreated()) {
       try {
-        dropPartitionFromExplore(operation.getPartitionKey());
       } catch (Exception e) {
         caughtExn = e;
       }
@@ -367,7 +353,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
     partitionsTable.put(put);
 
     if (!appending) {
-      addPartitionToExplore(key, path);
       operation.setExplorePartitionCreated();
     }
   }
@@ -575,21 +560,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
     partitionsTable.delete(rowKey, deleteColumns);
   }
 
-  @VisibleForTesting
-  public void addPartitionToExplore(PartitionKey key, String path) {
-    if (exploreEnabled) {
-      ExploreFacade exploreFacade = exploreFacadeProvider.get();
-      if (exploreFacade != null) {
-        try {
-          exploreFacade.addPartition(datasetInstanceId, spec, key, files.getLocation(path).toURI().getPath());
-        } catch (Exception e) {
-          throw new DataSetException(String.format(
-            "Unable to add partition for key %s with path %s to explore table.", key.toString(), path), e);
-        }
-      }
-    }
-  }
-
   @WriteOnly
   @Override
   public void dropPartition(PartitionKey key) {
@@ -600,7 +570,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
       return;
     }
     // TODO: make DDL operations transactional [CDAP-1393]
-    dropPartitionFromExplore(key);
     partitionsTable.delete(rowKey);
     if (!isExternal) {
       Location partitionLocation = partition.getLocation();
@@ -625,20 +594,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
   }
 
-  private void dropPartitionFromExplore(PartitionKey key) {
-    if (exploreEnabled) {
-      ExploreFacade exploreFacade = exploreFacadeProvider.get();
-      if (exploreFacade != null) {
-        try {
-          exploreFacade.dropPartition(datasetInstanceId, spec, key);
-        } catch (Exception e) {
-          throw new DataSetException(String.format(
-            "Unable to drop partition for key %s from explore table.", key.toString()), e);
-        }
-      }
-    }
-  }
-
   @ReadWrite
   @Override
   public Future<Void> concatenatePartition(PartitionKey key) {
@@ -646,16 +601,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
     if (partition == null) {
       throw new PartitionNotFoundException(key, getName());
     }
-    try {
-      if (exploreEnabled) {
-        return exploreFacadeProvider.get().concatenatePartition(datasetInstanceId, spec, key);
-      } else {
-        return Futures.immediateFuture(null);
-      }
-    } catch (Exception e) {
-      throw new DataSetException(String.format(
-        "Unable to concatenate partition for key %s from explore table.", key.toString()), e);
-    }
+    return Futures.immediateFuture(null);
   }
 
   @ReadOnly
@@ -1021,28 +967,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
     return runtimeArguments;
   }
 
-  private void enableExplore(boolean truncating) {
-    ExploreFacade exploreFacade = exploreFacadeProvider.get();
-    if (exploreFacade != null) {
-      try {
-        exploreFacade.enableExploreDataset(datasetInstanceId, spec, truncating);
-      } catch (Exception e) {
-        throw new DataSetException("Unable to enable explore", e);
-      }
-    }
-  }
-
-  private void disableExplore() {
-    ExploreFacade exploreFacade = exploreFacadeProvider.get();
-    if (exploreFacade != null) {
-      try {
-        exploreFacade.disableExploreDataset(datasetInstanceId);
-      } catch (Exception e) {
-        throw new DataSetException("Unable to enable explore", e);
-      }
-    }
-  }
-
   /**
    * This method can bring a partitioned file set in sync with explore. It scans the partition table and adds
    * every partition to explore. It will start multiple transactions, processing a batch of partitions in each
@@ -1064,9 +988,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
         transactional.execute(new TxRunnable() {
           @Override
           public void run(io.cdap.cdap.api.data.DatasetContext context) throws Exception {
-            PartitionedFileSetDataset pfs = context.getDataset(datasetName);
-            pfs.disableExplore();
-            pfs.enableExplore(true); // truncating = true, because this is like truncating
           }
         });
       } catch (TransactionFailureException e) {
@@ -1101,7 +1022,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
                   return;
                 }
                 try {
-                  pfs.addPartitionToExplore(key, path);
                   successCount.incrementAndGet();
                   if (verbose) {
                     LOG.info("Added partition {} with path {}", key, path);

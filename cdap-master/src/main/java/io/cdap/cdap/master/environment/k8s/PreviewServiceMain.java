@@ -27,7 +27,6 @@ import com.google.inject.Scopes;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.app.guice.UnsupportedExploreClient;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManagerModule;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
@@ -41,7 +40,6 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
-import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -119,7 +117,6 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
           bind(TwillRunnerService.class).toProvider(
             new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
           bind(TwillRunner.class).to(TwillRunnerService.class);
-          bind(ExploreClient.class).to(UnsupportedExploreClient.class);
         }
       }
     ));

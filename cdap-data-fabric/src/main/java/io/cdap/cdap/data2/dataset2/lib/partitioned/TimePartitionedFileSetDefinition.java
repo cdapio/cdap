@@ -86,8 +86,7 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
     IndexedTable table = indexedTableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME),
                                                     arguments, classLoader);
 
-    return new TimePartitionedFileSetDataset(datasetContext, spec.getName(), fileset, table, spec, arguments,
-                                             getExploreProvider());
+    return new TimePartitionedFileSetDataset(datasetContext, spec.getName(), fileset, table, spec, arguments);
   }
 
   // if the arguments do not contain an output path, but an output partition time, generate an output path from that;

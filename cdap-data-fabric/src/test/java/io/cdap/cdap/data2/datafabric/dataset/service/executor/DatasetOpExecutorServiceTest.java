@@ -52,7 +52,6 @@ import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -134,7 +133,6 @@ public class DatasetOpExecutorServiceTest {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new ExploreClientModule(),
       new NamespaceAdminTestModule(),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationTestModule(),

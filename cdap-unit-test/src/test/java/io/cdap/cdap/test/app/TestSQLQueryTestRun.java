@@ -16,9 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
-import io.cdap.cdap.common.NamespaceCannotBeCreatedException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
-import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.DataSetManager;
@@ -48,46 +46,6 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(testSpace).build());
     testSQLQuery();
     namespaceAdmin.delete(testSpace);
-  }
-
-  @Test(timeout = 120000L)
-  public void testSQLQueryWithCustomMapping() throws Exception {
-    // trying to create a cdap namespace with custom hive database when the database does not exists in hive should
-    // fail.
-    String customHiveDatabase = "custom_db";
-    try {
-      namespaceAdmin.create(new NamespaceMeta.Builder().setName(testSpace).setHiveDatabase(customHiveDatabase).build());
-      Assert.fail();
-    } catch (NamespaceCannotBeCreatedException e) {
-      // expected exception. Make sure that the namespace creation failed because of explore exception
-      Assert.assertTrue(e.getCause() instanceof ExploreException);
-
-    }
-
-    // create the custom database in hive
-    try (
-      Connection connection = getQueryClient();
-      ResultSet results = connection.prepareStatement(String.format("CREATE DATABASE %s",
-                                                                    customHiveDatabase)).executeQuery()
-    ) {
-      // run a query over the dataset
-      Assert.assertNotNull(results);
-    }
-
-    // check that the custom hive database got created
-    checkDatabaseExists(customHiveDatabase);
-
-    // now the namespace create should work
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(testSpace).setHiveDatabase(customHiveDatabase).build());
-
-    // test some sql query on this custom hive database
-    testSQLQuery();
-
-    // delete the cdap namespace
-    namespaceAdmin.delete(testSpace);
-
-    // deleting the cdap namespace should not have deleted the custom hive database
-    checkDatabaseExists(customHiveDatabase);
   }
 
   private void checkDatabaseExists(String customHiveDatabase) throws Exception {

@@ -52,7 +52,6 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueue;
@@ -330,7 +329,6 @@ public class JobQueueDebugger extends AbstractIdleService {
       new ZKDiscoveryModule(),
       new DFSLocationModule(),
       new TwillModule(),
-      new ExploreClientModule(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),

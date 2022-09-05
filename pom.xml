@@ -2932,9 +2932,6 @@
         <module>cdap-system-app-unit-test</module>
         <module>cdap-tms</module>
         <module>cdap-gateway</module>
-        <module>cdap-explore-client</module>
-        <module>cdap-explore-jdbc</module>
-        <module>cdap-explore</module>
         <module>cdap-unit-test</module>
         <module>cdap-unit-test-spark2_2.11</module>
         <module>cdap-unit-test-spark3_2.12</module>
