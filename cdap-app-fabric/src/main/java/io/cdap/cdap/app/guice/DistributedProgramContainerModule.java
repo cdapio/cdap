@@ -49,8 +49,6 @@ import io.cdap.cdap.data2.metadata.writer.LineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MessagingLineageWriter;
 import io.cdap.cdap.data2.registry.MessagingUsageWriter;
 import io.cdap.cdap.data2.registry.UsageWriter;
-import io.cdap.cdap.explore.client.ExploreClient;
-import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
@@ -218,24 +216,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
           bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
         }
       }));
-    }
-
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
-          bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
-        }
-      });
-    } else {
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          // Bind to unsupported/no-op class implementations
-          bind(ExploreClient.class).to(UnsupportedExploreClient.class);
-        }
-      });
     }
   }
 

@@ -85,10 +85,6 @@ import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import io.cdap.cdap.explore.client.ExploreClient;
-import io.cdap.cdap.explore.executor.ExploreExecutorService;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
-import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -211,8 +207,6 @@ public class TestBase {
   private static boolean firstInit = true;
   private static MetricsCollectionService metricsCollectionService;
   private static Scheduler scheduler;
-  private static ExploreExecutorService exploreExecutorService;
-  private static ExploreClient exploreClient;
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
@@ -315,8 +309,6 @@ public class TestBase {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
-      new ExploreRuntimeModule().getInMemoryModules(),
-      new ExploreClientModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewManagerModule(false),
@@ -364,8 +356,6 @@ public class TestBase {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
-      exploreExecutorService.startAndWait();
       // wait for explore service to be discoverable
       DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
       EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryService.discover(
@@ -373,7 +363,6 @@ public class TestBase {
       Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                  "%s service is not up after 5 seconds",
                                  Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-      exploreClient = injector.getInstance(ExploreClient.class);
     }
     programScheduler = injector.getInstance(Scheduler.class);
     if (programScheduler instanceof Service) {
@@ -642,10 +631,6 @@ public class TestBase {
     metricsCollectionService.stopAndWait();
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
-    }
-    Closeables.closeQuietly(exploreClient);
-    if (exploreExecutorService != null) {
-      exploreExecutorService.stopAndWait();
     }
     datasetService.stopAndWait();
     dsOpService.stopAndWait();

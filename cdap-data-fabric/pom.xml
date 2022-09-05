@@ -139,11 +139,6 @@
       <artifactId>netty-all</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-explore-client</artifactId>
-        <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
     </dependency>

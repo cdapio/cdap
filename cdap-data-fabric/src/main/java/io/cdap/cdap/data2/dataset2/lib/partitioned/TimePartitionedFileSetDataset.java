@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.inject.Provider;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
@@ -36,7 +35,6 @@ import io.cdap.cdap.api.dataset.lib.TimePartitionDetail;
 import io.cdap.cdap.api.dataset.lib.TimePartitionOutput;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import io.cdap.cdap.explore.client.ExploreFacade;
 
 import java.util.Calendar;
 import java.util.Collection;
@@ -69,9 +67,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
   public TimePartitionedFileSetDataset(DatasetContext datasetContext, String name,
                                        FileSet fileSet, IndexedTable partitionTable,
-                                       DatasetSpecification spec, Map<String, String> arguments,
-                                       Provider<ExploreFacade> exploreFacadeProvider) {
-    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
+                                       DatasetSpecification spec, Map<String, String> arguments) {
+    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments);
 
     // the first version of TPFS in CDAP 2.7 did not have the partitioning in the properties. It is not supported.
     if (PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null) {

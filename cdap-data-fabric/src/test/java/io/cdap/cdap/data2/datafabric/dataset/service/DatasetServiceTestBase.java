@@ -66,8 +66,6 @@ import io.cdap.cdap.data2.dataset2.InMemoryDatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
-import io.cdap.cdap.explore.client.DiscoveryExploreClient;
-import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.DatasetModuleId;
@@ -231,8 +229,6 @@ public abstract class DatasetServiceTestBase {
     registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules);
 
-    DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
-    ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     ownerAdmin = injector.getInstance(OwnerAdmin.class);
@@ -249,7 +245,7 @@ public abstract class DatasetServiceTestBase {
                                                                          authenticationContext);
 
     instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
-                                                 instanceManager, opExecutor, exploreFacade,
+                                                 instanceManager, opExecutor,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer,
                                                  authenticationContext,
                                                  new NoOpMetadataServiceClient());

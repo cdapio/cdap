@@ -64,11 +64,6 @@ import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import io.cdap.cdap.explore.client.ExploreClient;
-import io.cdap.cdap.explore.executor.ExploreExecutorService;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
-import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
-import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
@@ -147,7 +142,6 @@ public class StandaloneMain {
   private final CConfiguration cConf;
   private final DatasetService datasetService;
   private final DatasetOpExecutorService datasetOpExecutorService;
-  private final ExploreClient exploreClient;
   private final AccessControllerInstantiator accessControllerInstantiator;
   private final MessagingService messagingService;
   private final OperationalStatsService operationalStatsService;
@@ -163,7 +157,6 @@ public class StandaloneMain {
   private final ArtifactLocalizerService artifactLocalizerService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private ExploreExecutorService exploreExecutorService;
 
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
@@ -211,13 +204,6 @@ public class StandaloneMain {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
-    boolean exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
-    if (exploreEnabled) {
-      ExploreServiceUtils.checkHiveSupport(cConf, getClass().getClassLoader());
-      exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
-    }
-
-    exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
     secureStoreService = injector.getInstance(SecureStoreService.class);
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
@@ -307,9 +293,6 @@ public class StandaloneMain {
       externalAuthenticationServer.startAndWait();
     }
 
-    if (exploreExecutorService != null) {
-      exploreExecutorService.startAndWait();
-    }
     metadataService.startAndWait();
     operationalStatsService.startAndWait();
     secureStoreService.startAndWait();
@@ -344,10 +327,6 @@ public class StandaloneMain {
 
       // Stop all services that requires tx service
       metadataSubscriberService.stopAndWait();
-      if (exploreExecutorService != null) {
-        exploreExecutorService.stopAndWait();
-      }
-      exploreClient.close();
       metadataService.stopAndWait();
       remoteExecutionTwillRunnerService.stop();
       serviceStore.stopAndWait();
@@ -545,8 +524,6 @@ public class StandaloneMain {
       new CoreSecurityRuntimeModule().getStandaloneModules(),
       new ExternalAuthenticationModule(),
       new SecureStoreServerModule(),
-      new ExploreRuntimeModule().getStandaloneModules(),
-      new ExploreClientModule(),
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getStandaloneModules(),
       new AuditModule(),

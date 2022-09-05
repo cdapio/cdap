@@ -31,10 +31,6 @@ import org.junit.Test;
  * Tests for master services.
  */
 public class TwillRunnableTest {
-  @Test
-  public void testExploreServiceTwillRunnableInjector() {
-    ExploreServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration(), "");
-  }
 
   @Test
   public void testDatasetOpExecutorTwillRunnableInjector() {

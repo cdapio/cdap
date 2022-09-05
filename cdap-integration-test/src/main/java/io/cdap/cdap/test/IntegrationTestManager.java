@@ -49,8 +49,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
-import io.cdap.cdap.explore.jdbc.ExploreConnectionParams;
-import io.cdap.cdap.explore.jdbc.ExploreDriver;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
