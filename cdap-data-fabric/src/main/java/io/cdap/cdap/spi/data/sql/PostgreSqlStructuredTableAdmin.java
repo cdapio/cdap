@@ -20,8 +20,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -36,9 +36,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -47,6 +47,7 @@ import javax.sql.DataSource;
  * Sql structured admin to use jdbc connection to create and drop tables.
  */
 public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
+
   private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStructuredTableAdmin.class);
   private final StructuredTableRegistry registry;
   private final DataSource dataSource;
@@ -62,34 +63,19 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
-  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
-    StructuredTableId tableId = spec.getTableId();
-
-    try (Connection connection = dataSource.getConnection()) {
-      // If the table is registered, the table and the indexes must get created. If not, we need to verify the
-      // table existence, index existence and then register for the table.
-      if (registry.getSpecification(spec.getTableId()) != null) {
-        throw new TableAlreadyExistsException(spec.getTableId());
+  public void createOrUpdate(StructuredTableSpecification spec)
+    throws IOException, TableSchemaIncompatibleException {
+    // If the table is registered, the table and the indexes must get created. If not, we need to verify the
+    // table existence, index existence and then register for the table.
+    if (registry.getSpecification(spec.getTableId()) != null) {
+      try {
+        updateTable(spec, registry.getSpecification(spec.getTableId()));
+        return;
+      } catch (TableNotFoundException e) {
+        LOG.debug(String.format("Table %s not found while updating it, creating it now.", spec.getTableId()));
       }
-
-      try (Statement statement = connection.createStatement()) {
-        if (!tableExistsInternal(connection, tableId)) {
-          // Create table
-          LOG.info("Creating table {}", spec);
-          statement.execute(getCreateStatement(spec));
-        }
-
-        // Create indexes
-        for (String indexStatement : getCreateIndexStatements(tableId, getNonExistIndexes(connection, spec))) {
-          LOG.debug("Create index statement: {}", indexStatement);
-          statement.execute(indexStatement);
-        }
-
-        registry.registerSpecification(spec);
-      }
-    } catch (SQLException e) {
-      throw new IOException(String.format("Error creating table %s", tableId), e);
     }
+    createTable(spec);
   }
 
   @Override
@@ -108,6 +94,53 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       throw new TableNotFoundException(tableId);
     }
     return new StructuredTableSchema(spec);
+  }
+
+  private void updateTable(StructuredTableSpecification newSpec,
+                           StructuredTableSpecification existingSpec)
+    throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
+    StructuredTableId tableId = newSpec.getTableId();
+    if (newSpec.equals(existingSpec)) {
+      LOG.trace("The table schema is already up to date: {}", tableId);
+      return;
+    }
+    StructuredTableSchema newSchema = new StructuredTableSchema(newSpec);
+    StructuredTableSchema existingSchema = new StructuredTableSchema(existingSpec);
+    if (!existingSchema.isCompatible(newSchema)) {
+      throw new TableSchemaIncompatibleException(tableId);
+    }
+
+    try (Connection connection = dataSource.getConnection()) {
+      // Since each add column and create index statement has "IF NOT EXIST", it should not throw in
+      // a race condition when multiple table updates process at the same time, hence no need to retry updateTable
+      addColumns(connection, newSchema);
+      addIndices(connection, newSchema);
+      registry.registerSpecification(newSpec);
+    } catch (SQLException e) {
+      throw new IOException(String.format("Error updating table schema: %s", tableId.getName()), e);
+    }
+  }
+
+  private void createTable(StructuredTableSpecification spec) throws IOException {
+    try (Connection connection = dataSource.getConnection()) {
+      try (Statement statement = connection.createStatement()) {
+        if (!tableExistsInternal(connection, spec.getTableId())) {
+          // Create table
+          LOG.debug("Creating table {}", spec);
+          statement.execute(getCreateStatement(spec));
+        }
+
+        // Create indexes
+        Set<String> nonExistIndexes = getNonExistIndexes(connection, new StructuredTableSchema(spec));
+        for (String indexStatement : getCreateIndexStatements(spec.getTableId(), nonExistIndexes)) {
+          LOG.debug("Creating index statement: {}", indexStatement);
+          statement.execute(indexStatement);
+        }
+        registry.registerSpecification(spec);
+      }
+    } catch (SQLException | IOException e) {
+      throw new IOException(String.format("Error creating table %s", spec.getTableId()), e);
+    }
   }
 
   // TODO: CDAP-15068 - make drop table idempotent
@@ -141,13 +174,54 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     }
   }
 
+  // Add new non-primary key columns to table
+  private void addColumns(Connection connection, StructuredTableSchema schema)
+    throws IOException, TableNotFoundException {
+    StructuredTableId tableId = schema.getTableId();
+    try {
+      Optional<String> columnStatement = getAddColumnStatement(tableId,
+                                                               connection.getMetaData(), schema);
+      if (!columnStatement.isPresent()) {
+        LOG.debug("No new columns to add for table {}", schema.getTableId());
+        return;
+      }
+      try (Statement statement = connection.createStatement()) {
+        LOG.debug("Create adding columns statement: {}", columnStatement);
+        statement.execute(columnStatement.get());
+      }
+    } catch (SQLException e) {
+      // PostgreSQL error 42P01 denotes the database query is on an undefined table.
+      if ("42P01".equalsIgnoreCase(e.getSQLState())) {
+        throw new TableNotFoundException(tableId);
+      }
+      throw new IOException(String.format("Error adding columns to table: %s", tableId.getName()), e);
+    }
+  }
+
+  // Add new non-primary key indices to table
+  private void addIndices(Connection connection, StructuredTableSchema schema)
+    throws IOException, TableNotFoundException {
+    try (Statement statement = connection.createStatement()) {
+      // Create indexes
+      for (String indexStatement : getCreateIndexStatements(schema.getTableId(),
+                                                            getNonExistIndexes(connection, schema))) {
+        LOG.debug("Create index statement: {}", indexStatement);
+        statement.execute(indexStatement);
+      }
+    } catch (SQLException e) {
+      if ("42P01".equalsIgnoreCase(e.getSQLState())) {
+        throw new TableNotFoundException(schema.getTableId());
+      }
+      throw new IOException(String.format("Error adding indices to table: %s", schema.getTableId().getName()), e);
+    }
+  }
+
   private Set<String> getNonExistIndexes(Connection connection,
-                                         StructuredTableSpecification specification) throws SQLException {
+                                         StructuredTableSchema schema) throws SQLException {
     DatabaseMetaData metaData = connection.getMetaData();
     Set<String> existingIndexes = new HashSet<>();
-    Set<String> indexes = new HashSet<>(specification.getIndexes());
     try (ResultSet rs = metaData.getIndexInfo(null, null,
-                                              specification.getTableId().getName(), false, false)) {
+                                              schema.getTableId().getName(), false, false)) {
       while (rs.next()) {
         // the COLUMN_NAME will return the column that is indexed, which is more intuitive to use INDEX_NAME, also
         // null can be returned if the created index is of tableIndexStatistic, though we don't create indexes of this
@@ -158,7 +232,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
         }
       }
     }
-    return Sets.difference(indexes, existingIndexes);
+    return Sets.difference(schema.getIndexes(), existingIndexes);
   }
 
   private String getCreateStatement(StructuredTableSpecification specification) {
@@ -168,7 +242,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     // append the columns with sql type
     createStmt.append(
       specification.getFieldTypes().stream()
-        .map(f -> f.getName() + " " + getPostgreSQLType(f))
+        .map(f -> f.getName() + " " + getPostgreSQLType(f.getType()))
         .collect(Collectors.joining(","))
     );
 
@@ -178,23 +252,49 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   private List<String> getCreateIndexStatements(StructuredTableId tableId, Set<String> indexColumns) {
-    String table = tableId.getName();
-    List<String> statements = new ArrayList<>(indexColumns.size());
-    for (String column : indexColumns) {
-      statements.add(String.format("CREATE INDEX %s_%s_idx ON %s (%s)", table, column, table, column));
+    String tableName = tableId.getName();
+    return indexColumns.stream()
+      .map(indexColumn -> String.format("CREATE INDEX IF NOT EXISTS %s_%s_idx ON %s (%s)",
+                                        tableName, indexColumn, tableName, indexColumn))
+      .collect(Collectors.toList());
+  }
+
+  private Optional<String> getAddColumnStatement(StructuredTableId tableId,
+                                                 DatabaseMetaData metaData,
+                                                 StructuredTableSchema schema) throws SQLException {
+    Set<String> existingFields = new HashSet<>();
+    ResultSet resultSet = metaData.getColumns(null, null, tableId.getName(), null);
+    while (resultSet.next()) {
+      existingFields.add(resultSet.getString("COLUMN_NAME"));
     }
-    return statements;
+
+    // Since schema is backward compatible, they have the same primary keys
+    // The new different fields are all non-primary key columns
+    List<String> fieldsToAdd = schema.getFieldNames()
+      .stream()
+      .filter(f -> !existingFields.contains(f))
+      .collect(Collectors.toList());
+
+    if (fieldsToAdd.isEmpty()) {
+      return Optional.empty();
+    }
+
+    String addColumnsStatement = fieldsToAdd.stream()
+      .map(fieldName ->
+             String.format(" ADD COLUMN IF NOT EXISTS %s %s", fieldName, getPostgreSQLType(schema.getType(fieldName))))
+      .collect(Collectors.joining(", ", "ALTER TABLE " + tableId.getName(), ";"));
+
+    return Optional.of(addColumnsStatement);
   }
 
   private String getDeleteStatement(String tableName) {
     return "DROP TABLE " + tableName + ";";
   }
 
-  private String getPostgreSQLType(FieldType field) {
+  private String getPostgreSQLType(FieldType.Type fieldType) {
     String sqlType;
 
-    FieldType.Type type = field.getType();
-    switch (type) {
+    switch (fieldType) {
       case INTEGER:
         sqlType = "int";
         break;
@@ -216,7 +316,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       default:
         // this should never happen since all the fields are from the specification and validated there
         throw new IllegalStateException(
-          String.format("The type %s of the field %s is not a valid type", type, field.getName()));
+          String.format("UnSupported type: %s", fieldType));
     }
     return sqlType;
   }

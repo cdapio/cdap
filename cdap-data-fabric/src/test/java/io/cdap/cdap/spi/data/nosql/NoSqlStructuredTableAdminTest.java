@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.StructuredTableConcurrencyTest;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.StructuredTableAdminTest;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
@@ -31,25 +30,14 @@ import org.junit.ClassRule;
 import java.io.IOException;
 
 /**
- * Tests concurrent operations on {@link NoSqlStructuredTable}.
+ * Test for NoSQL structured table admin.
  */
-public class NoSqlStructuredTableConcurrencyTest extends StructuredTableConcurrencyTest {
+public class NoSqlStructuredTableAdminTest extends StructuredTableAdminTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
   private static TransactionManager txManager;
   private static StructuredTableAdmin noSqlTableAdmin;
-  private static TransactionRunner transactionRunner;
-
-  @Override
-  protected StructuredTableAdmin getStructuredTableAdmin() {
-    return noSqlTableAdmin;
-  }
-
-  @Override
-  protected TransactionRunner getTransactionRunner() {
-    return transactionRunner;
-  }
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -60,7 +48,11 @@ public class NoSqlStructuredTableConcurrencyTest extends StructuredTableConcurre
     CConfiguration cConf = dsFrameworkUtil.getConfiguration();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
     noSqlTableAdmin = dsFrameworkUtil.getInjector().getInstance(StructuredTableAdmin.class);
-    transactionRunner = dsFrameworkUtil.getInjector().getInstance(TransactionRunner.class);
+  }
+
+  @Override
+  protected StructuredTableAdmin getStructuredTableAdmin() throws Exception {
+    return noSqlTableAdmin;
   }
 
   @AfterClass

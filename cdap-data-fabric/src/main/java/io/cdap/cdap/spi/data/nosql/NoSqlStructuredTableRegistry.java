@@ -29,7 +29,6 @@ import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
@@ -83,20 +82,19 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
   }
 
   @Override
-  public void registerSpecification(StructuredTableSpecification specification) throws TableAlreadyExistsException {
-    LOG.debug("Registering table specification {}", specification);
+  public void registerSpecification(StructuredTableSpecification specification) {
     StructuredTableId tableId = specification.getTableId();
     MetricsTable table = getRegistryTable();
     try {
       byte[] rowKeyBytes = getRowKeyBytes(tableId);
-      byte[] serialized = table.get(rowKeyBytes, SCHEMA_COL_BYTES);
-      if (serialized != null) {
-        throw new TableAlreadyExistsException(tableId);
+      byte[] oldValue = table.get(rowKeyBytes, SCHEMA_COL_BYTES);
+      if (oldValue != null) {
+        LOG.debug("Updating table specification {}", specification);
+      } else {
+        LOG.debug("Registering table specification {}", specification);
       }
-      serialized = Bytes.toBytes(GSON.toJson(specification));
-      if (!table.swap(rowKeyBytes, SCHEMA_COL_BYTES, null, serialized)) {
-        throw new TableAlreadyExistsException(tableId);
-      }
+      byte[] serialized = Bytes.toBytes(GSON.toJson(specification));
+      table.swap(rowKeyBytes, SCHEMA_COL_BYTES, oldValue, serialized);
     } finally {
       closeRegistryTable(table);
     }
