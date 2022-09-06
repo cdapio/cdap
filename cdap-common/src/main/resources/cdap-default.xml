@@ -5378,14 +5378,6 @@
   </property>
 
   <property>
-    <name>app.version.deletion.enabled</name>
-    <value>false</value>
-    <description>
-      Enables deletion application versions specifically.
-    </description>
-  </property>
-
-  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>

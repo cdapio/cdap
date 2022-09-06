@@ -51,6 +51,7 @@ import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
@@ -59,6 +60,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -399,14 +401,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") final String namespaceId,
                                @PathParam("app-id") final String appId,
                                @PathParam("version-id") final String versionId) throws Exception {
-    if (configuration.getBoolean(Constants.AppFabric.APP_VERSION_DELETION_ENABLED, false)) {
-      ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
-      applicationLifecycleService.removeApplication(id);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } else {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Deletion of specific app version is not allowed.");
+    // If LCM flow is enabled - we do not want to delete specific versions of the app.
+    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(new DefaultFeatureFlagsProvider(configuration))) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Deletion of specific app version is not allowed.");
+      return;
     }
+    ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
+    applicationLifecycleService.removeApplication(id);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**

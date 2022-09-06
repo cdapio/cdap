@@ -83,7 +83,6 @@ import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -118,13 +117,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String EMPTY_ARRAY_JSON = "[]";
   private static final String STOPPED = "STOPPED";
   private static final String RUNNING = "RUNNING";
-
-
-  @BeforeClass
-  public static void beforeClass() throws Throwable {
-    AppFabricTestBase.beforeClass();
-    AppFabricTestBase.cConfiguration.setBoolean(Constants.AppFabric.APP_VERSION_DELETION_ENABLED, true);
-  }
 
   @Category(XSlowTests.class)
   @Test
@@ -1077,6 +1069,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<ScheduleDetail> triggeredSchedules2 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, anotherWorkflow);
     Assert.assertEquals(1, triggeredSchedules2.size());
     assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules2);
+
     deleteApp(app1, 200);
 
     // Schedule detail of app2 from versioned API
@@ -1084,6 +1077,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                           VERSION2, AppWithMultipleSchedules.ANOTHER_WORKFLOW);
     Assert.assertEquals(3, anotherSchedules2.size());
     assertProgramInSchedules(AppWithMultipleSchedules.ANOTHER_WORKFLOW, anotherSchedules2);
+
     deleteApp(app2, 200);
   }
 

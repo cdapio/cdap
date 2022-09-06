@@ -94,12 +94,9 @@ import java.util.stream.StreamSupport;
  */
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
-  private static CConfiguration cConf;
-
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    cConf = createBasicCConf();
-    initializeAndStartServices(cConf);
+    initializeAndStartServices(createBasicCConf());
   }
 
   @Before
@@ -400,7 +397,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                              ApplicationId.DEFAULT_VERSION);
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2WithVersion.get("configuration").getAsString());
     Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
-    cConf.setBoolean(Constants.AppFabric.APP_VERSION_DELETION_ENABLED, true);
     deleteApp(appId, 200);
     deleteApp(appIdDefault, 200);
     deleteApp(appIdV2, 200);
@@ -717,8 +713,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Delete an non-existing app with version
     response = doDelete(getVersionedAPIPath("apps/XYZ/versions/" + VERSION1,
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    // Introducing in LCM: disable versioned app delete
-    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertEquals(404, response.getResponseCode());
 
     // Deploy an app with version
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, AllProgramsApp.class.getSimpleName(), VERSION1);
@@ -736,8 +731,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath(
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
-    Assert.assertEquals(500, response.getResponseCode());
-    Assert.assertEquals("Deletion of specific app version is not allowed.", response.getResponseBodyAsString());
+    Assert.assertEquals(409, response.getResponseCode());
+    Assert.assertEquals("'" + program1.getParent() + "' could not be deleted. Reason: The following programs" +
+                          " are still running: " + program1.getProgram(), response.getResponseBodyAsString());
 
     stopProgram(program1, null, 200, null);
     waitState(program1, "STOPPED");
@@ -746,17 +742,17 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath(
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
-    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the app with version after stopping the service
     response = doDelete(getVersionedAPIPath(
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
-    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertEquals(200, response.getResponseCode());
     response = doDelete(getVersionedAPIPath(
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
-    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the App after stopping the service
     response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
@@ -811,7 +807,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     disableProfile(profileId, 200);
 
     // clean up
-    cConf.setBoolean(Constants.AppFabric.APP_VERSION_DELETION_ENABLED, true);
     deleteApp(defaultAppId, 200);
     deleteArtifact(artifactId, 200);
   }

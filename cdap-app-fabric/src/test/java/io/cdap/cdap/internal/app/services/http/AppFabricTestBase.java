@@ -217,7 +217,6 @@ public abstract class AppFabricTestBase {
   private static MetricStore metricStore;
   private static RemoteClientFactory remoteClientFactory;
   private static LogQueryService logQueryService;
-  public static CConfiguration cConfiguration;
 
   private static HttpRequestConfig httpRequestConfig;
 
@@ -226,8 +225,7 @@ public abstract class AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    cConfiguration = createBasicCConf();
-    initializeAndStartServices(cConfiguration);
+    initializeAndStartServices(createBasicCConf());
   }
 
   protected static void initializeAndStartServices(CConfiguration cConf) throws Exception {
