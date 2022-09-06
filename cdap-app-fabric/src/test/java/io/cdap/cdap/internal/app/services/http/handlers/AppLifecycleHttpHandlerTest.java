@@ -46,6 +46,7 @@ import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -94,9 +95,21 @@ import java.util.stream.StreamSupport;
  */
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
+  private static CConfiguration cConf;
+  private static final String FEATURE_FLAG_PREFIX = "feature.";
+
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    initializeAndStartServices(createBasicCConf());
+    cConf = createBasicCConf();
+    initializeAndStartServices(cConf);
+  }
+
+  private void isLCMEnabled(boolean lcmFlag) {
+    if (lcmFlag) {
+      cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), true);
+      return;
+    }
+    cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), false);
   }
 
   @Before
@@ -662,6 +675,42 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = getAppListResponseWhenFailingWithException(TEST_NAMESPACE1);
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertEquals(exceptionMessage, response.getResponseBodyAsString());
+  }
+
+  /**
+   * Tests deleting with versioned API when LCM feature flag is enabled.
+   */
+  @Test
+  public void testDeleteVersionedAppLCMEnabled() throws Exception {
+    isLCMEnabled(true);
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+
+    HttpResponse response = doDelete(getVersionedAPIPath(
+            String.format("apps/%s/versions/%s", appDetails.get("name").getAsString(),
+                    appDetails.get("appVersion").getAsString()),
+            Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(403, response.getResponseCode());
+    Assert.assertEquals("Forbidden", response.getResponseMessage());
+    Assert.assertEquals("Deletion of specific app version is not allowed.", response.getResponseBodyAsString());
+  }
+
+  /**
+   * Tests deleting with versioned API when LCM feature flag is disabled.
+   */
+  @Test
+  public void testDeleteVersionedAppLCMDisabled() throws Exception {
+    isLCMEnabled(false);
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+
+    HttpResponse response = doDelete(getVersionedAPIPath(
+            String.format("apps/%s/versions/%s", appDetails.get("name").getAsString(),
+                    appDetails.get("appVersion").getAsString()),
+            Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals("OK", response.getResponseMessage());
+    Assert.assertTrue(response.getResponseBodyAsString().isEmpty());
   }
 
   /**
