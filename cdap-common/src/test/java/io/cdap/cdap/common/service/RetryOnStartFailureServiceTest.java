@@ -112,7 +112,7 @@ public class RetryOnStartFailureServiceTest {
 
   @Test
   public void testLoggingContext() {
-    // This test logging context set before the service started is propagated into the service
+    // This test logging context set before the service started is not propagated into the child thread
     final Map<String, String> context = Collections.singletonMap("key", "value");
 
     // Create the service before setting the context.
@@ -120,12 +120,12 @@ public class RetryOnStartFailureServiceTest {
 
       @Override
       protected void startUp() throws Exception {
-        Assert.assertEquals(context, MDC.getCopyOfContextMap());
+        Assert.assertNull(MDC.getCopyOfContextMap());
       }
 
       @Override
       protected void shutDown() throws Exception {
-        Assert.assertEquals(context, MDC.getCopyOfContextMap());
+        Assert.assertNull(MDC.getCopyOfContextMap());
       }
     }, RetryStrategies.noRetry());
 
