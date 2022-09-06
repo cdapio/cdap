@@ -105,7 +105,8 @@ public abstract class StructuredTableAdminTest {
 
     // Assert UPDATED_SIMPLE_TABLE_SPEC schema
     StructuredTableSchema updateSimpleTableSchema = admin.getSchema(SIMPLE_TABLE);
-    Assert.assertEquals(updateSimpleTableSchema, new StructuredTableSchema(UPDATED_SIMPLE_TABLE_SPEC));
+    StructuredTableSchema expected = new StructuredTableSchema(UPDATED_SIMPLE_TABLE_SPEC);
+    Assert.assertEquals(updateSimpleTableSchema, expected);
   }
 
   @Test

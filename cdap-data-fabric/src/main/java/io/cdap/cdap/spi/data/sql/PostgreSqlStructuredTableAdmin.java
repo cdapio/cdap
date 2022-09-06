@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,16 @@
 package io.cdap.cdap.spi.data.sql;
 
 import com.google.common.base.Joiner;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Inject;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
-import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
@@ -37,10 +40,12 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
@@ -50,22 +55,26 @@ import javax.sql.DataSource;
 public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStructuredTableAdmin.class);
-  private final StructuredTableRegistry registry;
+  // https://www.postgresql.org/docs/9.6/errcodes-appendix.html, "42P01" denotes the table is undefined
+  private static final String TABLE_UNDEFINED_SQL_STATE = "42P01";
   private final DataSource dataSource;
+  private final LoadingCache<StructuredTableId, StructuredTableSchema> schemaCache;
 
   @Inject
-  PostgreSqlStructuredTableAdmin(DataSource dataSource, int scanFetchSize) {
-    this(new SqlStructuredTableRegistry(dataSource, scanFetchSize), dataSource);
-  }
-
-  PostgreSqlStructuredTableAdmin(StructuredTableRegistry registry, DataSource dataSource) {
-    this.registry = registry;
+  PostgreSqlStructuredTableAdmin(DataSource dataSource) {
     this.dataSource = dataSource;
+    this.schemaCache = CacheBuilder.newBuilder()
+      .build(new CacheLoader<StructuredTableId, StructuredTableSchema>() {
+        @Override
+        public StructuredTableSchema load(StructuredTableId tableId) throws SQLException {
+          return loadSchema(tableId);
+        }
+      });
   }
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
-    if (registry.getSpecification(spec.getTableId()) != null) {
+    if (exists(spec.getTableId())) {
       throw new TableAlreadyExistsException(spec.getTableId());
     }
     createTable(spec);
@@ -74,11 +83,9 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   @Override
   public void createOrUpdate(StructuredTableSpecification spec)
     throws IOException, TableSchemaIncompatibleException {
-    // If the table is registered, the table and the indexes must get created. If not, we need to verify the
-    // table existence, index existence and then register for the table.
-    if (registry.getSpecification(spec.getTableId()) != null) {
+    if (exists(spec.getTableId())) {
       try {
-        updateTable(spec, registry.getSpecification(spec.getTableId()));
+        updateTable(spec);
         return;
       } catch (TableNotFoundException e) {
         LOG.debug(String.format("Table %s not found while updating it, creating it now.", spec.getTableId()));
@@ -89,32 +96,35 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public boolean exists(StructuredTableId tableId) throws IOException {
-    try (Connection connection = dataSource.getConnection()) {
-      return tableExistsInternal(connection, tableId);
-    } catch (SQLException e) {
-      throw new IOException("Failed to check if table " + tableId + " exists", e);
+    try {
+      getSchema(tableId);
+      return true;
+    } catch (TableNotFoundException e) {
+      return false;
     }
   }
 
   @Override
   public StructuredTableSchema getSchema(StructuredTableId tableId) throws TableNotFoundException {
-    StructuredTableSpecification spec = registry.getSpecification(tableId);
-    if (spec == null) {
-      throw new TableNotFoundException(tableId);
+    try {
+      return schemaCache.get(tableId);
+    } catch (ExecutionException | UncheckedExecutionException e) {
+      if (e.getCause() instanceof TableNotFoundException) {
+        throw (TableNotFoundException) e.getCause();
+      }
+      throw new RuntimeException("Failed to load table schema for " + tableId, e.getCause());
     }
-    return new StructuredTableSchema(spec);
   }
 
-  private void updateTable(StructuredTableSpecification newSpec,
-                           StructuredTableSpecification existingSpec)
+  private void updateTable(StructuredTableSpecification newSpec)
     throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
     StructuredTableId tableId = newSpec.getTableId();
-    if (newSpec.equals(existingSpec)) {
+    StructuredTableSchema newSchema = new StructuredTableSchema(newSpec);
+    StructuredTableSchema existingSchema = getSchema(tableId);
+    if (newSchema.equals(existingSchema)) {
       LOG.trace("The table schema is already up to date: {}", tableId);
       return;
     }
-    StructuredTableSchema newSchema = new StructuredTableSchema(newSpec);
-    StructuredTableSchema existingSchema = new StructuredTableSchema(existingSpec);
     if (!existingSchema.isCompatible(newSchema)) {
       throw new TableSchemaIncompatibleException(tableId);
     }
@@ -124,7 +134,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       // a race condition when multiple table updates process at the same time, hence no need to retry updateTable
       addColumns(connection, newSchema);
       addIndices(connection, newSchema);
-      registry.registerSpecification(newSpec);
+      schemaCache.invalidate(tableId);
     } catch (SQLException e) {
       throw new IOException(String.format("Error updating table schema: %s", tableId.getName()), e);
     }
@@ -145,9 +155,8 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
           LOG.debug("Creating index statement: {}", indexStatement);
           statement.execute(indexStatement);
         }
-        registry.registerSpecification(spec);
       }
-    } catch (SQLException | IOException e) {
+    } catch (SQLException e) {
       throw new IOException(String.format("Error creating table %s", spec.getTableId()), e);
     }
   }
@@ -161,18 +170,10 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       try (Statement statement = connection.createStatement()) {
         statement.execute(sqlQuery);
       }
-      registry.removeSpecification(tableId);
+      schemaCache.invalidate(tableId);
       // All indexes on a table are dropped when a table is dropped.
     } catch (SQLException e) {
       throw new IOException(String.format("Error dropping table %s", tableId), e);
-    }
-  }
-
-  boolean tableExists(StructuredTableId tableId) throws IOException {
-    try (Connection connection = dataSource.getConnection()) {
-      return tableExistsInternal(connection, tableId);
-    } catch (SQLException e) {
-      throw new IOException(String.format("Error checking whether table %s exists", tableId.getName()), e);
     }
   }
 
@@ -200,7 +201,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       }
     } catch (SQLException e) {
       // PostgreSQL error 42P01 denotes the database query is on an undefined table.
-      if ("42P01".equalsIgnoreCase(e.getSQLState())) {
+      if (TABLE_UNDEFINED_SQL_STATE.equalsIgnoreCase(e.getSQLState())) {
         throw new TableNotFoundException(tableId);
       }
       throw new IOException(String.format("Error adding columns to table: %s", tableId.getName()), e);
@@ -218,7 +219,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
         statement.execute(indexStatement);
       }
     } catch (SQLException e) {
-      if ("42P01".equalsIgnoreCase(e.getSQLState())) {
+      if (TABLE_UNDEFINED_SQL_STATE.equalsIgnoreCase(e.getSQLState())) {
         throw new TableNotFoundException(schema.getTableId());
       }
       throw new IOException(String.format("Error adding indices to table: %s", schema.getTableId().getName()), e);
@@ -301,32 +302,93 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   private String getPostgreSQLType(FieldType.Type fieldType) {
-    String sqlType;
-
     switch (fieldType) {
       case INTEGER:
-        sqlType = "int";
-        break;
+        return "int";
       case STRING:
-        sqlType = "text";
-        break;
+        return "text";
       case LONG:
-        sqlType = "bigint";
-        break;
+        return "bigint";
       case DOUBLE:
-        sqlType = "double precision";
-        break;
+        return "double precision";
       case FLOAT:
-        sqlType = "real";
-        break;
+        return "real";
       case BYTES:
-        sqlType = "bytea";
-        break;
+        return "bytea";
       default:
         // this should never happen since all the fields are from the specification and validated there
         throw new IllegalStateException(
           String.format("UnSupported type: %s", fieldType));
     }
-    return sqlType;
+  }
+
+  private FieldType.Type fromSQLType(String sqlType) {
+    switch (sqlType.toLowerCase()) {
+      case "integer":
+      case "int":
+        return FieldType.Type.INTEGER;
+      case "text":
+        return FieldType.Type.STRING;
+      case "bigint":
+        return FieldType.Type.LONG;
+      case "double precision":
+        return FieldType.Type.DOUBLE;
+      case "real":
+        return FieldType.Type.FLOAT;
+      case "bytea":
+        return FieldType.Type.BYTES;
+      default:
+        throw new IllegalArgumentException("Unsupport spanner type " + sqlType);
+    }
+  }
+
+  private StructuredTableSchema loadSchema(StructuredTableId tableId)
+    throws TableNotFoundException, SQLException {
+    // Query the information_schema, pg_index and pg_attribute to reconstruct the StructuredTableSchema
+    // using just one query, instead of calling MetaData.getColumns(), MetaData.getPrimaryKeys() and
+    // MetaData.getIndexInfo() that is hitting Database 3 times
+    String schemaStatement = String.format("SELECT C.column_name, C.data_type, I.is_primarykey_index "
+                                             + "FROM information_schema.columns C LEFT JOIN "
+                                             + "(SELECT a.attname AS column_name, i.indisprimary AS "
+                                             + "is_primarykey_index, format_type(a.atttypid, a.atttypmod) "
+                                             + "AS data_type FROM pg_index i JOIN pg_attribute a ON a.attrelid = "
+                                             + "i.indrelid AND a.attnum = ANY(i.indkey) WHERE i.indrelid = "
+                                             + "'%s'::regclass) I ON I.column_name=C.column_name "
+                                             + "WHERE table_name='%s' order by ordinal_position;",
+                                             tableId.getName(), tableId.getName());
+
+    List<FieldType> fields = new ArrayList<>();
+    List<String> primaryKeys = new ArrayList<>();
+    List<String> indexes = new ArrayList<>();
+
+    try (Connection connection = dataSource.getConnection()) {
+      Statement statement = connection.createStatement();
+      ResultSet resultSet = statement.executeQuery(schemaStatement);
+      while (resultSet.next()) {
+        String columnName = resultSet.getString("column_name");
+        String indexType = resultSet.getString("is_primarykey_index");
+
+        fields.add(new FieldType(columnName, fromSQLType(resultSet.getString("data_type"))));
+
+        // "t" as true indicates primary key index, "f" as false indicates normal index, null means it's just a column
+        if ("t".equalsIgnoreCase(indexType)) {
+          primaryKeys.add(columnName);
+        } else if ("f".equalsIgnoreCase(indexType)) {
+          indexes.add(columnName);
+        }
+      }
+    } catch (SQLException e) {
+      // PostgreSQL error 42P01: database query is on an undefined table
+      if (TABLE_UNDEFINED_SQL_STATE.equalsIgnoreCase(e.getSQLState())) {
+        throw new TableNotFoundException(tableId);
+      }
+      throw new SQLException(e.getCause());
+    }
+
+    if (fields.isEmpty()) {
+      throw new TableNotFoundException(tableId);
+    }
+
+    return new StructuredTableSchema(tableId, fields, primaryKeys, indexes);
   }
 }
