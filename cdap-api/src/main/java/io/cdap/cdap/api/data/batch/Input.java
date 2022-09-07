@@ -35,13 +35,6 @@ public abstract class Input {
   private String alias;
   private String namespace;
 
-  /**
-   * no args contructor for GSON
-   */
-  private Input() {
-    this.name = null;
-  }
-
   protected Input(String name) {
     this.name = name;
   }
