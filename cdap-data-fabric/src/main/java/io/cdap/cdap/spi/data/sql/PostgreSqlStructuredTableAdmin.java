@@ -20,6 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
@@ -60,6 +61,14 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   PostgreSqlStructuredTableAdmin(StructuredTableRegistry registry, DataSource dataSource) {
     this.registry = registry;
     this.dataSource = dataSource;
+  }
+
+  @Override
+  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
+    if (registry.getSpecification(spec.getTableId()) != null) {
+      throw new TableAlreadyExistsException(spec.getTableId());
+    }
+    createTable(spec);
   }
 
   @Override

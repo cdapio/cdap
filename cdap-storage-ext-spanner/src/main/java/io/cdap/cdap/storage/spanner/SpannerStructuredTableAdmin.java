@@ -32,6 +32,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableDuplicateUpdateException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
@@ -76,6 +77,14 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
           return loadSchema(tableId);
         }
       });
+  }
+
+  @Override
+  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
+    if (exists(spec.getTableId())) {
+      throw new TableAlreadyExistsException(spec.getTableId());
+    }
+    createTable(spec);
   }
 
   @Override
