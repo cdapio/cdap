@@ -195,6 +195,11 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
     StructuredTableAdmin specAdmin =
       new StructuredTableAdmin() {
         @Override
+        public void create(StructuredTableSpecification spec) {
+          throw new UnsupportedOperationException("Unexpected DDL operation during registry usage!!");
+        }
+
+        @Override
         public void createOrUpdate(StructuredTableSpecification spec) {
           throw new UnsupportedOperationException("Unexpected DDL operation during registry usage!!");
         }
