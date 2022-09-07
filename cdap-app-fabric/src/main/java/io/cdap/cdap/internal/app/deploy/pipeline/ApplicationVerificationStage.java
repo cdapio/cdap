@@ -122,7 +122,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     emit(input);
   }
 
-  private void verifySpec(ApplicationId appId, ApplicationSpecification specification) {
+  private void verifySpec(ApplicationId appId,
+                          ApplicationSpecification specification) {
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());

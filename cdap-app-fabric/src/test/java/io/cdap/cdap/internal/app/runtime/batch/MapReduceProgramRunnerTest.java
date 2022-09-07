@@ -127,26 +127,21 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     final ApplicationWithPrograms app = deployApp(AppWithTxAware.class);
     runProgram(app, AppWithTxAware.PedanticMapReduce.class,
                new BasicArguments(ImmutableMap.of("outputPath", TEMP_FOLDER_SUPPLIER.get().getPath() + "/output")));
-    deleteApp(app.getApplicationId());
   }
 
   @Test
   public void testMapreduceWithFileSet() throws Exception {
-    ApplicationWithPrograms applicationWithPrograms = testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001",
-            AppWithMapReduceUsingFileSet.class,
-            AppWithMapReduceUsingFileSet.ComputeSum.class,
-            null, null, null);
-    deleteApp(applicationWithPrograms.getApplicationId());
-
+    testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001",
+                          AppWithMapReduceUsingFileSet.class,
+                          AppWithMapReduceUsingFileSet.ComputeSum.class,
+                          null, null, null);
 
     // test reading and writing same dataset
     // this time configure the output format to use # as the separator, overriding the dataset properties
-    // and also use # as the separator for validation
-    applicationWithPrograms = testMapreduceWithFile("boogie", "zzz", "boogie", "f123",
-            AppWithMapReduceUsingFileSet.class,
-            AppWithMapReduceUsingFileSet.ComputeSum.class,
-            null, null, "#");
-    deleteApp(applicationWithPrograms.getApplicationId());
+    testMapreduceWithFile("boogie", "zzz", "boogie", "f123",
+                          AppWithMapReduceUsingFileSet.class,
+                          AppWithMapReduceUsingFileSet.ComputeSum.class,
+                          null, null, "#"); // and also use # as the separator for validation
   }
 
   @Test
@@ -178,12 +173,12 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_NAME, "rtOutput1");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_PATH, "a001");
     // test reading and writing distinct datasets, reading more than one path
-    ApplicationWithPrograms applicationWithPrograms = testMapreduceWithFile("rtInput1", "abc, xyz", "rtOutput1", "a001",
-            AppWithMapReduceUsingRuntimeDatasets.class,
-            AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
-            runtimeArguments,
-            AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
-            null);
+    testMapreduceWithFile("rtInput1", "abc, xyz", "rtOutput1", "a001",
+                          AppWithMapReduceUsingRuntimeDatasets.class,
+                          AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
+                          runtimeArguments,
+                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
+                          null);
 
     // validate that the table emitted metrics
     Collection<MetricTimeSeries> metrics =
@@ -215,14 +210,12 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_PATHS, "zzz");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_NAME, "rtInput2");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_PATH, "f123");
-    deleteApp(applicationWithPrograms.getApplicationId());
-    applicationWithPrograms = testMapreduceWithFile("rtInput2", "zzz", "rtInput2", "f123",
-            AppWithMapReduceUsingRuntimeDatasets.class,
-            AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
-            runtimeArguments,
-            AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
-            null);
-    deleteApp(applicationWithPrograms.getApplicationId());
+    testMapreduceWithFile("rtInput2", "zzz", "rtInput2", "f123",
+                          AppWithMapReduceUsingRuntimeDatasets.class,
+                          AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
+                          runtimeArguments,
+                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
+                          null);
   }
 
   @Test
@@ -249,7 +242,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     metrics = getMetricTimeSeries();
 
     Assert.assertTrue(metrics.size() > 0);
-    deleteApp(app.getApplicationId());
   }
 
   private Collection<MetricTimeSeries> getMetricTimeSeries() {
@@ -265,7 +257,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       Collections.<String>emptyList()));
   }
 
-  private ApplicationWithPrograms testMapreduceWithFile(String inputDatasetName, String inputPaths,
+  private void testMapreduceWithFile(String inputDatasetName, String inputPaths,
                                      String outputDatasetName, String outputPath,
                                      Class appClass, Class mrClass,
                                      Map<String, String> extraRuntimeArgs,
@@ -351,7 +343,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         Assert.assertEquals(1L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS, 0L));
       });
     }
-    return app;
   }
 
   @Test
@@ -360,7 +351,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     MapReduceSpecification mrSpec =
       app.getSpecification().getMapReduce().get(AppWithMapReduce.ClassicWordCount.class.getSimpleName());
     Assert.assertEquals(AppWithMapReduce.ClassicWordCount.MEMORY_MB, mrSpec.getDriverResources().getMemoryMB());
-    deleteApp(app.getApplicationId());
   }
 
   @Test
@@ -409,7 +399,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
         }
       });
-    deleteApp(app.getApplicationId());
   }
 
   @Test
@@ -462,7 +451,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     // dummy check that output file is not empty
     Assert.assertTrue(lines > 0);
-    deleteApp(app.getApplicationId());
   }
 
   @Test
@@ -530,7 +518,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         }
       });
     datasetCache.dismissTransactionContext();
-    deleteApp(app.getApplicationId());
+
     // todo: verify metrics. Will be possible after refactor for CDAP-765
   }
 
@@ -581,7 +569,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         }
       }
     );
-    deleteApp(appWithPrograms.getApplicationId());
   }
 
   private URI createStopWordsFile() throws IOException {
@@ -643,7 +630,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       });
 
     datasetCache.dismissTransactionContext();
-    deleteApp(app.getApplicationId());
   }
 
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
@@ -685,7 +671,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     testFailureInInit("true", app, AppWithMapReduce.ExplicitFaiiingMR.class, ImmutableMap.<String, String>of());
     testFailureInInit("false", app, AppWithMapReduce.ExplicitFaiiingMR.class, ImmutableMap.of("failInput", "true"));
     testFailureInInit("false", app, AppWithMapReduce.ExplicitFaiiingMR.class, ImmutableMap.of("failOutput", "true"));
-    deleteApp(app.getApplicationId());
   }
 
   private void testFailureInInit(final String expected, ApplicationWithPrograms app,
@@ -756,7 +741,6 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         }
       });
     datasetCache.dismissTransactionContext();
-    deleteApp(app.getApplicationId());
   }
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass,

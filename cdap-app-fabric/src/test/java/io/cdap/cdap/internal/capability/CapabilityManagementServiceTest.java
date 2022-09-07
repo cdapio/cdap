@@ -331,8 +331,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
     // Verify that application is redeployed with newer artifact.
-    // Introducing in LCM: cannot deploy- since the application to be deployed must differ from it's latest version
-    Assert.assertEquals(oldArtifactVersion,
+    Assert.assertEquals(newArtifactVersion,
                         appList.get(0).get("artifact").getAsJsonObject().get("version").getAsString());
     // Capability management service might not yet have deployed application.
     // So wait till program exists and is in running state.
@@ -477,7 +476,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, appNameWithCapability, testVersion);
       applicationLifecycleService
         .deployApp(NamespaceId.DEFAULT, appNameWithCapability, testVersion, artifactId,
-                   null, null, programId -> {
+                   null, programId -> {
           });
       Assert.fail("Expecting exception");
     } catch (CapabilityNotAvailableException ex) {
@@ -508,7 +507,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       .from(Id.Namespace.DEFAULT, appNameWithCapability, testVersion);
     applicationLifecycleService
       .deployApp(NamespaceId.DEFAULT, appNameWithCapability, testVersion, artifactId,
-                 null, null, programId -> {
+                 null, programId -> {
         });
 
     applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithCapability, testVersion));
@@ -551,7 +550,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Id.Artifact artifactId = Id.Artifact
       .from(new Id.Namespace(namespace), appName, version);
     ApplicationWithPrograms applicationWithPrograms = applicationLifecycleService
-      .deployApp(new NamespaceId(namespace), appName, null, artifactId, null, null, op -> {
+      .deployApp(new NamespaceId(namespace), appName, null, artifactId, null, op -> {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
@@ -631,7 +630,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Id.Artifact artifactId = Id.Artifact
       .from(new Id.Namespace(namespace), appName, version);
     ApplicationWithPrograms applicationWithPrograms = applicationLifecycleService
-      .deployApp(new NamespaceId(namespace), appName, null, artifactId, null, null, op -> {
+      .deployApp(new NamespaceId(namespace), appName, null, artifactId, null, op -> {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
@@ -783,7 +782,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     String label = "Enable capability";
     String capability = "test";
     ArtifactSummary artifactSummary = new ArtifactSummary(appName, artifactVersion, ArtifactScope.SYSTEM);
-    SystemApplication application = new SystemApplication(namespace, appName, appVersion, artifactSummary, null, null);
+    SystemApplication application = new SystemApplication(namespace, appName, appVersion, artifactSummary, null);
     SystemProgram program = new SystemProgram(namespace, appName, ProgramType.SERVICE.name(),
                                               programName, appVersion, null);
     return new CapabilityConfig(label, CapabilityStatus.ENABLED, capability,
@@ -811,7 +810,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     artifactRepository.addArtifact(artifactId, appJarFile);
     //deploy app
     applicationLifecycleService
-      .deployApp(NamespaceId.DEFAULT, appName, testVersion, artifactId, null, null, programId -> {
+      .deployApp(NamespaceId.DEFAULT, appName, testVersion, artifactId,
+                 null, programId -> {
         });
   }
 }

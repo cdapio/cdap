@@ -57,7 +57,12 @@ public class AppRequest<T> {
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
                     @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules) {
-    this(artifact, config, preview, ownerPrincipal, updateSchedules, null, null, null);
+    this(artifact, config, preview, ownerPrincipal, updateSchedules, null);
+  }
+
+  public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
+                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration) {
+    this(artifact, config, preview, ownerPrincipal, updateSchedules, configuration, null, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,

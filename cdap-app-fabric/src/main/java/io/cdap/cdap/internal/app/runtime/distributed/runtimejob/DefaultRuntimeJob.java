@@ -350,7 +350,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
     String appClassName = systemArguments.get(ProgramOptionConstants.APPLICATION_CLASS);
     Location programJarLocation = Locations.toLocation(
       new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
-
     
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(programDescriptor.getArtifactId())
@@ -362,7 +361,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       .setUpdateSchedules(false)
       .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments))
       .build();
-    
+
     Configurator configurator = configuratorFactory.create(deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
     ConfigResponse response = future.get(120, TimeUnit.SECONDS);

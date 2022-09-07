@@ -88,7 +88,6 @@ public class WorkerProgramRunnerTest {
   private static DatasetFramework dsFramework;
   private static DynamicDatasetCache datasetCache;
   private static MetricStore metricStore;
-  private static CConfiguration conf;
 
   private static Collection<ProgramController> runningPrograms = new HashSet<>();
 
@@ -107,7 +106,7 @@ public class WorkerProgramRunnerTest {
   public static void beforeClass() {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
-    conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
 
@@ -165,7 +164,6 @@ public class WorkerProgramRunnerTest {
           Assert.assertEquals(AppWithMisbehavedDataset.VALUE, result.getString(AppWithMisbehavedDataset.COLUMN));
         }
       });
-    AppFabricTestHelper.deleteApplication(app.getApplicationId(), conf);
   }
 
   @Test
@@ -231,7 +229,6 @@ public class WorkerProgramRunnerTest {
         return ts.getTimeValues().get(0).getValue();
       }
     }, 5L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
-    AppFabricTestHelper.deleteApplication(app.getApplicationId(), conf);
   }
 
   private ProgramController startProgram(ApplicationWithPrograms app, Class<?> programClass)

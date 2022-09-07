@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.sysapp;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
@@ -114,12 +113,10 @@ public class SystemAppEnableExecutor {
 
     // if we don't null check, it gets serialized to "null"
     String configString = arguments.getConfig() == null ? null : GSON.toJson(arguments.getConfig());
-    JsonObject versionObject = arguments.getVersion();
-    String changeSummaryString = versionObject == null ? null : versionObject.get("changeSummary").getAsString();
 
     try {
       return appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                           artifactSummary, configString, changeSummaryString, x -> { },
+                                           artifactSummary, configString, x -> { },
                                            ownerPrincipalId, arguments.canUpdateSchedules(), false,
                                            Collections.emptyMap());
 

@@ -111,7 +111,7 @@ public class ConfiguratorTest {
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
-
+    
     AppDeploymentInfo appDeploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(artifactId.toEntityId())
       .setArtifactLocation(appJar)
