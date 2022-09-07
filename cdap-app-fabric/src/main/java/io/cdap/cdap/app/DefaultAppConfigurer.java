@@ -85,8 +85,6 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final PluginInstantiator pluginInstantiator;
   private final AppDeploymentRuntimeInfo runtimeInfo;
   private final Id.Artifact artifactId;
-  @Nullable
-  private final String changeSummary;
   private final String configuration;
   private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
   private final Map<String, SparkSpecification> sparks = new HashMap<>();
@@ -104,14 +102,12 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
-    this(namespace, artifactId, app, null, "",  null,
-            null, null, null, new FeatureFlagsProvider() {
+    this(namespace, artifactId, app, "", null, null, null, null,
+         new FeatureFlagsProvider() {
          });
   }
 
-  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app,
-                              @Nullable String changeSummary,
-                              String configuration,
+  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
                               @Nullable PluginFinder pluginFinder,
                               @Nullable PluginInstantiator pluginInstantiator,
                               @Nullable RuntimeConfigurer runtimeConfigurer,
@@ -121,7 +117,6 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     featureFlagsProvider);
     this.name = app.getClass().getSimpleName();
     this.description = "";
-    this.changeSummary = changeSummary;
     this.configuration = configuration;
     this.artifactId = artifactId;
     this.pluginFinder = pluginFinder;
@@ -321,7 +316,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     }
 
     return new DefaultApplicationSpecification(appName, appVersion, ProjectInfo.getVersion().toString(), description,
-                                               changeSummary, configuration, artifactId,
+                                               configuration, artifactId,
                                                getDatasetModules(), getDatasetSpecs(),
                                                mapReduces, sparks, workflows, services,
                                                builtScheduleSpecs, workers, getPlugins());

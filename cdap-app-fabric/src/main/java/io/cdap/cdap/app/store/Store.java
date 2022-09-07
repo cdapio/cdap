@@ -304,7 +304,7 @@ public interface Store {
    * @param specification application specification to store
    * @param owner         user name (owner) of the application version
    */
-  void addApplication(ApplicationId id, ApplicationSpecification specification, String owner);
+  void addApplication(ApplicationId id, ApplicationSpecification specification, @Nullable String owner);
 
 
   /**

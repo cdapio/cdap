@@ -51,7 +51,7 @@ public class MapReduceContextConfigTest {
       hConf.setInt(String.valueOf(i), i);
     }
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      "name", ProjectInfo.getVersion().toString(), "desc", null, appCfg.toString(),
+      "name", ProjectInfo.getVersion().toString(), "desc", appCfg.toString(),
       new ArtifactId("artifact", new ArtifactVersion("1.0.0"), ArtifactScope.USER),
       Collections.emptyMap(),
       Collections.emptyMap(),

@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.capability;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -308,12 +307,10 @@ class CapabilityApplier {
     }
     LOG.debug("Application {} is being deployed", applicationId);
     String configString = application.getConfig() == null ? null : GSON.toJson(application.getConfig());
-    JsonObject versionObject = application.getVersionObject();
-    String changeSummaryString = versionObject == null ? null : versionObject.get("changeSummary").getAsString();
     applicationLifecycleService
       .deployApp(applicationId.getParent(), applicationId.getApplication(), applicationId.getVersion(),
-                 application.getArtifact(), configString, changeSummaryString, NOOP_PROGRAM_TERMINATOR,
-              null, null, false, Collections.emptyMap());
+                 application.getArtifact(), configString, NOOP_PROGRAM_TERMINATOR, null, null, false,
+                 Collections.emptyMap());
   }
 
   @VisibleForTesting

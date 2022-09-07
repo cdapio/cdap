@@ -46,7 +46,6 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.Notification;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
 import org.apache.tephra.TransactionManager;
@@ -84,7 +83,6 @@ public class MapReduceRunnerTestBase {
   protected static DatasetFramework dsFramework;
   protected static DynamicDatasetCache datasetCache;
   protected static MetricStore metricStore;
-  protected  static CConfiguration conf;
 
 
   @ClassRule
@@ -103,7 +101,7 @@ public class MapReduceRunnerTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
     // allow subclasses to override the following two parameters
     Integer txTimeout = Integer.getInteger(TxConstants.Manager.CFG_TX_TIMEOUT);
     if (txTimeout != null) {
@@ -145,10 +143,6 @@ public class MapReduceRunnerTestBase {
 
   protected ApplicationWithPrograms deployApp(Class<?> appClass) throws Exception {
     return AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
-  }
-
-  protected void deleteApp(ApplicationId appId) throws Exception {
-     AppFabricTestHelper.deleteApplication(appId, conf);
   }
 
   protected ApplicationWithPrograms deployApp(Class<?> appClass, Config config) throws Exception {

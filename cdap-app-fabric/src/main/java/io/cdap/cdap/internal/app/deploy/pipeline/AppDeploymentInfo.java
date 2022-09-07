@@ -58,6 +58,13 @@ public class AppDeploymentInfo {
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
+                           @Nullable String configString) {
+    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
+            null, null, true, null);
+  }
+
+  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
+                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable String changeSummary,
                            @Nullable String owner) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, changeSummary,
@@ -67,11 +74,19 @@ public class AppDeploymentInfo {
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable String changeSummary,
-                           @Nullable String owner,
-                           @Nullable KerberosPrincipalId ownerPrincipal,
+                           @Nullable String owner, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
          appName, appVersion, configString, changeSummary, owner, ownerPrincipal,
+            updateSchedules, runtimeInfo);
+  }
+
+  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
+                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
+                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
+            appName, appVersion, configString, null, null, ownerPrincipal,
             updateSchedules, runtimeInfo);
   }
 
@@ -83,6 +98,14 @@ public class AppDeploymentInfo {
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion,
             configString, changeSummary, owner, ownerPrincipal, updateSchedules, runtimeInfo);
+  }
+
+  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
+                           String applicationClassName, @Nullable String appName, @Nullable String appVersion,
+                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+    this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion,
+            configString, null, null, ownerPrincipal, updateSchedules, runtimeInfo);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,

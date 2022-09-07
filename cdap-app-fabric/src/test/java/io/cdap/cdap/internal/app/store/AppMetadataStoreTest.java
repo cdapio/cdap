@@ -74,12 +74,9 @@ public abstract class AppMetadataStoreTest {
   private static final ArtifactId ARTIFACT_ID = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
   private static final Map<String, String> SINGLETON_PROFILE_MAP =
     Collections.singletonMap(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
-  private static final long TEST_CREATED = System.currentTimeMillis();
-  private static final String TEST_OWNER = "owner";
 
   private final AtomicInteger sourceId = new AtomicInteger();
   private final AtomicLong runIdTime = new AtomicLong();
-
 
   @Before
   public void before() {
@@ -926,10 +923,8 @@ public abstract class AppMetadataStoreTest {
       String appName = "test" + i;
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
-        store.writeApplication(NamespaceId.SYSTEM.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+        store.writeApplication(NamespaceId.SYSTEM.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
     }
     TransactionRunners.run(transactionRunner, context -> {
@@ -965,8 +960,7 @@ public abstract class AppMetadataStoreTest {
       String appName = "test" + i;
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
     }
 
@@ -995,8 +989,7 @@ public abstract class AppMetadataStoreTest {
       String appName = "test" + i;
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
     }
 
@@ -1118,16 +1111,14 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
-                               defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
+                               defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
 
       String cdapAppName = "test" + (2 * i + 1);
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.CDAP.getNamespace(),
-                               cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
+                               cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
     }
 
@@ -1156,16 +1147,14 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
-            defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
+            defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
 
       String cdapAppName = "test" + (2 * i + 1);
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.CDAP.getNamespace(),
-            cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                TEST_CREATED, TEST_OWNER);
+            cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
     }
 

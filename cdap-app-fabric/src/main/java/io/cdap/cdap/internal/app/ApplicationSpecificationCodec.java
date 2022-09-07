@@ -120,10 +120,10 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               WorkerSpecification.class);
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
 
-    return new DefaultApplicationSpecification(name, appVersion, appCDAPVersion, description, changeSummary,
+    return new DefaultApplicationSpecification(name, appVersion, appCDAPVersion, description,
                                                configuration, artifactId,
                                                datasetModules, datasetInstances,
                                                mapReduces, sparks,
-                                               workflows, services, programSchedules, workers, plugins);
+                                               workflows, services, programSchedules, workers, plugins, changeSummary);
   }
 }

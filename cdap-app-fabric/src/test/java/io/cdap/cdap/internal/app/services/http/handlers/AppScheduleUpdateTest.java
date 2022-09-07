@@ -75,7 +75,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
 
     // none of the schedules will be added - by default we have set update schedules to be false as system property.
     Assert.assertEquals(0, actualSchSpecs.size());
-    deleteApp(defaultAppId, 200);
 
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
@@ -90,7 +89,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     // both the schedules will be added as now,
     // we have provided update schedules property to be true manually in appRequest
     Assert.assertEquals(2, actualSchSpecs.size());
-   // deleteApp(defaultAppId, 200);
 
     config = new AppWithSchedule.AppConfig(true, true, false);
     request = new AppRequest<>(
@@ -104,7 +102,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
 
     // no changes will be made, as default behavior is dont update schedules, so both the schedules should be there
     Assert.assertEquals(2, actualSchSpecs.size());
-    deleteApp(defaultAppId, 200);
 
     config = new AppWithSchedule.AppConfig(false, false, false);
     request = new AppRequest<>(
@@ -118,6 +115,5 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
 
     // workflow is deleted, so the schedules will be deleted now
     Assert.assertEquals(0, actualSchSpecs.size());
-    deleteApp(defaultAppId, 200);
   }
 }
