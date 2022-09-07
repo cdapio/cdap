@@ -319,7 +319,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
                                                configuration, artifactId,
                                                getDatasetModules(), getDatasetSpecs(),
                                                mapReduces, sparks, workflows, services,
-                                               builtScheduleSpecs, workers, getPlugins());
+                                               builtScheduleSpecs, workers, getPlugins(), changeSummary);
   }
 
   public Collection<StructuredTableSpecification> getSystemTables() {
