@@ -33,16 +33,14 @@ public class SystemApplication {
   private final String version;
   private final ArtifactSummary artifact;
   private final JsonObject config;
-  private final JsonObject versionObject;
 
   public SystemApplication(String namespace, String applicationName, @Nullable String version,
-                           ArtifactSummary artifact, @Nullable JsonObject config, @Nullable JsonObject versionObject) {
+                           ArtifactSummary artifact, @Nullable JsonObject config) {
     this.namespace = namespace;
     this.name = applicationName;
     this.version = version;
     this.artifact = artifact;
     this.config = config;
-    this.versionObject = versionObject;
   }
 
   /**
@@ -80,14 +78,6 @@ public class SystemApplication {
   @Nullable
   public JsonObject getConfig() {
     return config;
-  }
-
-  /**
-   * @return version {@link JSONObject}, could be null
-   */
-  @Nullable
-  public JsonObject getVersionObject() {
-    return versionObject;
   }
 
   @Override

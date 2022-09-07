@@ -121,7 +121,7 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     artifactRepository.addArtifact(artifactId, appJarFile);
     ArtifactSummary summary = new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(),
                                                   ArtifactScope.SYSTEM);
-    applicationLifecycleService.deployApp(NamespaceId.SYSTEM, APP_NAME, VERSION, summary, null, null, 
+    applicationLifecycleService.deployApp(NamespaceId.SYSTEM, APP_NAME, VERSION, summary, null,
                                           programId -> {
                                             // no-op
                                           }, null, false, false, Collections.emptyMap());

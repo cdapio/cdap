@@ -425,20 +425,14 @@ public class DefaultStore implements Store {
 
   @Override
   public void addApplication(ApplicationId id, ApplicationSpecification spec) {
-    // Generate the creation time for the version of the app.
-    long created = System.currentTimeMillis();
-    // TODO: send owner info to function
-    TransactionRunners.run(transactionRunner, context -> {
-      getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec,
-              created, null);
-    });
+    addApplication(id, spec, null);
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationSpecification spec, String owner) {
+  public void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String owner) {
     // Generate the creation time for the version of the app.
-    long created = System.currentTimeMillis();
-    // TODO: send owner info to function
+    Long created = System.currentTimeMillis();
+    // TODO: update latest field of the latest version
     TransactionRunners.run(transactionRunner, context -> {
       getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec,
               created, owner);

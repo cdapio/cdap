@@ -90,7 +90,6 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     // assert that the mapper was initialized and destroyed (this doesn't happen when using hadoop's MultipleOutputs).
     Assert.assertEquals("true", System.getProperty("mapper.initialized"));
     Assert.assertEquals("true", System.getProperty("mapper.destroyed"));
-    deleteApp(app.getApplicationId());
   }
 
   @Test
@@ -111,7 +110,6 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     Assert.assertFalse(runProgram(app,
                                   AppWithMapReduceUsingInconsistentMappers.MapReduceWithInconsistentMapperTypes2.class,
                                   new BasicArguments()));
-    deleteApp(app.getApplicationId());
   }
 
   @Test
@@ -121,6 +119,5 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     // will fail because it configured two inputs with the same alias
     Assert.assertFalse(runProgram(app,
                                   AppWithMapReduceUsingMultipleInputs.InvalidMapReduce.class, new BasicArguments()));
-    deleteApp(app.getApplicationId());
   }
 }

@@ -61,7 +61,24 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public DefaultApplicationSpecification(String name,
                                          @Nullable String appCDAPVersion, String description,
-                                         @Nullable String changeSummary,
+                                         String configuration,
+                                         ArtifactId artifactId,
+                                         Map<String, String> datasetModules,
+                                         Map<String, DatasetCreationSpec> datasetInstances,
+                                         Map<String, MapReduceSpecification> mapReduces,
+                                         Map<String, SparkSpecification> sparks,
+                                         Map<String, WorkflowSpecification> workflows,
+                                         Map<String, ServiceSpecification> services,
+                                         Map<String, ScheduleCreationSpec> programSchedules,
+                                         Map<String, WorkerSpecification> workers,
+                                         Map<String, Plugin> plugins, @Nullable String changeSummary) {
+    this(name, ApplicationId.DEFAULT_VERSION, appCDAPVersion, description, configuration, artifactId,
+            datasetModules, datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
+            plugins, changeSummary);
+  }
+
+  public DefaultApplicationSpecification(String name,
+                                         @Nullable String appCDAPVersion, String description,
                                          String configuration,
                                          ArtifactId artifactId,
                                          Map<String, String> datasetModules,
@@ -73,14 +90,13 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
-    this(name, ApplicationId.DEFAULT_VERSION, appCDAPVersion, description, changeSummary, configuration, artifactId,
-            datasetModules, datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
-            plugins);
+    this(name, ApplicationId.DEFAULT_VERSION, appCDAPVersion, description, configuration, artifactId, datasetModules,
+            datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
+            plugins, null);
   }
 
   public DefaultApplicationSpecification(String name, String appVersion,
                                          @Nullable String appCDAPVersion, String description,
-                                         @Nullable String changeSummary,
                                          String configuration,
                                          ArtifactId artifactId,
                                          Map<String, String> datasetModules,
@@ -92,11 +108,27 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
+      this(name, appVersion, appCDAPVersion, description, configuration, artifactId, datasetModules,
+               datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers, plugins, null);
+  }
+
+  public DefaultApplicationSpecification(String name, String appVersion,
+                                         @Nullable String appCDAPVersion, String description,
+                                         String configuration,
+                                         ArtifactId artifactId,
+                                         Map<String, String> datasetModules,
+                                         Map<String, DatasetCreationSpec> datasetInstances,
+                                         Map<String, MapReduceSpecification> mapReduces,
+                                         Map<String, SparkSpecification> sparks,
+                                         Map<String, WorkflowSpecification> workflows,
+                                         Map<String, ServiceSpecification> services,
+                                         Map<String, ScheduleCreationSpec> programSchedules,
+                                         Map<String, WorkerSpecification> workers,
+                                         Map<String, Plugin> plugins, @Nullable String changeSummary) {
     this.name = name;
     this.appVersion = appVersion;
     this.appCDAPVersion = appCDAPVersion;
     this.description = description;
-    this.changeSummary = changeSummary;
     this.configuration = configuration;
     this.artifactId = artifactId;
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
@@ -108,6 +140,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.programSchedules = ImmutableMap.copyOf(programSchedules);
     this.workers = ImmutableMap.copyOf(workers);
     this.plugins = ImmutableMap.copyOf(plugins);
+    this.changeSummary = changeSummary;
   }
 
   @Override

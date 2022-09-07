@@ -427,10 +427,15 @@ public class AppMetadataStore {
 
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec,
-                               long created, String owner)
+                               @Nullable Long created, @Nullable String owner)
     throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)), created,
             owner);
+  }
+
+  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec)
+          throws IOException {
+    writeApplication(namespaceId, appId, versionId, spec, null, null);
   }
 
   public void deleteApplication(String namespaceId, String appId, String versionId)
@@ -1837,12 +1842,17 @@ public class AppMetadataStore {
   }
 
   private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized,
-                                          long created, String owner)
+                                          @Nullable Long created, @Nullable String owner)
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
     // TODO: Add owner, creation time and latest fields
     getApplicationSpecificationTable().upsert(fields);
+  }
+
+  private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized)
+          throws IOException {
+    writeApplicationSerialized(namespaceId, appId, versionId, serialized, null, null);
   }
 
   private List<Field<?>> getCountTypePrefix(String countType) {
