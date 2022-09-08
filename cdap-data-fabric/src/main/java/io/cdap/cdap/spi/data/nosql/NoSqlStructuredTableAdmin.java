@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.lib.IndexedTable;
 import io.cdap.cdap.api.dataset.lib.IndexedTableDefinition;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
@@ -62,12 +63,24 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
+  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
+    if (exists(spec.getTableId())) {
+      throw new TableAlreadyExistsException(spec.getTableId());
+    }
+    createTable(spec);
+  }
+
+  @Override
   public void createOrUpdate(StructuredTableSpecification spec)
     throws IOException, TableSchemaIncompatibleException {
     if (exists(spec.getTableId())) {
       updateTable(spec);
       return;
     }
+    createTable(spec);
+  }
+
+  private void createTable(StructuredTableSpecification spec) throws IOException {
     LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
     DatasetAdmin indexTableAdmin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec, null);
     if (!indexTableAdmin.exists()) {
