@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
+import io.cdap.cdap.etl.api.streaming.StreamingEventHandler;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
@@ -202,8 +203,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     StreamingSource<Object, Object> pluginInstance = createPluginInstance(stageSpec, collector);
     StreamingContext sourceStreamingContext = new DefaultStreamingContext(stageSpec, sec, streamingContext);
     DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
-    JavaDStream<Object> statefulStream = pluginInstance.getStatefulStream(sourceStreamingContext);
-    statefulStream.foreachRDD((javaRDD, time) -> {
+    JavaDStream<Object> dStream = pluginInstance.getStream(sourceStreamingContext);
+    dStream.foreachRDD((javaRDD, time) -> {
       if (dataTracer.isEnabled()) {
         // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
         javaRDD = new LimitingFunction<>(spec.getNumOfRecordsPreview()).call(javaRDD);
@@ -223,6 +224,11 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       emittedRecords.put(source, builder.build());
       processDag(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
                  functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups, branchers, shufflers);
+      if (dStream instanceof StreamingEventHandler) {
+        ((StreamingEventHandler) dStream).onBatchCompleted(sourceStreamingContext);
+      } else if (dStream.dstream() instanceof StreamingEventHandler) {
+        ((StreamingEventHandler) (dStream.dstream())).onBatchCompleted(sourceStreamingContext);
+      }
     });
   }
 
