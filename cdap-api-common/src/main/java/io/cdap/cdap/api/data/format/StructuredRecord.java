@@ -492,7 +492,7 @@ public class StructuredRecord implements Serializable {
         return this;
       }
 
-      if (decimal.precision() > logicalSchema.getPrecision()) {
+      if (logicalSchema.getPrecision() != 0 && decimal.precision() > logicalSchema.getPrecision()) {
         throw new UnexpectedFormatException(
           String.format("Field '%s' has precision '%s' which is higher than schema precision '%s'.",
                         fieldName, decimal.precision(), logicalSchema.getPrecision()));

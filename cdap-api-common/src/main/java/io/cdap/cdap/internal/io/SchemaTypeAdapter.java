@@ -236,11 +236,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
     if (logicalType != null) {
       if (logicalType == Schema.LogicalType.DECIMAL) {
-        try {
-          return Schema.decimalOf(precision, scale);
-        } catch (IllegalArgumentException e) {
-          throw new IOException("Decimal type must contain a positive precision value.");
-        }
+        return Schema.decimalOf(precision, scale);
       }
 
       return Schema.of(logicalType);

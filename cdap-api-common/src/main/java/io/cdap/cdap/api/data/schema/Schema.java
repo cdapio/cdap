@@ -627,10 +627,6 @@ public final class Schema implements Serializable {
                  @Nullable String recordName, @Nullable Map<String, Field> fieldMap,  // Not null for record type
                  @Nullable List<Schema> unionSchemas,                                 // Not null for union type
                  int precision, int scale) {
-    if (logicalType == LogicalType.DECIMAL && precision <= 0) {
-      throw new IllegalArgumentException("Schema for logical type decimal must be created using decimalOf() method.");
-    }
-
     this.type = type;
     this.logicalType = logicalType;
     Map.Entry<Map<String, Integer>, Map<Integer, String>> enumValuesIndexes = createIndex(enumValues);
