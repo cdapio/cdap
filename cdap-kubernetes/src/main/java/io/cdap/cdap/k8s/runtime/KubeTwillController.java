@@ -250,6 +250,11 @@ class KubeTwillController implements ExtendedTwillController {
       return completion;
     }
 
+    if (meta.getAnnotations() != null && Boolean.parseBoolean(
+        meta.getAnnotations().get(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED))) {
+      completion.complete(KubeTwillController.this);
+      return CompletableFuture.completedFuture(KubeTwillController.this);
+    }
     return cleanupResources(gracePeriodSeconds);
   }
 

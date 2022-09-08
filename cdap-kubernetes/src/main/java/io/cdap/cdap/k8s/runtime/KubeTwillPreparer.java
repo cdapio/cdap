@@ -183,6 +183,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String serviceAccountName;
   private String programRuntimeNamespace;
   private String workloadIdentityServiceAccount;
+  private boolean runtimeCleanupDisabled;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -353,6 +354,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     if (config.containsKey(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY)) {
       workloadIdentityServiceAccount = config
         .get(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
+    }
+    if (config.containsKey(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED)) {
+      runtimeCleanupDisabled = Boolean.parseBoolean(config.get(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED));
     }
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
@@ -591,7 +595,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       }
 
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
-                                                     timeoutUnit.toMillis(timeout));
+                                                     timeoutUnit.toMillis(timeout), runtimeCleanupDisabled);
       if (V1Job.class.equals(resourceType)) {
         metadata = createJob(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
       } else if (V1Deployment.class.equals(resourceType)) {
@@ -614,7 +618,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   /**
    * Creates a {@link V1ObjectMeta} for the given resource type.
    */
-  private V1ObjectMeta createResourceMetadata(Type resourceType, String runnableName, long startTimeoutMillis) {
+  private V1ObjectMeta createResourceMetadata(Type resourceType, String runnableName, long startTimeoutMillis,
+                                              boolean runtimeCleanupDisabled) {
     String resourceName = getResourceName(twillSpec.getName(), twillRunId, getMaxLength(resourceType));
 
     Map<String, String> extraLabels = this.extraLabels.entrySet().stream()
@@ -630,6 +635,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .addToLabels(KubeMasterEnvironment.NAMESPACE_PROPERTY, programRuntimeNamespace)
       .addToAnnotations(KubeTwillRunnerService.APP_LABEL, twillSpec.getName())
       .addToAnnotations(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION, Long.toString(startTimeoutMillis));
+    if (runtimeCleanupDisabled) {
+      objectMetaBuilder.addToAnnotations(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED, Boolean.TRUE.toString());
+    }
+
     // OwnerReference must be in same namespace as object
     if (kubeNamespace.equals(programRuntimeNamespace)) {
       objectMetaBuilder.withOwnerReferences(podInfo.getOwnerReferences());
