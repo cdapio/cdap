@@ -26,7 +26,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AllProgramsApp;
-import io.cdap.cdap.AppWithMultipleSchedules;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.AppWithWorker;
@@ -34,7 +33,6 @@ import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.DummyAppWithTrackingTable;
 import io.cdap.cdap.SleepingWorkflowApp;
 import io.cdap.cdap.api.Config;
-import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
@@ -49,7 +47,6 @@ import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.internal.app.ServiceSpecificationCodec;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
@@ -252,115 +249,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getResponseCode());
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getResponseCode());
-  }
-
-  @Test
-  public void testVersionedProgramStartStopStatus() throws Exception {
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "app", VERSION1);
-    addAppArtifact(artifactId, AllProgramsApp.class);
-    AppRequest<? extends Config> appRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-
-    ApplicationId appId1 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION1);
-    ApplicationId appId2 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION2);
-    Id.Application appDefault = Id.Application.fromEntityId(appId1);
-
-    // deploy app1
-    Assert.assertEquals(200, deploy(appId1, appRequest).getResponseCode());
-
-    // deploy app1 with default version
-    Assert.assertEquals(200, deploy(appDefault, appRequest).getResponseCode());
-
-    // deploy the second version of the app
-    Assert.assertEquals(200, deploy(appId2, appRequest).getResponseCode());
-
-    ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    ProgramId serviceId2 = appId2.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    Id.Program serviceIdDefault = Id.Program.fromEntityId(serviceId1);
-    // service is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
-    // start service
-    startProgram(serviceId1, 200);
-    waitState(serviceId1, RUNNING);
-    // wordFrequencyService2 is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(serviceId2));
-    // start service in version2
-    startProgram(serviceId2, 200);
-    waitState(serviceId2, RUNNING);
-    // wordFrequencyServiceDefault is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(serviceIdDefault));
-    // start service in default version
-    startProgram(serviceIdDefault, 200);
-    waitState(serviceIdDefault, RUNNING);
-    // same service cannot be run concurrently in the same app version
-    startProgram(serviceId1, 409);
-    stopProgram(serviceId1, null, 200, null);
-    waitState(serviceId1, STOPPED);
-    Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
-    // wordFrequencyService1 can be run after wordFrequencyService1 is stopped
-    startProgram(serviceId1, 200);
-    waitState(serviceId1, RUNNING);
-
-    stopProgram(serviceId1, null, 200, null);
-    stopProgram(serviceId2, null, 200, null);
-    stopProgram(serviceIdDefault, null, 200, null);
-    waitState(serviceId1, STOPPED);
-    waitState(serviceId2, STOPPED);
-    waitState(serviceIdDefault, STOPPED);
-
-    Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
-    addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
-    AppRequest<? extends Config> sleepWorkflowRequest = new AppRequest<>(
-      new ArtifactSummary(sleepWorkflowArtifactId.getName(), sleepWorkflowArtifactId.getVersion().getVersion()));
-
-    ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION1);
-    final ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
-
-    ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION2);
-    final ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
-
-    // Start wordCountApp1
-    Assert.assertEquals(200, deploy(sleepWorkflowApp1, sleepWorkflowRequest).getResponseCode());
-    // workflow is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
-    // start workflow in a wrong version
-    startProgram(sleepWorkflow2, 404);
-    // Start wordCountApp2
-    Assert.assertEquals(200, deploy(sleepWorkflowApp2, sleepWorkflowRequest).getResponseCode());
-
-    // start multiple workflow simultaneously with a long sleep time
-    Map<String, String> args = Collections.singletonMap("sleep.ms", "120000");
-    startProgram(sleepWorkflow1, args, 200);
-    startProgram(sleepWorkflow2, args, 200);
-    startProgram(sleepWorkflow1, args, 200);
-    startProgram(sleepWorkflow2, args, 200);
-
-    // Make sure they are all running. Otherwise on slow machine, it's possible that the TMS states hasn't
-    // been consumed and write to the store before we stop the program and query for STOPPED state.
-    Tasks.waitFor(2, () -> getProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING).size(),
-                  10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
-    Tasks.waitFor(2, () -> getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING).size(),
-                  10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
-
-    // stop multiple workflow simultaneously
-    // This will stop all concurrent runs of the Workflow version 1.0.0
-    stopProgram(sleepWorkflow1, null, 200, null);
-    // This will stop all concurrent runs of the Workflow version 2.0.0
-    stopProgram(sleepWorkflow2, null, 200, null);
-
-    // Wait until all are stopped
-    waitState(sleepWorkflow1, STOPPED);
-    waitState(sleepWorkflow2, STOPPED);
-
-    //Test for runtime args
-    testVersionedProgramRuntimeArgs(sleepWorkflow1);
-
-    // cleanup
-    deleteApp(appId1, 200);
-    deleteApp(appId2, 200);
-    deleteApp(appDefault, 200);
-    deleteApp(sleepWorkflowApp1, 200);
-    deleteApp(sleepWorkflowApp2, 200);
   }
 
   @Category(XSlowTests.class)
@@ -966,119 +854,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
                                                                  ProgramType.WORKER.getCategoryName(),
                                                                  AppWithWorker.WORKER));
-  }
-
-  @Test
-  public void testMultipleWorkflowSchedules() throws Exception {
-    // Deploy the app
-    NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
-    Id.Namespace idTestNamespace2 = Id.Namespace.fromEntityId(testNamespace2);
-    Id.Artifact artifactId = Id.Artifact.from(idTestNamespace2, "appwithmultiplescheduledworkflows", VERSION1);
-    addAppArtifact(artifactId, AppWithMultipleSchedules.class);
-    AppRequest<? extends Config> appRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-    Id.Application appDefault = new Id.Application(idTestNamespace2, AppWithMultipleSchedules.NAME);
-    ApplicationId app1 = testNamespace2.app(AppWithMultipleSchedules.NAME, VERSION1);
-    ApplicationId app2 = testNamespace2.app(AppWithMultipleSchedules.NAME, VERSION2);
-    Assert.assertEquals(200, deploy(appDefault, appRequest).getResponseCode());
-    Assert.assertEquals(200, deploy(app1, appRequest).getResponseCode());
-    Assert.assertEquals(200, deploy(app2, appRequest).getResponseCode());
-
-    // Schedule details from non-versioned API
-    List<ScheduleDetail> someSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
-                                                      AppWithMultipleSchedules.SOME_WORKFLOW);
-    Assert.assertEquals(2, someSchedules.size());
-    Assert.assertEquals(AppWithMultipleSchedules.SOME_WORKFLOW, someSchedules.get(0).getProgram().getProgramName());
-    Assert.assertEquals(AppWithMultipleSchedules.SOME_WORKFLOW, someSchedules.get(1).getProgram().getProgramName());
-
-    // Schedule details from non-versioned API
-    List<ScheduleDetail> anotherSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
-                                                         AppWithMultipleSchedules.ANOTHER_WORKFLOW);
-    Assert.assertEquals(3, anotherSchedules.size());
-    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_WORKFLOW,
-                        anotherSchedules.get(0).getProgram().getProgramName());
-    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_WORKFLOW,
-                        anotherSchedules.get(1).getProgram().getProgramName());
-    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_WORKFLOW,
-                        anotherSchedules.get(2).getProgram().getProgramName());
-
-    // Schedule details from non-versioned API filtered by Trigger type
-    List<ScheduleDetail> filteredTimeSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
-                                                              AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
-                                                              ProtoTrigger.Type.TIME);
-    Assert.assertEquals(1, filteredTimeSchedules.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, filteredTimeSchedules);
-
-    // Schedule details from non-versioned API filtered by Trigger type
-    List<ScheduleDetail> programStatusSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
-                                                              AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
-                                                              ProtoTrigger.Type.PROGRAM_STATUS);
-    Assert.assertEquals(4, programStatusSchedules.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, programStatusSchedules);
-
-    deleteApp(appDefault, 200);
-
-    // Schedule of app1 from versioned API
-    List<ScheduleDetail> someSchedules1 = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME, VERSION1,
-                                                       AppWithMultipleSchedules.SOME_WORKFLOW);
-    Assert.assertEquals(2, someSchedules1.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.SOME_WORKFLOW, someSchedules1);
-
-    // Schedule details from versioned API filtered by Trigger type
-    filteredTimeSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME, VERSION1,
-                                         AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
-                                         ProtoTrigger.Type.TIME);
-    Assert.assertEquals(1, filteredTimeSchedules.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, filteredTimeSchedules);
-
-    // Schedule details from versioned API filtered by Trigger type
-    programStatusSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME, VERSION1,
-                                          AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
-                                          ProtoTrigger.Type.PROGRAM_STATUS);
-    Assert.assertEquals(4, programStatusSchedules.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, programStatusSchedules);
-
-    // Schedules triggered by SOME_WORKFLOW's completed or failed or killed status
-    ProgramId someWorkflow = app1.workflow(AppWithMultipleSchedules.SOME_WORKFLOW);
-    List<ScheduleDetail> triggeredSchedules1 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
-                                                                             ProgramStatus.COMPLETED,
-                                                                             ProgramStatus.FAILED,
-                                                                             ProgramStatus.KILLED);
-    Assert.assertEquals(3, triggeredSchedules1.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules1);
-
-    List<ScheduleDetail> filteredSchedules =
-      listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SCHEDULED,
-                                    ProgramStatus.COMPLETED, ProgramStatus.FAILED, ProgramStatus.KILLED);
-    // No schedule is enabled yet
-    Assert.assertEquals(0, filteredSchedules.size());
-    filteredSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SUSPENDED,
-                                                      ProgramStatus.COMPLETED,
-                                                      ProgramStatus.FAILED,
-                                                      ProgramStatus.KILLED);
-    // All schedules are suspended
-    Assert.assertEquals(3, filteredSchedules.size());
-
-    // Schedules triggered by SOME_WORKFLOW's completed status
-    List<ScheduleDetail> triggeredByCompletedSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
-                                                                                       ProgramStatus.COMPLETED);
-    Assert.assertEquals(2, triggeredByCompletedSchedules.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredByCompletedSchedules);
-    // Schedules triggered by ANOTHER_WORKFLOW regardless of program status
-    ProgramId anotherWorkflow = app1.workflow(AppWithMultipleSchedules.ANOTHER_WORKFLOW);
-    List<ScheduleDetail> triggeredSchedules2 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, anotherWorkflow);
-    Assert.assertEquals(1, triggeredSchedules2.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules2);
-
-    deleteApp(app1, 200);
-
-    // Schedule detail of app2 from versioned API
-    List<ScheduleDetail> anotherSchedules2 = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
-                                                          VERSION2, AppWithMultipleSchedules.ANOTHER_WORKFLOW);
-    Assert.assertEquals(3, anotherSchedules2.size());
-    assertProgramInSchedules(AppWithMultipleSchedules.ANOTHER_WORKFLOW, anotherSchedules2);
-
-    deleteApp(app2, 200);
   }
 
   private void assertProgramInSchedules(String programName, List<ScheduleDetail> schedules) {

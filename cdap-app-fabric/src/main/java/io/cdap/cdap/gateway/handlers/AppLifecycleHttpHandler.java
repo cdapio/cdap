@@ -595,7 +595,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Decodes request coming from the {@link #getApplicationDetails(FullHttpRequest, HttpResponder, String)} call.
    */
   private List<ApplicationId> decodeAndValidateBatchApplication(NamespaceId namespaceId,
-                                                                FullHttpRequest request) throws BadRequestException {
+                                                                FullHttpRequest request) throws BadRequestException,
+          ApplicationNotFoundException {
     try {
       List<ApplicationId> result = new ArrayList<>();
       JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
@@ -611,13 +612,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           throw new BadRequestException("Missing 'appId' in the request element.");
         }
         String appId = obj.get("appId").getAsString();
+        String version = null;
 
-        JsonElement version = obj.get("version");
-        if (version == null) {
-          result.add(validateApplicationId(namespaceId, appId));
+        JsonElement versionObj = obj.get("version");
+        if (versionObj == null) {
+          // get the latest version of the app instead of -SNAPSHOT
+          try {
+            ApplicationDetail appLatestVersionDetail = applicationLifecycleService.getAppLatestVersionDetail(
+                    new ApplicationId(namespaceId.getNamespace(), appId));
+            version = appLatestVersionDetail.getAppVersion();
+          } catch (Exception e) {
+            throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
+          }
         } else {
-          result.add(validateApplicationVersionId(namespaceId, appId, version.getAsString()));
+            version = versionObj.getAsString();
         }
+        result.add(validateApplicationVersionId(namespaceId, appId, version));
       }
       return result;
     } catch (JsonSyntaxException e) {
