@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.spec;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -304,8 +303,8 @@ public class PipelineSpecGeneratorTest {
           .build())
       .addConnections(etlConfig.getConnections())
       .setResources(etlConfig.getResources())
-      .setDriverResources(new Resources(1024, 1))
-      .setClientResources(new Resources(1024, 1))
+      .setDriverResources(ETLConfig.Builder.DEFAULT_TEST_RESOURCES)
+      .setClientResources(ETLConfig.Builder.DEFAULT_TEST_RESOURCES)
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
       .setEngine(Engine.MAPREDUCE)
@@ -341,8 +340,8 @@ public class PipelineSpecGeneratorTest {
           .build())
       .addConnections(etlConfig.getConnections())
       .setResources(etlConfig.getResources())
-      .setDriverResources(new Resources(1024, 1))
-      .setClientResources(new Resources(1024, 1))
+      .setDriverResources(ETLConfig.Builder.DEFAULT_TEST_RESOURCES)
+      .setClientResources(ETLConfig.Builder.DEFAULT_TEST_RESOURCES)
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
       .setEngine(Engine.MAPREDUCE)
@@ -921,9 +920,9 @@ public class PipelineSpecGeneratorTest {
       .addStage(StageSpec.builder("a2", new PluginSpec(Action.PLUGIN_TYPE, "action2", empty, ARTIFACT_ID))
                   .addInputSchema("a1", null)
                   .build())
-      .setResources(new Resources(1024))
-      .setDriverResources(new Resources(1024))
-      .setClientResources(new Resources(1024))
+      .setResources(ETLConfig.Builder.DEFAULT_TEST_RESOURCES)
+      .setDriverResources(ETLConfig.Builder.DEFAULT_TEST_RESOURCES)
+      .setClientResources(ETLConfig.Builder.DEFAULT_TEST_RESOURCES)
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .setEngine(Engine.MAPREDUCE)
       .build();
