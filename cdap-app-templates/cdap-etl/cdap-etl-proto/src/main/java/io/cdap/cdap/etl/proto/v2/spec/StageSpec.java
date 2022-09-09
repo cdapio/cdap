@@ -197,7 +197,7 @@ public class StageSpec implements Serializable {
     private boolean processTimingEnabled;
     private int maxPreviewRecords;
 
-    public Builder(String name, PluginSpec plugin) {
+    private Builder(String name, PluginSpec plugin) {
       this.name = name;
       this.plugin = plugin;
       this.inputSchemas = new HashMap<>();

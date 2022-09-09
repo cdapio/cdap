@@ -5336,6 +5336,14 @@
   </property>
 
   <property>
+    <name>feature.datatype.logicaltype.fixed.enabled</name>
+    <value>false</value>
+    <description>
+      Enables Fixed datatype of logical type in CDAP Schema
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>

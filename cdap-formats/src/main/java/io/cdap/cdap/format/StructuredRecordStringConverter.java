@@ -174,11 +174,7 @@ public class StructuredRecordStringConverter {
     // Decode base64 payload for byte fields.
     if (fieldSchema.getType() == Schema.Type.BYTES) {
       try {
-        if (fieldSchema.getLogicalType() == Schema.LogicalType.FIXED) {
-          builder.set(fieldName, FormatUtils.base64Decode(part));
-        } else {
-          builder.set(fieldName, FormatUtils.base64Decode(part));
-        }
+        builder.set(fieldName, FormatUtils.base64Decode(part));
         return;
       } catch (IOException ioe) {
         throw new IllegalArgumentException("Unable to extract Base64 payload from field " + fieldName, ioe);
