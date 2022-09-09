@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -365,12 +365,13 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .addConnection("src", "sink")
         .setEngine(Engine.SPARK)
         .build();
+    String parentVersion = "dummyParentVersion";
 
-    DraftStoreRequest<ETLBatchConfig> batchDraftStoreRequest = new DraftStoreRequest<>(config, "", name,
-                                                                                       description, 0, artifact);
+    DraftStoreRequest<ETLBatchConfig> batchDraftStoreRequest =
+      new DraftStoreRequest<>(config, "", name, description, 0, artifact, parentVersion);
 
     long now = System.currentTimeMillis();
-    Draft expectedDraft = new Draft(config, name, description, artifact, draftId.getId(), now, now);
+    Draft expectedDraft = new Draft(config, name, description, artifact, draftId.getId(), now, now, parentVersion);
 
     createPipelineDraft(draftId, batchDraftStoreRequest);
     return expectedDraft;
@@ -386,11 +387,11 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .setCheckpointDir("temp/dir")
         .build();
 
-    DraftStoreRequest<DataStreamsConfig> batchDraftStoreRequest = new DraftStoreRequest<>(config, "", name,
-                                                                                          description, 0, artifact);
+    DraftStoreRequest<DataStreamsConfig> batchDraftStoreRequest =
+      new DraftStoreRequest<>(config, "", name, description, 0, artifact, null);
 
     long now = System.currentTimeMillis();
-    Draft expectedDraft = new Draft(config, name, description, artifact, draftId.getId(), now, now);
+    Draft expectedDraft = new Draft(config, name, description, artifact, draftId.getId(), now, now, null);
 
     createPipelineDraft(draftId, batchDraftStoreRequest);
     return expectedDraft;
@@ -485,7 +486,8 @@ public class DraftServiceTest extends DataPipelineServiceTest {
                 StudioUtil.ARTIFACT_STREAMING_NAME));
       }
       return new Draft(config, draft.getName(), draft.getDescription(), draft.getArtifact(),
-          draft.getId(),          draft.getCreatedTimeMillis(), draft.getUpdatedTimeMillis());
+                       draft.getId(), draft.getCreatedTimeMillis(), draft.getUpdatedTimeMillis(),
+                       draft.getParentVersion());
     }
   }
 }
