@@ -100,11 +100,12 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
 
     SparkConf sparkConf = new SparkConf();
     // we do not do checkpointing during preview. Skip enabling write-ahead logs in that case to avoid spark exception
-    if (!spec.isPreviewEnabled(context) && !spec.isCheckpointsDisabled()) {
+    if (!spec.isPreviewEnabled(context) && spec.getStateSpec()
+      .getMode() == DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING) {
       // required spark configs to prevent data loss during real-time pipeline upgrades
       sparkConf.set("spark.streaming.receiver.writeAheadLog.enable", "true");
 
-      String checkpointDir = spec.getCheckpointDirectory();
+      String checkpointDir = spec.getStateSpec().getCheckpointDir();
       String checkpointScheme = null;
 
       if (!Strings.isNullOrEmpty(checkpointDir)) {
@@ -162,7 +163,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       }
       if ("spark.streaming.receiver.writeAheadLog.enable".equals(property.getKey())) {
         boolean isWriteAheadLogEnabled = Boolean.parseBoolean(property.getValue());
-        if (spec.isCheckpointsDisabled() && isWriteAheadLogEnabled) {
+        if (spec.getStateSpec().getMode() != DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING && isWriteAheadLogEnabled) {
           throw new IllegalArgumentException(
             "Checkpointing should be enabled when write-ahead logs are enabled for the pipeline.");
         }

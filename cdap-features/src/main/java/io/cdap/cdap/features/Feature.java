@@ -32,7 +32,8 @@ public enum Feature {
   PUSHDOWN_TRANSFORMATION_GROUPBY("6.7.0"),
   PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.7.0"),
   STREAMING_PIPELINE_CHECKPOINT_DELETION("6.7.1"),
-  LIFECYCLE_MANAGEMENT_EDIT("6.8.0");
+  LIFECYCLE_MANAGEMENT_EDIT("6.8.0"),
+  STREAMING_PIPELINE_NATIVE_STATE_TRACKING("6.8.0", false);
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;

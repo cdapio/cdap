@@ -5378,6 +5378,14 @@
   </property>
 
   <property>
+    <name>feature.streaming.pipeline.native.state.tracking.enabled</name>
+    <value>false</value>
+    <description>
+      Enable native state tracking for streaming pipelines for Atleast Once guarantee
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
