@@ -246,6 +246,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
    */
   @SuppressWarnings("unchecked")
   public abstract static class Builder<T extends Builder> {
+    public static final Resources DEFAULT_TEST_RESOURCES = new Resources(2048, 1);
     protected Set<ETLStage> stages;
     protected Set<Connection> connections;
     protected Resources resources;
@@ -259,9 +260,9 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     protected Builder() {
       this.stages = new HashSet<>();
       this.connections = new HashSet<>();
-      this.resources = new Resources(1024, 1);
-      this.driverResources = new Resources(1024, 1);
-      this.clientResources = new Resources(1024, 1);
+      this.resources = DEFAULT_TEST_RESOURCES;
+      this.driverResources = DEFAULT_TEST_RESOURCES;
+      this.clientResources = DEFAULT_TEST_RESOURCES;
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
       this.properties = new HashMap<>();
