@@ -217,12 +217,18 @@ public class AbstractProgramRuntimeServiceTest {
                                                                              program, null, null);
     ProgramRunDispatcherFactory factory = new ProgramRunDispatcherFactory(cConf, launchDispatcher);
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(cConf, runnerFactory, new NoOpProgramStateWriter(), factory, false) {
-      @Override
-      public ProgramLiveInfo getLiveInfo(ProgramId programId) {
-        return new ProgramLiveInfo(programId, "runtime") { };
-      }
-    };
+      new AbstractProgramRuntimeService(cConf, runnerFactory, new NoOpProgramStateWriter(), factory) {
+
+        @Override
+        protected boolean isDistributed() {
+          return false;
+        }
+
+        @Override
+        public ProgramLiveInfo getLiveInfo(ProgramId programId) {
+          return new ProgramLiveInfo(programId, "runtime") { };
+        }
+      };
 
     runtimeService.startAndWait();
     try {
@@ -448,8 +454,13 @@ public class AbstractProgramRuntimeServiceTest {
                                       ProgramRunnerFactory programRunnerFactory, @Nullable RuntimeInfo extraInfo,
                                       InMemoryProgramRunDispatcher programRunDispatcher) {
       super(cConf, programRunnerFactory, new NoOpProgramStateWriter(),
-            new ProgramRunDispatcherFactory(cConf, programRunDispatcher), false);
+            new ProgramRunDispatcherFactory(cConf, programRunDispatcher));
       this.extraInfo = extraInfo;
+    }
+
+    @Override
+    protected boolean isDistributed() {
+      return false;
     }
 
     @Override

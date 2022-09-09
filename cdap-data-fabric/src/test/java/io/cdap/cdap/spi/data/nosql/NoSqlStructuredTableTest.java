@@ -29,7 +29,6 @@ import io.cdap.cdap.spi.data.StructuredTableTest;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,7 +46,7 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
 /**
- * Unit test for nosql strcutured table.
+ * Unit test for nosql structured table.
  */
 public class NoSqlStructuredTableTest extends StructuredTableTest {
   @ClassRule
@@ -71,7 +70,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    Configuration txConf = HBaseConfiguration.create();
+    Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
 

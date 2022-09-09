@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.data.common;
 
 import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
@@ -35,10 +34,9 @@ public interface StructuredTableRegistry {
    *
    * @param specification table specification to register
    * @throws IOException if not able to write to the underlying storage
-   * @throws TableAlreadyExistsException if the table already exists
    */
   void registerSpecification(StructuredTableSpecification specification)
-    throws IOException, TableAlreadyExistsException;
+    throws IOException;
 
   /**
    * Get the specification of a table if it exists in the registry.

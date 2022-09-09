@@ -14,34 +14,45 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.app.deploy;
 
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import org.apache.twill.api.RunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Information required by {@link io.cdap.cdap.app.deploy.ProgramRunDispatcher} to execute
  * program-run logic.
  */
-public class ProgramRunDispatcherInfo {
+public class ProgramRunDispatcherContext {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramRunDispatcherContext.class);
 
   private final ProgramDescriptor programDescriptor;
   private final RunId runId;
   private final ProgramOptions programOptions;
-  private final boolean isDistributed;
+  private final boolean distributed;
 
-  private final AtomicReference<Runnable> cleanUpTask;
+  // Transient to avoid serialization of tasks
+  private final transient Deque<Runnable> cleanupTasks;
 
-  public ProgramRunDispatcherInfo(ProgramDescriptor programDescriptor, ProgramOptions programOptions,
-                                  RunId runId, boolean isDistributed, AtomicReference<Runnable> cleanUpTask) {
+  public ProgramRunDispatcherContext(ProgramRunDispatcherContext other) {
+    this(other.programDescriptor, other.programOptions, other.runId, other.distributed);
+  }
+
+  public ProgramRunDispatcherContext(ProgramDescriptor programDescriptor, ProgramOptions programOptions,
+                                     RunId runId, boolean distributed) {
     this.programDescriptor = programDescriptor;
     this.programOptions = programOptions;
     this.runId = runId;
-    this.isDistributed = isDistributed;
-    this.cleanUpTask = cleanUpTask;
+    this.distributed = distributed;
+    this.cleanupTasks = new ConcurrentLinkedDeque<>();
   }
 
   public ProgramOptions getProgramOptions() {
@@ -57,10 +68,22 @@ public class ProgramRunDispatcherInfo {
   }
 
   public boolean isDistributed() {
-    return isDistributed;
+    return distributed;
   }
 
-  public AtomicReference<Runnable> getCleanUpTask() {
-    return cleanUpTask;
+  public void addCleanupTask(Runnable task) {
+    cleanupTasks.add(task);
+  }
+
+  public void executeCleanupTasks() {
+    Iterator<Runnable> iter = cleanupTasks.descendingIterator();
+    while (iter.hasNext()) {
+      try {
+        iter.next().run();
+      } catch (Exception e) {
+        LOG.warn("Exception raised when executing cleanup task", e);
+      }
+      iter.remove();
+    }
   }
 }

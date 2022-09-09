@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.deploy;
 
 import io.cdap.cdap.app.runtime.ProgramController;
-import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
 
 /**
  * This interface is used for providing the abstraction for executing program-run logic either In-memory or remotely.
@@ -27,10 +26,10 @@ public interface ProgramRunDispatcher {
   /**
    * Creates a new instance of {@link ProgramController} for the given program run info.
    *
-   * @param programRunDispatcherInfo Context Information required to perform program-run operation.
+   * @param dispatcherContext Context Information required to perform program-run operation.
    * @return An instance of {@link ProgramController}
    * @throws Exception if program-run operation fails
    */
-  ProgramController dispatchProgram(ProgramRunDispatcherInfo programRunDispatcherInfo) throws Exception;
+  ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext) throws Exception;
 
 }

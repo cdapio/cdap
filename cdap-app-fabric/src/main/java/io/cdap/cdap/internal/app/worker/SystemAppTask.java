@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -69,7 +68,6 @@ import java.io.IOException;
 public class SystemAppTask implements RunnableTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemAppTask.class);
-  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
 
@@ -125,8 +123,9 @@ public class SystemAppTask implements RunnableTask {
 
       LOG.debug("Launching system app task {}", taskClassName);
       RunnableTask runnableTask = (RunnableTask) injector.getInstance(clazz);
-      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest.getParam().getSimpleParam(), null,
-                                                                        null, null, systemAppTaskContext) {
+
+
+      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest, systemAppTaskContext) {
         @Override
         public void writeResult(byte[] data) throws IOException {
           context.writeResult(data);

@@ -70,19 +70,20 @@ public abstract class StructuredTableTest {
   private static final String FLOAT_COL = "col3";
   private static final String BYTES_COL = "col4";
   private static final String LONG_COL = "col5";
+  private static final String IDX_COL = "col6";
   private static final String VAL = "val";
   private static final StructuredTableSchema SIMPLE_SCHEMA;
 
   static {
     try {
       SIMPLE_SPEC = new StructuredTableSpecification.Builder()
-       .withId(SIMPLE_TABLE)
-       .withFields(Fields.intType(KEY), Fields.stringType(STRING_COL), Fields.longType(KEY2),
-                   Fields.doubleType(DOUBLE_COL), Fields.floatType(FLOAT_COL), Fields.bytesType(BYTES_COL),
-                   Fields.longType(LONG_COL))
-       .withPrimaryKeys(KEY, KEY2)
-       .withIndexes(STRING_COL)
-       .build();
+        .withId(SIMPLE_TABLE)
+        .withFields(Fields.intType(KEY), Fields.stringType(STRING_COL), Fields.longType(KEY2),
+                    Fields.doubleType(DOUBLE_COL), Fields.floatType(FLOAT_COL), Fields.bytesType(BYTES_COL),
+                    Fields.longType(LONG_COL), Fields.longType(IDX_COL))
+        .withPrimaryKeys(KEY, KEY2)
+        .withIndexes(STRING_COL, IDX_COL)
+        .build();
       SIMPLE_SCHEMA = new StructuredTableSchema(SIMPLE_SPEC);
     } catch (InvalidFieldException e) {
       throw new RuntimeException(e);
@@ -90,11 +91,12 @@ public abstract class StructuredTableTest {
   }
 
   protected abstract StructuredTableAdmin getStructuredTableAdmin() throws Exception;
+
   protected abstract TransactionRunner getTransactionRunner() throws Exception;
 
   @Before
   public void init() throws Exception {
-    getStructuredTableAdmin().create(SIMPLE_SPEC);
+    getStructuredTableAdmin().createOrUpdate(SIMPLE_SPEC);
   }
 
   @After
@@ -595,11 +597,11 @@ public abstract class StructuredTableTest {
   @Test
   public void testUpdate() throws Exception {
     List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, 1),
-                                            Fields.longField(KEY2, 2L),
-                                            Fields.stringField(STRING_COL, "str1"),
-                                            Fields.doubleField(DOUBLE_COL, (double) 1.0),
-                                            Fields.floatField(FLOAT_COL, (float) 1.0),
-                                            Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes")));
+                                          Fields.longField(KEY2, 2L),
+                                          Fields.stringField(STRING_COL, "str1"),
+                                          Fields.doubleField(DOUBLE_COL, (double) 1.0),
+                                          Fields.floatField(FLOAT_COL, (float) 1.0),
+                                          Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes")));
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       table.upsert(fields);

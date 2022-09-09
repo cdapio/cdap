@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import com.google.gson.Gson;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.macro.InvalidMacroException;
@@ -70,8 +69,6 @@ import javax.annotation.Nullable;
  * Default implementation of {@link SystemHttpServiceContext} for system app services to use.
  */
 public class BasicSystemHttpServiceContext extends BasicHttpServiceContext implements SystemHttpServiceContext {
-
-  private static final Gson GSON = new Gson();
 
   private final NamespaceId namespaceId;
   private final TransactionRunner transactionRunner;

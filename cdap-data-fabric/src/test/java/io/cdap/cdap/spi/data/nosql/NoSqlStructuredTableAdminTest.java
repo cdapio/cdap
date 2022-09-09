@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,55 +14,45 @@
  * the License.
  */
 
-package io.cdap.cdap.spi.data.common;
+package io.cdap.cdap.spi.data.nosql;
 
-import com.google.inject.Key;
-import com.google.inject.name.Names;
-import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.StructuredTableAdminTest;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 
+import java.io.IOException;
+
 /**
- * NoSQL backend for {@link CachedStructuredTableRegistryTest}
+ * Test for NoSQL structured table admin.
  */
-public class NoSqlCachedStructuredTableRegistryTest extends CachedStructuredTableRegistryTest {
+public class NoSqlStructuredTableAdminTest extends StructuredTableAdminTest {
   @ClassRule
-  public static final DatasetFrameworkTestUtil DS_FRAMEWORK_UTIL = new DatasetFrameworkTestUtil();
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
   private static TransactionManager txManager;
-  private static NoSqlStructuredTableRegistry noSqlRegistry;
-  private static StructuredTableRegistry registry;
+  private static StructuredTableAdmin noSqlTableAdmin;
 
   @BeforeClass
-  public static void beforeClass() {
-    Configuration txConf = HBaseConfiguration.create();
+  public static void beforeClass() throws IOException {
+    Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
 
-    CConfiguration cConf = DS_FRAMEWORK_UTIL.getConfiguration();
+    CConfiguration cConf = dsFrameworkUtil.getConfiguration();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
-
-    noSqlRegistry = new NoSqlStructuredTableRegistry(DS_FRAMEWORK_UTIL.getInjector().getInstance(
-      Key.get(DatasetDefinition.class, Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))));
-    registry = new CachedStructuredTableRegistry(noSqlRegistry);
+    noSqlTableAdmin = dsFrameworkUtil.getInjector().getInstance(StructuredTableAdmin.class);
   }
 
   @Override
-  protected StructuredTableRegistry getStructuredTableRegistry() {
-    return registry;
-  }
-
-  @Override
-  protected StructuredTableRegistry getNonCachedStructuredTableRegistry() {
-    return noSqlRegistry;
+  protected StructuredTableAdmin getStructuredTableAdmin() throws Exception {
+    return noSqlTableAdmin;
   }
 
   @AfterClass

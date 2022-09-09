@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.MetricRetrievalException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -35,6 +36,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.events.EventWriter;
+import io.cdap.cdap.spi.events.ExecutionMetrics;
 import io.cdap.cdap.spi.events.ProgramStatusEvent;
 import io.cdap.cdap.spi.events.ProgramStatusEventDetails;
 import org.slf4j.Logger;
@@ -208,7 +210,14 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
       return;
     }
     if (status.isEndState()) {
-      CompletableFuture.supplyAsync(() -> metricsProvider.retrieveMetrics(runId))
+      CompletableFuture.supplyAsync(() -> {
+        try {
+          return metricsProvider.retrieveMetrics(runId);
+        } catch (MetricRetrievalException e) {
+          LOG.error("Error retrieving metrics from provider. ", e);
+          return new ExecutionMetrics[]{};
+        }
+      })
         .thenAccept(metrics -> {
           ProgramStatusEventDetails.Builder newBuilder = builder.withPipelineMetrics(metrics);
           writeInEventWriters(newBuilder);

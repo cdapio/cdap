@@ -18,6 +18,8 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.common.base.Throwables;
 
+import javax.annotation.Nullable;
+
 /**
  * A {@link RuntimeException} that wraps exceptions from Dataproc operation and provide a {@link #toString()}
  * implementation that doesn't include this exception class name and with the root cause error message.
@@ -32,12 +34,25 @@ public class DataprocRuntimeException extends RuntimeException {
     super(createMessage(cause), cause);
   }
 
+  public DataprocRuntimeException(@Nullable String operationId, Throwable cause) {
+    super(createMessage(operationId, cause), cause);
+  }
+
   @Override
   public String toString() {
     return getMessage();
   }
 
   private static String createMessage(Throwable cause) {
-    return String.format("Dataproc operation failure: %s", Throwables.getRootCause(cause).getMessage());
+    return createMessage(null, cause);
+  }
+
+  private static String createMessage(@Nullable String operationId, Throwable cause) {
+    if (operationId != null) {
+      return String.format("Dataproc operation %s failure: %s",
+                           operationId, Throwables.getRootCause(cause).getMessage());
+    } else {
+      return String.format("Dataproc operation failure: %s", Throwables.getRootCause(cause).getMessage());
+    }
   }
 }

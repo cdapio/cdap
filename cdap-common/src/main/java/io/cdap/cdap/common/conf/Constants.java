@@ -478,8 +478,6 @@ public final class Constants {
     public static final String CONTAINER_COUNT = "system.worker.container.count";
     public static final String CONTAINER_JVM_OPTS = "system.worker.container.jvm.opts";
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
-    public static final String CLEANUP_EXECUTOR_SERVICE_BINDING = "cleanup.executor.service";
-    public static final String CLEANUP_THREADS = "system.worker.cleanup.threads";
     public static final String DISPATCH_PROGRAM_TYPES = "system.worker.dispatch.program.types";
     public static final String HTTP_CLIENT_READ_TIMEOUT_MS = "system.worker.http.client.read.timeout.ms";
     public static final String HTTP_CLIENT_CONNECTION_TIMEOUT_MS = "system.worker.http.client.connection.timeout.ms";
@@ -635,13 +633,15 @@ public final class Constants {
     public static final String DATA_STORAGE_SQL_DRIVER_DIRECTORY = "data.storage.sql.jdbc.driver.directory";
     public static final String DATA_STORAGE_SQL_JDBC_DRIVER_NAME = "data.storage.sql.jdbc.driver.name";
 
-    // the jdbc connection related properties should be from cdap-security.xml
+    // the jdbc connection related properties should be from cdap-site.xml
     public static final String DATA_STORAGE_SQL_JDBC_CONNECTION_URL = "data.storage.sql.jdbc.connection.url";
-    public static final String DATA_STORAGE_SQL_USERNAME = "data.storage.sql.jdbc.username";
-    public static final String DATA_STORAGE_SQL_PASSWORD = "data.storage.sql.jdbc.password";
     public static final String DATA_STORAGE_SQL_PROPERTY_PREFIX = "data.storage.sql.jdbc.property.";
     public static final String DATA_STORAGE_SQL_CONNECTION_SIZE = "data.storage.sql.jdbc.connection.pool.size";
     public static final String DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS = "data.storage.sql.scan.size.rows";
+
+    // the db credentials properties should be from cdap-security.xml
+    public static final String DATA_STORAGE_SQL_USERNAME = "data.storage.sql.jdbc.username";
+    public static final String DATA_STORAGE_SQL_PASSWORD = "data.storage.sql.jdbc.password";
 
     // used for Guice named bindings
     public static final String TABLE_TYPE = "table.type";
