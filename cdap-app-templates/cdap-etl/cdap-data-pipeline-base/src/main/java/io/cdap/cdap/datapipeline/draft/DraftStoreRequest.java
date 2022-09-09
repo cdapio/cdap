@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -29,17 +29,19 @@ public class DraftStoreRequest<T> {
   private final String name;
   private final String description;
   private final int revision;
+  private final String parentVersion;
   private final ArtifactSummary artifact;
   private final T config;
 
   public DraftStoreRequest(@Nullable T config, String previousHash, String name, String description, int revision,
-                           @Nullable ArtifactSummary artifact) {
+                           @Nullable ArtifactSummary artifact, @Nullable String parentVersion) {
     this.config = config;
     this.previousHash = previousHash;
     this.name = name;
     this.description = description;
     this.revision = revision;
     this.artifact = artifact;
+    this.parentVersion = parentVersion;
   }
 
   public String getDescription() {
@@ -58,6 +60,11 @@ public class DraftStoreRequest<T> {
   @Nullable
   public T getConfig() {
     return config;
+  }
+
+  @Nullable
+  public String getParentVersion() {
+    return parentVersion;
   }
 
   /**
@@ -94,12 +101,13 @@ public class DraftStoreRequest<T> {
       Objects.equals(previousHash, that.previousHash) &&
       Objects.equals(name, that.name) &&
       Objects.equals(artifact, that.artifact) &&
-      revision == that.revision;
+      revision == that.revision &&
+      Objects.equals(parentVersion, that.parentVersion);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(config, previousHash, revision, artifact, name, description);
+    return Objects.hash(config, previousHash, revision, artifact, name, description, parentVersion);
   }
 }
 

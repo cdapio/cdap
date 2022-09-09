@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -30,9 +30,9 @@ public class Draft extends DraftStoreRequest<ETLConfig> {
   private final int configHash;
 
   private Draft(ETLConfig config, String previousHash, String name, String description,
-                int revision,
-                ArtifactSummary artifact, String id, long createdTimeMillis, long updatedTimeMillis) {
-    super(config, previousHash, name, description, revision, artifact);
+                int revision, ArtifactSummary artifact, String id, long createdTimeMillis,
+                long updatedTimeMillis, String parentVersion) {
+    super(config, previousHash, name, description, revision, artifact, parentVersion);
     this.id = id;
     this.createdTimeMillis = createdTimeMillis;
     this.updatedTimeMillis = updatedTimeMillis;
@@ -41,9 +41,9 @@ public class Draft extends DraftStoreRequest<ETLConfig> {
 
   // This should be the default constructor until previousHash and revision are needed
   public Draft(ETLConfig config, String name, String description, ArtifactSummary artifact,
-               String id,
-               long createdTimeMillis, long updatedTimeMillis) {
-    this(config, "", name, description, 0, artifact, id, createdTimeMillis, updatedTimeMillis);
+               String id, long createdTimeMillis, long updatedTimeMillis, String parentVersion) {
+    this(config, "", name, description, 0, artifact,
+         id, createdTimeMillis, updatedTimeMillis, parentVersion);
   }
 
   public int getConfigHash() {
