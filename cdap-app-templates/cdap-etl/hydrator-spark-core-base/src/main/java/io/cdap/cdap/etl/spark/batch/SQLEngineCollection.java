@@ -61,7 +61,7 @@ import javax.annotation.Nullable;
  *
  * @param <T> type of records stored in this {@link SparkCollection}.
  */
-public class SQLEngineCollection<T> implements SQLBackedCollection<T>, WrappableCollection<T> {
+public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   private static final Logger LOG = LoggerFactory.getLogger(SQLEngineCollection.class);
   private static final String DIRECT_WRITE_ERROR = "Exception when trying to write to sink {} using direct output. " +
     "Operation will continue with standard sink flow.";
@@ -319,11 +319,5 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T>, Wrappable
     SQLEngineJob<SQLDataset> job = adapter.join(joinStageName, joinRequest.getJoinDefinition());
     return new SQLEngineCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory,
                                      joinStageName, adapter, job);
-  }
-
-  @Override
-  @SuppressWarnings("raw,unchecked")
-  public WrappedCollection<T, ?> wrap(java.util.function.Function<SparkCollection<T>, SparkCollection<?>> mapper) {
-    return new WrappedSQLEngineCollection(this, mapper);
   }
 }

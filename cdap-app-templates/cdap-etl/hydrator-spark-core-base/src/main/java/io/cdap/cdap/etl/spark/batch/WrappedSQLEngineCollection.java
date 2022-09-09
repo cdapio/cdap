@@ -16,17 +16,25 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.PhaseSpec;
+import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * SQLEngineBackedCollection that wraps another SQLEngineBackedCollection in order to delay the execution of a
@@ -36,14 +44,14 @@ import java.util.Set;
  * @param <T> Type of the wrapped collection records.
  * @param <U> Type of the output collection records.
  */
-public class WrappedSQLEngineCollection<T, U>
-  extends WrappedCollection<T, U>
-  implements SQLBackedCollection<U>, WrappableCollection<U> {
+public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> {
+  private final java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper;
   private final SQLBackedCollection<T> wrapped;
+  private SparkCollection<U> unwrapped;
 
   public WrappedSQLEngineCollection(SQLBackedCollection<T> wrapped,
                                     java.util.function.Function<SparkCollection<T>, SparkCollection<U>> mapper) {
-    super(wrapped, mapper);
+    this.mapper = mapper;
     this.wrapped = wrapped;
   }
 
@@ -62,6 +70,14 @@ public class WrappedSQLEngineCollection<T, U>
   protected SparkCollection<U> rewrap(
     java.util.function.Function<SparkCollection<T>, SparkCollection<T>> remapper) {
     return new WrappedSQLEngineCollection<>((SQLBackedCollection<T>) remapper.apply(wrapped), mapper);
+  }
+
+  protected SparkCollection<U> unwrap() {
+    if (unwrapped == null) {
+      unwrapped = mapper.apply(wrapped);
+    }
+
+    return unwrapped;
   }
 
   @Override
@@ -148,8 +164,80 @@ public class WrappedSQLEngineCollection<T, U>
   }
 
   @Override
-  @SuppressWarnings("raw,unchecked")
-  public WrappedCollection<U, ?> wrap(java.util.function.Function<SparkCollection<U>, SparkCollection<?>> mapper) {
-    return new WrappedSQLEngineCollection(this, mapper);
+  public <C> C getUnderlying() {
+    return unwrap().getUnderlying();
+  }
+
+  @Override
+  public SparkCollection<U> cache() {
+    return unwrap().cache();
+  }
+
+  @Override
+  public SparkCollection<U> union(SparkCollection<U> other) {
+    return unwrap().union(other);
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
+    return unwrap().transform(stageSpec, collector);
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
+                                                                  StageStatisticsCollector collector) {
+    return unwrap().transform(stageSpec, collector);
+  }
+
+  @Override
+  public <U1> SparkCollection<U1> map(Function<U, U1> function) {
+    return unwrap().map(function);
+  }
+
+  @Override
+  public <U1> SparkCollection<U1> flatMap(StageSpec stageSpec, FlatMapFunction<U, U1> function) {
+    return unwrap().flatMap(stageSpec, function);
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec,
+                                                       @Nullable Integer partitions,
+                                                       StageStatisticsCollector collector) {
+    return unwrap().aggregate(stageSpec, partitions, collector);
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec,
+                                                             @Nullable Integer partitions,
+                                                             StageStatisticsCollector collector) {
+    return unwrap().reduceAggregate(stageSpec, partitions, collector);
+  }
+
+  @Override
+  public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<U, K, V> function) {
+    return unwrap().flatMapToPair(function);
+  }
+
+  @Override
+  public <U1> SparkCollection<U1> compute(StageSpec stageSpec, SparkCompute<U, U1> compute) throws Exception {
+    return unwrap().compute(stageSpec, compute);
+  }
+
+  @Override
+  public Runnable createStoreTask(StageSpec stageSpec,
+                                  SparkSink<U> sink) throws Exception {
+    return unwrap().createStoreTask(stageSpec, sink);
+  }
+
+  @Override
+  public void publishAlerts(StageSpec stageSpec,
+                            StageStatisticsCollector collector) throws Exception {
+    unwrap().publishAlerts(stageSpec, collector);
+  }
+
+  @Override
+  public SparkCollection<U> window(StageSpec stageSpec,
+                                   Windower windower) {
+    return unwrap().window(stageSpec, windower);
   }
 }
