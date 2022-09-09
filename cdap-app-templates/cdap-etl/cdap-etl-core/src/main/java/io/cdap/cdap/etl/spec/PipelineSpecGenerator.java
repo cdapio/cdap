@@ -339,6 +339,10 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       } else if (!type.equals(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
         PipelineConfigurable singlePlugin = (PipelineConfigurable) plugin;
         singlePlugin.configurePipeline(pipelineConfigurer);
+        // Any source specific settings
+        if (sourcePluginTypes.contains(type)) {
+          configureSourcePlugin(stageName, plugin, stageConfigurer, collector);
+        }
         // we don't have StreamingSource dependency so use source plugin types to check type
         // evaluate macros and find out if there is connection used
         if ((sourcePluginTypes.contains(type) || BatchSink.PLUGIN_TYPE.equals(type)) && runtimeEvaluator == null) {
@@ -398,6 +402,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       specBuilder.setOutputSchema(stageConfigurer.getOutputSchema());
     }
     return specBuilder;
+  }
+
+  protected void configureSourcePlugin(String stageName, Object plugin, DefaultStageConfigurer stageConfigurer,
+                                       FailureCollector collector) {
+    //no-op
   }
 
   protected void validateJoinCondition(String stageName, JoinCondition condition, FailureCollector collector) {
