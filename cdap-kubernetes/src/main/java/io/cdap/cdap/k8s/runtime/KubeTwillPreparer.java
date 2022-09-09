@@ -78,7 +78,9 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.ApplicationBundler;
 import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.apache.twill.internal.DefaultRuntimeSpecification;
@@ -176,6 +178,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final boolean workloadIdentityEnabled;
   private final long workloadIdentityKSATTL;
   private final String workloadIdentityPool;
+  private final List<Class<?>> dependencies;
 
   private String schedulerQueue;
   private String mainRunnableName;
@@ -183,6 +186,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String serviceAccountName;
   private String programRuntimeNamespace;
   private String workloadIdentityServiceAccount;
+  private ClassAcceptor classAcceptor;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -231,6 +235,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     String confTTLStr = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS);
     this.workloadIdentityKSATTL = WorkloadIdentityUtil.convertWorkloadIdentityTTLFromString(confTTLStr);
     this.workloadIdentityPool = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_POOL);
+    this.classAcceptor = new ClassAcceptor();
+    this.dependencies = new ArrayList<>();
   }
 
   @Override
@@ -456,7 +462,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public TwillPreparer withDependencies(Iterable<Class<?>> classes) {
-    // no-op
+    for (Class<?> c : classes) {
+      dependencies.add(c);
+    }
     return this;
   }
 
@@ -513,6 +521,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public TwillPreparer withBundlerClassAcceptor(ClassAcceptor classAcceptor) {
+    this.classAcceptor = classAcceptor;
     return this;
   }
 
@@ -570,6 +579,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       try {
         saveSpecification(twillSpec, runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC));
         saveArguments(arguments, runnableArgs, runtimeConfigDir.resolve(Constants.Files.ARGUMENTS));
+        saveApplicationJar(new ApplicationBundler(classAcceptor),
+                           runtimeConfigDir.resolve(Constants.Files.APPLICATION_JAR));
         runtimeConfigLocation = createRuntimeConfigJar(runtimeConfigDir);
       } finally {
         Paths.deleteRecursively(runtimeConfigDir);
@@ -863,10 +874,33 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
+   * Saves the dependency classes to an application jar for execution in {@link KubeTwillLauncher}.
+   * We only save explicitly added dependency classes because those classes are guaranteed to have a valid classloader.
+   * Given that the cdap-kubernetes extension is loaded via extension loader, it may not have classes loaded from
+   * another extension.
+   *
+   * @param bundler The application bundler to use
+   * @throws IOException if the location creation fails, or if the application jar creation fails
+   */
+  private void saveApplicationJar(final ApplicationBundler bundler, Path dir) throws IOException {
+    long startTime = System.currentTimeMillis();
+    final Set<Class<?>> classes = new HashSet<>(dependencies);
+    Location target = new LocalLocationFactory().create(dir.toAbsolutePath().toString());
+
+    LOG.debug("Create and copy {} to dir '{}'", Constants.Files.APPLICATION_JAR, dir);
+    if (!target.createNew()) {
+      throw new IOException(String.format("Failed to create new application jar file at location {}", dir));
+    }
+    bundler.createBundle(target, classes);
+    LOG.debug("Copied {} to location '{}' in {} ms", Constants.Files.APPLICATION_JAR, dir,
+              System.currentTimeMillis() - startTime);
+  }
+
+  /**
    * Creates a jar from the runtime config directory and upload it to a {@link Location}.
    */
   private Location createRuntimeConfigJar(Path dir) throws IOException {
-    LOG.debug("Create and upload {}", dir);
+    LOG.debug("Create and upload runtime jar in {}", dir);
 
     // Jar everything under the given directory, which contains different files needed by AM/runnable containers
     Location location = createTempLocation(Constants.Files.RUNTIME_CONFIG_JAR);

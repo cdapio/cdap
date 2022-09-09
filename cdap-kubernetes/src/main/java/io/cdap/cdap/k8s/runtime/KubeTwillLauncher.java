@@ -40,15 +40,24 @@ import org.apache.twill.internal.utils.Instances;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.Reader;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * A {@link MasterEnvironmentRunnable} for running {@link TwillRunnable} in the current process.
@@ -94,6 +103,14 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       runnableArgs = map.getOrDefault(runnableName, Collections.emptyList());
     }
 
+    Path applicationJarPath = runtimeConfigDir.resolve(Constants.Files.APPLICATION_JAR);
+    Path destinationDir = Files.createTempDirectory(Paths.get("."), "unpacked");
+    long classLoaderStart = System.currentTimeMillis();
+    unJar(applicationJarPath.toFile(), destinationDir.toFile());
+    URL[] jarURLs = recursiveGetJars(destinationDir).stream().toArray(URL[]::new);
+    ClassLoader appClassLoader = new URLClassLoader(jarURLs, context.getClass().getClassLoader());
+    LOG.debug("Created application classloader in {} ms.", System.currentTimeMillis() - classLoaderStart);
+
     PodInfo podInfo = masterEnv.getPodInfo();
     try {
       TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create()
@@ -103,7 +120,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       RunId runId = twillRuntimeSpec.getTwillAppRunId();
 
       String runnableClassName = runtimeSpec.getRunnableSpecification().getClassName();
-      Class<?> runnableClass = context.getClass().getClassLoader().loadClass(runnableClassName);
+      Class<?> runnableClass = appClassLoader.loadClass(runnableClassName);
       if (!TwillRunnable.class.isAssignableFrom(runnableClass)) {
         throw new IllegalArgumentException("Class " + runnableClass + " is not an instance of " + TwillRunnable.class);
       }
@@ -158,5 +175,36 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
     } catch (Exception e) {
       LOG.warn("Failed to delete pod {} with uid {}", podInfo.getName(), podInfo.getUid(), e);
     }
+  }
+
+  private static void unJar(File jarFile, File targetDirectory) throws IOException {
+    try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(jarFile)))) {
+      Path targetPath = targetDirectory.toPath();
+      Files.createDirectories(targetPath);
+
+      ZipEntry entry;
+      while ((entry = zipIn.getNextEntry()) != null) {
+        Path output = targetPath.resolve(entry.getName());
+
+        if (entry.isDirectory()) {
+          Files.createDirectories(output);
+        } else {
+          Files.createDirectories(output.getParent());
+          Files.copy(zipIn, output);
+        }
+      }
+    }
+  }
+
+  private static List<URL> recursiveGetJars(Path targetDirectory) throws IOException {
+    List<URL> jars = new ArrayList<>();
+    for (File f: targetDirectory.toFile().listFiles()) {
+      if (f.isFile() && f.toPath().toString().endsWith(".jar")) {
+        jars.add(f.toURI().toURL());
+      } else if (f.isDirectory()) {
+        jars.addAll(recursiveGetJars(f.toPath().toAbsolutePath()));
+      }
+    }
+    return jars;
   }
 }

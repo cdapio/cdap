@@ -174,7 +174,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     launchConfig
       .addExtraEnv(extraEnv)
-      .addExtraDependencies(SparkProgramRuntimeProvider.class)
+      .addExtraDependencies(SparkProgramRuntimeProvider.class, SparkTwillRunnable.class)
       .addExtraSystemArgument(SparkRuntimeContextConfig.DISTRIBUTED_MODE, Boolean.TRUE.toString())
       .setClassAcceptor(createBundlerClassAcceptor());
   }
