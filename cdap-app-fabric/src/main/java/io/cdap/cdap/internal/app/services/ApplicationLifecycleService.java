@@ -24,7 +24,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
-import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
@@ -333,7 +332,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // TODO: CDAP-12473: filter based on the entity visibility in the app detail
     // user needs to pass the visibility check to get the app detail
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationMeta latestApp = store.getLatestAppVersion(appId);
+    ApplicationMeta latestApp = store.getLatestApp(appId);
     if (latestApp == null || latestApp.getSpec() == null) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -441,20 +440,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param parentVersion the version of the application from which the app is deployed
    * @return whether the app version is allowed to be deployed
    */
-  public boolean deployAppAllowed(ApplicationId appId, String parentVersion) throws Exception {
+  public boolean deployAppAllowed(ApplicationId appId, @Nullable String parentVersion)  {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationMeta latest = store.getLatestAppVersion(appId);
-    // App does not exist
-    if (parentVersion == null || parentVersion.isEmpty() || latest == null || latest.getSpec() == null) {
-      //parent version in request is null then Allow to create a new one (Cannot create an app
-      // from a non existing parent version)
-      return parentVersion == null || parentVersion.isEmpty();
+    if (parentVersion == null || parentVersion.isEmpty()) {
+      return true;
     }
-    ApplicationSpecification parentAppSpec = store.getApplication(new ApplicationId(appId.getNamespace(),
-            appId.getApplication(), parentVersion));
-    if (parentAppSpec == null) {
-      // Parent version doesn't exist in store
-      return false;
+    ApplicationMeta latest = store.getLatestApp(appId);
+    // App does not exist
+    if (latest == null || latest.getSpec() == null) {
+      // parent version should be null when the app does not exist
+      return parentVersion == null || parentVersion.isEmpty();
     }
     String latestVersion = latest.getSpec().getAppVersion();
     // If latest version is the parent version then we allow deploy
@@ -481,12 +476,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Check if the current user has admin privileges on it before updating.
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
-    // check that app exists
-    ApplicationSpecification currentSpec = store.getApplication(appId);
-    if (currentSpec == null) {
+    String parentVersion = appRequest.getParentVersion();
+
+    // check if we are allowed to deploy the app.
+    if (!deployAppAllowed(appId, parentVersion)) {
+      throw new Exception("Can't deploy the application because the parent version is not the latest.");
+    }
+    ApplicationMeta currentApp = store.getLatestApp(appId);
+    if (currentApp == null || currentApp.getSpec() == null) {
       throw new ApplicationNotFoundException(appId);
     }
-
+    ApplicationSpecification currentSpec = currentApp.getSpec();
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
@@ -525,12 +525,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
-    LinkedTreeMap<String, String> versionRequestObject = (LinkedTreeMap<String, String>) appRequest.getVersion();
-    String changeSummary = versionRequestObject == null ? null : versionRequestObject.get("changeSummary");
+    String changeSummary = appRequest.getChangeSummary() == null ? null : appRequest.getChangeSummary()
+      .getChangeSummaryDescription();
 
     Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
-    return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
-             programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
+    return deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(), artifactId, requestedConfigStr,
+                     changeSummary, programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
   }
 
   /**
@@ -604,12 +604,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     throws Exception {
     // Check if the current user has admin privileges on it before updating.
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-    // check that app exists
-    ApplicationSpecification currentSpec = store.getApplication(appId);
-    if (currentSpec == null) {
+
+    // upgrade the latest version of the app
+    ApplicationMeta currentApp = store.getLatestApp(appId);
+    if (currentApp == null || currentApp.getSpec() == null) {
       LOG.info("Application {} not found for upgrade.", appId);
       throw new NotFoundException(appId);
     }
+    ApplicationSpecification currentSpec = currentApp.getSpec();
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(appId, currentArtifact,
@@ -683,12 +685,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
       updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
     }
-
+    Principal requestingUser = authenticationContext.getPrincipal();
     // Deploy application with with potentially new app config and new artifact.
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
                                                              appId.getParent(), appClass, appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig,
-                                                             null, null,
+                                                             null,
+                                                             requestingUser == null ? null : requestingUser.getName(),
                                                              ownerPrincipal, updateSchedules, null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
@@ -811,6 +814,42 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param namespace the namespace to deploy the app to
    * @param appName the name of the app. If null, the name will be set based on the application spec
+   * @param artifactId the id of the artifact to create the application from
+   * @param configStr the configuration to send to the application when generating the application specification
+   * @param changeSummary the change summary entered by the user
+   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
+   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @param ownerPrincipal the kerberos principal of the application owner
+   * @param updateSchedules specifies if schedules of the workflow have to be updated,
+   *                        if null value specified by the property "app.deploy.update.schedules" will be used.
+   * @return information about the deployed application
+   * @throws InvalidArtifactException if the artifact does not contain any application classes
+   * @throws ArtifactNotFoundException if the specified artifact does not exist
+   * @throws IOException if there was an IO error reading artifact detail from the meta store
+   * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
+   *                   the actual exception
+   */
+  public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
+                                           Id.Artifact artifactId,
+                                           @Nullable String configStr,
+                                           @Nullable String changeSummary,
+                                           ProgramTerminator programTerminator,
+                                           @Nullable KerberosPrincipalId ownerPrincipal,
+                                           @Nullable Boolean updateSchedules) throws Exception {
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+    return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator, artifactDetail,
+                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules,
+            false, Collections.emptyMap());
+  }
+
+  /**
+   * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
+   * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
+   * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
+   * {@link Store}. This method can create a new application as well as update an existing one.
+   *
+   * @param namespace the namespace to deploy the app to
+   * @param appName the name of the app. If null, the name will be set based on the application spec
    * @param summary the artifact summary of the app
    * @param configStr the configuration to send to the application when generating the application specification
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
@@ -846,8 +885,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator,
-            artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
-            appUpdateSchedules : updateSchedules, isPreview, userProps);
+                     artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
+                     appUpdateSchedules : updateSchedules, isPreview, userProps);
   }
 
   /**
@@ -881,10 +920,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules, boolean isPreview,
                                            Map<String, String> userProps) throws Exception {
-    NamespaceId artifactNamespace =
-            ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
+    NamespaceId artifactNamespace = ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
-            ArtifactVersionRange.parse(summary.getVersion()));
+                                            ArtifactVersionRange.parse(summary.getVersion()));
     // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
     // collection returned.
     List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
@@ -892,8 +930,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
     return deployApp(namespace, appName, appVersion, configStr, null, programTerminator,
-            artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
-                    appUpdateSchedules : updateSchedules, isPreview, userProps);
+                     artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
+                     appUpdateSchedules : updateSchedules, isPreview, userProps);
   }
 
   /**
@@ -1084,7 +1122,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
       appVersion, configStr, changeSummary, requestingUser == null ? null : requestingUser.getName() ,
       ownerPrincipal, updateSchedules, isPreview ? new AppDeploymentRuntimeInfo(null, userProps,
-        Collections.emptyMap()) : null);
+      Collections.emptyMap()) : null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

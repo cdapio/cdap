@@ -53,14 +53,14 @@ public class AppDeploymentInfo {
   public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
     this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
          info.configString, info.changeSummary, info.owner, info.ownerPrincipal,
-            info.updateSchedules, info.runtimeInfo);
+         info.updateSchedules, info.runtimeInfo);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
-            null, null, true, null);
+         null, null, true, null);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
@@ -68,7 +68,7 @@ public class AppDeploymentInfo {
                            @Nullable String configString, @Nullable String changeSummary,
                            @Nullable String owner) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, changeSummary,
-            owner, null, true, null);
+         owner, null, true, null);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
@@ -77,8 +77,7 @@ public class AppDeploymentInfo {
                            @Nullable String owner, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
-         appName, appVersion, configString, changeSummary, owner, ownerPrincipal,
-            updateSchedules, runtimeInfo);
+         appName, appVersion, configString, changeSummary, owner, ownerPrincipal, updateSchedules, runtimeInfo);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
@@ -86,8 +85,8 @@ public class AppDeploymentInfo {
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
-            appName, appVersion, configString, null, null, ownerPrincipal,
-            updateSchedules, runtimeInfo);
+         appName, appVersion, configString, null, null, ownerPrincipal, updateSchedules,
+         runtimeInfo);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
@@ -97,7 +96,7 @@ public class AppDeploymentInfo {
                            @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion,
-            configString, changeSummary, owner, ownerPrincipal, updateSchedules, runtimeInfo);
+         configString, changeSummary, owner, ownerPrincipal, updateSchedules, runtimeInfo);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
@@ -105,7 +104,7 @@ public class AppDeploymentInfo {
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
     this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion,
-            configString, null, null, ownerPrincipal, updateSchedules, runtimeInfo);
+         configString, null, null, ownerPrincipal, updateSchedules, runtimeInfo);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,

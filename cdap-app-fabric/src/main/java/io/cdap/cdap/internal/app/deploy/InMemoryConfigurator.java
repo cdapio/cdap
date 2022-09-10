@@ -65,7 +65,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 
-
 /**
  * In Memory Configurator doesn't spawn a external process, but does this in memory.
  */
@@ -176,7 +175,7 @@ public final class InMemoryConfigurator implements Configurator {
           runtimeInfo.getExistingAppSpec()) : null;
       configurer = new DefaultAppConfigurer(
         appNamespace, artifactId, app, changeSummary, configString, pluginFinder, pluginInstantiator,
-              runtimeConfigurer, runtimeInfo, featureFlagsProvider);
+        runtimeConfigurer, runtimeInfo, featureFlagsProvider);
 
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());

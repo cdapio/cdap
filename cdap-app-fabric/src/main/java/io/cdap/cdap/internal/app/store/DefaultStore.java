@@ -435,7 +435,7 @@ public class DefaultStore implements Store {
     // TODO: update latest field of the latest version
     TransactionRunners.run(transactionRunner, context -> {
       getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec,
-              created, owner);
+                                                    created, owner);
     });
   }
 
@@ -702,14 +702,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ApplicationMeta getLatestAppVersion(ApplicationId id) {
+  public ApplicationMeta getLatestApp(ApplicationId id) {
     // TODO: Change this to sort by creation time instead of version.
     return TransactionRunners.run(transactionRunner, context -> {
       Optional<ApplicationMeta> latestApp = getAppMetadataStore(context)
               .getAllAppVersions(id.getNamespace(), id.getApplication()).stream()
-              .sorted((o1, o2) -> o2.getSpec().getAppVersion().compareTo(o1.getSpec().getAppVersion()))
-              .collect(Collectors.toList())
-              .stream().findFirst();
+                .sorted((o1, o2) -> o2.getSpec().getAppVersion().compareTo(o1.getSpec().getAppVersion()))
+                .collect(Collectors.toList())
+                .stream().findFirst();
       return latestApp.isPresent() ? latestApp.get() : null;
     });
   }
