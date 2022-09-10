@@ -160,6 +160,6 @@ public class ApplicationDetail {
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), spec.getChangeSummary(), 
-            spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
+                                 spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
   }
 }

@@ -381,7 +381,7 @@ public interface Store {
    * @param id application id
    * @return The metadata information of the latest application version.
    */
-  ApplicationMeta getLatestAppVersion(ApplicationId id);
+  ApplicationMeta getLatestApp(ApplicationId id);
 
   /**
    * Returns a list of all versions' ApplicationId's of the application by id

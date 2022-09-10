@@ -41,6 +41,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
@@ -52,6 +53,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for the {@link ArtifactManager} from {@link Service}.
+ * TODO: These tests will be modified/removed after LCM changes to the schedules and it's apis.
+ * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   @ClassRule
@@ -87,6 +90,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testNamespaceIsolation() throws Exception {
     Map<String, String> properties = new HashMap<>();
     properties.put("value", "x");
@@ -100,6 +104,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testDynamicPluginSimple() throws Exception {
     // test a single plugin
     Map<String, String> properties = new HashMap<>();
@@ -129,6 +134,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testServiceMacroEvaluator() throws Exception {
     // properties with macro
     Map<String, String> rawProperties = new HashMap<>();
@@ -153,6 +159,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testDynamicPluginBodyProducer() throws Exception {
     // test that a plugin can be instantiated in the body producer chunk() and onFinish() methods
     // the good plugin should be found, so the response should be 'x'
@@ -174,6 +181,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testDynamicPluginContentConsumer() throws Exception {
     // test that a plugin can be instantiated in the content consumer finish method
     // the good plugin should be found, so the response should be 'x'

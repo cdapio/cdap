@@ -32,6 +32,7 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -47,6 +48,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Test that MapReduce and Worker can incrementally process partitions.
+ * TODO: This test will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
+ * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class PartitionConsumingTestRun extends TestFrameworkTestBase {
   private static final String LINE1 = "a b a";
@@ -54,6 +57,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
   private static final String LINE3 = "c c c";
 
   @Test
+  @Ignore
   public void testMapReduceConsumer() throws Exception {
     testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {
       @Override
@@ -72,6 +76,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testWorkerConsumer() throws Exception {
     testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {
       @Override

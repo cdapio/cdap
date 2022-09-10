@@ -166,6 +166,7 @@ public class ApplicationDeployable {
   /**
    * Returns the owner (user name) of the version of the application
    */
+  @Nullable
   public String getOwner() {
     return owner;
   }

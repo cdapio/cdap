@@ -48,6 +48,7 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -68,6 +69,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for testing service handler lifecycle.
+ * TODO: These tests will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
+ * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
@@ -85,6 +88,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testLifecycleWithThreadTerminates() throws Exception {
     // Set the http server properties to speed up test
     System.setProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
@@ -129,6 +133,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testLifecycleWithGC() throws Exception {
     // Set the http server properties to speed up test
     System.setProperty(AbstractServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
@@ -185,6 +190,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testContentConsumerLifecycle() throws Exception {
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
@@ -273,6 +279,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testContentProducerLifecycle() throws Exception {
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
@@ -320,6 +327,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testContentConsumerProducerLifecycle() throws Exception {
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
@@ -382,6 +390,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testInvalidResponder() throws Exception {
     ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
     serviceManager = appManager.getServiceManager("test").start();
@@ -396,6 +405,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testInvalidContentProducer() throws Exception {
     ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
     serviceManager = appManager.getServiceManager("test").start();

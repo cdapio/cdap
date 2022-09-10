@@ -100,6 +100,8 @@ import java.util.stream.Stream;
 
 /**
  * Unit-tests for testing Spark program.
+ * TODO: These tests will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
+ * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class SparkTest extends TestFrameworkTestBase {
 
@@ -122,7 +124,8 @@ public class SparkTest extends TestFrameworkTestBase {
     return deployWithArtifact(appClass, ARTIFACTS.get(appClass));
   }
 
-  @Test @Ignore("For this to work in spark 2 and later DefaultSource should implement" +
+  @Test
+  @Ignore("For this to work in spark 2 and later DefaultSource should implement" +
     "org.apache.spark.sql.execution.datasources.FileFormat")
   public void testDatasetSQL() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
@@ -197,6 +200,7 @@ public class SparkTest extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testPySpark() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 
@@ -246,6 +250,7 @@ public class SparkTest extends TestFrameworkTestBase {
 
 
   @Test
+  @Ignore
   public void testSparkProgramStatusSchedule() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
     ScheduleId scheduleId = new ScheduleId(NamespaceId.DEFAULT.getNamespace(), TestSparkApp.class.getSimpleName(),
@@ -317,6 +322,7 @@ public class SparkTest extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testSparkWithGetDataset() throws Exception {
     testSparkWithGetDataset(SparkAppUsingGetDataset.class, SparkLogParser.class.getSimpleName());
     testSparkWithGetDataset(SparkAppUsingGetDataset.class, ScalaSparkLogParser.class.getSimpleName());
@@ -370,6 +376,7 @@ public class SparkTest extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testSparkServicePlugin() throws Exception {
     addPluginArtifact(NamespaceId.DEFAULT.artifact("plugin", "1.0"), Collections.emptySet(), StringLengthFunc.class);
 
