@@ -43,6 +43,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -56,6 +57,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Unit-tests for testing FileSet usages in Spark program.
+ * TODO: These tests will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
+ * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class SparkFileSetTestRun extends TestFrameworkTestBase {
 
@@ -76,24 +79,28 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testSparkWithFileSet() throws Exception {
     testSparkWithFileSet(applicationManager, FileCountSparkProgram.class.getSimpleName());
     testSparkWithFileSet(applicationManager, ScalaFileCountSparkProgram.class.getSimpleName());
   }
 
   @Test
+  @Ignore
   public void testSparkWithCustomFileSet() throws Exception {
     testSparkWithCustomFileSet(applicationManager, FileCountSparkProgram.class.getSimpleName());
     testSparkWithCustomFileSet(applicationManager, ScalaFileCountSparkProgram.class.getSimpleName());
   }
 
   @Test
+  @Ignore
   public void testSparkWithTimePartitionedFileSet() throws Exception {
     testSparkWithTimePartitionedFileSet(applicationManager, FileCountSparkProgram.class.getSimpleName());
     testSparkWithTimePartitionedFileSet(applicationManager, ScalaFileCountSparkProgram.class.getSimpleName());
   }
 
   @Test
+  @Ignore
   public void testSparkWithPartitionedFileSet() throws Exception {
     testSparkWithPartitionedFileSet(applicationManager, FileCountSparkProgram.class.getSimpleName());
     testSparkWithPartitionedFileSet(applicationManager, ScalaFileCountSparkProgram.class.getSimpleName());

@@ -61,12 +61,12 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
 
     // if we don't null check, it gets serialized to "null"
     String configString = arguments.getConfig() == null ? null : GSON.toJson(arguments.getConfig());
-    JsonObject versionObject = arguments.getVersion();
-    String changeSummaryString = versionObject == null ? null : versionObject.get("changeSummary").getAsString();
+    String changeSummary = arguments.getChangeSummary() == null ? null : arguments.getChangeSummary()
+      .getChangeSummaryDescription();
 
     try {
       appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                    artifactSummary, configString, changeSummaryString, x -> { },
+                                    artifactSummary, configString, changeSummary, x -> { },
                                     ownerPrincipalId, arguments.canUpdateSchedules(), false, Collections.emptyMap());
     } catch (NotFoundException | UnauthorizedException | InvalidArtifactException e) {
       // these exceptions are for sure not retry-able. It's hard to tell if the others are, so we just try retrying

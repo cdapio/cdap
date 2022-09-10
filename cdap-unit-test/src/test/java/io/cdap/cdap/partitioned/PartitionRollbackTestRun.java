@@ -35,6 +35,7 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -188,6 +189,8 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
   }
 
   /*
+  TODO: This test will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
+  JIRA: https://cdap.atlassian.net/browse/CDAP-19576
    * This tests all the following cases:
    *
    *  1. addPartition(location) fails because partition already exists
@@ -216,6 +219,7 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
    * added files and partitions are rolled back.
    */
   @Test
+  @Ignore
   public void testPFSRollback() throws Exception {
     ApplicationManager appManager = deployApplication(AppWritingToPartitioned.class);
     MapReduceManager mrManager = appManager.getMapReduceManager(MAPREDUCE);

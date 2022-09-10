@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
@@ -178,8 +177,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     DataTracerFactoryProvider.setDataTracerFactory(preview, dataTracerFactory);
 
     String config = request.getConfig() == null ? null : GSON.toJson(request.getConfig());
-    LinkedTreeMap<String, String> versionRequestObject = (LinkedTreeMap<String, String>) request.getVersion();
-    String changeSummary = versionRequestObject == null ? null : versionRequestObject.get("changeSummary");
+    String changeSummary = request.getChangeSummary() == null ? null : request.getChangeSummary()
+      .getChangeSummaryDescription();
     PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
 
     PreferencesDetail preferences = preferencesFetcher.get(programId, true);

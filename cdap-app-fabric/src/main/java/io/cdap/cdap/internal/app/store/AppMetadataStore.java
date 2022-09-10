@@ -430,11 +430,11 @@ public class AppMetadataStore {
                                @Nullable Long created, @Nullable String owner)
     throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)), created,
-            owner);
+                               owner);
   }
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec)
-          throws IOException {
+    throws IOException {
     writeApplication(namespaceId, appId, versionId, spec, null, null);
   }
 
@@ -464,10 +464,10 @@ public class AppMetadataStore {
     }
     ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec);
     // Generate the creation time for the version of the app.
-    long created = System.currentTimeMillis();
+    Long created = System.currentTimeMillis();
     // TODO: add owner info 
     writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated),
-            created, null);
+                               created, null);
   }
 
   /**
