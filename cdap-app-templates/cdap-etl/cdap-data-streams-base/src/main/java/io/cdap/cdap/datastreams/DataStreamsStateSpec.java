@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 public class DataStreamsStateSpec {
 
   public enum Mode {
-    NONE, SPARK_CHECKPOINTING, NATIVE_STATE_STORE
+    NONE, SPARK_CHECKPOINTING, STATE_STORE
   }
 
   private final Mode mode;
