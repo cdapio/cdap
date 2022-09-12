@@ -277,13 +277,13 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    * Generates a SELECT query for scanning over all the provided ranges. For each of the range, it generates a where
    * clause using the {@link #appendRange(StringBuilder, Range)} method. The where clause of each range are OR together.
    * E.g.
-   *
+   * <p>
    * SELECT * FROM table WHERE key1 in (?,?) AND key2 in (?,?)
    * OR ((key3 >= ?) AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?)) LIMIT limit
    *
    * @param keyFields a map from field name to field values that the query has to match with
-   * @param ranges the list of ranges to scan
-   * @param limit number of result
+   * @param ranges    the list of ranges to scan
+   * @param limit     number of result
    * @return a select query
    */
   private PreparedStatement prepareMultiScanQuery(Map<String, Set<Field<?>>> keyFields,
@@ -557,7 +557,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   /**
    * Read a row from the table. Null columns mean read from all columns.
    *
-   * @param keys key of the row
+   * @param keys    key of the row
    * @param columns columns to read, null means read from all
    * @return an optional containing the row or empty optional if the row does not exist
    */
@@ -590,8 +590,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   /**
    * Sets a list of fields' values into the given {@link PreparedStatement}.
    *
-   * @param statement the prepared statement to have the fields set into
-   * @param fields the list of fields to set
+   * @param statement  the prepared statement to have the fields set into
+   * @param fields     the list of fields to set
    * @param beginIndex the first argument index to use to set the fields
    * @return the next argument index that have been set up to
    * @throws SQLException
@@ -678,7 +678,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   private void setStatementFieldByRange(Collection<Range> keyRanges,
                                         PreparedStatement statement) throws SQLException, InvalidFieldException {
     int nextIndex = 1;
-    for (Range keyRange: keyRanges) {
+    for (Range keyRange : keyRanges) {
       nextIndex = setStatementFieldByRange(keyRange, statement, nextIndex);
     }
   }
@@ -711,7 +711,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    * INSERT INTO simpletable (key1,key2,col1,col2,col3) VALUES (?,?,?,?,?) ON CONFLICT (key1,key2)
    * DO UPDATE SET col1=EXCLUDED.col1,col2=EXCLUDED.col2,col3=EXCLUDED.col3;
    *
-   * @param fields fields to write
+   * @param fields         fields to write
    * @param incrementField the field to increment if conflict. If null, then do not increment
    * @return the sql query
    */
@@ -721,7 +721,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
                                                ") ");
     StringJoiner valuePart = new StringJoiner(",", "VALUES (", ") ");
     StringJoiner conflictPart = new StringJoiner(",", "ON CONFLICT (", ") ");
-    StringJoiner updatePart = new StringJoiner(",",  "DO UPDATE SET ", ";");
+    StringJoiner updatePart = new StringJoiner(",", "DO UPDATE SET ", ";");
 
     for (Field<?> field : fields) {
       insertPart.add(field.getName());
@@ -740,7 +740,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   private String getUpdateSqlQuery(Collection<Field<?>> fields) {
     String tablePart = "UPDATE " + tableSchema.getTableId().getName();
     StringJoiner updatePart = new StringJoiner(", ", " SET ", "");
-    StringJoiner conditionPart = new StringJoiner(" AND ", " WHERE " , ";");
+    StringJoiner conditionPart = new StringJoiner(" AND ", " WHERE ", ";");
     for (Field<?> field : fields) {
       if (tableSchema.isPrimaryKeyColumn(field.getName())) {
         conditionPart.add(field.getName() + "=?");
@@ -753,13 +753,13 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
   private String getReadQuery(Collection<Field<?>> keys, Collection<String> columns, boolean forUpdate) {
     return new StringBuilder("SELECT ")
-        .append(columns == null ? "*" : Joiner.on(",").join(columns))
-        .append(" FROM ")
-        .append(tableSchema.getTableId().getName())
-        .append(" WHERE ").append(getEqualsClause(keys))
-        .append(getOrderByClause(tableSchema.getPrimaryKeys()))
-        .append(forUpdate ? " FOR UPDATE " : "")
-        .append(";").toString();
+      .append(columns == null ? "*" : Joiner.on(",").join(columns))
+      .append(" FROM ")
+      .append(tableSchema.getTableId().getName())
+      .append(" WHERE ").append(getEqualsClause(keys))
+      .append(getOrderByClause(tableSchema.getPrimaryKeys()))
+      .append(forUpdate ? " FOR UPDATE " : "")
+      .append(";").toString();
   }
 
   /**
@@ -767,8 +767,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    * scan, both rows are inclusive, it will generate the following query:
    * SELECT * FROM simpletable WHERE (key1,key2)>=(?,?) AND (key1,key2)<=(?,?) LIMIT 10;
    *
-   * @param range the range to scan.
-   * @param limit limit number of row
+   * @param range     the range to scan.
+   * @param limit     limit number of row
    * @param sortOrder sort order
    * @return the scan query
    */
@@ -825,9 +825,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   private String getCountStatement(Collection<Range> ranges) {
-    StringBuilder statement =  new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
+    StringBuilder statement = new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
     boolean whereAdded = false;
-    for (Range range: ranges) {
+    for (Range range : ranges) {
       fieldValidator.validatePrimaryKeys(range.getBegin(), true);
       fieldValidator.validatePrimaryKeys(range.getEnd(), true);
 
@@ -880,8 +880,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
         return Fields.floatField(name, (Float) value);
       case STRING:
         return Fields.stringField(name, (String) value);
-        default:
-          throw new IllegalStateException("Unknown field type " + type);
+      default:
+        throw new IllegalStateException("Unknown field type " + type);
     }
   }
 
