@@ -110,6 +110,7 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
                                                                                            .getMDCPropertyMap());
         rollover(logLocationIdentifier, eventObject);
         OutputStream locationOutputStream = locationManager.getLocationOutputStream(logLocationIdentifier, filePath);
+        System.out.println("In doAppend():",locationOutputStream.getLocation());
         setOutputStream(locationOutputStream);
         writeOut(eventObject);
       }
@@ -174,6 +175,21 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
     }
   }
 
+  private void writeBytes(byte[] byteArray) throws IOException {
+    if (byteArray != null && byteArray.length != 0) {
+      this.lock.lock();
+
+      try {
+        getOutputStream().write(byteArray);
+        if (isImmediateFlush()) {
+          getOutputStream().flush();
+        }
+      } finally {
+        this.lock.unlock();
+      }
+    }
+  }
+
   private void closeInvalidStream() throws IOException {
     if (locationManager.getInvalidOutputStream() != null) {
       LocationOutputStream invalidOutputStream = locationManager.getInvalidOutputStream();
@@ -210,7 +226,8 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
       LOG.info("Stopping appender {}", this.name);
       locationManager.close();
       if (encoder != null) {
-        encoder.close();
+        byte[] footer = this.encoder.footerBytes();
+        this.writeBytes(footer);
       }
     } catch (IOException ioe) {
       LOG.error("Failed to write footer for appender named {}", this.getName(), ioe);
@@ -228,7 +245,8 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
     }
 
     try {
-      encoder.init(outputStream);
+      byte[] header = this.encoder.headerBytes();
+      this.writeBytes(header);
     } catch (IOException ioe) {
       this.started = false;
       LOG.error("Failed to initialize encoder for appender named {}", name, ioe);
@@ -238,7 +256,7 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
   // Since this appender does not support prudent mode, we override writeOut method from FileAppender
   @Override
   protected void writeOut(ILoggingEvent event) throws IOException {
-    this.encoder.doEncode(event);
+    this.encoder.encode(event);
   }
 
   @VisibleForTesting
