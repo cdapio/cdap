@@ -278,10 +278,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       JavaSparkContext javaSparkContext = context == null ? new JavaSparkContext() : context;
       JavaStreamingContext jssc = new JavaStreamingContext(
         javaSparkContext, Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
-      boolean checkpointsDisabled = pipelineSpec.getStateSpec()
-        .getMode() != DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING;
-      SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec,
-                                                                             checkpointsDisabled);
+      SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec);
 
       // TODO: figure out how to get partitions to use for aggregators and joiners.
       // Seems like they should be set at configure time instead of runtime? but that requires an API change.

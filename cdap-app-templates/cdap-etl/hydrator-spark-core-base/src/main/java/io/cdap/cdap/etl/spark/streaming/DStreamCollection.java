@@ -182,7 +182,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        stream.foreachRDD(new StreamingBatchSinkFunction<T>(sec, stageSpec, functionCacheFactory.newCache()));
+        stream.foreachRDD(new StreamingBatchSinkFunction<T>(sec, stageSpec, functionCacheFactory.newCache(), null));
       }
     };
   }
@@ -194,7 +194,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
       @Override
       public void run() {
         ((JavaDStream<RecordInfo<Object>>) stream).foreachRDD(
-              new StreamingMultiSinkFunction(sec, phaseSpec, group, sinks, collectors));
+              new StreamingMultiSinkFunction(sec, phaseSpec, group, sinks, collectors, null));
       }
     };
   }
@@ -204,7 +204,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        stream.foreachRDD(new StreamingSparkSinkFunction<T>(sec, stageSpec));
+        stream.foreachRDD(new StreamingSparkSinkFunction<T>(sec, stageSpec, null));
       }
     };
   }

@@ -37,8 +37,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
+import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 /**
  * Function used to write a batch of data to a {@link SparkSink} for use with a JavaDStream.
@@ -49,10 +52,14 @@ public class StreamingSparkSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
   private static final Logger LOG = LoggerFactory.getLogger(StreamingSparkSinkFunction.class);
   private final JavaSparkExecutionContext sec;
   private final StageSpec stageSpec;
+  @Nullable
+  private final DatasetContext datasetContext;
 
-  public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec) {
+  public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
+                                    @Nullable DatasetContext datasetContext) {
     this.sec = sec;
     this.stageSpec = stageSpec;
+    this.datasetContext = datasetContext;
   }
 
   @Override
@@ -79,14 +86,7 @@ public class StreamingSparkSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
     boolean isDone = false;
 
     try {
-      sec.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext datasetContext) throws Exception {
-          SparkPluginContext context = new BasicSparkPluginContext(null, pipelineRuntime, stageSpec,
-                                                                   datasetContext, sec.getAdmin());
-          sparkSink.prepareRun(context);
-        }
-      });
+      prepareRun(pipelineRuntime, sparkSink);
       isPrepared = true;
 
       final SparkExecutionPluginContext sparkExecutionPluginContext
@@ -94,34 +94,71 @@ public class StreamingSparkSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
                                              logicalStartTime, stageSpec);
       final JavaRDD<T> countedRDD = data.map(new CountingFunction<T>(stageName, sec.getMetrics(),
                                                                      "records.in", null)).cache();
-      sec.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          sparkSink.run(sparkExecutionPluginContext, countedRDD);
-        }
-      });
+      runSparkSink(sparkSink, sparkExecutionPluginContext, countedRDD);
       isDone = true;
-      sec.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext datasetContext) throws Exception {
-          SparkPluginContext context = new BasicSparkPluginContext(null, pipelineRuntime, stageSpec,
-                                                                   datasetContext, sec.getAdmin());
-          sparkSink.onRunFinish(true, context);
-        }
-      });
+      onRunFinish(pipelineRuntime, sparkSink, true);
     } catch (Exception e) {
       LOG.error("Error while executing sink {} for the batch for time {}.", stageName, logicalStartTime, e);
     } finally {
       if (isPrepared && !isDone) {
-        sec.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext datasetContext) throws Exception {
-            SparkPluginContext context = new BasicSparkPluginContext(null, pipelineRuntime, stageSpec,
-                                                                     datasetContext, sec.getAdmin());
-            sparkSink.onRunFinish(false, context);
-          }
-        });
+        onRunFinish(pipelineRuntime, sparkSink, false);
       }
     }
+  }
+
+  private void onRunFinish(PipelineRuntime pipelineRuntime, SparkSink<T> sparkSink,
+                           boolean succeeded) throws TransactionFailureException {
+    if (datasetContext != null) {
+      onRunFinishWithContext(datasetContext, pipelineRuntime, sparkSink, succeeded);
+      return;
+    }
+    sec.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext datasetContext) throws Exception {
+        onRunFinishWithContext(datasetContext, pipelineRuntime, sparkSink, succeeded);
+      }
+    });
+  }
+
+  private void onRunFinishWithContext(DatasetContext datasetContext, PipelineRuntime pipelineRuntime,
+                                      SparkSink<T> sparkSink, boolean succeeded) {
+    SparkPluginContext context = new BasicSparkPluginContext(null, pipelineRuntime, stageSpec,
+                                                             datasetContext, sec.getAdmin());
+    sparkSink.onRunFinish(succeeded, context);
+  }
+
+  private void runSparkSink(SparkSink<T> sparkSink, SparkExecutionPluginContext sparkExecutionPluginContext,
+                            JavaRDD<T> countedRDD) throws Exception {
+    if (datasetContext != null) {
+      //already in a transaction
+      sparkSink.run(sparkExecutionPluginContext, countedRDD);
+      return;
+    }
+    sec.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        sparkSink.run(sparkExecutionPluginContext, countedRDD);
+      }
+    });
+  }
+
+  private void prepareRun(PipelineRuntime pipelineRuntime, SparkSink<T> sparkSink) throws Exception {
+    if (datasetContext != null) {
+      prepareRunWithContext(datasetContext, pipelineRuntime, sparkSink);
+      return;
+    }
+    sec.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext datasetContext) throws Exception {
+        prepareRunWithContext(datasetContext, pipelineRuntime, sparkSink);
+      }
+    });
+  }
+
+  private void prepareRunWithContext(DatasetContext datasetContext, PipelineRuntime pipelineRuntime,
+                                     SparkSink<T> sparkSink) throws Exception {
+    SparkPluginContext context = new BasicSparkPluginContext(null, pipelineRuntime, stageSpec,
+                                                             datasetContext, sec.getAdmin());
+    sparkSink.prepareRun(context);
   }
 }
