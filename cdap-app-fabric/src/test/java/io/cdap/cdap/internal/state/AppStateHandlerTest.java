@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.internal.state;
 
-import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
@@ -66,30 +65,23 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class AppStateHandlerTest {
-  private static final Gson GSON = new Gson();
   public static final String NAMESPACE_1 = "ns1";
   public static final String NAMESPACE_2 = "ns2";
   public static final String APP_NAME = "testapp";
   public static final long APP_ID = 92177123;
   public static final String STATE_KEY = "kafka";
-  public static final String STATE_VALUE_STRING = "{\n" +
+  public static final String STATE_VALUE = "{\n" +
           "\"offset\" : 12345\n" +
           "}";
-  public static final byte[] STATE_VALUE = STATE_VALUE_STRING.getBytes(StandardCharsets.UTF_8);
 
-  private static AppState appState;
   private static String endpoint;
-
-  private static CConfiguration cConf;
   private static AppStateStore appStateStore;
   private static Injector injector;
   private static NamespaceAdmin namespaceAdmin;
   private static TransactionManager txManager;
 
-  private NettyHttpService service;
   private ClientConfig config;
 
   @ClassRule
@@ -97,7 +89,7 @@ public class AppStateHandlerTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    cConf = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
             new ConfigModule(cConf),
@@ -128,13 +120,16 @@ public class AppStateHandlerTest {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    appState = new AppState(NAMESPACE_1, APP_NAME, APP_ID, STATE_KEY, STATE_VALUE);
-    endpoint = "namespaces/" + NAMESPACE_1 + "/app/" + APP_NAME;
+    endpoint = "namespaces/" + NAMESPACE_1 + "/apps/" + APP_NAME + "/appids/" + APP_ID + "/states/" + STATE_KEY;
   }
 
   @AfterClass
   public static void teardown() throws Exception {
     namespaceAdmin.delete(new NamespaceId(NAMESPACE_1));
+
+    if (txManager != null) {
+      txManager.stopAndWait();
+    }
   }
 
   @Before
@@ -142,66 +137,84 @@ public class AppStateHandlerTest {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
-    service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName(),
-                                                      new NoOpMetricsCollectionService())
-      .setHttpHandlers(new AppStateHandler(namespaceAdmin, appStateStore))
-      .build();
+    NettyHttpService service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName(),
+            new NoOpMetricsCollectionService())
+            .setHttpHandlers(new AppStateHandler(namespaceAdmin, appStateStore))
+            .build();
     service.start();
     config = ClientConfig.builder()
-      .setConnectionConfig(
-        ConnectionConfig.builder()
-          .setHostname(service.getBindAddress().getHostName())
-          .setPort(service.getBindAddress().getPort())
-          .setSSLEnabled(false)
-          .build()).build();
+            .setConnectionConfig(
+                    ConnectionConfig.builder()
+                            .setHostname(service.getBindAddress().getHostName())
+                            .setPort(service.getBindAddress().getPort())
+                            .setSSLEnabled(false)
+                            .build()).build();
   }
 
   @After
   public void tearDown() throws Exception {
-    if (txManager != null) {
-      txManager.stopAndWait();
-    }
   }
 
   @Test
   public void testAppStateSave() throws IOException {
-    HttpResponse response = executeHttpRequest(HttpMethod.POST, endpoint, appState);
+    // Save state
+    HttpResponse response = executeHttpRequest(HttpMethod.POST, endpoint, STATE_VALUE);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+
+    // Cleanup
+    executeHttpRequest(HttpMethod.DELETE, endpoint, null);
   }
 
   @Test
   public void testAppStateGet() throws IOException {
-    HttpResponse response = executeHttpRequest(HttpMethod.POST, endpoint, appState);
+    // Save state
+    HttpResponse response = executeHttpRequest(HttpMethod.POST, endpoint, STATE_VALUE);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    response = executeHttpRequest(HttpMethod.GET, endpoint, appState);
+    // Read state
+    response = executeHttpRequest(HttpMethod.GET, endpoint, null);
+
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    Assert.assertEquals(STATE_VALUE, response.getResponseBody());
+    Assert.assertEquals(STATE_VALUE, response.getResponseBodyAsString());
+
+    // Cleanup
+    executeHttpRequest(HttpMethod.DELETE, endpoint, null);
   }
 
   @Test
   public void testAppStateDelete() throws IOException {
-    HttpResponse response = executeHttpRequest(HttpMethod.POST, endpoint, appState);
+    // Save state
+    HttpResponse response = executeHttpRequest(HttpMethod.POST, endpoint, STATE_VALUE);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    response = executeHttpRequest(HttpMethod.DELETE, endpoint, appState);
+    // Delete state
+    response = executeHttpRequest(HttpMethod.DELETE, endpoint, null);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
   }
 
   @Test
   public void testAppStateNamespaceInvalid() throws IOException {
-    appState = new AppState(NAMESPACE_2, APP_NAME, APP_ID, STATE_KEY, STATE_VALUE);
-    endpoint = "/namespaces/" + NAMESPACE_2 + "/app/" + APP_NAME;
+    String endpoint = "namespaces/" + NAMESPACE_2 + "/apps/" + APP_NAME + "/appids/" + APP_ID + "/states/" + STATE_KEY;
 
-    HttpResponse response = executeHttpRequest(HttpMethod.GET, endpoint, appState);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
+    // Get state with invalid namespace
+    HttpResponse response = executeHttpRequest(HttpMethod.GET, endpoint, null);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
   }
 
-  private HttpResponse executeHttpRequest(HttpMethod method, String endpoint, AppState appStateRequest)
+  @Test
+  public void testAppStateDoesNotExist() throws IOException {
+    // Get state that does not exist in table
+    HttpResponse response = executeHttpRequest(HttpMethod.GET, endpoint, null);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+  }
+
+  private HttpResponse executeHttpRequest(HttpMethod method, String endpoint, String body)
           throws IOException {
-    HttpRequest.Builder builder = HttpRequest
-            .builder(method, config.resolveURL(endpoint))
-            .withBody(GSON.toJson(appStateRequest));
-    return HttpRequests.execute(builder.build());
+    HttpRequest.Builder httpRequest = HttpRequest
+            .builder(method, config.resolveURL(endpoint));
+    if (body != null) {
+      httpRequest.withBody(body);
+    }
+    return HttpRequests.execute(httpRequest.build());
   }
 }

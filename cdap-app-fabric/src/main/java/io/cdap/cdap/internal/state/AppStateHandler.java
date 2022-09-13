@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.state;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -27,6 +28,7 @@ import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.nio.charset.StandardCharsets;
@@ -36,14 +38,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-
 /**
  * Internal {@link HttpHandler} for Application State Management
  */
 @Singleton
-@Path(Constants.Gateway.INTERNAL_API_VERSION_3)
+@Path(Constants.Gateway.API_VERSION_3)
 public class AppStateHandler extends AbstractHttpHandler {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().create();
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final AppStateStore appStateStore;
 
@@ -58,25 +59,35 @@ public class AppStateHandler extends AbstractHttpHandler {
    * Get {@link AppState} for a given app-name.
    */
   @GET
-  @Path("/namespaces/{namespace-id}/app/{app-name}")
-  public void getState(FullHttpRequest request, HttpResponder responder,
+  @Path("/namespaces/{namespace-id}/apps/{app-name}/appids/{app-id}/states/{state-key}")
+  public void getState(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
-                       @PathParam("app-name") String appName) throws Exception {
+                       @PathParam("app-name") String appName,
+                       @PathParam("app-id") long appId,
+                       @PathParam("state-key") String stateKey) throws Exception {
     validateNamespace(namespaceId);
-    AppState appStateRequest = getAppStateRequest(request, namespaceId, appName);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appStateStore.getState(appStateRequest)));
+    AppState appStateRequest = new AppState(namespaceId, appName, appId, stateKey);
+    if (appStateStore.getState(appStateRequest).isPresent()) {
+      responder.sendJson(HttpResponseStatus.OK,
+              new String(appStateStore.getState(appStateRequest).get(), StandardCharsets.UTF_8));
+    } else {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
   }
 
   /**
    * Save {@link AppState} for a given app-name.
    */
   @POST
-  @Path("/namespaces/{namespace-id}/app/{app-name}")
+  @Path("/namespaces/{namespace-id}/apps/{app-name}/appids/{app-id}/states/{state-key}")
   public void saveState(FullHttpRequest request, HttpResponder responder,
-                       @PathParam("namespace-id") String namespaceId,
-                       @PathParam("app-name") String appName) throws Exception {
+                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-name") String appName,
+                        @PathParam("app-id") long appId,
+                        @PathParam("state-key") String stateKey) throws Exception {
     validateNamespace(namespaceId);
-    AppState appStateRequest = getAppStateRequest(request, namespaceId, appName);
+    AppState appStateRequest = new AppState(namespaceId, appName, appId, stateKey,
+            request.content().toString(StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8));
     appStateStore.saveState(appStateRequest);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -85,12 +96,14 @@ public class AppStateHandler extends AbstractHttpHandler {
    * Delete {@link AppState} for a given app-name.
    */
   @DELETE
-  @Path("/namespaces/{namespace-id}/app/{app-name}")
-  public void deleteState(FullHttpRequest request, HttpResponder responder,
-                       @PathParam("namespace-id") String namespaceId,
-                       @PathParam("app-name") String appName) throws Exception {
+  @Path("/namespaces/{namespace-id}/apps/{app-name}/appids/{app-id}/states/{state-key}")
+  public void deleteState(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("app-name") String appName,
+                          @PathParam("app-id") long appId,
+                          @PathParam("state-key") String stateKey) throws Exception {
     validateNamespace(namespaceId);
-    AppState appStateRequest = getAppStateRequest(request, namespaceId, appName);
+    AppState appStateRequest = new AppState(namespaceId, appName, appId, stateKey);
     appStateStore.deleteState(appStateRequest);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -100,13 +113,5 @@ public class AppStateHandler extends AbstractHttpHandler {
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-  }
-
-  private AppState getAppStateRequest(FullHttpRequest request, String namespace, String appName) {
-    AppState appStateRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-            AppState.class);
-    appStateRequest.setNamespace(namespace);
-    appStateRequest.setAppName(appName);
-    return appStateRequest;
   }
 }
