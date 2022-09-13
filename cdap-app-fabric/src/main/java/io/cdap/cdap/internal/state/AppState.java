@@ -22,9 +22,19 @@ package io.cdap.cdap.internal.state;
 public class AppState {
   private String namespace;
   private String appName;
-  private final long appId;
-  private final String stateKey;
-  private final byte[] stateValue;
+  private long appId;
+  private String stateKey;
+  private byte[] stateValue;
+
+  public AppState(String namespace,
+                  String appName,
+                  long appId,
+                  String stateKey) {
+    this.namespace = namespace;
+    this.appName = appName;
+    this.appId = appId;
+    this.stateKey = stateKey;
+  }
 
   public AppState(String namespace,
                   String appName,
@@ -44,14 +54,6 @@ public class AppState {
 
   public String getAppName() {
     return appName;
-  }
-
-  public void setNamespace(String namespace) {
-    this.namespace = namespace;
-  }
-
-  public void setAppName(String appName) {
-    this.appName = appName;
   }
 
   public long getAppId() {
