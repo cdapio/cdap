@@ -23,7 +23,6 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableConcurrencyTest;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -54,7 +53,7 @@ public class NoSqlStructuredTableConcurrencyTest extends StructuredTableConcurre
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    Configuration txConf = HBaseConfiguration.create();
+    Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
 

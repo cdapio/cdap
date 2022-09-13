@@ -56,12 +56,12 @@ public class SystemAppTestBaseTest extends SystemAppTestBase {
 
     String keyCol = "key";
     String valCol = "val";
-    tableAdmin.create(new StructuredTableSpecification.Builder()
-                        .withId(id)
-                        .withFields(new FieldType(keyCol, FieldType.Type.STRING),
-                                    new FieldType(valCol, FieldType.Type.STRING))
-                        .withPrimaryKeys(keyCol)
-                        .build());
+    tableAdmin.createOrUpdate(new StructuredTableSpecification.Builder()
+                                .withId(id)
+                                .withFields(new FieldType(keyCol, FieldType.Type.STRING),
+                                            new FieldType(valCol, FieldType.Type.STRING))
+                                .withPrimaryKeys(keyCol)
+                                .build());
 
     try {
       TransactionRunner transactionRunner = getTransactionRunner();

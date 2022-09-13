@@ -151,6 +151,7 @@ public final class StructuredTableSpecification {
 
     /**
      * Set the table id. A table should have an id.
+     *
      * @param id table id
      * @return Builder instance
      */
@@ -161,10 +162,11 @@ public final class StructuredTableSpecification {
 
     /**
      * Set the field types in the table schema. A table should have at least one field.
+     *
      * @param fieldTypes list of field types
      * @return Builder instance
      */
-    public Builder withFields(FieldType ...fieldTypes) {
+    public Builder withFields(FieldType... fieldTypes) {
       this.fieldTypes = Arrays.asList(fieldTypes);
       return this;
     }
@@ -172,10 +174,11 @@ public final class StructuredTableSpecification {
     /**
      * Set the fields that form the primary keys of the table. A table should have at least one primary key.
      * See {@link FieldType#PRIMARY_KEY_TYPES} for valid primary key field types.
+     *
      * @param primaryKeys list of field names forming the primary keys
      * @return Builder instance
      */
-    public Builder withPrimaryKeys(String ...primaryKeys) {
+    public Builder withPrimaryKeys(String... primaryKeys) {
       this.primaryKeys = Arrays.asList(primaryKeys);
       return this;
     }
@@ -183,10 +186,11 @@ public final class StructuredTableSpecification {
     /**
      * Set the fields that need to be indexed in the table. A table need not define any indexes.
      * See {@link FieldType#INDEX_COLUMN_TYPES} for valid index field types.
+     *
      * @param indexes list of field names for the index
      * @return Builder instance
      */
-    public Builder withIndexes(String ...indexes) {
+    public Builder withIndexes(String... indexes) {
       if (indexes != null) {
         this.indexes = Arrays.asList(indexes);
       }
@@ -195,6 +199,7 @@ public final class StructuredTableSpecification {
 
     /**
      * Build the table specification
+     *
      * @return the table specification
      */
     public StructuredTableSpecification build() throws InvalidFieldException {

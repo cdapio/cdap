@@ -24,13 +24,13 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.app.deploy.ProgramRunDispatcherContext;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
-import io.cdap.cdap.internal.app.deploy.pipeline.ProgramRunDispatcherInfo;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.proto.InMemoryProgramLiveInfo;
@@ -59,7 +59,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -80,22 +79,22 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ProgramRunnerFactory programRunnerFactory;
   private final ProgramStateWriter programStateWriter;
   private final ProgramRunDispatcherFactory programRunDispatcherFactory;
-  private final boolean isDistributed;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private TwillRunnerService remoteTwillRunnerService;
   private ExecutorService executor;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-    ProgramStateWriter programStateWriter, ProgramRunDispatcherFactory programRunDispatcherFactory,
-    boolean isDistributed) {
+                                          ProgramStateWriter programStateWriter,
+                                          ProgramRunDispatcherFactory programRunDispatcherFactory) {
     this.cConf = cConf;
     this.programRunDispatcherFactory = programRunDispatcherFactory;
-    this.isDistributed = isDistributed;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
     this.programStateWriter = programStateWriter;
   }
+
+  protected abstract boolean isDistributed();
 
   /**
    * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is optional because
@@ -117,22 +116,17 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
-    AtomicReference<Runnable> cleanUpTask = new AtomicReference<>();
-    ProgramRunDispatcherInfo programRunDispatcherInfo = new ProgramRunDispatcherInfo(programDescriptor, options, runId,
-      isDistributed, cleanUpTask);
+    ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(programDescriptor, options, runId,
+                                                                                    isDistributed());
     ProgramId programId = programDescriptor.getProgramId();
     ProgramRunId programRunId = programId.run(runId);
     DelayedProgramController controller = new DelayedProgramController(programRunId);
-    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, () -> {
-      if (cleanUpTask.get() != null) {
-        cleanUpTask.get().run();
-      }
-    });
+    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, dispatcherContext::executeCleanupTasks);
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {
       try {
         controller.setProgramController(programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
-                                          .dispatchProgram(programRunDispatcherInfo));
+                                          .dispatchProgram(dispatcherContext));
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);

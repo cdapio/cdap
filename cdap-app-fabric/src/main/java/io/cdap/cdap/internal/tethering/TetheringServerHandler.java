@@ -29,6 +29,7 @@ import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -54,6 +55,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -102,7 +104,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     checkTetheringServerEnabled();
     store.updatePeerTimestamp(peer);
     TetheringStatus tetheringStatus = store.getPeer(peer).getTetheringStatus();
-    String messageId = processRequestContent(request);
+    String messageId = processRequestContent(request, peer);
     if (tetheringStatus == TetheringStatus.PENDING) {
       throw new PeerNotFoundException(String.format("Peer %s not found", peer));
     } else if (tetheringStatus == TetheringStatus.REJECTED) {
@@ -232,7 +234,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
    * Processes and publishes the list of tethering program updates received from the client
    * Returns lastMessageId sent by the client
    */
-  private String processRequestContent(FullHttpRequest request) throws BadRequestException {
+  private String processRequestContent(FullHttpRequest request, String peer) throws BadRequestException {
     String lastControlMessageId;
     List<Notification> notificationList;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
@@ -245,6 +247,12 @@ public class TetheringServerHandler extends AbstractHttpHandler {
 
     try {
       for (Notification notification : notificationList) {
+        Map<String, String> properties = notification.getProperties();
+        String programRunId = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
+        String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
+
+        LOG.debug("Received notification from peer {} about program run {} in state {}",
+                 peer, programRunId, programStatus);
         messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), programStatusTopic,
                                                        GSON.toJson(notification));
       }

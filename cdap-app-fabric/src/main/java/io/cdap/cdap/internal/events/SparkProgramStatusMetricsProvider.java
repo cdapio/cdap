@@ -17,9 +17,11 @@
 package io.cdap.cdap.internal.events;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.MetricRetrievalException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
@@ -56,7 +58,7 @@ import javax.inject.Inject;
  * Implementation for {@link MetricsProvider}. Retrieves metrics for a Spark program execution.
  */
 public class SparkProgramStatusMetricsProvider implements MetricsProvider {
-  private static final Logger logger = LoggerFactory.getLogger(SparkProgramStatusMetricsProvider.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkProgramStatusMetricsProvider.class);
   private static final Gson gson = new Gson();
 
   private final String sparkApplicationsEndpoint = "/api/v1/applications";
@@ -78,13 +80,19 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
   }
 
   @Override
-  public ExecutionMetrics[] retrieveMetrics(ProgramRunId runId) {
+  public ExecutionMetrics[] retrieveMetrics(ProgramRunId runId) throws MetricRetrievalException {
     if (!runId.getType().equals(ProgramType.SPARK)) {
       return new ExecutionMetrics[]{ExecutionMetrics.emptyMetrics()};
     }
     long startTime = System.currentTimeMillis();
     String runIdStr = runId.getRun();
     String sparkHistoricBaseURL = cConf.get(Constants.Spark.SPARK_METRICS_PROVIDER_HOST);
+    if (Strings.isNullOrEmpty(sparkHistoricBaseURL)) {
+      emitMetrics(runId, startTime, false);
+      LOG.warn("The '{}' configuration is missing, no spark metrics will be provided",
+               Constants.Spark.SPARK_METRICS_PROVIDER_HOST);
+      return new ExecutionMetrics[]{};
+    }
     String applicationsURL = String.format("%s%s?minEndDate=%s", sparkHistoricBaseURL,
                                            sparkApplicationsEndpoint, generateMaxTerminationDateParam());
     try {
@@ -103,7 +111,7 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
               metrics = extractMetrics(stagesResponse.getResponseBodyAsString());
               if (Objects.isNull(metrics)) {
                 emitMetrics(runId, startTime, false);
-                logger.error("Error during metrics extraction, received null response");
+                LOG.warn("Error during metrics extraction, received null response");
                 return new ExecutionMetrics[]{};
               } else {
                 emitMetrics(runId, startTime, true);
@@ -113,15 +121,14 @@ public class SparkProgramStatusMetricsProvider implements MetricsProvider {
               throw new RetryableException("Error during attemptId extraction");
             }
           } catch (IOException e) {
-            logger.warn("Error retrieving application response", e);
+            LOG.warn("Error retrieving application response", e);
             throw new RetryableException(e);
           }
         }, RetryStrategies.fromConfiguration(this.cConf, Constants.Spark.SPARK_METRICS_PROVIDER_RETRY_STRATEGY_PREFIX),
         t -> t instanceof RetryableException);
     } catch (Exception e) {
       emitMetrics(runId, startTime, false);
-      logger.error("Retries failed for extracting metrics. ", e);
-      return new ExecutionMetrics[]{};
+      throw new MetricRetrievalException(e);
     }
   }
 

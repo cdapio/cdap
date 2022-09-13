@@ -24,7 +24,6 @@ import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistryTest;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -47,7 +46,7 @@ public class NoSqlStructuredTableRegistryTest extends StructuredTableRegistryTes
 
   @BeforeClass
   public static void beforeClass() {
-    Configuration txConf = HBaseConfiguration.create();
+    Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
   }
