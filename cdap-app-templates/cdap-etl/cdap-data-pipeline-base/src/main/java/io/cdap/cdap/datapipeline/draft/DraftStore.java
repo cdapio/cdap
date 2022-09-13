@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2022 Cask Data, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -60,6 +60,7 @@ public class DraftStore {
   private static final String UPDATED_COL = "updatedtimemillis";
   private static final String PIPELINE_COL = "pipeline";
   private static final String REVISION_COL = "revision";
+  private static final String PARENTVERSION_COL = "parentversion";
   public static final StructuredTableSpecification TABLE_SPEC = new StructuredTableSpecification.Builder()
     .withId(TABLE_ID)
     .withFields(Fields.stringType(NAMESPACE_COL),
@@ -72,7 +73,8 @@ public class DraftStore {
                 Fields.longType(CREATED_COL),
                 Fields.longType(UPDATED_COL),
                 Fields.stringType(PIPELINE_COL),
-                Fields.intType(REVISION_COL))
+                Fields.intType(REVISION_COL),
+                Fields.stringType(PARENTVERSION_COL))
     .withPrimaryKeys(NAMESPACE_COL, GENERATION_COL, OWNER_COL, ID_COL)
     .build();
   private static final Gson GSON = new Gson();
@@ -223,7 +225,7 @@ public class DraftStore {
     long createTime = existing.map(Draft::getCreatedTimeMillis).orElse(now);
 
     Draft draft = new Draft(request.getConfig(), request.getName(), request.getDescription(), request.getArtifact(),
-                            id.getId(), createTime, now);
+                            id.getId(), createTime, now, request.getParentVersion());
 
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(TABLE_ID);
@@ -258,7 +260,7 @@ public class DraftStore {
   }
 
   private List<Field<?>> getRow(DraftId id, Draft draft) {
-    List<Field<?>> fields = new ArrayList<>(11);
+    List<Field<?>> fields = new ArrayList<>(12);
     addKeyFields(id, fields);
     fields.add(Fields.stringField(ARTIFACT_COL, GSON.toJson(draft.getArtifact())));
     fields.add(Fields.stringField(NAME_COL, draft.getName()));
@@ -267,6 +269,7 @@ public class DraftStore {
     fields.add(Fields.longField(UPDATED_COL, draft.getUpdatedTimeMillis()));
     fields.add(Fields.stringField(PIPELINE_COL, GSON.toJson(draft.getConfig())));
     fields.add(Fields.intField(REVISION_COL, draft.getRevision()));
+    fields.add(Fields.stringField(PARENTVERSION_COL, draft.getParentVersion()));
 
     return fields;
   }
@@ -282,6 +285,7 @@ public class DraftStore {
     String description = row.getString(DESCRIPTION_COL);
     long createTime = row.getLong(CREATED_COL);
     long updateTime = row.getLong(UPDATED_COL);
+    String parentVersion = row.getString(PARENTVERSION_COL);
 
     String artifactStr = row.getString(ARTIFACT_COL);
     ArtifactSummary artifact = GSON.fromJson(artifactStr, ArtifactSummary.class);
@@ -300,6 +304,6 @@ public class DraftStore {
       }
     }
 
-    return new Draft(config, name, description, artifact, id, createTime, updateTime);
+    return new Draft(config, name, description, artifact, id, createTime, updateTime, parentVersion);
   }
 }
