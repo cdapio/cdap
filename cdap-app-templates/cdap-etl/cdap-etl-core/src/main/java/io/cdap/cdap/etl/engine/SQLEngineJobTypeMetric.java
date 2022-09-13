@@ -22,7 +22,12 @@ package io.cdap.cdap.etl.engine;
 public enum SQLEngineJobTypeMetric {
   JOIN("join"),
   TRANSFORM("transform"),
-  WRITE("join");
+  PUSH("push"),
+  PULL("pull"),
+  SPARK_PUSH("spark_push"),
+  SPARK_PULL("spark_pull"),
+  READ("read"),
+  WRITE("write");
 
   private final String type;
 
