@@ -27,6 +27,6 @@ public interface MetadataConsumer {
   /**
    * Consumes lineage info for a program run.
    */
-  void consumeLineage(ProgramRun programRun, LineageInfo lineageInfo);
+  void consumeLineage(MetadataConsumerContext context, ProgramRun programRun, LineageInfo lineageInfo);
 }
 
