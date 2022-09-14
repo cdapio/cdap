@@ -70,6 +70,15 @@ public interface RuntimeJobManager extends Closeable {
   void kill(ProgramRunInfo programRunInfo) throws Exception;
 
   /**
+   * Cleans up any resources after a pipeline is complete. For example, signals Dataproc to
+   * clean up dataproc clusters.
+   *
+   * @param programRunInfo program run info
+   * @throws Exception thrown if any exception while killing the job
+   */
+  void clean(ProgramRunInfo programRunInfo) throws Exception;
+
+  /**
    * This method is responsible to perform clean up for runtime manager.
    */
   @Override

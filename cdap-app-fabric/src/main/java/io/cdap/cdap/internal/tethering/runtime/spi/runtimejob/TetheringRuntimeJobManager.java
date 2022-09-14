@@ -106,9 +106,13 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     publishToControlChannel(message);
   }
 
+  /**
+   * This method should be used carefully, as currently it is always returning RUNNING
+   */
   @Override
   public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) {
     // TODO: CDAP-18739 - pull job status instead of always treating it as RUNNING
+
     return Optional.of(new RuntimeJobDetail(programRunInfo, RuntimeJobStatus.RUNNING));
   }
 
@@ -151,6 +155,12 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
                                                                     TetheringControlMessage.Type.KILL_PROGRAM);
     publishToControlChannel(message);
+  }
+
+  @Override
+  public void clean(ProgramRunInfo programRunInfo) throws Exception {
+    // no-op
+    LOG.debug("No-op cleanup for program {}", programRunInfo);
   }
 
   @Override

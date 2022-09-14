@@ -75,4 +75,12 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
       runtimeJobManager.kill(programRunInfo);
     }
   }
+
+  @Override
+  public void clean() throws Exception {
+    LOG.debug("Cleaning up program run {}", programRunId);
+    try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
+      runtimeJobManager.clean(programRunInfo);
+    }
+  }
 }

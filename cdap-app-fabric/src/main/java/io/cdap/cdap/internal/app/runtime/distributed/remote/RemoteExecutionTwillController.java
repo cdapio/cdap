@@ -133,10 +133,10 @@ class RemoteExecutionTwillController implements TwillController {
         TimeUnit.SECONDS.sleep(1);
       }
     } catch (Exception e) {
-      // If there is exception, use the remote execution controller to try killing the remote process
+      // If there is exception, use the remote execution controller to try cleaning up the remote process
       try {
-        LOG.debug("Force termination of remote process for program run {}", programRunId);
-        remoteProcessController.kill();
+        LOG.debug("Clean up of remote process for program run {}", programRunId);
+        remoteProcessController.clean();
       } catch (Exception ex) {
         LOG.warn("Failed to terminate remote process for program run {}", programRunId, ex);
       }

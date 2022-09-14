@@ -299,6 +299,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   @Override
+  public void clean(ProgramRunInfo programRunInfo) throws Exception {
+    LOG.debug(" Cleaning up program {}", programRunInfo);
+    stop(programRunInfo);
+  }
+
+  @Override
   public void close() {
     JobControllerClient client = this.jobControllerClient;
     if (client != null) {

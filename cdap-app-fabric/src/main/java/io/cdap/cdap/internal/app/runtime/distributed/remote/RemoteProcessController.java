@@ -40,4 +40,10 @@ public interface RemoteProcessController {
    * @throws Exception if not able to kill the remote process
    */
   void kill() throws Exception;
+
+  /**
+   * Cleans up the remote process, functionally similar to kill in some cases whereas a no-op in others
+   * @throws Exception if not able to kill the remote process
+   */
+  void clean() throws Exception;
 }

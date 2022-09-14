@@ -102,6 +102,12 @@ final class SSHRemoteProcessController implements RemoteProcessController {
     killProcess(9);
   }
 
+  @Override
+  public void clean() throws Exception {
+    LOG.debug("Cleaning up program run {}", programRunId);
+    kill();
+  }
+
   private void killProcess(int signal) throws IOException, InterruptedException {
     // SSH and kill the process
     try (SSHSession session = new DefaultSSHSession(sshConfig)) {
