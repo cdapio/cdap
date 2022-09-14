@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineInput;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
 import io.cdap.cdap.etl.batch.preview.LimitingInputFormatProvider;
@@ -73,6 +74,10 @@ public class MapReduceBatchContext extends AbstractBatchContext
 
   @Override
   public void setInput(Input input) {
+    // Skip SQLEngineInput as this is not supported in MapReduce.
+    if (input instanceof SQLEngineInput) {
+      return;
+    }
     Input wrapped = CALLER.callUnchecked(() -> {
       Input trackableInput = input;
       if (isPreviewEnabled && input instanceof Input.InputFormatProviderInput) {

@@ -59,6 +59,7 @@ import io.cdap.cdap.etl.mock.batch.MockSQLEngineWithStageSettings;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSinkWithWriteCapability;
 import io.cdap.cdap.etl.mock.batch.MockSource;
+import io.cdap.cdap.etl.mock.batch.MockSourceWithReadCapability;
 import io.cdap.cdap.etl.mock.batch.NodeStatesAction;
 import io.cdap.cdap.etl.mock.batch.NullErrorTransform;
 import io.cdap.cdap.etl.mock.batch.aggregator.DistinctAggregator;
@@ -117,7 +118,7 @@ public class HydratorTestBase extends TestBase {
     MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, FieldLineageAction.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS,
+    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSourceWithReadCapability.PLUGIN_CLASS,
     MockSink.PLUGIN_CLASS, MockSinkWithWriteCapability.PLUGIN_CLASS,
     DistinctReducibleAggregator.PLUGIN_CLASS, FieldCountReducibleAggregator.PLUGIN_CLASS,
     FileConnector.PLUGIN_CLASS, IncapableSource.PLUGIN_CLASS, IncapableSink.PLUGIN_CLASS,

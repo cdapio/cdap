@@ -35,8 +35,6 @@ public class SQLEngineJob<T> {
     this.task = task;
   }
 
-
-
   public boolean isDone() {
     return task.isDone();
   }

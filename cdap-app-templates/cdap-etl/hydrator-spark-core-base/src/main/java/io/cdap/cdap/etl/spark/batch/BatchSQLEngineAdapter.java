@@ -26,6 +26,7 @@ import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineInput;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineOutput;
 import io.cdap.cdap.etl.api.engine.sql.capability.PullCapability;
 import io.cdap.cdap.etl.api.engine.sql.capability.PushCapability;
@@ -39,6 +40,8 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLJoinRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLReadRequest;
+import io.cdap.cdap.etl.api.engine.sql.request.SQLReadResult;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
@@ -75,6 +78,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -259,6 +263,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     Runnable pullTask = () -> {
       try {
+        getDatasetForStage(job.getDatasetName());
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
         // Wait for previous job to complete
         waitForJobAndThrowException(job);
@@ -346,17 +351,9 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return boolean detailing if the collection exists or not.
    */
   public boolean exists(String datasetName) {
-    SQLEngineJobKey joinStagePushKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.PUSH);
-    if (jobs.containsKey(joinStagePushKey)) {
-      return true;
-    }
+    SQLDataset dataset = getDatasetForStage(datasetName);
 
-    SQLEngineJobKey joinStageExecKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.EXECUTE);
-    if (jobs.containsKey(joinStageExecKey)) {
-      return true;
-    }
-
-    return false;
+    return dataset != null;
   }
 
   /**
@@ -502,21 +499,20 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return
    */
   private SQLDataset getDatasetForStage(String stageName) {
-    // Wait for the previous push or execute jobs to complete
-    SQLEngineJobKey pushJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.PUSH);
-    SQLEngineJobKey execJobKey = new SQLEngineJobKey(stageName, SQLEngineJobType.EXECUTE);
+    // Wait for the previous read, push or execute job to complete.
+    List<SQLEngineJobKey> jobKeys = Arrays.asList(new SQLEngineJobKey(stageName, SQLEngineJobType.READ),
+                                                  new SQLEngineJobKey(stageName, SQLEngineJobType.PUSH),
+                                                  new SQLEngineJobKey(stageName, SQLEngineJobType.EXECUTE));
 
-    if (jobs.containsKey(pushJobKey)) {
-      SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(pushJobKey);
-      waitForJobAndThrowException(job);
-      return job.waitFor();
-    } else if (jobs.containsKey(execJobKey)) {
-      SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(execJobKey);
-      waitForJobAndThrowException(job);
-      return job.waitFor();
-    } else {
-      throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
+    for (SQLEngineJobKey jobKey : jobKeys) {
+      if (jobs.containsKey(jobKey)) {
+        SQLEngineJob<SQLDataset> job = (SQLEngineJob<SQLDataset>) jobs.get(jobKey);
+        waitForJobAndThrowException(job);
+        return job.waitFor();
+      }
     }
+
+    throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
   }
 
   /**
@@ -829,6 +825,41 @@ public class BatchSQLEngineAdapter implements Closeable {
   }
 
   /**
+   * Try to read input from the SQLEngineInput registered by the source
+   *
+   * @param datasetName    dataset to read
+   * @param sqlEngineInput input instance created by this engine
+   * @return {@link SQLEngineJob<SQLDataset>} representing the records read from the source. The underlying
+   * {@link SQLDataset} will be invalid if the read operation is not successful
+   */
+  public SQLEngineJob<SQLDataset> read(String datasetName, SQLEngineInput sqlEngineInput) {
+    SQLEngineJobKey readJobKey = new SQLEngineJobKey(datasetName, SQLEngineJobType.READ);
+    // Run read job
+    return runJob(readJobKey, () -> {
+      LOG.debug("Attempting read for dataset {} from {}", datasetName, sqlEngineInput);
+      SQLReadResult readResult = sqlEngine.read(new SQLReadRequest(datasetName, sqlEngineInput));
+      LOG.debug("Read dataset {} from {} was {}",
+                datasetName,
+                sqlEngineInput,
+                readResult.isSuccessful() ? "completed" : "unsuccessful");
+
+      // If the read operation is not successful, throw a SQLEngineException.
+      if (!readResult.isSuccessful()) {
+        throw new SQLEngineException("Unable to read input stage " + datasetName + " from SQL Engine.");
+      }
+
+      // Count input stage metrics
+      DefaultStageMetrics stageMetrics = new DefaultStageMetrics(metrics, datasetName);
+      StageStatisticsCollector statisticsCollector = statsCollectors.get(datasetName);
+      countRecordsIn(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
+      countRecordsOut(readResult.getSqlDataset().getNumRows(), statisticsCollector, stageMetrics);
+
+      // Return the SQLDataset instance from the read result.
+      return readResult.getSqlDataset();
+    });
+  }
+
+  /**
    * Try to write the output directly to the SQLEngineOutput registered by this engine.
    *
    * @param datasetName     dataset to write
@@ -872,6 +903,16 @@ public class BatchSQLEngineAdapter implements Closeable {
    */
   public <T> CompletableFuture<T> submitTask(Supplier<T> supplier) {
     return CompletableFuture.supplyAsync(supplier, executorService);
+  }
+
+  /**
+   * Returns the name of the SQL Engine class that is managed by this adapter.
+   *
+   * This is useful to ensure that only compatible inputs are supplied to the SQL engine.
+   * @return SQL Engine class name
+   */
+  public String getSQLEngineClassName() {
+    return sqlEngine.getClass().getName();
   }
 
   /**
