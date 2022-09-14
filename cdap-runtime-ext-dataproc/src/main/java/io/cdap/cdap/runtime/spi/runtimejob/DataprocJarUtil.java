@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
+import com.google.api.client.util.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
@@ -49,17 +50,23 @@ final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  static LocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
-    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
-      @Override
-      public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString().contains("spark-assembly");
+  static LocalFileDescription getTwillJar(LocationFactory locationFactory) throws IOException {
+    return new LocalFileDescription(Constants.Files.TWILL_JAR + "-" + "TODO_ADD_VERSION", () -> {
+      try {
+        ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
+          @Override
+          public boolean accept(String className, URL classUrl, URL classPathUrl) {
+            return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString().contains("spark-assembly");
+          }
+        });
+        Location location = locationFactory.create(Constants.Files.TWILL_JAR);
+        bundler.createBundle(location, ImmutableList.of(ApplicationMasterMain.class,
+                                                        TwillContainerMain.class, OptionSpec.class));
+        return createLocalFile(location, true);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
     });
-    Location location = locationFactory.create(Constants.Files.TWILL_JAR);
-    bundler.createBundle(location, ImmutableList.of(ApplicationMasterMain.class,
-                                                    TwillContainerMain.class, OptionSpec.class));
-    return createLocalFile(location, true);
   }
 
   /**
@@ -69,36 +76,42 @@ final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  static LocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
-    Location location = locationFactory.create("launcher.jar");
-    try (JarOutputStream jarOut = new JarOutputStream(location.getOutputStream())) {
-      ClassLoader classLoader = DataprocJobMain.class.getClassLoader();
-      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
-        @Override
-        public boolean accept(String className, URL classUrl, URL classPathUrl) {
-          if (className.startsWith("io.cdap.cdap.runtime")) {
-            try {
-              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              try (InputStream is = classUrl.openStream()) {
-                ByteStreams.copy(is, jarOut);
+  static LocalFileDescription getLauncherJar(LocationFactory locationFactory) throws IOException {
+    return new LocalFileDescription("launcher.jar" + "-" + "TODO_ADD_VERSION", () -> {
+      try {
+        Location location = locationFactory.create("launcher.jar");
+        try (JarOutputStream jarOut = new JarOutputStream(location.getOutputStream())) {
+          ClassLoader classLoader = DataprocJobMain.class.getClassLoader();
+          Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+            @Override
+            public boolean accept(String className, URL classUrl, URL classPathUrl) {
+              if (className.startsWith("io.cdap.cdap.runtime")) {
+                try {
+                  jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+                  try (InputStream is = classUrl.openStream()) {
+                    ByteStreams.copy(is, jarOut);
+                  }
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+                return true;
               }
-            } catch (IOException e) {
-              throw new RuntimeException(e);
+              return false;
             }
-            return true;
-          }
-          return false;
-        }
-      }, DataprocJobMain.class.getName());
+          }, DataprocJobMain.class.getName());
 
-      // Add the logback-console.xml from resources
-      URL logbackURL = classLoader.getResource("logback-console.xml");
-      if (logbackURL != null) {
-        jarOut.putNextEntry(new JarEntry("logback-console.xml"));
-        Resources.copy(logbackURL, jarOut);
+          // Add the logback-console.xml from resources
+          URL logbackURL = classLoader.getResource("logback-console.xml");
+          if (logbackURL != null) {
+            jarOut.putNextEntry(new JarEntry("logback-console.xml"));
+            Resources.copy(logbackURL, jarOut);
+          }
+        }
+        return createLocalFile(location, false);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
-    }
-    return createLocalFile(location, false);
+    });
   }
 
   private static LocalFile createLocalFile(Location location, boolean archive) throws IOException {

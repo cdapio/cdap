@@ -21,6 +21,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJobInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.runtimejob.LocalFileDescription;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.apache.hadoop.conf.Configuration;
@@ -38,8 +39,9 @@ import org.apache.twill.internal.io.LocationCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -71,15 +73,20 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
                         TimeoutChecker timeoutChecker) throws Exception {
     try (RuntimeJobManager jobManager = jobManagerSupplier.get()) {
       timeoutChecker.throwIfTimeout();
-      Map<String, LocalFile> localizeFiles = new HashMap<>(localFiles);
+      //TODO: Propagate higher and use proper key
+      List<LocalFileDescription> localizeFiles = localFiles.values().stream().map(
+        f -> new LocalFileDescription(f.getName() + f.getSize() + f.getLastModified(), () -> f)
+      ).collect(Collectors.toList());
       for (Map.Entry<String, Location> secretFile: secretFiles.entrySet()) {
         Location secretFileLocation = secretFile.getValue();
-        localizeFiles.put(secretFile.getKey(),
-                          new DefaultLocalFile(secretFile.getKey(),
-                                               secretFileLocation.toURI(),
-                                               secretFileLocation.lastModified(),
-                                               secretFileLocation.length(),
-                                               false, null));
+        DefaultLocalFile localFile = new DefaultLocalFile(secretFile.getKey(),
+                                                                 secretFileLocation.toURI(),
+                                                                 secretFileLocation.lastModified(),
+                                                                 secretFileLocation.length(),
+                                                                 false, null);
+        localizeFiles.add(new LocalFileDescription(secretFile.getKey(),
+                                                   () -> localFile,
+                                                   false);
       }
 
       RuntimeJobInfo runtimeJobInfo = createRuntimeJobInfo(runtimeSpec, localizeFiles,
@@ -91,13 +98,16 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   private RuntimeJobInfo createRuntimeJobInfo(RuntimeSpecification runtimeSpec,
-                                              Map<String, LocalFile> localFiles, String jvmOpts) {
+                                              Collection<LocalFileDescription> localFiles, String jvmOpts) {
 
     Map<String, String> jvmProperties = parseJvmProperties(jvmOpts);
     LOG.info("JVM properties {}", jvmProperties);
 
     return new DefaultRuntimeJobInfo(getProgramRunId(),
-                                     Stream.concat(localFiles.values().stream(), runtimeSpec.getLocalFiles().stream())
+                                     Stream.concat(localFiles.stream(),
+                                                   runtimeSpec.getLocalFiles().stream()
+                                                     //TODO: Add has here
+                                                     .map(f -> new LocalFileDescription(f.getName(), () -> f)))
                                     .collect(Collectors.toList()), jvmProperties);
   }
 

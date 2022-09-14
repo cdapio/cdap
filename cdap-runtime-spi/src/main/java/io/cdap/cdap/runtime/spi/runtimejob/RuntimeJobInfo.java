@@ -31,7 +31,7 @@ public interface RuntimeJobInfo {
   /**
    * Returns a collection of files that are used to launch the job.
    */
-  Collection<? extends LocalFile> getLocalizeFiles();
+  Collection<LocalFileDescription> getLocalizeFiles();
 
   /**
    * Returns fully qualified classname of default implementation of a {@link RuntimeJob}.

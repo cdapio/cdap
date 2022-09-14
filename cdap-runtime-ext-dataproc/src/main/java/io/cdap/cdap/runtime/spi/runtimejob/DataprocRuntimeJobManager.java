@@ -187,14 +187,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     // on dataproc bucket the run root will be <bucket>/cdap-job/<runid>/. All the files for this run will be copied
     // under that base dir.
     String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runInfo.getRun());
+    String cacheRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, "cache");
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
-      List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
+      List<LocalFileDescription> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
-      for (LocalFile fileToUpload : localFiles) {
-        String targetFilePath = getPath(runRootPath, fileToUpload.getName());
+      for (LocalFileDescription fileToUpload : localFiles) {
+        String targetFilePath = getPath(
+          fileToUpload.isCacheable() ? cacheRootPath : runRootPath,
+          fileToUpload.getFileKey());
         uploadFutures.add(
           provisionerContext.execute(() -> uploadFile(bucket, targetFilePath, fileToUpload)).toCompletableFuture());
       }
@@ -309,15 +312,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Returns list of runtime local files with twill.jar and launcher.jar added to it.
    */
-  private List<LocalFile> getRuntimeLocalFiles(Collection<? extends LocalFile> runtimeLocalFiles,
+  private List<LocalFileDescription> getRuntimeLocalFiles(Collection<LocalFileDescription> runtimeLocalFiles,
                                                File tempDir) throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(tempDir);
-    List<LocalFile> localFiles = new ArrayList<>(runtimeLocalFiles);
+    List<LocalFileDescription> localFiles = new ArrayList<>(runtimeLocalFiles);
     localFiles.add(DataprocJarUtil.getTwillJar(locationFactory));
     localFiles.add(DataprocJarUtil.getLauncherJar(locationFactory));
-
-    // Sort files in descending order by size so that we upload concurrently large files first.
-    localFiles.sort(Comparator.comparingLong(LocalFile::getSize).reversed());
 
     return localFiles;
   }
@@ -326,7 +326,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Uploads files to gcs.
    */
   private LocalFile uploadFile(String bucket, String targetFilePath,
-                               LocalFile localFile) throws IOException, StorageException {
+                               LocalFileDescription localFileDescription) throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     String contentType = "application/octet-stream";
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
@@ -336,6 +336,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     if (bucketObj == null) {
       throw new IOException("GCS bucket '" + bucket + "'does not exists");
     }
+
+    URI destinationURI = URI.create(String.format("gs://%s/%s", bucket, targetFilePath));
+    Blob existingBlob = storage.get(blobId);
+    if (localFileDescription.isCacheable() && existingBlob.exists()) {
+      //TODO: cache expiration
+      return new DefaultLocalFile(existingBlob.getName(), destinationURI,
+                                  existingBlob.getCreateTime(), existingBlob.getSize(),
+                                  true /*TODO*/, null);
+    }
+
+    LocalFile localFile = localFileDescription.getFileSupplier().get();
 
     LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{} of {} bucket type located at {}",
               localFile.getSize(), localFile.getURI(), bucket, targetFilePath,
@@ -360,7 +371,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                 localFile.getURI(), bucket, targetFilePath);
     }
 
-    return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
+    return new DefaultLocalFile(localFile.getName(), destinationURI,
                                 localFile.getLastModified(), localFile.getSize(),
                                 localFile.isArchive(), localFile.getPattern());
   }
