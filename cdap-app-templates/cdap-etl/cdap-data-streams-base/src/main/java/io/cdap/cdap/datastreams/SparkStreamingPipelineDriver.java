@@ -108,14 +108,14 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       .addStages(stageSpecs)
       .build();
 
-    boolean checkpointsDisabled = pipelineSpec.isCheckpointsDisabled();
+    boolean checkpointsEnabled = pipelineSpec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING;
     boolean isPreviewEnabled = pipelineSpec.isPreviewEnabled(sec);
 
     String checkpointDir = null;
     JavaSparkContext context = null;
-    if (!checkpointsDisabled && !isPreviewEnabled) {
+    if (checkpointsEnabled && !isPreviewEnabled) {
       String pipelineName = sec.getApplicationSpecification().getName();
-      String configCheckpointDir = pipelineSpec.getCheckpointDirectory();
+      String configCheckpointDir = pipelineSpec.getStateSpec().getCheckpointDir();
       if (Strings.isNullOrEmpty(configCheckpointDir)) {
         // Use the directory of a fileset dataset if the checkpoint directory is not set.
         Admin admin = sec.getAdmin();
@@ -223,7 +223,8 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
           jssc.stop(true, true);
 
           // After stopping the streaming context, checks if all received data has been processed.
-          if (!pipelineSpec.isCheckpointsDisabled() && checkpointDir != null) {
+          if (pipelineSpec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING
+            && checkpointDir != null) {
             if (areAllBlocksProcessed(jssc, pipelineSpec, checkpointDir)) {
               LOG.info("All receiver blocks are processed in the checkpoint directory {}", checkpointDir);
               try {
@@ -277,8 +278,10 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       JavaSparkContext javaSparkContext = context == null ? new JavaSparkContext() : context;
       JavaStreamingContext jssc = new JavaStreamingContext(
         javaSparkContext, Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
+      boolean checkpointsDisabled = pipelineSpec.getStateSpec()
+        .getMode() != DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING;
       SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec,
-                                                                             pipelineSpec.isCheckpointsDisabled());
+                                                                             checkpointsDisabled);
 
       // TODO: figure out how to get partitions to use for aggregators and joiners.
       // Seems like they should be set at configure time instead of runtime? but that requires an API change.

@@ -42,6 +42,8 @@ public final class Constants {
   public static final String DATASET_AGGREGATE_IGNORE_PARTITIONS =
     "spark.cdap.pipeline.aggregate.dataset.partitions.ignore";
   public static final String DEFAULT_CACHING_STORAGE_LEVEL = "DISK_ONLY";
+  // Can be used as a runtime argument for streaming pipeline to disable at least once processing.
+  public static final String CDAP_STREAMING_ATLEASTONCE_ENABLED = "cdap.streaming.atleastonce.enabled";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");

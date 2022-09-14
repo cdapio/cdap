@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.DatasetConfigurer;
@@ -27,14 +28,20 @@ import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.join.JoinCondition;
+import io.cdap.cdap.etl.api.streaming.StreamingStateHandler;
+import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.common.macro.TimeParser;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
+import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.fs.Path;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -48,6 +55,9 @@ public class DataStreamsPipelineSpecGenerator
                                      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
                                      .create();
   private final RuntimeConfigurer runtimeConfigurer;
+  //Set of sources in this pipeline that supports @link{StreamingStateHandler}
+  private Set<String> stateHandlingSources;
+  private Set<String> sourcePluginTypes;
 
   <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(
     String namespace, T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
@@ -55,6 +65,8 @@ public class DataStreamsPipelineSpecGenerator
     super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes,
           Engine.SPARK, featureFlagsProvider);
     this.runtimeConfigurer = runtimeConfigurer;
+    this.sourcePluginTypes = sourcePluginTypes;
+    this.stateHandlingSources = new HashSet<>();
   }
 
   @Override
@@ -79,20 +91,76 @@ public class DataStreamsPipelineSpecGenerator
     DataStreamsPipelineSpec.Builder specBuilder = DataStreamsPipelineSpec.builder(batchIntervalMillis, pipelineId)
       .setExtraJavaOpts(config.getExtraJavaOpts())
       .setStopGracefully(config.getStopGracefully())
-      .setIsUnitTest(config.isUnitTest())
-      .setCheckpointsDisabled(config.checkpointsDisabled());
-    String checkpointDir = config.getCheckpointDir();
-    if (!config.checkpointsDisabled() && checkpointDir != null) {
-      try {
-        new Path(checkpointDir);
-      } catch (Exception e) {
-        throw new IllegalArgumentException(
-          String.format("Checkpoint directory '%s' is not a valid Path: %s", checkpointDir, e.getMessage()), e);
-      }
-      specBuilder.setCheckpointDirectory(checkpointDir);
-    }
+      .setIsUnitTest(config.isUnitTest());
+
     configureStages(config, specBuilder);
+    //Configure the at least once processing mode for this pipeline
+    configureAtleastOnceMode(config, specBuilder);
     return specBuilder.build();
+  }
+
+  @VisibleForTesting
+  void configureAtleastOnceMode(DataStreamsConfig config, DataStreamsPipelineSpec.Builder specBuilder) {
+    //If runtime arg sets atleast once processing to false, disable both
+    if (runtimeConfigurer != null && runtimeConfigurer.getRuntimeArguments() != null) {
+      boolean atleastOnceProcessingEnabled = Boolean.parseBoolean(
+        runtimeConfigurer.getRuntimeArguments().getOrDefault(Constants.CDAP_STREAMING_ATLEASTONCE_ENABLED, "true"));
+      if (!atleastOnceProcessingEnabled) {
+        DataStreamsStateSpec stateSpec = DataStreamsStateSpec.getBuilder(DataStreamsStateSpec.Mode.NONE).build();
+        specBuilder.setStateSpec(stateSpec);
+        return;
+      }
+    }
+    //Check if native state tracking is possible
+    if (nativeStateTrackingSupported(config, sourcePluginTypes, stateHandlingSources)) {
+      // Native state tracking and spark checkpointing is mutually exclusive
+      // This is because Spark recreates context from checkpoint data
+      DataStreamsStateSpec stateSpec = DataStreamsStateSpec.getBuilder(DataStreamsStateSpec.Mode.NATIVE_STATE_STORE)
+        .build();
+      specBuilder.setStateSpec(stateSpec);
+    } else {
+      String checkpointDir = config.getCheckpointDir();
+      if (checkpointDir != null) {
+        try {
+          new Path(checkpointDir);
+        } catch (Exception e) {
+          throw new IllegalArgumentException(
+            String.format("Checkpoint directory '%s' is not a valid Path: %s", checkpointDir, e.getMessage()), e);
+        }
+      }
+      DataStreamsStateSpec.Builder builder = DataStreamsStateSpec.getBuilder(
+        DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING).setCheckPointDir(checkpointDir);
+      specBuilder.setStateSpec(builder.build());
+    }
+  }
+
+  private boolean nativeStateTrackingSupported(DataStreamsConfig config, Set<String> sourcePluginTypes,
+                                               Set<String> stateHandlingSources) {
+    if (!Feature.STREAMING_PIPELINE_NATIVE_STATE_TRACKING.isEnabled(getFeatureFlagsProvider())) {
+      return false;
+    }
+
+    // Should have a source plugin that supports native state tracking
+    if (stateHandlingSources.isEmpty()) {
+      return false;
+    }
+
+    // Additional validations.
+    // Pipelines with multiple sources and Windower plugin does not work with native state handling.
+    int sourceCount = 0;
+    for (ETLStage stage : config.getStages()) {
+      if (sourcePluginTypes.contains(stage.getPlugin().getType())) {
+        sourceCount++;
+        if (sourceCount > 1) {
+          return false;
+        }
+      }
+      if (stage.getPlugin().getType() == Windower.PLUGIN_TYPE) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
@@ -102,6 +170,15 @@ public class DataStreamsPipelineSpecGenerator
         String.format("Join stage '%s' uses a %s condition, which is not supported in streaming pipelines.",
                       stageName, condition.getOp()),
         "Only basic joins on key equality are supported.");
+    }
+  }
+
+  @Override
+  protected void configureSourcePlugin(String stageName, Object plugin, DefaultStageConfigurer stageConfigurer,
+                                       FailureCollector collector) {
+    super.configureSourcePlugin(stageName, plugin, stageConfigurer, collector);
+    if (plugin instanceof StreamingStateHandler) {
+      stateHandlingSources.add(stageName);
     }
   }
 }
