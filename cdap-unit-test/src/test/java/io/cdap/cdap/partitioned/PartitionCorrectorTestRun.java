@@ -26,6 +26,7 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.PrintStream;
@@ -36,12 +37,17 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+/*
+* TODO: This test will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
+* JIRA: https://cdap.atlassian.net/browse/CDAP-19576
+* */
 public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
 
   private static final DateFormat DATE_FORMAT =
     DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
 
   @Test
+  @Ignore
   public void testPartitionCorrector() throws Exception {
 
     ApplicationManager appManager = deployApplication(PartitionExploreCorrectorTestApp.class);
