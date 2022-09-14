@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,19 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.engine;
+package io.cdap.cdap.spi.metadata;
+
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Types for SQl Engine Jobs.
+ * Interface for consuming programs and lineage metadata.
  */
-public enum SQLEngineJobType {
-  PUSH,
-  PULL,
-  EXECUTE,
-  READ,
-  WRITE
+@Beta
+public interface MetadataConsumer {
+
+  /**
+   * Consumes lineage info for a program run.
+   */
+  void consumeLineage(ProgramRun programRun, LineageInfo lineageInfo);
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.engine;
+package io.cdap.cdap.spi.metadata;
 
-/**
- * Types for SQl Engine Jobs.
- */
-public enum SQLEngineJobType {
-  PUSH,
-  PULL,
-  EXECUTE,
-  READ,
-  WRITE
+import org.junit.Test;
+
+public class ProgramRunTest {
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateStartTimeLessThanEndTime() {
+    ProgramRun.builder("id")
+      .setProgramId("pid")
+      .setNamespace("default")
+      .setApplication("app")
+      .setStartTime(10L)
+      .setEndTime(5L)
+      .setStatus("Completed")
+      .build();
+  }
 }

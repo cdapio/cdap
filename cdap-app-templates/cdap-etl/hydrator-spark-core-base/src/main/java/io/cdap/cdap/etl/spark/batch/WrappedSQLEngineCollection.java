@@ -55,7 +55,7 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
     this.mapper = mapper;
   }
 
-  private SparkCollection<U> unwrap() {
+  protected SparkCollection<U> unwrap() {
     if (unwrapped == null) {
       unwrapped = mapper.apply(wrapped);
     }
@@ -66,8 +66,8 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
   /**
    * Executes an operation on the underlying collection and then wraps it in the same mapper for this collection.
    *
-   * This is useful when executing multiple operations in sequence where we need to delegate the operation to the
-   * underlying SQL engine and keep delaying the pull operation.
+   * This is useful when executing multiple operations in sequence where we need to delegate an operation to the
+   * underlying implementation
    *
    * By calling this over all wrapped collections, we will eventually reach an instance of a
    * {@link SQLEngineCollection} where the actual operation will take place.
@@ -75,7 +75,7 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
    * @param remapper function used to re-map the underlying collection.
    * @return SQL Backed collection after re-mapping the underlying colleciton and re-adding the mapper.
    */
-  private SparkCollection<U> rewrap(
+  protected SparkCollection<U> rewrap(
     java.util.function.Function<SparkCollection<T>, SparkCollection<T>> remapper) {
     return new WrappedSQLEngineCollection<>((SQLBackedCollection<T>) remapper.apply(wrapped), mapper);
   }
@@ -167,6 +167,23 @@ public class WrappedSQLEngineCollection<T, U> implements SQLBackedCollection<U> 
     return wrapped.tryMultiStoreDirect(phaseSpec, sinks);
   }
 
+  /**
+   * Handle logic to store directly to the Sink stage if the sink supports this behavior.
+   *
+   * @param stageSpec stage spec
+   * @param sinkFunction sync function to use
+   * @return Runnable that can be used to execute this store task.
+   */
+
+  /**
+   * Handle logic to store directly to the multiple sinks if this behavior is supported by the sinks.
+   *
+   * @param phaseSpec phase spec
+   * @param group set containing all stages in the group
+   * @param sinks set containing all sinks in the group
+   * @param collectors map containing all stats collectors
+   * @return runnable that can be used to execute this multi store operation
+   */
   @Override
   public Runnable createMultiStoreTask(PhaseSpec phaseSpec,
                                        Set<String> group,
