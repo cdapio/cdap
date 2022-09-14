@@ -229,6 +229,7 @@ public abstract class SparkPipelineRunner {
         SparkCollection<Object> inputRecords = port == null ?
           emittedRecords.get(inputStageName).outputRecords :
           emittedRecords.get(inputStageName).outputPortRecords.get(port);
+
         inputDataCollections.put(inputStageName, inputRecords);
       }
 
@@ -1001,15 +1002,14 @@ public abstract class SparkPipelineRunner {
    * @param collection Collection to use.
    * @return Instance of a spark collection with RecordInfo attached to output records.
    */
-  private SparkCollection<RecordInfo<Object>> mapToRecordInfoCollection(String stageName,
-                                                                        SparkCollection<Object> collection) {
+  protected SparkCollection<RecordInfo<Object>> mapToRecordInfoCollection(String stageName,
+                                                                          SparkCollection<Object> collection) {
     // For SQLEngineCollection or WrappedSparkCollection, we wrap the collection in order to not force a
     // premature/unnecessary pull operation from the SQL engine.
     if (collection instanceof SQLBackedCollection) {
       return new WrappedSQLEngineCollection<>((SQLBackedCollection<Object>) collection,
                                               (c) -> c.map(new RecordInfoWrapper<>(stageName)));
     }
-
     return collection.map(new RecordInfoWrapper<>(stageName));
   }
 

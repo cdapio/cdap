@@ -23,5 +23,6 @@ public enum SQLEngineJobType {
   PUSH,
   PULL,
   EXECUTE,
+  READ,
   WRITE
 }
