@@ -2025,4 +2025,10 @@ public final class Constants {
     public static final String BOSS_THREADS = "artifact.cache.boss.threads";
     public static final String WORKER_THREADS = "artifact.cache.worker.threads";
   }
+
+  public static final class MetadataConsumer {
+    public static final String PROJECT_ID = "metadata.consumer.project.id";
+    public static final String INSTANCE_ID = "metadata.consumer.instance.id";
+    public static final String INSTANCE_REGION = "metadata.consumer.instance.region";
+  }
 }
