@@ -53,7 +53,8 @@ public abstract class AbstractMetadataClient {
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Gson GSON = new GsonBuilder().
+    registerTypeAdapter(MetadataEntity.class, new MetadataEntityCodec()).create();
 
   public static final BiMap<String, String> ENTITY_TYPE_TO_API_PART;
 
