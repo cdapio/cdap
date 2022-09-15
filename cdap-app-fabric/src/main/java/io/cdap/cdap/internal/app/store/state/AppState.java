@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,36 +14,36 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.state;
+package io.cdap.cdap.internal.app.store.state;
+
+import javax.annotation.Nullable;
 
 /**
  * Represents an application state.
  */
 public class AppState {
-  private String namespace;
-  private String appName;
-  private long appId;
-  private String stateKey;
-  private byte[] stateValue;
+  private final String namespace;
+  private final String appName;
+  private final String stateKey;
+  private final byte[] stateValue;
 
   public AppState(String namespace,
-                  String appName,
-                  long appId,
-                  String stateKey) {
-    this.namespace = namespace;
-    this.appName = appName;
-    this.appId = appId;
-    this.stateKey = stateKey;
+                  String appName) {
+    this(namespace, appName, null, null);
   }
 
   public AppState(String namespace,
                   String appName,
-                  long appId,
+                  String stateKey) {
+    this(namespace, appName, stateKey, null);
+  }
+
+  public AppState(String namespace,
+                  String appName,
                   String stateKey,
-                  byte[] stateValue) {
+                  @Nullable byte[] stateValue) {
     this.namespace = namespace;
     this.appName = appName;
-    this.appId = appId;
     this.stateKey = stateKey;
     this.stateValue = stateValue;
   }
@@ -56,14 +56,11 @@ public class AppState {
     return appName;
   }
 
-  public long getAppId() {
-    return appId;
-  }
-
   public String getStateKey() {
     return stateKey;
   }
 
+  @Nullable
   public byte[] getState() {
     return stateValue;
   }

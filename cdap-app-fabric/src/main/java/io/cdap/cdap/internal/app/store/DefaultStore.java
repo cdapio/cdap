@@ -43,6 +43,8 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.ForwardingApplicationSpecification;
+import io.cdap.cdap.internal.app.store.state.AppState;
+import io.cdap.cdap.internal.app.store.state.AppStateTable;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -78,6 +80,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -886,6 +889,38 @@ public class DefaultStore implements Store {
 
       return result;
     });
+  }
+
+  @Override
+  public Optional<byte[]> getState(AppState request) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppStateTable(context).getState(request);
+    });
+  }
+
+  @Override
+  public void saveState(AppState request) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppStateTable(context).saveState(request);
+    });
+  }
+
+  @Override
+  public void deleteState(AppState request) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppStateTable(context).deleteState(request);
+    });
+  }
+
+  @Override
+  public void deleteAllStates(AppState request) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppStateTable(context).deleteAllStates(request);
+    });
+  }
+
+  private AppStateTable getAppStateTable(StructuredTableContext context) throws TableNotFoundException {
+    return new AppStateTable(context);
   }
 
   /**

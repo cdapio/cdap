@@ -51,6 +51,7 @@ import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandlerInternal;
+import io.cdap.cdap.gateway.handlers.AppStateHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
@@ -418,6 +419,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TetheringHandler.class);
       handlerBinder.addBinding().to(TetheringServerHandler.class);
       handlerBinder.addBinding().to(TetheringClientHandler.class);
+      handlerBinder.addBinding().to(AppStateHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

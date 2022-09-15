@@ -69,7 +69,7 @@ public final class StoreDefinition {
     LogFileMetaStore.create(tableAdmin);
     CapabilitiesStore.create(tableAdmin);
     TetheringStore.create(tableAdmin);
-    StateStore.create(tableAdmin);
+    AppStateStore.create(tableAdmin);
   }
 
   /**
@@ -1043,26 +1043,22 @@ public final class StoreDefinition {
   /**
    * Schema for app state
    */
-  public static final class StateStore {
-    public static final StructuredTableId STATE = new StructuredTableId("state");
+  public static final class AppStateStore {
+    public static final StructuredTableId APP_STATE = new StructuredTableId("state");
 
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String APP_NAME_FIELD = "app_name";
-    public static final String APP_ID_FIELD = "app_id";
     public static final String STATE_KEY_FIELD = "state_key";
     public static final String STATE_VALUE_FIELD = "state_value";
-    public static final String UPDATED_TIME_FIELD = "updated_time";
 
     public static final StructuredTableSpecification STATE_TABLE_SPEC =
             new StructuredTableSpecification.Builder()
-                    .withId(STATE)
+                    .withId(APP_STATE)
                     .withFields(Fields.stringType(NAMESPACE_FIELD),
                             Fields.stringType(APP_NAME_FIELD),
-                            Fields.longType(APP_ID_FIELD),
                             Fields.stringType(STATE_KEY_FIELD),
-                            Fields.bytesType(STATE_VALUE_FIELD),
-                            Fields.longType(UPDATED_TIME_FIELD))
-                    .withPrimaryKeys(NAMESPACE_FIELD, APP_NAME_FIELD, APP_ID_FIELD, STATE_KEY_FIELD)
+                            Fields.bytesType(STATE_VALUE_FIELD))
+                    .withPrimaryKeys(NAMESPACE_FIELD, APP_NAME_FIELD, STATE_KEY_FIELD)
                     .build();
 
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
