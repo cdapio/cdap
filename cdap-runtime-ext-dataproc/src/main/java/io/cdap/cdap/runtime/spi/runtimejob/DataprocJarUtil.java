@@ -40,7 +40,7 @@ import java.util.jar.JarOutputStream;
 /**
  * Util class to build jar files needed by {@code DataprocRuntimeJobManager}.
  */
-final class DataprocJarUtil {
+public final class DataprocJarUtil {
 
   /**
    * Returns twill bundle jar.
@@ -49,17 +49,21 @@ final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  static LocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
+  public static synchronized LocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
+    Location location = locationFactory.create(Constants.Files.TWILL_JAR);
+    if (location.exists()) {
+      return getLocalFile(location, true);
+    }
+
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString().contains("spark-assembly");
       }
     });
-    Location location = locationFactory.create(Constants.Files.TWILL_JAR);
     bundler.createBundle(location, ImmutableList.of(ApplicationMasterMain.class,
                                                     TwillContainerMain.class, OptionSpec.class));
-    return createLocalFile(location, true);
+    return getLocalFile(location, true);
   }
 
   /**
@@ -69,8 +73,12 @@ final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  static LocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
-    Location location = locationFactory.create("launcher.jar");
+  public static synchronized LocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
+    Location location = locationFactory.create(Constants.Files.LAUNCHER_JAR);
+    if (location.exists()) {
+      return getLocalFile(location, false);
+    }
+
     try (JarOutputStream jarOut = new JarOutputStream(location.getOutputStream())) {
       ClassLoader classLoader = DataprocJobMain.class.getClassLoader();
       Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
@@ -98,10 +106,10 @@ final class DataprocJarUtil {
         Resources.copy(logbackURL, jarOut);
       }
     }
-    return createLocalFile(location, false);
+    return getLocalFile(location, false);
   }
 
-  private static LocalFile createLocalFile(Location location, boolean archive) throws IOException {
+  static LocalFile getLocalFile(Location location, boolean archive) throws IOException {
     return new DefaultLocalFile(location.getName(), location.toURI(),
                                 location.lastModified(), location.length(), archive, null);
   }

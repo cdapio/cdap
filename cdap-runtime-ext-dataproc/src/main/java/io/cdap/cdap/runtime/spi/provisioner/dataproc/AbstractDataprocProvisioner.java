@@ -38,6 +38,7 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -90,6 +91,13 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   @Override
   public final void initialize(ProvisionerSystemContext systemContext) {
     this.systemContext = systemContext;
+
+    // invalidate twill and launcher jar cache.
+    if (Files.exists(DataprocUtils.CACHE_DIR_PATH)) {
+      DataprocUtils.deleteDirectoryWithRetries(DataprocUtils.CACHE_DIR_PATH.toFile(),
+                                               "Unable to delete local cache directory %s for " +
+                                                 "twill.jar and launcher.jar");
+    }
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.common;
 
+import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.gax.paging.Page;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
@@ -30,12 +31,15 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -53,6 +57,12 @@ public final class DataprocUtils {
   public static final String CDAP_CACHED_ARTIFACTS = "cached-artifacts";
   public static final String WORKER_CPU_PREFIX = "Up to";
   public static final String DISABLE_GCS_CACHING = "disableGCSCaching";
+  public static final Path CACHE_DIR_PATH = Paths.get(System.getProperty("java.io.tmpdir"),
+                                                      "dataproc.launcher.cache");
+  public static final String LOCAL_CACHE_DISABLED = "disableLocalCaching";
+  private static final int NUMBER_OF_RETRIES = 5;
+  private static final int MIN_WAIT_TIME_MILLISECOND = 500;
+  private static final int MAX_WAIT_TIME_MILLISECOND = 10000;
 
   /**
    * HTTP Status-Code 429: RESOURCE_EXHAUSTED.
@@ -290,6 +300,58 @@ public final class DataprocUtils {
         connection.disconnect();
       }
     }
+  }
+
+  /**
+   * Recursively deletes all the contents of the directory and the directory itself.
+   */
+  public static void deleteDirectoryContents(@Nullable File file) {
+    if (file == null) {
+      return;
+    }
+
+    if (file.isDirectory()) {
+      File[] entries = file.listFiles();
+      if (entries != null) {
+        for (File entry : entries) {
+          deleteDirectoryContents(entry);
+        }
+      }
+    }
+    if (!file.delete()) {
+      LOG.warn("Failed to delete file {}.", file);
+    }
+  }
+
+  /**
+   * Recursively deletes all the contents of the directory and the directory itself with retries.
+   */
+  public static synchronized void deleteDirectoryWithRetries(@Nullable File file, String errorMessageOnFailure)  {
+    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
+      .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
+      .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
+
+    Exception exception = null;
+    int counter = 0;
+    while (counter < NUMBER_OF_RETRIES) {
+      counter++;
+
+      try {
+        deleteDirectoryContents(file);
+        return;
+      } catch (Exception e) {
+        // exception does not get logged since it might get too chatty.
+        exception = e;
+      }
+
+      try {
+        Thread.sleep(backOff.nextBackOffMillis());
+      } catch (InterruptedException | IOException e) {
+        exception = e;
+        break;
+      }
+    }
+    throw new RuntimeException(String.format(errorMessageOnFailure, file), exception);
   }
 
   private DataprocUtils() {
