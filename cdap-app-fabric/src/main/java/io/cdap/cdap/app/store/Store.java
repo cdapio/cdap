@@ -30,6 +30,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
+import io.cdap.cdap.internal.app.store.state.AppState;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
@@ -49,6 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -514,6 +516,36 @@ public interface Store {
    */
   List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
                                long startTime, long endTime, int limitPerProgram);
+
+
+  /**
+   * Get application state.
+   *
+   * @param request a {@link AppState} object with primary keys {namespace, appName, stateKey} set.
+   * @return state of application
+   */
+  Optional<byte[]> getState(AppState request);
+
+  /**
+   * Save application state.
+   *
+   * @param request a {@link AppState} object with all the fields set.
+   */
+  void saveState(AppState request);
+
+  /**
+   * Delete application state.
+   *
+   * @param request a {@link AppState} object with primary keys {namespace, appName, stateKey} set.
+   */
+  void deleteState(AppState request);
+
+  /**
+   * Delete all states related to an application.
+   *
+   * @param request a {@link AppState} object with primary keys {namespace, appName} set.
+   */
+  void deleteAllStates(AppState request);
 
   /**
    * Ensures the given program exists in the given application spec.
