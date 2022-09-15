@@ -316,16 +316,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ApplicationNotFoundException if the specified application does not exist
    */
   public ApplicationDetail getAppDetail(ApplicationId appId) throws Exception {
-    // TODO: CDAP-12473: filter based on the entity visibility in the app detail
     // user needs to pass the visibility check to get the app detail
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
+    ApplicationMeta appMeta = store.getApplicationMetadata(appId);
+    if (appMeta == null || appMeta.getSpec() == null) {
       throw new ApplicationNotFoundException(appId);
     }
-    // TODO: fetch creation time from store
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appSpec, ownerPrincipal));
+    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
+                                                                            appMeta.getOwner(), appMeta.getCreated(),
+                                                                            appMeta.getLatest()));
   }
 
   /**
@@ -335,16 +335,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return detail about the latest version of the specified application
    * @throws ApplicationNotFoundException if the specified application does not exist
    */
-  public ApplicationDetail getAppLatestVersionDetail(ApplicationId appId) throws Exception {
-    // TODO: CDAP-12473: filter based on the entity visibility in the app detail
-    // user needs to pass the visibility check to get the app detail
+  public ApplicationDetail getLatestAppDetail(ApplicationId appId) throws Exception {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationMeta latestApp = store.getLatestApp(appId);
+    ApplicationMeta latestApp = store.getLatest(appId.getNamespace(), appId.getApplication());
     if (latestApp == null || latestApp.getSpec() == null) {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal));
+    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal,
+                                                                            latestApp.getOwner(),
+                                                                            latestApp.getCreated(),
+                                                                            latestApp.getLatest()));
   }
 
   /**
@@ -452,7 +453,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (parentVersion == null || parentVersion.isEmpty()) {
       return true;
     }
-    ApplicationMeta latest = store.getLatestApp(appId);
+    ApplicationMeta latest = store.getLatest(appId.getNamespace(), appId.getApplication());
     // App does not exist
     if (latest == null || latest.getSpec() == null) {
       // parent version should be null when the app does not exist
@@ -489,7 +490,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (!deployAppAllowed(appId, parentVersion)) {
       throw new Exception("Can't deploy the application because the parent version is not the latest.");
     }
-    ApplicationMeta currentApp = store.getLatestApp(appId);
+    ApplicationMeta currentApp = store.getLatest(appId.getNamespace(), appId.getApplication());
     if (currentApp == null || currentApp.getSpec() == null) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -532,8 +533,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
-    String changeSummary = appRequest.getChangeSummary() == null ? null : appRequest.getChangeSummary()
-      .getChangeSummaryDescription();
+    String changeSummary = appRequest.getChangeSummary() == null ? null :
+      appRequest.getChangeSummary().getDescription();
 
     Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
     return deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(), artifactId, requestedConfigStr,
@@ -613,7 +614,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     // upgrade the latest version of the app
-    ApplicationMeta currentApp = store.getLatestApp(appId);
+    ApplicationMeta currentApp = store.getLatest(appId.getNamespace(), appId.getApplication());
     if (currentApp == null || currentApp.getSpec() == null) {
       LOG.info("Application {} not found for upgrade.", appId);
       throw new NotFoundException(appId);

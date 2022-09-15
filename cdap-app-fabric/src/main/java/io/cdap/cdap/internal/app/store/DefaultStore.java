@@ -81,7 +81,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -427,19 +426,22 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationSpecification spec) {
-    addApplication(id, spec, null);
+  public void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String owner,
+                             @Nullable Long created, @Nullable String latestVersion) {
+    // Generate the creation time for the version of the app.
+    TransactionRunners.run(transactionRunner, context -> {
+      // TODO: Get the latest app and update the latest field to false
+      if (latestVersion != null) {
+        getAppMetadataStore(context).updateLatestApplication(id.getNamespace(), id.getApplication(), latestVersion);
+      }
+      getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec,
+                                                    created, owner, true);
+    });
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String owner) {
-    // Generate the creation time for the version of the app.
-    Long created = System.currentTimeMillis();
-    // TODO: update latest field of the latest version
-    TransactionRunners.run(transactionRunner, context -> {
-      getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec,
-                                                    created, owner);
-    });
+  public void addApplication(ApplicationId id, ApplicationSpecification spec) {
+    addApplication(id, spec, null, null, null);
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
@@ -580,6 +582,14 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
+  public ApplicationMeta getApplicationMetadata(ApplicationId id) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getApplicationMeta(getAppMetadataStore(context), id);
+    });
+  }
+
+  @Nullable
+  @Override
   public ApplicationSpecification getApplication(ApplicationId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getApplicationSpec(getAppMetadataStore(context), id);
@@ -707,15 +717,10 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ApplicationMeta getLatestApp(ApplicationId id) {
-    // TODO: Change this to sort by creation time instead of version.
+  public ApplicationMeta getLatest(String namespace, String appId) {
     return TransactionRunners.run(transactionRunner, context -> {
-      Optional<ApplicationMeta> latestApp = getAppMetadataStore(context)
-              .getAllAppVersions(id.getNamespace(), id.getApplication()).stream()
-                .sorted((o1, o2) -> o2.getSpec().getAppVersion().compareTo(o1.getSpec().getAppVersion()))
-                .collect(Collectors.toList())
-                .stream().findFirst();
-      return latestApp.isPresent() ? latestApp.get() : null;
+      return getAppMetadataStore(context).getLatest().stream()
+        .filter(r -> r.getId().equals(appId)).findAny().orElse(null);
     });
   }
 
@@ -750,8 +755,13 @@ public class DefaultStore implements Store {
 
   private ApplicationSpecification getApplicationSpec(AppMetadataStore mds, ApplicationId id)
     throws IOException, TableNotFoundException {
-    ApplicationMeta meta = mds.getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
+    ApplicationMeta meta = getApplicationMeta(mds, id);
     return meta == null ? null : meta.getSpec();
+  }
+
+  private ApplicationMeta getApplicationMeta(AppMetadataStore mds, ApplicationId id)
+    throws IOException, TableNotFoundException {
+    return mds.getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
   }
 
   private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,
