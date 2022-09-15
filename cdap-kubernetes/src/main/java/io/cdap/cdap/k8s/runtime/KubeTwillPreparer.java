@@ -1176,11 +1176,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
                           "and less than or equal to 1.", memoryMultiplier));
       }
 
-      requirementsBuilder
+      
+    }
+    //Add defaul limits resource when create workload
+    requirementsBuilder
         .addToLimits("cpu", new Quantity(String.format("%dm", resourceSpec.getVirtualCores() * 1000)))
         .addToLimits("memory", new Quantity(String.format("%dMi", resourceSpec.getMemorySize())));
-    }
-
+    
     int cpuToRequest = (int) (resourceSpec.getVirtualCores() * 1000 * cpuMultiplier);
     int memoryToRequest = (int) (resourceSpec.getMemorySize() * memoryMultiplier);
 
