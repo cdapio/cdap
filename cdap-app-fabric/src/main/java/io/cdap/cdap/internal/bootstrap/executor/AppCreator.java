@@ -62,7 +62,7 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
     // if we don't null check, it gets serialized to "null"
     String configString = arguments.getConfig() == null ? null : GSON.toJson(arguments.getConfig());
     String changeSummary = arguments.getChangeSummary() == null ? null : arguments.getChangeSummary()
-      .getChangeSummaryDescription();
+      .getDescription();
 
     try {
       appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),

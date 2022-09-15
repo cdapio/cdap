@@ -27,15 +27,15 @@ import javax.annotation.Nullable;
 @Beta
 public class ChangeSummary {
     @Nullable
-    protected final String changeSummary;
+    protected final String description;
 
-    public ChangeSummary(@Nullable String changeSummary) {
-        this.changeSummary = changeSummary;
+    public ChangeSummary(@Nullable String description) {
+        this.description = description;
     }
 
     @Nullable
-    public String getChangeSummaryDescription() {
-        return changeSummary == null ? null : changeSummary;
+    public String getDescription() {
+        return description == null ? null : description;
     }
 
     @Override
@@ -49,18 +49,18 @@ public class ChangeSummary {
 
         ChangeSummary that = (ChangeSummary) o;
 
-        return Objects.equals(changeSummary, that.changeSummary);
+        return Objects.equals(description, that.description);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(changeSummary);
+        return Objects.hash(description);
     }
 
     @Override
     public String toString() {
         return "ChangeSummary{" +
-                "changeSummary='" + changeSummary +
+                "description='" + description +
                 '}';
     }
 }
