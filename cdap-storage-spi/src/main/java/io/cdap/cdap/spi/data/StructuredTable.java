@@ -153,6 +153,41 @@ public interface StructuredTable extends Closeable {
   CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException, IOException;
 
   /**
+   * Read a set of rows from the table matching the index and the key range.
+   * The rows returned will be sorted on the primary key order.
+   *
+   * @param keyRange key range for the scan
+   * @param limit maximum number of rows to return
+   * @param filterIndex the index to filter upon
+   * @return a {@link CloseableIterator} of rows
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
+   *                               or the type does not match the schema
+   * @throws IOException if there is an error scanning the table
+   */
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+    throws InvalidFieldException,
+    IOException {
+      return scan(keyRange, limit);
+  }
+
+  /**
+   * Read a set of rows from the table matching the key range, return by sortOrder of specified index field.
+   *
+   * @param keyRange key range for the scan
+   * @param limit maximum number of rows to return
+   * @param sortIndexField the index field to sort upon
+   * @param sortOrder the sort order of the index field
+   * @return a {@link CloseableIterator} of rows
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
+   *                               or the type does not match the schema
+   * @throws IOException if there is an error scanning the table
+   */
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String sortIndexField, SortOrder sortOrder)
+    throws InvalidFieldException, IOException{
+    return scan(keyRange, limit);
+  }
+
+  /**
    * Read a set of rows from the table matching the set of key ranges.
    * The rows returned will be sorted on the primary key order.
    *
