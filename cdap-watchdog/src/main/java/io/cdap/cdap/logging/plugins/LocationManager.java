@@ -170,12 +170,13 @@ public class LocationManager implements Flushable, Closeable, Syncable {
   @Override
   public void close() {
     Collection<LocationOutputStream> locations = activeLocations.values();
-    activeLocations.clear();
 
     for (LocationOutputStream locationOutputStream : locations) {
       // we do not want to throw any exception rather close all the open output streams. so close quietly
       Closeables.closeQuietly(locationOutputStream);
     }
+
+    activeLocations.clear();
   }
 
   /**
