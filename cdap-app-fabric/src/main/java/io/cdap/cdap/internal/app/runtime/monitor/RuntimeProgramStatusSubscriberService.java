@@ -21,12 +21,12 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
@@ -171,13 +171,11 @@ public class RuntimeProgramStatusSubscriberService extends AbstractNotificationS
         store.deleteRunIfTerminated(programRunId, sourceId);
         break;
       case REJECTED: {
-        ProgramDescriptor programDescriptor =
-          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
         // Strip off user args and trim down system args as runtime only needs the run status for validation purpose.
         // User and system args could be large and store them in local store can lead to unnecessary storage
         // and processing overhead.
         store.recordProgramRejected(programRunId, Collections.emptyMap(), Collections.emptyMap(),
-                                    sourceId, programDescriptor.getArtifactId().toApiArtifactId());
+                                    sourceId, ProgramStatePublisher.getArtifactId(GSON, properties).toApiArtifactId());
         // We don't need to retain records for terminated programs, hence just delete it
         store.deleteRunIfTerminated(programRunId,  sourceId);
         break;

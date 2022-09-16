@@ -75,8 +75,13 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
-      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
-      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor));
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()));
+
+    if (ProgramStatePublisher.isProgramStartSkipped(programOptions.getArguments().asMap())) {
+      properties.put(ProgramOptionConstants.PROGRAM_ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId()));
+    } else {
+      properties.put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor));
+    }
 
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
@@ -153,7 +158,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.REJECTED.name())
       .put(ProgramOptionConstants.USER_ID, userId)
-      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
+      .put(ProgramOptionConstants.PROGRAM_ARTIFACT_ID, GSON.toJson(programDescriptor.getArtifactId()))
       .put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
   }
