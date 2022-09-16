@@ -293,19 +293,21 @@ public interface Store {
    * Creates new application if it doesn't exist. Updates existing one otherwise.
    *
    * @param id            application id
-   * @param specification application specification to store
+   * @param spec          application specification to store
+   * @param owner         user name (owner) of the application version
+   * @param created       creation time of the application version
+   * @param latestVersion latest version id of the application
    */
-  void addApplication(ApplicationId id, ApplicationSpecification specification);
+  void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String owner, @Nullable Long created,
+                      @Nullable String latestVersion);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
    *
    * @param id            application id
-   * @param specification application specification to store
-   * @param owner         user name (owner) of the application version
+   * @param spec          application specification to store
    */
-  void addApplication(ApplicationId id, ApplicationSpecification specification, @Nullable String owner);
-
+  void addApplication(ApplicationId id, ApplicationSpecification spec);
 
   /**
    * Return a list of program specifications that are deleted comparing the specification in the store with the
@@ -326,6 +328,15 @@ public interface Store {
    */
   @Nullable
   ApplicationSpecification getApplication(ApplicationId id);
+
+  /**
+   * Returns application metadata information by id.
+   *
+   * @param id application id
+   * @return application metadata
+   */
+  @Nullable
+  ApplicationMeta getApplicationMetadata(ApplicationId id);
 
   /**
    * Returns a collection of all application specs in the specified namespace
@@ -373,12 +384,13 @@ public interface Store {
   Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id);
 
   /**
-   * Returns the latest version of an application
+   * Returns latest version of an application in a namespace
    *
-   * @param id application id
+   * @param namespace namespace
+   * @param appId application id
    * @return The metadata information of the latest application version.
    */
-  ApplicationMeta getLatestApp(ApplicationId id);
+  ApplicationMeta getLatest(String namespace, String appId);
 
   /**
    * Returns a list of all versions' ApplicationId's of the application by id

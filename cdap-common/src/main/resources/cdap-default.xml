@@ -4028,6 +4028,48 @@
     </description>
   </property>
 
+  <!-- Retry configuration for spark metrics retrieval -->
+  <property>
+    <name>spark.metrics.strategy.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>spark.metrics.strategy.retry.policy.max.delay.ms</name>
+    <value>2000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>spark.metrics.strategy.retry.policy.max.retries</name>
+    <value>10</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name> spark.metrics.strategy.retry.policy.max.time.secs</name>
+    <value>30</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>spark.metrics.strategy.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for programs. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
   <!-- Router Configuration -->
 
   <property>
@@ -4898,14 +4940,6 @@
   </property>
 
   <property>
-    <name>system.worker.cleanup.threads</name>
-    <value>1</value>
-    <description>
-      Size of the thread pool for program run dispatch cleanups.
-    </description>
-  </property>
-
-  <property>
     <name>system.worker.container.num.cores</name>
     <value>1</value>
     <description>
@@ -5305,9 +5339,17 @@
 
   <property>
     <name>feature.pipeline.composite.triggers.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Enables configuring composite AND/OR triggers for a pipeline schedule.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.lifecycle.management.edit.enabled</name>
+    <value>false</value>
+    <description>
+      Enables Design-time Lifecycle Management for applications.
     </description>
   </property>
 

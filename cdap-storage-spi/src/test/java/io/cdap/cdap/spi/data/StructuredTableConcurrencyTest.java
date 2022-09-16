@@ -81,7 +81,7 @@ public abstract class StructuredTableConcurrencyTest {
 
   @Before
   public void init() throws Exception {
-    getStructuredTableAdmin().create(TEST_SPEC);
+    getStructuredTableAdmin().createOrUpdate(TEST_SPEC);
   }
 
   @After

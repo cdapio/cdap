@@ -74,10 +74,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   DistributedProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                    TwillRunner twillRunner, Store store, ProgramStateWriter programStateWriter,
                                    ProgramRunDispatcherFactory programRunDispatcherFactory) {
-    super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory, true);
+    super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory);
     this.twillRunner = twillRunner;
     this.store = store;
     this.programStateWriter = programStateWriter;
+  }
+
+  @Override
+  protected boolean isDistributed() {
+    return true;
   }
 
   @Override

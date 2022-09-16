@@ -28,7 +28,6 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -50,8 +49,6 @@ public class TaskWorkerService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final ArtifactManagerFactory artifactManagerFactory;
-  private final RunnableTaskLauncher taskLauncher;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
 
@@ -59,12 +56,9 @@ public class TaskWorkerService extends AbstractIdleService {
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
                     DiscoveryService discoveryService,
-                    ArtifactManagerFactory artifactManagerFactory,
                     MetricsCollectionService metricsCollectionService,
                     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    this.artifactManagerFactory = artifactManagerFactory;
-    this.taskLauncher = new RunnableTaskLauncher(cConf);
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER)
       .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -105,7 +99,8 @@ public class TaskWorkerService extends AbstractIdleService {
   }
 
   private void stopService(String className) {
-    /** TODO: Expand this logic such that
+    /*
+     * TODO: Expand this logic such that
      * based on number of requests per particular class,
      * the service gets stopped.
      */

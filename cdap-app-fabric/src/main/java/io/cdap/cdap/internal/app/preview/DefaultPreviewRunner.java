@@ -178,7 +178,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
     String config = request.getConfig() == null ? null : GSON.toJson(request.getConfig());
     String changeSummary = request.getChangeSummary() == null ? null : request.getChangeSummary()
-      .getChangeSummaryDescription();
+      .getDescription();
     PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
 
     PreferencesDetail preferences = preferencesFetcher.get(programId, true);

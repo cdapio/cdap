@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,7 +56,6 @@ public class PostgreSqlStorageProvider implements StorageProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(PostgreSqlStorageProvider.class);
 
-
   private final DataSource dataSource;
   private final StructuredTableAdmin admin;
   private final TransactionRunner txRunner;
@@ -65,10 +64,9 @@ public class PostgreSqlStorageProvider implements StorageProvider {
   PostgreSqlStorageProvider(CConfiguration cConf, SConfiguration sConf,
                             MetricsCollectionService metricsCollectionService) {
     this.dataSource = createDataSource(cConf, sConf, metricsCollectionService);
-    this.admin = new PostgreSqlStructuredTableAdmin(dataSource,
-        cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS));
+    this.admin = new PostgreSqlStructuredTableAdmin(dataSource);
     this.txRunner = new RetryingSqlTransactionRunner(admin, dataSource, metricsCollectionService, cConf,
-        cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS));
+      cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS));
   }
 
   @Override

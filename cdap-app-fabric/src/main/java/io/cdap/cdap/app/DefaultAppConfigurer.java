@@ -104,9 +104,9 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
-    this(namespace, artifactId, app, null, "",  null,
-            null, null, null, new FeatureFlagsProvider() {
-         });
+    this(namespace, artifactId, app, null, "", null,
+         null, null, null, new FeatureFlagsProvider() {
+      });
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app,
@@ -118,7 +118,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
                               @Nullable AppDeploymentRuntimeInfo runtimeInfo,
                               FeatureFlagsProvider featureFlagsProvider) {
     super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
-    featureFlagsProvider);
+          featureFlagsProvider);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.changeSummary = changeSummary;
@@ -146,7 +146,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
     DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, deployNamespace, artifactId,
-        pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
+                                                                           pluginFinder, pluginInstantiator,
+                                                                           runtimeInfo, getFeatureFlagsProvider());
     mapReduce.configure(configurer);
     addDatasetsAndPlugins(configurer);
     MapReduceSpecification spec = configurer.createSpecification();
@@ -161,17 +162,18 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     // It is a bit hacky here to look for the DefaultExtendedSparkConfigurer implementation through the
     // SparkRunnerClassloader directly (CDAP-11797)
     ClassLoader sparkRunnerClassLoader = ClassLoaders.findByName(
-      spark.getClass().getClassLoader(), "io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader");
+      spark.getClass().getClassLoader(),
+      "io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader");
 
     if (sparkRunnerClassLoader != null) {
       try {
         configurer = (DefaultSparkConfigurer) sparkRunnerClassLoader
           .loadClass("io.cdap.cdap.app.deploy.spark.DefaultExtendedSparkConfigurer")
           .getConstructor(Spark.class, Id.Namespace.class, Id.Artifact.class,
-                          PluginFinder.class, PluginInstantiator.class, 
+                          PluginFinder.class, PluginInstantiator.class,
                           AppDeploymentRuntimeInfo.class, FeatureFlagsProvider.class)
-          .newInstance(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator, 
-            runtimeInfo, getFeatureFlagsProvider());
+          .newInstance(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator,
+                       runtimeInfo, getFeatureFlagsProvider());
 
       } catch (Exception e) {
         // Ignore it and the configurer will be defaulted to DefaultSparkConfigurer
@@ -181,7 +183,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
     if (configurer == null) {
       configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder,
-        pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
+                                              pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     }
 
     spark.configure(configurer);
@@ -194,8 +196,9 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   public void addWorkflow(Workflow workflow) {
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
     DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow,
-        this, deployNamespace, artifactId, pluginFinder, pluginInstantiator,
-        runtimeInfo, getFeatureFlagsProvider());
+                                                                         this, deployNamespace,
+                                                                         artifactId, pluginFinder, pluginInstantiator,
+                                                                         runtimeInfo, getFeatureFlagsProvider());
     workflow.configure(configurer);
     WorkflowSpecification spec = configurer.createSpecification();
     addDatasetsAndPlugins(configurer);
@@ -217,7 +220,9 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
     DefaultSystemTableConfigurer systemTableConfigurer = new DefaultSystemTableConfigurer();
     DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
-      pluginFinder, pluginInstantiator, systemTableConfigurer, runtimeInfo, getFeatureFlagsProvider());
+                                                                       pluginFinder, pluginInstantiator,
+                                                                       systemTableConfigurer, runtimeInfo,
+                                                                       getFeatureFlagsProvider());
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -230,7 +235,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
     DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace, artifactId,
-      pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
+                                                                     pluginFinder, pluginInstantiator, runtimeInfo,
+                                                                     getFeatureFlagsProvider());
     worker.configure(configurer);
     addDatasetsAndPlugins(configurer);
     WorkerSpecification spec = configurer.createSpecification();

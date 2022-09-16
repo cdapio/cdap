@@ -16,29 +16,59 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.service.worker.RunnableTaskParam;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
+import io.cdap.cdap.common.conf.Constants;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
+
 /**
  * Class for holding details of a task
  */
 public class TaskDetails {
-  private final boolean success;
-  private final String className;
+
+  private static final String SUCCESS = "success";
+  private static final String FAILURE = "failure";
+
+  private final MetricsCollectionService metricsCollectionService;
   private final long startTime;
+  private final RunnableTaskRequest request;
+  private final boolean terminateOnComplete;
 
-  public TaskDetails(boolean success, String className, long startTime) {
-    this.success = success;
-    this.className = className;
+  public TaskDetails(MetricsCollectionService metricsCollectionService, long startTime,
+                     boolean terminateOnComplete,
+                     @Nullable RunnableTaskRequest request) {
+    this.metricsCollectionService = metricsCollectionService;
     this.startTime = startTime;
+    this.terminateOnComplete = terminateOnComplete;
+    this.request = request;
   }
 
-  public boolean isSuccess() {
-    return success;
+  public void emitMetrics(boolean succeeded) {
+    long time = System.currentTimeMillis() - startTime;
+    Map<String, String> metricTags = new HashMap<>();
+    metricTags.put(Constants.Metrics.Tag.CLASS, Optional.ofNullable(getClassName()).orElse(""));
+    metricTags.put(Constants.Metrics.Tag.STATUS, succeeded ? SUCCESS : FAILURE);
+    metricsCollectionService.getContext(metricTags).increment(Constants.Metrics.TaskWorker.REQUEST_COUNT, 1L);
+    metricsCollectionService.getContext(metricTags).gauge(Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS, time);
   }
 
+  public boolean isTerminateOnComplete() {
+    return terminateOnComplete;
+  }
+
+  @Nullable
   public String getClassName() {
-    return className;
-  }
-
-  public long getStartTime() {
-    return startTime;
+    if (request == null) {
+      return null;
+    }
+    return Optional.ofNullable(request.getParam())
+      .map(RunnableTaskParam::getEmbeddedTaskRequest)
+      .map(RunnableTaskRequest::getClassName)
+      .orElse(request.getClassName());
   }
 }

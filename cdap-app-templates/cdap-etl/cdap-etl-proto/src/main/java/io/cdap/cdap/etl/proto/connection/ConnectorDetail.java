@@ -17,8 +17,12 @@
 
 package io.cdap.cdap.etl.proto.connection;
 
+import io.cdap.cdap.etl.api.connector.SampleType;
+
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Response for the spec endpoint. The schema and properties are set on each available plugins.
@@ -27,13 +31,27 @@ import java.util.Set;
  */
 public class ConnectorDetail {
   private final Set<PluginDetail> relatedPlugins;
+  private final Set<SampleType> supportedSampleTypes;
+
+  public ConnectorDetail(Set<PluginDetail> relatedPlugins, @Nullable Set<SampleType> supportedSampleTypes) {
+    this.relatedPlugins = relatedPlugins;
+    if (supportedSampleTypes != null) {
+      this.supportedSampleTypes = supportedSampleTypes;
+    } else {
+      this.supportedSampleTypes = new HashSet<>();
+    }
+  }
 
   public ConnectorDetail(Set<PluginDetail> relatedPlugins) {
-    this.relatedPlugins = relatedPlugins;
+    this(relatedPlugins, null);
   }
 
   public Set<PluginDetail> getRelatedPlugins() {
     return relatedPlugins;
+  }
+
+  public Set<SampleType> getSupportedSampleTypes() {
+    return supportedSampleTypes;
   }
 
   @Override
@@ -47,11 +65,12 @@ public class ConnectorDetail {
     }
 
     ConnectorDetail that = (ConnectorDetail) o;
-    return Objects.equals(relatedPlugins, that.relatedPlugins);
+    return Objects.equals(relatedPlugins, that.relatedPlugins)
+            && Objects.equals(supportedSampleTypes, that.supportedSampleTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(relatedPlugins);
+    return Objects.hash(relatedPlugins, supportedSampleTypes);
   }
 }

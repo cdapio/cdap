@@ -49,7 +49,7 @@ public interface MetricsTable extends Dataset {
   void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates);
 
   /**
-   * Atomically compare a single column of a row with a expected value, and if it matches, replace it with a new value.
+   * Atomically compare a single column of a row with an expected value, and if it matches, replace it with a new value.
    * @param oldValue the expected value of the column. If null, this means that the column must not exist.
    * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.
    * @return whether the write happened, that is, whether the existing value of the column matched the expected value.

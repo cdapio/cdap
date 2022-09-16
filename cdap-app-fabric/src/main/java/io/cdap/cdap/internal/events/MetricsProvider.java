@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.events;
 
+import io.cdap.cdap.common.MetricRetrievalException;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
 
@@ -30,5 +31,5 @@ public interface MetricsProvider {
    *
    * @param runId The {@link ProgramRunId} which references this execution.
    */
-  ExecutionMetrics[] retrieveMetrics(ProgramRunId runId);
+  ExecutionMetrics[] retrieveMetrics(ProgramRunId runId) throws MetricRetrievalException;
 }

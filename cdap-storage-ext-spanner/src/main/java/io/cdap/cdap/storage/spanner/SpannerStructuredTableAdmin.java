@@ -33,14 +33,19 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableDuplicateUpdateException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,7 +56,7 @@ import java.util.stream.Collectors;
  * A {@link StructuredTableAdmin} implementation backed by Google Cloud Spanner.
  */
 public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
-
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerStructuredTableAdmin.class);
   private final DatabaseId databaseId;
   private final DatabaseAdminClient adminClient;
   private final DatabaseClient databaseClient;
@@ -76,36 +81,19 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
-    List<String> statements = new ArrayList<>();
-    statements.add(getCreateTableStatement(spec));
-
-    for (String idxColumn : spec.getIndexes()) {
-      String createIndex = String.format("CREATE INDEX %s ON %s (%s)",
-                                         escapeName(getIndexName(spec.getTableId(), idxColumn)),
-                                         escapeName(spec.getTableId().getName()), escapeName(idxColumn));
-
-      // Need to store all the non-primary keys and non index fields so that it can be queried
-      Set<String> storingFields = spec.getFieldTypes().stream().map(FieldType::getName).collect(Collectors.toSet());
-      storingFields.remove(idxColumn);
-      spec.getPrimaryKeys().forEach(storingFields::remove);
-
-      if (!storingFields.isEmpty()) {
-        createIndex += " STORING (" + String.join(",", storingFields) + ")";
-      }
-
-      statements.add(createIndex);
+    if (exists(spec.getTableId())) {
+      throw new TableAlreadyExistsException(spec.getTableId());
     }
+    createTable(spec);
+  }
 
-    try {
-      Uninterruptibles.getUninterruptibly(adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
-                                                                        databaseId.getDatabase(), statements, null));
-    } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof SpannerException
-        && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
-        throw new TableAlreadyExistsException(spec.getTableId());
-      }
-      throw new IOException("Failed to create table in Spanner", cause);
+  @Override
+  public void createOrUpdate(StructuredTableSpecification spec)
+    throws IOException, TableSchemaIncompatibleException {
+    if (exists(spec.getTableId())) {
+      tryUpdatingTable(spec);
+    } else {
+      createTable(spec);
     }
   }
 
@@ -128,6 +116,45 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
         throw (TableNotFoundException) e.getCause();
       }
       throw new RuntimeException("Failed to load table schema for " + tableId, e.getCause());
+    }
+  }
+
+  private void updateTable(StructuredTableSpecification spec)
+    throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
+    StructuredTableId tableId = spec.getTableId();
+    StructuredTableSchema cachedTableSchema = getSchema(tableId);
+    StructuredTableSchema newTableSchema = new StructuredTableSchema(spec);
+
+    if (newTableSchema.equals(cachedTableSchema)) {
+      LOG.trace("The table schema is already up to date: {}", tableId);
+      return;
+    }
+    if (!cachedTableSchema.isCompatible(newTableSchema)) {
+      throw new TableSchemaIncompatibleException(tableId);
+    }
+
+    List<String> statements = new ArrayList<>();
+    statements.addAll(getAddColumnsStatement(newTableSchema, cachedTableSchema));
+    statements.addAll(getAddIndicesStatement(newTableSchema, cachedTableSchema));
+    try {
+      Uninterruptibles.getUninterruptibly(adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
+                                                                        databaseId.getDatabase(), statements, null));
+      schemaCache.invalidate(tableId);
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof SpannerException) {
+        if (((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
+          LOG.debug("Concurrent table update error: ", e);
+          throw new TableDuplicateUpdateException(spec.getTableId());
+        }
+
+        if (((SpannerException) cause).getErrorCode() == ErrorCode.NOT_FOUND) {
+          LOG.debug("Concurrent table update error, table not found while updating the table schema: ", e);
+          throw new TableNotFoundException(spec.getTableId());
+        }
+      }
+
+      throw new IOException("Failed to update table schema in Spanner", cause);
     }
   }
 
@@ -168,10 +195,10 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     // Query the information_schema to reconstruct the StructuredTableSchema
     // See https://cloud.google.com/spanner/docs/information-schema for details
     Statement schemaStatement = Statement.newBuilder(
-      "SELECT C.column_name, C.spanner_type, I.index_type, I.ordinal_position FROM information_schema.columns C " +
-        "LEFT JOIN information_schema.index_columns I " +
-        "ON C.column_name = I.column_name AND C.table_name = I.table_name " +
-        "WHERE C.table_name = @table_name ORDER BY C.ordinal_position")
+        "SELECT C.column_name, C.spanner_type, I.index_type, I.ordinal_position FROM information_schema.columns C " +
+          "LEFT JOIN information_schema.index_columns I " +
+          "ON C.column_name = I.column_name AND C.table_name = I.table_name AND I.ordinal_position is not NULL " +
+          "WHERE C.table_name = @table_name ORDER BY C.ordinal_position")
       .bind("table_name").to(tableId.getName())
       .build();
 
@@ -214,22 +241,9 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     String statement = spec.getFieldTypes().stream()
       .map(f -> {
         String fieldName = f.getName();
-
-        switch (f.getType()) {
-          case INTEGER:
-          case LONG:
-            return escapeName(fieldName) + " INT64" + (primaryKeys.contains(fieldName) ? " NOT NULL" : "");
-          case FLOAT:
-          case DOUBLE:
-            return escapeName(fieldName) + " FLOAT64" + (primaryKeys.contains(fieldName) ? " NOT NULL" : "");
-          case STRING:
-            return escapeName(fieldName) + " STRING(MAX)" + (primaryKeys.contains(fieldName) ? " NOT NULL" : "");
-          case BYTES:
-            return escapeName(fieldName) + " BYTES(MAX)" + (primaryKeys.contains(fieldName) ? " NOT NULL" : "");
-          default:
-            // This should never happen
-            throw new IllegalArgumentException("Unsupported field type " + f.getType());
-        }
+        return escapeName(fieldName) + " "
+          + getSpannerType(f.getType())
+          + (primaryKeys.contains(fieldName) ? " NOT NULL" : "");
       }).collect(Collectors.joining(", ", "CREATE TABLE " + escapeName(spec.getTableId().getName()) + " (", ")"));
 
     if (primaryKeys.isEmpty()) {
@@ -237,6 +251,40 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     }
 
     return statement + " PRIMARY KEY (" + String.join(", ", primaryKeys) + ")";
+  }
+
+  private String getCreateIndexStatement(String idxColumn, StructuredTableSchema schema) {
+    String createIndex = String.format("CREATE INDEX %s ON %s (%s)",
+                                       escapeName(getIndexName(schema.getTableId(), idxColumn)),
+                                       escapeName(schema.getTableId().getName()), escapeName(idxColumn));
+
+    // Need to store all the non-primary keys and non index fields so that it can be queried
+    Set<String> storingFields = new HashSet<>(schema.getFieldNames());
+    storingFields.remove(idxColumn);
+    schema.getPrimaryKeys().forEach(storingFields::remove);
+
+    if (!storingFields.isEmpty()) {
+      createIndex += " STORING (" + String.join(",", storingFields) + ")";
+    }
+    return createIndex;
+  }
+
+  private String getSpannerType(FieldType.Type fieldType) {
+    switch (fieldType) {
+      case INTEGER:
+      case LONG:
+        return "INT64";
+      case FLOAT:
+      case DOUBLE:
+        return "FLOAT64";
+      case STRING:
+        return "STRING(MAX)";
+      case BYTES:
+        return "BYTES(MAX)";
+      default:
+        // This should never happen
+        throw new IllegalArgumentException("Unsupported field type " + fieldType);
+    }
   }
 
   private FieldType.Type fromSpannerType(String spannerType) {
@@ -250,11 +298,77 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       case "bytes(max)":
         return FieldType.Type.BYTES;
       default:
-        throw new IllegalArgumentException("Unsupport spanner type " + spannerType);
+        throw new IllegalArgumentException("Unsupported spanner type " + spannerType);
     }
   }
 
   private String escapeName(String name) {
     return "`" + name + "`";
+  }
+
+  private void createTable(StructuredTableSpecification spec) throws IOException {
+    List<String> statements = new ArrayList<>();
+    statements.add(getCreateTableStatement(spec));
+
+    StructuredTableSchema schema = new StructuredTableSchema(spec);
+    spec.getIndexes()
+      .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+
+    try {
+      Uninterruptibles.getUninterruptibly(adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
+                                                                        databaseId.getDatabase(), statements, null));
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof SpannerException
+        && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
+        LOG.debug("Concurrent table creation error: ", e);
+      } else {
+        throw new IOException("Failed to create table in Spanner", cause);
+      }
+    }
+  }
+
+  private void tryUpdatingTable(StructuredTableSpecification spec)
+    throws IOException, TableSchemaIncompatibleException {
+    try {
+      updateTable(spec);
+    } catch (TableDuplicateUpdateException | TableNotFoundException e) {
+      // Invalidate cached schema and retry
+      schemaCache.invalidate(spec.getTableId());
+      if (e instanceof TableDuplicateUpdateException) {
+        // Exception due to adding existing columns or indexes in Spanner
+        LOG.debug(String.format("Retry updating the table: %s", spec.getTableId()));
+        updateTable(spec);
+      }
+      if (e instanceof TableNotFoundException) {
+        // Exception due to table being deleted while updating the schema
+        // re-create it
+        LOG.debug(String.format("Re-creating the table: %s", spec.getTableId()));
+        createTable(spec);
+      }
+    }
+  }
+
+  private List<String> getAddColumnsStatement(StructuredTableSchema newSpannerSchema,
+                                              StructuredTableSchema cachedTableSchema) {
+    Set<String> existingSchemaFields = cachedTableSchema.getFieldNames();
+    return newSpannerSchema.getFieldNames().stream()
+      .filter(field -> !existingSchemaFields.contains(field))
+      .map(field ->
+             String.format("ALTER TABLE %s ADD COLUMN %s %s",
+                           escapeName(newSpannerSchema.getTableId().getName()),
+                           escapeName(field),
+                           getSpannerType(newSpannerSchema.getType(field))
+             ))
+      .collect(Collectors.toList());
+  }
+
+  private List<String> getAddIndicesStatement(StructuredTableSchema newSchema,
+                                              StructuredTableSchema cachedTableSchema) {
+    Set<String> existingSchemaIndices = cachedTableSchema.getIndexes();
+    return newSchema.getIndexes().stream()
+      .filter(field -> !existingSchemaIndices.contains(field))
+      .map(field -> getCreateIndexStatement(field, newSchema))
+      .collect(Collectors.toList());
   }
 }

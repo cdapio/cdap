@@ -20,6 +20,8 @@ import com.google.common.base.Objects;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 
+import javax.annotation.Nullable;
+
 /**
  * Holds application metadata
  */
@@ -28,11 +30,24 @@ public class ApplicationMeta {
 
   private final String id;
   private final ApplicationSpecification spec;
-  // TODO: add creation time, owner and latest fields from the table
+  @Nullable
+  private final Long created;
+  @Nullable
+  private final String owner;
+  @Nullable
+  private final String latest;
 
   public ApplicationMeta(String id, ApplicationSpecification spec) {
+    this(id, spec, null, null, null);
+  }
+
+  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable Long created, @Nullable String owner,
+                         @Nullable String latest) {
     this.id = id;
     this.spec = spec;
+    this.created = created;
+    this.owner = owner;
+    this.latest = latest;
   }
 
   public String getId() {
@@ -43,11 +58,29 @@ public class ApplicationMeta {
     return spec;
   }
 
+  @Nullable
+  public String getOwner() {
+    return owner;
+  }
+
+  @Nullable
+  public Long getCreated() {
+    return created;
+  }
+
+  @Nullable
+  public String getLatest() {
+    return latest;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("id", id)
       .add("spec", ADAPTER.toJson(spec))
+      .add("created", created)
+      .add("owner", owner)
+      .add("latest", latest)
       .toString();
   }
 }

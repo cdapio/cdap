@@ -17,7 +17,7 @@
 package io.cdap.cdap.store;
 
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
@@ -79,13 +79,9 @@ public final class StoreDefinition {
 
     StructuredTableId tableId = spec.getTableId();
     try {
-      if (!admin.exists(tableId)) {
-        admin.create(spec);
-      }
-    } catch (TableAlreadyExistsException e) {
-      if (!admin.getSchema(tableId).isCompatible(spec)) {
-        throw new IllegalStateException("Table " + tableId + " already exists with an incompatible schema", e);
-      }
+      admin.createOrUpdate(spec);
+    } catch (TableSchemaIncompatibleException e) {
+      throw new IllegalStateException("Table " + tableId + " already exists with an incompatible schema", e);
     }
   }
 
@@ -356,8 +352,9 @@ public final class StoreDefinition {
       createIfNotExists(tableAdmin, PROVISIONER_STORE_SPEC);
     }
   }
+
   /**
-   *  Defines schema for AppMetadata tables
+   * Defines schema for AppMetadata tables
    */
   public static final class AppMetadataStore {
 
@@ -373,6 +370,9 @@ public final class StoreDefinition {
     public static final String APPLICATION_FIELD = "application";
     public static final String VERSION_FIELD = "version";
     public static final String APPLICATION_DATA_FIELD = "application_data";
+    public static final String CREATION_TIME_FIELD = "created";
+    public static final String OWNER_FIELD = "owner";
+    public static final String LATEST_FIELD = "latest";
     public static final String PROGRAM_TYPE_FIELD = "program_type";
     public static final String PROGRAM_FIELD = "program";
     public static final String RUN_FIELD = "run";
@@ -395,8 +395,12 @@ public final class StoreDefinition {
         .withFields(Fields.stringType(NAMESPACE_FIELD),
                     Fields.stringType(APPLICATION_FIELD),
                     Fields.stringType(VERSION_FIELD),
-                    Fields.stringType(APPLICATION_DATA_FIELD))
+                    Fields.stringType(APPLICATION_DATA_FIELD),
+                    Fields.longType(CREATION_TIME_FIELD),
+                    Fields.stringType(OWNER_FIELD),
+                    Fields.stringType(LATEST_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
+        .withIndexes(LATEST_FIELD)
         .build();
 
     public static final StructuredTableSpecification WORKFLOW_NODE_STATES_SPEC =
@@ -847,7 +851,7 @@ public final class StoreDefinition {
   }
 
   /**
-   *  Schema for usage table
+   * Schema for usage table
    */
   public static final class UsageStore {
     public static final StructuredTableId USAGES = new StructuredTableId("usages");
@@ -878,10 +882,10 @@ public final class StoreDefinition {
 
   /**
    * Schema for field lineage.
-   *
+   * <p>
    * Endpoint checksum table is used to store endpoints/properties of endpoints to a checksum. Checksum can then be
    * used the query the other tables. Also contains the program run info for that checksum.
-   *
+   * <p>
    * The remaining tables store various endpoint data keyed by checksum.
    */
   public static final class FieldLineageStore {
