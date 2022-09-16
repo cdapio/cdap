@@ -17,10 +17,13 @@
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJobInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.apache.hadoop.conf.Configuration;
@@ -38,9 +41,13 @@ import org.apache.twill.internal.io.LocationCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,10 +57,12 @@ import java.util.stream.Stream;
  */
 class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
 
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeJobTwillPreparer.class);
 
   private final Map<String, Location> secretFiles;
   private final Supplier<RuntimeJobManager> jobManagerSupplier;
+  private final ProgramOptions programOptions;
 
   RuntimeJobTwillPreparer(CConfiguration cConf, Configuration hConf,
                           TwillSpecification twillSpec, ProgramRunId programRunId,
@@ -63,6 +72,7 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
     super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
     this.secretFiles = secretFiles;
     this.jobManagerSupplier = jobManagerSupplier;
+    this.programOptions = programOptions;
   }
 
   @Override
@@ -96,9 +106,28 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
     Map<String, String> jvmProperties = parseJvmProperties(jvmOpts);
     LOG.info("JVM properties {}", jvmProperties);
 
-    return new DefaultRuntimeJobInfo(getProgramRunId(),
-                                     Stream.concat(localFiles.values().stream(), runtimeSpec.getLocalFiles().stream())
-                                    .collect(Collectors.toList()), jvmProperties);
+    Collection<? extends LocalFile> files =
+      Stream.concat(localFiles.values().stream(), runtimeSpec.getLocalFiles().stream()).collect(Collectors.toList());
+
+    Collection<LocalFile> resultingFiles = new ArrayList<>();
+
+    Set<String> cacheableFiles;
+    if (programOptions.getArguments().hasOption(ProgramOptionConstants.CACHEABLE_FILES)) {
+      cacheableFiles =
+        GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES), Set.class);
+    } else {
+      cacheableFiles = new HashSet<>();
+    }
+
+    for (LocalFile f : files) {
+      if (!cacheableFiles.contains(f.getName())) {
+        resultingFiles.add(f);
+      } else {
+        resultingFiles.add(new CacheableLocalFile(f));
+      }
+    }
+
+    return new DefaultRuntimeJobInfo(getProgramRunId(), resultingFiles, jvmProperties);
   }
 
   /**
