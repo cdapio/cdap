@@ -161,6 +161,7 @@ public class RollingLocationLogAppenderTest {
     activeFiles = rollingAppender.getLocationManager().getActiveLocations();
     Assert.assertEquals(3, activeFiles.size());
     verifyFileOutput(activeFiles, 5);
+    rollingAppender.stop();
   }
 
   @Test
@@ -210,6 +211,7 @@ public class RollingLocationLogAppenderTest {
     locationOutputStream = activeFiles.get(new LocationIdentifier("testNs1", "testApp1"));
     parentDir = Locations.getParent(locationOutputStream.getLocation());
     Assert.assertEquals(10, parentDir.list().size());
+    rollingAppender.stop();
   }
 
   @Test

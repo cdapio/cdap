@@ -28,8 +28,10 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.logging.context.ApplicationLoggingContext;
+import io.cdap.cdap.logging.serialize.DelegatingLoggingEvent;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -40,13 +42,12 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
 
-  private static final String ORIGIN_KEY = ".origin";
-  private static final int LOGGER_CACHE_SIZE = 1000;
-  private static final long LOGGER_CACHE_EXPIRY_MILLIS = 60000;
   // Note, this constant is used in LoggingConfiguration.java
   @VisibleForTesting
   static final String ERROR_TAGS = "error.tags";
-
+  private static final String ORIGIN_KEY = ".origin";
+  private static final int LOGGER_CACHE_SIZE = 1000;
+  private static final long LOGGER_CACHE_EXPIRY_MILLIS = 60000;
   private final Cache<String, Map<String, String>> loggerExtraTags;
 
   protected LogAppender() {
@@ -69,8 +70,10 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       if (loggingContext == null) {
         return;
       }
-      addErrorCodeTags(eventObject);
-      addExtraTags(eventObject, loggingContext);
+      //Creating a modifiable MDC to pass it to Delegating LoggingEvent
+      Map<String, String> modifiableMDC = new HashMap<>(loggingContext.getSystemTagsAsString());
+      modifiableMDC.putAll(eventObject.getMDCPropertyMap());
+      eventObject = addExtraTags(eventObject, loggingContext, modifiableMDC);
     }
 
     LogMessage logMessage = new LogMessage(eventObject, loggingContext);
@@ -79,13 +82,13 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
 
   /**
    * if event is for an exception deriving from ErrorCodeProvider, capture error group etc.
+   *
    * @param event
    */
-  private void addErrorCodeTags(ILoggingEvent event) {
+  private void addErrorCodeTags(ILoggingEvent event, Map<String, String> modifiableMDC) {
     if (event.getThrowableProxy() == null || !(event.getThrowableProxy() instanceof ThrowableProxy)) {
       return;
     }
-
     Throwable throwable = ((ThrowableProxy) (event.getThrowableProxy())).getThrowable();
     // add all error tags from all the inner exceptions
     StringBuilder tagsSb = new StringBuilder();
@@ -96,7 +99,7 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       if (throwable instanceof ErrorTagProvider) {
 
         ErrorTagProvider errorCodeThrowable = (ErrorTagProvider) throwable;
-        for (ErrorTagProvider.ErrorTag tag: errorCodeThrowable.getErrorTags()) {
+        for (ErrorTagProvider.ErrorTag tag : errorCodeThrowable.getErrorTags()) {
           if (combinedTags.contains(tag)) {
             continue;
           }
@@ -110,23 +113,30 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       }
       throwable = throwable.getCause();
     }
-    event.getMDCPropertyMap().put(ERROR_TAGS, tagsSb.toString());
+
+    modifiableMDC.put(ERROR_TAGS, tagsSb.toString());
   }
 
   /**
    * Adds extra MDC tags to the given event.
+   *
+   * @return
    */
-  private void addExtraTags(ILoggingEvent event, LoggingContext loggingContext) {
+  private ILoggingEvent addExtraTags(ILoggingEvent event, LoggingContext loggingContext,
+                                     Map<String, String> modifiableMDC) {
+
+    addErrorCodeTags(event, modifiableMDC);
+
     // For error logs, if the logging context is in application scope, tag it as program logs.
     if (loggingContext.getSystemTagsMap().containsKey(ApplicationLoggingContext.TAG_APPLICATION_ID)
-        && event.getLevel() == Level.ERROR) {
-      event.getMDCPropertyMap().putAll(Collections.singletonMap(ORIGIN_KEY, "program"));
-      return;
+      && event.getLevel() == Level.ERROR) {
+      modifiableMDC.put(ORIGIN_KEY, "program");
+      return new DelegatingLoggingEvent(event, modifiableMDC);
     }
 
     StackTraceElement[] callerData = event.getCallerData();
     if (callerData == null || callerData.length == 0) {
-      return;
+      return new DelegatingLoggingEvent(event, modifiableMDC);
     }
 
     String callerClass = callerData[0].getClassName();
@@ -149,7 +159,9 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
     }
 
     // Add the extra tag to the log event
-    event.getMDCPropertyMap().putAll(tags);
+    modifiableMDC.putAll(tags);
+
+    return new DelegatingLoggingEvent(event, modifiableMDC);
   }
 
   private Map<String, String> getTagsForClass(String className, Class[] callerClasses) {
