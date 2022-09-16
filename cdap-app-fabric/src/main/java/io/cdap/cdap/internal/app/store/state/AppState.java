@@ -40,7 +40,7 @@ public class AppState {
 
   public AppState(String namespace,
                   String appName,
-                  String stateKey,
+                  @Nullable String stateKey,
                   @Nullable byte[] stateValue) {
     this.namespace = namespace;
     this.appName = appName;
@@ -56,6 +56,7 @@ public class AppState {
     return appName;
   }
 
+  @Nullable
   public String getStateKey() {
     return stateKey;
   }

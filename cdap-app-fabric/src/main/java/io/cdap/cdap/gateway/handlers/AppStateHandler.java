@@ -60,7 +60,7 @@ public class AppStateHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Get {@link AppState} for a given app-name.
+   * Get {@link AppState} for a given app-name and state-key.
    */
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-name}/states/{state-key}")
@@ -80,7 +80,7 @@ public class AppStateHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Save {@link AppState} for a given app-name.
+   * Save {@link AppState} for a given app-name and state-key.
    */
   @PUT
   @Path("/namespaces/{namespace-id}/apps/{app-name}/states/{state-key}")
@@ -88,16 +88,17 @@ public class AppStateHandler extends AbstractHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-name") String appName,
                         @PathParam("state-key") String stateKey) throws Exception {
-    validateInput(namespaceId, appName, stateKey);
     byte[] stateValue = new byte[request.content().readableBytes()];
     request.content().readBytes(stateValue);
+
+    validateInput(namespaceId, appName, stateKey, stateValue);
     AppState appStateRequest = new AppState(namespaceId, appName, stateKey, stateValue);
     applicationLifecycleService.saveState(appStateRequest);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
-   * Delete a {@link AppState} for a given app-name.
+   * Delete a {@link AppState} for a given app-name and state-key.
    */
   @DELETE
   @Path("/namespaces/{namespace-id}/apps/{app-name}/states/{state-key}")
@@ -132,11 +133,15 @@ public class AppStateHandler extends AbstractHttpHandler {
   }
 
   private void validateInput(String namespace, String appName, String stateKey) throws Exception {
-    NamespaceId namespaceId = validateNamespace(namespace);
-
-    validateApplication(appName, namespaceId);
+    validateInput(namespace, appName);
 
     validateStateKey(stateKey);
+  }
+
+  private void validateInput(String namespace, String appName, String stateKey, byte[] stateValue) throws Exception {
+    validateInput(namespace, appName, stateKey);
+
+    validateStateValue(stateValue);
   }
 
   private void validateApplication(String appName, NamespaceId namespaceId)
@@ -152,6 +157,12 @@ public class AppStateHandler extends AbstractHttpHandler {
   private void validateStateKey(String stateKey) throws BadRequestException {
     if (stateKey == null) {
       throw new BadRequestException("Path parameter state-key cannot be empty");
+    }
+  }
+
+  private void validateStateValue(byte[] stateValue) throws BadRequestException {
+    if (stateValue == null) {
+      throw new BadRequestException("Path parameter state-value cannot be empty");
     }
   }
 
