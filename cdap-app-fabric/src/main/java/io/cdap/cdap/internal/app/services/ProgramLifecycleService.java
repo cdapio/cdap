@@ -47,6 +47,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.utils.StringUtils;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -94,7 +95,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -557,7 +557,7 @@ public class ProgramLifecycleService {
       }
 
       LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(),
-               programId.getProgram(), decodeUserId(userId), userArgs);
+               programId.getProgram(), StringUtils.decodeUserId(userId, LOG), userArgs);
 
       provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
       done = true;
@@ -776,7 +776,7 @@ public class ProgramLifecycleService {
       }
       // send a message to stop the program run
       LOG.info("Issuing a program stop request with a timeout value of {} secs by user {}", gracefulShutdownSecs,
-               decodeUserId(SecurityRequestContext.getUserId()));
+               StringUtils.decodeUserId(SecurityRequestContext.getUserId(), LOG));
       programStateWriter.stop(activeRunId, gracefulShutdownSecs);
     }
 
@@ -1171,16 +1171,5 @@ public class ProgramLifecycleService {
       KerberosPrincipalId kid = new KerberosPrincipalId(principal);
       accessEnforcer.enforce(kid, authenticationContext.getPrincipal(), AccessPermission.IMPERSONATE);
     }
-  }
-
-  private  String decodeUserId(String encodedUserId) {
-    String decodedUserId = "emptyUserId";
-    try {
-      byte[] decodedBytes = Base64.getDecoder().decode(encodedUserId);
-      decodedUserId = new String(decodedBytes);
-    } catch (Exception e) {
-      LOG.debug("Failed to decode userId {} with exception {}", encodedUserId, e);
-    }
-    return decodedUserId;
   }
 }
