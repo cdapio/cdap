@@ -223,6 +223,8 @@ public final class Constants {
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
+    public static final String UPGRADE_APP_THREADS = "app.upgrade.worker.threads";
+    public static final String UPGRADE_APP_THREADS_FORMAT = "app.upgrade.worker.threads.format";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
     public static final String STATUS_EVENT_FETCH_SIZE = "app.program.status.event.fetch.size";
     public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "app.program.status.event.poll.delay.millis";
