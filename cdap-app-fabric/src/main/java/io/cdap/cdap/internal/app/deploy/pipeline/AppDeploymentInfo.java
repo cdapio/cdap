@@ -43,7 +43,6 @@ public class AppDeploymentInfo {
   private final String appVersion;
   @Nullable
   private final String configString;
-
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
