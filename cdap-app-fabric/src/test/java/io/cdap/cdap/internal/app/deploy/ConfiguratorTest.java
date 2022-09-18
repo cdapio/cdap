@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -112,9 +112,12 @@ public class ConfiguratorTest {
                                                                           authEnforcer, authenticationContext);
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
 
-    AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
-      NamespaceId.DEFAULT, new ApplicationClass(AllProgramsApp.class.getName(), "", null),
-      null, null, null);
+    AppDeploymentInfo appDeploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId.toEntityId())
+      .setArtifactLocation(appJar)
+      .setNamespaceId(NamespaceId.DEFAULT)
+      .setApplicationClass(new ApplicationClass(AllProgramsApp.class.getName(), "", null))
+      .build();
 
     // Create a configurator that is testable. Provide it a application.
     Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
@@ -156,9 +159,13 @@ public class ConfiguratorTest {
     PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
 
-    AppDeploymentInfo appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
-      NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
-      null, null, new Gson().toJson(config));
+    AppDeploymentInfo appDeploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId.toEntityId())
+      .setArtifactLocation(appJar)
+      .setNamespaceId(NamespaceId.DEFAULT)
+      .setApplicationClass(new ApplicationClass(ConfigTestApp.class.getName(), "", null))
+      .setConfigString(new Gson().toJson(config))
+      .build();
 
     // Create a configurator that is testable. Provide it an application.
     Configurator configurator = new InMemoryConfigurator(conf, pluginFinder, new DefaultImpersonator(cConf, null),
@@ -178,9 +185,12 @@ public class ConfiguratorTest {
     Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
     // Create a deployment info without the app configuration
-    appDeploymentInfo = new AppDeploymentInfo(artifactId.toEntityId(), appJar,
-      NamespaceId.DEFAULT, new ApplicationClass(ConfigTestApp.class.getName(), "", null),
-      null, null, null);
+    appDeploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId.toEntityId())
+      .setArtifactLocation(appJar)
+      .setNamespaceId(NamespaceId.DEFAULT)
+      .setApplicationClass(new ApplicationClass(ConfigTestApp.class.getName(), "", null))
+      .build();
 
     Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, pluginFinder,
                                                                       new DefaultImpersonator(cConf, null),

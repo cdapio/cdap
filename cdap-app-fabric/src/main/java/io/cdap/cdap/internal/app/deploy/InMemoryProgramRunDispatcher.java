@@ -318,12 +318,18 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                       artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
     }
 
-    AppDeploymentInfo deploymentInfo =
-      new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(), programId.getNamespaceId(),
-                            appClass, existingAppSpec.getName(), existingAppSpec.getAppVersion(),
-                            existingAppSpec.getConfiguration(), null, false,
-                            new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
-                                                         options.getArguments().asMap()));
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId)
+      .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+      .setNamespaceId(programId.getNamespaceId())
+      .setApplicationClass(appClass)
+      .setAppName(existingAppSpec.getName())
+      .setAppVersion(existingAppSpec.getAppVersion())
+      .setConfigString(existingAppSpec.getConfiguration())
+      .setUpdateSchedules(false)
+      .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec,
+                                                   options.getUserArguments().asMap(), options.getArguments().asMap()))
+      .build();
     Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator, artifactRepository,
                                                          factory, deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
