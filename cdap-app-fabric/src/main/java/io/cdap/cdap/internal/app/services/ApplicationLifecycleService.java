@@ -1138,7 +1138,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setConfigString(configStr)
       .setOwnerPrincipal(ownerPrincipal)
       .setUpdateSchedules(updateSchedules)
-      .setRuntimeInfo(isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null)
+      .setRuntimeInfo(isPreview ? new AppDeploymentRuntimeInfo(null, userProps,
+                                                               Collections.emptyMap()) : null)
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
