@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2020 Cask Data, Inc.
+ * Copyright © 2015-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -632,10 +632,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     // Deploy application with with potentially new app config and new artifact.
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
-                                                             appId.getParent(), appClass, appId.getApplication(),
-                                                             appId.getVersion(), updatedAppConfig, ownerPrincipal,
-                                                             updateSchedules, null);
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId)
+      .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+      .setApplicationClass(appClass)
+      .setApplicationId(appId)
+      .setConfigString(updatedAppConfig)
+      .setOwnerPrincipal(ownerPrincipal)
+      .setUpdateSchedules(updateSchedules)
+      .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -975,11 +980,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
     }
     // deploy application with newly added artifact
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
-      Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
-      artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
-      appVersion, configStr, ownerPrincipal, updateSchedules,
-      isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null);
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()))
+      .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+      .setApplicationClass(appClass)
+      .setNamespaceId(namespaceId)
+      .setAppName(appName)
+      .setAppVersion(appVersion)
+      .setConfigString(configStr)
+      .setOwnerPrincipal(ownerPrincipal)
+      .setUpdateSchedules(updateSchedules)
+      .setRuntimeInfo(isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null)
+      .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
