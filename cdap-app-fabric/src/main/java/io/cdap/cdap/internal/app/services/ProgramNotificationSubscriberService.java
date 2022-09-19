@@ -42,6 +42,7 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
@@ -60,6 +61,7 @@ import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -335,23 +337,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
         Map<String, String> systemArguments = systemArgumentsString == null ?
           Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-        boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
-        boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
-
         ProgramOptions prgOptions = ProgramOptions.fromNotification(notification, GSON);
-        ProgramDescriptor prgDescriptor =
-          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
 
-        // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
-        // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
-        // if this is NOT a preview run or a program within a workflow (i.e., else case), program is started and its
-        // state changes into Starting.
-        if (isInWorkflow || skipProvisioning) {
+        boolean programStartSkipped = ProgramStatePublisher.isProgramStartSkipped(systemArguments);
+        if (programStartSkipped) {
+          ArtifactId artifactId = ProgramStatePublisher.getArtifactId(GSON, properties);
           appMetadataStore.recordProgramProvisioning(programRunId, prgOptions.getUserArguments().asMap(),
                                                      prgOptions.getArguments().asMap(), messageIdBytes,
-                                                     prgDescriptor.getArtifactId().toApiArtifactId());
+                                                     artifactId.toApiArtifactId());
           appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
         } else {
+          ProgramDescriptor prgDescriptor =
+            GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
           runnables.add(() -> {
             String oldUser = SecurityRequestContext.getUserId();
             try {
@@ -428,11 +425,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         break;
       case REJECTED:
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
-        ProgramDescriptor programDescriptor =
-          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
+        ArtifactId artifactId = ProgramStatePublisher.getArtifactId(GSON, properties);
         recordedRunRecord = appMetadataStore.recordProgramRejected(
           programRunId, programOptions.getUserArguments().asMap(),
-          programOptions.getArguments().asMap(), messageIdBytes, programDescriptor.getArtifactId().toApiArtifactId());
+          programOptions.getArguments().asMap(), messageIdBytes, artifactId.toApiArtifactId());
         writeToHeartBeatTable(recordedRunRecord,
                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                               programHeartbeatTable);
@@ -453,14 +449,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       // for any status that represents completion of a job that was actually started (excludes rejected jobs)
       // publish the deprovisioning event(s).
       if (programRunStatus.isEndState() && programRunStatus != ProgramRunStatus.REJECTED) {
-        // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
-        // instead, we just record the state as deprovisioned without notifying the provisioner
-        // and we will emit the program status metrics for it
-        boolean isInWorkflow = recordedRunRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME);
-        boolean skipProvisioning =
-          Boolean.parseBoolean(recordedRunRecord.getSystemArgs().get(ProgramOptionConstants.SKIP_PROVISIONING));
-
-        if (isInWorkflow || skipProvisioning) {
+        if (ProgramStatePublisher.isProgramStartSkipped(recordedRunRecord.getSystemArgs())) {
           appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
           appMetadataStore.recordProgramDeprovisioned(programRunId, null, messageIdBytes);
         } else {

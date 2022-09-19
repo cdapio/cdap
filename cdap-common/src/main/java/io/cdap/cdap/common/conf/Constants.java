@@ -237,6 +237,8 @@ public final class Constants {
     public static final String PROGRAM_TERMINATOR_INTERVAL_SECS = "app.program.terminator.interval.secs";
     public static final String PROGRAM_TERMINATE_TIME_BUFFER_SECS = "app.program.terminate.time.buffer.secs";
     public static final String PROGRAM_TERMINATOR_TX_BATCH_SIZE = "app.program.terminator.tx.batch.size";
+    public static final String ARTIFACTS_COMPUTE_HASH = "app.artifact.compute.hash";
+    public static final String ARTIFACTS_COMPUTE_HASH_SNAPSHOT = "app.artifact.compute.hash.snapshot";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";

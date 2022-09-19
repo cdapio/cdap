@@ -132,6 +132,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     try (Connection connection = dataSource.getConnection()) {
       // Since each add column and create index statement has "IF NOT EXIST", it should not throw in
       // a race condition when multiple table updates process at the same time, hence no need to retry updateTable
+      LOG.debug("Updating table schema {}", newSpec);
       addColumns(connection, newSchema);
       addIndices(connection, newSchema);
       schemaCache.invalidate(tableId);

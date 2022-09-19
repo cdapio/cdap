@@ -36,6 +36,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.BinaryDecoder;
 import io.cdap.cdap.common.io.DatumReader;
+import io.cdap.cdap.common.io.StringCachingDecoder;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
@@ -53,6 +54,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -311,7 +313,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     private final MetricsMetaKey metricsMetaKey;
     private final TopicId topic;
     private final PayloadInputStream payloadInput;
-    private final BinaryDecoder decoder;
+    private final StringCachingDecoder decoder;
     private final String oldestTsMetricName;
     private final String latestTsMetricName;
     private long lastMetricTimeSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -325,7 +327,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       this.metricsMetaKey = metricsMetaKey;
       this.topic = topic;
       this.payloadInput = new PayloadInputStream();
-      this.decoder = new BinaryDecoder(payloadInput);
+      this.decoder = new StringCachingDecoder(new BinaryDecoder(payloadInput), new HashMap<>());
     }
 
     @Override
@@ -405,6 +407,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
             }
           }
         }
+        decoder.getCache().clear();
 
         if (currentMessageId != null) {
           // update the last processed timestamp in local topic meta and update the topicProcessMetaMap with this
