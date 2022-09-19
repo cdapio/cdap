@@ -442,6 +442,13 @@
       "label": "Advanced Settings",
       "properties": [
         {
+          "widget-type": "hidden",
+          "name": "disableGCSCaching",
+          "widget-attributes": {
+            "default": "false"
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "Image Version",
           "name": "imageVersion",
@@ -681,6 +688,20 @@
         },
         {
           "name": "autoScalingPolicy",
+          "type": "property"
+        }
+      ]
+    },
+    {
+      "name": "Show disableGCSCaching",
+      "condition": {
+        "property": "disableGCSCaching",
+        "operator": "equal",
+        "value": "true"
+      },
+      "show": [
+        {
+          "name": "disableGCSCaching",
           "type": "property"
         }
       ]

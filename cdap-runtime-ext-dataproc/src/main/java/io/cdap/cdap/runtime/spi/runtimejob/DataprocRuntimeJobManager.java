@@ -177,6 +177,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
+    boolean disableGCSCaching = Boolean.parseBoolean(
+      provisionerContext.getProperties().getOrDefault(DataprocUtils.DISABLE_GCS_CACHING, "false"));
+
     String bucket = DataprocUtils.getBucketName(this.bucket);
 
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
@@ -198,7 +201,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
       for (LocalFile fileToUpload : localFiles) {
-        boolean isCacheable = fileToUpload instanceof CacheableLocalFile;
+        boolean isCacheable = !disableGCSCaching && fileToUpload instanceof CacheableLocalFile;
         String targetFilePath = getPath(isCacheable ? cacheRootPath :
                                           runRootPath, fileToUpload.getName());
         uploadFutures.add(
