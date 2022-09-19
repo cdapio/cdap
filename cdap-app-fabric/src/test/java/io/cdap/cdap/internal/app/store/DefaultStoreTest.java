@@ -46,6 +46,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -1072,7 +1073,7 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testStateRemovedOnRemoveApplication() {
+  public void testStateRemovedOnRemoveApplication() throws ApplicationNotFoundException {
     String stateKey = "kafka";
     byte[] stateValue = ("{\n" +
                          "\"offset\" : 12345\n" +
@@ -1095,7 +1096,7 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testStateRemovedOnRemoveAll() {
+  public void testStateRemovedOnRemoveAll() throws ApplicationNotFoundException {
     String stateKey = "kafka";
     byte[] stateValue = ("{\n" +
                          "\"offset\" : 12345\n" +
