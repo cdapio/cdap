@@ -52,6 +52,7 @@ public final class DataprocUtils {
   public static final String CDAP_GCS_ROOT = "cdap-job";
   public static final String CDAP_CACHED_ARTIFACTS = "cached-artifacts";
   public static final String WORKER_CPU_PREFIX = "Up to";
+  public static final String DISABLE_GCS_CACHING = "disableGCSCaching";
 
   /**
    * HTTP Status-Code 429: RESOURCE_EXHAUSTED.

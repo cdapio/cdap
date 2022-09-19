@@ -92,6 +92,8 @@ final class DataprocConf {
   public static final String COMPUTE_HTTP_REQUEST_READ_TIMEOUT = "compute.request.read.timeout.millis";
   private static final int COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT = 20000;
 
+  // If true, artifacts will not be cached in GCS regardless of cConf setting.
+  static final String DISABLE_GCS_CACHING = "disableGCSCaching";
 
   private final String accountKey;
   private final String region;
@@ -158,6 +160,8 @@ final class DataprocConf {
   private final int computeReadTimeout;
   private final int computeConnectionTimeout;
 
+  private final boolean disableGCSCaching;
+
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB,
@@ -178,7 +182,8 @@ final class DataprocConf {
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
                        boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
-                       @Nullable String rootUrl) {
+                       @Nullable String rootUrl,
+                       boolean disableGCSCaching) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -232,6 +237,7 @@ final class DataprocConf {
     this.computeReadTimeout = computeReadTimeout;
     this.computeConnectionTimeout = computeConnectionTimeout;
     this.rootUrl = rootUrl;
+    this.disableGCSCaching = disableGCSCaching;
   }
 
   String getRegion() {
@@ -674,6 +680,9 @@ final class DataprocConf {
                                           COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT);
     String rootUrl = getString(properties, ROOT_URL);
 
+    boolean disableGCSCaching = Boolean.parseBoolean(
+      properties.getOrDefault(DISABLE_GCS_CACHING, "false"));
+
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             masterDiskType, masterMachineType,
@@ -687,7 +696,8 @@ final class DataprocConf {
                             initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
-                            enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl);
+                            enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
+                            disableGCSCaching);
   }
 
   // the UI never sends nulls, it only sends empty strings.

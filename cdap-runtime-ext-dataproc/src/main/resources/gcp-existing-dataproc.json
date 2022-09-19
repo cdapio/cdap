@@ -73,6 +73,13 @@
           "widget-attributes": {
             "placeholder": "Specify the GCP service account"
           }
+        },
+        {
+          "widget-type": "hidden",
+          "name": "disableGCSCaching",
+          "widget-attributes": {
+            "default": "false"
+          }
         }
       ]
     },
@@ -98,6 +105,22 @@
           "widget-attributes": {
             "placeholder": "Specify the private key for SSH"
           }
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "name": "Show disableGCSCaching",
+      "condition": {
+        "property": "disableGCSCaching",
+        "operator": "equal",
+        "value": "true"
+      },
+      "show": [
+        {
+          "name": "disableGCSCaching",
+          "type": "property"
         }
       ]
     }
