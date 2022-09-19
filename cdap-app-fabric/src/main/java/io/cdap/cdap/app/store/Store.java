@@ -30,6 +30,8 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
@@ -49,6 +51,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -514,6 +517,41 @@ public interface Store {
    */
   List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
                                long startTime, long endTime, int limitPerProgram);
+
+
+  /**
+   * Get application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @return state of application
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException;
+
+  /**
+   * Save application state.
+   *
+   * @param request a {@link AppStateKeyValue} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  void saveState(AppStateKeyValue request) throws ApplicationNotFoundException;
+
+  /**
+   * Delete application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  void deleteState(AppStateKey request) throws ApplicationNotFoundException;
+
+  /**
+   * Delete all states related to an application.
+   *
+   * @param namespaceId NamespaceId of the application.
+   * @param appName AppName of the application.
+   * @throws ApplicationNotFoundException if application with appName is not found.
+   */
+  void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException;
 
   /**
    * Ensures the given program exists in the given application spec.

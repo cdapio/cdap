@@ -73,6 +73,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
@@ -1028,7 +1030,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId, spec);
-
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
@@ -1137,5 +1138,47 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       LOG.debug("Failed to decode userId with exception {}", e);
     }
     return decodedUserId;
+  }
+
+  /**
+   * Get application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @return state of application
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
+    return store.getState(request);
+  }
+
+  /**
+   * Save application state.
+   *
+   * @param request a {@link AppStateKeyValue} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
+    store.saveState(request);
+  }
+
+  /**
+   * Delete application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
+    store.deleteState(request);
+  }
+
+  /**
+   * Delete all states related to an application.
+   *
+   * @param namespaceId NamespaceId of the application.
+   * @param appName AppName of the application.
+   * @throws ApplicationNotFoundException if application with appName is not found.
+   */
+  public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
+    store.deleteAllStates(namespaceId, appName);
   }
 }
