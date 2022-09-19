@@ -57,6 +57,7 @@ public class AppStateHandlerTest extends AppFabricTestBase {
   public static final String NAMESPACE_1 = "ns1";
   public static final String NAMESPACE_2 = "ns2";
   public static final String APP_NAME = "testapp";
+  public static final String APP_NAME_2 = "testapp2";
   public static final String STATE_KEY = "kafka";
   public static final String STATE_VALUE = "{\n" +
                                            "\"offset\" : 12345\n" +
@@ -175,6 +176,15 @@ public class AppStateHandlerTest extends AppFabricTestBase {
   @Test
   public void testAppStateNamespaceInvalid() throws IOException {
     String endpoint = "namespaces/" + NAMESPACE_2 + "/apps/" + APP_NAME + "/states/" + STATE_KEY;
+
+    // Get state with invalid namespace
+    HttpResponse response = executeHttpRequest(HttpMethod.GET, endpoint, null);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+  }
+
+  @Test
+  public void testAppNameInvalid() throws IOException {
+    String endpoint = "namespaces/" + NAMESPACE_1 + "/apps/" + APP_NAME_2 + "/states/" + STATE_KEY;
 
     // Get state with invalid namespace
     HttpResponse response = executeHttpRequest(HttpMethod.GET, endpoint, null);

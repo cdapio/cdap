@@ -524,30 +524,34 @@ public interface Store {
    *
    * @param request a {@link AppStateKey} object.
    * @return state of application
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
-  Optional<byte[]> getState(AppStateKey request);
+  Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException;
 
   /**
    * Save application state.
    *
    * @param request a {@link AppStateKeyValue} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
-  void saveState(AppStateKeyValue request);
+  void saveState(AppStateKeyValue request) throws ApplicationNotFoundException;
 
   /**
    * Delete application state.
    *
    * @param request a {@link AppStateKey} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
-  void deleteState(AppStateKey request);
+  void deleteState(AppStateKey request) throws ApplicationNotFoundException;
 
   /**
    * Delete all states related to an application.
    *
    * @param namespaceId NamespaceId of the application.
    * @param appName AppName of the application.
+   * @throws ApplicationNotFoundException if application with appName is not found.
    */
-  void deleteAllStates(NamespaceId namespaceId, String appName);
+  void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException;
 
   /**
    * Ensures the given program exists in the given application spec.

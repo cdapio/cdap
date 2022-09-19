@@ -895,35 +895,35 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Optional<byte[]> getState(AppStateKey request) {
+  public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
     return TransactionRunners.run(transactionRunner, context -> {
       verifyApplicationExists(request.getNamespaceId(), request.getAppName());
       return getAppStateTable(context).get(request);
-    });
+    }, ApplicationNotFoundException.class);
   }
 
   @Override
-  public void saveState(AppStateKeyValue request) {
+  public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       verifyApplicationExists(request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).save(request);
-    });
+    }, ApplicationNotFoundException.class);
   }
 
   @Override
-  public void deleteState(AppStateKey request) {
+  public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       verifyApplicationExists(request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).delete(request);
-    });
+    }, ApplicationNotFoundException.class);
   }
 
   @Override
-  public void deleteAllStates(NamespaceId namespaceId, String appName) {
+  public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       verifyApplicationExists(namespaceId, appName);
       getAppStateTable(context).deleteAll(namespaceId, appName);
-    });
+    }, ApplicationNotFoundException.class);
   }
 
   private AppStateTable getAppStateTable(StructuredTableContext context) throws TableNotFoundException {

@@ -1145,8 +1145,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param request a {@link AppStateKey} object.
    * @return state of application
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
-  public Optional<byte[]> getState(AppStateKey request) {
+  public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
     return store.getState(request);
   }
 
@@ -1154,8 +1155,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Save application state.
    *
    * @param request a {@link AppStateKeyValue} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
-  public void saveState(AppStateKeyValue request) {
+  public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
     store.saveState(request);
   }
 
@@ -1163,8 +1165,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Delete application state.
    *
    * @param request a {@link AppStateKey} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
-  public void deleteState(AppStateKey request) {
+  public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
     store.deleteState(request);
   }
 
@@ -1173,8 +1176,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param namespaceId NamespaceId of the application.
    * @param appName AppName of the application.
+   * @throws ApplicationNotFoundException if application with appName is not found.
    */
-  public void deleteAllStates(NamespaceId namespaceId, String appName) {
+  public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
     store.deleteAllStates(namespaceId, appName);
   }
 }
