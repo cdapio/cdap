@@ -73,7 +73,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
-import io.cdap.cdap.internal.app.store.state.AppState;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
@@ -1018,7 +1019,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId, spec);
     deleteAppMetadata(appId, spec);
-    deleteAllStates(appId);
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
     try {
@@ -1131,59 +1131,38 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Get application state.
    *
-   * @param request a {@link AppState} object with primary keys {namespace, appName, stateKey} set.
+   * @param request a {@link AppStateKey} object.
    * @return state of application
    */
-  public Optional<byte[]> getState(AppState request) {
+  public Optional<byte[]> getState(AppStateKey request) {
     return store.getState(request);
   }
 
   /**
    * Save application state.
    *
-   * @param request a {@link AppState} object with all the fields set.
+   * @param request a {@link AppStateKeyValue} object.
    */
-  public void saveState(AppState request) {
+  public void saveState(AppStateKeyValue request) {
     store.saveState(request);
   }
 
   /**
    * Delete application state.
    *
-   * @param request a {@link AppState} object with primary keys {namespace, appName, stateKey} set.
+   * @param request a {@link AppStateKey} object.
    */
-  public void deleteState(AppState request) {
+  public void deleteState(AppStateKey request) {
     store.deleteState(request);
   }
 
   /**
    * Delete all states related to an application.
    *
-   * @param appId a {@link ApplicationId} object with {namespace, appName} set.
+   * @param namespaceId NamespaceId of the application.
+   * @param appName AppName of the application.
    */
-  public void deleteAllStates(ApplicationId appId) {
-    deleteAllStates(new AppState(appId.getNamespace(), appId.getApplication()));
-  }
-
-  /**
-   * Delete all states related to an application.
-   *
-   * @param request a {@link AppState} object with primary keys {namespace, appName} set.
-   */
-  public void deleteAllStates(AppState request) {
-    store.deleteAllStates(request);
-  }
-
-  /**
-   * Validates if application exists
-   *
-   * @param appId a {@link ApplicationId} object.
-   * @throws ApplicationNotFoundException
-   */
-  public void validateApplication(ApplicationId appId) throws ApplicationNotFoundException {
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId);
-    }
+  public void deleteAllStates(NamespaceId namespaceId, String appName) {
+    store.deleteAllStates(namespaceId, appName);
   }
 }
