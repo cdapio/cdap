@@ -251,7 +251,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") String appId,
                         @PathParam("program-type") String type,
                         @PathParam("program-id") String programId) throws Exception {
-    getStatus(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId);
+    getStatus(request, responder, namespaceId, appId, getLatestAppVersion(namespaceId, appId), type, programId);
   }
 
   /**
@@ -348,7 +348,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("program-type") String type,
                             @PathParam("program-id") String programId,
                             @PathParam("action") String action) throws Exception {
-    doPerformAction(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId, action);
+    doPerformAction(request, responder, namespaceId, appId,
+                    getLatestAppVersion(namespaceId, appId), type, programId, action);
   }
 
   @POST
@@ -439,7 +440,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit)
     throws Exception {
-    programHistory(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type,
+    programHistory(request, responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), type,
                    programName, status, startTs, endTs, resultLimit);
   }
 
@@ -485,7 +486,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("program-type") String type,
                              @PathParam("program-name") String programName,
                              @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
-    programRunRecord(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName, runid);
+    programRunRecord(request, responder, namespaceId, appName,
+                     getLatestAppVersion(namespaceId, appName), type, programName, runid);
   }
 
   /**
@@ -591,7 +593,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                    @PathParam("namespace-id") String namespaceId, @PathParam("app-name") String appName,
                                    @PathParam("program-type") String type,
                                    @PathParam("program-name") String programName) throws Exception {
-    programSpecification(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+    programSpecification(request, responder, namespaceId, appName,
+                         getLatestAppVersion(namespaceId, appName), type, programName);
   }
 
 
@@ -675,9 +678,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                   scheduleStatus, Joiner.on(',').join(ProgramScheduleStatus.values())),
                                     e);
     }
-
+    String latestVersion = getLatestAppVersion(triggerNamespaceId, triggerAppName);
     ProgramId triggerProgramId = new NamespaceId(triggerNamespaceId)
-      .app(triggerAppName, triggerAppVersion)
+      .app(triggerAppName, latestVersion)
       .program(programType, triggerProgramName);
 
     Set<io.cdap.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
@@ -710,7 +713,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName) throws Exception {
-    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doGetSchedule(responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
   }
 
   @GET
@@ -742,7 +745,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus) throws Exception {
     getAllSchedules(request, responder, namespaceId, appName,
-                    ApplicationId.DEFAULT_VERSION, triggerType, scheduleStatus);
+                    getLatestAppVersion(namespaceId, appName), triggerType, scheduleStatus);
   }
 
   /**
@@ -778,7 +781,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("program-name") String program,
                                   @QueryParam("trigger-type") String triggerType,
                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    getProgramSchedules(request, responder, namespace, application, ApplicationId.DEFAULT_VERSION,
+    getProgramSchedules(request, responder, namespace, application, getLatestAppVersion(namespace, application),
                         type, program, triggerType, scheduleStatus);
   }
 
@@ -1015,7 +1018,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName)
     throws Exception {
-    doAddSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doAddSchedule(request, responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
   }
 
   @PUT
@@ -1072,7 +1075,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doUpdateSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doUpdateSchedule(request, responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
   }
 
   @POST
@@ -1133,7 +1136,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doDeleteSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doDeleteSchedule(responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
   }
 
   @DELETE
@@ -1168,7 +1171,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName,
                                      @PathParam("run-id") String runId) throws Exception {
-    updateLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName,
+    updateLogLevels(request, responder, namespace, appName, getLatestAppVersion(namespace, appName), type, programName,
                     runId);
   }
 
@@ -1203,7 +1206,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName,
                                     @PathParam("run-id") String runId) throws Exception {
-    resetLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName,
+    resetLogLevels(request, responder, namespace, appName, getLatestAppVersion(namespace, appName), type, programName,
                    runId);
   }
 
@@ -1608,7 +1611,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-name") String appName,
                                  @PathParam("program-type") String type,
                                  @PathParam("program-name") String programName) throws Exception {
-    getProgramRunCount(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+    getProgramRunCount(request, responder, namespaceId, appName,
+                       getLatestAppVersion(namespaceId, appName), type, programName);
   }
 
   /**
@@ -1782,7 +1786,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("service-type") String serviceType,
                                      @PathParam("program-name") String programName) throws Exception {
     getServiceAvailability(request, responder, namespaceId, appName,
-                           ApplicationId.DEFAULT_VERSION, serviceType, programName);
+                           getLatestAppVersion(namespaceId, appName), serviceType, programName);
   }
 
   /**
@@ -2024,5 +2028,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private boolean isTetheredRunRecord(RunRecord runRecord) {
     return runRecord.getPeerName() != null;
+  }
+
+  /**
+   * 
+   * @param namespaceId
+   * @param appId
+   * @return latest app version
+   */
+  private String getLatestAppVersion(String namespaceId, String appId) {
+    return store.getLatest(namespaceId, appId).getSpec().getAppVersion();
   }
 }

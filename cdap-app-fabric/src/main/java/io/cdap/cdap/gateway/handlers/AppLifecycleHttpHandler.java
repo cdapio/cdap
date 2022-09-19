@@ -875,7 +875,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ApplicationId validateApplicationId(NamespaceId namespaceId, String appId) throws BadRequestException {
-    return validateApplicationVersionId(namespaceId, appId, ApplicationId.DEFAULT_VERSION);
+    return validateApplicationVersionId(namespaceId, appId,
+                                  applicationLifecycleService.getLatestAppVersion(namespaceId.getNamespace(), appId));
   }
 
   private ApplicationId validateApplicationVersionId(String namespace, String appId, String versionId)

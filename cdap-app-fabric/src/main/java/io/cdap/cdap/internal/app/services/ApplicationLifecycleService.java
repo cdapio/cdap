@@ -342,6 +342,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
+   *
+   * @param namespaceId
+   * @param appId
+   * @return latest app version
+   */
+  public String getLatestAppVersion(String namespaceId, String appId) {
+    return store.getLatest(namespaceId, appId).getSpec().getAppVersion();
+  }
+
+  /**
    * Gets details for a set of given applications.
    *
    * @param appIds the set of application id to get details
