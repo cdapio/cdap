@@ -20,6 +20,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -47,8 +48,10 @@ public class AppStateTableTest extends AppFabricTestBase {
                                             "\"offset\" : 12345\n" +
                                             "}").getBytes(StandardCharsets.UTF_8);
 
-  private static AppState request;
-  private static AppState request2;
+  private static NamespaceId namespaceId1;
+  private static AppStateKey request;
+  private static AppStateKeyValue saveRequest;
+  private static AppStateKeyValue saveRequest2;
   private static AppStateTable appStateTable;
   private static TransactionManager txManager;
   private static TransactionRunner transactionRunner;
@@ -68,8 +71,10 @@ public class AppStateTableTest extends AppFabricTestBase {
 
     transactionRunner = getInjector().getInstance(TransactionRunner.class);
 
-    request = new AppState(NAMESPACE_1, APP_NAME, STATE_KEY, STATE_VALUE);
-    request2 = new AppState(NAMESPACE_1, APP_NAME, STATE_KEY_2, STATE_VALUE);
+    namespaceId1 = new NamespaceId(NAMESPACE_1);
+    request = new AppStateKey(namespaceId1, APP_NAME, STATE_KEY);
+    saveRequest = new AppStateKeyValue(namespaceId1, APP_NAME, STATE_KEY, STATE_VALUE);
+    saveRequest2 = new AppStateKeyValue(namespaceId1, APP_NAME, STATE_KEY_2, STATE_VALUE);
   }
 
   @AfterClass
@@ -89,7 +94,7 @@ public class AppStateTableTest extends AppFabricTestBase {
     // Cleanup
     try {
       TransactionRunners.run(transactionRunner, context -> {
-        getAppStateTable(context).deleteAllStates(request);
+        getAppStateTable(context).deleteAll(namespaceId1, APP_NAME);
       });
     } catch (Exception e) {
       // Exception because state might already have been deleted.
@@ -102,8 +107,8 @@ public class AppStateTableTest extends AppFabricTestBase {
   @Test
   public void testAppStateSaveAndGet() {
     Optional<byte[]> stateValue = TransactionRunners.run(transactionRunner, context -> {
-      getAppStateTable(context).saveState(request);
-      return getAppStateTable(context).getState(request);
+      getAppStateTable(context).save(saveRequest);
+      return getAppStateTable(context).get(request);
     });
 
     Assert.assertTrue(stateValue.isPresent());
@@ -114,9 +119,9 @@ public class AppStateTableTest extends AppFabricTestBase {
   public void testAppStateDelete() {
     // Save state
     Optional<byte[]> stateValue = TransactionRunners.run(transactionRunner, context -> {
-      getAppStateTable(context).saveState(request);
-      getAppStateTable(context).deleteState(request);
-      return getAppStateTable(context).getState(request);
+      getAppStateTable(context).save(saveRequest);
+      getAppStateTable(context).delete(request);
+      return getAppStateTable(context).get(request);
     });
 
     Assert.assertFalse(stateValue.isPresent());
@@ -126,12 +131,11 @@ public class AppStateTableTest extends AppFabricTestBase {
   public void testAppStateDeleteAll() {
     // Save state
     Optional<byte[]> stateValue = TransactionRunners.run(transactionRunner, context -> {
-      getAppStateTable(context).saveState(request);
-      getAppStateTable(context).saveState(request2);
+      getAppStateTable(context).save(saveRequest);
+      getAppStateTable(context).save(saveRequest2);
 
-      AppState deleteAllRequest = new AppState(NAMESPACE_1, APP_NAME, "");
-      getAppStateTable(context).deleteAllStates(deleteAllRequest);
-      return getAppStateTable(context).getState(request);
+      getAppStateTable(context).deleteAll(namespaceId1, APP_NAME);
+      return getAppStateTable(context).get(request);
     });
 
     Assert.assertFalse(stateValue.isPresent());

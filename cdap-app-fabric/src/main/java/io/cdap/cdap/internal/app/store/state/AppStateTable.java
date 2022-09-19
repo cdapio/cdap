@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.store.state;
 
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -43,40 +44,61 @@ public class AppStateTable {
   }
 
   /**
-   * @param request with key fields {namespace, appName, stateKey} set
-   * @return state of application
-   * @throws IOException if state not found
+   * Get application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @return state of application.
+   * @throws IOException if there is an error reading from the table.
    */
-  public Optional<byte[]> getState(AppState request) throws IOException {
+  public Optional<byte[]> get(AppStateKey request) throws IOException {
     Optional<StructuredRow> row = table.read(getKeyFields(request));
     return row.map(this::getStateValue);
   }
 
   /**
-   * @param request with all the fields set
-   * @throws IOException if exception while saving
+   * Save application state.
+   *
+   * @param request a {@link AppStateKeyValue} object.
+   * @throws IOException if there is an error saving to the table
    */
-  public void saveState(AppState request) throws IOException {
+  public void save(AppStateKeyValue request) throws IOException {
     table.upsert(getRow(request));
   }
 
   /**
-   * @param request with key fields {namespace, appName, stateKey} set
-   * @throws IOException if state not found
+   * Delete application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @throws IOException if there is an error deleting from the table.
    */
-  public void deleteState(AppState request) throws IOException {
+  public void delete(AppStateKey request) throws IOException {
     table.delete(getKeyFields(request));
   }
 
   /**
-   * @param request with key fields {namespace, appName} set
-   * @throws IOException if state not found
+   * Delete all states related to an application.
+   *
+   * @param namespaceId NamespaceId of the application.
+   * @param appName AppName of the application.
+   * @throws IOException if there is an error reading or deleting from the table.
    */
-  public void deleteAllStates(AppState request) throws IOException {
+  public void deleteAll(NamespaceId namespaceId, String appName) throws IOException {
     table.deleteAll(Range.from(ImmutableList.of(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
-                                                                   request.getNamespace()),
+                                                                   namespaceId.getNamespace()),
                                                 Fields.stringField(StoreDefinition.AppStateStore.APP_NAME_FIELD,
-                                                                   request.getAppName())),
+                                                                   appName)),
+                               Range.Bound.INCLUSIVE));
+  }
+
+  /**
+   * Delete all states related to a namespace.
+   *
+   * @param namespaceId NamespaceId of the application.
+   * @throws IOException if there is an error reading or deleting from the table.
+   */
+  public void deleteAll(NamespaceId namespaceId) throws IOException {
+    table.deleteAll(Range.from(ImmutableList.of(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
+                                                                   namespaceId.getNamespace())),
                                Range.Bound.INCLUSIVE));
   }
 
@@ -84,15 +106,16 @@ public class AppStateTable {
     return structuredRow.getBytes(StoreDefinition.AppStateStore.STATE_VALUE_FIELD);
   }
 
-  private List<Field<?>> getKeyFields(AppState request) {
+  private List<Field<?>> getKeyFields(AppStateKey request) {
     List<Field<?>> keyFields = new ArrayList<>(3);
-    keyFields.add(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD, request.getNamespace()));
+    keyFields.add(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
+                                     request.getNamespaceId().getNamespace()));
     keyFields.add(Fields.stringField(StoreDefinition.AppStateStore.APP_NAME_FIELD, request.getAppName()));
     keyFields.add(Fields.stringField(StoreDefinition.AppStateStore.STATE_KEY_FIELD, request.getStateKey()));
     return keyFields;
   }
 
-  private List<Field<?>> getRow(AppState request) {
+  private List<Field<?>> getRow(AppStateKeyValue request) {
     List<Field<?>> fields = new ArrayList<>(4);
     fields.addAll(getKeyFields(request));
     fields.add(Fields.bytesField(StoreDefinition.AppStateStore.STATE_VALUE_FIELD, request.getState()));

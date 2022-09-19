@@ -54,6 +54,8 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunCluster;
@@ -77,6 +79,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1066,6 +1069,53 @@ public abstract class DefaultStoreTest {
                                            suspendedPrograms.subSet(1000L, 45 * 10000L),
                                            runningPrograms.subSet(1000L, 45 * 10000L))),
                         runIdsToTime(store.getRunningInRange(1, 45 * 10)));
+  }
+
+  @Test
+  public void testStateRemovedOnRemoveApplication() {
+    String stateKey = "kafka";
+    byte[] stateValue = ("{\n" +
+                         "\"offset\" : 12345\n" +
+                         "}").getBytes(StandardCharsets.UTF_8);
+
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    NamespaceId namespaceId = new NamespaceId("account1");
+    ApplicationId appId = namespaceId.app(spec.getName());
+    store.addApplication(appId, spec);
+    store.saveState(new AppStateKeyValue(namespaceId, spec.getName(), stateKey, stateValue));
+
+    Assert.assertNotNull(store.getApplication(appId));
+    AppStateKey appStateRequest = new AppStateKey(namespaceId, spec.getName(), stateKey);
+    Assert.assertNotNull(store.getState(appStateRequest));
+
+    // removing application should work successfully
+    store.removeApplication(appId);
+
+    Assert.assertNull(store.getApplication(appId));
+  }
+
+  @Test
+  public void testStateRemovedOnRemoveAll() {
+    String stateKey = "kafka";
+    byte[] stateValue = ("{\n" +
+                         "\"offset\" : 12345\n" +
+                         "}").getBytes(StandardCharsets.UTF_8);
+    String appName = "application1";
+
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    NamespaceId namespaceId = new NamespaceId("account1");
+    ApplicationId appId = namespaceId.app(appName);
+    store.addApplication(appId, spec);
+    store.saveState(new AppStateKeyValue(namespaceId, appName, stateKey, stateValue));
+
+    Assert.assertNotNull(store.getApplication(appId));
+    AppStateKey appStateRequest = new AppStateKey(namespaceId, appName, stateKey);
+    Assert.assertNotNull(store.getState(appStateRequest));
+
+    // removing everything should work successfully
+    store.removeAll(namespaceId);
+
+    Assert.assertNull(store.getApplication(appId));
   }
 
   private void writeStartRecord(ProgramRunId run, ArtifactId artifactId) {

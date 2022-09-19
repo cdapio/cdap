@@ -30,7 +30,8 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
-import io.cdap.cdap.internal.app.store.state.AppState;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
@@ -521,31 +522,32 @@ public interface Store {
   /**
    * Get application state.
    *
-   * @param request a {@link AppState} object with primary keys {namespace, appName, stateKey} set.
+   * @param request a {@link AppStateKey} object.
    * @return state of application
    */
-  Optional<byte[]> getState(AppState request);
+  Optional<byte[]> getState(AppStateKey request);
 
   /**
    * Save application state.
    *
-   * @param request a {@link AppState} object with all the fields set.
+   * @param request a {@link AppStateKeyValue} object.
    */
-  void saveState(AppState request);
+  void saveState(AppStateKeyValue request);
 
   /**
    * Delete application state.
    *
-   * @param request a {@link AppState} object with primary keys {namespace, appName, stateKey} set.
+   * @param request a {@link AppStateKey} object.
    */
-  void deleteState(AppState request);
+  void deleteState(AppStateKey request);
 
   /**
    * Delete all states related to an application.
    *
-   * @param request a {@link AppState} object with primary keys {namespace, appName} set.
+   * @param namespaceId NamespaceId of the application.
+   * @param appName AppName of the application.
    */
-  void deleteAllStates(AppState request);
+  void deleteAllStates(NamespaceId namespaceId, String appName);
 
   /**
    * Ensures the given program exists in the given application spec.

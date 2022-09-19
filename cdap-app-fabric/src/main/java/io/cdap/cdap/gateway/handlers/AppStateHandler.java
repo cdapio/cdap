@@ -18,15 +18,11 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.security.AccessException;
-import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.internal.app.store.state.AppState;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
@@ -60,17 +56,17 @@ public class AppStateHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Get {@link AppState} for a given app-name and state-key.
+   * Get state for a given app-name and state-key.
    */
   @GET
-  @Path("/namespaces/{namespace-id}/apps/{app-name}/states/{state-key}")
+  @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")
   public void getState(HttpRequest request, HttpResponder responder,
-                       @PathParam("namespace-id") String namespaceId,
+                       @PathParam("namespace") String namespace,
                        @PathParam("app-name") String appName,
                        @PathParam("state-key") String stateKey) throws Exception {
-    validateInput(namespaceId, appName, stateKey);
-    AppState appStateRequest = new AppState(namespaceId, appName, stateKey);
-    Optional<byte[]> appStateResponse = applicationLifecycleService.getState(appStateRequest);
+    NamespaceId namespaceId = validateInput(namespace, appName, stateKey);
+    AppStateKey appStateKeyRequest = new AppStateKey(namespaceId, appName, stateKey);
+    Optional<byte[]> appStateResponse = applicationLifecycleService.getState(appStateKeyRequest);
     if (appStateResponse.isPresent()) {
       responder.sendByteArray(HttpResponseStatus.OK, appStateResponse.get(),
                               EmptyHttpHeaders.INSTANCE);
@@ -80,105 +76,107 @@ public class AppStateHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Save {@link AppState} for a given app-name and state-key.
+   * Save state for a given app-name and state-key.
    */
   @PUT
-  @Path("/namespaces/{namespace-id}/apps/{app-name}/states/{state-key}")
+  @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")
   public void saveState(FullHttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("namespace") String namespace,
                         @PathParam("app-name") String appName,
                         @PathParam("state-key") String stateKey) throws Exception {
     byte[] stateValue = new byte[request.content().readableBytes()];
     request.content().readBytes(stateValue);
 
-    validateInput(namespaceId, appName, stateKey, stateValue);
-    AppState appStateRequest = new AppState(namespaceId, appName, stateKey, stateValue);
-    applicationLifecycleService.saveState(appStateRequest);
+    NamespaceId namespaceId = validateInput(namespace, appName, stateKey, stateValue);
+    AppStateKeyValue appStateKeyRequest = new AppStateKeyValue(namespaceId, appName, stateKey, stateValue);
+    applicationLifecycleService.saveState(appStateKeyRequest);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
-   * Delete a {@link AppState} for a given app-name and state-key.
+   * Delete a state for a given app-name and state-key.
    */
   @DELETE
-  @Path("/namespaces/{namespace-id}/apps/{app-name}/states/{state-key}")
+  @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")
   public void deleteState(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("namespace") String namespace,
                           @PathParam("app-name") String appName,
-                          @PathParam("state-key") String stateKey) throws Exception {
-    validateInput(namespaceId, appName, stateKey);
-    AppState appStateRequest = new AppState(namespaceId, appName, stateKey);
-    applicationLifecycleService.deleteState(appStateRequest);
+                          @PathParam("state-key") String stateKey)
+    throws Exception {
+    NamespaceId namespaceId = validateInput(namespace, appName, stateKey);
+    AppStateKey appStateKeyRequest = new AppStateKey(namespaceId, appName, stateKey);
+    applicationLifecycleService.deleteState(appStateKeyRequest);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
-   * Delete all {@link AppState} for a given app-name.
+   * Delete all states for a given app-name.
    */
   @DELETE
-  @Path("/namespaces/{namespace-id}/apps/{app-name}/states")
+  @Path("/namespaces/{namespace}/apps/{app-name}/states")
   public void deleteAllStates(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId,
-                              @PathParam("app-name") String appName) throws Exception {
-    validateInput(namespaceId, appName);
-    AppState appStateRequest = new AppState(namespaceId, appName);
-    applicationLifecycleService.deleteAllStates(appStateRequest);
+                              @PathParam("namespace") String namespace,
+                              @PathParam("app-name") String appName)
+    throws Exception {
+    NamespaceId namespaceId = validateInput(namespace, appName);
+    applicationLifecycleService.deleteAllStates(namespaceId, appName);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private void validateInput(String namespace, String appName) throws Exception {
+  private NamespaceId validateInput(String namespace, String appName)
+    throws Exception {
     NamespaceId namespaceId = validateNamespace(namespace);
 
-    validateApplication(appName, namespaceId);
+    validateApplication(namespaceId, appName);
+
+    return namespaceId;
   }
 
-  private void validateInput(String namespace, String appName, String stateKey) throws Exception {
-    validateInput(namespace, appName);
+  private NamespaceId validateInput(String namespace, String appName, String stateKey)
+    throws Exception {
+    NamespaceId namespaceId = validateInput(namespace, appName);
 
     validateStateKey(stateKey);
+
+    return namespaceId;
   }
 
-  private void validateInput(String namespace, String appName, String stateKey, byte[] stateValue) throws Exception {
-    validateInput(namespace, appName, stateKey);
+  private NamespaceId validateInput(String namespace, String appName, String stateKey, byte[] stateValue)
+    throws Exception {
+    NamespaceId namespaceId = validateInput(namespace, appName, stateKey);
 
     validateStateValue(stateValue);
+
+    return namespaceId;
   }
 
-  private void validateApplication(String appName, NamespaceId namespaceId)
-    throws BadRequestException, ApplicationNotFoundException {
-    if (appName == null) {
-      throw new BadRequestException("Path parameter app-id cannot be empty");
-    }
-
-    ApplicationId appId = namespaceId.app(appName);
-    applicationLifecycleService.validateApplication(appId);
+  private void validateApplication(NamespaceId namespaceId, String appName)
+    throws NullPointerException, IllegalArgumentException {
+    // Verify app name is not null and has a valid app name
+    namespaceId.app(appName);
   }
 
-  private void validateStateKey(String stateKey) throws BadRequestException {
+  private void validateStateKey(String stateKey) throws NullPointerException {
     if (stateKey == null) {
-      throw new BadRequestException("Path parameter state-key cannot be empty");
+      throw new NullPointerException("Path parameter state-key cannot be empty");
     }
   }
 
-  private void validateStateValue(byte[] stateValue) throws BadRequestException {
+  private void validateStateValue(byte[] stateValue) throws NullPointerException {
     if (stateValue == null) {
-      throw new BadRequestException("Path parameter state-value cannot be empty");
+      throw new NullPointerException("Parameter state-value cannot be empty");
     }
   }
 
   private NamespaceId validateNamespace(String namespace) throws Exception {
-    if (namespace == null) {
-      throw new BadRequestException("Path parameter namespace-id cannot be empty");
+    // Verify namespace is not null and has a valid namespace name
+    NamespaceId namespaceId = new NamespaceId(namespace);
+
+    // Verify namespace exists
+    if (!namespaceId.equals(NamespaceId.SYSTEM)) {
+      namespaceQueryAdmin.get(namespaceId);
     }
 
-    NamespaceId namespaceId = new NamespaceId(namespace);
-    try {
-      if (!namespaceId.equals(NamespaceId.SYSTEM)) {
-        namespaceQueryAdmin.get(namespaceId);
-      }
-    } catch (NamespaceNotFoundException | AccessException e) {
-      throw e;
-    }
     return namespaceId;
   }
 }
