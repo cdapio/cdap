@@ -345,14 +345,26 @@ public class AppMetadataStore {
   }
 
   public ApplicationMeta getLatest(NamespaceId namespaceId, String appName) throws IOException {
-    // TODO : replace with scan by index. JIRA: CDAP-19656 
-    ApplicationMeta latest =  scanAppsWithRange(getNamespaceAndApplicationRange(namespaceId.getNamespace(), appName))
-      .stream().findAny().orElse(null);
-    // If latest  does not exist, return the app corresponding to the smallest version-id string
-    if (latest == null) {
-      return getAllAppVersions(namespaceId.getNamespace(), appName).stream().findFirst().orElse(null);
+    Range range = getNamespaceAndApplicationRange(namespaceId.getNamespace(), appName);
+    // scan based on: latest field set to true
+    Field<?> indexField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().scan(range, Integer.MAX_VALUE, indexField)) {
+      if (iterator.hasNext()) {
+        // There must be only one entry corresponding to latest = true
+        return decodeRow(iterator.next());
+      }
     }
-    return latest;
+    // To handle apps added prior to 6.8.0, which have latest = null in the table, a deterministic choice for a version
+    // needs to be made. The app corresponding to the smallest version-id string is made as a choice.
+    try (CloseableIterator<StructuredRow> iterator = getApplicationSpecificationTable()
+      .scan(range, Integer.MAX_VALUE, SortOrder.ASC)) {
+      if (iterator.hasNext()) {
+        return decodeRow(iterator.next());
+      }
+    }
+    // This is the case when when the app currently doesn't exist
+    return null;
   }
 
   public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) throws IOException {
@@ -447,9 +459,12 @@ public class AppMetadataStore {
   public void createApplicationVersion(ApplicationId id, ApplicationMeta appMeta) throws IOException,
     ConflictException {
     // Fetch the latest version
+    String parentVersion = appMeta.getChange().getParentVersion();
     ApplicationMeta latest = getLatest(id.getNamespaceId(), id.getApplication());
-    if (!deployAppAllowed(appMeta.getChange().getParentVersion(), latest)) {
-      throw new ConflictException("Can't deploy the application because the parent version is not the latest.");
+    if (!deployAppAllowed(parentVersion, latest)) {
+      throw new ConflictException(String.format("Cannot deploy the application because parent version '%s' does not " +
+                                                  "match the latest version '%s'.", parentVersion, latest == null ?
+        null : latest.getSpec().getAppVersion()));
     }
     // When the app does not exist -it is not an edit).
     if (latest != null) {
@@ -1932,19 +1947,6 @@ public class AppMetadataStore {
       while (iterator.hasNext()) {
         result.add(
           GSON.fromJson(iterator.next().getString(field), typeofT));
-      }
-    }
-    return result;
-  }
-
-  private List<ApplicationMeta> scanAppsWithRange(Range range)
-    throws IOException {
-    List<ApplicationMeta> result = new ArrayList<>();
-    try (CloseableIterator<StructuredRow> iterator = getApplicationSpecificationTable()
-      .scan(range, Integer.MAX_VALUE)) {
-      while (iterator.hasNext()) {
-        ApplicationMeta appMeta = decodeRow(iterator.next());
-        result.add(appMeta);
       }
     }
     return result;

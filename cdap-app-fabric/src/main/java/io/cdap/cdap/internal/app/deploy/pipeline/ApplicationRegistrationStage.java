@@ -57,7 +57,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(), input.getSpecification(),
-                                               input.getChangeDetail());
+                                                  input.getChangeDetail());
     try {
       store.addApplication(input.getApplicationId(), appMeta);
     } catch (Exception e) {
