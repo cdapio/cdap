@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,23 @@
 package io.cdap.cdap.internal.tethering;
 
 /**
- * Status of a tethering connection.
+ * Control message and its message id.
+ * These messages are sent from the tethering server to the client.
  */
-public enum TetheringStatus {
-  PENDING,
-  ACCEPTED,
-  REJECTED,
-  NOT_FOUND
+public class TetheringControlMessageWithId {
+  private TetheringControlMessage controlMessage;
+  private String messageId;
+
+  public TetheringControlMessageWithId(TetheringControlMessage controlMessage, String messageId) {
+    this.controlMessage = controlMessage;
+    this.messageId = messageId;
+  }
+
+  public TetheringControlMessage getControlMessage() {
+    return controlMessage;
+  }
+
+  public String getMessageId() {
+    return messageId;
+  }
 }

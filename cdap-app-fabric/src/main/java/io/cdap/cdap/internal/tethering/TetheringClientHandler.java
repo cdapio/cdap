@@ -19,11 +19,13 @@ package io.cdap.cdap.internal.tethering;
 import com.google.gson.Gson;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -35,6 +37,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
@@ -48,13 +51,17 @@ public class TetheringClientHandler extends AbstractHttpHandler {
   private final TetheringStore store;
   private final ContextAccessEnforcer contextAccessEnforcer;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final TetheringClient tetheringClient;
 
   @Inject
-  TetheringClientHandler(TetheringStore store, ContextAccessEnforcer contextAccessEnforcer,
-                         NamespaceQueryAdmin namespaceQueryAdmin) {
+  TetheringClientHandler(CConfiguration cConf, TetheringStore store, ContextAccessEnforcer contextAccessEnforcer,
+                         NamespaceQueryAdmin namespaceQueryAdmin,
+                         @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
+                           RemoteAuthenticator remoteAuthenticator) {
     this.store = store;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.tetheringClient = new TetheringClient(remoteAuthenticator, cConf.get(Constants.INSTANCE_NAME));
   }
 
   /**
@@ -73,6 +80,7 @@ public class TetheringClientHandler extends AbstractHttpHandler {
     validateEndpoint(tetheringCreationRequest.getEndpoint());
     PeerInfo peerInfo = new PeerInfo(tetheringCreationRequest.getPeer(), tetheringCreationRequest.getEndpoint(),
                                      TetheringStatus.PENDING, peerMetadata, System.currentTimeMillis());
+    tetheringClient.createTethering(peerInfo);
     store.addPeer(peerInfo);
     responder.sendStatus(HttpResponseStatus.OK);
   }
