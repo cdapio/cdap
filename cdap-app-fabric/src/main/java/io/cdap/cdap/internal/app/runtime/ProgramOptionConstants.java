@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime;
 
 import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.master.spi.MasterOptionConstants;
 
 /**
  * Defines constants used across different modules.
@@ -172,9 +173,9 @@ public final class ProgramOptionConstants {
   public static final String PEER_ENDPOINT = "peerEndpoint";
 
   /**
-   * Option for name of the runtime namespace for the tethered program run.
+   * Option for name of the runtime namespace for the program run.
    */
-  public static final String RUNTIME_NAMESPACE = "runtimeNamespace";
+  public static final String RUNTIME_NAMESPACE = MasterOptionConstants.RUNTIME_NAMESPACE;
 
   /**
    * Option for a URI to a directory containing additional resources needed for the program run. This is needed for

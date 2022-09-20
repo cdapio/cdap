@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
@@ -28,6 +29,7 @@ import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillController;
@@ -43,6 +45,9 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -159,6 +164,10 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           TwillPreparer twillPreparer = twillRunner.prepare(
             new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), taskworkerResourceSpec,
                                            artifactLocalizerResourceSpec));
+
+          Map<String, String> configMap = new HashMap<>();
+          configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE, NamespaceId.SYSTEM.getNamespace());
+          twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
