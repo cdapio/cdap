@@ -73,7 +73,7 @@ public class DataStreamsPipelineSpecGeneratorTest {
     specGenerator.configureAtleastOnceMode(etlConfig, builder);
 
     DataStreamsPipelineSpec pipelineSpec = builder.build();
-    Assert.assertTrue(pipelineSpec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.NATIVE_STATE_STORE);
+    Assert.assertTrue(pipelineSpec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.STATE_STORE);
   }
 
   @Test
