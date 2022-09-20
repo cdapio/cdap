@@ -22,7 +22,7 @@ package io.cdap.cdap.etl.api.streaming;
 public interface StreamingEventHandler {
 
   /**
-   * Call on each completed batch
+   * Call on each completed batch.
    *
    * @param streamingContext @link{StreamingContext} Context object for this stage
    */

@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
-import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -53,7 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Function used to write a batch of data to a batch sink for use with a JavaDStream.
@@ -66,19 +64,15 @@ public class StreamingMultiSinkFunction implements VoidFunction2<JavaRDD<RecordI
   private final Set<String> group;
   private final Set<String> sinkNames;
   private final Map<String, StageStatisticsCollector> collectors;
-  @Nullable
-  private final DatasetContext datasetContext;
 
   public StreamingMultiSinkFunction(JavaSparkExecutionContext sec, PhaseSpec phaseSpec,
                                     Set<String> group, Set<String> sinkNames,
-                                    Map<String, StageStatisticsCollector> collectors,
-                                    DatasetContext datasetContext) {
+                                    Map<String, StageStatisticsCollector> collectors) {
     this.sec = sec;
     this.phaseSpec = phaseSpec;
     this.group = group;
     this.sinkNames = sinkNames;
     this.collectors = collectors;
-    this.datasetContext = datasetContext;
   }
 
   @Override
@@ -124,7 +118,15 @@ public class StreamingMultiSinkFunction implements VoidFunction2<JavaRDD<RecordI
       MultiSinkFunction multiSinkFunction = new MultiSinkFunction(sec, phaseSpec, group, collectors);
       Set<String> outputNames = sinkFactory.writeCombinedRDD(data.flatMapToPair(multiSinkFunction),
                                                              sec, sinkNames);
-      registerLineage(outputNames);
+      sec.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          for (String outputName : outputNames) {
+            ExternalDatasets.registerLineage(sec.getAdmin(), outputName, AccessType.WRITE,
+                                             null, () -> context.getDataset(outputName));
+          }
+        }
+      });
     } catch (Exception e) {
       LOG.error("Error writing to sinks {} for the batch for time {}.", sinkNames, logicalStartTime, e);
       ranSuccessfully = false;
@@ -142,27 +144,6 @@ public class StreamingMultiSinkFunction implements VoidFunction2<JavaRDD<RecordI
     }
   }
 
-  private void registerLineage(Set<String> outputNames) throws TransactionFailureException, DatasetManagementException {
-    if (datasetContext != null) {
-      registerLineageWithContext(datasetContext, outputNames);
-      return;
-    }
-    sec.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        registerLineageWithContext(context, outputNames);
-      }
-    });
-  }
-
-  private void registerLineageWithContext(DatasetContext context,
-                                          Set<String> outputNames) throws DatasetManagementException {
-    for (String outputName : outputNames) {
-      ExternalDatasets.registerLineage(sec.getAdmin(), outputName, AccessType.WRITE,
-                                       null, () -> context.getDataset(outputName));
-    }
-  }
-
   private Map<String, SubmitterLifecycle<?>> createStages(MacroEvaluator evaluator) throws InstantiationException {
     PluginContext pluginContext = sec.getPluginContext();
     Map<String, SubmitterLifecycle<?>> stages = new HashMap<>();
@@ -174,59 +155,39 @@ public class StreamingMultiSinkFunction implements VoidFunction2<JavaRDD<RecordI
   }
 
   private void prepareRun(PipelineRuntime pipelineRuntime, SparkBatchSinkFactory sinkFactory, StageSpec stageSpec,
-                          SubmitterLifecycle<?> plugin) throws Exception {
-    if (datasetContext != null) {
-      prepareRunWithContext(datasetContext, stageSpec, sinkFactory, pipelineRuntime, plugin);
-      return;
-    }
+                          SubmitterLifecycle<?> plugin) throws TransactionFailureException {
     sec.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext datasetContext) throws Exception {
-        prepareRunWithContext(datasetContext, stageSpec, sinkFactory, pipelineRuntime, plugin);
+        if (stageSpec.getPluginType().equals(BatchSink.PLUGIN_TYPE)) {
+          SparkBatchSinkContext context =
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
+          ((SubmitterLifecycle<BatchSinkContext>) plugin).prepareRun(context);
+          return;
+        }
+
+        SparkSubmitterContext context = new SparkSubmitterContext(sec, pipelineRuntime, datasetContext, stageSpec);
+        ((SubmitterLifecycle<StageSubmitterContext>) plugin).prepareRun(context);
       }
     });
-  }
-
-  private void prepareRunWithContext(DatasetContext datasetContext, StageSpec stageSpec,
-                                     SparkBatchSinkFactory sinkFactory, PipelineRuntime pipelineRuntime,
-                                     SubmitterLifecycle<?> plugin) throws Exception {
-    if (stageSpec.getPluginType().equals(BatchSink.PLUGIN_TYPE)) {
-      SparkBatchSinkContext context =
-        new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
-      ((SubmitterLifecycle<BatchSinkContext>) plugin).prepareRun(context);
-      return;
-    }
-
-    SparkSubmitterContext context = new SparkSubmitterContext(sec, pipelineRuntime, datasetContext, stageSpec);
-    ((SubmitterLifecycle<StageSubmitterContext>) plugin).prepareRun(context);
   }
 
   private void onRunFinish(PipelineRuntime pipelineRuntime, SparkBatchSinkFactory sinkFactory, StageSpec stageSpec,
                            SubmitterLifecycle<?> plugin,
                            boolean succeeded) throws TransactionFailureException {
-    if (datasetContext != null) {
-      onRunFinishWithContext(datasetContext, stageSpec, sinkFactory, pipelineRuntime, plugin, succeeded);
-      return;
-    }
     sec.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext datasetContext) throws Exception {
-        onRunFinishWithContext(datasetContext, stageSpec, sinkFactory, pipelineRuntime, plugin, succeeded);
+        if (stageSpec.getPluginType().equals(BatchSink.PLUGIN_TYPE)) {
+          SparkBatchSinkContext sinkContext =
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
+          ((SubmitterLifecycle<BatchSinkContext>) plugin).onRunFinish(succeeded, sinkContext);
+          return;
+        }
+
+        SparkSubmitterContext context = new SparkSubmitterContext(sec, pipelineRuntime, datasetContext, stageSpec);
+        ((SubmitterLifecycle<StageSubmitterContext>) plugin).onRunFinish(succeeded, context);
       }
     });
-  }
-
-  private void onRunFinishWithContext(DatasetContext datasetContext, StageSpec stageSpec,
-                                      SparkBatchSinkFactory sinkFactory, PipelineRuntime pipelineRuntime,
-                                      SubmitterLifecycle<?> plugin, boolean succeeded) {
-    if (stageSpec.getPluginType().equals(BatchSink.PLUGIN_TYPE)) {
-      SparkBatchSinkContext sinkContext =
-        new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
-      ((SubmitterLifecycle<BatchSinkContext>) plugin).onRunFinish(succeeded, sinkContext);
-      return;
-    }
-
-    SparkSubmitterContext context = new SparkSubmitterContext(sec, pipelineRuntime, datasetContext, stageSpec);
-    ((SubmitterLifecycle<StageSubmitterContext>) plugin).onRunFinish(succeeded, context);
   }
 }

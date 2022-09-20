@@ -17,7 +17,6 @@
 package io.cdap.cdap.datastreams;
 
 import io.cdap.cdap.api.Transactionals;
-import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
@@ -80,7 +79,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Driver for running pipelines using Spark Streaming.
@@ -92,16 +90,16 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext javaStreamingContext;
   private final DataStreamsPipelineSpec spec;
-  private final boolean nativeStateStoreEnabled;
+  private final boolean stateStoreEnabled;
 
   public SparkStreamingPipelineRunner(JavaSparkExecutionContext sec, JavaStreamingContext javaStreamingContext,
                                       DataStreamsPipelineSpec spec) {
     this.sec = sec;
     this.javaStreamingContext = javaStreamingContext;
     this.spec = spec;
-    this.nativeStateStoreEnabled = spec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.NATIVE_STATE_STORE
+    this.stateStoreEnabled = spec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.STATE_STORE
       && !spec.isPreviewEnabled(sec);
-    LOG.debug("Native state handling enabled : {}", nativeStateStoreEnabled);
+    LOG.debug("State handling mode is : {}", spec.getStateSpec().getMode());
   }
 
   @Override
@@ -223,115 +221,111 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
                             MacroEvaluator macroEvaluator, CombinerDag groupedDag,
                             Map<String, Set<String>> groups, Set<String> branchers,
                             Set<String> shufflers) throws Exception {
-    if (nativeStateStoreEnabled) {
-      //Process source separately
-      List<String> topologicalOrder = groupedDag.getTopologicalOrder();
-      String source = topologicalOrder.get(0);
-      StageSpec stageSpec = pipelinePhase.getStage(source);
-      StageStatisticsCollector collector = collectors.get(source) == null ? new NoopStageStatisticsCollector()
-        : collectors.get(source);
-      JavaDStream<Object> dStream = getDStream(stageSpec, collector);
-      DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
-      dStream.foreachRDD((javaRDD, time) -> {
-        Transactionals.execute(sec, context -> {
-
-          JavaRDD<Object> batchRDD = javaRDD;
-          if (dataTracer.isEnabled()) {
-            // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
-            batchRDD = new LimitingFunction<>(spec.getNumOfRecordsPreview()).call(batchRDD);
-          }
-          batchRDD = new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer)
-            .call(batchRDD);
-          JavaRDD<RecordInfo<Object>> wrapped = batchRDD.map(new WrapOutputTransformFunction<>(stageSpec.getName()));
-          StreamingContext streamingContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext);
-          RDDCollection<RecordInfo<Object>> rddCollection =
-            new RDDCollection<RecordInfo<Object>>(sec, functionCacheFactory, javaStreamingContext.sparkContext(),
-                                                  new SQLContext(javaStreamingContext.sparkContext()),
-                                                  context, new SparkBatchSinkFactory(), wrapped);
-          EmittedRecords records = getEmittedRecords(pipelinePhase, stageSpec, rddCollection, groupedDag,
-                                                      branchers, shufflers, false, false);
-          Map<String, EmittedRecords> emittedRecords = new HashMap<>();
-          Collection<Runnable> sinkRunnables = new ArrayList<>();
-          emittedRecords.put(source, records);
-
-          //process the remaining stages
-          for (int i = 1; i < topologicalOrder.size(); i++) {
-            String stageName = topologicalOrder.get(i);
-            processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
-                         functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups, branchers, shufflers,
-                         sinkRunnables, stageName, time.milliseconds(), context);
-          }
-
-          //We should have all the sink runnables at this point, execute them
-          executeSinkRunnables(sec, sinkRunnables);
-
-          if (dStream instanceof StreamingEventHandler) {
-            ((StreamingEventHandler) dStream).onBatchCompleted(streamingContext);
-          } else if (dStream.dstream() instanceof StreamingEventHandler) {
-            ((StreamingEventHandler) (dStream.dstream())).onBatchCompleted(streamingContext);
-          }
-
-        }, Exception.class);
-
-      });
-
-    } else {
+    if (!stateStoreEnabled) {
       super.processDag(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
                        functionCacheFactory, macroEvaluator, groupedDag, groups, branchers, shufflers);
+      return;
     }
+
+    //Process source separately
+    List<String> topologicalOrder = groupedDag.getTopologicalOrder();
+    String source = topologicalOrder.get(0);
+    StageSpec stageSpec = pipelinePhase.getStage(source);
+    StageStatisticsCollector collector = collectors.getOrDefault(source, new NoopStageStatisticsCollector());
+    JavaDStream<Object> dStream = getDStream(stageSpec, collector);
+    DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
+    dStream.foreachRDD((javaRDD, time) -> {
+      Collection<Runnable> sinkRunnables = new ArrayList<>();
+      Transactionals.execute(sec, context -> {
+
+        JavaRDD<Object> batchRDD = javaRDD;
+        if (dataTracer.isEnabled()) {
+          // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
+          batchRDD = new LimitingFunction<>(spec.getNumOfRecordsPreview()).call(batchRDD);
+        }
+        batchRDD = new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer)
+          .call(batchRDD);
+        JavaRDD<RecordInfo<Object>> wrapped = batchRDD.map(new WrapOutputTransformFunction<>(stageSpec.getName()));
+        RDDCollection<RecordInfo<Object>> rddCollection =
+          new RDDCollection<RecordInfo<Object>>(sec, functionCacheFactory, javaStreamingContext.sparkContext(),
+                                                new SQLContext(javaStreamingContext.sparkContext()),
+                                                context, new SparkBatchSinkFactory(), wrapped);
+        EmittedRecords records = getEmittedRecords(pipelinePhase, stageSpec, rddCollection, groupedDag,
+                                                   branchers, shufflers, false, false);
+        Map<String, EmittedRecords> emittedRecords = new HashMap<>();
+        emittedRecords.put(source, records);
+
+        //process the remaining stages
+        for (int i = 1; i < topologicalOrder.size(); i++) {
+          String stageName = topologicalOrder.get(i);
+          processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
+                       functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups, branchers, shufflers,
+                       sinkRunnables, stageName, time.milliseconds(), context);
+        }
+      }, Exception.class);
+
+      //We should have all the sink runnables at this point, execute them
+      executeSinkRunnables(sec, sinkRunnables);
+
+      StreamingContext streamingContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext);
+      if (dStream instanceof StreamingEventHandler) {
+        ((StreamingEventHandler) dStream).onBatchCompleted(streamingContext);
+      } else if (dStream.dstream() instanceof StreamingEventHandler) {
+        ((StreamingEventHandler) (dStream.dstream())).onBatchCompleted(streamingContext);
+      }
+    });
   }
 
   @Override
   protected Runnable getSparkSinkRunnable(StageSpec stageSpec, SparkCollection<Object> stageData,
-                                          SparkSink<Object> sparkSink, long time,
-                                          @Nullable DatasetContext datasetContext) throws Exception {
-    if (nativeStateStoreEnabled) {
-      return () -> {
-        try {
-          new StreamingSparkSinkFunction<>(sec, stageSpec, datasetContext)
-            .call(stageData.getUnderlying(), Time.apply(time));
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      };
+                                          SparkSink<Object> sparkSink, long time) throws Exception {
+    if (!stateStoreEnabled) {
+      return super.getSparkSinkRunnable(stageSpec, stageData, sparkSink, time);
     }
-    return super.getSparkSinkRunnable(stageSpec, stageData, sparkSink, time, datasetContext);
+
+    return () -> {
+      try {
+        new StreamingSparkSinkFunction<>(sec, stageSpec).call(stageData.getUnderlying(), Time.apply(time));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 
   @Override
   protected Runnable getBatchSinkRunnable(FunctionCache.Factory functionCacheFactory, StageSpec stageSpec,
                                           SparkCollection<Object> stageData,
-                                          PluginFunctionContext pluginFunctionContext, long time,
-                                          @Nullable DatasetContext datasetContext) {
-    if (nativeStateStoreEnabled) {
-      return () -> {
-        try {
-          new StreamingBatchSinkFunction<>(sec, stageSpec, functionCacheFactory.newCache(), datasetContext).call(
-            stageData.getUnderlying(), Time.apply(time));
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      };
+                                          PluginFunctionContext pluginFunctionContext, long time) {
+    if (!stateStoreEnabled) {
+      return super.getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData, pluginFunctionContext, time);
     }
-    return super.getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData, pluginFunctionContext, time,
-                                      datasetContext);
+
+    return () -> {
+      try {
+        new StreamingBatchSinkFunction<>(sec, stageSpec, functionCacheFactory.newCache()).call(
+          stageData.getUnderlying(), Time.apply(time));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 
   @Override
   protected Runnable getGroupSinkRunnable(PhaseSpec phaseSpec, Set<String> groupStages,
                                           Map<String, StageStatisticsCollector> collectors,
                                           SparkCollection<RecordInfo<Object>> fullInput, Set<String> groupSinks,
-                                          long time, @Nullable DatasetContext datasetContext) {
-    if (nativeStateStoreEnabled) {
-      return () -> {
-        try {
-          new StreamingMultiSinkFunction(sec, phaseSpec, groupStages, groupSinks, collectors, datasetContext).call(
-            fullInput.getUnderlying(), Time.apply(time));
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      };
+                                          long time) {
+    if (!stateStoreEnabled) {
+      return super.getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time);
     }
-    return super.getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time, datasetContext);
+
+    return () -> {
+      try {
+        new StreamingMultiSinkFunction(sec, phaseSpec, groupStages, groupSinks, collectors).call(
+          fullInput.getUnderlying(), Time.apply(time));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 }

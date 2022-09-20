@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
-import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -40,12 +39,10 @@ import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
-import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Function used to write a batch of data to a batch sink for use with a JavaDStream.
@@ -58,15 +55,11 @@ public class StreamingBatchSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
   private final JavaSparkExecutionContext sec;
   private final StageSpec stageSpec;
   private final FunctionCache functionCache;
-  @Nullable
-  private final DatasetContext datasetContext;
 
-  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec, FunctionCache functionCache,
-                                    @Nullable DatasetContext datasetContext) {
+  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec, FunctionCache functionCache) {
     this.sec = sec;
     this.stageSpec = stageSpec;
     this.functionCache = functionCache;
-    this.datasetContext = datasetContext;
   }
 
   @Override
@@ -89,7 +82,14 @@ public class StreamingBatchSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
     boolean isDone = false;
 
     try {
-      prepareRun(sinkFactory, batchSink, pipelineRuntime);
+      sec.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext datasetContext) throws Exception {
+          SparkBatchSinkContext sinkContext =
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
+          batchSink.prepareRun(sinkContext);
+        }
+      });
       isPrepared = true;
 
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec,
@@ -99,83 +99,37 @@ public class StreamingBatchSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
 
       Set<String> outputNames = sinkFactory.writeFromRDD(data.flatMapToPair(
         new BatchSinkFunction<T, Object, Object>(pluginFunctionContext, functionCache)), sec, stageName);
-      registerLineage(outputNames);
+      sec.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          for (String outputName : outputNames) {
+            ExternalDatasets.registerLineage(sec.getAdmin(), outputName, AccessType.WRITE,
+                                             null, () -> context.getDataset(outputName));
+          }
+        }
+      });
       isDone = true;
-      onRunFinish(sinkFactory, batchSink, pipelineRuntime, true);
+      sec.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext datasetContext) throws Exception {
+          SparkBatchSinkContext sinkContext =
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
+          batchSink.onRunFinish(true, sinkContext);
+        }
+      });
     } catch (Exception e) {
       LOG.error("Error writing to sink {} for the batch for time {}.", stageName, logicalStartTime, e);
     } finally {
       if (isPrepared && !isDone) {
-        onRunFinish(sinkFactory, batchSink, pipelineRuntime, false);
+        sec.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext datasetContext) throws Exception {
+            SparkBatchSinkContext sinkContext =
+              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
+            batchSink.onRunFinish(false, sinkContext);
+          }
+        });
       }
     }
-  }
-
-  private void onRunFinish(SparkBatchSinkFactory sinkFactory, BatchSink<Object, Object, Object> batchSink,
-                           PipelineRuntime pipelineRuntime, boolean succeeded) throws TransactionFailureException {
-    if (datasetContext != null) {
-      onRunFinishWithContext(datasetContext, sinkFactory, pipelineRuntime, batchSink, succeeded);
-      return;
-    }
-
-    sec.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext datasetContext) throws Exception {
-        onRunFinishWithContext(datasetContext, sinkFactory, pipelineRuntime, batchSink, succeeded);
-      }
-    });
-  }
-
-  private void onRunFinishWithContext(DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
-                                      PipelineRuntime pipelineRuntime, BatchSink<Object, Object, Object> batchSink,
-                                      boolean succeeded) {
-    SparkBatchSinkContext sinkContext =
-      new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
-    batchSink.onRunFinish(succeeded, sinkContext);
-  }
-
-  private void registerLineage(Set<String> outputNames) throws TransactionFailureException, DatasetManagementException {
-    if (datasetContext != null) {
-      registerLineageWithContext(datasetContext, outputNames);
-      return;
-    }
-
-    sec.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        registerLineageWithContext(context, outputNames);
-      }
-    });
-  }
-
-  private void registerLineageWithContext(DatasetContext context,
-                                          Set<String> outputNames) throws DatasetManagementException {
-    for (String outputName : outputNames) {
-      ExternalDatasets.registerLineage(sec.getAdmin(), outputName, AccessType.WRITE,
-                                       null, () -> context.getDataset(outputName));
-    }
-  }
-
-  private void prepareRun(SparkBatchSinkFactory sinkFactory, BatchSink<Object, Object, Object> batchSink,
-                          PipelineRuntime pipelineRuntime) throws Exception {
-    if (datasetContext != null) {
-      prepareRunWithContext(sinkFactory, batchSink, pipelineRuntime, datasetContext);
-      return;
-    }
-
-    sec.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext datasetContext) throws Exception {
-        prepareRunWithContext(sinkFactory, batchSink, pipelineRuntime, datasetContext);
-      }
-    });
-  }
-
-  private void prepareRunWithContext(SparkBatchSinkFactory sinkFactory, BatchSink<Object, Object, Object> batchSink,
-                                     PipelineRuntime pipelineRuntime,
-                                     DatasetContext datasetContext) throws Exception {
-    SparkBatchSinkContext sinkContext =
-      new SparkBatchSinkContext(sinkFactory, sec, datasetContext, pipelineRuntime, stageSpec);
-    batchSink.prepareRun(sinkContext);
   }
 }

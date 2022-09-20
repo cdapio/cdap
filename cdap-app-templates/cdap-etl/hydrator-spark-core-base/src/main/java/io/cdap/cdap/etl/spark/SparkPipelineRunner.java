@@ -299,12 +299,11 @@ public abstract class SparkPipelineRunner {
       }
 
     } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
-      sinkRunnables.add(getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData, pluginFunctionContext,
-                                             time, datasetContext));
+      sinkRunnables.add(getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData, pluginFunctionContext, time));
     } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
       SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
-      sinkRunnables.add(getSparkSinkRunnable(stageSpec, stageData, sparkSink, time, datasetContext));
+      sinkRunnables.add(getSparkSinkRunnable(stageSpec, stageData, sparkSink, time));
 
     } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -392,15 +391,13 @@ public abstract class SparkPipelineRunner {
   }
 
   protected Runnable getSparkSinkRunnable(StageSpec stageSpec, SparkCollection<Object> stageData,
-                                          SparkSink<Object> sparkSink, long time,
-                                          @Nullable DatasetContext datasetContext) throws Exception {
+                                          SparkSink<Object> sparkSink, long time) throws Exception {
     return stageData.createStoreTask(stageSpec, sparkSink);
   }
 
   protected Runnable getBatchSinkRunnable(FunctionCache.Factory functionCacheFactory, StageSpec stageSpec,
                                           SparkCollection<Object> stageData,
-                                          PluginFunctionContext pluginFunctionContext, long time,
-                                          @Nullable DatasetContext datasetContext) {
+                                          PluginFunctionContext pluginFunctionContext, long time) {
     return stageData.createStoreTask(stageSpec, new BatchSinkFunction(
       pluginFunctionContext, functionCacheFactory.newCache()));
   }
@@ -601,13 +598,13 @@ public abstract class SparkPipelineRunner {
 
     // Sets.intersection returns an unserializable Set, so copy it into a HashSet.
     Set<String> groupSinks = new HashSet<>(Sets.intersection(groupStages, phaseSpec.getPhase().getSinks()));
-    return getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time, datasetContext);
+    return getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time);
   }
 
   protected Runnable getGroupSinkRunnable(PhaseSpec phaseSpec, Set<String> groupStages,
                                           Map<String, StageStatisticsCollector> collectors,
                                           SparkCollection<RecordInfo<Object>> fullInput, Set<String> groupSinks,
-                                          long time, @Nullable DatasetContext datasetContext) {
+                                          long time) {
     return fullInput.createMultiStoreTask(phaseSpec, groupStages, groupSinks, collectors);
   }
 

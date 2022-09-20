@@ -115,7 +115,7 @@ public class DataStreamsPipelineSpecGenerator
     if (nativeStateTrackingSupported(config, sourcePluginTypes, stateHandlingSources)) {
       // Native state tracking and spark checkpointing is mutually exclusive
       // This is because Spark recreates context from checkpoint data
-      DataStreamsStateSpec stateSpec = DataStreamsStateSpec.getBuilder(DataStreamsStateSpec.Mode.NATIVE_STATE_STORE)
+      DataStreamsStateSpec stateSpec = DataStreamsStateSpec.getBuilder(DataStreamsStateSpec.Mode.STATE_STORE)
         .build();
       specBuilder.setStateSpec(stateSpec);
     } else {
