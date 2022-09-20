@@ -61,6 +61,15 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
   }
 
   @Override
+  public RuntimeJobStatus getStatus() throws Exception {
+    try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
+      return runtimeJobManager.getDetail(programRunInfo)
+        .map(RuntimeJobDetail::getStatus)
+        .orElse(RuntimeJobStatus.UNKNOWN);
+    }
+  }
+
+  @Override
   public void terminate() throws Exception {
     LOG.debug("Stopping program run {}", programRunId);
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
@@ -69,10 +78,10 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
   }
 
   @Override
-  public void kill() throws Exception {
-    LOG.debug("Force stopping program run {}", programRunId);
+  public void kill(RuntimeJobStatus status) throws Exception {
+    LOG.debug("Force stopping program run {} based on program status {}", programRunId, status);
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
-      runtimeJobManager.kill(programRunInfo);
+      runtimeJobManager.kill(new RuntimeJobDetail(programRunInfo, status));
     }
   }
 }

@@ -19,7 +19,6 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -44,14 +43,6 @@ public interface RuntimeJobManager extends Closeable {
   Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) throws Exception;
 
   /**
-   * Provides all the jobs that are in running state. If there are no running jobs, it should return empty list.
-   *
-   * @return a list job details
-   * @throws Exception thrown if any exception while getting list of running jobs
-   */
-  List<RuntimeJobDetail> list() throws Exception;
-
-  /**
    * Gracefully stops a running job. If the job is already in terminal status, then this method should be a no-op. If
    * the job does not exist, this method should be a no-op.
    *
@@ -64,10 +55,10 @@ public interface RuntimeJobManager extends Closeable {
    * Forcefully kills a running job. If the job is already in terminal status, then this method should be a no-op. If
    * the job does not exist, this method should be a no-op.
    *
-   * @param programRunInfo program run info
+   * @param runtimeJobDetail runtime Job Detail
    * @throws Exception thrown if any exception while killing the job
    */
-  void kill(ProgramRunInfo programRunInfo) throws Exception;
+  void kill(RuntimeJobDetail runtimeJobDetail) throws Exception;
 
   /**
    * This method is responsible to perform clean up for runtime manager.
