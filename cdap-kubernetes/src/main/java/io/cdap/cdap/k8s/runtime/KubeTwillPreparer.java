@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -24,6 +25,7 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
+import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.twill.Completable;
@@ -137,17 +139,21 @@ import java.util.stream.Stream;
 class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer, SecureTwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
-  private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
-  private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
+  @VisibleForTesting
+  static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
+  @VisibleForTesting
+  static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
   private static final String JAVA_OPTS_KEY = "OPTS";
   private static final String JAVA_OPTS_DELIM = " ";
   private static final String FILE_LOCALIZER_JVM_OPTS = "master.environment.k8s.file.localizer.container.jvm.opts";
   private static final String FILE_LOCALIZER_DEFAULT_JVM_OPTS = "-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError";
 
-  private static final String PROGRAM_CPU_MULTIPLIER = "program.k8s.container.cpu.multiplier";
+  @VisibleForTesting
+  static final String PROGRAM_CPU_MULTIPLIER = "program.k8s.container.cpu.multiplier";
   private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
-  private static final String PROGRAM_MEMORY_MULTIPLIER = "program.k8s.container.memory.multiplier";
+  @VisibleForTesting
+  static final String PROGRAM_MEMORY_MULTIPLIER = "program.k8s.container.memory.multiplier";
   private static final String DEFAULT_PROGRAM_MEMORY_MULTIPLIER = "0.5";
 
   private final MasterEnvironmentContext masterEnvContext;
@@ -184,6 +190,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String programRuntimeNamespace;
   private String workloadIdentityServiceAccount;
   private boolean runtimeCleanupDisabled;
+  private String cdapRuntimeNamespace;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -232,6 +239,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     String confTTLStr = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS);
     this.workloadIdentityKSATTL = WorkloadIdentityUtil.convertWorkloadIdentityTTLFromString(confTTLStr);
     this.workloadIdentityPool = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_POOL);
+    this.cdapRuntimeNamespace = null;
   }
 
   @Override
@@ -357,6 +365,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
     if (config.containsKey(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED)) {
       runtimeCleanupDisabled = Boolean.parseBoolean(config.get(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED));
+    }
+    if (config.containsKey(MasterOptionConstants.RUNTIME_NAMESPACE)) {
+      cdapRuntimeNamespace = config.get(MasterOptionConstants.RUNTIME_NAMESPACE);
     }
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
@@ -1000,7 +1011,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
     V1ResourceRequirements initContainerResourceRequirements =
-      createResourceRequirements(resourceType, mainRuntimeSpec.getResourceSpecification());
+      createResourceRequirements(mainRuntimeSpec.getResourceSpecification());
 
     // Setup the container environment. Inherit everything from the current pod except workload identity env vars.
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
@@ -1093,7 +1104,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     mounts = addSecreteVolMountIfNeeded(mainRuntimeSpec, volumeMounts);
     containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(), podInfo.getImagePullPolicy(),
                                    workDir,
-                                   createResourceRequirements(resourceType, mainRuntimeSpec.getResourceSpecification()),
+                                   createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
                                    mounts, environs, KubeTwillLauncher.class,
                                    Stream.concat(Stream.of(mainRuntimeSpec.getName()), args.stream())
                                      .toArray(String[]::new)));
@@ -1106,7 +1117,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       environs.put(JAVA_OPTS_KEY, runnableJVMOptions.get(name).toString());
       mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
-                                     createResourceRequirements(resourceType, spec.getResourceSpecification()),
+                                     createResourceRequirements(spec.getResourceSpecification()),
                                      mounts, environs, KubeTwillLauncher.class,
                                      Stream.concat(Stream.of(name), args.stream()).toArray(String[]::new)));
     }
@@ -1178,7 +1189,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Creates a {@link V1ResourceRequirements} based on the given {@link ResourceSpecification}. If the namespace has a
    * resource quota, the objects must also specify resource limits.
    */
-  private V1ResourceRequirements createResourceRequirements(Type resourceType, ResourceSpecification resourceSpec) {
+  @VisibleForTesting
+  V1ResourceRequirements createResourceRequirements(ResourceSpecification resourceSpec) {
     Map<String, String> cConf = masterEnvContext.getConfigurations();
     float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
     float memoryMultiplier = Float.parseFloat(cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
@@ -1186,18 +1198,19 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     V1ResourceRequirementsBuilder requirementsBuilder = new V1ResourceRequirementsBuilder();
 
     // Use separate multiplier for user pods
-    if (resourceType == V1Job.class) {
+    // System pods have the 'system' namespace
+    if (cdapRuntimeNamespace != null && !isSystemNamespace(cdapRuntimeNamespace)) {
       // For job type use program multipliers.
       cpuMultiplier = Float.parseFloat(cConf.getOrDefault(PROGRAM_CPU_MULTIPLIER, DEFAULT_PROGRAM_CPU_MULTIPLIER));
       memoryMultiplier = Float.parseFloat(
         cConf.getOrDefault(PROGRAM_MEMORY_MULTIPLIER, DEFAULT_PROGRAM_MEMORY_MULTIPLIER));
 
       if (!(cpuMultiplier > 0 && cpuMultiplier <= 1)) {
-        throw new RuntimeException(
+        throw new IllegalArgumentException(
           String.format("CPU multiplier %f should be greater than 0 and less than or equal to 1.", cpuMultiplier));
       }
       if (!(memoryMultiplier > 0 && memoryMultiplier <= 1)) {
-        throw new RuntimeException(
+        throw new IllegalArgumentException(
           String.format("Memory multiplier %f should be greater than 0 " +
                           "and less than or equal to 1.", memoryMultiplier));
       }
@@ -1213,8 +1226,19 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     requirementsBuilder.addToRequests("cpu", new Quantity(String.format("%dm", cpuToRequest)))
       .addToRequests("memory", new Quantity(String.format("%dMi", memoryToRequest)));
 
+    LOG.info("Using CPU multiplier {} and memory multiplier {} for program in namespace '{}'", cpuMultiplier,
+             memoryMultiplier, cdapRuntimeNamespace);
+
     return requirementsBuilder.build();
 
+  }
+
+  /**
+   * @param namespace a namespace ID
+   * @return whether the given namespace is the system namespace
+   */
+  public static boolean isSystemNamespace(String namespace) {
+    return "system".equals(namespace);
   }
 
   /**
