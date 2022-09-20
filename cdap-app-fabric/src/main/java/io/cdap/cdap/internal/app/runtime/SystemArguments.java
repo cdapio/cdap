@@ -100,6 +100,10 @@ public final class SystemArguments {
 
   public static final String NAMESPACE_CONFIG_PREFIX = "system.namespace.config.";
 
+  // Runtime argument to disable cleanup after pipeline run. Currently applicable only to jobs running
+  // natively in kubernetes.
+  public static final String RUNTIME_CLEANUP_DISABLED = "system.runtime.cleanup.disabled";
+
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
    * {@link #LOG_LEVEL} + {@code .}, with the remaining part of the key as the logger name, with the argument value
@@ -339,6 +343,11 @@ public final class SystemArguments {
                                            YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL);
     if (failureValidityInterval != null) {
       result.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL, failureValidityInterval.toString());
+    }
+
+    String cleanupDisabled = args.get(RUNTIME_CLEANUP_DISABLED);
+    if (cleanupDisabled != null) {
+      result.put(RUNTIME_CLEANUP_DISABLED, cleanupDisabled);
     }
 
     return result;

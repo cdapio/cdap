@@ -141,6 +141,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   public static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   public static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY =
     "workload.identity.gcp.service.account.email";
+  // Whether to cleanup resources after job completion
+  public static final String RUNTIME_CLEANUP_DISABLED = "system.runtime.cleanup.disabled";
 
   private final MasterEnvironmentContext masterEnvContext;
   private final String kubeNamespace;
