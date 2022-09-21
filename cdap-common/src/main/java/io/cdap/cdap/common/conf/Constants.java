@@ -1707,6 +1707,8 @@ public final class Constants {
     public static final String STORAGE_PROVIDER_IMPLEMENTATION = "metadata.storage.implementation";
     public static final String STORAGE_PROVIDER_NOSQL = "nosql";
     public static final String STORAGE_PROVIDER_ELASTICSEARCH = "elastic";
+
+    public static final String METADATA_WRITER_SUBSCRIBER = "metadata.writer";
   }
 
   /**
@@ -2032,5 +2034,14 @@ public final class Constants {
     public static final String PORT = "artifact.cache.bind.port";
     public static final String BOSS_THREADS = "artifact.cache.boss.threads";
     public static final String WORKER_THREADS = "artifact.cache.worker.threads";
+  }
+
+  /**
+   * Constants for MetadataConsumer
+   */
+  public static final class MetadataConsumer {
+    public static final String METADATA_CONSUMER_PREFIX = "metadata.consumer.";
+    public static final String METADATA_CONSUMER_EXTENSIONS_ENABLED_LIST = "metadata.consumer.extensions.enabled.list";
+    public static final String METADATA_CONSUMER_EXTENSIONS_DIR = "metadata.consumer.extensions.dir";
   }
 }
