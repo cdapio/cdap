@@ -43,6 +43,9 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.ForwardingApplicationSpecification;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
+import io.cdap.cdap.internal.app.store.state.AppStateTable;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -78,6 +81,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -533,6 +537,7 @@ public class DefaultStore implements Store {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(), id.getApplication());
 
     TransactionRunners.run(transactionRunner, context -> {
+      getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplication(id.getNamespace(), id.getApplication(), id.getVersion());
       metaStore.deleteProgramHistory(id.getNamespace(), id.getApplication(), id.getVersion());
@@ -544,6 +549,7 @@ public class DefaultStore implements Store {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 
     TransactionRunners.run(transactionRunner, context -> {
+      getAppStateTable(context).deleteAll(id);
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplications(id.getNamespace());
       metaStore.deleteProgramHistory(id);
@@ -886,6 +892,51 @@ public class DefaultStore implements Store {
 
       return result;
     });
+  }
+
+  @Override
+  public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
+      return getAppStateTable(context).get(request);
+    }, ApplicationNotFoundException.class);
+  }
+
+  @Override
+  public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
+      getAppStateTable(context).save(request);
+    }, ApplicationNotFoundException.class);
+  }
+
+  @Override
+  public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
+      getAppStateTable(context).delete(request);
+    }, ApplicationNotFoundException.class);
+  }
+
+  @Override
+  public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      verifyApplicationExists(namespaceId, appName);
+      getAppStateTable(context).deleteAll(namespaceId, appName);
+    }, ApplicationNotFoundException.class);
+  }
+
+  private AppStateTable getAppStateTable(StructuredTableContext context) throws TableNotFoundException {
+    return new AppStateTable(context);
+  }
+
+  private void verifyApplicationExists(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
+    // Check if app exists
+    ApplicationId appId = namespaceId.app(appName);
+    ApplicationSpecification appSpec = getApplication(appId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(appId);
+    }
   }
 
   /**

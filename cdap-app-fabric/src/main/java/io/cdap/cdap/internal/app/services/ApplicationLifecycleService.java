@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2020 Cask Data, Inc.
+ * Copyright © 2015-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,6 +73,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
@@ -632,10 +634,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     // Deploy application with with potentially new app config and new artifact.
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
-                                                             appId.getParent(), appClass, appId.getApplication(),
-                                                             appId.getVersion(), updatedAppConfig, ownerPrincipal,
-                                                             updateSchedules, null);
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId)
+      .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+      .setApplicationClass(appClass)
+      .setApplicationId(appId)
+      .setConfigString(updatedAppConfig)
+      .setOwnerPrincipal(ownerPrincipal)
+      .setUpdateSchedules(updateSchedules)
+      .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -975,11 +982,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
     }
     // deploy application with newly added artifact
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
-      Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
-      artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
-      appVersion, configStr, ownerPrincipal, updateSchedules,
-      isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null);
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()))
+      .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+      .setApplicationClass(appClass)
+      .setNamespaceId(namespaceId)
+      .setAppName(appName)
+      .setAppVersion(appVersion)
+      .setConfigString(configStr)
+      .setOwnerPrincipal(ownerPrincipal)
+      .setUpdateSchedules(updateSchedules)
+      .setRuntimeInfo(isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null)
+      .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -1016,7 +1030,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId, spec);
-
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
@@ -1125,5 +1138,47 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       LOG.debug("Failed to decode userId with exception {}", e);
     }
     return decodedUserId;
+  }
+
+  /**
+   * Get application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @return state of application
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
+    return store.getState(request);
+  }
+
+  /**
+   * Save application state.
+   *
+   * @param request a {@link AppStateKeyValue} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
+    store.saveState(request);
+  }
+
+  /**
+   * Delete application state.
+   *
+   * @param request a {@link AppStateKey} object.
+   * @throws ApplicationNotFoundException if application with request.appName is not found.
+   */
+  public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
+    store.deleteState(request);
+  }
+
+  /**
+   * Delete all states related to an application.
+   *
+   * @param namespaceId NamespaceId of the application.
+   * @param appName AppName of the application.
+   * @throws ApplicationNotFoundException if application with appName is not found.
+   */
+  public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
+    store.deleteAllStates(namespaceId, appName);
   }
 }

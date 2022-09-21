@@ -45,12 +45,14 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandlerInternal;
+import io.cdap.cdap.gateway.handlers.AppStateHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
@@ -124,6 +126,7 @@ import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
+import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.internal.tethering.TetheringClientHandler;
 import io.cdap.cdap.internal.tethering.TetheringHandler;
 import io.cdap.cdap.internal.tethering.TetheringServerHandler;
@@ -338,6 +341,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           .build(Key.get(ConfiguratorFactory.class,
                          Names.named(AppFabric.FACTORY_IMPLEMENTATION_REMOTE)))
       );
+      // Used in InMemoryProgramRunDispatcher, TetheringClientHandler
+      install(RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+                                                          Constants.Tethering.CLIENT_AUTHENTICATOR_NAME));
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
 
@@ -418,6 +424,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TetheringHandler.class);
       handlerBinder.addBinding().to(TetheringServerHandler.class);
       handlerBinder.addBinding().to(TetheringClientHandler.class);
+      handlerBinder.addBinding().to(AppStateHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

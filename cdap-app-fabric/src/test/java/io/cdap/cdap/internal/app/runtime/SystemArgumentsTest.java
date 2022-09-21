@@ -124,6 +124,19 @@ public class SystemArgumentsTest {
   }
 
   @Test
+  public void testGetTwillApplicationConfigs() {
+    // disable cleanup config specified
+    Map<String, String> configs = SystemArguments.getTwillApplicationConfigs(
+      ImmutableMap.of(SystemArguments.RUNTIME_CLEANUP_DISABLED, "true"));
+    Assert.assertTrue("unexpected value for config: " + SystemArguments.RUNTIME_CLEANUP_DISABLED,
+                      Boolean.parseBoolean(configs.get(SystemArguments.RUNTIME_CLEANUP_DISABLED)));
+
+    // disable cleanup config not specified
+    configs = SystemArguments.getTwillApplicationConfigs(ImmutableMap.of(SystemArguments.MEMORY_KEY, "10"));
+    Assert.assertTrue(configs.isEmpty());
+  }
+
+  @Test
   public void testRetryStrategies() {
     CConfiguration cConf = CConfiguration.create();
     Map<String, String> args = Collections.emptyMap();

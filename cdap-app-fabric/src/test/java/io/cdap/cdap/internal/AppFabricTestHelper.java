@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2020 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -313,10 +313,12 @@ public class AppFabricTestHelper {
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(namespaceId, artifactId)),
                                    new File(deployedJar.toURI()));
     ApplicationClass applicationClass = new ApplicationClass(appClass.getName(), "", null);
-    AppDeploymentInfo info = new AppDeploymentInfo(Artifacts.toProtoArtifactId(namespaceId, artifactId),
-                                                   deployedJar, namespaceId,
-                                                   applicationClass, null, null,
-                                                   config == null ? null : new Gson().toJson(config));
+    AppDeploymentInfo info = AppDeploymentInfo.builder()
+      .setArtifactId(Artifacts.toProtoArtifactId(namespaceId, artifactId))
+      .setArtifactLocation(deployedJar)
+      .setNamespaceId(namespaceId).setApplicationClass(applicationClass)
+      .setConfigString(config == null ? null : new Gson().toJson(config))
+      .build();
     return getLocalManager().deploy(info).get();
   }
 

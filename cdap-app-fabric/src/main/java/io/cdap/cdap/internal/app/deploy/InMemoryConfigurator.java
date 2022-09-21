@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -100,7 +100,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.pluginFinder = pluginFinder;
     this.appNamespace = Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId());
     this.artifactId = Id.Artifact.fromEntityId(deploymentInfo.getArtifactId());
-    this.appClassName = deploymentInfo.getApplicationClassName();
+    this.appClassName = deploymentInfo.getApplicationClass().getClassName();
     this.applicationName = deploymentInfo.getApplicationName();
     this.applicationVersion = deploymentInfo.getApplicationVersion();
     this.configString = deploymentInfo.getConfigString() == null ? "" : deploymentInfo.getConfigString();

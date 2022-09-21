@@ -17,10 +17,11 @@
 package io.cdap.cdap.internal.tethering;
 
 /**
- * Status of a tether.
+ * Status of a tethering connection.
  */
 public enum TetheringStatus {
   PENDING,
   ACCEPTED,
-  REJECTED
+  REJECTED,
+  NOT_FOUND
 }

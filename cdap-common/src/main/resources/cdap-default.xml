@@ -416,6 +416,23 @@
 
 
   <!-- Applications Configuration -->
+  <property>
+    <name>app.artifact.compute.hash</name>
+    <value>false</value>
+    <description>
+      If true, a hash for sharable artifacts will be computed and appended to artifact filename.
+    </description>
+  </property>
+
+  <property>
+    <name>app.artifact.compute.hash.snapshot</name>
+    <value>false</value>
+    <description>
+      If true, a hash for sharable artifacts with SNAPSHOT in their versions will be computed and appended
+      to artifact filename.
+      Should only be enabled for testing purposes. Otherwise, should always remain false.
+    </description>
+  </property>
 
   <property>
     <name>app.artifact.dir</name>

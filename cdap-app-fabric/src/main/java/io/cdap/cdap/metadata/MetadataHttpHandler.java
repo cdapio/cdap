@@ -27,6 +27,7 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metadata.MetadataEntityCodec;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.data2.metadata.MetadataCompatibility;
@@ -95,6 +96,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .registerTypeAdapter(Metadata.class, new MetadataCodec())
+    .registerTypeAdapter(MetadataEntity.class, new MetadataEntityCodec())
     .create();
   // for internal calls (create/update/drop/delete) we need to use a different codec for ScopedName and
   // ScopedNameOfKind: they are used as map keys, where JSON only allows plain strings, so we serialize
