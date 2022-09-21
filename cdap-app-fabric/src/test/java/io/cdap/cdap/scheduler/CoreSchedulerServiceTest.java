@@ -95,7 +95,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -270,10 +269,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
   }
 
-  // TODO: This test will be modified after LCM changes to the schedules and it's apis (Ignored for now)
-  //  JIRA: https://cdap.atlassian.net/browse/CDAP-19576
   @Test
-  @Ignore
   @Category(XSlowTests.class)
   public void testRunScheduledJobs() throws Exception {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
@@ -369,10 +365,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     testScheduleUpdate("delete");
   }
 
-  // TODO: This test will be modified after LCM changes to the schedules and it's apis (Ignored for now)
-  //  JIRA: https://cdap.atlassian.net/browse/CDAP-19576
   @Test
-  @Ignore
   @Category(XSlowTests.class)
   public void testProgramEvents() throws Exception {
     // Deploy the app

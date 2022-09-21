@@ -180,6 +180,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     String changeSummary = request.getChangeSummary() == null ? null : request.getChangeSummary()
       .getDescription();
     PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
+    String parentVersion = request.getParentVersion();
 
     PreferencesDetail preferences = preferencesFetcher.get(programId, true);
     Map<String, String> userProps = new HashMap<>(preferences.getProperties());
@@ -191,7 +192,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       LOG.debug("Deploying preview application for {}", programId);
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
                                             artifactSummary, config, changeSummary, NOOP_PROGRAM_TERMINATOR, null,
-                                            request.canUpdateSchedules(), true, userProps);
+                                            request.canUpdateSchedules(), true, userProps, parentVersion);
     } catch (Exception e) {
       PreviewStatus previewStatus = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, submitTimeMillis,
                                                       new BasicThrowable(e), null, null);

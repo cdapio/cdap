@@ -43,12 +43,19 @@ public class AppDeploymentInfo {
   private final String appVersion;
   @Nullable
   private final String configString;
+  @Nullable
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
   @Nullable
   private final AppDeploymentRuntimeInfo runtimeInfo;
+  @Nullable
+  private final String changeSummary;
+  @Nullable
+  private final String author;
+  @Nullable
+  private final String parentVersion;
 
   /**
    * Creates a new {@link Builder}.
@@ -71,13 +78,17 @@ public class AppDeploymentInfo {
       .setConfigString(other.configString)
       .setOwnerPrincipal(other.ownerPrincipal)
       .setUpdateSchedules(other.updateSchedules)
-      .setRuntimeInfo(other.runtimeInfo);
+      .setRuntimeInfo(other.runtimeInfo)
+      .setChangeSummary(other.changeSummary)
+      .setAuthor(other.author)
+      .setParentVersion(other.parentVersion);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                            @Nullable String changeSummary, @Nullable String author, @Nullable String parentVersion) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -88,6 +99,9 @@ public class AppDeploymentInfo {
     this.updateSchedules = updateSchedules;
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
+    this.changeSummary = changeSummary;
+    this.author = author;
+    this.parentVersion = parentVersion;
   }
 
   /**
@@ -170,6 +184,30 @@ public class AppDeploymentInfo {
   }
 
   /**
+   * Returns the change summary description provided for the application edit or {@code null} if it is not provided.
+   */
+  @Nullable
+  public String getChangeSummary() {
+    return changeSummary;
+  }
+
+  /**
+   * Returns the author of the application edit or {@code null} if it is not provided.
+   */
+  @Nullable
+  public String getAuthor() {
+    return author;
+  }
+
+  /**
+   * Returns the parent-version in the request or {@code null} if it is not provided.
+   */
+  @Nullable
+  public String getParentVersion() {
+    return parentVersion;
+  }
+
+  /**
    * Builder class for the {@link AppDeploymentInfo}.
    */
   public static final class Builder {
@@ -185,6 +223,12 @@ public class AppDeploymentInfo {
     // The default behavior of update schedules is to update schedule on deployment.
     private boolean updateSchedules = true;
     private AppDeploymentRuntimeInfo runtimeInfo;
+    @Nullable
+    private String changeSummary;
+    @Nullable
+    private String author;
+    @Nullable
+    private String parentVersion;
 
     private Builder() {
       // Only for the builder() method to use
@@ -247,6 +291,21 @@ public class AppDeploymentInfo {
       return this;
     }
 
+    public Builder setChangeSummary(@Nullable String changeSummary) {
+      this.changeSummary = changeSummary;
+      return this;
+    }
+
+    public Builder setAuthor(@Nullable String author) {
+      this.author = author;
+      return this;
+    }
+
+    public Builder setParentVersion(@Nullable String parentVersion) {
+      this.parentVersion = parentVersion;
+      return this;
+    }
+
     public AppDeploymentInfo build() {
       if (artifactId == null) {
         throw new IllegalStateException("Missing artifact ID");
@@ -261,7 +320,8 @@ public class AppDeploymentInfo {
         throw new IllegalStateException("Missing application class");
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
-                                   appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo);
+                                   appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
+                                   changeSummary, author, parentVersion);
     }
   }
 }

@@ -39,6 +39,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -423,22 +424,50 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String owner,
-                             @Nullable Long created, @Nullable String latestVersion) {
+  public void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String author,
+                             @Nullable Long created, @Nullable String changeSummary, @Nullable String parentVersion) {
     // Generate the creation time for the version of the app.
     TransactionRunners.run(transactionRunner, context -> {
-      // TODO: Get the latest app and update the latest field to false
-      if (latestVersion != null) {
-        getAppMetadataStore(context).updateLatestApplication(id.getNamespace(), id.getApplication(), latestVersion);
+      ApplicationMeta latest = getLatest(id.getNamespace(), id.getApplication());
+      if (!deployAppAllowed(parentVersion, latest)) {
+        throw new BadRequestException("Can't deploy the application because the parent version is not the " +
+                                        "latest.");
+      }
+      // TODO - edge case : if latest is null and app exists (legacy versions) then update based on latest version-id
+      if (latest != null) {
+        getAppMetadataStore(context).updateLatestApplication(id.getNamespace(), id.getApplication(),
+                                                             latest.getSpec().getAppVersion());
       }
       getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec,
-                                                    created, owner, true);
+                                                    created, author, changeSummary);
     });
+  }
+
+  /**
+   * To determine whether the app is allowed to be deployed:
+   * Do not deploy when the parent version is not the latest.
+   *
+   * @param parentVersion the version of the application from which the app is deployed
+   * @param latest the application meta of the latest version
+   * @return whether the app version is allowed to be deployed
+   */
+  private boolean deployAppAllowed(@Nullable String parentVersion, @Nullable ApplicationMeta latest)  {
+    if (parentVersion == null || parentVersion.isEmpty()) {
+      return true;
+    }
+    // App does not exist
+    if (latest == null || latest.getSpec() == null) {
+      // parent version should be null when the app does not exist
+      return parentVersion == null || parentVersion.isEmpty();
+    }
+    String latestVersion = latest.getSpec().getAppVersion();
+    // If latest version is the parent version then we allow deploy
+    return latestVersion.equals(parentVersion);
   }
 
   @Override
   public void addApplication(ApplicationId id, ApplicationSpecification spec) {
-    addApplication(id, spec, null, null, null);
+    addApplication(id, spec, null, null, null, null);
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
@@ -479,7 +508,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setWorkerInstances(ProgramId id, int instances) {
+  public void setWorkerInstances(ProgramId id, int instances, Long created) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s", instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -493,7 +522,7 @@ public class DefaultStore implements Store {
                                                                      workerSpec.getResources(),
                                                                      instances, workerSpec.getPlugins());
       ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
-      metaStore.updateAppSpec(id.getParent(), newAppSpec);
+      metaStore.updateAppSpec(id.getParent(), newAppSpec, created);
 
     });
 
@@ -502,7 +531,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setServiceInstances(ProgramId id, int instances) {
+  public void setServiceInstances(ProgramId id, int instances, Long created) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s", instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -515,7 +544,7 @@ public class DefaultStore implements Store {
                                              serviceSpec.getResources(), instances, serviceSpec.getPlugins());
 
       ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getProgram(), serviceSpec);
-      metaStore.updateAppSpec(id.getParent(), newAppSpec);
+      metaStore.updateAppSpec(id.getParent(), newAppSpec, created);
     });
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
@@ -712,10 +741,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ApplicationMeta getLatest(String namespace, String appId) {
+  public ApplicationMeta getLatest(String namespace, String appName) {
+    // TODO: change this to filter by range of primary prefix key and index
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getLatest().stream()
-        .filter(r -> r.getId().equals(appId)).findAny().orElse(null);
+      return getAppMetadataStore(context).getLatest(namespace, appName).stream()
+        .findAny().orElse(null);
     });
   }
 
