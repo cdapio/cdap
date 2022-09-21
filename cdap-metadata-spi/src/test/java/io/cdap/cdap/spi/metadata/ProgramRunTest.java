@@ -26,8 +26,8 @@ public class ProgramRunTest {
       .setProgramId("pid")
       .setNamespace("default")
       .setApplication("app")
-      .setStartTime(10L)
-      .setEndTime(5L)
+      .setStartTimeMs(10L)
+      .setEndTimeMs(5L)
       .setStatus("Completed")
       .build();
   }
