@@ -100,7 +100,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExternalResource;
@@ -227,13 +226,8 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(updated, namespaceAdmin.get(AUTH_NAMESPACE));
   }
 
-  /*
-   * TODO: This test will be modified/removed after LCM changes to the schedules and it's apis.
-   * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-   * */
   @Test
   @Category(SlowTests.class)
-  @Ignore
   public void testApps() throws Exception {
     try {
       deployApplication(NamespaceId.DEFAULT, DummyApp.class);
@@ -447,12 +441,7 @@ public class AuthorizationTest extends TestBase {
     pluginArtifactManager.delete();
   }
 
-  /*
-   * TODO: This test will be modified/removed after LCM changes to the schedules and it's apis.
-   * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-   * */
   @Test
-  @Ignore
   public void testPrograms() throws Exception {
     createAuthNamespace();
     grantAndAssertSuccess(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), ALICE,
@@ -544,12 +533,7 @@ public class AuthorizationTest extends TestBase {
     dummyAppManager.delete();
   }
 
-  /*
-   * TODO: This test will be modified/removed after LCM changes to the schedules and it's apis.
-   * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-   * */
   @Test
-  @Ignore
   public void testCrossNSService() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(CrossNsDatasetAccessApp.APP_NAME);
@@ -691,12 +675,7 @@ public class AuthorizationTest extends TestBase {
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
-  /*
-   * TODO: This test will be modified/removed after LCM changes to the schedules and it's apis.
-   * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-   * */
   @Test
-  @Ignore
   public void testCrossNSMapReduce() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(DatasetCrossNSAccessWithMAPApp.class.getSimpleName());
@@ -858,12 +837,7 @@ public class AuthorizationTest extends TestBase {
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
-  /*
-   * TODO: This test will be modified/removed after LCM changes to the schedules and it's apis.
-   * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-   * */
   @Test
-  @Ignore
   public void testCrossNSSpark() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(TestSparkCrossNSDatasetApp.APP_NAME);
@@ -897,12 +871,7 @@ public class AuthorizationTest extends TestBase {
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
   }
 
-  /*
-  * TODO: This test will be modified/removed after LCM changes to the schedules and it's apis.
-  * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-  * */
   @Test
-  @Ignore
   public void testScheduleAuth() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(AppWithSchedule.class.getSimpleName());
@@ -1170,12 +1139,7 @@ public class AuthorizationTest extends TestBase {
     getNamespaceAdmin().delete(outputDatasetNSMeta.getNamespaceId());
   }
 
-  /*
-   * TODO: This test will be modified/removed after LCM changes to the schedules and it's apis.
-   * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-   * */
   @Test
-  @Ignore
   public void testAddDropPartitions() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(PartitionTestApp.class.getSimpleName());

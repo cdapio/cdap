@@ -238,9 +238,9 @@ public class AppMetadataStore {
       .map(r -> new ApplicationMeta(GSON.fromJson(r.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
                                                   ApplicationMeta.class).getId(), GSON.fromJson(r.getString(
         StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD), ApplicationMeta.class).getSpec(),
+                                    r.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD),
                                     r.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD),
-                                    r.getString(StoreDefinition.AppMetadataStore.OWNER_FIELD),
-                                    r.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD)))
+                                    r.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD)))
       .orElse(null);
   }
 
@@ -347,10 +347,13 @@ public class AppMetadataStore {
     return getApplicationSpecificationTable().count(ranges);
   }
 
-  public List<ApplicationMeta> getLatest() throws IOException {
-    // Querying the table on latest = true.
-    Field<?> indexLatest = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
-    return scanAppsWithIndex(indexLatest);
+  public List<ApplicationMeta> getLatest(String namespaceId, String appName) throws IOException {
+    // TODO: Querying the table on latest = true.
+    return scanWithRange(
+      getNamespaceAndApplicationRange(namespaceId, appName),
+      ApplicationMeta.class,
+      getApplicationSpecificationTable(),
+      StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
   }
 
   public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) throws IOException {
@@ -437,10 +440,10 @@ public class AppMetadataStore {
 
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec,
-                               @Nullable Long created, @Nullable String owner, @Nullable Boolean latest)
+                                Long created, @Nullable String author, @Nullable String changeSummary)
     throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)), created,
-                               owner, latest);
+                               author, changeSummary);
   }
 
   public void updateLatestApplication(String namespaceId, String appId, String versionId)
@@ -461,7 +464,7 @@ public class AppMetadataStore {
     getApplicationSpecificationTable().deleteAll(getNamespaceRange(namespaceId));
   }
 
-  public void updateAppSpec(ApplicationId appId, ApplicationSpecification spec) throws IOException {
+  public void updateAppSpec(ApplicationId appId, ApplicationSpecification spec, Long created) throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     }
@@ -475,11 +478,8 @@ public class AppMetadataStore {
       LOG.trace("Application {} exists in mds with specification {}", appId, GSON.toJson(existing));
     }
     ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec);
-    // Generate the creation time for the version of the app.
-    Long created = System.currentTimeMillis();
-    // TODO: add owner info 
     writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated),
-                               created, updated.getOwner(), false);
+                               created, updated.getAuthor(), null);
   }
 
   /**
@@ -1854,13 +1854,15 @@ public class AppMetadataStore {
   }
 
   private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized,
-                                          @Nullable Long created, @Nullable String owner, @Nullable Boolean latest)
+                                          Long created, @Nullable String author,
+                                          @Nullable String changeSummary)
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.OWNER_FIELD, owner));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.AUTHOR_FIELD, author));
     fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, created));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, Boolean.toString(latest)));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD, changeSummary));
     getApplicationSpecificationTable().upsert(fields);
   }
 
@@ -1897,18 +1899,6 @@ public class AppMetadataStore {
     return result;
   }
 
-  private List<ApplicationMeta> scanAppsWithIndex(Field<?> indexField) throws IOException {
-    List<ApplicationMeta> result = new ArrayList<>();
-    try (CloseableIterator<StructuredRow> iterator =  getApplicationSpecificationTable()
-      .scan(indexField)) {
-      while (iterator.hasNext()) {
-        ApplicationMeta appMeta = getApplicationMetaUtil(iterator.next());
-        result.add(appMeta);
-      }
-    }
-    return result;
-  }
-
   private List<ApplicationMeta> scanAppsWithRange(Range range)
     throws IOException {
     List<ApplicationMeta> result = new ArrayList<>();
@@ -1923,14 +1913,14 @@ public class AppMetadataStore {
   }
 
   private ApplicationMeta getApplicationMetaUtil(StructuredRow row) {
-    String owner = row.getString(StoreDefinition.AppMetadataStore.OWNER_FIELD);
-    String latest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
+    String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
+    String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
     Long created = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
     ApplicationSpecification spec = GSON.fromJson(row.getString(
       StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD), ApplicationMeta.class).getSpec();
     String id = GSON.fromJson(row.getString(
       StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD), ApplicationMeta.class).getId();
-    return new ApplicationMeta(id, spec, created, owner, latest);
+    return new ApplicationMeta(id, spec, changeSummary, created, author);
   }
 
   private void writeToStructuredTableWithPrimaryKeys(

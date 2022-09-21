@@ -65,12 +65,6 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
     return delegate.getConfiguration();
   }
 
-  @Nullable
-  @Override
-  public String getChangeSummary() {
-    return delegate.getChangeSummary();
-  }
-
   @Override
   public String getDescription() {
     return delegate.getDescription();

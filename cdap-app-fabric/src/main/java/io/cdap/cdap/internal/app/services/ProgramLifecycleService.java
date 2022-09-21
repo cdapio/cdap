@@ -136,6 +136,7 @@ public class ProgramLifecycleService {
   private final ArtifactRepository artifactRepository;
   private final RunRecordMonitorService runRecordMonitorService;
   private final boolean userProgramLaunchDisabled;
+  private final Long created = System.currentTimeMillis();
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
@@ -1043,7 +1044,7 @@ public class ProgramLifecycleService {
     throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getWorkerInstances(programId);
     if (oldInstances != instances) {
-      store.setWorkerInstances(programId, instances);
+      store.setWorkerInstances(programId, instances, created);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
@@ -1058,7 +1059,7 @@ public class ProgramLifecycleService {
     throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getServiceInstances(programId);
     if (oldInstances != instances) {
-      store.setServiceInstances(programId, instances);
+      store.setServiceInstances(programId, instances, created);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,

@@ -372,7 +372,8 @@ public final class StoreDefinition {
     public static final String VERSION_FIELD = "version";
     public static final String APPLICATION_DATA_FIELD = "application_data";
     public static final String CREATION_TIME_FIELD = "created";
-    public static final String OWNER_FIELD = "owner";
+    public static final String CHANGE_SUMMARY_FIELD = "change_summary";
+    public static final String AUTHOR_FIELD = "author";
     public static final String LATEST_FIELD = "latest";
     public static final String PROGRAM_TYPE_FIELD = "program_type";
     public static final String PROGRAM_FIELD = "program";
@@ -398,10 +399,10 @@ public final class StoreDefinition {
                     Fields.stringType(VERSION_FIELD),
                     Fields.stringType(APPLICATION_DATA_FIELD),
                     Fields.longType(CREATION_TIME_FIELD),
-                    Fields.stringType(OWNER_FIELD),
+                    Fields.stringType(AUTHOR_FIELD),
+                    Fields.stringType(CHANGE_SUMMARY_FIELD),
                     Fields.stringType(LATEST_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
-        .withIndexes(LATEST_FIELD)
         .build();
 
     public static final StructuredTableSpecification WORKFLOW_NODE_STATES_SPEC =

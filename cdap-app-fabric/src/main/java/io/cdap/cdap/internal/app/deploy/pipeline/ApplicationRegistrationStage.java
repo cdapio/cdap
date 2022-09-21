@@ -25,7 +25,6 @@ import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.data2.registry.UsageRegistry;
-import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -57,12 +56,8 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     try {
-      ApplicationMeta latest = store.getLatest(input.getApplicationId().getNamespace(),
-                                               input.getApplicationId().getApplication());
-      // TODO - edge case : if latest is null and app exists then update based on latest version-id
-      store.addApplication(input.getApplicationId(), applicationSpecification, input.getOwner(),
-                           System.currentTimeMillis(), latest == null || latest.getSpec() == null ?
-                             null : latest.getSpec().getAppVersion());
+      store.addApplication(input.getApplicationId(), applicationSpecification, input.getAuthor(),
+                           System.currentTimeMillis(), input.getChangeSummary(), input.getParentVersion());
     } catch (Exception e) {
       // if we failed to store the app spec cleanup the owner if it was added in this call
       if (ownerAdded) {

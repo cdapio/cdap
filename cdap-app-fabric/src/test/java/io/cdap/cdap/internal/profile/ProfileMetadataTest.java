@@ -34,7 +34,6 @@ import io.cdap.cdap.proto.profile.Profile;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -57,12 +56,7 @@ public class ProfileMetadataTest extends AppFabricTestBase {
     metadataSubscriberService.stopAndWait();
   }
 
-  /*
-  * TODO: These tests will be modified after LCM changes to the schedules and it's apis.
-  *  JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-  * */
   @Test
-  @Ignore
   public void testProfileMetadata() throws Exception {
     // create my profile
     ProfileId myProfile = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");
