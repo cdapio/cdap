@@ -91,7 +91,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -188,8 +187,7 @@ public class UnitTestManager extends AbstractTestManager {
       Application app = applicationClz.newInstance();
       MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
-      ApplicationId applicationId = new ApplicationId(namespace.getNamespace(), configurer.getName(),
-                                                      UUID.randomUUID().toString());
+      ApplicationId applicationId = new ApplicationId(namespace.getNamespace(), configurer.getName());
 
       ArtifactSummary artifactSummary = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
       appFabricClient.deployApplication(Id.Application.fromEntityId(applicationId),

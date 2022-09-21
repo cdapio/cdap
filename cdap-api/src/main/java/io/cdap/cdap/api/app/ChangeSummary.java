@@ -28,15 +28,11 @@ public class ChangeSummary {
   private final String author;
   @Nullable
   private final Long creationTime;
-  @Nullable
-  private final String isLatest;
 
-  public ChangeSummary(@Nullable String description, @Nullable String author, @Nullable Long creationTime,
-                       @Nullable String isLatest) {
+  public ChangeSummary(@Nullable String description, @Nullable String author, @Nullable Long creationTime) {
     this.description = description;
     this.author = author;
     this.creationTime = creationTime;
-    this.isLatest = isLatest;
   }
 
   /**
@@ -61,13 +57,5 @@ public class ChangeSummary {
   @Nullable
   public String getDescription() {
     return description;
-  }
-
-  /**
-   * @return If the change is the latest for the app.
-   */
-  @Nullable
-  public String isLatest() {
-    return isLatest;
   }
 }

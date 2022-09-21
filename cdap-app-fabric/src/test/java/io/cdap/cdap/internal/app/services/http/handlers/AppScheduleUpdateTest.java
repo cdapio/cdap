@@ -27,7 +27,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
@@ -56,11 +55,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     }
   };
 
-  /* TODO: These tests will be modified after LCM changes to the schedules and it's apis.
-      JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-   */
   @Test
-  @Ignore
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);

@@ -54,7 +54,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -72,8 +71,6 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Tests for AutoJoiner plugins.
- * TODO: This test will be modified/removed after LCM changes to the apis in ProgramLifecycleHttpHandler.
- * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class AutoJoinerTest extends HydratorTestBase {
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
@@ -139,7 +136,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testCaseSensitivity() throws Exception {
     Schema weird1 = Schema.recordOf(
       "weird1",
@@ -233,7 +229,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testBroadcastJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -258,7 +253,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testBroadcastJoinUsingSQLEngine() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -289,7 +283,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testBroadcastJoinUsingSQLEngineWithIncludedStages() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -318,7 +311,6 @@ public class AutoJoinerTest extends HydratorTestBase {
 
 
   @Test
-  @Ignore
   public void testAutoInnerJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -341,7 +333,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoInnerJoinUsingSQLEngine() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -366,7 +357,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoInnerJoinUsingSQLEngineWithEngineDisabledViaRuntimeArgs() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -391,7 +381,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoInnerJoinUsingSQLEngineWithExcludedStages() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -419,7 +408,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoInnerJoinSkewed() throws Exception {
     Schema expectedSchema = Schema.recordOf("interests.users",
                                             Schema.Field.of("interests_region", Schema.of(Schema.Type.STRING)),
@@ -466,7 +454,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoLeftOuterJoinSkewed() throws Exception {
     Schema expectedSchema = Schema.recordOf("interests.users",
                                             Schema.Field.of("interests_region", Schema.of(Schema.Type.STRING)),
@@ -516,7 +503,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoLeftOuterJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "purchases.users",
@@ -544,7 +530,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoRightOuterJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "purchases.users",
@@ -577,7 +562,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoOuterJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "purchases.users",
@@ -1119,7 +1103,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testDoubleBroadcastJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "purchases.users.interests",
@@ -1167,7 +1150,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testTripleAutoSingleRequiredJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "purchases.users.interests",
@@ -1228,7 +1210,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testTripleAutoTwoRequiredJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "purchases.users.interests",
@@ -1276,7 +1257,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testTripleAutoNoneRequiredJoin() throws Exception {
     /*
     In this case, all the JOINS will be full outer joins
@@ -1468,7 +1448,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testNullNotEqual() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "items.attributes",
@@ -1495,7 +1474,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testNullIsEqual() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "items.attributes",
@@ -1603,7 +1581,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testLeftOuterAutoJoinWithMacros() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "Record0",
@@ -1630,7 +1607,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testInnerAutoJoinWithMacros() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "Record0",
@@ -1666,7 +1642,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testAutoJoinWithMacrosAndEmptyInput() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "joined",
@@ -1707,7 +1682,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testOuterOrJoin() throws Exception {
     /*
          users ------|
@@ -1797,7 +1771,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testInnerBetweenCondition() throws Exception {
     /*
          users ----------|
@@ -1892,7 +1865,6 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
   public void testLeftOuterComplexConditionBroadcast() throws Exception {
     /*
          sales ----------|
@@ -2097,7 +2069,6 @@ public class AutoJoinerTest extends HydratorTestBase {
 
 
   @Test
-  @Ignore
   public void testQuadAutoOneRequiredJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf(
       "ages.purchases.users.interests",
