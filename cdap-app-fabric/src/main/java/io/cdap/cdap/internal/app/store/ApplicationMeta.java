@@ -33,21 +33,21 @@ public class ApplicationMeta {
   @Nullable
   private final Long created;
   @Nullable
-  private final String owner;
+  private final String author;
   @Nullable
-  private final String latest;
+  private final String description;
 
   public ApplicationMeta(String id, ApplicationSpecification spec) {
     this(id, spec, null, null, null);
   }
 
-  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable Long created, @Nullable String owner,
-                         @Nullable String latest) {
+  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable String description, @Nullable Long created,
+                         @Nullable String author) {
     this.id = id;
     this.spec = spec;
+    this.description = description;
     this.created = created;
-    this.owner = owner;
-    this.latest = latest;
+    this.author = author;
   }
 
   public String getId() {
@@ -59,8 +59,8 @@ public class ApplicationMeta {
   }
 
   @Nullable
-  public String getOwner() {
-    return owner;
+  public String getAuthor() {
+    return author;
   }
 
   @Nullable
@@ -69,8 +69,8 @@ public class ApplicationMeta {
   }
 
   @Nullable
-  public String getLatest() {
-    return latest;
+  public String getDescription() {
+    return description;
   }
 
   @Override
@@ -78,9 +78,9 @@ public class ApplicationMeta {
     return Objects.toStringHelper(this)
       .add("id", id)
       .add("spec", ADAPTER.toJson(spec))
+      .add("description", description)
       .add("created", created)
-      .add("owner", owner)
-      .add("latest", latest)
+      .add("author", author)
       .toString();
   }
 }

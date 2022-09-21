@@ -34,6 +34,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
@@ -349,10 +350,17 @@ public class DefaultRuntimeJob implements RuntimeJob {
       new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
 
 
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
-      programDescriptor.getArtifactId(), programJarLocation, programId.getNamespaceId(), appClassName,
-      programId.getApplication(), programId.getVersion(), existingAppSpec.getConfiguration(), null, false,
-      new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments));
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(programDescriptor.getArtifactId())
+      .setArtifactLocation(programJarLocation)
+      .setApplicationClass(new ApplicationClass(appClassName, "", null))
+      .setApplicationId(programId.getParent())
+      .setConfigString(existingAppSpec.getConfiguration())
+      .setOwnerPrincipal(null)
+      .setUpdateSchedules(false)
+      .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments))
+      .build();
+
     Configurator configurator = configuratorFactory.create(deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
     ConfigResponse response = future.get(120, TimeUnit.SECONDS);

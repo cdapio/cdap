@@ -22,6 +22,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -101,6 +103,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -125,6 +129,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private final RemoteClientFactory remoteClientFactory;
   private final PluginFinder pluginFinder;
   private final ArtifactRepository noAuthArtifactRepository;
+  private final boolean artifactsComputeHash;
+  private final boolean artifactsComputeHashSnapshot;
   private RemoteAuthenticator remoteAuthenticator;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private String hostname;
@@ -143,6 +149,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     this.remoteClientFactory = remoteClientFactory;
     this.noAuthArtifactRepository = artifactRepository;
     this.pluginFinder = pluginFinder;
+
+    this.artifactsComputeHash = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH);
+    this.artifactsComputeHashSnapshot = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_SNAPSHOT);
   }
 
   /**
@@ -309,12 +318,18 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                       artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
     }
 
-    AppDeploymentInfo deploymentInfo =
-      new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(), programId.getNamespaceId(),
-                            appClass, existingAppSpec.getName(), existingAppSpec.getAppVersion(),
-                            existingAppSpec.getConfiguration(), null, false,
-                            new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
-                                                         options.getArguments().asMap()));
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId)
+      .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+      .setNamespaceId(programId.getNamespaceId())
+      .setApplicationClass(appClass)
+      .setAppName(existingAppSpec.getName())
+      .setAppVersion(existingAppSpec.getAppVersion())
+      .setConfigString(existingAppSpec.getConfiguration())
+      .setUpdateSchedules(false)
+      .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec,
+                                                   options.getUserArguments().asMap(), options.getArguments().asMap()))
+      .build();
     Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator, artifactRepository,
                                                          factory, deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
@@ -477,6 +492,12 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                                     new BasicArguments(userArguments), options.isDebug());
   }
 
+  private static void hashArtifactId(Hasher hasher, ArtifactId artifactId) {
+    hasher.putString(artifactId.getParent().toString());
+    hasher.putString(artifactId.getArtifact());
+    hasher.putString(artifactId.getVersion());
+  }
+
   /**
    * Return the copy of the {@link ProgramOptions} including locations of plugin artifacts in it.
    *
@@ -497,8 +518,22 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     Set<String> files = Sets.newHashSet();
     HashMap<String, String> arguments = new HashMap<>(options.getArguments().asMap());
-    for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
-      Plugin plugin = pluginEntry.getValue();
+    Hasher hasher = Hashing.sha256().newHasher();
+
+    /**
+     * If there is an artifact with SNAPSHOT version, hash should not be computed because artifact with
+     * SNAPSHOT might get changed but hash value remaining the same.
+     * {@link Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_SNAPSHOT} allows to compute hash on snapshots
+     * which should only be used in testings.
+     */
+    boolean computeHash = artifactsComputeHash && !appSpec.getPlugins().isEmpty() &&
+      (artifactsComputeHashSnapshot ||
+        appSpec.getPlugins().values().stream().allMatch(plugin -> !plugin.getArtifactId().getVersion().isSnapshot()));
+
+    // Sort plugins based on keys so generated hashes remain identical
+    SortedMap<String, Plugin> sortedMap = new TreeMap<>(appSpec.getPlugins());
+    for (Map.Entry<String, Plugin> entry : sortedMap.entrySet()) {
+      Plugin plugin = entry.getValue();
       File destFile = new File(tempDir, Artifacts.getFileName(plugin.getArtifactId()));
       // Skip if the file has already been copied.
       if (!files.add(destFile.getName())) {
@@ -507,15 +542,22 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
       try {
         ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
+        if (computeHash) {
+          hashArtifactId(hasher, artifactId);
+        }
         String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
         ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
         copyArtifact(artifactId, artifactDetail, destFile, artifactRepository, isDistributed, peer != null);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
+
     }
     LOG.debug("Plugin artifacts of {} copied to {}", programId, tempDir.getAbsolutePath());
     arguments.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
+    if (computeHash) {
+      arguments.put(ProgramOptionConstants.PLUGIN_DIR_HASH, hasher.hash().toString());
+    }
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(ImmutableMap.copyOf(arguments)),
                                     options.getUserArguments(), options.isDebug());
   }

@@ -139,7 +139,7 @@ public class ConfiguratorTask implements RunnableTask {
         .toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(info.getArtifactId()));
 
       // Creates a new deployment info with the newly fetched artifact
-      AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(info, artifactLocation);
+      AppDeploymentInfo deploymentInfo = AppDeploymentInfo.copyFrom(info).setArtifactLocation(artifactLocation).build();
       InMemoryConfigurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator,
                                                                    artifactRepository, remoteClientFactory,
                                                                    deploymentInfo);

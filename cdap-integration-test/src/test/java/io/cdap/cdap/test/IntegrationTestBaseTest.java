@@ -22,24 +22,20 @@ import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.config.ClientConfig;
-import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -68,20 +64,13 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     Assert.assertTrue(new ApplicationClient(defaultClientConfig).list(NamespaceId.DEFAULT).isEmpty());
 
     ApplicationClient applicationClient = new ApplicationClient(clientConfig);
-    List<ApplicationRecord> appList = applicationClient.list(namespace);
-    Assert.assertEquals(AllProgramsApp.NAME, appList.get(0).getName());
-    ApplicationId appId = new ApplicationId(namespace.getNamespace(), AllProgramsApp.NAME,
-                                            appList.get(0).getAppVersion());
-    applicationClient.delete(appId);
+    Assert.assertEquals(AllProgramsApp.NAME, applicationClient.list(namespace).get(0).getName());
+    applicationClient.delete(namespace.app(AllProgramsApp.NAME));
     Assert.assertTrue(new ApplicationClient(clientConfig).list(namespace).isEmpty());
+
   }
 
-  /*
-  * TODO: This test will be modified after LCM changes to the schedules and it's apis.
-  *  JIRA: https://cdap.atlassian.net/browse/CDAP-19576
-  * */
   @Test
-  @Ignore
   public void testSQLQuery() throws Exception {
     getTestManager().deployDatasetModule(NamespaceId.DEFAULT.datasetModule("my-kv"), AppUsingCustomModule.Module.class);
 

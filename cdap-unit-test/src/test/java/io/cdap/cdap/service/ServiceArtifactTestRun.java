@@ -32,7 +32,6 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -50,8 +49,6 @@ import java.util.jar.JarOutputStream;
 
 /**
  * Unit test for the {@link ArtifactManager} from {@link Service}.
- * TODO: These tests will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
- * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class ServiceArtifactTestRun extends TestFrameworkTestBase {
 
@@ -81,7 +78,6 @@ public class ServiceArtifactTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  @Ignore
   public void testServiceArtifact() throws Exception {
     ApplicationManager appManager = deployWithArtifact(ServiceArtifactApp.class, artifactJar);
     ServiceManager serviceManager = appManager.getServiceManager("artifact").start();

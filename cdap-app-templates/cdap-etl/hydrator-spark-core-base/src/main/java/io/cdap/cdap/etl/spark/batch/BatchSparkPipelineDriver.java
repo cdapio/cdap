@@ -33,6 +33,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineInput;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
@@ -118,15 +119,36 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                           FunctionCache.Factory functionCacheFactory,
                                                           StageStatisticsCollector collector) {
+    // Initialize function cache factory
+    this.functionCacheFactory = functionCacheFactory;
+
+    String sourceStageName = stageSpec.getName();
+
+    // Check if the SQL Engine is inialized and look for compatible sources
+    if (sqlEngineAdapter != null) {
+      // If the SQL Engine is initialized, and the stage is a compatible Input stage for this SQL engine, return a
+      // SQLBacked Collection which will try to execute the SQL Input operation and fail the pipeline in case of any
+      // sql failure
+      if (sourceFactory.getSQLEngineInput(sourceStageName, sqlEngineAdapter.getSQLEngineClassName()) != null) {
+        LOG.info("Source stage {} is compatible with SQL Engine.", sourceStageName);
+        SQLEngineInput sourceSQLEngineInput = sourceFactory.getSQLEngineInput(sourceStageName,
+                                                                              sqlEngineAdapter.getSQLEngineClassName());
+
+        return getSourceSQLBackedCollection(sourceStageName, sourceSQLEngineInput);
+      } else {
+        LOG.debug("Source stage {} is not compatible with SQL Engine.", sourceStageName);
+      }
+    }
+
+    // If SQL engine is not initiated : use default spark method (RDDCollection)
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
       new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
     this.functionCacheFactory = functionCacheFactory;
     return new RDDCollection<>(sec, functionCacheFactory, jsc,
                                new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
-      .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
-      .flatMap(sourceFunction)
-    );
+                                 .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
+                                 .flatMap(sourceFunction));
   }
 
   @Override
@@ -299,13 +321,13 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
   /**
    * Decide if we should pushdown this join operation into the SQL Engine.
-   *
+   * <p>
    * We will use pushdown if a SQL engine is available, unless:
-   *
+   * <p>
    * 1. One of the sides of the join is a broadcast, unle
    *
-   * @param stageName the name of the Stage
-   * @param joinDefinition the Join Definition
+   * @param stageName            the name of the Stage
+   * @param joinDefinition       the Join Definition
    * @param inputDataCollections the input data collections
    * @return boolean used to decide wether to pushdown this collection or not.
    */
@@ -348,6 +370,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
   /**
    * Check if this stage is configured as a stage that should be pushed to the SQL engine
+   *
    * @param stageName stage name
    * @return boolean stating if this stage should always try to be executed in the SQL engine.
    */
@@ -357,6 +380,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
   /**
    * Check if this stage is configured as a stage that should never be pushed to the SQL engine
+   *
    * @param stageName stage name
    * @return boolean stating if this stage should always be skipped from executing in the SQL engine.
    */
@@ -365,8 +389,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   }
 
   /**
-   * If SQL Engine is present, supports relational transform and current stage data is already
-   * provided by SQL engine, adds SQL Engine implementation of relational engine
+   * If SQL Engine is present, supports relational transform and current stage data is already provided by SQL engine,
+   * adds SQL Engine implementation of relational engine
+   *
    * @param stageData
    * @return
    */
@@ -399,5 +424,21 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
   public Engine getSQLRelationalEngine() {
     return sqlEngineAdapter.getSQLRelationalEngine();
+  }
+
+  /**
+   * Contains logic to read a {@link SQLEngineInput} using the SQL engine adapter.
+   * @param stageName Stage name to read
+   * @param input SQL Input specification
+   * @return a {@link SQLBackedCollection} representing the records from this SQL input
+   */
+  protected SQLBackedCollection<RecordInfo<Object>> getSourceSQLBackedCollection(String stageName,
+                                                                                 SQLEngineInput input) {
+    // Execute read operation using the stage input.
+    SQLEngineJob<SQLDataset> readJob = sqlEngineAdapter.read(stageName, input);
+    SQLEngineCollection<Object> sqlCollection =
+      new SQLEngineCollection<>(sec, functionCacheFactory, jsc, new SQLContext(jsc), datasetContext,
+                                sinkFactory, stageName, sqlEngineAdapter,  readJob);
+    return (SQLBackedCollection<RecordInfo<Object>>) mapToRecordInfoCollection(stageName, sqlCollection);
   }
 }

@@ -131,10 +131,9 @@ public class RemoteConfiguratorTest {
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> { }, new NoOpMetricsCollectionService()),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
-        new ArtifactLocalizerHttpHandlerInternal(new ArtifactLocalizer(cConf, remoteClientFactory,
-                                                                       ((namespaceId, retryStrategy) -> {
-                                                                         return new NoOpArtifactManager();
-                                                                       })))
+        new ArtifactLocalizerHttpHandlerInternal(
+          new ArtifactLocalizer(cConf, remoteClientFactory, ((namespaceId, retryStrategy) -> new NoOpArtifactManager()))
+        )
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
@@ -173,9 +172,12 @@ public class RemoteConfiguratorTest {
                                                                         artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
-                                                   new ApplicationClass(AllProgramsApp.class.getName(), "", null),
-                                                   null, null, null);
+    AppDeploymentInfo info = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId)
+      .setArtifactLocation(appJar)
+      .setNamespaceId(NamespaceId.DEFAULT)
+      .setApplicationClass(new ApplicationClass(AllProgramsApp.class.getName(), "", null))
+      .build();
 
     Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
 
@@ -207,9 +209,12 @@ public class RemoteConfiguratorTest {
 
     // Don't update the artifacts map so that the fetching of artifact would fail.
 
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
-                                                   new ApplicationClass(AllProgramsApp.class.getName(), "", null),
-                                                   null, null, null);
+    AppDeploymentInfo info = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId)
+      .setArtifactLocation(appJar)
+      .setNamespaceId(NamespaceId.DEFAULT)
+      .setApplicationClass(new ApplicationClass(AllProgramsApp.class.getName(), "", null))
+      .build();
 
     Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
 
@@ -227,9 +232,14 @@ public class RemoteConfiguratorTest {
                                                                         artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
 
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appJar, NamespaceId.DEFAULT,
-                                                   new ApplicationClass(ConfigTestApp.class.getName(), "", null),
-                                                   "BadApp", null, GSON.toJson("invalid"));
+    AppDeploymentInfo info = AppDeploymentInfo.builder()
+      .setArtifactId(artifactId)
+      .setArtifactLocation(appJar)
+      .setNamespaceId(NamespaceId.DEFAULT)
+      .setApplicationClass(new ApplicationClass(ConfigTestApp.class.getName(), "", null))
+      .setAppName("BadApp")
+      .setConfigString(GSON.toJson("invalid"))
+      .build();
 
     Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
 

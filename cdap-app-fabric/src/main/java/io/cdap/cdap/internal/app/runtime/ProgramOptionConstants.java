@@ -49,6 +49,8 @@ public final class ProgramOptionConstants {
 
   public static final String PROGRAM_RUN_ID = "programRunId";
 
+  public static final String PROGRAM_ARTIFACT_ID = "programArtifactId";
+
   public static final String INSTANCE_ID = "instanceId";
 
   public static final String INSTANCES = "instances";
@@ -108,6 +110,16 @@ public final class ProgramOptionConstants {
    * Option to a local file path of a directory containing plugins artifacts.
    */
   public static final String PLUGIN_DIR = "pluginDir";
+
+  /**
+   * Option to hash value of local file path of a directory containing plugins artifacts.
+   */
+  public static final String PLUGIN_DIR_HASH = "pluginDirHash";
+
+  /**
+   * Option to cacheable file names.
+   */
+  public static final String CACHEABLE_FILES = "cacheableFiles";
 
   /**
    * Option to a local file path of a JAR file containing plugins artifacts.

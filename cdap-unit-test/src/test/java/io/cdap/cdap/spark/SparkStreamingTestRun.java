@@ -34,7 +34,6 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.KafkaPublisher;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -45,8 +44,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * TODO: These tests will be modified/removed after LCM changes to ProgramLifecycleHttpHandler apis.
- * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
+ *
  */
 public class SparkStreamingTestRun extends TestFrameworkTestBase {
 
@@ -60,7 +58,6 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
-  @Ignore
   public void test() throws Exception {
     File checkpointDir = TEMP_FOLDER.newFolder();
     KafkaPublisher publisher = KAFKA_TESTER.getKafkaClient().getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED,

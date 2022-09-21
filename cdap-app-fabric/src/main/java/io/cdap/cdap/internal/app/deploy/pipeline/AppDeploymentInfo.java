@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2020 Cask Data, Inc.
+ * Copyright © 2015-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -35,98 +36,72 @@ public class AppDeploymentInfo {
   private final ArtifactId artifactId;
   private final transient Location artifactLocation;
   private final NamespaceId namespaceId;
-  private final String applicationClassName;
   private final ApplicationClass applicationClass;
+  @Nullable
   private final String appName;
+  @Nullable
   private final String appVersion;
+  @Nullable
   private final String configString;
   @Nullable
-  private final String changeSummary;
-  @Nullable
-  private final String owner;
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
+  @Nullable
   private final AppDeploymentRuntimeInfo runtimeInfo;
+  @Nullable
+  private final String changeSummary;
+  @Nullable
+  private final String author;
+  @Nullable
+  private final String parentVersion;
 
-  public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
-    this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
-         info.configString, info.changeSummary, info.owner, info.ownerPrincipal,
-         info.updateSchedules, info.runtimeInfo);
+  /**
+   * Creates a new {@link Builder}.
+   */
+  public static Builder builder() {
+    return new Builder();
   }
 
-  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString) {
-    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
-         null, null, true, null);
-  }
-
-  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString, @Nullable String changeSummary,
-                           @Nullable String owner) {
-    this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, changeSummary,
-         owner, null, true, null);
-  }
-
-  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString, @Nullable String changeSummary,
-                           @Nullable String owner, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
-         appName, appVersion, configString, changeSummary, owner, ownerPrincipal, updateSchedules, runtimeInfo);
-  }
-
-  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
-         appName, appVersion, configString, null, null, ownerPrincipal, updateSchedules,
-         runtimeInfo);
-  }
-
-  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                           String applicationClassName, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString,  @Nullable String changeSummary,
-                           @Nullable String owner,
-                           @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion,
-         configString, changeSummary, owner, ownerPrincipal, updateSchedules, runtimeInfo);
-  }
-
-  public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                           String applicationClassName, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
-    this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion,
-         configString, null, null, ownerPrincipal, updateSchedules, runtimeInfo);
+  /**
+   * Creates a new {@link Builder} by copying all fields from the another {@link AppDeploymentInfo}.
+   */
+  public static Builder copyFrom(AppDeploymentInfo other) {
+    return new Builder()
+      .setArtifactId(other.artifactId)
+      .setArtifactLocation(other.artifactLocation)
+      .setApplicationClass(other.applicationClass)
+      .setNamespaceId(other.namespaceId)
+      .setAppName(other.appName)
+      .setAppVersion(other.appVersion)
+      .setConfigString(other.configString)
+      .setOwnerPrincipal(other.ownerPrincipal)
+      .setUpdateSchedules(other.updateSchedules)
+      .setRuntimeInfo(other.runtimeInfo)
+      .setChangeSummary(other.changeSummary)
+      .setAuthor(other.author)
+      .setParentVersion(other.parentVersion);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                            @Nullable ApplicationClass applicationClass, String applicationClassName,
-                            @Nullable String appName, @Nullable String appVersion,
-                            @Nullable String configString, @Nullable String changeSummary,
-                            @Nullable String owner, 
-                            @Nullable KerberosPrincipalId ownerPrincipal,
-                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
+                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                            @Nullable String changeSummary, @Nullable String author, @Nullable String parentVersion) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
     this.appName = appName;
     this.appVersion = appVersion;
     this.configString = configString;
-    this.changeSummary = changeSummary;
-    this.owner = owner;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
     this.applicationClass = applicationClass;
-    this.applicationClassName = applicationClassName;
     this.runtimeInfo = runtimeInfo;
+    this.changeSummary = changeSummary;
+    this.author = author;
+    this.parentVersion = parentVersion;
   }
 
   /**
@@ -155,19 +130,10 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the {@link ApplicationClass} associated with this {@link Application} or {@code null} if this is runtime
-   * and cluster mode is ISOLATED, use {@link #getApplicationClassName()} to get the application class name.
+   * Returns the {@link ApplicationClass} associated with this {@link Application}.
    */
-  @Nullable
   public ApplicationClass getApplicationClass() {
     return applicationClass;
-  }
-
-  /**
-   * Returns the application class name for this app, this is needed to instantiate the app
-   */
-  public String getApplicationClassName() {
-    return applicationClassName;
   }
 
   /**
@@ -195,22 +161,6 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the change summary string provided for the application deployment or {@code null} if it is not provided.
-   */
-  @Nullable
-  public String getChangeSummary() {
-    return changeSummary;
-  }
-
-  /**
-   * @return The owner (username) who created the version of the Application.
-   */
-  @Nullable
-  public String getOwner() {
-    return owner;
-  }
-
-  /**
    * @return the principal of the application owner
    */
   @Nullable
@@ -231,5 +181,147 @@ public class AppDeploymentInfo {
   @Nullable
   public AppDeploymentRuntimeInfo getRuntimeInfo() {
     return runtimeInfo;
+  }
+
+  /**
+   * Returns the change summary description provided for the application edit or {@code null} if it is not provided.
+   */
+  @Nullable
+  public String getChangeSummary() {
+    return changeSummary;
+  }
+
+  /**
+   * Returns the author of the application edit or {@code null} if it is not provided.
+   */
+  @Nullable
+  public String getAuthor() {
+    return author;
+  }
+
+  /**
+   * Returns the parent-version in the request or {@code null} if it is not provided.
+   */
+  @Nullable
+  public String getParentVersion() {
+    return parentVersion;
+  }
+
+  /**
+   * Builder class for the {@link AppDeploymentInfo}.
+   */
+  public static final class Builder {
+
+    private ArtifactId artifactId;
+    private Location artifactLocation;
+    private ApplicationClass applicationClass;
+    private NamespaceId namespaceId;
+    private String appName;
+    private String appVersion;
+    private String configString;
+    private KerberosPrincipalId ownerPrincipal;
+    // The default behavior of update schedules is to update schedule on deployment.
+    private boolean updateSchedules = true;
+    private AppDeploymentRuntimeInfo runtimeInfo;
+    @Nullable
+    private String changeSummary;
+    @Nullable
+    private String author;
+    @Nullable
+    private String parentVersion;
+
+    private Builder() {
+      // Only for the builder() method to use
+    }
+
+    public Builder setArtifactId(ArtifactId artifactId) {
+      this.artifactId = artifactId;
+      return this;
+    }
+
+    public Builder setArtifactLocation(Location artifactLocation) {
+      this.artifactLocation = artifactLocation;
+      return this;
+    }
+
+    public Builder setApplicationClass(ApplicationClass applicationClass) {
+      this.applicationClass = applicationClass;
+      return this;
+    }
+
+    public Builder setApplicationId(ApplicationId appId) {
+      setNamespaceId(appId.getNamespaceId());
+      setAppName(appId.getApplication());
+      setAppVersion(appId.getVersion());
+      return this;
+    }
+
+    public Builder setNamespaceId(NamespaceId namespaceId) {
+      this.namespaceId = namespaceId;
+      return this;
+    }
+
+    public Builder setAppName(String appName) {
+      this.appName = appName;
+      return this;
+    }
+
+    public Builder setAppVersion(String appVersion) {
+      this.appVersion = appVersion;
+      return this;
+    }
+
+    public Builder setConfigString(String configString) {
+      this.configString = configString;
+      return this;
+    }
+
+    public Builder setOwnerPrincipal(KerberosPrincipalId ownerPrincipal) {
+      this.ownerPrincipal = ownerPrincipal;
+      return this;
+    }
+
+    public Builder setUpdateSchedules(boolean updateSchedules) {
+      this.updateSchedules = updateSchedules;
+      return this;
+    }
+
+    public Builder setRuntimeInfo(AppDeploymentRuntimeInfo runtimeInfo) {
+      this.runtimeInfo = runtimeInfo;
+      return this;
+    }
+
+    public Builder setChangeSummary(@Nullable String changeSummary) {
+      this.changeSummary = changeSummary;
+      return this;
+    }
+
+    public Builder setAuthor(@Nullable String author) {
+      this.author = author;
+      return this;
+    }
+
+    public Builder setParentVersion(@Nullable String parentVersion) {
+      this.parentVersion = parentVersion;
+      return this;
+    }
+
+    public AppDeploymentInfo build() {
+      if (artifactId == null) {
+        throw new IllegalStateException("Missing artifact ID");
+      }
+      if (artifactLocation == null) {
+        throw new IllegalStateException("Missing artifact location");
+      }
+      if (namespaceId == null) {
+        throw new IllegalStateException("Missing namespace ID");
+      }
+      if (applicationClass == null) {
+        throw new IllegalStateException("Missing application class");
+      }
+      return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
+                                   appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
+                                   changeSummary, author, parentVersion);
+    }
   }
 }

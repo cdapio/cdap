@@ -122,9 +122,10 @@ public class ApplicationDetail {
 
   public static ApplicationDetail fromSpec(ApplicationSpecification spec,
                                            @Nullable String ownerPrincipal, @Nullable String author,
-                                           @Nullable Long created, @Nullable String isLatest) {
-    // Adding owner, creation time and latest fields to the app detail
-    ChangeSummary changeSummary = new ChangeSummary(spec.getChangeSummary(), author, created, isLatest);
+                                           @Nullable String description,
+                                           @Nullable Long created) {
+    // Adding owner, creation time and change summary description fields to the app detail
+    ChangeSummary changeSummary = new ChangeSummary(description, author, created);
     List<ProgramRecord> programs = new ArrayList<>();
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
       programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),

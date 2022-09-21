@@ -475,7 +475,6 @@ class CapabilityApplier {
 
   private ApplicationId getApplicationId(MetadataEntity metadataEntity) {
     return new ApplicationId(metadataEntity.getValue(MetadataEntity.NAMESPACE),
-                             metadataEntity.getValue(MetadataEntity.APPLICATION),
-                             metadataEntity.getValue(MetadataEntity.VERSION));
+                             metadataEntity.getValue(MetadataEntity.APPLICATION));
   }
 }

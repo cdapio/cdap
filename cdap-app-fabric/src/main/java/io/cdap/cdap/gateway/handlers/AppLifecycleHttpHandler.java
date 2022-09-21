@@ -49,7 +49,6 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceException;
-import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
@@ -186,7 +185,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") final String appId)
     throws BadRequestException, NamespaceNotFoundException, AccessException {
 
-    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, RunIds.generate().getId());
+    ApplicationId applicationId = validateApplicationId(namespaceId, appId);
 
     try {
       return deployAppFromArtifact(applicationId);
@@ -222,7 +221,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Creates an application with the specified name and app-id from an artifact.
-   * Version id in the path is ignored.
    */
   @POST
   @Path("/apps/{app-id}/versions/{version-id}/create")
@@ -233,7 +231,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        @PathParam("version-id") final String versionId)
     throws Exception {
 
-    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, RunIds.generate().getId());
+    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
+
+    if (!applicationLifecycleService.updateAppAllowed(applicationId)) {
+      responder.sendString(HttpResponseStatus.CONFLICT,
+                           String.format("Cannot update the application because version %s already exists", versionId));
+    }
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
@@ -255,8 +258,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @QueryParam("pageSize") Integer pageSize,
                          @QueryParam("orderBy") SortOrder orderBy,
                          @QueryParam("nameFilter") String nameFilter
-  )
-    throws Exception {
+      )
+      throws Exception {
 
     NamespaceId namespace = validateNamespace(namespaceId);
 
@@ -271,22 +274,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
         AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
         ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, pageSize,
-                                                             orderBy, nameFilter, names);
+                                                                 orderBy, nameFilter, names);
         boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
           ApplicationRecord record = new ApplicationRecord(appDetail);
           jsonListResponder.send(record);
           lastRecord.set(record);
         });
         ApplicationRecord record = lastRecord.get();
-        return !pageLimitReached || record == null ? null :
+        return !pageLimitReached  || record == null ? null :
           record.getName() + EntityId.IDSTRING_PART_SEPARATOR + record.getAppVersion();
       });
     } else {
       ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, null,
                                                            orderBy, nameFilter, names);
       JsonWholeListResponder.respond(GSON, responder,
-                                     jsonListResponder -> applicationLifecycleService.scanApplications
-                                       (scanRequest, d -> jsonListResponder.send(new ApplicationRecord(d)))
+          jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
+              d -> jsonListResponder.send(new ApplicationRecord(d)))
       );
     }
   }
@@ -316,7 +319,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the latest version info associated with the application.
+   * Returns the info associated with the application.
    */
   @GET
   @Path("/apps/{app-id}")
@@ -324,9 +327,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") final String namespaceId,
                          @PathParam("app-id") final String appId)
     throws Exception {
+
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson
-      (applicationLifecycleService.getLatestAppDetail(applicationId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
   }
 
   /**
@@ -355,6 +358,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("app-id") final String appId,
                                 @PathParam("version-id") final String versionId)
     throws Exception {
+
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
   }
@@ -368,6 +372,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
     throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException, AccessException {
+
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(applicationId)));
   }
@@ -441,8 +446,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appName)
     throws NotFoundException, BadRequestException, AccessException, IOException {
-    // Updates the latest version instead of the -SNAPSHOT version
-    ApplicationId appId = validateApplicationVersionId(namespaceId, appName, RunIds.generate().getId());
+
+    ApplicationId appId = validateApplicationId(namespaceId, appName);
 
     AppRequest appRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
@@ -453,6 +458,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
+
     try {
       applicationLifecycleService.updateApp(appId, appRequest, createProgramTerminator());
       responder.sendString(HttpResponseStatus.OK, "Update complete.");
@@ -480,10 +486,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appName,
                                  @QueryParam("artifactScope") Set<String> artifactScopes,
                                  @QueryParam("allowSnapshot") boolean allowSnapshot) throws Exception {
-    // Upgrade only the latest version of the app.
-    ApplicationDetail latestApp = applicationLifecycleService.getLatestAppDetail
-      (new ApplicationId(namespaceId, appName));
-    ApplicationId appId = validateApplicationVersionId(namespaceId, appName, latestApp.getAppVersion());
+    ApplicationId appId = validateApplicationId(validateNamespace(namespaceId), appName);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
     applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
     ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId);
@@ -525,9 +528,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         for (ApplicationId appId : appIds) {
           ApplicationUpdateDetail updateDetail;
           try {
-            // Get the latest version of the app.
-            ApplicationDetail latestApp = applicationLifecycleService.getLatestAppDetail(appId);
-            appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), latestApp.getAppVersion());
             applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
             updateDetail = new ApplicationUpdateDetail(appId);
           } catch (UnsupportedOperationException e) {
@@ -537,8 +537,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             updateDetail = new ApplicationUpdateDetail(appId, e);
           } catch (Exception e) {
             updateDetail =
-              new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", e,
-                                                                      HttpResponseStatus.INTERNAL_SERVER_ERROR));
+                new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", e,
+                                            HttpResponseStatus.INTERNAL_SERVER_ERROR));
             LOG.error("Application upgrade failed with exception", e);
           }
           GSON.toJson(updateDetail, ApplicationUpdateDetail.class, jsonWriter);
@@ -593,8 +593,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Decodes request coming from the {@link #getApplicationDetails(FullHttpRequest, HttpResponder, String)} call.
    */
   private List<ApplicationId> decodeAndValidateBatchApplication(NamespaceId namespaceId,
-                                                                FullHttpRequest request) throws BadRequestException,
-    ApplicationNotFoundException {
+                                                                FullHttpRequest request) throws BadRequestException {
     try {
       List<ApplicationId> result = new ArrayList<>();
       JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
@@ -610,22 +609,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           throw new BadRequestException("Missing 'appId' in the request element.");
         }
         String appId = obj.get("appId").getAsString();
-        String version = null;
 
-        JsonElement versionObj = obj.get("version");
-        if (versionObj == null) {
-          // get the latest version of the app instead of -SNAPSHOT
-          try {
-            ApplicationDetail appLatestVersionDetail = applicationLifecycleService.getLatestAppDetail(
-              new ApplicationId(namespaceId.getNamespace(), appId));
-            version = appLatestVersionDetail.getAppVersion();
-          } catch (Exception e) {
-            throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
-          }
+        JsonElement version = obj.get("version");
+        if (version == null) {
+          result.add(validateApplicationId(namespaceId, appId));
         } else {
-          version = versionObj.getAsString();
+          result.add(validateApplicationVersionId(namespaceId, appId, version.getAsString()));
         }
-        result.add(validateApplicationVersionId(namespaceId, appId, version));
       }
       return result;
     } catch (JsonSyntaxException e) {
@@ -637,14 +627,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Decodes request coming from the {@link #upgradeApplications(FullHttpRequest, HttpResponder, String, Set, boolean)}
    * call.
    */
-  private List<ApplicationId> decodeAndValidateBatchApplicationRecord(NamespaceId namespaceId, FullHttpRequest request)
+  private List<ApplicationId> decodeAndValidateBatchApplicationRecord(NamespaceId namespaceId,
+                                                                      FullHttpRequest request)
     throws BadRequestException {
     try {
       List<ApplicationId> appIds = new ArrayList<>();
       List<ApplicationRecord> records =
         DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                             new TypeToken<List<ApplicationRecord>>() {
-                             }.getType());
+                             new TypeToken<List<ApplicationRecord>>() { }.getType());
       if (records == null) {
         throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
       }
@@ -652,9 +642,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (element.getName() != null && element.getName().isEmpty()) {
           throw new BadRequestException("Missing 'name' in the request element for app-id.");
         }
-        // Do not allow upgrading specific version of the app - only the latest version must be upgraded -
-        // which is fetched in the upgradeApplications function.
-        appIds.add(validateApplicationId(namespaceId, element.getName()));
+        if (element.getAppVersion() == null) {
+          appIds.add(validateApplicationId(namespaceId, element.getName()));
+        } else {
+          appIds.add(validateApplicationVersionId(namespaceId, element.getName(), element.getAppVersion()));
+        }
       }
       return appIds;
     } catch (JsonSyntaxException e) {
@@ -691,20 +683,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           String configString = config == null ? null :
             config instanceof String ? (String) config : GSON.toJson(config);
 
-          String parentVersion = appRequest.getParentVersion();
-
-          String changeSummary = appRequest.getChangeSummary() == null ? null : appRequest.getChangeSummary()
-            .getDescription();
-
           try {
-            if (!applicationLifecycleService.deployAppAllowed(appId, parentVersion)) {
-              throw new BadRequestException("Can't deploy the application because the parent version is not the " +
-                                              "latest.");
-            }
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                  artifactSummary, configString, changeSummary,
-                                                  createProgramTerminator(), ownerPrincipalId,
-                                                  appRequest.canUpdateSchedules(), false,
+                                                  artifactSummary, configString, createProgramTerminator(),
+                                                  ownerPrincipalId, appRequest.canUpdateSchedules(), false,
                                                   Collections.emptyMap());
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {

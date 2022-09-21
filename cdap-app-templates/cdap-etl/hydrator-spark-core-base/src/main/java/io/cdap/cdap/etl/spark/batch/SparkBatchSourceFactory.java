@@ -21,6 +21,7 @@ import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngineInput;
 import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -31,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.currentThread;
 
@@ -43,11 +45,13 @@ public final class SparkBatchSourceFactory {
   private final Map<String, InputFormatProvider> inputFormatProviders;
   private final Map<String, DatasetInfo> datasetInfos;
   private final Map<String, Set<String>> sourceInputs;
+  private final Map<String, SQLEngineInput> sqlInputs;
 
   public SparkBatchSourceFactory() {
     this.inputFormatProviders = new HashMap<>();
     this.datasetInfos = new HashMap<>();
     this.sourceInputs = new HashMap<>();
+    this.sqlInputs = new HashMap<>();
   }
 
   public void addInput(String stageName, Input input) {
@@ -61,9 +65,19 @@ public final class SparkBatchSourceFactory {
       addInput(stageName, ifpInput.getAlias(),
                new BasicInputFormatProvider(ifpInput.getInputFormatProvider().getInputFormatClassName(),
                                             ifpInput.getInputFormatProvider().getInputFormatConfiguration()));
+    } else if (input instanceof SQLEngineInput) {
+      addInput(stageName, input.getAlias(), (SQLEngineInput) input);
     }
   }
 
+  /**
+   * Add Dataset Input
+   * @param stageName stage name
+   * @param datasetName dataset name
+   * @param alias stage alias
+   * @param datasetArgs dataset arguments
+   * @param splits list of splits
+   */
   private void addInput(String stageName, String datasetName, String alias, Map<String, String> datasetArgs,
                         List<Split> splits) {
     duplicateAliasCheck(alias);
@@ -71,9 +85,30 @@ public final class SparkBatchSourceFactory {
     addStageInput(stageName, alias);
   }
 
+  /**
+   * Add InputFormatProvider Input
+   * @param stageName stage name
+   * @param alias stage alias
+   * @param inputFormatProvider input format provider instance
+   */
   private void addInput(String stageName, String alias, InputFormatProvider inputFormatProvider) {
     duplicateAliasCheck(alias);
     inputFormatProviders.put(alias, inputFormatProvider);
+    addStageInput(stageName, alias);
+  }
+
+  /**
+   * Add SQL Engine Input
+   * @param stageName stage name
+   * @param alias stage alias
+   * @param sqlEngineInput input
+   */
+  private void addInput(String stageName, String alias,
+                         SQLEngineInput sqlEngineInput) {
+    if (sqlInputs.containsKey(stageName)) {
+      throw new IllegalArgumentException("Input already configured: " + alias);
+    }
+    sqlInputs.put(alias, sqlEngineInput);
     addStageInput(stageName, alias);
   }
 
@@ -84,9 +119,24 @@ public final class SparkBatchSourceFactory {
     }
   }
 
+  public SQLEngineInput getSQLEngineInput(String stageName, String sqlEngineClassName) {
+    return !sourceInputs.containsKey(stageName) ? null :
+      sourceInputs.get(stageName)
+        .stream()
+        .map(sqlInputs::get)
+        .filter(java.util.Objects::nonNull)
+        .filter(input -> sqlEngineClassName.equals(input.getSqlEngineClassName()))
+        .findFirst()
+        .orElse(null);
+  }
+
   public <K, V> JavaPairRDD<K, V> createRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc, String sourceName,
                                             Class<K> keyClass, Class<V> valueClass) {
     Set<String> inputNames = sourceInputs.get(sourceName);
+
+    // Exclude SQL inputs
+    inputNames = inputNames.stream().filter(in -> !sqlInputs.containsKey(in)).collect(Collectors.toSet());
+
     if (inputNames == null || inputNames.isEmpty()) {
       // should never happen if validation happened correctly at pipeline configure time
       throw new IllegalArgumentException(

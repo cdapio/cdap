@@ -38,7 +38,6 @@ import io.cdap.common.http.HttpResponse;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -48,8 +47,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for scheduled run time.
- * TODO: These tests will be modified after LCM changes to the schedules and it's apis.
- * JIRA: https://cdap.atlassian.net/browse/CDAP-19576
  */
 public class ScheduledRunTimeTest extends AppFabricTestBase {
 
@@ -78,7 +75,6 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore
   public void testGetNextRun() throws Exception {
     ApplicationId appId = NamespaceId.DEFAULT.app("test");
     deploy(appId, new AppRequest<>(new ArtifactSummary(ARTIFACT_ID.getName(), ARTIFACT_ID.getVersion().getVersion())));
@@ -108,7 +104,6 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore
   public void testBatchGetNextRun() throws Exception {
     // deploys 5 apps and create schedules for each of them
     long now = System.currentTimeMillis();

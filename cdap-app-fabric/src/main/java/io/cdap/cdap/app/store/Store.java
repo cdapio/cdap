@@ -294,12 +294,13 @@ public interface Store {
    *
    * @param id            application id
    * @param spec          application specification to store
-   * @param owner         user name (owner) of the application version
+   * @param author        user that edited the application version
    * @param created       creation time of the application version
-   * @param latestVersion latest version id of the application
+   * @param changeSummary the change summary description of application edit
+   * @param parentVersion version id of the application
    */
-  void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String owner, @Nullable Long created,
-                      @Nullable String latestVersion);
+  void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String author, @Nullable Long created,
+                      @Nullable String changeSummary, @Nullable String parentVersion);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
@@ -387,10 +388,10 @@ public interface Store {
    * Returns latest version of an application in a namespace
    *
    * @param namespace namespace
-   * @param appId application id
+   * @param appName application id
    * @return The metadata information of the latest application version.
    */
-  ApplicationMeta getLatest(String namespace, String appId);
+  ApplicationMeta getLatest(String namespace, String appName);
 
   /**
    * Returns a list of all versions' ApplicationId's of the application by id

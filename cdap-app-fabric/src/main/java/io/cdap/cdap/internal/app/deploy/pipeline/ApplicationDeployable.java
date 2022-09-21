@@ -51,7 +51,11 @@ public class ApplicationDeployable {
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
   @Nullable
-  private final String owner;
+  private final String changeSummary;
+  @Nullable
+  private final String author;
+  @Nullable
+  private final String parentVersion;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
@@ -59,7 +63,8 @@ public class ApplicationDeployable {
                                ApplicationDeployScope applicationDeployScope,
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(), null);
+         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
+         null, null, null);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -70,7 +75,8 @@ public class ApplicationDeployable {
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables,
-                               Map<MetadataScope, Metadata> metadata, @Nullable String owner) {
+                               Map<MetadataScope, Metadata> metadata, @Nullable String changeSummary,
+                               @Nullable String author, @Nullable String parentVersion) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -82,7 +88,9 @@ public class ApplicationDeployable {
     this.systemTables = systemTables;
     this.applicationClass = applicationClass;
     this.metadata = metadata;
-    this.owner = owner;
+    this.changeSummary = changeSummary;
+    this.author = author;
+    this.parentVersion = parentVersion;
   }
 
   /**
@@ -164,10 +172,26 @@ public class ApplicationDeployable {
   }
 
   /**
+   * Returns the change-summary descrption of the edit of the application
+   */
+  @Nullable
+  public String getChangeSummary() {
+    return changeSummary;
+  }
+
+  /**
    * Returns the owner (user name) of the version of the application
    */
   @Nullable
-  public String getOwner() {
-    return owner;
+  public String getAuthor() {
+    return author;
+  }
+
+  /**
+   * Returns the parent-version of the version of the application in the request
+   */
+  @Nullable
+  public String getParentVersion() {
+    return parentVersion;
   }
 }
