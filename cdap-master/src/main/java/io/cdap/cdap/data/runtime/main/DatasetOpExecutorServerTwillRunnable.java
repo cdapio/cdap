@@ -48,6 +48,7 @@ import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.metadata.MetadataConsumerSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -144,5 +145,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(MetadataSubscriberService.class));
+    services.add(injector.getInstance(MetadataConsumerSubscriberService.class));
   }
 }
