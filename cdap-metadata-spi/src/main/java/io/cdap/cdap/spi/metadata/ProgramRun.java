@@ -86,7 +86,7 @@ public class ProgramRun {
   }
 
   /**
-   * Returns the startTime of the program run.
+   * Returns the startTime of the program run in millis.
    */
   @Nullable
   public Long getStartTimeMs() {
@@ -94,7 +94,7 @@ public class ProgramRun {
   }
 
   /**
-   * Returns the endTime of the program run.
+   * Returns the endTime of the program run in millis.
    */
   @Nullable
   public Long getEndTimeMs() {
@@ -123,8 +123,8 @@ public class ProgramRun {
       ", programId='" + programId + '\'' +
       ", namespace='" + namespace + '\'' +
       ", application='" + application + '\'' +
-      ", startTime=" + startTimeMs +
-      ", endTime=" + endTimeMs +
+      ", startTimeMs=" + startTimeMs +
+      ", endTimeMs=" + endTimeMs +
       ", status='" + status + '\'' +
       ", properties=" + properties +
       '}';
@@ -167,8 +167,8 @@ public class ProgramRun {
     private String programId;
     private String namespace;
     private String application;
-    private Long startTime;
-    private Long endTime;
+    private Long startTimeMs;
+    private Long endTimeMs;
     private String status;
 
     private Builder(String id) {
@@ -201,18 +201,18 @@ public class ProgramRun {
     }
 
     /**
-     * Set the start time of the program run.
+     * Set the start time of the program run in millis.
      */
-    public Builder setStartTime(Long startTime) {
-      this.startTime = startTime;
+    public Builder setStartTimeMs(@Nullable Long startTimeMs) {
+      this.startTimeMs = startTimeMs;
       return this;
     }
 
     /**
-     * Set the end time of the program run.
+     * Set the end time of the program run in millis.
      */
-    public Builder setEndTime(Long endTime) {
-      this.endTime = endTime;
+    public Builder setEndTimeMs(@Nullable Long endTimeMs) {
+      this.endTimeMs = endTimeMs;
       return this;
     }
 
@@ -261,8 +261,8 @@ public class ProgramRun {
      * Creates a new instance of {@link ProgramRun}.
      */
     public ProgramRun build() {
-      return new ProgramRun(id, programId, namespace, application, startTime, endTime, status,
-                                             properties);
+      return new ProgramRun(id, programId, namespace, application, startTimeMs, endTimeMs, status,
+                            properties);
     }
   }
 }

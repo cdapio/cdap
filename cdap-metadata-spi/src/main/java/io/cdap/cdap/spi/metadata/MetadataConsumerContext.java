@@ -18,27 +18,21 @@ package io.cdap.cdap.spi.metadata;
 
 import io.cdap.cdap.api.annotation.Beta;
 
+import java.util.Map;
+
 /**
- * Interface for consuming programs and lineage metadata.
+ * Interface for an {@link MetadataConsumer} context
  */
 @Beta
-public interface MetadataConsumer {
+public interface MetadataConsumerContext {
 
   /**
-   * @return the name of the metadata consumer.
-   */
-  String getName();
-
-  /**
-   * Consumes lineage info for a program run.
+   * Returns the {@link Map} of properties associated with the Metadata Consumer extension.
+   * The properties for the extension can be specified in the <code>cdap-site.xml</code>
+   * prefixed with <code>metadata.consumer.</code>. The returned {@link Map} will have all
+   * such properties, but with prefix <code>metadata.consumer.</code> stripped.
    *
-   * @param context context for the MetadataConsumer containing properties required by the implementation.
-   * @param programRun the {@link ProgramRun} for which lineage is consumed
-   * @param lineageInfo the {@link LineageInfo} containing details of lineage for the program run
-   *
-   * @throws Exception if there is any error while consuming lineage.
+   * @return the MetadataConsumer properties for the program run
    */
-  void consumeLineage(MetadataConsumerContext context, ProgramRun programRun, LineageInfo lineageInfo)
-    throws Exception;
+  Map<String, String> getProperties();
 }
-
