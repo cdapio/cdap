@@ -51,7 +51,9 @@ import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,8 +188,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     LOG.debug("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
               runInfo.getRun(), clusterName, projectId, region, bucket);
 
-    // TODO: CDAP-16408 use fixed directory for caching twill, application, artifact jars
-    File tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
+    File tempDir = DataprocUtils.CACHE_DIR_PATH.toFile();
+    boolean disableLocalCaching = Boolean.parseBoolean(
+      provisionerContext.getProperties().getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED,
+                                                      "false"));
     // In dataproc bucket, the run root will be <bucket>/cdap-job/<runid>/. All the files without _cache_ in their
     // filename for this run will be copied under that base dir.
     String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runInfo.getRun());
@@ -196,6 +200,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String cacheRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, DataprocUtils.CDAP_CACHED_ARTIFACTS);
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
+      if (disableLocalCaching) {
+        LOG.debug("Local caching is disabled, " +
+                    "continuing without caching twill and dataproc launcher jars.");
+        tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
+      }
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
@@ -236,8 +245,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       throw new Exception(String.format("Error while launching job %s on cluster %s",
                                         getJobId(runInfo), clusterName), e);
     } finally {
-      // delete local temp directory
-      deleteDirectoryContents(tempDir);
+      if (disableLocalCaching) {
+        DataprocUtils.deleteDirectoryContents(tempDir);
+      }
     }
   }
 
@@ -324,13 +334,29 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                                File tempDir) throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(tempDir);
     List<LocalFile> localFiles = new ArrayList<>(runtimeLocalFiles);
-    localFiles.add(DataprocJarUtil.getTwillJar(locationFactory));
-    localFiles.add(DataprocJarUtil.getLauncherJar(locationFactory));
+    localFiles.add(getTwillJar(locationFactory));
+    localFiles.add(getLauncherJar(locationFactory));
 
     // Sort files in descending order by size so that we upload concurrently large files first.
     localFiles.sort(Comparator.comparingLong(LocalFile::getSize).reversed());
 
     return localFiles;
+  }
+
+  private LocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
+    Location location = locationFactory.create(Constants.Files.TWILL_JAR);
+    if (location.exists()) {
+      return DataprocJarUtil.getLocalFile(location, true);
+    }
+    return DataprocJarUtil.getTwillJar(locationFactory);
+  }
+
+  private LocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
+    Location location = locationFactory.create(Constants.Files.LAUNCHER_JAR);
+    if (location.exists()) {
+      return DataprocJarUtil.getLocalFile(location, false);
+    }
+    return DataprocJarUtil.getLauncherJar(locationFactory);
   }
 
   private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
@@ -574,23 +600,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   private String getPath(String... pathSubComponents) {
     return Joiner.on("/").join(pathSubComponents);
-  }
-
-  /**
-   * Recursively deletes all the contents of the directory and the directory itself.
-   */
-  private static void deleteDirectoryContents(File file) {
-    if (file.isDirectory()) {
-      File[] entries = file.listFiles();
-      if (entries != null) {
-        for (File entry : entries) {
-          deleteDirectoryContents(entry);
-        }
-      }
-    }
-    if (!file.delete()) {
-      LOG.warn("Failed to delete temp file {}.", file);
-    }
   }
 
   /**

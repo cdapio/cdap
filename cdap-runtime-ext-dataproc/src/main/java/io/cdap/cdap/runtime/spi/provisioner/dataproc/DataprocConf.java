@@ -86,6 +86,7 @@ final class DataprocConf {
   static final String WORKER_NUM_NODES = "workerNumNodes";
   static final String SECONDARY_WORKER_NUM_NODES = "secondaryWorkerNumNodes";
   static final String AUTOSCALING_POLICY = "autoScalingPolicy";
+  static final String LOCAL_CACHE_DISABLED = DataprocUtils.LOCAL_CACHE_DISABLED;
 
   public static final String COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT = "compute.request.connection.timeout.millis";
   private static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
@@ -156,6 +157,7 @@ final class DataprocConf {
   private final long clusterReuseThresholdMinutes;
   private final String clusterReuseKey;
   private final boolean enablePredefinedAutoScaling;
+  private final boolean disableLocalCaching;
 
   private final int computeReadTimeout;
   private final int computeConnectionTimeout;
@@ -182,8 +184,7 @@ final class DataprocConf {
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
                        boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
-                       @Nullable String rootUrl,
-                       boolean disableGCSCaching) {
+                       @Nullable String rootUrl, boolean disableGCSCaching, boolean disableLocalCaching) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -238,6 +239,7 @@ final class DataprocConf {
     this.computeConnectionTimeout = computeConnectionTimeout;
     this.rootUrl = rootUrl;
     this.disableGCSCaching = disableGCSCaching;
+    this.disableLocalCaching = disableLocalCaching;
   }
 
   String getRegion() {
@@ -443,6 +445,10 @@ final class DataprocConf {
     return enablePredefinedAutoScaling;
   }
 
+  public boolean isDisableLocalCaching() {
+    return disableLocalCaching;
+  }
+
   public int getComputeReadTimeout() {
     return computeReadTimeout;
   }
@@ -561,6 +567,9 @@ final class DataprocConf {
 
     boolean enablePredefinedAutoScaling =
       Boolean.parseBoolean(properties.getOrDefault(PREDEFINED_AUTOSCALE_ENABLED, "false"));
+
+    boolean disableLocalCaching =
+      Boolean.parseBoolean(properties.getOrDefault(LOCAL_CACHE_DISABLED, "false"));
 
     if (enablePredefinedAutoScaling) {
       workerNumNodes = PredefinedAutoScaling.getPrimaryWorkerInstances();
@@ -697,7 +706,7 @@ final class DataprocConf {
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
                             enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
-                            disableGCSCaching);
+                            disableGCSCaching, disableLocalCaching);
   }
 
   // the UI never sends nulls, it only sends empty strings.
