@@ -1004,10 +1004,11 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       return;
     }
     Map<Type, AppResourceWatcherThread<?>> typeMap = new HashMap<>();
+    // Batch jobs are k8s jobs, and streaming pipelines are k8s deployments
     typeMap.put(V1Job.class, AppResourceWatcherThread.createJobWatcher(namespace, selector));
-    // We only create deployments and stateful in the system namespace, so only add watchers for them in that namespace
+    typeMap.put(V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(namespace, selector));
+    // We only create statefulsets in the system namespace, so only add watchers for them in that namespace
     if (namespace.equals(kubeNamespace)) {
-      typeMap.put(V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(namespace, selector));
       typeMap.put(V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(namespace, selector));
     }
     typeMap.values().forEach(watcher -> {
