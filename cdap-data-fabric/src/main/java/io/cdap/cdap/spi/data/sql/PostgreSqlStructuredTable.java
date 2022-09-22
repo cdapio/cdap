@@ -212,7 +212,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Scan range {} with limit {} order {}", tableSchema.getTableId(), keyRange, limit, sortOrder);
     fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
     fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
-    String scanQuery = getScanQuery(keyRange, limit, sortOrder);
+    String scanQuery = getScanQuery(keyRange, limit, tableSchema.getPrimaryKeys(), sortOrder);
 
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
@@ -347,6 +347,66 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to scan from table %s with index %s",
                                           tableSchema.getTableId().getName(), index), e);
+    }
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+    throws InvalidFieldException, IOException {
+
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validateField(filterIndex);
+    if (!tableSchema.isIndexColumn(filterIndex.getName())) {
+      throw new InvalidFieldException(tableSchema.getTableId(), filterIndex.getName(), "is not an indexed column");
+    }
+
+    LOG.trace("Table {}: Scan range {} with filterIndex {} limit {}",
+              tableSchema.getTableId(), keyRange, filterIndex, limit);
+
+    String scanQuery = getScanIndexQuery(keyRange, limit, filterIndex, SortOrder.ASC);
+
+    try {
+      PreparedStatement statement = connection.prepareStatement(scanQuery);
+      statement.setFetchSize(fetchSize);
+      int nextIndex = setStatementFieldByRange(keyRange, statement, 1);
+      setField(statement, filterIndex, nextIndex);
+      LOG.trace("SQL statement: {}", statement);
+
+      ResultSet resultSet = statement.executeQuery();
+      return new ResultSetIterator(statement, resultSet, tableSchema);
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to scan from table %s with range %s and index %s",
+                                          tableSchema.getTableId().getName(), keyRange, filterIndex), e);
+    }
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> orderByField, SortOrder sortOrder)
+    throws InvalidFieldException, IOException {
+
+    LOG.trace("Table {}: Scan range {} with limit {} order {} on index field {}",
+              tableSchema.getTableId(), keyRange, limit, sortOrder, orderByField);
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    String indexField = orderByField.getName();
+    if (!tableSchema.isIndexColumn(indexField)) {
+      throw new InvalidFieldException(tableSchema.getTableId(), indexField, "is not an indexed column");
+    }
+
+    String scanQuery = getScanQuery(keyRange, limit, Collections.singleton(indexField), sortOrder);
+
+    try {
+      PreparedStatement statement = connection.prepareStatement(scanQuery);
+      statement.setFetchSize(fetchSize);
+      setStatementFieldByRange(keyRange, statement);
+      LOG.trace("SQL statement: {}", statement);
+
+      ResultSet resultSet = statement.executeQuery();
+      return new ResultSetIterator(statement, resultSet, tableSchema);
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to scan from table %s with range %s",
+                                          tableSchema.getTableId().getName(), keyRange), e);
     }
   }
 
@@ -763,21 +823,47 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * Get the scan query for the range given. For example, if the range provides key1, key2 as the begin and end to
+   * Get the scan query for the range given. For example, if the range provides key1, key2 as the beginning and end to
    * scan, both rows are inclusive, it will generate the following query:
    * SELECT * FROM simpletable WHERE (key1,key2)>=(?,?) AND (key1,key2)<=(?,?) LIMIT 10;
    *
-   * @param range     the range to scan.
-   * @param limit     limit number of row
-   * @param sortOrder sort order
+   * @param range        the range to scan.
+   * @param limit        limit number of row
+   * @param fieldsToSort The fields to be sorted, have to be indexed or primary keys
+   * @param sortOrder    sort order
    * @return the scan query
    */
-  private String getScanQuery(Range range, int limit, SortOrder sortOrder) {
+  private String getScanQuery(Range range, int limit, Collection<String> fieldsToSort, SortOrder sortOrder) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ").append(tableSchema.getTableId().getName());
     if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
       queryString.append(" WHERE ");
       appendRange(queryString, range);
     }
+
+    queryString.append(getOrderByClause(fieldsToSort, sortOrder));
+    queryString.append(" LIMIT ").append(limit).append(";");
+    return queryString.toString();
+  }
+
+  /**
+   * Get the scan query for the given range and index field.
+   *
+   * @param range       the range to scan.
+   * @param limit       limit number of row
+   * @param filterIndex index field
+   * @param sortOrder   sort order by primary keys
+   * @return the scan query
+   */
+  private String getScanIndexQuery(Range range, int limit, Field<?> filterIndex, SortOrder sortOrder) {
+    StringBuilder queryString = new StringBuilder("SELECT * FROM ")
+      .append(tableSchema.getTableId().getName())
+      .append(" WHERE ");
+
+    if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+      appendRange(queryString, range);
+      queryString.append(" AND ");
+    }
+    queryString.append(getEqualsClause(Collections.singleton(filterIndex)));
 
     queryString.append(getOrderByClause(tableSchema.getPrimaryKeys(), sortOrder));
     queryString.append(" LIMIT ").append(limit).append(";");
@@ -858,7 +944,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     return getOrderByClause(keys, SortOrder.ASC);
   }
 
-  private String getOrderByClause(List<String> keys, SortOrder sortOrder) {
+  private String getOrderByClause(Collection<String> keys, SortOrder sortOrder) {
     StringJoiner joiner = new StringJoiner(", ", " ORDER BY ", "");
     for (String key : keys) {
       joiner.add(sortOrder == SortOrder.ASC ? key : key + " DESC");

@@ -85,45 +85,38 @@ public class MetricStructuredTable implements StructuredTable {
     }
   }
 
-  @Override
-  public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException {
+  private interface ReadFunction {
+    Optional<StructuredRow> read() throws InvalidFieldException, IOException;
+  }
+
+  private Optional<StructuredRow> read(ReadFunction readFunc, String metricNamePrefix) throws IOException {
     try {
       Optional<StructuredRow> result;
       if (!emitTimeMetrics) {
-        result = structuredTable.read(keys);
+        result = readFunc.read();
       } else {
         long curTime = System.nanoTime();
-        result = structuredTable.read(keys);
+        result = readFunc.read();
         long duration = System.nanoTime() - curTime;
-        metricsCollector.increment(metricPrefix + "read.time", duration);
+        metricsCollector.increment(metricPrefix + metricNamePrefix + "time", duration);
       }
-      metricsCollector.increment(metricPrefix + "read.count", 1L);
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "count", 1L);
       return result;
     } catch (Exception e) {
-      metricsCollector.increment(metricPrefix + "read.error", 1L);
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "error", 1L);
       throw e;
     }
   }
 
   @Override
+  public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException {
+    return read(() -> structuredTable.read(keys), "read.");
+  }
+
+  @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
                                       Collection<String> columns) throws InvalidFieldException, IOException {
-    try {
-      Optional<StructuredRow> result;
-      if (!emitTimeMetrics) {
-        result = structuredTable.read(keys, columns);
-      } else {
-        long curTime = System.nanoTime();
-        result = structuredTable.read(keys, columns);
-        long duration = System.nanoTime() - curTime;
-        metricsCollector.increment(metricPrefix + "read.time", duration);
-      }
-      metricsCollector.increment(metricPrefix + "read.count", 1L);
-      return result;
-    } catch (Exception e) {
-      metricsCollector.increment(metricPrefix + "read.error", 1L);
-      throw e;
-    }
+    return read(() -> structuredTable.read(keys, columns), "read.");
   }
 
   @Override
@@ -145,26 +138,33 @@ public class MetricStructuredTable implements StructuredTable {
     }
   }
 
-  @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
+  private interface ScanFunction {
+    CloseableIterator<StructuredRow> scan() throws InvalidFieldException, IOException;
+  }
 
+  private CloseableIterator<StructuredRow> scan(ScanFunction scanFunc, String metricNamePrefix) throws IOException {
     try {
       CloseableIterator<StructuredRow> result;
       if (!emitTimeMetrics) {
-        result = structuredTable.scan(keyRange, limit, sortOrder);
+        result = scanFunc.scan();
       } else {
         long curTime = System.nanoTime();
-        result = structuredTable.scan(keyRange, limit, sortOrder);
+        result = scanFunc.scan();
         long duration = System.nanoTime() - curTime;
-        metricsCollector.increment(metricPrefix + "scan.time", duration);
+        metricsCollector.increment(metricPrefix + metricNamePrefix + "time", duration);
       }
-      metricsCollector.increment(metricPrefix + "scan.count", 1L);
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "count", 1L);
       return result;
     } catch (Exception e) {
-      metricsCollector.increment(metricPrefix + "scan.error", 1L);
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "error", 1L);
       throw e;
     }
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
+    throws InvalidFieldException, IOException {
+    return scan(() -> structuredTable.scan(keyRange, limit, sortOrder), "scan.");
   }
 
   @Override
@@ -174,20 +174,41 @@ public class MetricStructuredTable implements StructuredTable {
 
   @Override
   public CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException, IOException {
+    return scan(() -> structuredTable.scan(index), "index.scan.");
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+    throws InvalidFieldException, IOException {
+    return scan(() -> structuredTable.scan(keyRange, limit, filterIndex), "index.range.scan.");
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> orderByField, SortOrder sortOrder)
+    throws InvalidFieldException, IOException {
+    return scan(() -> structuredTable.scan(keyRange, limit, orderByField, sortOrder), "sort.index.range.scan.");
+  }
+
+  private interface MultiScanFunction {
+    CloseableIterator<StructuredRow> multiScan() throws InvalidFieldException, IOException;
+  }
+
+  private CloseableIterator<StructuredRow> multiScan(MultiScanFunction multiScanFunction, String metricNamePrefix)
+    throws IOException {
     try {
       CloseableIterator<StructuredRow> result;
       if (!emitTimeMetrics) {
-        result = structuredTable.scan(index);
+        result = multiScanFunction.multiScan();
       } else {
         long curTime = System.nanoTime();
-        result = structuredTable.scan(index);
+        result = multiScanFunction.multiScan();
         long duration = System.nanoTime() - curTime;
-        metricsCollector.increment(metricPrefix + "index.scan.time", duration);
+        metricsCollector.increment(metricPrefix + metricNamePrefix + "time", duration);
       }
-      metricsCollector.increment(metricPrefix + "index.scan.count", 1L);
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "count", 1L);
       return result;
     } catch (Exception e) {
-      metricsCollector.increment(metricPrefix + "index.scan.error", 1L);
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "error", 1L);
       throw e;
     }
   }
@@ -195,22 +216,7 @@ public class MetricStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
                                                     int limit) throws InvalidFieldException, IOException {
-    try {
-      CloseableIterator<StructuredRow> result;
-      if (!emitTimeMetrics) {
-        result = structuredTable.multiScan(keyRanges, limit);
-      } else {
-        long curTime = System.nanoTime();
-        result = structuredTable.multiScan(keyRanges, limit);
-        long duration = System.nanoTime() - curTime;
-        metricsCollector.increment(metricPrefix + "multi.scan.time", duration);
-      }
-      metricsCollector.increment(metricPrefix + "multi.scan.count", 1L);
-      return result;
-    } catch (Exception e) {
-      metricsCollector.increment(metricPrefix + "multi.scan.error", 1L);
-      throw e;
-    }
+    return multiScan(() -> structuredTable.multiScan(keyRanges, limit), "multi.scan.");
   }
 
   @Override

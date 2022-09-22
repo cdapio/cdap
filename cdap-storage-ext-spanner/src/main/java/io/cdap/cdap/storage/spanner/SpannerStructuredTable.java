@@ -28,6 +28,7 @@ import com.google.cloud.spanner.Value;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -198,6 +199,51 @@ public class SpannerStructuredTable implements StructuredTable {
   }
 
   @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+    throws InvalidFieldException {
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validateField(filterIndex);
+    if (!schema.isIndexColumn(filterIndex.getName())) {
+      throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
+    }
+
+    Map<String, Value> parameters = new HashMap<>();
+    String rangeClause = getRangeWhereClause(keyRange, parameters);
+    String indexClause = getIndexWhereClause(filterIndex, parameters);
+
+    Statement.Builder builder = Statement.newBuilder(
+      "SELECT * FROM " + escapeName(schema.getTableId().getName())
+        + " WHERE " + rangeClause + " AND " + indexClause
+        + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName).collect(Collectors.joining(","))
+        + " LIMIT " + limit);
+    parameters.forEach((name, value) -> builder.bind(name).to(value));
+    return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> orderByField, SortOrder sortOrder)
+    throws InvalidFieldException {
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    String indexField = orderByField.getName();
+    if (!schema.isIndexColumn(indexField)) {
+      throw new InvalidFieldException(schema.getTableId(), indexField, "is not an indexed column");
+    }
+
+    Map<String, Value> parameters = new HashMap<>();
+    String whereClause = getRangeWhereClause(keyRange, parameters);
+
+    Statement.Builder builder = Statement.newBuilder(
+      "SELECT * FROM " + escapeName(schema.getTableId().getName())
+        + " WHERE " + whereClause
+        + " ORDER BY " + (sortOrder == SortOrder.ASC ? indexField : indexField + " DESC")
+        + " LIMIT " + limit);
+    parameters.forEach((name, value) -> builder.bind(name).to(value));
+    return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
+  }
+
+  @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
                                                     int limit) throws InvalidFieldException {
     // If nothing to scan, just return
@@ -213,9 +259,9 @@ public class SpannerStructuredTable implements StructuredTable {
 
     Statement.Builder builder = Statement.newBuilder(
       "SELECT * FROM " + escapeName(schema.getTableId().getName())
-       + " WHERE " + whereClause
-       + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName).collect(Collectors.joining(","))
-       + " LIMIT " + limit);
+        + " WHERE " + whereClause
+        + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName).collect(Collectors.joining(","))
+        + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
   }
@@ -364,10 +410,16 @@ public class SpannerStructuredTable implements StructuredTable {
     return String.join(" AND ", conditions);
   }
 
+  private String getIndexWhereClause(Field<?> filterIndex, Map<String, Value> parameters) {
+    int paramIndex = parameters.size();
+    parameters.put("p_" + paramIndex, getValue(filterIndex));
+    return escapeName(filterIndex.getName()) + " = " + "@p_" + paramIndex;
+  }
+
   /**
    * Generates the WHERE clause for a set of ranges.
    *
-   * @param ranges the set of ranges to query for
+   * @param ranges     the set of ranges to query for
    * @param parameters the parameters name and value used in the WHERE clause
    * @return the WHERE clause or {@code null} if the ranges resulted in a full table query.
    */
