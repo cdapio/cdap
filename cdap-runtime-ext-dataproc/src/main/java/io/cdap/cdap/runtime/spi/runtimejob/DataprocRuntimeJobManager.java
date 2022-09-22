@@ -37,6 +37,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
@@ -183,14 +184,19 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
-    boolean disableGCSCaching = Boolean.parseBoolean(
-      provisionerContext.getProperties().getOrDefault(DataprocUtils.DISABLE_GCS_CACHING, "false"));
-
     String bucket = DataprocUtils.getBucketName(this.bucket);
-
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
+
+    // Caching is disabled if it's been explicitly disabled or delete lifecycle is not set on the bucket.
+    boolean disableGCSCaching = Boolean.parseBoolean(
+      provisionerContext.getProperties().getOrDefault(DataprocUtils.DISABLE_GCS_CACHING, "false"))
+      || !isDeleteLifecycleEnabled(bucket);
+
     LOG.debug("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
               runInfo.getRun(), clusterName, projectId, region, bucket);
+    if (disableGCSCaching) {
+      LOG.warn("Launching run {} without GCS caching. This slows launch time.", runInfo.getRun());
+    }
 
     File tempDir = DataprocUtils.CACHE_DIR_PATH.toFile();
     boolean disableLocalCaching = Boolean.parseBoolean(
@@ -361,6 +367,27 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       return DataprocJarUtil.getLocalFile(location, false);
     }
     return DataprocJarUtil.getLauncherJar(locationFactory);
+  }
+
+  /**
+   * Check whether delete lifecycle with days since custom time has been enabled on the bucket or not.
+   * @param bucketName
+   * @return true if delete lifecycle with days since custom time is set on the bucket.
+   */
+  private boolean isDeleteLifecycleEnabled(String bucketName) {
+    Storage storage = getStorageClient();
+    Bucket bucket = storage.get(bucketName);
+    for (BucketInfo.LifecycleRule rule : bucket.getLifecycleRules()) {
+      if (rule.getAction() == null || rule.getCondition() == null ||
+        rule.getCondition().getDaysSinceCustomTime() == null) {
+        continue;
+      }
+      if (rule.getAction() instanceof BucketInfo.LifecycleRule.DeleteLifecycleAction &&
+        rule.getCondition().getDaysSinceCustomTime() > 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
