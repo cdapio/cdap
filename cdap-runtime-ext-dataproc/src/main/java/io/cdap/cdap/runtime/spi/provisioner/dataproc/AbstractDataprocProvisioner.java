@@ -19,9 +19,11 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.runtime.spi.VersionInfo;
+import io.cdap.cdap.runtime.spi.common.ArtifactCacheManager;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -72,6 +74,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   public static final String LABEL_REUSE_UNTIL = "cdap-reuse-until";
   /**
    * In reuse scenario we can't find "our" cluster by cluster name, so let's put it into the label
+   *
    * @see {@link DataprocProvisioner#getAllocatedClusterName(ProvisionerContext)}
    */
   public static final String LABEL_RUN_KEY = "cdap-run-key";
@@ -123,14 +126,22 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         jobManager.close();
       }
 
+      String bucket = DataprocUtils.getBucketName(properties.get(BUCKET));
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
         .setCredentials(conf.getDataprocCredentials()).build().getService();
-      DataprocUtils.deleteGCSPath(storageClient, properties.get(BUCKET),
-                                  DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRunInfo().getRun());
+      String runId = context.getProgramRunInfo().getRun();
+      String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runId);
+      String cachedArtifactsPath = getPath(DataprocUtils.CDAP_GCS_ROOT, DataprocUtils.CDAP_CACHED_ARTIFACTS);
+      ArtifactCacheManager.releaseCacheUsageForArtifacts(storageClient, bucket, runRootPath, cachedArtifactsPath);
+      DataprocUtils.deleteGCSPath(storageClient, bucket, getPath(DataprocUtils.CDAP_GCS_ROOT, runId));
     }
 
     doDeleteCluster(context, cluster, conf);
     return ClusterStatus.DELETING;
+  }
+
+  private String getPath(String... pathSubComponents) {
+    return Joiner.on("/").join(pathSubComponents);
   }
 
   /**
@@ -147,7 +158,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
    *
    * @param context the {@link ProvisionerContext} for this delete operation
    * @param cluster the {@link Cluster} to be deleted
-   * @param conf the {@link DataprocConf} for talking to Dataproc
+   * @param conf    the {@link DataprocConf} for talking to Dataproc
    * @throws Exception if failed to delete cluster
    */
   protected abstract void doDeleteCluster(ProvisionerContext context,

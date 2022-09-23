@@ -47,6 +47,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.common.ArtifactCacheManager;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
@@ -69,11 +70,13 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -220,15 +223,23 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
+      Set<String> cachedFiles = new HashSet<>();
       for (LocalFile fileToUpload : localFiles) {
         boolean isCacheable = !disableGCSCaching && fileToUpload instanceof CacheableLocalFile;
-        String targetFilePath = getPath(isCacheable ? cacheRootPath :
-                                          runRootPath, fileToUpload.getName());
+        String targetFilePath = getPath(isCacheable ? cacheRootPath : runRootPath, fileToUpload.getName());
         uploadFutures.add(
           provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
               uploadFile(bucket, targetFilePath, fileToUpload, false))
             .toCompletableFuture());
+        if (isCacheable) {
+          cachedFiles.add(fileToUpload.getName());
+        }
       }
+      if (!cachedFiles.isEmpty()) {
+        ArtifactCacheManager.recordCacheUsageForArtifacts(getStorageClient(), bucket, cachedFiles, runRootPath,
+                                                          cacheRootPath);
+      }
+
       List<LocalFile> uploadedFiles = new ArrayList<>();
       for (Future<LocalFile> uploadFuture : uploadFutures) {
         uploadedFiles.add(uploadFuture.get());
