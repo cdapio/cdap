@@ -17,21 +17,35 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.common.base.Throwables;
+import io.cdap.cdap.error.api.ErrorTagProvider;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
  * A {@link RuntimeException} that wraps exceptions from Dataproc operation and provide a {@link #toString()}
  * implementation that doesn't include this exception class name and with the root cause error message.
  */
-public class DataprocRuntimeException extends RuntimeException {
+public class DataprocRuntimeException extends RuntimeException implements ErrorTagProvider {
+  private final Set<ErrorTag> errorTags = new HashSet<>();
 
-  public DataprocRuntimeException(String message) {
+  public DataprocRuntimeException(String message, ErrorTag... tags) {
     super(message);
+    errorTags.addAll(Arrays.asList(tags));
+    errorTags.add(ErrorTag.DEPENDENCY);
   }
 
-  public DataprocRuntimeException(Throwable cause) {
-    super(createMessage(cause), cause);
+  public DataprocRuntimeException(Throwable cause, String message, ErrorTag... tags) {
+    super(message, cause);
+    errorTags.addAll(Arrays.asList(tags));
+    errorTags.add(ErrorTag.DEPENDENCY);
+  }
+
+  public DataprocRuntimeException(Throwable cause, ErrorTag... tags) {
+    this(cause, "", tags);
   }
 
   public DataprocRuntimeException(@Nullable String operationId, Throwable cause) {
@@ -40,7 +54,7 @@ public class DataprocRuntimeException extends RuntimeException {
 
   @Override
   public String toString() {
-    return getMessage();
+    return String.format("ErrorTags: %s,  Msg: %s", errorTags, getMessage() != null ? getMessage() : "");
   }
 
   private static String createMessage(Throwable cause) {
@@ -54,5 +68,10 @@ public class DataprocRuntimeException extends RuntimeException {
     } else {
       return String.format("Dataproc operation failure: %s", Throwables.getRootCause(cause).getMessage());
     }
+  }
+
+  @Override
+  public Set<ErrorTag> getErrorTags() {
+    return Collections.unmodifiableSet(errorTags);
   }
 }

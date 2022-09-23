@@ -131,7 +131,6 @@ public class DataprocClientTest {
 
   @Test
   public void nonRateLimitDoesNotThrowsRetryableException() throws Exception {
-
     List<GoogleJsonError.ErrorInfo> errorList = new ArrayList<>();
 
     GoogleJsonError.ErrorInfo errorInfo = new GoogleJsonError.ErrorInfo();
@@ -148,7 +147,8 @@ public class DataprocClientTest {
 
     Mockito.when(listMock.execute()).thenThrow(gError);
     DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
-    thrown.expect(GoogleJsonResponseException.class);
+    thrown.expect(DataprocRuntimeException.class);
+    thrown.expectCause(IsInstanceOf.instanceOf(GoogleJsonResponseException.class));
     client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
   }
 
@@ -176,7 +176,6 @@ public class DataprocClientTest {
                                                                Mockito.anyString()))
       .thenThrow(e);
     thrown.expect(DataprocRuntimeException.class);
-    thrown.expectMessage("Dataproc operation failure");
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
     sshDataprocClientFactory.create(dataprocConf).getClusters(null, new HashMap<>());
   }

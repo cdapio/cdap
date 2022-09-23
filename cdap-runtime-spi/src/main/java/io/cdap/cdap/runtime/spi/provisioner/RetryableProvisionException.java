@@ -16,20 +16,47 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
+import io.cdap.cdap.error.api.ErrorTagProvider;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * An provision exception that indicates a failure that may succeed after a retry.
  */
-public class RetryableProvisionException extends Exception {
+public class RetryableProvisionException extends Exception implements ErrorTagProvider {
+  private final Set<ErrorTag> errorTags = new HashSet<>();
 
   public RetryableProvisionException(String message) {
     super(message);
+    addCommonTags();
   }
 
   public RetryableProvisionException(Throwable cause) {
+    this(cause, null, null);
+  }
+
+  public RetryableProvisionException(Throwable cause, ErrorTag... tags) {
     super(cause);
+    errorTags.addAll(Arrays.asList(tags));
+    addCommonTags();
   }
 
   public RetryableProvisionException(String message, Throwable cause) {
     super(message, cause);
+
+  }
+
+  private void addCommonTags() {
+    errorTags.add(ErrorTag.DEPENDENCY);
+    // Provisoning is an internal detail. Even communication issues should probably be considered as SYSTEM
+    errorTags.add(ErrorTag.SYSTEM);
+  }
+
+  @Override
+  public Set<ErrorTag> getErrorTags() {
+    return Collections.unmodifiableSet(errorTags);
   }
 }
