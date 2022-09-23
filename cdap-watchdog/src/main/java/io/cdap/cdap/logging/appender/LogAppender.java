@@ -18,16 +18,21 @@ package io.cdap.cdap.logging.appender;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.AppenderBase;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.logging.context.ApplicationLoggingContext;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,6 +43,9 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
   private static final String ORIGIN_KEY = ".origin";
   private static final int LOGGER_CACHE_SIZE = 1000;
   private static final long LOGGER_CACHE_EXPIRY_MILLIS = 60000;
+  // Note, this constant is used in LoggingConfiguration.java
+  @VisibleForTesting
+  static final String ERROR_TAGS = "error.tags";
 
   private final Cache<String, Map<String, String>> loggerExtraTags;
 
@@ -61,11 +69,48 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       if (loggingContext == null) {
         return;
       }
+      addErrorCodeTags(eventObject);
       addExtraTags(eventObject, loggingContext);
     }
 
     LogMessage logMessage = new LogMessage(eventObject, loggingContext);
     appendEvent(logMessage);
+  }
+
+  /**
+   * if event is for an exception deriving from ErrorCodeProvider, capture error group etc.
+   * @param event
+   */
+  private void addErrorCodeTags(ILoggingEvent event) {
+    if (event.getThrowableProxy() == null || !(event.getThrowableProxy() instanceof ThrowableProxy)) {
+      return;
+    }
+
+    Throwable throwable = ((ThrowableProxy) (event.getThrowableProxy())).getThrowable();
+    // add all error tags from all the inner exceptions
+    StringBuilder tagsSb = new StringBuilder();
+    // keep track of all the tags from all inner exceptions in a set to ensure there are no duplicates in
+    // the merged string
+    Set<ErrorTagProvider.ErrorTag> combinedTags = new HashSet<>();
+    while (throwable != null) {
+      if (throwable instanceof ErrorTagProvider) {
+
+        ErrorTagProvider errorCodeThrowable = (ErrorTagProvider) throwable;
+        for (ErrorTagProvider.ErrorTag tag: errorCodeThrowable.getErrorTags()) {
+          if (combinedTags.contains(tag)) {
+            continue;
+          }
+          combinedTags.add(tag);
+
+          if (tagsSb.length() > 0) {
+            tagsSb.append(", ");
+          }
+          tagsSb.append(tag);
+        }
+      }
+      throwable = throwable.getCause();
+    }
+    event.getMDCPropertyMap().put(ERROR_TAGS, tagsSb.toString());
   }
 
   /**

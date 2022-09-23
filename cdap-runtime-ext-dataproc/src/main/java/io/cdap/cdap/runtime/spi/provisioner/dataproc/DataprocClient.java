@@ -51,6 +51,7 @@ import com.google.protobuf.Duration;
 import com.google.protobuf.Empty;
 import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
+import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
@@ -110,12 +111,13 @@ abstract class DataprocClient implements AutoCloseable {
       networks = networkList.getItems();
     } catch (Exception e) {
       handleRetryableExceptions(e);
-      throw e;
+      throw new DataprocRuntimeException(e);
     }
 
     if (networks == null || networks.isEmpty()) {
-      throw new IllegalArgumentException(String.format("Unable to find any networks in project '%s'. "
-                                                         + "Please create a network in the project.", project));
+      throw new DataprocRuntimeException(
+        String.format("Unable to find any networks in project '%s'. Please create a network in the project.", project),
+        ErrorTag.CONFIGURATION);
     }
 
     for (Network network : networks) {
@@ -133,7 +135,7 @@ abstract class DataprocClient implements AutoCloseable {
   private static String getZone(String zoneUri) {
     int idx = zoneUri.lastIndexOf("/");
     if (idx <= 0) {
-      throw new IllegalArgumentException("Invalid zone uri " + zoneUri);
+      throw new DataprocRuntimeException("Invalid zone uri " + zoneUri, ErrorTag.CONFIGURATION);
     }
     return zoneUri.substring(idx + 1);
   }
@@ -347,7 +349,8 @@ abstract class DataprocClient implements AutoCloseable {
       network = findNetwork(compute, networkHostProjectId);
     }
     if (network == null) {
-      throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
+      throw new DataprocRuntimeException("Unable to automatically detect a network, please explicitly set a network.",
+        ErrorTag.CONFIGURATION);
     }
 
     Network networkInfo = getNetworkInfo(networkHostProjectId, network, compute);
@@ -355,9 +358,10 @@ abstract class DataprocClient implements AutoCloseable {
     String subnet = conf.getSubnet();
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
-      throw new IllegalArgumentException(String.format("Subnet '%s' does not exist in network '%s' in project '%s'. "
-                                                         + "Please use a different subnet.",
-                                                       subnet, network, networkHostProjectId));
+      throw new DataprocRuntimeException(
+        String.format("Subnet '%s' does not exist in network '%s' in project '%s'. Please use a different subnet.",
+          subnet, network, networkHostProjectId),
+        ErrorTag.CONFIGURATION);
     }
 
     // if the network uses custom subnets, a subnet must be provided to the dataproc api
@@ -365,9 +369,10 @@ abstract class DataprocClient implements AutoCloseable {
     if (!autoCreateSubnet) {
       // if the network uses custom subnets but none exist, error out
       if (subnets == null || subnets.isEmpty()) {
-        throw new IllegalArgumentException(String.format("Network '%s' in project '%s' does not contain any subnets. "
-                                                           + "Please create a subnet or use a different network.",
-                                                         network, networkHostProjectId));
+        throw new DataprocRuntimeException(
+          String.format("Network '%s' in project '%s' does not contain any subnets. " +
+                          "Please create a subnet or use a different network.", network, networkHostProjectId),
+          ErrorTag.CONFIGURATION);
       }
     }
 
@@ -417,9 +422,9 @@ abstract class DataprocClient implements AutoCloseable {
         return currentSubnet;
       }
     }
-    throw new IllegalArgumentException(
+    throw new DataprocRuntimeException(
       String.format("Could not find %s in network '%s' that are for region '%s'", subnet == null ? "any subnet" :
-        String.format("a subnet named '%s", subnet), network, region));
+        String.format("a subnet named '%s", subnet), network, region), ErrorTag.CONFIGURATION);
   }
 
   private Network getNetworkInfo(String project, String network, Compute compute)
@@ -429,12 +434,14 @@ abstract class DataprocClient implements AutoCloseable {
       networkObj = compute.networks().get(project, network).execute();
     } catch (Exception e) {
       handleRetryableExceptions(e);
-      throw e;
+      throw new DataprocRuntimeException(e);
     }
 
     if (networkObj == null) {
-      throw new IllegalArgumentException(String.format("Unable to find network '%s' in project '%s'. "
-                                                         + "Please specify another network.", network, project));
+      throw new DataprocRuntimeException(
+        String.format("Unable to find network '%s' in project '%s'. Please specify another network.", network, project),
+        ErrorTag.CONFIGURATION
+        );
     }
     return networkObj;
   }
@@ -487,8 +494,8 @@ abstract class DataprocClient implements AutoCloseable {
     // If there is no network connectivity and yet private ip only cluster is requested, raise an exception
     throw new DataprocRuntimeException(
       String.format("Direct network connectivity is needed for private Dataproc cluster between VPC %s/%s and %s/%s",
-                    systemProjectId, systemNetwork, conf.getNetworkHostProjectID(), network.getName())
-    );
+                    systemProjectId, systemNetwork, conf.getNetworkHostProjectID(), network.getName()),
+      ErrorTag.CONFIGURATION);
   }
 
   private static PeeringState getPeeringState(String systemProjectId, String systemNetwork, Network networkInfo) {
@@ -556,8 +563,9 @@ abstract class DataprocClient implements AutoCloseable {
     try {
       Cluster cluster = getDataprocCluster(clusterName)
         .filter(c -> c.getStatus().getState() == ClusterStatus.State.RUNNING)
-        .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
-                                                          " does not exist or not in running state"));
+        .orElseThrow(() -> new DataprocRuntimeException(
+          "Dataproc cluster " + clusterName + " does not exist or not in running state",
+          ErrorTag.CONFIGURATION));
       Map<String, String> existingLabels = cluster.getLabelsMap();
       // If the labels to set are already exist and labels to remove are not set,
       // no need to update the cluster labelsToSet.
@@ -781,7 +789,7 @@ abstract class DataprocClient implements AutoCloseable {
         throw new RetryableProvisionException(e);
       }
       // otherwise, it's not a retryable failure
-      throw e;
+      throw new DataprocRuntimeException(e);
     }
   }
 
@@ -866,7 +874,7 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   // if there was an API exception that was not a 4xx, we can just try again
-  private RetryableProvisionException handleApiException(ApiException e) throws RetryableProvisionException {
+  protected RetryableProvisionException handleApiException(ApiException e) throws RetryableProvisionException {
     if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
       throw new RetryableProvisionException(e);
     }

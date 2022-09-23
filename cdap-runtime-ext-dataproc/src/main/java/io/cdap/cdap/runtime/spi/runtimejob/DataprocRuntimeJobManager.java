@@ -49,6 +49,7 @@ import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -98,6 +99,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
   private static final String LABEL_CDAP_PROGRAM = "cdap-program";
   private static final String LABEL_CDAP_PROGRAM_TYPE = "cdap-program-type";
+
+  // Dataproc specific error groups
+  private static final String ERRGP_GCS = "gcs";
 
   private final ProvisionerContext provisionerContext;
   private final String clusterName;
@@ -242,8 +246,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count", e);
-      throw new Exception(String.format("Error while launching job %s on cluster %s",
-                                        getJobId(runInfo), clusterName), e);
+      throw new DataprocRuntimeException(e, String.format("Error while launching job %s on cluster %s",
+                                                          getJobId(runInfo), clusterName));
     } finally {
       if (disableLocalCaching) {
         DataprocUtils.deleteDirectoryContents(tempDir);
