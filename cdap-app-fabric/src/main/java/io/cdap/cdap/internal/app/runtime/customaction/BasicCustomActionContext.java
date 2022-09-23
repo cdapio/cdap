@@ -33,6 +33,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.messaging.MessagingService;
@@ -61,13 +62,14 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   SecureStore secureStore, SecureStoreManager secureStoreManager,
                                   MessagingService messagingService, MetadataReader metadataReader,
                                   MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
-                                  FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory) {
+                                  FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
+                                  AppStateStoreProvider appStateStoreProvider) {
 
     super(workflow, programOptions, cConf, customActionSpecification.getDatasets(),
           datasetFramework, txClient, false,
           metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<>()), secureStore,
           secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;

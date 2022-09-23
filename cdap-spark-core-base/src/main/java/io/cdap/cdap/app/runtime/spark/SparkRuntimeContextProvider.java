@@ -52,6 +52,7 @@ import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -299,7 +300,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(NamespaceQueryAdmin.class),
         injector.getInstance(FieldLineageWriter.class),
         injector.getInstance(RemoteClientFactory.class),
-        closeable);
+        closeable,
+        injector.getInstance(AppStateStoreProvider.class));
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
     } catch (Exception e) {

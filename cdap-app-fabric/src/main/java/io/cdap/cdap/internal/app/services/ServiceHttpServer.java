@@ -50,6 +50,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
@@ -108,7 +109,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            PluginFinder pluginFinder, FieldLineageWriter fieldLineageWriter,
                            TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
                            RemoteClientFactory remoteClientFactory, ContextAccessEnforcer contextAccessEnforcer,
-                           CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+                           CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                           AppStateStoreProvider appStateStoreProvider) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -120,7 +122,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
                                                pluginFinder, fieldLineageWriter, transactionRunner,
-                                               preferencesFetcher, remoteClientFactory, contextAccessEnforcer);
+                                               preferencesFetcher, remoteClientFactory, contextAccessEnforcer,
+                                               appStateStoreProvider);
 
     Class<?> serviceClass = null;
     try {
@@ -136,14 +139,14 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                           secureStore, secureStoreManager, messagingService,
                                                           metadataReader, metadataPublisher, namespaceQueryAdmin,
                                                           fieldLineageWriter, transactionRunner, remoteClientFactory,
-                                                          artifactManager);
+                                                          artifactManager, appStateStoreProvider);
     } else {
       this.serviceContext = new BasicServiceContext(spec, program, programOptions, instanceId, this.instanceCount,
                                                     cConf, metricsCollectionService, datasetFramework, txClient,
                                                     pluginInstantiator,
                                                     secureStore, secureStoreManager, messagingService, metadataReader,
                                                     metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
-                                                    remoteClientFactory, artifactManager);
+                                                    remoteClientFactory, artifactManager, appStateStoreProvider);
     }
     this.httpServiceContext = contextFactory.create(null, null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -236,7 +239,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               TransactionRunner transactionRunner,
                                                               PreferencesFetcher preferencesFetcher,
                                                               RemoteClientFactory remoteClientFactory,
-                                                              ContextAccessEnforcer contextAccessEnforcer) {
+                                                              ContextAccessEnforcer contextAccessEnforcer,
+                                                              AppStateStoreProvider appStateStoreProvider) {
     return (spec, handlerClass) -> {
       if (handlerClass != null && AbstractSystemHttpServiceHandler.class.isAssignableFrom(handlerClass)) {
         return new BasicSystemHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
@@ -245,13 +249,14 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                  messagingService, artifactManager, metadataReader, metadataPublisher,
                                                  namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
                                                  transactionRunner, preferencesFetcher, remoteClientFactory,
-                                                 contextAccessEnforcer);
+                                                 contextAccessEnforcer, appStateStoreProvider);
       }
       return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                          metricsCollectionService, datasetFramework, discoveryServiceClient,
                                          txClient, pluginInstantiator, secureStore, secureStoreManager,
                                          messagingService, artifactManager, metadataReader, metadataPublisher,
-                                         namespaceQueryAdmin, pluginFinder, fieldLineageWriter, remoteClientFactory);
+                                         namespaceQueryAdmin, pluginFinder, fieldLineageWriter, remoteClientFactory,
+                                         appStateStoreProvider);
     };
   }
 

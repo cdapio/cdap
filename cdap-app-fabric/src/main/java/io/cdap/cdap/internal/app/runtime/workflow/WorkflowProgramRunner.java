@@ -40,6 +40,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -75,6 +76,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final FieldLineageWriter fieldLineageWriter;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final RemoteClientFactory remoteClientFactory;
+  private final AppStateStoreProvider appStateStoreProvider;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -84,7 +86,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                SecureStoreManager secureStoreManager, MessagingService messagingService,
                                ProgramStateWriter programStateWriter, MetadataReader metadataReader,
                                MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
-                               NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory) {
+                               NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory,
+                               AppStateStoreProvider appStateStoreProvider) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.metricsCollectionService = metricsCollectionService;
@@ -102,6 +105,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.fieldLineageWriter = fieldLineageWriter;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.remoteClientFactory = remoteClientFactory;
+    this.appStateStoreProvider = appStateStoreProvider;
   }
 
   @Override
@@ -138,7 +142,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                  txClient, workflowStateWriter, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService,
                                                  programStateWriter, metadataReader, metadataPublisher,
-                                                 fieldLineageWriter, namespaceQueryAdmin, remoteClientFactory);
+                                                 fieldLineageWriter, namespaceQueryAdmin, remoteClientFactory,
+                                                 appStateStoreProvider);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
