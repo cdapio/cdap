@@ -40,6 +40,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -88,6 +89,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final RemoteClientFactory remoteClientFactory;
   private final ContextAccessEnforcer contextAccessEnforcer;
   private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
+  private final AppStateStoreProvider appStateStoreProvider;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -101,7 +103,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
                               PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
                               ContextAccessEnforcer contextAccessEnforcer,
-                              CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+                              CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                              AppStateStoreProvider appStateStoreProvider) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -122,6 +125,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.remoteClientFactory = remoteClientFactory;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
+    this.appStateStoreProvider = appStateStoreProvider;
   }
 
   @Override
@@ -166,7 +170,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           metadataPublisher, namespaceQueryAdmin, pluginFinder,
                                                           fieldLineageWriter, transactionRunner, preferencesFetcher,
                                                           remoteClientFactory, contextAccessEnforcer,
-                                                          commonNettyHttpServiceFactory);
+                                                          commonNettyHttpServiceFactory, appStateStoreProvider);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),

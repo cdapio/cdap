@@ -37,6 +37,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -91,11 +92,12 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       PluginFinder pluginFinder, LocationFactory locationFactory,
                       MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                       NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                      RemoteClientFactory remoteClientFactory, Closeable closeable) {
+                      RemoteClientFactory remoteClientFactory, Closeable closeable,
+                      AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;

@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.api.streaming;
 
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.app.AppStateStore;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -29,7 +30,7 @@ import org.apache.tephra.TransactionFailureException;
  * Context for streaming plugin stages.
  */
 @Beta
-public interface StreamingContext extends StageContext, Transactional {
+public interface StreamingContext extends StageContext, Transactional, AppStateStore {
 
   /**
    * @return Spark JavaStreamingContext for the pipeline.

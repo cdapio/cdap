@@ -40,6 +40,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.RemoteTaskExecutor;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -94,11 +95,12 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
                                        NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
                                        FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
                                        PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
-                                       ContextAccessEnforcer contextAccessEnforcer) {
+                                       ContextAccessEnforcer contextAccessEnforcer,
+                                       AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, spec, instanceId, instanceCount, metricsCollectionService, dsFramework,
           discoveryServiceClient, txClient, pluginInstantiator, secureStore, secureStoreManager, messagingService,
           artifactManager, metadataReader, metadataPublisher, namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
-          remoteClientFactory);
+          remoteClientFactory, appStateStoreProvider);
 
     this.namespaceId = program.getId().getNamespaceId();
     this.transactionRunner = transactionRunner;

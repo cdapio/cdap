@@ -52,6 +52,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
@@ -112,6 +113,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final RemoteClientFactory remoteClientFactory;
   private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
+  private final AppStateStoreProvider appStateStoreProvider;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -123,7 +125,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      PluginFinder pluginFinder, MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                      FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin,
                      RemoteClientFactory remoteClientFactory,
-                     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+                     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                     AppStateStoreProvider appStateStoreProvider) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -144,6 +147,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.remoteClientFactory = remoteClientFactory;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
+    this.appStateStoreProvider = appStateStoreProvider;
   }
 
   @Override
@@ -197,8 +201,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    messagingService, serviceAnnouncer, pluginFinder,
                                                                    locationFactory, metadataReader, metadataPublisher,
                                                                    namespaceQueryAdmin, fieldLineageWriter,
-                                                                   remoteClientFactory, () -> { }
-      );
+                                                                   remoteClientFactory, () -> { },
+                                                                   appStateStoreProvider);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

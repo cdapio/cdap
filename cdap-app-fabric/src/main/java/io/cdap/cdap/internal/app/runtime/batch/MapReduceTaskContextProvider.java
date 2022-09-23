@@ -40,6 +40,7 @@ import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
@@ -181,6 +182,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     MetadataPublisher metadataPublisher = injector.getInstance(MetadataPublisher.class);
     FieldLineageWriter fieldLineageWriter = injector.getInstance(FieldLineageWriter.class);
     RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
+    AppStateStoreProvider appStateStoreProvider = injector.getInstance(AppStateStoreProvider.class);
 
     return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
       @Override
@@ -254,7 +256,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
           accessEnforcer, authenticationContext, messagingService, mapReduceClassLoader, metadataReader,
           metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
-          remoteClientFactory);
+          remoteClientFactory, appStateStoreProvider);
       }
     };
   }

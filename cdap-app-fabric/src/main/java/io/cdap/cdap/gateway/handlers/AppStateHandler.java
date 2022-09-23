@@ -57,6 +57,8 @@ public class AppStateHandler extends AbstractHttpHandler {
 
   /**
    * Get state for a given app-name and state-key.
+   * Returns null as response if the app is valid, but there is no entry for the key
+   * Returns {@link HttpResponseStatus.NOT_FOUND} if namespace or app is not valid
    */
   @GET
   @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")
@@ -71,12 +73,13 @@ public class AppStateHandler extends AbstractHttpHandler {
       responder.sendByteArray(HttpResponseStatus.OK, appStateResponse.get(),
                               EmptyHttpHeaders.INSTANCE);
     } else {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendStatus(HttpResponseStatus.OK, EmptyHttpHeaders.INSTANCE);
     }
   }
 
   /**
    * Save state for a given app-name and state-key.
+   * All params and state value should be present
    */
   @PUT
   @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")

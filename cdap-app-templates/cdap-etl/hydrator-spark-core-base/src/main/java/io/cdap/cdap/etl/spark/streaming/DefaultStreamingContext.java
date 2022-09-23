@@ -36,8 +36,10 @@ import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Default implementation of StreamingContext for Spark.
@@ -124,5 +126,15 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   public void record(List<FieldOperation> operations) {
     throw new UnsupportedOperationException("Field lineage recording is not supported. Please record lineage " +
                                               "in prepareRun() stage");
+  }
+
+  @Override
+  public Optional<byte[]> getState(String key) throws IOException {
+    return sec.getSparkExecutionContext().getState(key);
+  }
+
+  @Override
+  public void saveState(String key, byte[] value) throws IOException {
+    sec.getSparkExecutionContext().saveState(key, value);
   }
 }

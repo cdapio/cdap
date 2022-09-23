@@ -247,6 +247,7 @@ public final class Constants {
     public static final String SPARK_EVENT_LOGS_DIR = "app.program.spark.event.logs.dir";
     public static final String SPARK_COMPAT = "app.program.spark.compat";
     public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
+    public static final String APP_STATE = "app.state";
     public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
     public static final String TWILL_CONTROLLER_START_SECONDS = "program.twill.controller.start.seconds";
     public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";

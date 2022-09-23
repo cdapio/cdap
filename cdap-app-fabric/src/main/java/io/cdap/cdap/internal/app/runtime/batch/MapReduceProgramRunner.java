@@ -47,6 +47,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -97,6 +98,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final RemoteClientFactory remoteClientFactory;
+  private final AppStateStoreProvider appStateStoreProvider;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -108,7 +110,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 MessagingService messagingService, MetadataReader metadataReader,
                                 MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
-                                NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory) {
+                                NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory,
+                                AppStateStoreProvider appStateStoreProvider) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -126,6 +129,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.fieldLineageWriter = fieldLineageWriter;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.remoteClientFactory = remoteClientFactory;
+    this.appStateStoreProvider = appStateStoreProvider;
   }
 
   @Override
@@ -176,7 +180,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                   metricsCollectionService, txSystemClient, programDatasetFramework,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
                                   messagingService, metadataReader, metadataPublisher, namespaceQueryAdmin,
-                                  fieldLineageWriter, remoteClientFactory);
+                                  fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
       closeables.add(context);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),

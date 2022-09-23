@@ -28,6 +28,7 @@ import io.cdap.cdap.api.SchedulableProgramContext;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.app.AppStateStore;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.common.RuntimeArguments;
@@ -126,6 +127,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -136,7 +138,8 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable, FeatureFlagsProvider {
+  PluginContext, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter, Closeable, FeatureFlagsProvider,
+  AppStateStore {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
@@ -171,6 +174,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
+  private final AppStateStore appStateStore;
 
   /**
    * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
@@ -184,7 +188,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable PluginInstantiator pluginInstantiator,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                             NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                            RemoteClientFactory remoteClientFactory) {
+                            RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
     super(program.getId());
 
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
@@ -244,6 +248,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.fieldLineageOperations = new HashSet<>();
     this.loggingContext = LoggingContextHelper.getLoggingContextWithRunId(program.getId().run(getRunId()),
                                                                           programOptions.getArguments().asMap());
+    this.appStateStore = appStateStoreProvider.getStateStore(program.getNamespaceId(), program.getApplicationId());
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -875,5 +880,15 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     FieldLineageInfo info = new FieldLineageInfo(fieldLineageOperations);
     fieldLineageWriter.write(programRunId, info);
     fieldLineageOperations.clear();
+  }
+
+  @Override
+  public Optional<byte[]> getState(String key) throws IOException {
+    return appStateStore.getState(key);
+  }
+
+  @Override
+  public void saveState(String key, byte[] value) throws IOException {
+    appStateStore.saveState(key, value);
   }
 }

@@ -40,6 +40,7 @@ import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.DefaultServicePluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -117,12 +118,13 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  MetadataPublisher metadataPublisher,
                                  NamespaceQueryAdmin namespaceQueryAdmin,
                                  PluginFinder pluginFinder,
-                                 FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory) {
+                                 FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
+                                 AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
     this.cConf = cConf;
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.spec = spec;

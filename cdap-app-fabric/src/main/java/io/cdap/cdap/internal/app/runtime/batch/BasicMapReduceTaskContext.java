@@ -57,6 +57,7 @@ import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
@@ -144,12 +145,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                             NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                            RemoteClientFactory remoteClientFactory) {
+                            RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, ImmutableSet.of(), dsFramework, txClient,
           true, metricsCollectionService, createMetricsTags(programOptions,
                                                             taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;

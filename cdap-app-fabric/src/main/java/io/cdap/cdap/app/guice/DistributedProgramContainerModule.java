@@ -159,6 +159,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreClientModule());
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
+    modules.add(new AppStateModule());
     modules.add(new NamespaceQueryAdminModule());
     modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new ProgramStateWriterModule(clusterMode, systemArgs.hasOption(ProgramOptionConstants.PEER_NAME)));

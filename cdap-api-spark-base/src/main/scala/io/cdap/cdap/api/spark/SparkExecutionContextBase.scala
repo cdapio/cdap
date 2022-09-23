@@ -22,6 +22,7 @@ import io.cdap.cdap.api.TaskLocalizationContext
 import io.cdap.cdap.api.Transactional
 import io.cdap.cdap.api.TxRunnable
 import io.cdap.cdap.api.annotation.Beta
+import io.cdap.cdap.api.app.AppStateStore
 import io.cdap.cdap.api.data.batch.Split
 import io.cdap.cdap.api.lineage.field.LineageRecorder
 import io.cdap.cdap.api.messaging.MessagingContext
@@ -45,7 +46,8 @@ import scala.reflect.ClassTag
   */
 @Beta
 trait SparkExecutionContextBase extends RuntimeContext
-  with Transactional with MetadataReader with MetadataWriter with LineageRecorder {
+  with Transactional with MetadataReader with MetadataWriter with LineageRecorder
+  with AppStateStore {
 
   /**
     * @return The specification used to configure this Spark job instance.
