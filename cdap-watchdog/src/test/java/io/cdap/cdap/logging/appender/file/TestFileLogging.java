@@ -17,45 +17,18 @@
 package io.cdap.cdap.logging.appender.file;
 
 import com.google.common.collect.Lists;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.logging.LoggingContext;
-import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import io.cdap.cdap.data.runtime.DataSetsModules;
-import io.cdap.cdap.data.runtime.StorageModule;
-import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
-import io.cdap.cdap.logging.LoggingConfiguration;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.LoggingTester;
 import io.cdap.cdap.logging.context.WorkerLoggingContext;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.framework.local.LocalLogAppender;
-import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.ReadRange;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.AuthorizationTestModule;
-import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
-import io.cdap.cdap.security.impersonation.OwnerAdmin;
-import io.cdap.cdap.security.impersonation.UGIProvider;
-import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
-import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.store.StoreDefinition;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.runtime.TransactionModules;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -80,39 +53,8 @@ public class TestFileLogging {
 
   @BeforeClass
   public static void setUpContext() throws Exception {
-    Configuration hConf = HBaseConfiguration.create();
-    final CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + TestFileLogging.class.getSimpleName();
-    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
-
-    injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new NonCustomLocationUnitTestModule(),
-      new TransactionModules().getInMemoryModules(),
-      new LocalLogAppenderModule(),
-      new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getNoOpModule(),
-      new StorageModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
-        }
-      }
-    );
-
-    txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-
-    StoreDefinition.LogFileMetaStore.create(injector.getInstance(StructuredTableAdmin.class));
+    injector = LoggingTester.createInjector(TMP_FOLDER);
+    txManager = LoggingTester.createTransactionManager(injector);
 
     LogAppender appender = injector.getInstance(LocalLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");

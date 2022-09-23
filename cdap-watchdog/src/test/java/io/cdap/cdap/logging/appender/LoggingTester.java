@@ -19,21 +19,53 @@ package io.cdap.cdap.logging.appender;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import com.google.common.collect.Maps;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.NamespaceLoggingContext;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.logging.LoggingConfiguration;
+import io.cdap.cdap.logging.appender.file.TestFileLogging;
 import io.cdap.cdap.logging.context.ApplicationLoggingContext;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.Callback;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.read.ReadRange;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.store.StoreDefinition;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.runtime.TransactionModules;
 import org.junit.Assert;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +77,48 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class LoggingTester {
+
+  public static Injector createInjector(TemporaryFolder temporaryFolder) throws IOException {
+    Configuration hConf = HBaseConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
+    cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
+    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + TestFileLogging.class.getSimpleName();
+    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
+
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+        new NonCustomLocationUnitTestModule(),
+        new TransactionModules().getInMemoryModules(),
+        new LocalLogAppenderModule(),
+        new DataSetsModules().getInMemoryModules(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule(),
+        new StorageModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+          }
+        }
+    );
+
+    StoreDefinition.LogFileMetaStore.create(injector.getInstance(StructuredTableAdmin.class));
+    return injector;
+  }
+
+  public static TransactionManager createTransactionManager(Injector injector) throws IOException {
+
+    TransactionManager txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    return txManager;
+  }
+
   public void generateLogs(Logger logger, LoggingContext loggingContextNs1) throws InterruptedException {
     Exception e1 = new Exception("Test Exception1");
     Exception e2 = new Exception("Test Exception2", e1);

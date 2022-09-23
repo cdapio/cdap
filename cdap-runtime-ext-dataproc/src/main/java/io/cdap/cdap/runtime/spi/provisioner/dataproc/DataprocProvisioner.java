@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.VersionInfo;
@@ -87,9 +88,10 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     if (privateInstance && conf.isPreferExternalIP()) {
       // When prefer external IP is set to true it means only Dataproc external ip can be used to for communication
       // the instance being private instance is incapable of using external ip for communication
-      throw new IllegalArgumentException("The instance is incapable of using external ip for communication " +
-                                           "with Dataproc cluster. Please correct profile configuration by " +
-                                           "deselecting preferExternalIP.");
+      throw new DataprocRuntimeException(
+        "The instance is incapable of using external ip for communication with Dataproc cluster. " +
+          "Please correct profile configuration by deselecting preferExternalIP.",
+        ErrorTag.CONFIGURATION);
     }
 
     // Validate Network Tags as per https://cloud.google.com/vpc/docs/add-remove-network-tags
@@ -98,18 +100,22 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     // Lower case letters and dashes allowed only.
     List<String> networkTags = conf.getNetworkTags();
     if (!networkTags.stream().allMatch(e -> NETWORK_TAGS_PATTERN.matcher(e).matches())) {
-      throw new IllegalArgumentException("Invalid Network Tags: Ensure tag length is max 63 chars"
-                                           + " and contains  lowercase letters, numbers and dashes only. ");
+      throw new DataprocRuntimeException("Invalid Network Tags: Ensure tag length is max 63 chars"
+                                           + " and contains lowercase letters, numbers and dashes only. ",
+        ErrorTag.CONFIGURATION);
     }
+
     if (networkTags.size() > 64) {
-      throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
+      throw new DataprocRuntimeException("Exceed Max number of tags. Only Max of 64 allowed. ",
+        ErrorTag.CONFIGURATION);
     }
 
     if (!isAutoscalingFieldsValid(conf, properties)) {
-      throw new IllegalArgumentException(
+      throw new DataprocRuntimeException(
         String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
                       DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
-                      DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED));
+                      DataprocConf.AUTOSCALING_POLICY , DataprocConf.PREDEFINED_AUTOSCALE_ENABLED),
+        ErrorTag.CONFIGURATION);
     }
   }
 
@@ -183,7 +189,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         if (comparableImageVersion == null) {
           LOG.warn("Unable to extract Dataproc version from string '{}'.", imageVersion);
         } else if (DATAPROC_1_5_VERSION.compareTo(comparableImageVersion) > 0) {
-          throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.");
+          throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.",
+            ErrorTag.CONFIGURATION);
         }
       }
 

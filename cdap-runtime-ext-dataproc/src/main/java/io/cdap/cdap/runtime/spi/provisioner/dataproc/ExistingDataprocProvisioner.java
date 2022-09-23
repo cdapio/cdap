@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.common.base.Strings;
+import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -81,7 +82,8 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       String sshUser = contextProperties.get(SSH_USER);
       String sshKey = contextProperties.get(SSH_KEY);
       if (Strings.isNullOrEmpty(sshUser) || Strings.isNullOrEmpty(sshKey)) {
-        throw new DataprocRuntimeException("SSH User and key are required for monitoring through SSH.");
+        throw new DataprocRuntimeException("SSH User and key are required for monitoring through SSH.",
+          ErrorTag.CONFIGURATION);
       }
 
       SSHKeyPair sshKeyPair = new SSHKeyPair(new SSHPublicKey(sshUser, ""),
@@ -106,7 +108,8 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       Cluster cluster = client.getCluster(clusterName)
         .filter(c -> c.getStatus() == ClusterStatus.RUNNING)
         .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
-                                                          " does not exist or not in running state."));
+                                                          " does not exist or not in running state.",
+          ErrorTag.CONFIGURATION));
 
       // Determine cluster version and fail if version is smaller than 1.5
       Optional<String> optImageVer = client.getClusterImageVersion(clusterName);
@@ -116,7 +119,8 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       } else if (!optComparableImageVer.isPresent()) {
         LOG.warn("Unable to extract Dataproc version from string '{}'.", optImageVer.get());
       } else if (DATAPROC_1_5_VERSION.compareTo(optComparableImageVer.get()) > 0) {
-        throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.");
+        throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.",
+          ErrorTag.CONFIGURATION);
       }
 
       return cluster;

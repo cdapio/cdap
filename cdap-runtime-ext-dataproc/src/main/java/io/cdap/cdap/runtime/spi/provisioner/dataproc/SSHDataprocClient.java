@@ -135,7 +135,7 @@ class SSHDataprocClient extends DataprocClient {
       firewalls = getOrCreateCompute().firewalls().list(conf.getNetworkHostProjectID()).execute();
     } catch (Exception e) {
       handleRetryableExceptions(e);
-      throw e;
+      throw new DataprocRuntimeException(e);
     }
 
     List<String> tags = new ArrayList<>();

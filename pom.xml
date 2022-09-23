@@ -2886,6 +2886,7 @@
         <module>cdap-formats</module>
         <module>cdap-features</module>
         <module>cdap-elastic</module>
+        <module>cdap-error-api</module>
         <module>cdap-hbase-compat-base</module>
         <module>cdap-hbase-compat-1.0-cdh5.5.0</module>
         <module>cdap-hbase-compat-1.0-cdh</module>
