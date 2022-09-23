@@ -127,6 +127,20 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+    throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Scan range {} with limit {} and index {}", schema.getTableId(), keyRange, limit, filterIndex);
+    fieldValidator.validateField(filterIndex);
+    if (!schema.isIndexColumn(filterIndex.getName())) {
+      throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
+    }
+    LimitIterator rangeIterator = new LimitIterator(Collections.singleton(new ScannerIterator(getScanner(keyRange),
+                                                                                              schema)).iterator(),
+                                                    limit);
+    return new FilterByIndexIterator(rangeIterator, filterIndex);
+  }
+
+  @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
                                                     int limit) throws InvalidFieldException, IOException {
     // Sort the scan keys by the start key and merge overlapping ranges.
@@ -486,6 +500,43 @@ public final class NoSqlStructuredTable implements StructuredTable {
       if (currentScanner != null) {
         currentScanner.close();
         currentScanner = null;
+      }
+    }
+  }
+
+  /**
+   * Filters elements matching an index  {@link ScannerIterator}.
+   */
+  @VisibleForTesting
+  static final class FilterByIndexIterator extends AbstractCloseableIterator<StructuredRow> {
+    private final LimitIterator limitIterator;
+    private final Field<?> filterIndex;
+
+    FilterByIndexIterator(LimitIterator limitIterator, Field<?> filterIndex) {
+      this.limitIterator = limitIterator;
+      this.filterIndex = filterIndex;
+    }
+
+    @Override
+    protected StructuredRow computeNext() {
+      // Postfiltering on scanned rows by index
+      while (limitIterator.hasNext()) {
+        StructuredRow row = limitIterator.next();
+        if (row.getString(filterIndex.getName()).equals(filterIndex.getValue())) {
+          return row;
+        }
+      }
+      return endOfData();
+    }
+
+    @Override
+    public void close() {
+      closeScanner();
+    }
+
+    private void closeScanner() {
+      if (limitIterator != null) {
+        limitIterator.close();
       }
     }
   }
