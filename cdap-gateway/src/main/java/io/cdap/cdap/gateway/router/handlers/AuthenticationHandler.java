@@ -28,6 +28,7 @@ import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.auth.CipherException;
 import io.cdap.cdap.security.auth.TinkCipher;
+import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
 import io.cdap.cdap.security.auth.UserIdentityExtractionState;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -235,6 +236,10 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   @Nullable
   private Credential getUserCredential(UserIdentityPair userIdentityPair) throws CipherException {
     String userCredential = userIdentityPair.getUserCredential();
+    UserIdentity userIdentity = userIdentityPair.getUserIdentity();
+    if (userIdentity.getIdentifierType() == UserIdentity.IdentifierType.INTERNAL) {
+      return new Credential(userCredential, Credential.CredentialType.INTERNAL);
+    }
     if (userCredential == null ||
       !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
       return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
