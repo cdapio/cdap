@@ -24,9 +24,12 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableTest;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
@@ -39,6 +42,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -168,6 +172,86 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     Assert.assertEquals(expected.subList(0, Math.min(max, limit)), actual);
   }
 
+  @Test
+  public void testSortedIteratorOrderDesc() {
+    List<Integer> expected = new ArrayList<>(Arrays.asList(3, 1, 4, 7));
+    MockScanner scanner = new MockScanner(expected.iterator());
+    Field<?> orderByField = Fields.intField("key", null);
+    List<Integer> actual = new ArrayList<>();
+    try (NoSqlStructuredTable.SortedIterator closeableIterator = new NoSqlStructuredTable.SortedIterator(
+      Collections.singleton(new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA)).iterator(), orderByField,
+      SortOrder.DESC, SCHEMA)) {
+      while (closeableIterator.hasNext()) {
+        actual.add(closeableIterator.next().getInteger("key"));
+        Assert.assertFalse(scanner.isClosed());
+      }
+    }
+    Assert.assertTrue(scanner.isClosed());
+    Assert.assertEquals(actual.size(), expected.size());
+    Collections.sort(expected, Collections.reverseOrder());
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testSortedIteratorOrderAsc() {
+    List<Integer> expected = new ArrayList<>(Arrays.asList(3, 1, 4, 7));
+    MockScanner scanner = new MockScanner(expected.iterator());
+    Field<?> orderByField = Fields.intField("key", null);
+    List<Integer> actual = new ArrayList<>();
+    try (NoSqlStructuredTable.SortedIterator closeableIterator = new NoSqlStructuredTable.SortedIterator(
+      Collections.singleton(new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA)).iterator(), orderByField,
+      SortOrder.ASC, SCHEMA)) {
+      while (closeableIterator.hasNext()) {
+        actual.add(closeableIterator.next().getInteger("key"));
+        Assert.assertFalse(scanner.isClosed());
+      }
+    }
+    Assert.assertTrue(scanner.isClosed());
+    Assert.assertEquals(actual.size(), expected.size());
+    Collections.sort(expected);
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testFilterByIndexIteratorSingleMatch() {
+    List<Integer> expected = IntStream.range(0, 10).boxed().collect(Collectors.toList());
+    MockScanner scanner = new MockScanner(expected.iterator());
+    Field<?> filterIndex = Fields.intField("key", 9);
+    List<Integer> actual = new ArrayList<>();
+    try (NoSqlStructuredTable.FilterByIndexIterator closeableIterator = new NoSqlStructuredTable.FilterByIndexIterator(
+      Collections.singleton(new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA)).iterator(), filterIndex,
+      SCHEMA)) {
+      while (closeableIterator.hasNext()) {
+        actual.add(closeableIterator.next().getInteger("key"));
+        Assert.assertFalse(scanner.isClosed());
+      }
+    }
+    Assert.assertTrue(scanner.isClosed());
+    Assert.assertEquals(actual.size(), 1);
+    Assert.assertEquals(actual.get(0), filterIndex.getValue());
+  }
+
+  @Test
+  public void testFilterByIndexIteratorMultiMatch() {
+    List<Integer> expected = new ArrayList<>(Arrays.asList(9, 9, 9, 7));
+    MockScanner scanner = new MockScanner(expected.iterator());
+    Field<?> filterIndex = Fields.intField("key", 9);
+    List<Integer> actual = new ArrayList<>();
+    try (NoSqlStructuredTable.FilterByIndexIterator closeableIterator = new NoSqlStructuredTable.FilterByIndexIterator(
+      Collections.singleton(new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA)).iterator(), filterIndex,
+      SCHEMA)) {
+      while (closeableIterator.hasNext()) {
+        actual.add(closeableIterator.next().getInteger("key"));
+        Assert.assertFalse(scanner.isClosed());
+      }
+    }
+    Assert.assertTrue(scanner.isClosed());
+    Assert.assertEquals(actual.size(), 3);
+    Assert.assertEquals(actual.get(0), filterIndex.getValue());
+    Assert.assertEquals(actual.get(1), filterIndex.getValue());
+    Assert.assertEquals(actual.get(2), filterIndex.getValue());
+  }
+
   private static class MockScanner implements Scanner {
     private final Iterator<Integer> iterator;
     private boolean closed;
@@ -181,7 +265,8 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     public Row next() {
       if (iterator.hasNext()) {
         int i = iterator.next();
-        return createResult(new MDSKey.Builder().add("tableNamePrefix").add(i).add((long) i).build().getKey(),
+        return createResult(new MDSKey.Builder().add("tableNamePrefix").add(i).add((long) i)
+                              .build().getKey(),
                             "c" + i, "v" + i);
       }
       return null;
