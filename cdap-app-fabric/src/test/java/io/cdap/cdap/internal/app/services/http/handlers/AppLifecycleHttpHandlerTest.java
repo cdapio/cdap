@@ -97,7 +97,6 @@ import java.util.stream.StreamSupport;
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static CConfiguration cConf;
-  private static final String FEATURE_FLAG_PREFIX = "feature.";
 
   @BeforeClass
   public static void beforeClass() throws Throwable {

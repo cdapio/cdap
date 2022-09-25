@@ -220,6 +220,9 @@ public abstract class AppFabricTestBase {
 
   private static HttpRequestConfig httpRequestConfig;
 
+  protected static final String LIFECYCLE_MANAGEMENT_FEATURE_FLAG = "feature.lifecycle.management.edit.enabled";
+  protected static final String FEATURE_FLAG_PREFIX = "feature.";
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -704,7 +707,7 @@ public abstract class AppFabricTestBase {
 
   protected void deleteApp(ApplicationId app, int expectedResponseCode) throws Exception {
     HttpResponse response = doDelete(getVersionedAPIPath(
-      String.format("/apps/%s/versions/%s", app.getApplication(), app.getVersion()), app.getNamespace()));
+      String.format("/apps/%s", app.getApplication()), app.getNamespace()));
     assertResponseCode(expectedResponseCode, response);
   }
 
