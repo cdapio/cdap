@@ -30,18 +30,13 @@ public class ApplicationMeta {
 
   private final String id;
   private final ApplicationSpecification spec;
-  @Nullable
   private final Long created;
   @Nullable
   private final String author;
   @Nullable
   private final String description;
 
-  public ApplicationMeta(String id, ApplicationSpecification spec) {
-    this(id, spec, null, null, null);
-  }
-
-  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable String description, @Nullable Long created,
+  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable String description, Long created,
                          @Nullable String author) {
     this.id = id;
     this.spec = spec;

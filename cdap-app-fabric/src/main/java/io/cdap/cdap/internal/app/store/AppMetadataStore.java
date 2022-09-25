@@ -442,7 +442,9 @@ public class AppMetadataStore {
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec,
                                 Long created, @Nullable String author, @Nullable String changeSummary)
     throws IOException {
-    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)), created,
+    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec,
+                                                                                              changeSummary, created,
+                                                                                              author)), created,
                                author, changeSummary);
   }
 
@@ -477,7 +479,7 @@ public class AppMetadataStore {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Application {} exists in mds with specification {}", appId, GSON.toJson(existing));
     }
-    ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec);
+    ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec, null, created, null);
     writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated),
                                created, updated.getAuthor(), null);
   }

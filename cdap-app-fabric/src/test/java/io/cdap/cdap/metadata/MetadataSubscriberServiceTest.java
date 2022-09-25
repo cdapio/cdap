@@ -443,7 +443,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // app must exist before assigning the profile for the namespace, otherwise the app's
     // programs will not receive the profile metadata.
     Store store = injector.getInstance(DefaultStore.class);
-    store.addApplication(appId, appSpec);
+    store.addApplication(appId, appSpec, null, System.currentTimeMillis(), null, null);
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
@@ -584,7 +584,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(workflowId.toMetadataEntity())).getProperties());
 
     Store store = injector.getInstance(DefaultStore.class);
-    store.addApplication(appId, appSpec);
+    store.addApplication(appId, appSpec, null, System.currentTimeMillis(), null, null);
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
