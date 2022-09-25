@@ -145,7 +145,7 @@ public abstract class DefaultStoreTest {
   public void testLoadingProgram() throws Exception {
     ApplicationSpecification appSpec = Specifications.from(new FooApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    store.addApplication(appId, appSpec);
+    store.addApplication(appId, appSpec, null, System.currentTimeMillis(), null, null);
 
     ProgramDescriptor descriptor = store.loadProgram(appId.mr("mrJob1"));
     Assert.assertNotNull(descriptor);
@@ -475,7 +475,7 @@ public abstract class DefaultStoreTest {
   public void testAddApplication() {
     ApplicationSpecification spec = Specifications.from(new FooApp());
     ApplicationId appId = new ApplicationId("account1", "application1");
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     spec = store.getApplication(appId);
     Assert.assertNotNull(spec);
@@ -486,9 +486,11 @@ public abstract class DefaultStoreTest {
   public void testUpdateChangedApplication() {
     ApplicationId id = new ApplicationId("account1", "application1");
 
-    store.addApplication(id, Specifications.from(new FooApp()));
+    store.addApplication(id, Specifications.from(new FooApp()), null, System.currentTimeMillis(),
+                         null, null);
     // update
-    store.addApplication(id, Specifications.from(new ChangedFooApp()));
+    store.addApplication(id, Specifications.from(new ChangedFooApp()), null, System.currentTimeMillis(),
+                         null, null);
 
     ApplicationSpecification spec = store.getApplication(id);
     Assert.assertNotNull(spec);
@@ -545,7 +547,8 @@ public abstract class DefaultStoreTest {
 
     ApplicationSpecification appSpec = Specifications.from(app);
     ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    store.addApplication(appId, appSpec);
+    store.addApplication(appId, appSpec, null, System.currentTimeMillis(),
+                         null, null);
 
     AbstractApplication newApp = new AppWithNoServices();
 
@@ -561,7 +564,7 @@ public abstract class DefaultStoreTest {
   public void testServiceInstances() {
     ApplicationSpecification appSpec = Specifications.from(new AppWithServices());
     ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    store.addApplication(appId, appSpec);
+    store.addApplication(appId, appSpec, null, System.currentTimeMillis(), null, null);
 
     // Test setting of service instances
     ProgramId programId = appId.program(ProgramType.SERVICE, "NoOpService");
@@ -585,7 +588,7 @@ public abstract class DefaultStoreTest {
   public void testWorkerInstances() {
     ApplicationSpecification spec = Specifications.from(new AppWithWorker());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     ProgramId programId = appId.worker(AppWithWorker.WORKER);
     int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
@@ -603,7 +606,7 @@ public abstract class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app("application1");
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -618,7 +621,7 @@ public abstract class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -639,7 +642,7 @@ public abstract class DefaultStoreTest {
     ProgramId nonExistingProgramId = appId.workflow("nonExisting");
 
     // add the application
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     // add some run records to workflow and service
     for (int i = 0; i < 5; i++) {
@@ -677,7 +680,7 @@ public abstract class DefaultStoreTest {
   public void testRuntimeArgsDeletion() {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = new ApplicationId("testDeleteRuntimeArgs", spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -725,11 +728,11 @@ public abstract class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("testDeleteAll");
     ApplicationId appId1 = namespaceId.app(spec.getName());
-    store.addApplication(appId1, spec);
+    store.addApplication(appId1, spec, null, System.currentTimeMillis(), null, null);
 
     spec = Specifications.from(new AppWithServices());
     ApplicationId appId2 = namespaceId.app(spec.getName());
-    store.addApplication(appId2, spec);
+    store.addApplication(appId2, spec, null, System.currentTimeMillis(), null, null);
 
     ProgramId mapreduceProgramId1 = appId1.mr("NoOpMR");
     ProgramId workflowProgramId1 = appId1.workflow("NoOpWorkflow");
@@ -790,7 +793,7 @@ public abstract class DefaultStoreTest {
   public void testRunsLimit() {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = new ApplicationId("testRunsLimit", spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     ProgramId mapreduceProgramId = new ApplicationId("testRunsLimit", spec.getName())
       .mr(AllProgramsApp.NoOpMR.class.getSimpleName());
@@ -818,7 +821,7 @@ public abstract class DefaultStoreTest {
     //Deploy program with all types of programs.
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getMapReduce().keySet());
@@ -861,7 +864,8 @@ public abstract class DefaultStoreTest {
     int count = 100;
     for (int i = 0; i < count; i++) {
       String appName = "test" + i;
-      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec,
+                           null, System.currentTimeMillis(), null, null);
     }
 
     List<ApplicationId> apps = new ArrayList<ApplicationId>();
@@ -896,9 +900,11 @@ public abstract class DefaultStoreTest {
     int count = 100;
     for (int i = 0; i < count / 2; i++) {
       String appName = "test" + (2 * i);
-      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec);
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appSpec,
+                           null, System.currentTimeMillis(), null, null);
       appName = "test" + (2 * i + 1);
-      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), appSpec);
+      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), appSpec,
+                           null, System.currentTimeMillis(), null, null);
     }
 
     List<ApplicationId> apps = new ArrayList<ApplicationId>();
@@ -937,7 +943,7 @@ public abstract class DefaultStoreTest {
     //Deploy program with all types of programs.
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId, spec);
+    store.addApplication(appId, spec, null, System.currentTimeMillis(), null, null);
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());

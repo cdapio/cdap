@@ -425,7 +425,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String author,
-                             @Nullable Long created, @Nullable String changeSummary, @Nullable String parentVersion) {
+                             Long created, @Nullable String changeSummary, @Nullable String parentVersion) {
     // Generate the creation time for the version of the app.
     TransactionRunners.run(transactionRunner, context -> {
       ApplicationMeta latest = getLatest(id.getNamespace(), id.getApplication());
@@ -463,11 +463,6 @@ public class DefaultStore implements Store {
     String latestVersion = latest.getSpec().getAppVersion();
     // If latest version is the parent version then we allow deploy
     return latestVersion.equals(parentVersion);
-  }
-
-  @Override
-  public void addApplication(ApplicationId id, ApplicationSpecification spec) {
-    addApplication(id, spec, null, null, null, null);
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise

@@ -490,7 +490,8 @@ public class LineageAdminTest extends AppFabricTestBase {
       );
 
     Store store = getInjector().getInstance(Store.class);
-    store.addApplication(testApp, appSpec);
+    store.addApplication(testApp, appSpec, null, System.currentTimeMillis(), null,
+                         null);
     LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
@@ -663,7 +664,8 @@ public class LineageAdminTest extends AppFabricTestBase {
       );
 
     Store store = getInjector().getInstance(Store.class);
-    store.addApplication(testApp, appSpec);
+    store.addApplication(testApp, appSpec, null, System.currentTimeMillis(), null,
+                         null);
     LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D1 -|

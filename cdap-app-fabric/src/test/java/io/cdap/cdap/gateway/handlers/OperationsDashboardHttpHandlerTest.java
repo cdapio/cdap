@@ -298,7 +298,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap()
       );
 
-    store.addApplication(APP1_ID, dummyAppSpec1);
+    store.addApplication(APP1_ID, dummyAppSpec1, null, System.currentTimeMillis(), null,
+                         null);
     WorkflowSpecification scheduledWorfklow2 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG2_ID.getProgram(), "scheduled workflow",
                                 Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
@@ -313,7 +314,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap()
       );
-    store.addApplication(APP2_ID, dummyAppSpec2);
+    store.addApplication(APP2_ID, dummyAppSpec2, null, System.currentTimeMillis(), null,
+                         null);
   }
 
   /**

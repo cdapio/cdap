@@ -49,7 +49,8 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
 
   private void addApplication(String namespace, Application app) {
     ApplicationSpecification appSpec = Specifications.from(app);
-    store.addApplication(new ApplicationId(namespace, appSpec.getName()), appSpec);
+    store.addApplication(new ApplicationId(namespace, appSpec.getName()), appSpec, null,
+                         System.currentTimeMillis(), null, null);
   }
 
   @Test

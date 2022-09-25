@@ -299,16 +299,8 @@ public interface Store {
    * @param changeSummary the change summary description of application edit
    * @param parentVersion version id of the application
    */
-  void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String author, @Nullable Long created,
+  void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String author, Long created,
                       @Nullable String changeSummary, @Nullable String parentVersion);
-
-  /**
-   * Creates new application if it doesn't exist. Updates existing one otherwise.
-   *
-   * @param id            application id
-   * @param spec          application specification to store
-   */
-  void addApplication(ApplicationId id, ApplicationSpecification spec);
 
   /**
    * Return a list of program specifications that are deleted comparing the specification in the store with the
