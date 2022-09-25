@@ -77,6 +77,7 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.common.http.HttpResponse;
 import org.jboss.resteasy.util.HttpResponseCodes;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -104,7 +105,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     initializeAndStartServices(cConf);
   }
 
-  private void isLCMEnabled(boolean lcmFlag) {
+  private void enableLCMFlag(boolean lcmFlag) {
     if (lcmFlag) {
       cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), true);
       return;
@@ -143,6 +144,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
             messagingService, impersonator, capabilityReader));
       }
     });
+  }
+
+  @After
+  public void afterTest() {
+    enableLCMFlag(false);
   }
 
   /**
@@ -682,7 +688,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeleteVersionedAppLCMEnabled() throws Exception {
-    isLCMEnabled(true);
+    enableLCMFlag(true);
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
 
@@ -693,24 +699,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(403, response.getResponseCode());
     Assert.assertEquals("Forbidden", response.getResponseMessage());
     Assert.assertEquals("Deletion of specific app version is not allowed.", response.getResponseBodyAsString());
-  }
-
-  /**
-   * Tests deleting with versioned API when LCM feature flag is disabled.
-   */
-  @Test
-  public void testDeleteVersionedAppLCMDisabled() throws Exception {
-    isLCMEnabled(false);
-    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
-
-    HttpResponse response = doDelete(getVersionedAPIPath(
-            String.format("apps/%s/versions/%s", appDetails.get("name").getAsString(),
-                    appDetails.get("appVersion").getAsString()),
-            Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getResponseCode());
-    Assert.assertEquals("OK", response.getResponseMessage());
-    Assert.assertTrue(response.getResponseBodyAsString().isEmpty());
   }
 
   /**
