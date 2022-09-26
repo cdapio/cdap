@@ -34,6 +34,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -102,6 +103,18 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     testScannerIterator(10);
   }
 
+  @Override
+  @Ignore
+  public void testIndexScanWithRange() throws Exception {
+    // Should be removed after https://cdap.atlassian.net/browse/CDAP-19564
+  }
+
+  @Override
+  @Ignore
+  public void testSortedIndexScan() throws Exception {
+    // Should be removed after https://cdap.atlassian.net/browse/CDAP-19564
+  }
+  
   private void testScannerIterator(int max) throws Exception {
     List<Integer> expected = IntStream.range(0, max).boxed().collect(Collectors.toList());
     MockScanner scanner = new MockScanner(expected.iterator());

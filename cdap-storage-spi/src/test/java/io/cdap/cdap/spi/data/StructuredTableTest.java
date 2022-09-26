@@ -576,6 +576,159 @@ public abstract class StructuredTableTest {
   }
 
   @Test
+  public void testIndexScanWithRange() throws Exception {
+    int num = 100;
+    // Write a few records
+    List<Collection<Field<?>>> expected = new ArrayList<>();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      int counter = 0;
+      for (String value : Arrays.asList("abc", "def", "ghi")) {
+        for (int i = 0; i < num; ++i) {
+          Collection<Field<?>> fields = Arrays.asList(Fields.intField(KEY, counter),
+                                                      Fields.longField(KEY2, counter * 100L),
+                                                      Fields.stringField(STRING_COL, value));
+          table.upsert(fields);
+          expected.add(fields);
+          ++counter;
+        }
+      }
+    });
+
+    List<String> columns = Arrays.asList(KEY, KEY2, STRING_COL);
+
+    // Verify write
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), 1000)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected, rows);
+      }
+    });
+
+    // Scan by range and index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Fields.stringField(STRING_COL, "abc"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(0, num), rows);
+      }
+
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Fields.stringField(STRING_COL, "def"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(num, 2 * num), rows);
+      }
+
+      // index value not within range
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Fields.stringField(STRING_COL, "def"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(Collections.emptyList(), rows);
+      }
+
+      // non-existent index value
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Fields.stringField(STRING_COL, "non"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(Collections.emptyList(), rows);
+      }
+
+      // non-index column
+      try {
+        table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                   num * 10,
+                   Fields.longField(LONG_COL, 1L));
+        Assert.fail("Expected InvalidFieldException for scanning a non-index column");
+      } catch (InvalidFieldException e) {
+        // Expected
+      }
+    });
+  }
+
+  @Test
+  public void testSortedIndexScan() throws Exception {
+    int num = 100;
+    // Write a few records
+    List<Collection<Field<?>>> expected = new ArrayList<>();
+
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      int counter = 0;
+      for (int i = 0; i < num * 3; ++i) {
+        // insert data ascending by primary keys and descending by IDX_COL
+        Collection<Field<?>> fields = Arrays.asList(Fields.intField(KEY, counter),
+                                                    Fields.longField(KEY2, counter * 100L),
+                                                    Fields.longField(IDX_COL, (long) -i));
+        table.upsert(fields);
+        expected.add(fields);
+        ++counter;
+      }
+    });
+
+    List<String> columns = Arrays.asList(KEY, KEY2, IDX_COL);
+
+    // Verify write
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), num * 10)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected, rows);
+      }
+    });
+
+    // Scan by range and sort by index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10, Fields.longField(IDX_COL, 0L), SortOrder.DESC)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        List<Collection<Field<?>>> expectedSubList = expected.subList(0, num * 2);
+
+        Assert.assertEquals(expectedSubList, rows);
+      }
+
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 3)), Range.Bound.EXCLUSIVE),
+                        num * 10, Fields.longField(IDX_COL, 0L), SortOrder.ASC)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        List<Collection<Field<?>>> expectedSubList = expected.subList(num, num * 3);
+        Collections.reverse(expectedSubList);
+
+        Assert.assertEquals(expectedSubList, rows);
+      }
+
+      // non-index column
+      try {
+        table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                   num * 10, Fields.longField(LONG_COL, 0L), SortOrder.ASC);
+        Assert.fail("Expected InvalidFieldException for scanning a non-index column");
+      } catch (InvalidFieldException e) {
+        // Expected
+      }
+    });
+  }
+
+  @Test
   public void testCount() throws Exception {
     // Write records
     int max = 5;
