@@ -282,7 +282,10 @@ public class ProgramClient {
               LOG.warn("Program {} is already stopped, proceeding even though the following exception is raised.",
                        program, ioe);
             }
-            this.waitForStatus(program, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
+            // YarnTwillController has a timeout of 60 seconds after sending a stop signal using ZK.
+            // If this fails, it kills the app usin Yarn API. In cases where there is a failure to send the message
+            // via ZK, it waits for 60 seconds. So a wait of 60 seconds here is not enough.
+            this.waitForStatus(program, ProgramStatus.STOPPED, 120, TimeUnit.SECONDS);
           }
         } catch (ProgramNotFoundException e) {
           // IGNORE
