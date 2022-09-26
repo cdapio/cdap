@@ -359,7 +359,9 @@ public class ProgramClient {
         public String call() throws Exception {
           return getStatus(program);
         }
-      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS,
+        String.format("Timeout occurred. ProgramId: %s. Expected %s but found %s.", program != null ? program : "",
+          status.name(), getStatus(program)));
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), UnauthenticatedException.class);
       Throwables.propagateIfPossible(e.getCause(), ProgramNotFoundException.class);
