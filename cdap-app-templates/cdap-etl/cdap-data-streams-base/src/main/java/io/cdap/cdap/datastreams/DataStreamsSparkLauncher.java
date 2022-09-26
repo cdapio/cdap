@@ -97,9 +97,9 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
         numSources = numSources + streamingSource.getRequiredExecutors();
       }
     }
-
+    // Add warning message to discourage users from using multiple streaming sources.
     if (numSources > 1) {
-      getContext().getMetrics().count(Constants.Metrics.STREAMING_MULTI_SOURCE_PIPELINE_RUNS_COUNT, 1);
+      LOG.warn("Using multiple streaming sources in a pipeline is not recommended.");
     }
 
     SparkConf sparkConf = new SparkConf();
