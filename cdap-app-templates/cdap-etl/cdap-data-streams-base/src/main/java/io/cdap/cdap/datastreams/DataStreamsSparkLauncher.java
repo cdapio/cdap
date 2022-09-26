@@ -98,6 +98,11 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       }
     }
 
+    // Add warning message to discourage users from using multiple streaming sources.
+    if (numSources > 1) {
+      LOG.warn("Using multiple streaming sources in a pipeline is not recommended.");
+    }
+
     SparkConf sparkConf = new SparkConf();
     // we do not do checkpointing during preview. Skip enabling write-ahead logs in that case to avoid spark exception
     if (!spec.isPreviewEnabled(context) && spec.getStateSpec()
