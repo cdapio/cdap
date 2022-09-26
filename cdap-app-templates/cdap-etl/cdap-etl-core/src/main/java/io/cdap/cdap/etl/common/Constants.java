@@ -102,6 +102,19 @@ public final class Constants {
       public static final String APP_ENTITY_TYPE = "aet";
       public static final String APP_ENTITY_TYPE_NAME = "tpe";
     }
+
+    /**
+     * Metric constants for different modes of DataStreamsStateSpec
+     */
+    public static final class AtleastOnceProcessing {
+      public static final String STREAMING_ATLEASTONCE_DISABLED_COUNT = "streaming.atleastonce.disabled.count";
+      public static final String STREAMING_ATLEASTONCE_CHECKPOINTING_COUNT =
+        "streaming.atleastonce.checkpointing.count";
+      public static final String STREAMING_ATLEASTONCE_STORE_COUNT = "streaming.atleastonce.store.count";
+    }
+
+    public static final String STREAMING_MULTI_SOURCE_PIPELINE_RUNS_COUNT =
+      "streaming.multi.source.pipeline.runs.count";
   }
 
   /**

@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.services;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -40,6 +41,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.security.AccessException;
@@ -161,20 +163,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final Impersonator impersonator;
   private final CapabilityReader capabilityReader;
   private final int batchSize;
+  private final MetricsCollectionService metricsCollectionService;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice injection.
    */
   @Inject
   public ApplicationLifecycleService(CConfiguration cConf,
-                              Store store, Scheduler scheduler, UsageRegistry usageRegistry,
-                              PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
-                              OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
-                              ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                              MetadataServiceClient metadataServiceClient,
-                              AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
-                              MessagingService messagingService, Impersonator impersonator,
-                              CapabilityReader capabilityReader) {
+                                     Store store, Scheduler scheduler, UsageRegistry usageRegistry,
+                                     PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
+                                     OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
+                                     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
+                                     MetadataServiceClient metadataServiceClient,
+                                     AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
+                                     MessagingService messagingService, Impersonator impersonator,
+                                     CapabilityReader capabilityReader,
+                                     MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -193,6 +197,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.impersonator = impersonator;
     this.capabilityReader = capabilityReader;
     this.adminEventPublisher = new AdminEventPublisher(cConf, new MultiThreadMessagingContext(messagingService));
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -1148,6 +1153,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
   public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
+    emitMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
+                Constants.Metrics.AppStateStore.STATE_STORE_GET_COUNT);
     return store.getState(request);
   }
 
@@ -1158,6 +1165,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ApplicationNotFoundException if application with request.appName is not found.
    */
   public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
+    emitMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
+                Constants.Metrics.AppStateStore.STATE_STORE_SAVE_COUNT);
     store.saveState(request);
   }
 
@@ -1180,5 +1189,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
     store.deleteAllStates(namespaceId, appName);
+  }
+
+  private void emitMetrics(String namespace, String appName, String metricName) {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                                               Constants.Metrics.Tag.APP, appName);
+    metricsCollectionService.getContext(tags).increment(metricName, 1);
   }
 }
