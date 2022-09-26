@@ -98,6 +98,10 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       }
     }
 
+    if (numSources > 1) {
+      getContext().getMetrics().count(Constants.Metrics.STREAMING_MULTI_SOURCE_PIPELINE_RUNS_COUNT, 1);
+    }
+
     SparkConf sparkConf = new SparkConf();
     // we do not do checkpointing during preview. Skip enabling write-ahead logs in that case to avoid spark exception
     if (!spec.isPreviewEnabled(context) && spec.getStateSpec()
@@ -171,7 +175,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       }
     }
     context.setSparkConf(sparkConf);
-
+    emitMetrics(spec);
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
   }
 
@@ -183,5 +187,18 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
                        status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
 
+  }
+
+  private void emitMetrics(DataStreamsPipelineSpec spec) {
+    if (spec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.NONE) {
+      getContext().getMetrics().count(
+        Constants.Metrics.AtleastOnceProcessing.STREAMING_ATLEASTONCE_DISABLED_COUNT, 1);
+    } else if (spec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING) {
+      getContext().getMetrics().count(
+        Constants.Metrics.AtleastOnceProcessing.STREAMING_ATLEASTONCE_CHECKPOINTING_COUNT, 1);
+    } else {
+      getContext().getMetrics().count(
+        Constants.Metrics.AtleastOnceProcessing.STREAMING_ATLEASTONCE_STORE_COUNT, 1);
+    }
   }
 }
