@@ -18,6 +18,7 @@ package io.cdap.cdap.k8s.runtime;
 
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1JobStatus;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import org.apache.twill.api.ServiceController;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -41,6 +42,9 @@ public class KubeTwillControllerTest {
     KubeTwillController controller = new KubeTwillController("default", null, mockDiscoveryServiceClient,
                                                              mockApiClient, V1Job.class, objMetaWithAnnotation,
                                                              startupTaskCompletion);
+    V1JobStatus jobStatus = new V1JobStatus();
+    jobStatus.setFailed(1);
+    controller.setJobStatus(jobStatus);
 
     Future<? extends ServiceController> terminateFuture = controller.terminate();
     Assert.assertTrue(terminateFuture.isDone());
