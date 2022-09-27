@@ -68,11 +68,11 @@ import java.lang
 import java.net.URI
 import java.net.URL
 import java.util
+import java.util.Optional
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -307,6 +307,14 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   override def getMetadata(scope: MetadataScope, metadataEntity: MetadataEntity): Metadata = {
     return runtimeContext.getMetadata(scope, metadataEntity)
+  }
+
+  override def getState(key: String): Optional[Array[Byte]] = {
+    return runtimeContext.getState(key)
+  }
+
+  override def saveState(key: String, value: Array[Byte]): Unit = {
+    runtimeContext.saveState(key, value);
   }
 
   override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]): Unit = {

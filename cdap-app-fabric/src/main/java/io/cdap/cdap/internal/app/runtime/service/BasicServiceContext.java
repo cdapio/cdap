@@ -37,6 +37,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionSystemClient;
@@ -67,11 +68,12 @@ public class BasicServiceContext extends AbstractContext implements ServiceConte
                              MessagingService messagingService, MetadataReader metadataReader,
                              MetadataPublisher metadataPublisher,
                              NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                             RemoteClientFactory remoteClientFactory, ArtifactManager artifactManager) {
+                             RemoteClientFactory remoteClientFactory, ArtifactManager artifactManager,
+                             AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, Collections.emptySet(), datasetFramework, transactionSystemClient, false,
           metricsCollectionService, ImmutableMap.of(), secureStore, secureStoreManager, messagingService,
           pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
-          remoteClientFactory);
+          remoteClientFactory, appStateStoreProvider);
     this.instanceCount = instanceCount;
     this.instanceId = instanceId;
     this.specification = spec;

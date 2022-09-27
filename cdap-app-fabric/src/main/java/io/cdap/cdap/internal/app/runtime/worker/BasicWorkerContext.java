@@ -33,6 +33,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionSystemClient;
@@ -61,12 +62,12 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      MessagingService messagingService, MetadataReader metadataReader,
                      MetadataPublisher metadataPublisher,
                      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                     RemoteClientFactory remoteClientFactory) {
+                     RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, spec.getDatasets(),
           datasetFramework, transactionSystemClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
 
     this.specification = spec;
     this.instanceId = instanceId;

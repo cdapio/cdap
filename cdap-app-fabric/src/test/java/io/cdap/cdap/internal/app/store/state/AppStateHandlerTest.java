@@ -193,9 +193,10 @@ public class AppStateHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testAppStateDoesNotExist() throws IOException {
-    // Get state that does not exist in table
+    // Get state that does not exist in table, but the app is valid
     HttpResponse response = executeHttpRequest(HttpMethod.GET, endpoint, null);
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    Assert.assertArrayEquals(new byte[]{}, response.getResponseBody());
   }
 
   private HttpResponse executeHttpRequest(HttpMethod method, String endpoint, String body)

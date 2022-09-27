@@ -33,6 +33,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import io.cdap.cdap.messaging.MessagingService;
@@ -66,11 +67,11 @@ public class BasicSystemServiceContext extends BasicServiceContext implements Sy
                                    MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                                    NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
                                    TransactionRunner transactionRunner, RemoteClientFactory remoteClientFactory,
-                                   ArtifactManager artifactManager) {
+                                   ArtifactManager artifactManager, AppStateStoreProvider appStateStoreProvider) {
     super(spec, program, programOptions, instanceId, instanceCount, cConf, metricsCollectionService, datasetFramework,
           transactionSystemClient, pluginInstantiator, secureStore, secureStoreManager,
           messagingService, metadataReader, metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
-          remoteClientFactory, artifactManager);
+          remoteClientFactory, artifactManager, appStateStoreProvider);
     this.namespaceId = program.getId().getNamespaceId();
     this.transactionRunner = transactionRunner;
     this.namespaceQueryAdmin = namespaceQueryAdmin;

@@ -38,6 +38,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -72,6 +73,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final FieldLineageWriter fieldLineageWriter;
   private final RemoteClientFactory remoteClientFactory;
+  private final AppStateStoreProvider appStateStoreProvider;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -80,7 +82,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService, MetadataReader metadataReader,
                              MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
-                             FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory) {
+                             FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
+                             AppStateStoreProvider appStateStoreProvider) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -95,6 +98,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.fieldLineageWriter = fieldLineageWriter;
     this.remoteClientFactory = remoteClientFactory;
+    this.appStateStoreProvider = appStateStoreProvider;
   }
 
   @Override
@@ -138,7 +142,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, metadataReader, metadataPublisher,
-                                                          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory);
+                                                          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory,
+                                                          appStateStoreProvider);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 

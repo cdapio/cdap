@@ -43,6 +43,7 @@ import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
@@ -109,11 +110,12 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         MessagingService messagingService, MetadataReader metadataReader,
                         MetadataPublisher metadataPublisher,
                         NamespaceQueryAdmin namespaceQueryAdmin,
-                        FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory) {
+                        FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
+                        AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, spec.getDataSets(), dsFramework, txClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
           messagingService, pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin,
-          fieldLineageWriter, remoteClientFactory);
+          fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.spec = spec;
