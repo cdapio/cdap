@@ -73,6 +73,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -97,6 +98,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
   private static final String LABEL_CDAP_PROGRAM = "cdap-program";
   private static final String LABEL_CDAP_PROGRAM_TYPE = "cdap-program-type";
+
+  private static final int SET_CUSTOM_TIME_MAX_RETRY = 6;
+  private static final int SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY = 20000;
 
   // Dataproc specific error groups
   private static final String ERRGP_GCS = "gcs";
@@ -222,7 +226,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                           runRootPath, fileToUpload.getName());
         uploadFutures.add(
           provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
-              uploadFile(bucket, targetFilePath, fileToUpload))
+              uploadFile(bucket, targetFilePath, fileToUpload, false))
             .toCompletableFuture());
       }
       List<LocalFile> uploadedFiles = new ArrayList<>();
@@ -361,46 +365,78 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     return false;
   }
 
+  /**
+   * Upload cacheable files uploads the file to GCS if the file does not exists. Once uploaded, it also sets custom time
+   * on the object.
+   */
   private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
-                                        LocalFile localFile) throws IOException, StorageException {
+                                        LocalFile localFile)
+    throws IOException, StorageException, InterruptedException {
     Storage storage = getStorageClient();
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     Blob blob = storage.get(blobId);
     LocalFile result;
 
     if (blob != null && blob.exists()) {
+      LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
+                localFile.getURI(), bucket, targetFilePath);
       result = new DefaultLocalFile(localFile.getName(),
                                     URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                     localFile.getLastModified(), localFile.getSize(),
                                     localFile.isArchive(), localFile.getPattern());
-      LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
-                localFile.getURI(), bucket, targetFilePath);
+      setCustomTime(storage, blobId, targetFilePath);
 
     } else {
-      result = uploadFile(bucket, targetFilePath, localFile);
+      result = uploadFile(bucket, targetFilePath, localFile, true);
     }
 
-    long start = System.nanoTime();
-    String contentType = "application/octet-stream";
-    BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-      .setCustomTime(System.currentTimeMillis())
-      .setContentType(contentType).build();
 
-    storage.update(blobInfo);
-
-    LOG.debug("Successfully set custom time for gs://{}/{} in {} ms.", bucket, targetFilePath,
-              TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
     return result;
+  }
+
+  private void setCustomTime(Storage storage, BlobId blobId, String targetFilePath) throws InterruptedException {
+    Random rand = new Random();
+    for (int i = 1; i <= SET_CUSTOM_TIME_MAX_RETRY; i++) {
+      try {
+        Blob blob = storage.get(blobId);
+        // get a random jitter between 30min to 90min
+        long jitter = TimeUnit.MINUTES.toMillis(rand.nextInt(60)) + TimeUnit.MINUTES.toMillis(30);
+        if (blob.getCustomTime() == null ||
+          blob.getCustomTime() + jitter < System.currentTimeMillis()) {
+          BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+            .setCustomTime(System.currentTimeMillis())
+            .setTemporaryHold(true)
+            .build();
+          storage.update(blobInfo);
+
+          LOG.debug("Successfully set custom time for gs://{}/{}", bucket, targetFilePath);
+        } else {
+          //custom time is still fresh
+          LOG.debug("Skip setting custom time for gs://{}/{} since it is fresh", bucket, targetFilePath);
+        }
+        return;
+      } catch (Exception ex) {
+        if (i == SET_CUSTOM_TIME_MAX_RETRY) {
+          throw ex;
+        }
+        Thread.sleep(rand.nextInt(SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY));
+      }
+    }
   }
 
   /**
    * Uploads files to gcs.
    */
   private LocalFile uploadFile(String bucket, String targetFilePath,
-                               LocalFile localFile) throws IOException, StorageException {
+                               LocalFile localFile, boolean isCacheable)
+    throws IOException, StorageException, InterruptedException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     String contentType = "application/octet-stream";
-    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
+    BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId);
+    if (isCacheable) {
+      blobInfoBuilder.setCustomTime(System.currentTimeMillis()).setTemporaryHold(true);
+    }
+    BlobInfo blobInfo = blobInfoBuilder.setContentType(contentType).build();
     Storage storage = getStorageClient();
 
     Bucket bucketObj = storage.get(bucket);
@@ -421,14 +457,21 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
         throw e;
       }
-      // Precondition fails means the blob already exists, most likely happens due to retries
-      // https://cloud.google.com/storage/docs/request-preconditions#special-case
-      // Overwrite the file
-      Blob blob = storage.get(blobId);
-      BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
-      uploadToGCS(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
-      LOG.debug("Successfully uploaded file {} to gs://{}/{} by overwriting due to conflict",
-                localFile.getURI(), bucket, targetFilePath);
+
+      if (!isCacheable) {
+        // Precondition fails means the blob already exists, most likely happens due to retries
+        // https://cloud.google.com/storage/docs/request-preconditions#special-case
+        // Overwrite the file
+        Blob blob = storage.get(blobId);
+        BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
+        uploadToGCS(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
+        LOG.debug("Successfully uploaded file {} to gs://{}/{} by overwriting due to conflict",
+                  localFile.getURI(), bucket, targetFilePath);
+      } else {
+        LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
+                  localFile.getURI(), bucket, targetFilePath);
+        setCustomTime(storage, blobId, targetFilePath);
+      }
     }
 
     return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
