@@ -17,8 +17,12 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerClassLoaderFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,6 +35,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
 import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.master.environment.DefaultMasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -129,7 +134,8 @@ public class MasterEnvironmentMain {
           getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
 
         MasterEnvironmentRunnableContext runnableContext =
-          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory);
+          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory,
+                                                      getProgramRunnerClassLoaderFactory(cConf));
         @SuppressWarnings("unchecked")
         MasterEnvironmentRunnable runnable = masterEnv.createRunnable(runnableContext,
                                                                       (Class<? extends MasterEnvironmentRunnable>) cls);
@@ -194,6 +200,20 @@ public class MasterEnvironmentMain {
       RemoteAuthenticatorModules.getDefaultModule()
     );
     return injector.getInstance(RemoteAuthenticator.class);
+  }
+
+  private static ProgramRunnerClassLoaderFactory getProgramRunnerClassLoaderFactory(CConfiguration cConf) {
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(ProgramRuntimeProviderLoader.class).in(Scopes.SINGLETON);
+          bind(ProgramRunnerClassLoaderFactory.class).to(DefaultProgramRunnerClassLoaderFactory.class);
+        }
+      }
+    );
+    return injector.getInstance(ProgramRunnerClassLoaderFactory.class);
   }
 }
 
