@@ -23,7 +23,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
-import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -53,7 +52,6 @@ import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
@@ -124,7 +122,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   protected void configure() {
     List<Module> modules = getCoreModules();
 
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    RuntimeMonitorType runtimeMonitorType = RuntimeMonitorType.URL;
     modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
 
     install(Modules.override(modules).with(new AbstractModule() {
@@ -143,10 +141,11 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private List<Module> getCoreModules() {
-    Arguments systemArgs = programOpts.getArguments();
-    ClusterMode clusterMode = systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
-      ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
-      : ClusterMode.ON_PREMISE;
+//    Arguments systemArgs = programOpts.getArguments();
+//    ClusterMode clusterMode = systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
+//      ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
+//      : ClusterMode.ON_PREMISE;
+    ClusterMode clusterMode = ClusterMode.ISOLATED;
 
     List<Module> modules = new ArrayList<>();
 
@@ -161,7 +160,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
     modules.add(new NamespaceQueryAdminModule());
     modules.add(new DataSetsModules().getDistributedModules());
-    modules.add(new ProgramStateWriterModule(clusterMode, systemArgs.hasOption(ProgramOptionConstants.PEER_NAME)));
+    modules.add(new ProgramStateWriterModule(clusterMode, false));
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -277,7 +276,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new RemoteExecutionDiscoveryModule());
     // Use RemoteLogAppender if we're running in tethered mode so that logs get written to the log saver.
     // Otherwise write to the TMSLogAppender, will be consumed by RuntimeClientService.
-    if (programOpts.getArguments().getOption(ProgramOptionConstants.PEER_NAME) != null) {
+    String peerName = null;
+    if (peerName != null) {
       modules.add(new RemoteLogAppenderModule());
     } else {
       modules.add(new TMSLogAppenderModule());
@@ -293,7 +293,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     // the driver or configuration passed from driver to workers, see
     // io.cdap.cdap.security.auth.context.AuthenticationContextModules.loadRemoteCredentials
     AuthenticationContextModules authModules = new AuthenticationContextModules();
-    String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+    String principal = null;
     if (principal == null) {
       modules.add(authModules.getProgramContainerModule(cConf));
     } else {

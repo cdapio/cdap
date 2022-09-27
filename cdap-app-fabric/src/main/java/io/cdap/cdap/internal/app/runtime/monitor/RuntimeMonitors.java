@@ -158,13 +158,14 @@ public final class RuntimeMonitors {
    */
   public static Module getRemoteAuthenticatorModule(RuntimeMonitorType runtimeMonitorType, ProgramOptions programOpts) {
     // Module for remote authenticator from overridden config if using URL runtime monitoring.
-    String remoteAuthenticatorNameKey = Constants.RemoteAuthenticator.REMOTE_AUTHENTICATOR_NAME;
-    if (runtimeMonitorType == RuntimeMonitorType.URL) {
-      String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
-      remoteAuthenticatorNameKey = String.format("%s%s",
-                                                  Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_NAME_PREFIX,
-                                                  provisioner);
-    }
+//    String remoteAuthenticatorNameKey = Constants.RemoteAuthenticator.REMOTE_AUTHENTICATOR_NAME;
+//    if (runtimeMonitorType == RuntimeMonitorType.URL) {
+//      String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
+//      remoteAuthenticatorNameKey = String.format("%s%s",
+//                                                  Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_NAME_PREFIX,
+//                                                  provisioner);
+//    }
+    String remoteAuthenticatorNameKey = "app.program.runtime.monitor.url.authenticator.name.gcp-dataproc";
     return RemoteAuthenticatorModules.getDefaultModule(remoteAuthenticatorNameKey);
   }
 }

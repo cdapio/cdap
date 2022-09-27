@@ -763,9 +763,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Creates the {@link EventHandler} for handling the application events.
    */
   private EventHandler createEventHandler(CConfiguration cConf, ProgramRunId programRunId, ProgramOptions programOpts) {
-    return new TwillAppLifecycleEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
-                                             this instanceof LongRunningDistributedProgramRunner, programRunId,
-                                             clusterMode, SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+    if (programOpts != null) {
+      LOG.warn("Program Options are not null");
+    }
+    TwillAppLifecycleEventHandler tale = new TwillAppLifecycleEventHandler(
+      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
+      this instanceof LongRunningDistributedProgramRunner, programRunId,
+      clusterMode, SystemArguments.getRuntimeMonitorType(cConf, programOpts), programOpts);
+    LOG.warn("TwillAppLifeCycleEventHandler created {}", tale);
+    return tale;
   }
 
   /**
