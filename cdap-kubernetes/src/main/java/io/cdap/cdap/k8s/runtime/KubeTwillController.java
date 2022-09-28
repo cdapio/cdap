@@ -250,11 +250,6 @@ class KubeTwillController implements ExtendedTwillController {
       return completion;
     }
 
-    if (meta.getAnnotations() != null && Boolean.parseBoolean(
-        meta.getAnnotations().get(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED))) {
-      completion.complete(KubeTwillController.this);
-      return CompletableFuture.completedFuture(KubeTwillController.this);
-    }
     return cleanupResources(gracePeriodSeconds);
   }
 
@@ -582,6 +577,10 @@ class KubeTwillController implements ExtendedTwillController {
     } else if (jobStatus.getFailed() != null) {
       // If job has failed, mark future as failed. Else mark it as succeeded.
       resultFuture.completeExceptionally(new RuntimeException(String.format("Job %s has a failed status.", name)));
+      if (meta.getAnnotations() != null && Boolean.parseBoolean(
+        meta.getAnnotations().get(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED))) {
+        return resultFuture;
+      }
     } else {
       resultFuture.complete(name);
     }
