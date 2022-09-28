@@ -34,7 +34,8 @@ public class PodKillerTaskTest {
 
   @Test
   public void test() {
-    PodKillerTask task = new PodKillerTask("default", "cdap.container=preview", 1000);
+    PodKillerTask task = new PodKillerTask("default", "cdap.container=preview", 1000,
+                                           new DefaultApiClientFactory(10, 10));
     task.run(new MasterEnvironmentContext() {
       @Override
       public LocationFactory getLocationFactory() {

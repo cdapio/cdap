@@ -17,9 +17,13 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.util.Config;
 
 public class DefaultKubeMasterPathProvider implements KubeMasterPathProvider {
+  private final ApiClient apiClient;
+
+  public DefaultKubeMasterPathProvider(ApiClient apiClient) {
+    this.apiClient = apiClient;
+  }
 
   @Override
   public String getMasterPath() {
@@ -27,7 +31,6 @@ public class DefaultKubeMasterPathProvider implements KubeMasterPathProvider {
     String master;
     // apiClient.getBasePath() returns path similar to https://10.8.0.1:443
     try {
-      ApiClient apiClient = Config.defaultClient();
       master = apiClient.getBasePath();
     } catch (Exception e) {
       // should not happen

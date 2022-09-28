@@ -19,10 +19,10 @@ package io.cdap.cdap.k8s.common;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Range;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Watchable;
 import io.kubernetes.client.util.generic.KubernetesApiResponse;
@@ -43,7 +43,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Abstract class to help implementing {@link Runnable} that watch for resource changes in K8s.
@@ -74,17 +73,14 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
   private final Random random;
   private final Type resourceType;
   private final CachingResourceChangeListener changeListener;
+  private final ApiClientFactory apiClientFactory;
   private volatile boolean stopped;
   private volatile ApiClient apiClient;
   private Watchable<DynamicKubernetesObject> watch;
 
-  protected AbstractWatcherThread(String threadName, String namespace, String group, String version, String plural) {
-    this(threadName, namespace, group, version, plural, null);
-  }
-
   @VisibleForTesting
-  AbstractWatcherThread(String threadName, String namespace, String group, String version, String plural,
-                        @Nullable ApiClient apiClient) {
+  protected AbstractWatcherThread(String threadName, String namespace, String group, String version, String plural,
+                                  ApiClientFactory apiClientFactory) {
     super(threadName);
     setDaemon(true);
     this.namespace = namespace;
@@ -97,7 +93,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
     this.resourceType = TypeToken.of(getClass()).resolveType(
       AbstractWatcherThread.class.getTypeParameters()[0]).getType();
     this.changeListener = new CachingResourceChangeListener();
-    this.apiClient = apiClient;
+    this.apiClientFactory = apiClientFactory;
   }
 
 
@@ -220,7 +216,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
         return client;
       }
 
-      client = Config.defaultClient();
+      client = apiClientFactory.create();
 
       // Set a reasonable timeout for the watch.
       client.setReadTimeout((int) TimeUnit.MINUTES.toMillis(5));
