@@ -102,7 +102,6 @@ public abstract class DefaultStoreTest {
   protected static DefaultNamespaceStore nsStore;
   protected static NamespaceAdmin nsAdmin;
   private static final Gson GSON = new Gson();
-  private static final Long created = System.currentTimeMillis();
 
   private int sourceId;
 
@@ -575,7 +574,7 @@ public abstract class DefaultStoreTest {
     int count = store.getServiceInstances(programId);
     Assert.assertEquals(1, count);
 
-    store.setServiceInstances(programId, 10, created);
+    store.setServiceInstances(programId, 10);
     count = store.getServiceInstances(programId);
     Assert.assertEquals(10, count);
 
@@ -600,7 +599,7 @@ public abstract class DefaultStoreTest {
     int instances = store.getWorkerInstances(programId);
     Assert.assertEquals(instancesFromSpec, instances);
 
-    store.setWorkerInstances(programId, 9, created);
+    store.setWorkerInstances(programId, 9);
     instances = store.getWorkerInstances(programId);
     Assert.assertEquals(9, instances);
   }

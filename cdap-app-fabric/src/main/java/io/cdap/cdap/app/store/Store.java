@@ -401,9 +401,8 @@ public interface Store {
    *
    * @param id id of the program
    * @param instances number of instances
-   * @param created creation time of the update
    */
-  void setServiceInstances(ProgramId id, int instances, Long created);
+  void setServiceInstances(ProgramId id, int instances);
 
   /**
    * Returns the number of instances of a service.
@@ -417,9 +416,8 @@ public interface Store {
    *
    * @param id id of the program
    * @param instances number of instances
-   * @param created creation time of the update
    */
-  void setWorkerInstances(ProgramId id, int instances, Long created);
+  void setWorkerInstances(ProgramId id, int instances);
 
   /**
    * Gets the number of instances of a {@link Worker}
