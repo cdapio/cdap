@@ -24,8 +24,9 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -53,11 +54,10 @@ public interface MasterEnvironment {
   }
 
   /**
-   * Returns a {@link Optional} {@link MasterEnvironmentTask} to be executed periodically.
-   * It is guaranteed that there is no concurrent call to the task returned.
+   * Returns a list of {@link MasterEnvironmentTask}s to be executed periodically.
    */
-  default Optional<MasterEnvironmentTask> getTask() {
-    return Optional.empty();
+  default Collection<MasterEnvironmentTask> getTasks() {
+    return Collections.emptySet();
   }
 
   /**

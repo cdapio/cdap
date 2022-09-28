@@ -75,13 +75,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -111,6 +111,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DATA_TX_ENABLED = "data.tx.enabled";
   private static final String JOB_CLEANUP_INTERVAL = "program.container.cleaner.interval.mins";
   private static final String JOB_CLEANUP_BATCH_SIZE = "program.container.cleaner.batch.size";
+  private static final String DEFAULT_JOB_CLEANUP_INTERVAL_MIN = "60";
+  private static final String DEFAULT_JOB_CLEANUP_BATCH_SIZE = "1000";
 
   public static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
@@ -230,6 +232,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private long workloadIdentityServiceAccountTokenTTLSeconds;
   private String programCpuMultiplier;
   private String cdapInstallNamespace;
+  private KubeJobCleaner kubeJobCleaner;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, IllegalArgumentException, ApiException {
@@ -334,7 +337,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     String twillRunnables = context.getConfigurations().get(TWILL_RUNNER_SERVICE_MONITOR_DISABLE);
     boolean enableMonitor = true;
-    if (twillRunnables != null && podLabels != null) {
+    if (twillRunnables != null) {
       for (String twillRunnable : twillRunnables.split(",")) {
         if (podLabels.containsKey(DEFAULT_CONTAINER_LABEL) &&
           podLabels.get(DEFAULT_CONTAINER_LABEL).equals(twillRunnable)) {
@@ -345,14 +348,16 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     twillRunner = new KubeTwillRunnerService(context, apiClientFactory, namespace, discoveryService,
                                              podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName),
-                                             Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, "60")),
-                                             Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, "1000")),
                                              enableMonitor,
                                              workloadIdentityEnabled,
                                              workloadLauncherRoleNameForNamespace,
                                              workloadLauncherRoleNameForCluster,
                                              workloadIdentityPool,
                                              workloadIdentityProvider);
+
+    int batchSize = Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, DEFAULT_JOB_CLEANUP_BATCH_SIZE));
+    int interval = Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, DEFAULT_JOB_CLEANUP_INTERVAL_MIN));
+    kubeJobCleaner = new KubeJobCleaner(twillRunner.getSelector(), batchSize, interval, apiClientFactory);
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -391,8 +396,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   @Override
-  public Optional<MasterEnvironmentTask> getTask() {
-    return Optional.ofNullable(podKillerTask);
+  public Collection<MasterEnvironmentTask> getTasks() {
+    return Arrays.asList(podKillerTask, kubeJobCleaner);
   }
 
   @Override
