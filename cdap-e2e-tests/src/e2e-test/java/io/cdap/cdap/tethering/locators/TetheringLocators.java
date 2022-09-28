@@ -29,16 +29,16 @@ public class TetheringLocators {
   @FindBy(how = How.XPATH, using = "//a[@href='/cdap/administration/tethering']")
   public static WebElement tetheringPage;
 
-  @FindBy(how = How.CSS, using = "[data-testid='pending-request']")
+  @FindBy(how = How.CSS, using = "[data-testid='tethering-request']")
   public static WebElement pendingReqMoreMenu;
 
-  @FindBy(how = How.CSS, using = "[data-testid='delete-pending-request']")
+  @FindBy(how = How.CSS, using = "[data-testid='delete-tethering-request']")
   public static WebElement pendingReqDeleteOption;
 
   @FindBy(how = How.CSS, using = "[data-testid='Delete']")
   public static WebElement deleteConfirmation;
 
-  public static By pendingRequestLocatorClient = By.cssSelector("[data-testid='pending-request']");
+  public static By pendingRequestLocatorClient = By.cssSelector("[data-testid='tethering-request']");
 
   public static By pendingRequestLocatorServer = By.cssSelector("[data-testid='accept-connection']");
 
