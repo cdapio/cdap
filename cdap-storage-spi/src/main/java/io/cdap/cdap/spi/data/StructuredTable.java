@@ -181,7 +181,7 @@ public interface StructuredTable extends Closeable {
    *                               or the type does not match the schema
    * @throws IOException if there is an error scanning the table
    */
-  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> orderByField, SortOrder sortOrder)
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
     throw new UnsupportedOperationException("No supported implementation.");
   }

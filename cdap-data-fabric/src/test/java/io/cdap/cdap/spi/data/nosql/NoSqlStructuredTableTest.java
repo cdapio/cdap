@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
+import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableTest;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -36,7 +37,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -106,18 +106,6 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     testScannerIterator(10);
   }
 
-  @Override
-  @Ignore
-  public void testIndexScanWithRange() throws Exception {
-    // Should be removed after https://cdap.atlassian.net/browse/CDAP-19564
-  }
-
-  @Override
-  @Ignore
-  public void testSortedIndexScan() throws Exception {
-    // Should be removed after https://cdap.atlassian.net/browse/CDAP-19564
-  }
-  
   private void testScannerIterator(int max) throws Exception {
     List<Integer> expected = IntStream.range(0, max).boxed().collect(Collectors.toList());
     MockScanner scanner = new MockScanner(expected.iterator());
@@ -169,6 +157,27 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     }
     Assert.assertTrue(scanner.isClosed());
     Assert.assertEquals(expected.subList(0, Math.min(max, limit)), actual);
+  }
+
+  @Test
+  public void testDelegatingCloseableIterator() {
+    List<Integer> expected = new ArrayList<>(Arrays.asList(9, 4, 8, 7, 1));
+    MockScanner scanner = new MockScanner(expected.iterator());
+    NoSqlStructuredTable.ScannerIterator scannerIterator = new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA);
+    List<StructuredRow> scannedRows = new ArrayList<>();
+    while (scannerIterator.hasNext()) {
+      scannedRows.add(scannerIterator.next());
+      Assert.assertFalse(scanner.isClosed());
+    }
+    List<Integer> actual = new ArrayList<>();
+    try (NoSqlStructuredTable.DelegatingCloseableIterator closeableIterator = new NoSqlStructuredTable
+      .DelegatingCloseableIterator(scannedRows.stream().iterator())) {
+      while (closeableIterator.hasNext()) {
+        actual.add(closeableIterator.next().getInteger("key"));
+      }
+    }
+    Assert.assertEquals(actual.size(), expected.size());
+    Assert.assertEquals(actual, expected);
   }
 
   @Test
