@@ -43,4 +43,12 @@ public interface MasterEnvironmentTask {
   default long failureRetryDelay(Throwable t) {
     return 5000L;
   }
+
+  /**
+   * Returns the name of the task.
+   * @return task name
+   */
+  default String getName() {
+    return getClass().getSimpleName();
+  }
 }

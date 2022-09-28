@@ -164,8 +164,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       services.add(injector.getInstance(SystemWorkerServiceLauncher.class));
     }
 
-    // Optionally adds the master environment task
-    masterEnv.getTask().ifPresent(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
+    // Adds the master environment tasks
+    masterEnv.getTasks().forEach(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
   }
 
   @Nullable

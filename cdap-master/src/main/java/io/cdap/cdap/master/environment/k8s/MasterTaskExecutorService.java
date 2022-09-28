@@ -47,7 +47,8 @@ final class MasterTaskExecutorService extends AbstractScheduledService {
 
   @Override
   protected ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-env-executor"));
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory(
+      "master-env-task-" + task.getName()));
     return executor;
   }
 

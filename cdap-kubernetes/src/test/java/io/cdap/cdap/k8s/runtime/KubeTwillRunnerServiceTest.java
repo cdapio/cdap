@@ -81,7 +81,7 @@ public class KubeTwillRunnerServiceTest {
     ApiClientFactory apiClientFactory = new DefaultApiClientFactory(10, 300);
     twillRunnerService = new KubeTwillRunnerService(context, apiClientFactory,
                                                     KUBE_NAMESPACE, discoveryServiceClient, podInfo,
-                                                    "", Collections.emptyMap(), 1, 1,
+                                                    "", Collections.emptyMap(),
                                                     true, false,
                                                     null, null,
                                                     null, null);
