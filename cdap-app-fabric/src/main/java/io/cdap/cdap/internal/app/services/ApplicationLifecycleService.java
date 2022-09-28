@@ -745,41 +745,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
-    return deployApp(namespace, appName, appVersion, artifactId, configStr,  programTerminator, null, true);
-  }
-
-  /**
-   * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
-   * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
-   * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
-   * {@link Store}. This method can create a new application as well as update an existing one.
-   *
-   * @param namespace the namespace to deploy the app to
-   * @param appName the name of the app. If null, the name will be set based on the application spec
-   * @param artifactId the id of the artifact to create the application from
-   * @param configStr the configuration to send to the application when generating the application specification
-   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
-   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
-   * @param ownerPrincipal the kerberos principal of the application owner
-   * @param updateSchedules specifies if schedules of the workflow have to be updated,
-   *                        if null value specified by the property "app.deploy.update.schedules" will be used.
-   * @return information about the deployed application
-   * @throws InvalidArtifactException if the artifact does not contain any application classes
-   * @throws ArtifactNotFoundException if the specified artifact does not exist
-   * @throws IOException if there was an IO error reading artifact detail from the meta store
-   * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
-   *                   the actual exception
-   */
-  public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
-                                           Id.Artifact artifactId,
-                                           @Nullable String configStr,
-                                           ProgramTerminator programTerminator,
-                                           @Nullable KerberosPrincipalId ownerPrincipal,
-                                           @Nullable Boolean updateSchedules) throws Exception {
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return deployApp(namespace, appName, appVersion, configStr, null, programTerminator, artifactDetail,
-                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules, false,
-                     Collections.emptyMap(), null);
+    return deployApp(namespace, appName, appVersion, artifactId, configStr,  null, programTerminator,
+                     null, true);
   }
 
   /**
@@ -815,7 +782,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator, artifactDetail,
                      ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules,
-            false, Collections.emptyMap(), null);
+                     false, Collections.emptyMap(), null);
   }
 
   /**
@@ -828,6 +795,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appName the name of the app. If null, the name will be set based on the application spec
    * @param summary the artifact summary of the app
    * @param configStr the configuration to send to the application when generating the application specification
+   * @param changeSummary the change summary entered by the user
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
    *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
    * @param ownerPrincipal the kerberos principal of the application owner
@@ -835,6 +803,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *                        if null value specified by the property "app.deploy.update.schedules" will be used.
    * @param isPreview whether the app deployment is for preview
    * @param userProps the user properties for the app deployment, this is basically used for preview deployment
+   * @param parentVersion the parent version of the application to be edited in the request.
    * @return information about the deployed application
    * @throws InvalidArtifactException if the artifact does not contain any application classes
    * @throws IOException if there was an IO error reading artifact detail from the meta store
@@ -864,51 +833,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator,
                      artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
                      appUpdateSchedules : updateSchedules, isPreview, userProps, parentVersion);
-  }
-
-  /**
-   * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
-   * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
-   * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
-   * {@link Store}. This method can create a new application as well as update an existing one.
-   *
-   * @param namespace the namespace to deploy the app to
-   * @param appName the name of the app. If null, the name will be set based on the application spec
-   * @param summary the artifact summary of the app
-   * @param configStr the configuration to send to the application when generating the application specification
-   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
-   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
-   * @param ownerPrincipal the kerberos principal of the application owner
-   * @param updateSchedules specifies if schedules of the workflow have to be updated,
-   *                        if null value specified by the property "app.deploy.update.schedules" will be used.
-   * @param isPreview whether the app deployment is for preview
-   * @param userProps the user properties for the app deployment, this is basically used for preview deployment
-   * @return information about the deployed application
-   * @throws InvalidArtifactException if the artifact does not contain any application classes
-   * @throws IOException if there was an IO error reading artifact detail from the meta store
-   * @throws ArtifactNotFoundException if the specified artifact does not exist
-   * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
-   *                   the actual exception
-   */
-  public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
-                                           ArtifactSummary summary,
-                                           @Nullable String configStr, 
-                                           ProgramTerminator programTerminator,
-                                           @Nullable KerberosPrincipalId ownerPrincipal,
-                                           @Nullable Boolean updateSchedules, boolean isPreview,
-                                           Map<String, String> userProps) throws Exception {
-    NamespaceId artifactNamespace = ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
-    ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
-                                            ArtifactVersionRange.parse(summary.getVersion()));
-    // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
-    // collection returned.
-    List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
-    if (artifactDetail.isEmpty()) {
-      throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
-    }
-    return deployApp(namespace, appName, appVersion, configStr, null, programTerminator,
-                     artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
-                     appUpdateSchedules : updateSchedules, isPreview, userProps, null);
   }
 
   /**

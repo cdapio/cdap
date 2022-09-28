@@ -348,7 +348,7 @@ public class AppMetadataStore {
   }
 
   public List<ApplicationMeta> getLatest(String namespaceId, String appName) throws IOException {
-    // TODO: Querying the table on latest = true.
+    // TODO: change this to filter by range of primary prefix key and index
     return scanWithRange(
       getNamespaceAndApplicationRange(namespaceId, appName),
       ApplicationMeta.class,
@@ -466,7 +466,7 @@ public class AppMetadataStore {
     getApplicationSpecificationTable().deleteAll(getNamespaceRange(namespaceId));
   }
 
-  public void updateAppSpec(ApplicationId appId, ApplicationSpecification spec, Long created) throws IOException {
+  public void updateAppSpec(ApplicationId appId, ApplicationSpecification spec) throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     }
@@ -479,9 +479,10 @@ public class AppMetadataStore {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Application {} exists in mds with specification {}", appId, GSON.toJson(existing));
     }
-    ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec, null, created, null);
-    writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated),
-                               created, updated.getAuthor(), null);
+    // creation time cannot be null  - will be written to app-spec but won't be added to table
+    ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec, null, System.currentTimeMillis(),
+                                                  null);
+    updateApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated));
   }
 
   /**
@@ -1865,6 +1866,13 @@ public class AppMetadataStore {
     fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, created));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD, changeSummary));
+    getApplicationSpecificationTable().upsert(fields);
+  }
+
+  private void updateApplicationSerialized(String namespaceId, String appId, String versionId, String serialized)
+    throws IOException {
+    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
     getApplicationSpecificationTable().upsert(fields);
   }
 

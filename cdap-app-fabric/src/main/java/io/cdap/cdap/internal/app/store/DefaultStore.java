@@ -433,7 +433,7 @@ public class DefaultStore implements Store {
         throw new BadRequestException("Can't deploy the application because the parent version is not the " +
                                         "latest.");
       }
-      // TODO - edge case : if latest is null and app exists (legacy versions) then update based on latest version-id
+      // When the app does not exist -it is not an edit).
       if (latest != null) {
         getAppMetadataStore(context).updateLatestApplication(id.getNamespace(), id.getApplication(),
                                                              latest.getSpec().getAppVersion());
@@ -503,7 +503,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setWorkerInstances(ProgramId id, int instances, Long created) {
+  public void setWorkerInstances(ProgramId id, int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s", instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -517,7 +517,7 @@ public class DefaultStore implements Store {
                                                                      workerSpec.getResources(),
                                                                      instances, workerSpec.getPlugins());
       ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
-      metaStore.updateAppSpec(id.getParent(), newAppSpec, created);
+      metaStore.updateAppSpec(id.getParent(), newAppSpec);
 
     });
 
@@ -526,7 +526,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setServiceInstances(ProgramId id, int instances, Long created) {
+  public void setServiceInstances(ProgramId id, int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s", instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -539,7 +539,7 @@ public class DefaultStore implements Store {
                                              serviceSpec.getResources(), instances, serviceSpec.getPlugins());
 
       ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getProgram(), serviceSpec);
-      metaStore.updateAppSpec(id.getParent(), newAppSpec, created);
+      metaStore.updateAppSpec(id.getParent(), newAppSpec);
     });
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
@@ -737,10 +737,19 @@ public class DefaultStore implements Store {
 
   @Override
   public ApplicationMeta getLatest(String namespace, String appName) {
-    // TODO: change this to filter by range of primary prefix key and index
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getLatest(namespace, appName).stream()
+        ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespace, appName).stream()
         .findAny().orElse(null);
+      //  If latest is null and app exists (legacy versions) then fetch -SNAPSHOT app
+        if (latest == null) {
+          latest = getAppMetadataStore(context).getApplication(namespace, appName, ApplicationId.DEFAULT_VERSION);
+        }
+      // If -SNAPSHOT version does not exist, return the app corresponding to the smallest version-id string
+       if (latest == null) {
+        latest = getAppMetadataStore(context).getAllAppVersions(namespace, appName)
+          .stream().findFirst().orElse(null);
+        }
+        return latest;
     });
   }
 
