@@ -184,7 +184,7 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> orderByField, SortOrder sortOrder)
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
     return scan(() -> structuredTable.scan(keyRange, limit, orderByField, sortOrder), "sort.index.range.scan.");
   }

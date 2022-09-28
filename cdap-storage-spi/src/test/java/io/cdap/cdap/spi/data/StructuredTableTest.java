@@ -698,7 +698,7 @@ public abstract class StructuredTableTest {
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
-                        num * 10, Fields.longField(IDX_COL, 0L), SortOrder.DESC)) {
+                        num * 10, IDX_COL, SortOrder.DESC)) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         List<Collection<Field<?>>> expectedSubList = expected.subList(0, num * 2);
 
@@ -708,7 +708,7 @@ public abstract class StructuredTableTest {
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 3)), Range.Bound.EXCLUSIVE),
-                        num * 10, Fields.longField(IDX_COL, 0L), SortOrder.ASC)) {
+                        num * 10, IDX_COL, SortOrder.ASC)) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         List<Collection<Field<?>>> expectedSubList = expected.subList(num, num * 3);
         Collections.reverse(expectedSubList);
@@ -720,7 +720,7 @@ public abstract class StructuredTableTest {
       try {
         table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                 Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
-                   num * 10, Fields.longField(LONG_COL, 0L), SortOrder.ASC);
+                   num * 10, LONG_COL, SortOrder.ASC);
         Assert.fail("Expected InvalidFieldException for scanning a non-index column");
       } catch (InvalidFieldException e) {
         // Expected
