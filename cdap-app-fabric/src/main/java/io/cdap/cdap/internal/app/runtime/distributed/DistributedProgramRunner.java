@@ -17,12 +17,15 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.util.ContextInitializer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.guice.ClusterMode;
@@ -87,9 +90,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -102,6 +105,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -109,6 +113,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
@@ -118,6 +123,7 @@ import javax.annotation.Nullable;
 public abstract class DistributedProgramRunner implements ProgramRunner, ProgramControllerCreator {
 
   public static final String CDAP_CONF_FILE_NAME = "cConf.xml";
+  public static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   public static final String APP_SPEC_FILE_NAME = "appSpec.json";
   public static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
   public static final String PLUGIN_DIR = "artifacts";
@@ -130,7 +136,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
-  private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
@@ -206,8 +211,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
-      List<URI> configResources = localizeConfigs(createContainerCConf(cConf),
-                                                  createContainerHConf(this.hConf), tempDir, localizeResources);
+      localizeConfigs(createContainerCConf(cConf), createContainerHConf(this.hConf), tempDir, localizeResources);
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
@@ -246,20 +250,27 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Localize the serialized program options
       localizeResources.put(PROGRAM_OPTIONS_FILE_NAME,
                             new LocalizeResource(saveJsonFile(
-                              options, ProgramOptions.class,
-                              File.createTempFile("program.options", ".json", tempDir))));
+                              options, ProgramOptions.class, new File(tempDir, PROGRAM_OPTIONS_FILE_NAME))));
 
       Callable<ProgramController> callable = () -> {
+        Map<String, RunnableDefinition> twillRunnables = launchConfig.getRunnables();
+
         ProgramTwillApplication twillApplication = new ProgramTwillApplication(
-          programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
-          localizeResources, createEventHandler(cConf, programRunId, options));
+          programRunId, options, twillRunnables, launchConfig.getLaunchOrder(),
+          localizeResources, createEventHandler(cConf));
 
         TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
-        // Also add the configuration files to container classpath so that the
-        // TwillAppLifecycleEventHandler can get it. This can be removed when TWILL-246 is fixed.
-        // Only ON_PREMISE mode will be using EventHandler
-        twillPreparer.withResources(configResources);
+        // Also extra files to the resources jar so that the TwillAppLifecycleEventHandler,
+        // which runs in the AM container, can get them.
+        // This can be removed when TWILL-246 is fixed.
+        // Only program running in Hadoop will be using EventHandler
+        twillPreparer.withResources(localizeResources.get(CDAP_CONF_FILE_NAME).getURI(),
+                                    localizeResources.get(HADOOP_CONF_FILE_NAME).getURI(),
+                                    localizeResources.get(PROGRAM_OPTIONS_FILE_NAME).getURI());
+        if (logbackURI != null) {
+          twillPreparer.withResources(logbackURI);
+        }
 
         Map<String, String> userArgs = options.getUserArguments().asMap();
 
@@ -286,7 +297,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
         // Setup per runnable configurations
         Set<String> runnables = new HashSet<>();
-        for (Map.Entry<String, RunnableDefinition> entry : launchConfig.getRunnables().entrySet()) {
+        for (Map.Entry<String, RunnableDefinition> entry : twillRunnables.entrySet()) {
           String runnable = entry.getKey();
           runnables.add(runnable);
           RunnableDefinition runnableDefinition = entry.getValue();
@@ -334,7 +345,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         LauncherUtils.overrideJVMOpts(cConf, twillPreparer, runnables);
 
         if (logbackURI != null) {
-          twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
+          // AM has the logback.xml file under resources.jar/resources/logback.xml
+          twillPreparer.addJVMOptions("-D" + ContextInitializer.CONFIG_FILE_PROPERTY
+                                        + "=resources.jar/resources/" + LOGBACK_FILE_NAME);
+          // Set the system property to be used by the logback xml
+          twillPreparer.addJVMOptions("-DCDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+
+          // Runnable has the logback.xml just in the home directory
+          for (String runnableName : twillRunnables.keySet()) {
+            twillPreparer.setJVMOptions(runnableName,
+                                        "-D" + ContextInitializer.CONFIG_FILE_PROPERTY + "=" + LOGBACK_FILE_NAME);
+          }
         }
 
         addLogHandler(twillPreparer, cConf);
@@ -593,19 +614,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         BundleJarUtil.addToArchive(localDir, jarOut);
       }
 
-      String pluginDirHash = "";
       if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR_HASH)) {
         // if hash value for plugins has been provided, we append it to filename.
-        pluginDirHash = systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR_HASH);
+        String pluginDirHash = systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR_HASH);
         newSystemArgs.remove(ProgramOptionConstants.PLUGIN_DIR_HASH);
         pluginDirFileName = String.format("%s_%s", PLUGIN_DIR, pluginDirHash);
         pluginArchiveFileName = PLUGIN_ARCHIVE.replace(".jar", String.format("_%s%s", pluginDirHash, ".jar"));
 
-        Set<String> cacheableFiles;
+        Set<String> cacheableFiles = new HashSet<>();
         if (newSystemArgs.containsKey(ProgramOptionConstants.CACHEABLE_FILES)) {
-          cacheableFiles = GSON.fromJson(newSystemArgs.get(ProgramOptionConstants.CACHEABLE_FILES), HashSet.class);
-        } else {
-          cacheableFiles = new HashSet<>();
+          cacheableFiles = new HashSet<>(GSON.fromJson(newSystemArgs.get(ProgramOptionConstants.CACHEABLE_FILES),
+                                                       new TypeToken<Set<String>>() { }.getType()));
         }
         cacheableFiles.add(pluginDirFileName);
         cacheableFiles.add(pluginArchiveFileName);
@@ -634,36 +653,46 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * classpath.
    */
   @Nullable
-  private URI getLogBackURI(Program program, Arguments args, File tempDir) throws URISyntaxException, IOException {
+  private URI getLogBackURI(Program program, Arguments args, File tempDir) throws IOException {
+    File logbackFile = new File(tempDir, LOGBACK_FILE_NAME);
+
     // For runs from a tethered instance, use given logback file
     if (args.hasOption(ProgramOptionConstants.PEER_NAME)) {
-      File tetherLogbackFile = File.createTempFile("logback-tether", ".xml", tempDir);
-      Location location = locationFactory.create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI));
-      try (InputStream is = location.append(LOGBACK_FILE_NAME).getInputStream()) {
-        Files.copy(is, tetherLogbackFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        LOG.debug("Copied {} to {}", LOGBACK_FILE_NAME, tetherLogbackFile);
+      Location location = locationFactory
+        .create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI))
+        .append(LOGBACK_FILE_NAME);
+
+      try (InputStream is = location.getInputStream()) {
+        Files.copy(is, logbackFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        LOG.debug("Copied {} to {}", LOGBACK_FILE_NAME, logbackFile);
       }
-      return tetherLogbackFile.toURI();
+      return logbackFile.toURI();
     }
+
+    // Find and copy the logback xml to a predefined file name.
 
     String configurationFile = System.getProperty("logback.configurationFile");
     if (configurationFile != null) {
-      return new File(configurationFile).toURI();
+      Files.copy(new File(configurationFile).toPath(), logbackFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      return logbackFile.toURI();
     }
 
-    URL logbackURL = program.getClassLoader().getResource("logback.xml");
-    if (logbackURL != null) {
-      return logbackURL.toURI();
+    // List of possible locations of where the logback xml is.
+    URL logbackURL = Stream.of(program.getClassLoader().getResource("logback.xml"),
+                               getClass().getClassLoader().getResource("logback-container.xml"),
+                               getClass().getClassLoader().getResource("logback.xml"))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+
+    if (logbackURL == null) {
+      return null;
     }
 
-    for (String name : Arrays.asList("logback-container.xml", "logback.xml")) {
-      URL resource = getClass().getClassLoader().getResource(name);
-      if (resource != null) {
-        return resource.toURI();
-      }
+    try (OutputStream os = Files.newOutputStream(logbackFile.toPath())) {
+      Resources.copy(logbackURL, os);
     }
-
-    return null;
+    return logbackFile.toURI();
   }
 
   private Map<String, LogEntry.Level> transformLogLevels(Map<String, Level> logLevels) {
@@ -762,10 +791,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   /**
    * Creates the {@link EventHandler} for handling the application events.
    */
-  private EventHandler createEventHandler(CConfiguration cConf, ProgramRunId programRunId, ProgramOptions programOpts) {
+  private EventHandler createEventHandler(CConfiguration cConf) {
     return new TwillAppLifecycleEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
-                                             this instanceof LongRunningDistributedProgramRunner, programRunId,
-                                             clusterMode, SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+                                             this instanceof LongRunningDistributedProgramRunner);
   }
 
   /**
@@ -775,22 +803,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * @param hConf the hadoop configuration to localize
    * @param tempDir a temporary directory for local file creation
    * @param localizeResources the {@link LocalizeResource} map to update
-   * @return a list of {@link URI} that should be added as twill program resources.
    */
-  private List<URI> localizeConfigs(CConfiguration cConf, Configuration hConf, File tempDir,
-                                    Map<String, LocalizeResource> localizeResources) throws IOException {
-    List<URI> resources = new ArrayList<>();
-
+  private void localizeConfigs(CConfiguration cConf, Configuration hConf, File tempDir,
+                               Map<String, LocalizeResource> localizeResources) throws IOException {
     File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
     localizeResources.put(CDAP_CONF_FILE_NAME, new LocalizeResource(cConfFile));
-    resources.add(cConfFile.toURI());
 
     // Save the configuration to files
     File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
     localizeResources.put(HADOOP_CONF_FILE_NAME, new LocalizeResource(hConfFile));
-    resources.add(hConfFile.toURI());
-
-    return resources;
   }
 
   /**
