@@ -17,6 +17,7 @@
 package io.cdap.cdap.k8s.discovery;
 
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
+import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -28,7 +29,6 @@ import io.kubernetes.client.openapi.models.V1ServiceBuilder;
 import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
-import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.generic.options.ListOptions;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -78,6 +78,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
   private final Map<String, String> podLabels;
   private final List<V1OwnerReference> ownerReferences;
   private final Map<String, DefaultServiceDiscovered> serviceDiscovereds;
+  private final ApiClientFactory apiClientFactory;
   private volatile CoreV1Api coreApi;
   private volatile WatcherThread watcherThread;
   private boolean closed;
@@ -90,12 +91,13 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param podLabels the set of labels for the current pod
    */
   public KubeDiscoveryService(String namespace, String namePrefix, Map<String, String> podLabels,
-                              List<V1OwnerReference> ownerReferences) {
+                              List<V1OwnerReference> ownerReferences, ApiClientFactory apiClientFactory) {
     this.namespace = namespace;
     this.namePrefix = namePrefix;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
     this.podLabels = Collections.unmodifiableMap(new HashMap<>(podLabels));
     this.ownerReferences = Collections.unmodifiableList(new ArrayList<>(ownerReferences));
+    this.apiClientFactory = apiClientFactory;
   }
 
   @Override
@@ -195,7 +197,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
         return api;
       }
 
-      ApiClient client = Config.defaultClient();
+      ApiClient client = apiClientFactory.create();
 
       // Set a reasonable timeout for the watch.
       client.setReadTimeout((int) TimeUnit.MINUTES.toMillis(5));
@@ -362,7 +364,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     private final Set<String> services;
 
     WatcherThread() {
-      super("kube-discovery-service", namespace, "", "v1", "services");
+      super("kube-discovery-service", namespace, "", "v1", "services", apiClientFactory);
       this.services = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
