@@ -29,7 +29,7 @@ import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
-import io.cdap.cdap.app.runtime.DummyProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.DummyProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -106,7 +106,7 @@ public class ConfiguratorTest {
                                                                         null,
                                                                         null,
                                                                         null,
-                                                                        new DummyProgramRunnerFactory(),
+                                                                        new DummyProgramRunnerClassLoaderFactory(),
                                                                         new DefaultImpersonator(cConf, null));
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
@@ -152,7 +152,7 @@ public class ConfiguratorTest {
                                                                         null,
                                                                         null,
                                                                         null,
-                                                                        new DummyProgramRunnerFactory(),
+                                                                        new DummyProgramRunnerClassLoaderFactory(),
                                                                         new DefaultImpersonator(cConf, null));
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);

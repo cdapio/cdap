@@ -30,6 +30,7 @@ import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.guice.ProgramRunnerClassLoaderModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -82,7 +83,8 @@ public class ConfiguratorTask implements RunnableTask {
       RemoteAuthenticatorModules.getDefaultModule(),
       new LocalLocationModule(),
       new ConfiguratorTaskModule(),
-      new AuthenticationContextModules().getMasterWorkerModule()
+      new AuthenticationContextModules().getMasterWorkerModule(),
+      new ProgramRunnerClassLoaderModule()
     );
   }
 
@@ -111,7 +113,8 @@ public class ConfiguratorTask implements RunnableTask {
   /**
    * Class to preform the configurator task execution.
    */
-  private static class ConfiguratorTaskRunner {
+  @VisibleForTesting
+  static class ConfiguratorTaskRunner {
     private final Impersonator impersonator;
     private final PluginFinder pluginFinder;
     private final ArtifactRepository artifactRepository;
