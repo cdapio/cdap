@@ -18,7 +18,6 @@ package io.cdap.cdap.security.tools;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -31,9 +30,9 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.runtime.DaemonMain;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.TokenManager;
@@ -49,6 +48,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -60,9 +61,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
 /**
- * A service for managing the lifecycle of an http service that serves access tokens.
+ * Http server that serves access tokens.
  */
-public class AccessTokenGeneratorService extends AbstractIdleService {
+public class AccessTokenGeneratorService extends DaemonMain {
+  private static final Logger LOG = LoggerFactory.getLogger(AccessTokenGeneratorService.class);
   // Http handler configuration
   static final String ADDRESS_CONFIG = "access.token.generator.bind.address";
   static final String ADDRESS_DEFAULT = "127.0.0.1";
@@ -74,26 +76,8 @@ public class AccessTokenGeneratorService extends AbstractIdleService {
   static final String EXEC_POOL_SIZE_CONFIG = "access.token.generator.executor.pool.size";
   static final int EXEC_POOL_SIZE_DEFAULT = 0;
 
-  private final NettyHttpService httpService;
-  private final TokenGeneratorHttpHandler handler;
-
-  @Inject
-  AccessTokenGeneratorService(CConfiguration cConf, SConfiguration sConf,
-                              CommonNettyHttpServiceFactory httpServiceFactory,
-                              TokenGeneratorHttpHandler handler) {
-    this.handler = handler;
-    NettyHttpService.Builder builder = httpServiceFactory.builder("accesstoken.generator")
-      .setHost(cConf.get(ADDRESS_CONFIG, ADDRESS_DEFAULT))
-      .setPort(cConf.getInt(PORT_CONFIG, PORT_DEFAULT))
-      .setExecThreadPoolSize(cConf.getInt(EXEC_POOL_SIZE_CONFIG, EXEC_POOL_SIZE_DEFAULT))
-      .setWorkerThreadPoolSize(cConf.getInt(WORKER_POOL_SIZE_CONFIG, WORKER_POOL_SIZE_DEFAULT))
-      .setExceptionHandler(new HttpExceptionHandler())
-      .setHttpHandlers(handler);
-    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
-      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
-    }
-    httpService = builder.build();
-  }
+  private NettyHttpService httpService;
+  private TokenGeneratorHttpHandler handler;
 
   @VisibleForTesting
   InetSocketAddress getBindAddress() {
@@ -111,15 +95,25 @@ public class AccessTokenGeneratorService extends AbstractIdleService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  public void start() throws Exception {
+    LOG.info("Starting AccessTokenGeneratorService.");
     handler.tokenManager.startUp();
     httpService.start();
   }
 
   @Override
-  protected void shutDown() throws Exception {
-    httpService.stop();
+  public void stop()  {
+    LOG.info("Stopping AccessTokenGeneratorService.");
+    try {
+      httpService.stop();
+    } catch (Exception e) {
+      LOG.warn("Exception when stopping AccessTokenGeneratorService", e);
+    }
     handler.tokenManager.stopAndWait();
+  }
+
+  @Override
+  public void destroy() {
   }
 
   @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/accesstoken")
@@ -161,8 +155,7 @@ public class AccessTokenGeneratorService extends AbstractIdleService {
     }
   }
 
-  @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf) {
+  private Injector createInjector(CConfiguration cConf) {
     return Guice.createInjector(
       new ConfigModule(cConf),
       new IOModule(),
@@ -176,7 +169,8 @@ public class AccessTokenGeneratorService extends AbstractIdleService {
       CoreSecurityRuntimeModule.getDistributedModule(cConf));
   }
 
-  public static void main(String[] args)throws Exception {
+  @Override
+  public void init(String[] args) throws Exception {
     Option portOption = new Option("p", "port", true, "Server port.");
     portOption.setType(Integer.class);
     Option workerPoolSizeOption = new Option("w", "workerPoolSize", true,
@@ -186,7 +180,7 @@ public class AccessTokenGeneratorService extends AbstractIdleService {
                                            "Size of executor thread pool.");
     execPoolSizeOption.setType(Integer.class);
     Option tokenExpirationOption = new Option("t", "tokenExpiration", true,
-                                           "Access token expiration time in milliseconds.");
+                                              "Access token expiration time in milliseconds.");
     tokenExpirationOption.setType(Integer.class);
 
     Options options = new Options()
@@ -218,7 +212,23 @@ public class AccessTokenGeneratorService extends AbstractIdleService {
     }
 
     Injector injector = createInjector(cConf);
-    AccessTokenGeneratorService tokenGenerator = injector.getInstance(AccessTokenGeneratorService.class);
-    tokenGenerator.startAndWait();
+
+    this.handler = injector.getInstance(TokenGeneratorHttpHandler.class);
+    SConfiguration sConf = injector.getInstance(SConfiguration.class);
+    NettyHttpService.Builder builder = NettyHttpService.builder("accesstoken.generator")
+      .setHost(cConf.get(ADDRESS_CONFIG, ADDRESS_DEFAULT))
+      .setPort(cConf.getInt(PORT_CONFIG, PORT_DEFAULT))
+      .setExecThreadPoolSize(cConf.getInt(EXEC_POOL_SIZE_CONFIG, EXEC_POOL_SIZE_DEFAULT))
+      .setWorkerThreadPoolSize(cConf.getInt(WORKER_POOL_SIZE_CONFIG, WORKER_POOL_SIZE_DEFAULT))
+      .setExceptionHandler(new HttpExceptionHandler())
+      .setHttpHandlers(handler);
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+    httpService = builder.build();
+  }
+
+  public static void main(String[] args)throws Exception {
+    new AccessTokenGeneratorService().doMain(args);
   }
 }

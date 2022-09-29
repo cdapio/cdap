@@ -43,13 +43,14 @@ public class AccessTokenGeneratorServiceTest {
     CConfiguration cConf = CConfiguration.create();
     // Don't set port, AccessTokenGeneratorService will find an ephemeral port.
     cConf.setInt(AccessTokenGeneratorService.PORT_CONFIG, 0);
-    tokenGenerator = AccessTokenGeneratorService.createInjector(cConf).getInstance(AccessTokenGeneratorService.class);
-    tokenGenerator.startAndWait();
+    tokenGenerator  = new AccessTokenGeneratorService();
+    tokenGenerator.init(new String[0]);
+    tokenGenerator.start();
   }
 
   @AfterClass
   public static void teardown() throws Exception {
-    tokenGenerator.stopAndWait();
+    tokenGenerator.stop();
   }
 
   @Test
