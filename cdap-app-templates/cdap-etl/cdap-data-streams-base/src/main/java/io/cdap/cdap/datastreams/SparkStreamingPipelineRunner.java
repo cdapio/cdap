@@ -141,7 +141,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       source = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
     }
 
-    StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext);
+    StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext,
+                                                                 stateStoreEnabled);
     return source.getStream(sourceContext);
   }
 
@@ -267,7 +268,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       //We should have all the sink runnables at this point, execute them
       executeSinkRunnables(sec, sinkRunnables);
 
-      StreamingContext streamingContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext);
+      StreamingContext streamingContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext,
+                                                                      stateStoreEnabled);
       if (dStream instanceof StreamingEventHandler) {
         ((StreamingEventHandler) dStream).onBatchCompleted(streamingContext);
       } else if (dStream.dstream() instanceof StreamingEventHandler) {

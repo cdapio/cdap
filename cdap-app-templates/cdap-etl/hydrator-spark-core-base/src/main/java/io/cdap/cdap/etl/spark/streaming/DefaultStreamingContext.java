@@ -51,9 +51,11 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext jsc;
   private final Admin admin;
+  private final boolean stateStoreEnabled;
   private final boolean isPreviewEnabled;
 
-  public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
+  public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc,
+                                 boolean stateStoreEnabled) {
     super(new PipelineRuntime(sec.getNamespace(), sec.getApplicationSpecification().getName(),
                               sec.getLogicalStartTime(), new BasicArguments(sec), sec.getMetrics(),
                               sec.getPluginContext(), sec.getServiceDiscoverer(), sec, sec, sec,
@@ -61,12 +63,18 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
     this.sec = sec;
     this.jsc = jsc;
     this.admin = sec.getAdmin();
+    this.stateStoreEnabled = stateStoreEnabled;
     this.isPreviewEnabled = stageSpec.isPreviewEnabled(sec);
   }
 
   @Override
   public boolean isPreviewEnabled() {
     return isPreviewEnabled;
+  }
+
+  @Override
+  public boolean isStateStoreEnabled() {
+    return stateStoreEnabled;
   }
 
   @Override
