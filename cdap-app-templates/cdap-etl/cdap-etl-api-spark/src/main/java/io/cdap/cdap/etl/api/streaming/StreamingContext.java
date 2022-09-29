@@ -60,4 +60,10 @@ public interface StreamingContext extends StageContext, Transactional, AppStateS
    * @return a boolean value which indicates the pipeline is running in preview mode.
    */
   boolean isPreviewEnabled();
+
+  /**
+   * Indicates whether saving to the state store is enabled for this run
+   * @return boolean indicating whether this pipeline run has state store enabled
+   */
+  boolean isStateStoreEnabled();
 }

@@ -38,6 +38,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.app.AppStateStore;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -89,6 +90,7 @@ import io.cdap.cdap.explore.executor.ExploreExecutorService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
+import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
@@ -234,6 +236,7 @@ public class TestBase {
   private static AppFabricServer appFabricServer;
   private static PreferencesService preferencesService;
   private static ArtifactLocalizerService artifactLocalizerService;
+  private static AppStateStoreProvider appStateStoreProvider;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -434,6 +437,7 @@ public class TestBase {
     if (scheduler instanceof CoreSchedulerService) {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
     }
+    appStateStoreProvider = injector.getInstance(AppStateStoreProvider.class);
   }
 
   /**
@@ -1185,5 +1189,9 @@ public class TestBase {
       default:
         throw new IllegalStateException("Spark version " + sparkVersion + " is unknown");
     }
+  }
+
+  public static AppStateStore getAppStateStore(String namespace, String application) {
+    return appStateStoreProvider.getStateStore(namespace, application);
   }
 }
