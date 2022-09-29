@@ -397,7 +397,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public Collection<MasterEnvironmentTask> getTasks() {
-    return Arrays.asList(podKillerTask, kubeJobCleaner);
+    Set<MasterEnvironmentTask> set = new HashSet<>(2);
+    set.add(kubeJobCleaner);
+    if (podKillerTask != null) {
+      set.add(podKillerTask);
+    }
+    return set;
   }
 
   @Override
