@@ -24,7 +24,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
-import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableTest;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -160,27 +159,6 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
   }
 
   @Test
-  public void testDelegatingCloseableIterator() {
-    List<Integer> expected = new ArrayList<>(Arrays.asList(9, 4, 8, 7, 1));
-    MockScanner scanner = new MockScanner(expected.iterator());
-    NoSqlStructuredTable.ScannerIterator scannerIterator = new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA);
-    List<StructuredRow> scannedRows = new ArrayList<>();
-    while (scannerIterator.hasNext()) {
-      scannedRows.add(scannerIterator.next());
-      Assert.assertFalse(scanner.isClosed());
-    }
-    List<Integer> actual = new ArrayList<>();
-    try (NoSqlStructuredTable.DelegatingCloseableIterator closeableIterator = new NoSqlStructuredTable
-      .DelegatingCloseableIterator(scannedRows.iterator())) {
-      while (closeableIterator.hasNext()) {
-        actual.add(closeableIterator.next().getInteger("key"));
-      }
-    }
-    Assert.assertEquals(actual.size(), expected.size());
-    Assert.assertEquals(actual, expected);
-  }
-
-  @Test
   public void testFilterByIndexIteratorSingleMatch() {
     List<Integer> expected = IntStream.range(0, 10).boxed().collect(Collectors.toList());
     MockScanner scanner = new MockScanner(expected.iterator());
@@ -205,8 +183,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     Field<?> filterIndex = Fields.intField("key", 9);
     List<Integer> actual = new ArrayList<>();
     try (NoSqlStructuredTable.FilterByIndexIterator closeableIterator = new NoSqlStructuredTable.FilterByIndexIterator(
-      new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA), filterIndex,
-      SCHEMA)) {
+      new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA), filterIndex, SCHEMA)) {
       while (closeableIterator.hasNext()) {
         actual.add(closeableIterator.next().getInteger("key"));
         Assert.assertFalse(scanner.isClosed());
