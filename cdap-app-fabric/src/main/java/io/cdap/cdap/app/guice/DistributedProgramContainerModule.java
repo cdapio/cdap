@@ -53,6 +53,7 @@ import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
@@ -144,9 +145,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   private List<Module> getCoreModules() {
     Arguments systemArgs = programOpts.getArguments();
-    ClusterMode clusterMode = systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
-      ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
-      : ClusterMode.ON_PREMISE;
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(programOpts);
 
     List<Module> modules = new ArrayList<>();
 
