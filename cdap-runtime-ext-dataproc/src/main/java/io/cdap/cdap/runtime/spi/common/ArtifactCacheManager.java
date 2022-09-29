@@ -46,7 +46,7 @@ public class ArtifactCacheManager {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactCacheManager.class);
 
   private static final String CACHED_ARTIFACTS_USAGE_COUNT = "cached-artifacts-usage-count.json";
-  private static final String CACHED_ARTIFACTS_LIST_FOR_RUNID = "cached-artifacts-used.json";
+  private static final String CACHED_ARTIFACTS_LIST_FOR_RUNID = "cached-artifacts.json";
   private static final String CONTENT_TYPE_JSON = "application/json";
   public static final int MAX_RETRIES_FOR_CACHE_COUNTER_OPERATION = 10;
   public static final int MAX_RETRIES_TO_FETCH_CACHED_ARTIFACTS_FOR_RUN = 3;
@@ -83,7 +83,7 @@ public class ArtifactCacheManager {
   }
 
   private static void changeUsageCountForArtifacts(Storage client, String bucket, Set<String> files, String cachePath,
-                                                   String filePath, int changeValue) {
+                                                   String filePath, int changeValue) throws InterruptedException {
     if (files.isEmpty()) {
       LOG.debug("No Cached Artifacts found for this run!");
       return;
@@ -92,72 +92,80 @@ public class ArtifactCacheManager {
     for (int i = 0; i < MAX_RETRIES_FOR_CACHE_COUNTER_OPERATION; i++) {
       try {
         Blob blob = client.get(blobId);
-        Map<String, Integer> artifactCount;
         if (blob == null || !blob.exists()) {
           LOG.debug("Creating ArtifactsCacheCounter {} at {}", CACHED_ARTIFACTS_USAGE_COUNT, filePath);
-          artifactCount = new HashMap<>();
-          BlobInfo createBlob = BlobInfo.newBuilder(blobId).setContentType(CONTENT_TYPE_JSON).build();
-          try {
-            client.create(createBlob, GSON.toJson(artifactCount).getBytes(StandardCharsets.UTF_8),
-                          Storage.BlobTargetOption.doesNotExist());
-          } catch (StorageException e) {
-            if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
-              throw e;
-            }
-          }
-          blob = client.get(blobId);
+          blob = createCacheCounterFile(client, blobId);
         }
-        artifactCount = GSON.fromJson(new String(blob.getContent(), StandardCharsets.UTF_8),
-                                      new TypeToken<Map<String, Integer>>() {
-                                      }.getType());
-        for (String file : files) {
-          int count = artifactCount.getOrDefault(file, 0) + changeValue;
-          if (count <= 0) {
-            if (count < 0) {
-              LOG.error("Cache usage count less than 0 for {} in {}", file, getPath(cachePath,
-                                                                                    CACHED_ARTIFACTS_USAGE_COUNT));
-            }
-            artifactCount.remove(file);
-            setCustomTimeOnArtifactAndReleaseHold(client, bucket, file, cachePath);
-          } else {
-            artifactCount.put(file, count);
-          }
+        Map<String, Integer> artifactCount = GSON.fromJson(new String(blob.getContent(), StandardCharsets.UTF_8),
+                                                           new TypeToken<Map<String, Integer>>() {
+                                                           }.getType());
+        modifyCacheCounter(client, bucket, files, cachePath, artifactCount, changeValue);
+        if (writeCacheCounterToGCS(blob, artifactCount)) {
+          break;
         }
-        try {
-          WritableByteChannel writer = blob.writer(Storage.BlobWriteOption.generationMatch());
-          writer.write(ByteBuffer.wrap(GSON.toJson(artifactCount).getBytes(StandardCharsets.UTF_8)));
-          writer.close();
-        } catch (StorageException | IOException e) {
-          LOG.error("Exception while writing to artifacts cache counter file", e);
-          throw e;
-        }
-        break;
       } catch (Exception e) {
         LOG.error("Exception while updating artifacts cache counter, retrying operation.", e);
+      }
+      Thread.sleep(1000);
+    }
+  }
+
+  private static boolean writeCacheCounterToGCS(Blob blob, Map<String, Integer> artifactCount) {
+    try {
+      WritableByteChannel writer = blob.writer(Storage.BlobWriteOption.generationMatch());
+      writer.write(ByteBuffer.wrap(GSON.toJson(artifactCount).getBytes(StandardCharsets.UTF_8)));
+      writer.close();
+      return true;
+    } catch (IOException e) {
+      LOG.error("Exception while writing to artifacts cache counter file", e);
+    }
+    return false;
+  }
+
+  private static void modifyCacheCounter(Storage client, String bucket, Set<String> files, String cachePath,
+                                         Map<String, Integer> artifactCount, int changeValue) {
+    for (String file : files) {
+      int newCount = artifactCount.getOrDefault(file, 0) + changeValue;
+      if (newCount <= 0) {
+        if (newCount < 0) {
+          LOG.error("Cache usage count less than 0 for {} in {}", file, getPath(cachePath,
+                                                                                CACHED_ARTIFACTS_USAGE_COUNT));
+        }
+        artifactCount.remove(file);
+        setCustomTimeOnArtifactAndReleaseHold(client, bucket, file, cachePath);
+      } else {
+        artifactCount.put(file, newCount);
       }
     }
   }
 
-  private static void setCustomTimeOnArtifactAndReleaseHold(Storage client, String bucket, String file, String path) {
-    BlobInfo blobInfo = BlobInfo.newBuilder(bucket, getPath(path, file))
-      .setCustomTime(System.currentTimeMillis())
-      .setTemporaryHold(false).build();
-    client.update(blobInfo);
-  }
-
-  private static void storeCachedArtifactsForRun(Storage client, String bucket, Set<String> files, String filePath) {
-    BlobInfo createBlob = BlobInfo.newBuilder(bucket, filePath).setContentType(CONTENT_TYPE_JSON).build();
+  private static Blob createCacheCounterFile(Storage client, BlobId blobId) {
     try {
-      client.create(createBlob, GSON.toJson(files).getBytes(StandardCharsets.UTF_8),
+      BlobInfo createBlob = BlobInfo.newBuilder(blobId).setContentType(CONTENT_TYPE_JSON).build();
+      client.create(createBlob, GSON.toJson(new HashMap<>()).getBytes(StandardCharsets.UTF_8),
                     Storage.BlobTargetOption.doesNotExist());
     } catch (StorageException e) {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
         throw e;
       }
     }
+    return client.get(blobId);
   }
 
-  private static Set<String> getCachedArtifactsForRun(Storage client, String bucket, String filePath) {
+  private static void setCustomTimeOnArtifactAndReleaseHold(Storage client, String bucket, String file, String path) {
+    BlobInfo blobInfo = BlobInfo.newBuilder(bucket, getPath(path, file)).setCustomTime(System.currentTimeMillis())
+      .setTemporaryHold(false).build();
+    client.update(blobInfo);
+  }
+
+  private static void storeCachedArtifactsForRun(Storage client, String bucket, Set<String> files, String filePath) {
+    BlobInfo createBlob = BlobInfo.newBuilder(bucket, filePath).setContentType(CONTENT_TYPE_JSON).build();
+    client.create(createBlob, GSON.toJson(files).getBytes(StandardCharsets.UTF_8),
+                  Storage.BlobTargetOption.doesNotExist());
+  }
+
+  private static Set<String> getCachedArtifactsForRun(Storage client, String bucket,
+                                                      String filePath) throws InterruptedException {
     BlobId blobId = BlobId.of(bucket, filePath);
     Set<String> files = null;
     for (int i = 0; i < MAX_RETRIES_TO_FETCH_CACHED_ARTIFACTS_FOR_RUN; i++) {
@@ -171,6 +179,7 @@ public class ArtifactCacheManager {
           throw e;
         }
       }
+      Thread.sleep(1000);
     }
     return files;
   }
