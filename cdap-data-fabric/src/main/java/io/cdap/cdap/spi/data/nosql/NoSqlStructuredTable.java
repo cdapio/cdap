@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -146,39 +146,52 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
     Comparator<StructuredRow> comparator = sortOrder.equals(SortOrder.ASC) ? getComparator(orderByField) :
       getComparator(orderByField).reversed();
-    List<StructuredRow> rows = new ArrayList<>();
+    PriorityQueue<StructuredRow> rows = new PriorityQueue<>(comparator);
 
     try (ScannerIterator scannerIterator = new ScannerIterator(getScanner(keyRange), schema)) {
       while (scannerIterator.hasNext()) {
-        rows.add(scannerIterator.next());
+        rows.offer(scannerIterator.next());
       }
     }
-    rows.sort(comparator);
     // return an iterator for the sorted elements
-    DelegatingCloseableIterator delegatingCloseableIterator = new DelegatingCloseableIterator(rows.iterator());
-    return new LimitIterator(Collections.singleton(delegatingCloseableIterator).iterator(), limit);
+    AbstractCloseableIterator<StructuredRow> abstractCloseableIterator = new
+      AbstractCloseableIterator<StructuredRow>() {
+      @Override
+      protected StructuredRow computeNext() {
+        while (!rows.isEmpty()) {
+          return rows.poll();
+        }
+        return endOfData();
+      }
+
+      @Override
+      public void close() {
+        // no-op
+      }
+    };
+    return new LimitIterator(Collections.singleton(abstractCloseableIterator).iterator(), limit);
   }
-  
+
   private Comparator<StructuredRow> getComparator(String orderByField)
     throws InvalidFieldException {
     switch (schema.getType(orderByField)) {
       case INTEGER:
-        return (row1, row2) ->  Objects.compare(row1.getInteger(orderByField), row2.getInteger(orderByField),
-                                                Integer::compare);
+        return (row1, row2) ->Objects.compare(row1.getInteger(orderByField), row2.getInteger(orderByField),
+                                               Integer::compare);
       case LONG:
-        return (row1, row2) ->  Objects.compare(row1.getLong(orderByField), row2.getLong(orderByField), Long::compare);
+        return (row1, row2) ->Objects.compare(row1.getLong(orderByField), row2.getLong(orderByField), Long::compare);
       case FLOAT:
-        return (row1, row2) ->  Objects.compare(row1.getFloat(orderByField), row2.getFloat(orderByField),
-                                                Float::compare);
+        return (row1, row2) ->Objects.compare(row1.getFloat(orderByField), row2.getFloat(orderByField),
+                                               Float::compare);
       case DOUBLE:
-        return (row1, row2) ->  Objects.compare(row1.getDouble(orderByField), row2.getDouble(orderByField),
-                                                Double::compare);
+        return (row1, row2) ->Objects.compare(row1.getDouble(orderByField), row2.getDouble(orderByField),
+                                               Double::compare);
       case STRING:
-        return (row1, row2) ->  Objects.compare(row1.getString(orderByField), row2.getString(orderByField),
-                                                String::compareTo);
+        return (row1, row2) ->Objects.compare(row1.getString(orderByField), row2.getString(orderByField),
+                                               String::compareTo);
       case BYTES:
-        return (row1, row2) ->  new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField),
-                                                                   row2.getBytes(orderByField));
+        return (row1, row2) ->new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField),
+                                                                       row2.getBytes(orderByField));
       default:
         throw new InvalidFieldException(schema.getTableId(), orderByField);
     }
@@ -553,11 +566,12 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
     @Override
     public void close() {
-      currentScanner.close();
+      closeScanner();
     }
 
     private void closeScanner() {
       if (currentScanner != null) {
+        currentScanner.close();
         currentScanner = null;
       }
     }
@@ -577,22 +591,22 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
       switch (filterIndex.getFieldType()) {
         case INTEGER:
-          predicate = row -> Objects.equals(row.getInteger(filterIndex.getName()), filterIndex.getValue());
+          predicate = row ->Objects.equals(row.getInteger(filterIndex.getName()), filterIndex.getValue());
           break;
         case LONG:
-          predicate = row -> Objects.equals(row.getLong(filterIndex.getName()), filterIndex.getValue());
+          predicate = row ->Objects.equals(row.getLong(filterIndex.getName()), filterIndex.getValue());
           break;
         case FLOAT:
-          predicate = row -> Objects.equals(row.getFloat(filterIndex.getName()), filterIndex.getValue());
+          predicate = row ->Objects.equals(row.getFloat(filterIndex.getName()), filterIndex.getValue());
           break;
         case DOUBLE:
-          predicate = row -> Objects.equals(row.getDouble(filterIndex.getName()), filterIndex.getValue());
+          predicate = row ->Objects.equals(row.getDouble(filterIndex.getName()), filterIndex.getValue());
           break;
         case STRING:
-          predicate = row -> Objects.equals(row.getString(filterIndex.getName()), filterIndex.getValue());
+          predicate = row ->Objects.equals(row.getString(filterIndex.getName()), filterIndex.getValue());
           break;
         case BYTES:
-          predicate = row -> Arrays.equals(row.getBytes(filterIndex.getName()), (byte[]) filterIndex.getValue());
+          predicate = row ->Arrays.equals(row.getBytes(filterIndex.getName()), (byte[]) filterIndex.getValue());
           break;
         default:
           throw new InvalidFieldException(schema.getTableId(), filterIndex.getName());
@@ -614,31 +628,6 @@ public final class NoSqlStructuredTable implements StructuredTable {
     @Override
     public void close() {
       scannerIterator.close();
-    }
-  }
-
-  /**
-   * Returns elements from an iterator
-   */
-  @VisibleForTesting
-  static final class DelegatingCloseableIterator extends AbstractCloseableIterator<StructuredRow> {
-    private final Iterator<StructuredRow> delegate;
-
-    DelegatingCloseableIterator(Iterator<StructuredRow> delegate) {
-      this.delegate = delegate;
-    }
-
-    @Override
-    protected StructuredRow computeNext() {
-      if (delegate.hasNext()) {
-        return delegate.next();
-      }
-      return endOfData();
-    }
-
-    @Override
-    public void close() {
-      // no-op
     }
   }
 
