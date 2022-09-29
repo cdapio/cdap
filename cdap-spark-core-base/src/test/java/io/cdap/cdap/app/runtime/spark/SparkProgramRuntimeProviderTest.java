@@ -39,11 +39,11 @@ public class SparkProgramRuntimeProviderTest {
     masterEnvironment.initialize(null);
     MasterEnvironment tmpMasterEnv = MasterEnvironments.setMasterEnvironment(masterEnvironment);
 
-    Injector injector = ConfiguratorTask.createInjector(CConfiguration.create());
+    CConfiguration cConf = CConfiguration.create();
+    Injector injector = ConfiguratorTask.createInjector(cConf);
     ServiceLoader<ProgramRuntimeProvider> serviceLoader = ServiceLoader.load(ProgramRuntimeProvider.class);
     SparkProgramRuntimeProvider runtimeProvider = (SparkProgramRuntimeProvider) serviceLoader.iterator().next();
-    runtimeProvider.createProgramRunner(ProgramType.SPARK, injector.getInstance(ProgramRuntimeProvider.Mode.class),
-                                        injector);
+    runtimeProvider.createProgramClassLoader(cConf, ProgramType.SPARK);
 
     MasterEnvironments.setMasterEnvironment(tmpMasterEnv);
   }
@@ -54,11 +54,11 @@ public class SparkProgramRuntimeProviderTest {
     masterEnvironment.initialize(null);
     MasterEnvironment tmpMasterEnv = MasterEnvironments.setMasterEnvironment(masterEnvironment);
 
-    Injector injector = SystemAppTask.createInjector(CConfiguration.create());
+    CConfiguration cConf = CConfiguration.create();
+    Injector injector = SystemAppTask.createInjector(cConf);
     ServiceLoader<ProgramRuntimeProvider> serviceLoader = ServiceLoader.load(ProgramRuntimeProvider.class);
     SparkProgramRuntimeProvider runtimeProvider = (SparkProgramRuntimeProvider) serviceLoader.iterator().next();
-    runtimeProvider.createProgramRunner(ProgramType.SPARK, injector.getInstance(ProgramRuntimeProvider.Mode.class),
-                                        injector);
+    runtimeProvider.createProgramClassLoader(cConf, ProgramType.SPARK);
 
     MasterEnvironments.setMasterEnvironment(tmpMasterEnv);
   }

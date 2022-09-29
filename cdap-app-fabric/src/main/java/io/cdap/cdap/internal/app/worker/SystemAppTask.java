@@ -28,6 +28,7 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
+import io.cdap.cdap.app.guice.ProgramRunnerClassLoaderModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -159,6 +160,7 @@ public class SystemAppTask implements RunnableTask {
       new SecureStoreClientModule(),
       new AuthenticationContextModules().getMasterModule(),
       new SystemAppModule(),
+      new ProgramRunnerClassLoaderModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

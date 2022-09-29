@@ -17,7 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
@@ -39,9 +39,9 @@ public class RemoteArtifactRepositoryWithLocalization extends RemoteArtifactRepo
 
   @Inject
   RemoteArtifactRepositoryWithLocalization(CConfiguration cConf, ArtifactRepositoryReader artifactRepositoryReader,
-                                           ProgramRunnerFactory programRunnerFactory,
+                                           ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory,
                                            ArtifactLocalizerClient artifactLocalizerClient) {
-    super(cConf, artifactRepositoryReader, programRunnerFactory);
+    super(cConf, artifactRepositoryReader, programRunnerClassLoaderFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
 

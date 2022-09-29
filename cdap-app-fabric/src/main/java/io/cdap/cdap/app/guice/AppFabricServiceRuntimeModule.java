@@ -180,6 +180,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
+                           new ProgramRunnerClassLoaderModule(),
                            BootstrapModules.getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -220,6 +221,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
                            new ProvisionerModule(),
+                           new ProgramRunnerClassLoaderModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
                              @Override
@@ -272,6 +274,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
                            new ProvisionerModule(),
+                           new ProgramRunnerClassLoaderModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
                              @Override

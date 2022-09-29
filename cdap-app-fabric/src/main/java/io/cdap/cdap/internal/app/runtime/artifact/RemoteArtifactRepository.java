@@ -23,7 +23,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
-import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -56,9 +56,9 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   @VisibleForTesting
   @Inject
   public RemoteArtifactRepository(CConfiguration cConf, ArtifactRepositoryReader artifactRepositoryReader,
-                                  ProgramRunnerFactory programRunnerFactory) {
+                                  ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory) {
     this.artifactRepositoryReader = artifactRepositoryReader;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerClassLoaderFactory);
   }
 
   @Override
