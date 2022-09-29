@@ -23,6 +23,7 @@ import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.k8s.util.KubeUtil;
 import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
+import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -58,7 +59,6 @@ import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1SubjectBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
-import io.kubernetes.client.util.Config;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStoreUpdater;
@@ -145,6 +145,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   public static final String RUNTIME_CLEANUP_DISABLED = "system.runtime.cleanup.disabled";
 
   private final MasterEnvironmentContext masterEnvContext;
+  private final ApiClientFactory apiClientFactory;
   private final String kubeNamespace;
   private final String resourcePrefix;
   private final PodInfo podInfo;
@@ -169,7 +170,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private String workloadIdentityProvider;
   private RbacAuthorizationV1Api rbacV1Api;
 
-  public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext,
+  public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext, ApiClientFactory apiClientFactory,
                                 String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
                                 PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
                                 int jobCleanupIntervalMins, int jobCleanBatchSize,
@@ -180,6 +181,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
                                 String workloadIdentityPool,
                                 String workloadIdentityProvider) {
     this.masterEnvContext = masterEnvContext;
+    this.apiClientFactory = apiClientFactory;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
     this.resourcePrefix = resourcePrefix;
@@ -282,7 +284,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   public void start() {
     LOG.error("Starting KubeTwillRunnerService with {} monitor", enableMonitor ? "enabled" : "disabled");
     try {
-      apiClient = Config.defaultClient();
+      apiClient = apiClientFactory.create();
       coreV1Api = new CoreV1Api(apiClient);
       rbacV1Api = new RbacAuthorizationV1Api(apiClient);
       if (!enableMonitor) {
@@ -1005,11 +1007,13 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     }
     Map<Type, AppResourceWatcherThread<?>> typeMap = new HashMap<>();
     // Batch jobs are k8s jobs, and streaming pipelines are k8s deployments
-    typeMap.put(V1Job.class, AppResourceWatcherThread.createJobWatcher(namespace, selector));
-    typeMap.put(V1Deployment.class, AppResourceWatcherThread.createDeploymentWatcher(namespace, selector));
+    typeMap.put(V1Job.class, AppResourceWatcherThread.createJobWatcher(namespace, selector, apiClientFactory));
+    typeMap.put(V1Deployment.class,
+                AppResourceWatcherThread.createDeploymentWatcher(namespace, selector, apiClientFactory));
     // We only create statefulsets in the system namespace, so only add watchers for them in that namespace
     if (namespace.equals(kubeNamespace)) {
-      typeMap.put(V1StatefulSet.class, AppResourceWatcherThread.createStatefulSetWatcher(namespace, selector));
+      typeMap.put(V1StatefulSet.class,
+                  AppResourceWatcherThread.createStatefulSetWatcher(namespace, selector, apiClientFactory));
     }
     typeMap.values().forEach(watcher -> {
       watcher.addListener(new AppResourceChangeListener<>());
