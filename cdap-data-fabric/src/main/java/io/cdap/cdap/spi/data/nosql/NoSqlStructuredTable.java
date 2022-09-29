@@ -132,6 +132,10 @@ public final class NoSqlStructuredTable implements StructuredTable {
                              limit);
   }
 
+
+  /*
+   *  Sorting in memory for the no-sql implementation. We sort post table scan.
+   * */
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
@@ -140,57 +144,49 @@ public final class NoSqlStructuredTable implements StructuredTable {
     if (!schema.isIndexColumn(orderByField)) {
       throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column");
     }
-    ScannerIterator scannerIterator = null;
-    Comparator<StructuredRow> comparator = sortOrder.equals(SortOrder.ASC) ?
-      (row1, row2) ->
-        compareRowFields(row1, row2, orderByField)
-      : (row1, row2) ->
-      compareRowFields(row2, row1, orderByField);
-    List<StructuredRow> sorted = new ArrayList<>();
+    Comparator<StructuredRow> comparator = sortOrder.equals(SortOrder.ASC) ? getComparator(orderByField) :
+      getComparator(orderByField).reversed();
+    List<StructuredRow> rows = new ArrayList<>();
 
-    try {
-      scannerIterator = new ScannerIterator(getScanner(keyRange), schema);
+    try (ScannerIterator scannerIterator = new ScannerIterator(getScanner(keyRange), schema)) {
       while (scannerIterator.hasNext()) {
-        StructuredRow row = scannerIterator.next();
-        sorted.add(row);
-      }
-    } finally {
-      if (scannerIterator != null) {
-        scannerIterator.close();
+        rows.add(scannerIterator.next());
       }
     }
-    Collections.sort(sorted, comparator);
+    rows.sort(comparator);
     // return an iterator for the sorted elements
-    DelegatingCloseableIterator delegatingCloseableIterator = new DelegatingCloseableIterator
-      (sorted.stream().iterator());
+    DelegatingCloseableIterator delegatingCloseableIterator = new DelegatingCloseableIterator(rows.iterator());
     return new LimitIterator(Collections.singleton(delegatingCloseableIterator).iterator(), limit);
   }
   
-  private int compareRowFields(StructuredRow row1, StructuredRow row2, String orderByField)
+  private Comparator<StructuredRow> getComparator(String orderByField)
     throws InvalidFieldException {
     switch (schema.getType(orderByField)) {
       case INTEGER:
-        return Objects.compare(row1.getInteger(orderByField), row2.getInteger(orderByField),
-                               Integer::compare);
+        return (row1, row2) ->  Objects.compare(row1.getInteger(orderByField), row2.getInteger(orderByField),
+                                                Integer::compare);
       case LONG:
-        return Objects.compare(row1.getLong(orderByField), row2.getLong(orderByField),
-                               Long::compare);
+        return (row1, row2) ->  Objects.compare(row1.getLong(orderByField), row2.getLong(orderByField), Long::compare);
       case FLOAT:
-        return Objects.compare(row1.getFloat(orderByField), row2.getFloat(orderByField),
-                               Float::compare);
+        return (row1, row2) ->  Objects.compare(row1.getFloat(orderByField), row2.getFloat(orderByField),
+                                                Float::compare);
       case DOUBLE:
-        return Objects.compare(row1.getDouble(orderByField), row2.getDouble(orderByField),
-                               Double::compare);
+        return (row1, row2) ->  Objects.compare(row1.getDouble(orderByField), row2.getDouble(orderByField),
+                                                Double::compare);
       case STRING:
-        return Objects.compare(row1.getString(orderByField), row2.getString(orderByField),
-                               String::compareTo);
+        return (row1, row2) ->  Objects.compare(row1.getString(orderByField), row2.getString(orderByField),
+                                                String::compareTo);
       case BYTES:
-        return new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField), row2.getBytes(orderByField));
+        return (row1, row2) ->  new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField),
+                                                                   row2.getBytes(orderByField));
       default:
         throw new InvalidFieldException(schema.getTableId(), orderByField);
     }
   }
 
+  /*
+   * Filtering post table scan.
+   * */
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
     throws InvalidFieldException, IOException {
@@ -557,12 +553,11 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
     @Override
     public void close() {
-      closeScanner();
+      currentScanner.close();
     }
 
     private void closeScanner() {
       if (currentScanner != null) {
-        currentScanner.close();
         currentScanner = null;
       }
     }
@@ -635,7 +630,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
     @Override
     protected StructuredRow computeNext() {
-      while (delegate.hasNext()) {
+      if (delegate.hasNext()) {
         return delegate.next();
       }
       return endOfData();
