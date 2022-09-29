@@ -154,14 +154,13 @@ public final class NoSqlStructuredTable implements StructuredTable {
       }
     }
     // return an iterator for the sorted elements
-    AbstractCloseableIterator<StructuredRow> abstractCloseableIterator = new
-      AbstractCloseableIterator<StructuredRow>() {
+    CloseableIterator<StructuredRow> abstractCloseableIterator = new AbstractCloseableIterator<StructuredRow>() {
       @Override
       protected StructuredRow computeNext() {
-        while (!rows.isEmpty()) {
-          return rows.poll();
+        if (rows.isEmpty()) {
+          return endOfData();
         }
-        return endOfData();
+        return rows.poll();
       }
 
       @Override
@@ -169,28 +168,28 @@ public final class NoSqlStructuredTable implements StructuredTable {
         // no-op
       }
     };
-    return new LimitIterator(Collections.singleton(abstractCloseableIterator).iterator(), limit);
+    return new LimitIterator(abstractCloseableIterator, limit);
   }
 
   private Comparator<StructuredRow> getComparator(String orderByField)
     throws InvalidFieldException {
     switch (schema.getType(orderByField)) {
       case INTEGER:
-        return (row1, row2) ->Objects.compare(row1.getInteger(orderByField), row2.getInteger(orderByField),
+        return (row1, row2) -> Objects.compare(row1.getInteger(orderByField), row2.getInteger(orderByField),
                                                Integer::compare);
       case LONG:
-        return (row1, row2) ->Objects.compare(row1.getLong(orderByField), row2.getLong(orderByField), Long::compare);
+        return (row1, row2) -> Objects.compare(row1.getLong(orderByField), row2.getLong(orderByField), Long::compare);
       case FLOAT:
-        return (row1, row2) ->Objects.compare(row1.getFloat(orderByField), row2.getFloat(orderByField),
+        return (row1, row2) -> Objects.compare(row1.getFloat(orderByField), row2.getFloat(orderByField),
                                                Float::compare);
       case DOUBLE:
-        return (row1, row2) ->Objects.compare(row1.getDouble(orderByField), row2.getDouble(orderByField),
+        return (row1, row2) -> Objects.compare(row1.getDouble(orderByField), row2.getDouble(orderByField),
                                                Double::compare);
       case STRING:
-        return (row1, row2) ->Objects.compare(row1.getString(orderByField), row2.getString(orderByField),
+        return (row1, row2) -> Objects.compare(row1.getString(orderByField), row2.getString(orderByField),
                                                String::compareTo);
       case BYTES:
-        return (row1, row2) ->new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField),
+        return (row1, row2) -> new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField),
                                                                        row2.getBytes(orderByField));
       default:
         throw new InvalidFieldException(schema.getTableId(), orderByField);
@@ -544,6 +543,10 @@ public final class NoSqlStructuredTable implements StructuredTable {
       this.currentScanner = scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
     }
 
+    LimitIterator(CloseableIterator<StructuredRow> scannerIterator, int limit) {
+      this(Collections.singleton(scannerIterator).iterator(), limit);
+    }
+
     @Override
     protected StructuredRow computeNext() {
       if (count >= limit) {
@@ -591,22 +594,22 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
       switch (filterIndex.getFieldType()) {
         case INTEGER:
-          predicate = row ->Objects.equals(row.getInteger(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getInteger(filterIndex.getName()), filterIndex.getValue());
           break;
         case LONG:
-          predicate = row ->Objects.equals(row.getLong(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getLong(filterIndex.getName()), filterIndex.getValue());
           break;
         case FLOAT:
-          predicate = row ->Objects.equals(row.getFloat(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getFloat(filterIndex.getName()), filterIndex.getValue());
           break;
         case DOUBLE:
-          predicate = row ->Objects.equals(row.getDouble(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getDouble(filterIndex.getName()), filterIndex.getValue());
           break;
         case STRING:
-          predicate = row ->Objects.equals(row.getString(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getString(filterIndex.getName()), filterIndex.getValue());
           break;
         case BYTES:
-          predicate = row ->Arrays.equals(row.getBytes(filterIndex.getName()), (byte[]) filterIndex.getValue());
+          predicate = row -> Arrays.equals(row.getBytes(filterIndex.getName()), (byte[]) filterIndex.getValue());
           break;
         default:
           throw new InvalidFieldException(schema.getTableId(), filterIndex.getName());
