@@ -138,11 +138,15 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
 
   @Override
   public Optional<byte[]> getState(String key) throws IOException {
-    return sec.getSparkExecutionContext().getState(key);
+    // Make the key unique for the app
+    String pluginKey = String.format("%s.%s", getStageName(), key);
+    return sec.getSparkExecutionContext().getState(pluginKey);
   }
 
   @Override
   public void saveState(String key, byte[] value) throws IOException {
-    sec.getSparkExecutionContext().saveState(key, value);
+    // Make the key unique for the app
+    String pluginKey = String.format("%s.%s", getStageName(), key);
+    sec.getSparkExecutionContext().saveState(pluginKey, value);
   }
 }
