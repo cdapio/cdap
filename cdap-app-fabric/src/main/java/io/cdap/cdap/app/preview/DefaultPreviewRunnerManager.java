@@ -28,7 +28,6 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.app.guice.ProgramRunnerClassLoaderModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -180,7 +179,6 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       new ConfigStoreModule(),
       previewRunnerModule,
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new ProgramRunnerClassLoaderModule(),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient, previewLevelDBTableService),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
       new DataSetServiceModules().getStandaloneModules(),

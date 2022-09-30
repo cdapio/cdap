@@ -32,7 +32,6 @@ import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.deploy.Configurator;
-import io.cdap.cdap.app.guice.ProgramRunnerClassLoaderModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
@@ -245,7 +244,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(new AuthorizationEnforcementModule().getNoOpModules());
-    modules.add(new ProgramRunnerClassLoaderModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
