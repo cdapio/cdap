@@ -14,8 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.k8s.runtime;
+package io.cdap.cdap.master.environment.k8s;
 
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
@@ -25,30 +27,37 @@ import io.kubernetes.client.openapi.models.V1JobStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Kubernetes Job cleaner that scans and deletes completed jobs across all namespaces.
  */
-class KubeJobCleaner implements Runnable {
+class KubeJobCleaner implements MasterEnvironmentTask {
   private static final Logger LOG = LoggerFactory.getLogger(KubeJobCleaner.class);
-  private final BatchV1Api batchV1Api;
+  // The BatchV1Api client for interacting with the Kube API server. This needs to be a volatile to safeguard against
+  // multiple concurrent client instance creation.
+  private volatile BatchV1Api batchV1Api;
   private final String selector;
   private final int batchSize;
+  private final long delayMillis;
+  private final ApiClientFactory apiClientFactory;
 
-  KubeJobCleaner(BatchV1Api batchV1Api, String selector, int batchSize) {
-    this.batchV1Api = batchV1Api;
+  KubeJobCleaner(String selector, int batchSize, long delayMin, ApiClientFactory apiClientFactory) {
     this.selector = selector;
     this.batchSize = batchSize;
+    this.delayMillis = TimeUnit.MINUTES.toMillis(delayMin);
+    this.apiClientFactory = apiClientFactory;
   }
 
   @Override
-  public void run() {
+  public long run(MasterEnvironmentContext context) {
     String continuationToken = null;
     int retryCount = 10;
     int jobDeletionCount = 0;
     do {
       try {
+        batchV1Api = getBatchV1Api();
         // Attempt to delete completed jobs. K8s current implementation only supports status.successful field selector
         // for jobs. https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/batch/v1/conversion.go
         // so instead, list all the jobs in all k8s namespace and delete completed (successful + failed) jobs one
@@ -82,8 +91,8 @@ class KubeJobCleaner implements Runnable {
           }
         }
         continuationToken = jobs.getMetadata().getContinue();
-      } catch (ApiException e) {
-        // This could happen if there was error while listing the jobs.
+      } catch (IOException | ApiException e) {
+        // This could happen if there was error while listing the jobs or creating batch api client.
         retryCount--;
         try {
           Thread.sleep(200);
@@ -91,10 +100,28 @@ class KubeJobCleaner implements Runnable {
           // If interrupted during sleep, just break the loop
           break;
         }
-        LOG.warn("Error while listing jobs for cleanup, this attempt will be retried.", e);
+        LOG.warn("Error while listing jobs or creating batch api client for cleanup, " +
+                   "this attempt will be retried.", e);
       }
     } while (retryCount != 0 && continuationToken != null);
 
     LOG.trace("Completed an iteration of job clean by removing {} number of jobs.", jobDeletionCount);
+    return delayMillis;
+  }
+
+  private BatchV1Api getBatchV1Api() throws IOException {
+    BatchV1Api api = batchV1Api;
+    if (api != null) {
+      return api;
+    }
+
+    synchronized (this) {
+      api = batchV1Api;
+      if (api != null) {
+        return api;
+      }
+      batchV1Api = api = new BatchV1Api(apiClientFactory.create());
+      return api;
+    }
   }
 }

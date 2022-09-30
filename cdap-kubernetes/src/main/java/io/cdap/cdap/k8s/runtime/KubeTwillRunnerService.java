@@ -18,7 +18,6 @@ package io.cdap.cdap.k8s.runtime;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.gson.Gson;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.k8s.util.KubeUtil;
@@ -35,7 +34,6 @@ import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
@@ -154,17 +152,13 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private final Map<String, Map<Type, AppResourceWatcherThread<?>>> resourceWatchers;
   private final Map<String, KubeLiveInfo> liveInfos;
   private final Lock liveInfoLock;
-  private final int jobCleanupIntervalMins;
-  private final int jobCleanBatchSize;
   private final String selector;
   private final boolean enableMonitor;
-  private final Gson gson;
   private final String workloadLauncherRoleNameForNamespace;
   private final String workloadLauncherRoleNameForCluster;
   private ApiClient apiClient;
   private CoreV1Api coreV1Api;
   private ScheduledExecutorService monitorScheduler;
-  private ScheduledExecutorService jobCleanerService;
   private boolean workloadIdentityEnabled;
   private String workloadIdentityPool;
   private String workloadIdentityProvider;
@@ -173,7 +167,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext, ApiClientFactory apiClientFactory,
                                 String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
                                 PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
-                                int jobCleanupIntervalMins, int jobCleanBatchSize,
                                 boolean enableMonitor,
                                 boolean workloadIdentityEnabled,
                                 String workloadLauncherRoleNameForNamespace,
@@ -194,15 +187,12 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.resourceWatchers = new HashMap<>();
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
-    this.jobCleanupIntervalMins = jobCleanupIntervalMins;
-    this.jobCleanBatchSize = jobCleanBatchSize;
     this.enableMonitor = enableMonitor;
     this.workloadIdentityEnabled = workloadIdentityEnabled;
     this.workloadLauncherRoleNameForNamespace = workloadLauncherRoleNameForNamespace;
     this.workloadLauncherRoleNameForCluster = workloadLauncherRoleNameForCluster;
     this.workloadIdentityPool = workloadIdentityPool;
     this.workloadIdentityProvider = workloadIdentityProvider;
-    this.gson = new Gson();
   }
 
   @Override
@@ -282,7 +272,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
   @Override
   public void start() {
-    LOG.error("Starting KubeTwillRunnerService with {} monitor", enableMonitor ? "enabled" : "disabled");
+    LOG.debug("Starting KubeTwillRunnerService with {} monitor", enableMonitor ? "enabled" : "disabled");
     try {
       apiClient = apiClientFactory.create();
       coreV1Api = new CoreV1Api(apiClient);
@@ -293,12 +283,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
       addAndStartWatchers(kubeNamespace);
-
-      // start job cleaner service
-      jobCleanerService =
-        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("kube-job-cleaner"));
-      jobCleanerService.scheduleAtFixedRate(new KubeJobCleaner(new BatchV1Api(apiClient), selector, jobCleanBatchSize),
-                                            10, jobCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get Kubernetes API Client", e);
     }
@@ -353,6 +337,13 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       deleteKubeNamespace(namespace, namespaceDetail.getName());
       stopAndRemoveWatchers(namespace);
     }
+  }
+
+  /**
+   * Returns the k8s label selector which selects all runs started by the k8s twill runner that has the run id label.
+   */
+  public String getSelector() {
+    return selector;
   }
 
   /**
@@ -640,9 +631,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
   @Override
   public void stop() {
-    if (jobCleanerService != null) {
-      jobCleanerService.shutdownNow();
-    }
     stopAndRemoveWatchers();
     if (monitorScheduler != null) {
       monitorScheduler.shutdownNow();
