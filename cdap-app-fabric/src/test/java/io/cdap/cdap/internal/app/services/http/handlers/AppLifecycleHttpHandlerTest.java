@@ -42,6 +42,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
@@ -127,7 +128,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
       }
     });
   }

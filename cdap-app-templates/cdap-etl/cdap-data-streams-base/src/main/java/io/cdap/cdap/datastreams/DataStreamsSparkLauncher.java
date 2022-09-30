@@ -101,6 +101,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     // Add warning message to discourage users from using multiple streaming sources.
     if (numSources > 1) {
       LOG.warn("Using multiple streaming sources in a pipeline is not recommended.");
+      getContext().getMetrics().count(Constants.Metrics.STREAMING_MULTI_SOURCE_PIPELINE_RUNS_COUNT, 1);
     }
 
     SparkConf sparkConf = new SparkConf();
@@ -176,7 +177,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       }
     }
     context.setSparkConf(sparkConf);
-
+    emitMetrics(spec);
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
   }
 
@@ -188,5 +189,18 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
                        status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
 
+  }
+
+  private void emitMetrics(DataStreamsPipelineSpec spec) {
+    if (spec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.NONE) {
+      getContext().getMetrics().count(
+        Constants.Metrics.AtleastOnceProcessing.STREAMING_ATLEASTONCE_DISABLED_COUNT, 1);
+    } else if (spec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING) {
+      getContext().getMetrics().count(
+        Constants.Metrics.AtleastOnceProcessing.STREAMING_ATLEASTONCE_CHECKPOINTING_COUNT, 1);
+    } else {
+      getContext().getMetrics().count(
+        Constants.Metrics.AtleastOnceProcessing.STREAMING_ATLEASTONCE_STORE_COUNT, 1);
+    }
   }
 }

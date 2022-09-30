@@ -1108,6 +1108,11 @@ public final class Constants {
       public static final String SCHEDULE_NOTIFICATION_FAILURE = "schedulejob.notification.failure";
       public static final String SCHEDULE_LATENCY = "schedulejob.latency";
     }
+
+    public static final class AppStateStore {
+      public static final String STATE_STORE_GET_COUNT = "state.store.get.count";
+      public static final String STATE_STORE_SAVE_COUNT = "state.store.save.count";
+    }
   }
 
   /**
