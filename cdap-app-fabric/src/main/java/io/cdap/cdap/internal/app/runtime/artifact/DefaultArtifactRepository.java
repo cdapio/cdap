@@ -36,7 +36,6 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
-import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ArtifactRangeNotFoundException;
@@ -51,6 +50,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
@@ -108,11 +108,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
                                    ArtifactRepositoryReader artifactRepositoryReader,
                                    MetadataServiceClient metadataServiceClient,
-                                   ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory,
                                    Impersonator impersonator) {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerClassLoaderFactory);
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, new ProgramRuntimeProviderLoader(cConf));
     this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
     this.systemArtifactDirs = new HashSet<>();
     this.maxArtifactLoadParallelism = cConf.getInt(Constants.AppFabric.SYSTEM_ARTIFACTS_MAX_PARALLELISM);

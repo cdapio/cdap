@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.tethering;
 
-import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -144,8 +143,7 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(
       locationFactory, remoteClient);
-    return new RemoteArtifactRepository(cConf, artifactRepositoryReader,
-                                        getInjector().getInstance(ProgramRunnerClassLoaderFactory.class));
+    return new RemoteArtifactRepository(cConf, artifactRepositoryReader);
   }
 
   private void addPeer() throws PeerAlreadyExistsException, IOException {
