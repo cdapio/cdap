@@ -222,13 +222,12 @@ public class SpannerStructuredTable implements StructuredTable {
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> orderByField, SortOrder sortOrder)
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException {
     fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
     fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
-    String indexField = orderByField.getName();
-    if (!schema.isIndexColumn(indexField)) {
-      throw new InvalidFieldException(schema.getTableId(), indexField, "is not an indexed column");
+    if (!schema.isIndexColumn(orderByField)) {
+      throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column");
     }
 
     Map<String, Value> parameters = new HashMap<>();
@@ -237,7 +236,7 @@ public class SpannerStructuredTable implements StructuredTable {
     Statement.Builder builder = Statement.newBuilder(
       "SELECT * FROM " + escapeName(schema.getTableId().getName())
         + " WHERE " + whereClause
-        + " ORDER BY " + (sortOrder == SortOrder.ASC ? indexField : indexField + " DESC")
+        + " ORDER BY " + (sortOrder == SortOrder.ASC ? orderByField : orderByField + " DESC")
         + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
