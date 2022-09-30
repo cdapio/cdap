@@ -382,19 +382,18 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> orderByField, SortOrder sortOrder)
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
 
     LOG.trace("Table {}: Scan range {} with limit {} order {} on index field {}",
               tableSchema.getTableId(), keyRange, limit, sortOrder, orderByField);
     fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
     fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
-    String indexField = orderByField.getName();
-    if (!tableSchema.isIndexColumn(indexField)) {
-      throw new InvalidFieldException(tableSchema.getTableId(), indexField, "is not an indexed column");
+    if (!tableSchema.isIndexColumn(orderByField)) {
+      throw new InvalidFieldException(tableSchema.getTableId(), orderByField, "is not an indexed column");
     }
 
-    String scanQuery = getScanQuery(keyRange, limit, Collections.singleton(indexField), sortOrder);
+    String scanQuery = getScanQuery(keyRange, limit, Collections.singleton(orderByField), sortOrder);
 
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
