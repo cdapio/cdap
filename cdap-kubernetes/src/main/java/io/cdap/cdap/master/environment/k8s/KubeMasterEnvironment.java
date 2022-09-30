@@ -211,8 +211,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String READ_TIMEOUT = "master.environment.k8s.read.timeout.sec";
   private static final String READ_TIMEOUT_DEFAULT = "300";
 
+  private final List<MasterEnvironmentTask> tasks;
   private KubeDiscoveryService discoveryService;
-  private PodKillerTask podKillerTask;
   private KubeTwillRunnerService twillRunner;
   private PodInfo podInfo;
   private ApiClientFactory apiClientFactory;
@@ -232,7 +232,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private long workloadIdentityServiceAccountTokenTTLSeconds;
   private String programCpuMultiplier;
   private String cdapInstallNamespace;
-  private KubeJobCleaner kubeJobCleaner;
+
+  public KubeMasterEnvironment() {
+    this.tasks = new ArrayList<>();
+  }
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, IllegalArgumentException, ApiException {
@@ -330,7 +333,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         }
       }
 
-      podKillerTask = new PodKillerTask(namespace, podKillerSelector, delayMillis, apiClientFactory);
+      tasks.add(new PodKillerTask(namespace, podKillerSelector, delayMillis, apiClientFactory));
       LOG.info("Created pod killer task on namespace {}, with selector {} and delay {}",
                namespace, podKillerSelector, delayMillis);
     }
@@ -357,7 +360,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     int batchSize = Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, DEFAULT_JOB_CLEANUP_BATCH_SIZE));
     int interval = Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, DEFAULT_JOB_CLEANUP_INTERVAL_MIN));
-    kubeJobCleaner = new KubeJobCleaner(twillRunner.getSelector(), batchSize, interval, apiClientFactory);
+    tasks.add(new KubeJobCleaner(twillRunner.getSelector(), batchSize, interval, apiClientFactory));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -397,12 +400,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public Collection<MasterEnvironmentTask> getTasks() {
-    Set<MasterEnvironmentTask> set = new HashSet<>(2);
-    set.add(kubeJobCleaner);
-    if (podKillerTask != null) {
-      set.add(podKillerTask);
-    }
-    return set;
+    return tasks;
   }
 
   @Override
