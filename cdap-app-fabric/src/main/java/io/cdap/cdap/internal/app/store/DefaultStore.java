@@ -62,6 +62,7 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
@@ -424,45 +425,15 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String author,
-                             Long created, @Nullable String changeSummary, @Nullable String parentVersion) {
-    // Generate the creation time for the version of the app.
-    TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latest = getLatest(id.getNamespace(), id.getApplication());
-      if (!deployAppAllowed(parentVersion, latest)) {
-        throw new BadRequestException("Can't deploy the application because the parent version is not the " +
-                                        "latest.");
-      }
-      // When the app does not exist -it is not an edit).
-      if (latest != null) {
-        getAppMetadataStore(context).updateLatestApplication(id.getNamespace(), id.getApplication(),
-                                                             latest.getSpec().getAppVersion());
-      }
-      getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec,
-                                                    created, author, changeSummary);
-    });
-  }
-
-  /**
-   * To determine whether the app is allowed to be deployed:
-   * Do not deploy when the parent version is not the latest.
-   *
-   * @param parentVersion the version of the application from which the app is deployed
-   * @param latest the application meta of the latest version
-   * @return whether the app version is allowed to be deployed
-   */
-  private boolean deployAppAllowed(@Nullable String parentVersion, @Nullable ApplicationMeta latest)  {
-    if (parentVersion == null || parentVersion.isEmpty()) {
-      return true;
+  public void addApplication(ApplicationId id, ApplicationMeta meta, @Nullable String parentVersion) throws
+    BadRequestException {
+    try {
+      TransactionRunners.run(transactionRunner, context -> {
+        getAppMetadataStore(context).createApplicationVersion(id, meta, parentVersion);
+      }, TransactionException.class);
+    } catch (TransactionException e) {
+      throw TransactionRunners.propagate(e, BadRequestException.class);
     }
-    // App does not exist
-    if (latest == null || latest.getSpec() == null) {
-      // parent version should be null when the app does not exist
-      return parentVersion == null || parentVersion.isEmpty();
-    }
-    String latestVersion = latest.getSpec().getAppVersion();
-    // If latest version is the parent version then we allow deploy
-    return latestVersion.equals(parentVersion);
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
@@ -736,20 +707,21 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ApplicationMeta getLatest(String namespace, String appName) {
+  public ApplicationMeta getLatest(NamespaceId namespace, String appName) {
     return TransactionRunners.run(transactionRunner, context -> {
-        ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespace, appName).stream()
+      ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespace, appName).stream()
         .findAny().orElse(null);
       //  If latest is null and app exists (legacy versions) then fetch -SNAPSHOT app
-        if (latest == null) {
-          latest = getAppMetadataStore(context).getApplication(namespace, appName, ApplicationId.DEFAULT_VERSION);
-        }
+      if (latest == null) {
+        latest = getAppMetadataStore(context).getApplication(namespace.getNamespace(), appName,
+                                                             ApplicationId.DEFAULT_VERSION);
+      }
       // If -SNAPSHOT version does not exist, return the app corresponding to the smallest version-id string
-       if (latest == null) {
-        latest = getAppMetadataStore(context).getAllAppVersions(namespace, appName)
+      if (latest == null) {
+        latest = getAppMetadataStore(context).getAllAppVersions(namespace.getNamespace(), appName)
           .stream().findFirst().orElse(null);
-        }
-        return latest;
+      }
+      return latest;
     });
   }
 

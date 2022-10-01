@@ -402,6 +402,7 @@ public final class StoreDefinition {
                     Fields.stringType(CHANGE_SUMMARY_FIELD),
                     Fields.stringType(LATEST_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
+        .withIndexes(LATEST_FIELD, CREATION_TIME_FIELD)
         .build();
 
     public static final StructuredTableSpecification WORKFLOW_NODE_STATES_SPEC =

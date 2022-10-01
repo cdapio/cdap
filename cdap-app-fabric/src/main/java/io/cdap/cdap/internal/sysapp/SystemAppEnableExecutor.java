@@ -118,7 +118,7 @@ public class SystemAppEnableExecutor {
       return appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
                                            artifactSummary, configString, null, x -> { },
                                            ownerPrincipalId, arguments.canUpdateSchedules(), false,
-                                           Collections.emptyMap(), null);
+                                           Collections.emptyMap());
 
     } catch (UnauthorizedException | InvalidArtifactException e) {
       throw e;

@@ -26,6 +26,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
@@ -293,14 +294,11 @@ public interface Store {
    * Creates new application if it doesn't exist. Updates existing one otherwise.
    *
    * @param id            application id
-   * @param spec          application specification to store
-   * @param author        user that edited the application version
-   * @param created       creation time of the application version
-   * @param changeSummary the change summary description of application edit
+   * @param meta          application metadata to store
    * @param parentVersion version id of the application
    */
-  void addApplication(ApplicationId id, ApplicationSpecification spec, @Nullable String author, Long created,
-                      @Nullable String changeSummary, @Nullable String parentVersion);
+  void addApplication(ApplicationId id, ApplicationMeta meta, @Nullable String parentVersion) throws
+    BadRequestException;
 
   /**
    * Return a list of program specifications that are deleted comparing the specification in the store with the
@@ -383,7 +381,7 @@ public interface Store {
    * @param appName application id
    * @return The metadata information of the latest application version.
    */
-  ApplicationMeta getLatest(String namespace, String appName);
+  ApplicationMeta getLatest(NamespaceId namespace, String appName);
 
   /**
    * Returns a list of all versions' ApplicationId's of the application by id

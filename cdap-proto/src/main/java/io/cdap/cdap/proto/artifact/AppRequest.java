@@ -32,9 +32,7 @@ public class AppRequest<T> {
   private final T config;
   private final T configuration;
   @Nullable
-  private final String parentVersion;
-  @Nullable
-  private final ChangeSummary changeSummary;
+  private final ChangeSummaryRequest changeSummary;
   private final PreviewConfig preview;
   @SerializedName("principal")
   private final String ownerPrincipal;
@@ -64,19 +62,18 @@ public class AppRequest<T> {
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
                     @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration) {
-    this(artifact, config, preview, ownerPrincipal, updateSchedules, configuration, null, null);
+    this(artifact, config, preview, ownerPrincipal, updateSchedules, configuration, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
                     @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration,
-                    @Nullable String parentVersion, @Nullable ChangeSummary changeSummary) {
+                    @Nullable ChangeSummaryRequest changeSummary) {
     this.artifact = artifact;
     this.config = config;
     this.preview = preview;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
     this.configuration = configuration;
-    this.parentVersion = parentVersion;
     this.changeSummary = changeSummary;
   }
 
@@ -90,13 +87,8 @@ public class AppRequest<T> {
   }
 
   @Nullable
-  public ChangeSummary getChangeSummary() {
-    return changeSummary == null ? null : changeSummary;
-  }
-
-  @Nullable
-  public String getParentVersion() {
-    return parentVersion == null ? null : parentVersion;
+  public ChangeSummaryRequest getChangeSummary() {
+    return changeSummary;
   }
 
   @Nullable

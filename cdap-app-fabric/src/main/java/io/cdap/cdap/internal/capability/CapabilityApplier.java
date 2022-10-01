@@ -310,7 +310,7 @@ class CapabilityApplier {
     applicationLifecycleService
       .deployApp(applicationId.getParent(), applicationId.getApplication(), applicationId.getVersion(),
                  application.getArtifact(), configString, null, NOOP_PROGRAM_TERMINATOR,
-                 null, null, false, Collections.emptyMap(), null);
+                 null, null, false, Collections.emptyMap());
   }
 
   @VisibleForTesting

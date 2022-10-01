@@ -125,6 +125,6 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
                                           null, programId -> {
                                             // no-op
                                           }, null, false,
-                                          false, Collections.emptyMap(), null);
+                                          false, Collections.emptyMap());
   }
 }

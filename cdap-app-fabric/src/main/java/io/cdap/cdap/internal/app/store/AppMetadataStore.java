@@ -347,10 +347,10 @@ public class AppMetadataStore {
     return getApplicationSpecificationTable().count(ranges);
   }
 
-  public List<ApplicationMeta> getLatest(String namespaceId, String appName) throws IOException {
+  public List<ApplicationMeta> getLatest(NamespaceId namespaceId, String appName) throws IOException {
     // TODO: change this to filter by range of primary prefix key and index
     return scanWithRange(
-      getNamespaceAndApplicationRange(namespaceId, appName),
+      getNamespaceAndApplicationRange(namespaceId.getNamespace(), appName),
       ApplicationMeta.class,
       getApplicationSpecificationTable(),
       StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
@@ -440,20 +440,67 @@ public class AppMetadataStore {
 
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec,
-                                Long created, @Nullable String author, @Nullable String changeSummary)
+                                long creationTimeMillis, @Nullable String author, @Nullable String changeSummary)
     throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec,
-                                                                                              changeSummary, created,
-                                                                                              author)), created,
-                               author, changeSummary);
+                                                                                              changeSummary,
+                                                                                              creationTimeMillis,
+                                                                                              author))
+      , creationTimeMillis, author, changeSummary);
   }
 
-  public void updateLatestApplication(String namespaceId, String appId, String versionId)
-    throws IOException {
-    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "false"));
-    getApplicationSpecificationTable().upsert(fields);
+  public void createApplicationVersion(ApplicationId id, ApplicationMeta meta, @Nullable String parentVersion)
+    throws IOException, BadRequestException {
+    // Fetch the latest version
+    ApplicationMeta latest = getLatest(id.getNamespaceId(), id.getApplication()).stream().findAny().orElse(null);
+    //  If latest is null and app exists (legacy versions) then fetch -SNAPSHOT app
+    if (latest == null) {
+      latest = getApplication(id.getNamespace(), id.getApplication(), ApplicationId.DEFAULT_VERSION);
+    }
+    // If -SNAPSHOT version does not exist, return the app corresponding to the smallest version-id string
+    if (latest == null) {
+      latest = getAllAppVersions(id.getNamespace(), id.getApplication()).stream().findFirst().orElse(null);
+    }
+
+    if (!deployAppAllowed(parentVersion, latest)) {
+      throw new BadRequestException("Can't deploy the application because the parent version is not the " +
+                                                                    "latest.");
+    }
+    // When the app does not exist -it is not an edit).
+    if (latest != null) {
+      List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
+                                                        latest.getSpec().getAppVersion());
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "false"));
+      getApplicationSpecificationTable().upsert(fields);
+    }
+    // Add a new version of the app
+    writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), meta.getSpec(),
+                     meta.getCreationTimeMillis(), meta.getAuthor(), meta.getDescription());
   }
+
+  /**
+   * To determine whether the app is allowed to be deployed:
+   * Do not deploy when the parent version is not the latest.
+   *
+   * @param parentVersion the version of the application from which the app is deployed
+   * @param latest the application meta of the latest version
+   * @return whether the app version is allowed to be deployed
+   */
+  private boolean deployAppAllowed(@Nullable String parentVersion, @Nullable ApplicationMeta latest)  {
+    if (parentVersion == null || parentVersion.isEmpty()) {
+      return true;
+    }
+    // App does not exist
+    if (latest == null || latest.getSpec() == null) {
+      // parent version should be null when the app does not exist
+      return parentVersion == null || parentVersion.isEmpty();
+    }
+    String latestVersion = latest.getSpec().getAppVersion();
+    // If latest version is the parent version then we allow deploy
+    return latestVersion.equals(parentVersion);
+  }
+
+  
 
   public void deleteApplication(String namespaceId, String appId, String versionId)
     throws IOException {
