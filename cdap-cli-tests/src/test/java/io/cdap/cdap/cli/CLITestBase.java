@@ -52,11 +52,13 @@ import io.cdap.cdap.client.app.PrefixedEchoHandler;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.DatasetTypeNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -130,6 +132,8 @@ public abstract class CLITestBase {
   private static final ServiceId PREFIXED_ECHO_HANDLER_ID = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
   private static final DatasetId FAKE_DS_ID = NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME);
   private static final Logger LOG = LoggerFactory.getLogger(CLITestBase.class);
+  protected static final String FEATURE_FLAG_PREFIX = "feature.";
+  private static CConfiguration cConf = CConfiguration.create();
 
   public static CLIConfig createCLIConfig(URI standaloneUri) throws Exception {
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(standaloneUri.toString());
@@ -162,6 +166,10 @@ public abstract class CLITestBase {
         return null;
       }
     });
+  }
+
+  protected static boolean isLCMFeatureFlagEnabled() {
+    return cConf.getBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString());
   }
 
   public static void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {

@@ -416,8 +416,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2WithVersion.get("configuration").getAsString());
     Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
     deleteApp(appId, 200);
-    deleteApp(appIdDefault, 200);
-    deleteApp(appIdV2, 200);
+    deleteApp(appIdDefault, isLCMFeatureFlagEnabled() ? 404 : 200);
+    deleteApp(appIdV2, isLCMFeatureFlagEnabled() ? 404 : 200);
   }
 
   /**

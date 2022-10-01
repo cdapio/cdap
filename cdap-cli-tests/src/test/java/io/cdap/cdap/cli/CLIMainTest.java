@@ -56,8 +56,10 @@ public class CLIMainTest extends CLITestBase {
   public static void tearDownClass() throws Exception {
     programClient.stopAll(NamespaceId.DEFAULT);
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
-    testCommandOutputContains(cli, String.format("delete app %s version %s", FakeApp.NAME, V1_SNAPSHOT),
-                              "Successfully deleted app");
+    if (!isLCMFeatureFlagEnabled()) {
+      testCommandOutputContains(cli, String.format("delete app %s version %s", FakeApp.NAME, V1_SNAPSHOT),
+                                "Successfully deleted app");
+    }
   }
 
   @Override
