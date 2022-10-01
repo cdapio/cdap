@@ -30,18 +30,18 @@ public class ApplicationMeta {
 
   private final String id;
   private final ApplicationSpecification spec;
-  private final Long created;
+  private final long creationTimeMillis;
   @Nullable
   private final String author;
   @Nullable
   private final String description;
 
-  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable String description, Long created,
-                         @Nullable String author) {
+  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable String description,
+                         long creationTimeMillis, @Nullable String author) {
     this.id = id;
     this.spec = spec;
     this.description = description;
-    this.created = created;
+    this.creationTimeMillis = creationTimeMillis;
     this.author = author;
   }
 
@@ -58,9 +58,8 @@ public class ApplicationMeta {
     return author;
   }
 
-  @Nullable
-  public Long getCreated() {
-    return created;
+  public long getCreationTimeMillis() {
+    return creationTimeMillis;
   }
 
   @Nullable
@@ -74,7 +73,7 @@ public class ApplicationMeta {
       .add("id", id)
       .add("spec", ADAPTER.toJson(spec))
       .add("description", description)
-      .add("created", created)
+      .add("creationTimeMillis", creationTimeMillis)
       .add("author", author)
       .toString();
   }

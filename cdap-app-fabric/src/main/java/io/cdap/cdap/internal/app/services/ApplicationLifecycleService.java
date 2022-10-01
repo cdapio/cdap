@@ -88,6 +88,8 @@ import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.artifact.ChangeSummaryRequest;
+import io.cdap.cdap.proto.artifact.ChangeSummaryResponse;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -290,8 +292,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appIds);
 
       for (Map.Entry<ApplicationId, ApplicationSpecification> entry : list) {
+        // TODO : change-summary to be fetched from ApplicationMeta for CDAP-19528
         ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(),
-            owners.get(entry.getKey()));
+            owners.get(entry.getKey()), null);
 
         try {
           capabilityReader.checkAllEnabled(entry.getValue());
@@ -323,9 +326,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
+    ChangeSummaryResponse changeSummary = new ChangeSummaryResponse(appMeta.getDescription(), appMeta.getAuthor(),
+                                                                    appMeta.getCreationTimeMillis());
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
-                                                                            appMeta.getDescription(),
-                                                                            appMeta.getAuthor(), appMeta.getCreated()));
+                                                                            changeSummary));
   }
 
   /**
@@ -337,15 +341,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public ApplicationDetail getLatestAppDetail(ApplicationId appId) throws Exception {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationMeta latestApp = store.getLatest(appId.getNamespace(), appId.getApplication());
+    ApplicationMeta latestApp = store.getLatest(appId.getNamespaceId(), appId.getApplication());
     if (latestApp == null || latestApp.getSpec() == null) {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
+    ChangeSummaryResponse changeSummary = new ChangeSummaryResponse(latestApp.getDescription(), latestApp.getAuthor(),
+                                                                    latestApp.getCreationTimeMillis());
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal,
-                                                                            latestApp.getAuthor(),
-                                                                            latestApp.getDescription(),
-                                                                            latestApp.getCreated()));
+                                                                            changeSummary));
   }
 
   /**
@@ -367,7 +371,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
       ApplicationId appId = entry.getKey();
       result.put(appId, enforceApplicationDetailAccess(
-        appId, ApplicationDetail.fromSpec(entry.getValue(), principals.get(appId))));
+        // TODO : change-summary to be fetched from ApplicationMeta for CDAP-19528
+        appId, ApplicationDetail.fromSpec(entry.getValue(), principals.get(appId), null)));
     }
     return result;
   }
@@ -395,7 +400,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       }
       try {
         ApplicationDetail applicationDetail = enforceApplicationDetailAccess(
-          appId, ApplicationDetail.fromSpec(appSpec, null));
+          appId, ApplicationDetail.fromSpec(appSpec, null, null));
         // Add a directory for the namespace
         if (namespaces.add(appId.getParent())) {
           ZipEntry entry = new ZipEntry(appId.getNamespace() + "/");
@@ -460,12 +465,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Check if the current user has admin privileges on it before updating.
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
-    String parentVersion = appRequest.getParentVersion();
-    ApplicationMeta currentApp = store.getLatest(appId.getNamespace(), appId.getApplication());
-    if (currentApp == null || currentApp.getSpec() == null) {
+    ApplicationMeta currentApp = store.getLatest(appId.getNamespaceId(), appId.getApplication());
+    ApplicationSpecification currentSpec = Optional.ofNullable(currentApp)
+      .map(ApplicationMeta::getSpec)
+      .orElse(null);
+    if (currentSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
-    ApplicationSpecification currentSpec = currentApp.getSpec();
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
@@ -504,12 +510,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
-    String changeSummary = appRequest.getChangeSummary() == null ? null :
-      appRequest.getChangeSummary().getDescription();
-
     Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
     return deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(), artifactId, requestedConfigStr,
-                     changeSummary, programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
+                     appRequest.getChangeSummary(), programTerminator, ownerAdmin.getOwner(appId),
+                     appRequest.canUpdateSchedules());
   }
 
   /**
@@ -585,12 +589,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     // upgrade the latest version of the app
-    ApplicationMeta currentApp = store.getLatest(appId.getNamespace(), appId.getApplication());
-    if (currentApp == null || currentApp.getSpec() == null) {
+    ApplicationMeta currentApp = store.getLatest(appId.getNamespaceId(), appId.getApplication());
+    ApplicationSpecification currentSpec = Optional.ofNullable(currentApp)
+      .map(ApplicationMeta::getSpec)
+      .orElse(null);
+    
+    if (currentSpec == null) {
       LOG.info("Application {} not found for upgrade.", appId);
       throw new NotFoundException(appId);
     }
-    ApplicationSpecification currentSpec = currentApp.getSpec();
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(appId, currentArtifact,
@@ -715,7 +722,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
       return deployApp(namespace, appName, null, configStr, null, programTerminator, artifactDetail, ownerPrincipal,
-                       updateSchedules, false, Collections.emptyMap(), null);
+                       updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -782,14 +789,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
-                                           @Nullable String changeSummary,
+                                           @Nullable ChangeSummaryRequest changeSummary,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator, artifactDetail,
                      ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules,
-                     false, Collections.emptyMap(), null);
+                     false, Collections.emptyMap());
   }
 
   /**
@@ -802,7 +809,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appName the name of the app. If null, the name will be set based on the application spec
    * @param summary the artifact summary of the app
    * @param configStr the configuration to send to the application when generating the application specification
-   * @param changeSummary the change summary entered by the user
+   * @param changeSummary the change summary entered by the user - includes the description and parent-version
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
    *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
    * @param ownerPrincipal the kerberos principal of the application owner
@@ -810,7 +817,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *                        if null value specified by the property "app.deploy.update.schedules" will be used.
    * @param isPreview whether the app deployment is for preview
    * @param userProps the user properties for the app deployment, this is basically used for preview deployment
-   * @param parentVersion the parent version of the application to be edited in the request.
    * @return information about the deployed application
    * @throws InvalidArtifactException if the artifact does not contain any application classes
    * @throws IOException if there was an IO error reading artifact detail from the meta store
@@ -821,11 +827,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
                                            ArtifactSummary summary,
                                            @Nullable String configStr,
-                                           @Nullable String changeSummary,
+                                           @Nullable ChangeSummaryRequest changeSummary,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules, boolean isPreview,
-                                           Map<String, String> userProps, @Nullable String parentVersion)
+                                           Map<String, String> userProps)
     throws Exception {
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
@@ -839,7 +845,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator,
                      artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
-                     appUpdateSchedules : updateSchedules, isPreview, userProps, parentVersion);
+                     appUpdateSchedules : updateSchedules, isPreview, userProps);
   }
 
   /**
@@ -990,12 +996,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
                                             @Nullable String appVersion,
                                             @Nullable String configStr,
-                                            @Nullable String changeSummary,
+                                            @Nullable ChangeSummaryRequest changeSummary,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
                                             boolean updateSchedules, boolean isPreview,
-                                            Map<String, String> userProps, @Nullable String parentVersion)
+                                            Map<String, String> userProps)
     throws Exception {
     // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
     // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
@@ -1040,7 +1046,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                                                Collections.emptyMap()) : null)
       .setChangeSummary(changeSummary)
       .setAuthor(requestingUser == null ? null : requestingUser.getName())
-      .setParentVersion(parentVersion)
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
