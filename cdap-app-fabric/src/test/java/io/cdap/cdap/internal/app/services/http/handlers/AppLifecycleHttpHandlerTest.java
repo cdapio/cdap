@@ -85,8 +85,10 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
@@ -550,6 +552,80 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     //delete app in testnamespace1
     HttpResponse response = doDelete(getVersionedAPIPath("apps/",
         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
+  public void testListAndGetForPaginatedAPIWithNameFilterType() throws Exception {
+    for (int i = 0; i < 2; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME + String.join("", Collections.nCopies(i, "1"));
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+                                                   "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+                        new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+    String token = null;
+    JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token,
+                                                  AllProgramsApp.NAME.toUpperCase(Locale.ROOT),
+                                                  "EQUALS", null);
+    int currentResultSize = result.get("applications").getAsJsonArray().size();
+    Assert.assertEquals(0, currentResultSize);
+
+    JsonObject result1 = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token,
+                                                   AllProgramsApp.NAME.toUpperCase(Locale.ROOT),
+                                                  "EQUALS_IGNORE_CASE", null);
+    int currentResultSize1 = result1.get("applications").getAsJsonArray().size();
+    Assert.assertEquals(1, currentResultSize1);
+
+    JsonObject result2 = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, AllProgramsApp.NAME, null, null);
+    int currentResultSize2 = result2.get("applications").getAsJsonArray().size();
+    Assert.assertEquals(2, currentResultSize2);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
+  public void testListAndGetForPaginatedAPIWithLatestOnly() throws Exception {
+    for (int i = 0; i < 2; i++) {
+      //deploy with name to testnamespace1
+      String ns1AppName = AllProgramsApp.NAME;
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+                                                   "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      ApplicationId appId = new ApplicationId(ns1.getId(), AllProgramsApp.NAME, "v" + i);
+      response = deploy(appId,
+                        new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+    String token = null;
+    JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, AllProgramsApp.NAME, null, true);
+    int currentResultSize = result.get("applications").getAsJsonArray().size();
+    Assert.assertEquals(1, currentResultSize);
+
+    JsonObject result2 = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, AllProgramsApp.NAME, null, null);
+    int currentResultSize2 = result2.get("applications").getAsJsonArray().size();
+    Assert.assertEquals(2, currentResultSize2);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
     Assert.assertEquals(0, apps.size());
