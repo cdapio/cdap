@@ -19,10 +19,10 @@ package io.cdap.cdap.proto;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
-import io.cdap.cdap.api.app.ChangeSummary;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.proto.artifact.ChangeSummaryResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,7 @@ public class ApplicationDetail {
   private final String name;
   private final String appVersion;
   private final String description;
-  @Nullable
-  private final ChangeSummary changeSummary;
+  private final ChangeSummaryResponse changeSummary;
   private final String configuration;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
@@ -61,7 +60,7 @@ public class ApplicationDetail {
   public ApplicationDetail(String name,
                            String appVersion,
                            String description,
-                           @Nullable ChangeSummary changeSummary,
+                           @Nullable ChangeSummaryResponse changeSummary,
                            String configuration,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
@@ -95,7 +94,7 @@ public class ApplicationDetail {
     return configuration;
   }
 
-  public ChangeSummary getChangeSummary() {
+  public ChangeSummaryResponse getChangeSummary() {
     return changeSummary;
   }
 
@@ -121,11 +120,10 @@ public class ApplicationDetail {
   }
 
   public static ApplicationDetail fromSpec(ApplicationSpecification spec,
-                                           @Nullable String ownerPrincipal, @Nullable String author,
-                                           @Nullable String description,
-                                           @Nullable Long created) {
+                                           @Nullable String ownerPrincipal,
+                                           @Nullable ChangeSummaryResponse changeSummary) {
     // Adding owner, creation time and change summary description fields to the app detail
-    ChangeSummary changeSummary = new ChangeSummary(description, author, created);
+
     List<ProgramRecord> programs = new ArrayList<>();
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
       programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
@@ -166,10 +164,5 @@ public class ApplicationDetail {
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), changeSummary,
                                  spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
-  }
-
-  public static ApplicationDetail fromSpec(ApplicationSpecification spec,
-                                           @Nullable String ownerPrincipal) {
-    return fromSpec(spec, ownerPrincipal, null, null, null);
   }
 }

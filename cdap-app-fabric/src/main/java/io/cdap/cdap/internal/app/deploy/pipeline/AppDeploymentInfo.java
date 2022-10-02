@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.proto.artifact.ChangeSummaryRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -51,11 +52,9 @@ public class AppDeploymentInfo {
   @Nullable
   private final AppDeploymentRuntimeInfo runtimeInfo;
   @Nullable
-  private final String changeSummary;
+  private final ChangeSummaryRequest changeSummary;
   @Nullable
   private final String author;
-  @Nullable
-  private final String parentVersion;
 
   /**
    * Creates a new {@link Builder}.
@@ -80,15 +79,14 @@ public class AppDeploymentInfo {
       .setUpdateSchedules(other.updateSchedules)
       .setRuntimeInfo(other.runtimeInfo)
       .setChangeSummary(other.changeSummary)
-      .setAuthor(other.author)
-      .setParentVersion(other.parentVersion);
+      .setAuthor(other.author);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable String changeSummary, @Nullable String author, @Nullable String parentVersion) {
+                            @Nullable ChangeSummaryRequest changeSummary, @Nullable String author) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -101,7 +99,6 @@ public class AppDeploymentInfo {
     this.runtimeInfo = runtimeInfo;
     this.changeSummary = changeSummary;
     this.author = author;
-    this.parentVersion = parentVersion;
   }
 
   /**
@@ -184,10 +181,11 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the change summary description provided for the application edit or {@code null} if it is not provided.
+   * Returns the change summary description and parent version provided for the application edit or {@code null} if
+   * it is not provided.
    */
   @Nullable
-  public String getChangeSummary() {
+  public ChangeSummaryRequest getChangeSummary() {
     return changeSummary;
   }
 
@@ -197,14 +195,6 @@ public class AppDeploymentInfo {
   @Nullable
   public String getAuthor() {
     return author;
-  }
-
-  /**
-   * Returns the parent-version in the request or {@code null} if it is not provided.
-   */
-  @Nullable
-  public String getParentVersion() {
-    return parentVersion;
   }
 
   /**
@@ -224,11 +214,9 @@ public class AppDeploymentInfo {
     private boolean updateSchedules = true;
     private AppDeploymentRuntimeInfo runtimeInfo;
     @Nullable
-    private String changeSummary;
+    private ChangeSummaryRequest changeSummary;
     @Nullable
     private String author;
-    @Nullable
-    private String parentVersion;
 
     private Builder() {
       // Only for the builder() method to use
@@ -291,18 +279,13 @@ public class AppDeploymentInfo {
       return this;
     }
 
-    public Builder setChangeSummary(@Nullable String changeSummary) {
+    public Builder setChangeSummary(@Nullable ChangeSummaryRequest changeSummary) {
       this.changeSummary = changeSummary;
       return this;
     }
 
     public Builder setAuthor(@Nullable String author) {
       this.author = author;
-      return this;
-    }
-
-    public Builder setParentVersion(@Nullable String parentVersion) {
-      this.parentVersion = parentVersion;
       return this;
     }
 
@@ -321,7 +304,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
                                    appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeSummary, author, parentVersion);
+                                   changeSummary, author);
     }
   }
 }

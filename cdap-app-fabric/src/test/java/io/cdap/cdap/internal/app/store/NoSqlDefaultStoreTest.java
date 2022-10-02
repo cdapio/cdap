@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.spi.data.SortOrder;
@@ -41,12 +42,13 @@ public class NoSqlDefaultStoreTest extends DefaultStoreTest {
   }
 
   @Test
-  public void testScanApplicationsWithSmallReorderBatch() throws TransactionException {
+  public void testScanApplicationsWithSmallReorderBatch() throws TransactionException, BadRequestException {
     testScanApplications(getDescOrderUnsupportedStore());
   }
 
   @Test
-  public void testScanApplicationsWithNamespaceWithSmallReorderBatch() throws TransactionException {
+  public void testScanApplicationsWithNamespaceWithSmallReorderBatch() throws TransactionException,
+    BadRequestException {
     testScanApplicationsWithNamespace(getDescOrderUnsupportedStore());
   }
 

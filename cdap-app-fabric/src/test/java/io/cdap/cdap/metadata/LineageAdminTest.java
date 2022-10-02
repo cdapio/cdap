@@ -27,6 +27,7 @@ import io.cdap.cdap.api.workflow.WorkflowActionNode;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
@@ -42,6 +43,7 @@ import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -459,7 +461,7 @@ public class LineageAdminTest extends AppFabricTestBase {
 
 
   @Test
-  public void testWorkflowLineage() {
+  public void testWorkflowLineage() throws BadRequestException {
 
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
@@ -490,7 +492,8 @@ public class LineageAdminTest extends AppFabricTestBase {
       );
 
     Store store = getInjector().getInstance(Store.class);
-    store.addApplication(testApp, appSpec);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, null, System.currentTimeMillis(), null);
+    store.addApplication(testApp, meta, null);
     LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
@@ -663,7 +666,9 @@ public class LineageAdminTest extends AppFabricTestBase {
       );
 
     Store store = getInjector().getInstance(Store.class);
-    store.addApplication(testApp, appSpec);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, null, System.currentTimeMillis(),
+                                               null);
+    store.addApplication(testApp, meta, null);
     LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D1 -|

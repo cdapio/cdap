@@ -22,9 +22,11 @@ import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.gateway.handlers.PreferencesHttpHandlerInternal;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -47,9 +49,11 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     store = getInjector().getInstance(Store.class);
   }
 
-  private void addApplication(String namespace, Application app) {
+  private void addApplication(String namespace, Application app) throws BadRequestException {
     ApplicationSpecification appSpec = Specifications.from(app);
-    store.addApplication(new ApplicationId(namespace, appSpec.getName()), appSpec);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, null, System.currentTimeMillis(),
+                                               null);
+    store.addApplication(new ApplicationId(namespace, appSpec.getName()), meta, null);
   }
 
   @Test
