@@ -66,6 +66,52 @@ public abstract class ApplicationFilter {
   }
 
   /**
+   * The filter that check if application id exactly equals to a string (ignoring case).
+   */
+  public static class ApplicationIdEqualsFilter extends ApplicationIdFilter {
+    private final String searchFor;
+
+    public ApplicationIdEqualsFilter(String searchFor) {
+      this.searchFor = searchFor;
+    }
+
+    @Override
+    public boolean test(ApplicationId applicationId) {
+      return applicationId.getApplication().equalsIgnoreCase(searchFor);
+    }
+
+    @Override
+    public String toString() {
+      return "ApplicationIdEqualsFilter{" +
+        "searchFor='" + searchFor + '\'' +
+        '}';
+    }
+  }
+
+  /**
+   * The filter that check if application id exactly equals to a string (case-sensitive).
+   */
+  public static class ApplicationIdEqualsCaseSensitiveFilter extends ApplicationIdFilter {
+    private final String searchFor;
+
+    public ApplicationIdEqualsCaseSensitiveFilter(String searchFor) {
+      this.searchFor = searchFor;
+    }
+
+    @Override
+    public boolean test(ApplicationId applicationId) {
+      return applicationId.getApplication().equals(searchFor);
+    }
+
+    @Override
+    public String toString() {
+      return "ApplicationIdEqualsCaseSensitiveFilter{" +
+        "searchFor='" + searchFor + '\'' +
+        '}';
+    }
+  }
+
+  /**
    * Returns true if the application artifact is in a allow list of names
    */
   public static class ArtifactNamesInFilter extends ArtifactIdFilter {
