@@ -258,7 +258,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @QueryParam("pageToken") String pageToken,
                          @QueryParam("pageSize") Integer pageSize,
                          @QueryParam("orderBy") SortOrder orderBy,
-                         @QueryParam("nameFilter") String nameFilter
+                         @QueryParam("nameFilter") String nameFilter,
+                         @QueryParam("latestOnly") String latestOnly
       )
       throws Exception {
 
@@ -275,7 +276,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
         AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
         ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, pageSize,
-                                                                 orderBy, nameFilter, names);
+                                                                 orderBy, nameFilter, names, latestOnly);
         boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
           ApplicationRecord record = new ApplicationRecord(appDetail);
           jsonListResponder.send(record);
@@ -287,7 +288,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       });
     } else {
       ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, null,
-                                                           orderBy, nameFilter, names);
+                                                           orderBy, nameFilter, names, latestOnly);
       JsonWholeListResponder.respond(GSON, responder,
           jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
               d -> jsonListResponder.send(new ApplicationRecord(d)))
@@ -297,7 +298,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion, String pageToken,
                                                  Integer pageSize, SortOrder orderBy, String nameFilter,
-                                                 Set<String> names) {
+                                                 Set<String> names, String latestOnly) {
     ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
     builder.setNamespaceId(new NamespaceId(namespaceId));
     if (pageSize != null) {
@@ -309,6 +310,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     builder.addFilters(applicationLifecycleService.getAppFilters(names, artifactVersion));
     if (orderBy != null) {
       builder.setSortOrder(orderBy);
+    }
+    if (latestOnly != null && Boolean.parseBoolean(latestOnly)) {
+      builder.addFilter(new ApplicationFilter.ApplicationLatestFilter(applicationLifecycleService));
     }
     if (pageToken != null && !pageToken.isEmpty()) {
       builder.setScanFrom(ApplicationId.fromIdParts(Iterables.concat(

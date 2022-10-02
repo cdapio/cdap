@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.store;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.util.Locale;
@@ -107,6 +108,31 @@ public abstract class ApplicationFilter {
     public String toString() {
       return "ArtifactVersionFilter{" +
         "version='" + version + '\'' +
+        '}';
+    }
+  }
+
+  /**
+   * Returns true if the application version is latest
+   */
+  public static class ApplicationLatestFilter extends ApplicationIdFilter {
+    private final ApplicationLifecycleService applicationLifecycleService;
+
+    public ApplicationLatestFilter(ApplicationLifecycleService applicationLifecycleService) {
+      this.applicationLifecycleService = applicationLifecycleService;
+    }
+
+    @Override
+    public boolean test(ApplicationId applicationId) {
+      return applicationId.getVersion().equals(applicationLifecycleService.getLatestAppVersion(
+        applicationId.getNamespaceId(), applicationId.getApplication()
+      ));
+    }
+
+    @Override
+    public String toString() {
+      return "ArtifactVersionFilter{" +
+        "version=latest" +
         '}';
     }
   }
