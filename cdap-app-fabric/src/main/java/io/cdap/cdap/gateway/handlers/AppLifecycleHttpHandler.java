@@ -259,7 +259,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @QueryParam("pageSize") Integer pageSize,
                          @QueryParam("orderBy") SortOrder orderBy,
                          @QueryParam("nameFilter") String nameFilter,
-                         @QueryParam("latestOnly") String latestOnly
+                         @QueryParam("latestOnly") String latestOnly,
+                         @QueryParam("strictEqual") String strictEqual
       )
       throws Exception {
 
@@ -276,7 +277,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
         AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
         ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, pageSize,
-                                                                 orderBy, nameFilter, names, latestOnly);
+                                                                 orderBy, nameFilter, names, latestOnly, strictEqual);
         boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
           ApplicationRecord record = new ApplicationRecord(appDetail);
           jsonListResponder.send(record);
@@ -288,7 +289,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       });
     } else {
       ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, null,
-                                                           orderBy, nameFilter, names, latestOnly);
+                                                           orderBy, nameFilter, names, latestOnly, strictEqual);
       JsonWholeListResponder.respond(GSON, responder,
           jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
               d -> jsonListResponder.send(new ApplicationRecord(d)))
@@ -298,14 +299,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion, String pageToken,
                                                  Integer pageSize, SortOrder orderBy, String nameFilter,
-                                                 Set<String> names, String latestOnly) {
+                                                 Set<String> names, String latestOnly, String strictEqual) {
     ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
     builder.setNamespaceId(new NamespaceId(namespaceId));
     if (pageSize != null) {
       builder.setLimit(pageSize);
     }
     if (nameFilter != null && !nameFilter.isEmpty()) {
-      builder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));
+      if (strictEqual != null && Boolean.parseBoolean(strictEqual)) {
+        builder.addFilter(new ApplicationFilter.ApplicationIdEqualsFilter(nameFilter));
+      } else {
+        builder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));
+      }
     }
     builder.addFilters(applicationLifecycleService.getAppFilters(names, artifactVersion));
     if (orderBy != null) {
