@@ -18,6 +18,7 @@
 package io.cdap.cdap.internal.provision.task;
 
 import io.cdap.cdap.common.async.RepeatedTask;
+import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.Retries;
@@ -153,7 +154,8 @@ public abstract class ProvisioningTask implements RepeatedTask {
       throw e;
     } catch (Exception e) {
       LOG.error("{} task failed in {} state for program run {} due to {}.",
-                currentTaskInfo.getProvisioningOp().getType(), state, programRunId, e.getMessage(), e);
+                currentTaskInfo.getProvisioningOp().getType(), state, programRunId,
+                Exceptions.condenseThrowableMessage(e), e);
       handleSubtaskFailure(currentTaskInfo, e);
       ProvisioningOp failureOp = new ProvisioningOp(currentTaskInfo.getProvisioningOp().getType(),
                                                     ProvisioningOp.Status.FAILED);

@@ -29,11 +29,17 @@ import com.google.api.services.compute.Compute;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
+import com.google.longrunning.Operation;
+import com.google.longrunning.OperationsClient;
+import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.grpc.Status;
 import org.hamcrest.core.IsInstanceOf;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,6 +54,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +63,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-@PrepareForTest({DataprocClient.class, ClusterControllerClient.class})
+@PrepareForTest({DataprocClient.class, ClusterControllerClient.class, OperationsClient.class,
+  OperationsClient.ListOperationsPagedResponse.class})
 @RunWith(PowerMockRunner.class)
 public class DataprocClientTest {
 
@@ -92,7 +101,6 @@ public class DataprocClientTest {
     listMock = Mockito.mock(Compute.Networks.List.class);
     Mockito.when(computeMock.networks()).thenReturn(networksMock);
     Mockito.when(networksMock.list(Mockito.any())).thenReturn(listMock);
-    Mockito.when(clusterControllerClientMock.getCluster(Mockito.any())).thenReturn(Cluster.newBuilder().build());
 
   }
 
@@ -247,5 +255,40 @@ public class DataprocClientTest {
     thrown.expectMessage(String.format("Dataproc operation %s failure: %s", operationId, errorMessage));
     thrown.expectCause(IsInstanceOf.instanceOf(IOException.class));
     mockDataprocClientFactory.create(dataprocConf).deleteCluster(clusterName);
+  }
+
+  @Test
+  public void testGetClusterStatusCapturesErrorMessage() throws GeneralSecurityException, IOException,
+    RetryableProvisionException {
+    Cluster cluster = Cluster.newBuilder().setStatus(ClusterStatus.newBuilder().
+                                                       setState(ClusterStatus.State.ERROR)).build();
+    // PowerMockito.when(clusterControllerClientMock.getCluster(Mockito.any())).thenReturn(cluster);
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
+
+    OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
+    PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
+
+    OperationsClient.ListOperationsPagedResponse listOperationsPagedResponse =
+      PowerMockito.mock(OperationsClient.ListOperationsPagedResponse.class);
+    PowerMockito.when(operationsClient.listOperations(Mockito.any(), Mockito.any())).
+      thenReturn(listOperationsPagedResponse);
+
+    OperationsClient.ListOperationsPage page = Mockito.mock(OperationsClient.ListOperationsPage.class);
+    Mockito.when(listOperationsPagedResponse.getPage()).thenReturn(page);
+
+    String errorMsg = "Unexpected failure";
+    Any any = Any.newBuilder().setValue(ByteString.copyFrom("First Detail".getBytes(StandardCharsets.UTF_8))).build();
+    com.google.rpc.Status operationError = com.google.rpc.Status.newBuilder().setMessage(errorMsg).
+      addDetails(any).build();
+    Operation operation = Operation.newBuilder().setError(operationError).build();
+    List<Operation> operations = Collections.singletonList(operation);
+    Mockito.when(page.getPageElementCount()).thenReturn(1);
+    Mockito.when(page.getValues()).thenReturn(operations);
+
+    io.cdap.cdap.runtime.spi.provisioner.Cluster cdapCluster = new io.cdap.cdap.runtime.spi.provisioner.Cluster(
+      cluster.getClusterName(), io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.CREATING,
+      Collections.emptyList(), null);
+    String errorMsgRet = client.getClusterFailureMsg(cdapCluster.getName());
+    Assert.assertTrue(errorMsgRet.contains(errorMsg));
   }
 }

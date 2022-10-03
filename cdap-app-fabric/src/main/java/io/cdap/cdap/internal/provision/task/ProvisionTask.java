@@ -20,12 +20,15 @@ package io.cdap.cdap.internal.provision.task;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,7 +148,17 @@ public class ProvisionTask extends ProvisioningTask {
           // in this scenario, we try creating the cluster again
           return Optional.of(ProvisioningOp.Status.REQUESTING_CREATE);
         case FAILED:
-          // create failed, issue a request to delete the cluster
+          // create failed, log the reason for failure and then issue a request to delete the cluster
+          try {
+            String errorMsg =
+              Retries.callWithRetries(() -> provisioner.getClusterFailureMsg(provisionerContext, cluster),
+                                      RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
+                                      RetryableProvisionException.class::isInstance);
+            LOG.error("Cluster creation failed with error: {}", errorMsg);
+          } catch (Exception ex) {
+            LOG.error("Cluster creation failed but there was an error while retrieving the error message: {0}",
+                      ex.toString());
+          }
           return Optional.of(ProvisioningOp.Status.REQUESTING_DELETE);
         case DELETING:
           // create failed and it is somehow in deleting. This is just like the failed scenario,

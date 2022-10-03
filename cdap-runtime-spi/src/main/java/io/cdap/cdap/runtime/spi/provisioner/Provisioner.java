@@ -86,6 +86,20 @@ public interface Provisioner {
   ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception;
 
   /**
+   * Get the reason for cluster failure if it is available. This is only possible if status is
+   * {@link ClusterStatus#FAILED}
+   *
+   * @param context provisioner context
+   * @param cluster the cluster to get the failure error message for
+   * @return
+   * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
+   * @throws Exception if the operation failed in a non-retryable fashion
+   */
+  default String getClusterFailureMsg(ProvisionerContext context, Cluster cluster) throws Exception {
+    return "";
+  }
+
+  /**
    * Get details about the cluster. If the cluster does not exist, a cluster with status
    * {@link ClusterStatus#NOT_EXISTS} should be returned. This is called after a cluster has been created, but before
    * it has been initialized.
