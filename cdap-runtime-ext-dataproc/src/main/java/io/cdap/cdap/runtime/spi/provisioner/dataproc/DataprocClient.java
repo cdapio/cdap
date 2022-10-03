@@ -63,7 +63,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -666,38 +668,52 @@ abstract class DataprocClient implements AutoCloseable {
       .map(cluster -> convertStatus(cluster.getStatus()))
       .orElse(io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
 
-    // if it failed, try to get the create operation and log the error message
-    try {
-      if (status == io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.FAILED) {
-        String resourceName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(), conf.getRegion());
-        String filter = String.format("clusterName=%s AND operationType=CREATE", name);
-        OperationsClient.ListOperationsPagedResponse operationsResponse =
-          client.getOperationsClient().listOperations(resourceName, filter);
-        OperationsClient.ListOperationsPage page = operationsResponse.getPage();
-        if (page == null) {
-          LOG.warn("Unable to get the cause of the cluster creation failure.");
-          return status;
-        }
+    return status;
+  }
 
-        if (page.getPageElementCount() > 1) {
-          // shouldn't be possible
-          LOG.warn("Multiple create operations found for cluster {}, may not be able to find the failure message.",
-                   name);
-        }
-        if (page.getPageElementCount() > 0) {
-          Operation operation = page.getValues().iterator().next();
-          Status operationError = operation.getError();
-          if (operationError != null) {
-            LOG.warn("Failed to create cluster {}: {}", name, operationError.getMessage());
-          }
-        }
+  String getClusterFailureMsg(String name) throws RetryableProvisionException {
+    // TODO: this can return multiple operations if the cluster name is the same (ex: a previous cluster had the
+    // same name, was deleted, then this current cluster was created). This won't happen in practice for ephemeral
+    // clusters, but it's still not great to have this possibility in the implementation.
+    // https://cdap.atlassian.net/browse/CDAP-19641
+    String resourceName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(), conf.getRegion());
+    String filter = String.format("clusterName=%s AND operationType=CREATE", name);
+
+    OperationsClient.ListOperationsPagedResponse operationsResponse;
+    try {
+      operationsResponse = client.getOperationsClient().listOperations(resourceName, filter);
+    } catch (ApiException e) {
+      if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
+        // if there was an API exception that was not a 4xx, we can just try again
+        throw new RetryableProvisionException(e);
       }
-    } catch (Exception e) {
-      // if we failed to get the operations list, log an error and proceed with normal execution
-      LOG.warn("Unable to get the cause of the cluster creation failure.", e);
+      // otherwise, it's not a retryable failure
+      throw e;
     }
 
-    return status;
+    OperationsClient.ListOperationsPage page = operationsResponse.getPage();
+    if (page == null) {
+      return "Unable to get the cause of the cluster creation failure.";
+    }
+
+    if (page.getPageElementCount() > 1) {
+      // shouldn't be possible
+      return MessageFormat.format("Multiple create operations found for cluster {0}, may not be able to " +
+                                    "find the failure message.", name);
+    }
+
+    if (page.getPageElementCount() > 0) {
+      Operation operation = page.getValues().iterator().next();
+      Status operationError = operation.getError();
+      if (operationError != null) {
+        return MessageFormat.format("Failed to create cluster {0}: {1}. Details: {2}", name,
+                                    operationError.getMessage(),
+                                    operationError.getDetailsList() != null ?
+                                      Arrays.toString(operationError.getDetailsList().toArray()) : "");
+      }
+    }
+
+    return "";
   }
 
   /**

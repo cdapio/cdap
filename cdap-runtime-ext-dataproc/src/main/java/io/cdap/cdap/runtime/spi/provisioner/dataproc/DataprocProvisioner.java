@@ -370,6 +370,16 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   }
 
   @Override
+  public String getClusterFailureMsg(ProvisionerContext context, Cluster cluster) throws Exception {
+    DataprocConf conf = DataprocConf.create(createContextProperties(context));
+    String clusterName = cluster.getName();
+
+    try (DataprocClient client = clientFactory.create(conf)) {
+      return client.getClusterFailureMsg(clusterName);
+    }
+  }
+
+  @Override
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = cluster.getName();
