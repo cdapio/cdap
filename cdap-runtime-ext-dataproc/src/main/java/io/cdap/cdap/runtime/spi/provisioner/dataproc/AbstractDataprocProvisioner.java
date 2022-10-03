@@ -131,7 +131,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         .setCredentials(conf.getDataprocCredentials()).build().getService();
       String runId = context.getProgramRunInfo().getRun();
       String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runId);
-      ArtifactCacheManager.releaseCacheUsageForArtifacts(storageClient, bucket, runRootPath);
+      ArtifactCacheManager.getInstance().releaseCacheUsageForArtifacts(storageClient, bucket, runRootPath);
       DataprocUtils.deleteGCSPath(storageClient, bucket, getPath(DataprocUtils.CDAP_GCS_ROOT, runId));
     }
 

@@ -236,8 +236,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         }
       }
       if (!cachedFiles.isEmpty()) {
-        ArtifactCacheManager.recordCacheUsageForArtifacts(getStorageClient(), bucket, cachedFiles, runRootPath,
-                                                          cacheRootPath);
+        ArtifactCacheManager.getInstance().recordCacheUsageForArtifacts(getStorageClient(), bucket, cachedFiles,
+                                                                        runRootPath, cacheRootPath);
       }
 
       List<LocalFile> uploadedFiles = new ArrayList<>();
@@ -491,7 +491,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   /**
-   *
    * Uploads the file to GCS bucket.
    */
   private void uploadToGCS(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
@@ -662,7 +661,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Returns job name from run info.
    * namespace, application, program, run(36 characters)
    * Example: namespace_application_program_8e1cb2ce-a102-48cf-a959-c4f991a2b475
-   *
+   * <p>
    * The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), or hyphens (-).
    * The maximum length is 100 characters.
    *
