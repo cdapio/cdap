@@ -77,6 +77,7 @@ import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -318,6 +319,7 @@ public class AppFabricTestHelper {
       .setArtifactLocation(deployedJar)
       .setNamespaceId(namespaceId).setApplicationClass(applicationClass)
       .setConfigString(config == null ? null : new Gson().toJson(config))
+      .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
       .build();
     return getLocalManager().deploy(info).get();
   }

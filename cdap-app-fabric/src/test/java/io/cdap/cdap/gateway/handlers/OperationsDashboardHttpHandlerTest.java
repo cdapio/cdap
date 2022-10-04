@@ -48,6 +48,7 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -283,7 +284,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   /**
    * Adds {@link ApplicationSpecification} for APP1_ID and APP2_ID.
    */
-  private void addAppSpecs() throws BadRequestException {
+  private void addAppSpecs() throws ConflictException {
     WorkflowSpecification scheduledWorfklow1 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG1_ID.getProgram(), "scheduled workflow",
                                 Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
@@ -298,9 +299,10 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap()
       );
-    ApplicationMeta meta = new ApplicationMeta(dummyAppSpec1.getName(), dummyAppSpec1, null,
-                                               System.currentTimeMillis(), null);
-    store.addApplication(APP1_ID, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(dummyAppSpec1.getName(), dummyAppSpec1,
+                                               new ChangeDetail(null, null, null,
+                                                                System.currentTimeMillis()));
+    store.addApplication(APP1_ID, meta);
     WorkflowSpecification scheduledWorfklow2 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG2_ID.getProgram(), "scheduled workflow",
                                 Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
@@ -315,9 +317,10 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap()
       );
-    meta = new ApplicationMeta(dummyAppSpec2.getName(), dummyAppSpec2, null,
-                               System.currentTimeMillis(), null);
-    store.addApplication(APP2_ID, meta, null);
+    meta = new ApplicationMeta(dummyAppSpec2.getName(), dummyAppSpec2, new ChangeDetail(null, null,
+                                                                                        null, System.
+                                                                                          currentTimeMillis()));
+    store.addApplication(APP2_ID, meta);
   }
 
   /**

@@ -35,8 +35,7 @@ public class ApplicationWithPrograms extends ApplicationDeployable {
           applicationDeployable.getExistingAppSpec(), applicationDeployable.getApplicationDeployScope(),
           applicationDeployable.getApplicationClass(), applicationDeployable.getOwnerPrincipal(),
           applicationDeployable.canUpdateSchedules(), applicationDeployable.getSystemTables(),
-          applicationDeployable.getMetadata(), applicationDeployable.getChangeSummary(),
-          applicationDeployable.getAuthor());
+          applicationDeployable.getMetadata(), applicationDeployable.getChangeDetail());
     this.programDescriptors = ImmutableList.copyOf(programDescriptors);
   }
 

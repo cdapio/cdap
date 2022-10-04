@@ -20,7 +20,7 @@ import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
-import io.cdap.cdap.proto.artifact.ChangeSummaryRequest;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -52,9 +52,7 @@ public class AppDeploymentInfo {
   @Nullable
   private final AppDeploymentRuntimeInfo runtimeInfo;
   @Nullable
-  private final ChangeSummaryRequest changeSummary;
-  @Nullable
-  private final String author;
+  private final ChangeDetail changeDetail;
 
   /**
    * Creates a new {@link Builder}.
@@ -78,15 +76,14 @@ public class AppDeploymentInfo {
       .setOwnerPrincipal(other.ownerPrincipal)
       .setUpdateSchedules(other.updateSchedules)
       .setRuntimeInfo(other.runtimeInfo)
-      .setChangeSummary(other.changeSummary)
-      .setAuthor(other.author);
+      .setChangeDetail(other.changeDetail);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable ChangeSummaryRequest changeSummary, @Nullable String author) {
+                            @Nullable ChangeDetail changeDetail) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -97,8 +94,7 @@ public class AppDeploymentInfo {
     this.updateSchedules = updateSchedules;
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
-    this.changeSummary = changeSummary;
-    this.author = author;
+    this.changeDetail = changeDetail;
   }
 
   /**
@@ -181,20 +177,11 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the change summary description and parent version provided for the application edit or {@code null} if
-   * it is not provided.
+   * Returns the change detail {@code null} if it is not provided.
    */
   @Nullable
-  public ChangeSummaryRequest getChangeSummary() {
-    return changeSummary;
-  }
-
-  /**
-   * Returns the author of the application edit or {@code null} if it is not provided.
-   */
-  @Nullable
-  public String getAuthor() {
-    return author;
+  public ChangeDetail getChangeDetail() {
+    return changeDetail;
   }
 
   /**
@@ -214,9 +201,7 @@ public class AppDeploymentInfo {
     private boolean updateSchedules = true;
     private AppDeploymentRuntimeInfo runtimeInfo;
     @Nullable
-    private ChangeSummaryRequest changeSummary;
-    @Nullable
-    private String author;
+    private ChangeDetail changeDetail;
 
     private Builder() {
       // Only for the builder() method to use
@@ -279,13 +264,8 @@ public class AppDeploymentInfo {
       return this;
     }
 
-    public Builder setChangeSummary(@Nullable ChangeSummaryRequest changeSummary) {
-      this.changeSummary = changeSummary;
-      return this;
-    }
-
-    public Builder setAuthor(@Nullable String author) {
-      this.author = author;
+    public Builder setChangeDetail(@Nullable ChangeDetail changeDetail) {
+      this.changeDetail = changeDetail;
       return this;
     }
 
@@ -304,7 +284,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
                                    appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeSummary, author);
+                                   changeDetail);
     }
   }
 }

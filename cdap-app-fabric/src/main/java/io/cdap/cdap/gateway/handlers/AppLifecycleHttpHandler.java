@@ -69,7 +69,7 @@ import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import io.cdap.cdap.proto.artifact.ChangeSummaryRequest;
+import io.cdap.cdap.proto.artifact.ChangeSummary;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -683,7 +683,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           Object config = appRequest.getConfig();
           String configString = config == null ? null :
             config instanceof String ? (String) config : GSON.toJson(config);
-          ChangeSummaryRequest changeSummary = appRequest.getChangeSummary();
+          ChangeSummary changeSummary = appRequest.getChange();
 
           try {
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),

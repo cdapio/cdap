@@ -88,8 +88,8 @@ import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
-import io.cdap.cdap.proto.artifact.ChangeSummaryRequest;
-import io.cdap.cdap.proto.artifact.ChangeSummaryResponse;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
+import io.cdap.cdap.proto.artifact.ChangeSummary;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -294,7 +294,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       for (Map.Entry<ApplicationId, ApplicationSpecification> entry : list) {
         // TODO : change-summary to be fetched from ApplicationMeta for CDAP-19528
         ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(),
-            owners.get(entry.getKey()), null);
+                                                                         owners.get(entry.getKey()), null);
 
         try {
           capabilityReader.checkAllEnabled(entry.getValue());
@@ -326,10 +326,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    ChangeSummaryResponse changeSummary = new ChangeSummaryResponse(appMeta.getDescription(), appMeta.getAuthor(),
-                                                                    appMeta.getCreationTimeMillis());
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
-                                                                            changeSummary));
+                                                                            appMeta.getChange()));
   }
 
   /**
@@ -346,10 +344,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    ChangeSummaryResponse changeSummary = new ChangeSummaryResponse(latestApp.getDescription(), latestApp.getAuthor(),
-                                                                    latestApp.getCreationTimeMillis());
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal,
-                                                                            changeSummary));
+                                                                            latestApp.getChange()));
   }
 
   /**
@@ -512,7 +508,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
     return deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(), artifactId, requestedConfigStr,
-                     appRequest.getChangeSummary(), programTerminator, ownerAdmin.getOwner(appId),
+                     appRequest.getChange(), programTerminator, ownerAdmin.getOwner(appId),
                      appRequest.canUpdateSchedules());
   }
 
@@ -681,6 +677,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setConfigString(updatedAppConfig)
       .setOwnerPrincipal(ownerPrincipal)
       .setUpdateSchedules(updateSchedules)
+      .setChangeDetail(new ChangeDetail(null, null, requestingUser == null ? null :
+        requestingUser.getName(), System.currentTimeMillis()))
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
@@ -789,7 +787,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
-                                           @Nullable ChangeSummaryRequest changeSummary,
+                                           @Nullable ChangeSummary changeSummary,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules) throws Exception {
@@ -827,7 +825,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
                                            ArtifactSummary summary,
                                            @Nullable String configStr,
-                                           @Nullable ChangeSummaryRequest changeSummary,
+                                           @Nullable ChangeSummary changeSummary,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules, boolean isPreview,
@@ -996,13 +994,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
                                             @Nullable String appVersion,
                                             @Nullable String configStr,
-                                            @Nullable ChangeSummaryRequest changeSummary,
+                                            @Nullable ChangeSummary changeSummary,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
                                             boolean updateSchedules, boolean isPreview,
-                                            Map<String, String> userProps)
-    throws Exception {
+                                            Map<String, String> userProps) throws Exception {
     // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
     // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
     // pipeline - LocalArtifactLoaderStage
@@ -1030,7 +1027,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     // TODO @sansans : Fetch owner info JIRA: CDAP-19491
-
+    ChangeDetail change = new ChangeDetail(changeSummary == null ? null : changeSummary.getDescription(),
+                                           changeSummary == null ? null : changeSummary.getParentVersion(),
+                                           requestingUser == null ? null : requestingUser.getName(),
+                                           System.currentTimeMillis());
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()))
@@ -1042,10 +1042,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setConfigString(configStr)
       .setOwnerPrincipal(ownerPrincipal)
       .setUpdateSchedules(updateSchedules)
-      .setRuntimeInfo(isPreview ? new AppDeploymentRuntimeInfo(null, userProps,
-                                                               Collections.emptyMap()) : null)
-      .setChangeSummary(changeSummary)
-      .setAuthor(requestingUser == null ? null : requestingUser.getName())
+      .setRuntimeInfo(isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null)
+      .setChangeDetail(change)
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);

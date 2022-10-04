@@ -56,13 +56,10 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     ApplicationSpecification applicationSpecification = input.getSpecification();
     Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
-    ApplicationMeta meta = new ApplicationMeta(applicationSpecification.getName(), input.getSpecification(),
-                                               input.getChangeSummary() == null ? null :
-                                                 input.getChangeSummary().getDescription(), System.currentTimeMillis(),
-                                               input.getAuthor());
+    ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(), input.getSpecification(),
+                                               input.getChangeDetail());
     try {
-      store.addApplication(input.getApplicationId(), meta, input.getChangeSummary() == null ? null :
-        input.getChangeSummary().getParentVersion());
+      store.addApplication(input.getApplicationId(), appMeta);
     } catch (Exception e) {
       // if we failed to store the app spec cleanup the owner if it was added in this call
       if (ownerAdded) {

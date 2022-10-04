@@ -21,7 +21,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.proto.artifact.ChangeSummaryRequest;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -52,9 +52,7 @@ public class ApplicationDeployable {
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
   @Nullable
-  private final ChangeSummaryRequest changeSummary;
-  @Nullable
-  private final String author;
+  private final ChangeDetail changeDetail;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
@@ -63,7 +61,7 @@ public class ApplicationDeployable {
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
          applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
-         null, null);
+         null);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -74,8 +72,7 @@ public class ApplicationDeployable {
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables,
-                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeSummaryRequest changeSummary,
-                               @Nullable String author) {
+                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -87,8 +84,7 @@ public class ApplicationDeployable {
     this.systemTables = systemTables;
     this.applicationClass = applicationClass;
     this.metadata = metadata;
-    this.changeSummary = changeSummary;
-    this.author = author;
+    this.changeDetail = changeDetail;
   }
 
   /**
@@ -170,18 +166,10 @@ public class ApplicationDeployable {
   }
 
   /**
-   * Returns the change-summary descrptionand the parent-version of the edit of the application
+   * Returns the change details of the application
    */
   @Nullable
-  public ChangeSummaryRequest getChangeSummary() {
-    return changeSummary;
-  }
-
-  /**
-   * Returns the owner (user name) of the version of the application
-   */
-  @Nullable
-  public String getAuthor() {
-    return author;
+  public ChangeDetail getChangeDetail() {
+    return changeDetail;
   }
 }

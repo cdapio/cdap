@@ -39,7 +39,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -65,7 +65,6 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
-import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
@@ -83,6 +82,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -428,15 +428,10 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationMeta meta, @Nullable String parentVersion) throws
-    BadRequestException {
-    try {
+  public void addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
       TransactionRunners.run(transactionRunner, context -> {
-        getAppMetadataStore(context).createApplicationVersion(id, meta, parentVersion);
-      }, TransactionException.class);
-    } catch (TransactionException e) {
-      throw TransactionRunners.propagate(e, BadRequestException.class);
-    }
+        getAppMetadataStore(context).createApplicationVersion(id, meta);
+      }, ConflictException.class);
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
@@ -714,19 +709,7 @@ public class DefaultStore implements Store {
   @Override
   public ApplicationMeta getLatest(NamespaceId namespace, String appName) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespace, appName).stream()
-        .findAny().orElse(null);
-      //  If latest is null and app exists (legacy versions) then fetch -SNAPSHOT app
-      if (latest == null) {
-        latest = getAppMetadataStore(context).getApplication(namespace.getNamespace(), appName,
-                                                             ApplicationId.DEFAULT_VERSION);
-      }
-      // If -SNAPSHOT version does not exist, return the app corresponding to the smallest version-id string
-      if (latest == null) {
-        latest = getAppMetadataStore(context).getAllAppVersions(namespace.getNamespace(), appName)
-          .stream().findFirst().orElse(null);
-      }
-      return latest;
+      return getAppMetadataStore(context).getLatest(namespace, appName);
     });
   }
 
