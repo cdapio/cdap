@@ -886,12 +886,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // enforce DELETE privileges on the app
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     ensureNoRunningPrograms(appId);
-    ApplicationSpecification spec = store.getApplication(appId);
-    if (spec == null) {
-      throw new NotFoundException(Id.Application.fromEntityId(appId));
+    for (ApplicationSpecification appSpec : store.getAllAppVersions(appId)) {
+      removeAppInternal(new ApplicationId(appId.getNamespace(), appId.getApplication(), appSpec.getAppVersion()),
+                        appSpec);
     }
-
-    removeAppInternal(appId, spec);
   }
 
   /**
@@ -1185,5 +1183,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       LOG.debug("Failed to decode userId with exception {}", e);
     }
     return decodedUserId;
+  }
+
+  public String getLatestAppVersion(String namespace, String appId) {
+    return store.getLatestAppVersion(namespace, appId);
   }
 }

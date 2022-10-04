@@ -33,7 +33,7 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   private transient Integer hashCode;
 
   public ScheduleId(String namespace, String application, String version, String schedule) {
-    this(new ApplicationId(namespace, application, version), schedule);
+    this(new ApplicationId(namespace, application), schedule);
   }
 
   public ScheduleId(String namespace, String application, String schedule) {
@@ -56,7 +56,7 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
       throw new NullPointerException("Schedule id cannot be null.");
     }
     this.application = application;
-    this.version = appId.getVersion();
+    this.version = ApplicationId.DEFAULT_VERSION;
     this.schedule = schedule;
   }
 
