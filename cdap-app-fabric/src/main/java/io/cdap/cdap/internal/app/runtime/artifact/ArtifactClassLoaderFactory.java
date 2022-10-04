@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
-import io.cdap.cdap.app.runtime.ProgramRunnerClassLoaderFactory;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
@@ -28,6 +28,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import org.apache.twill.filesystem.Location;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.util.Iterator;
+import javax.annotation.Nullable;
 
 /**
  * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the artifact and
@@ -46,12 +48,19 @@ final class ArtifactClassLoaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactClassLoaderFactory.class);
 
   private final CConfiguration cConf;
-  private final ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory;
+  @Nullable
+  private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
   private final File tmpDir;
 
-  ArtifactClassLoaderFactory(CConfiguration cConf, ProgramRunnerClassLoaderFactory programRunnerClassLoaderFactory) {
+  @VisibleForTesting
+  ArtifactClassLoaderFactory(CConfiguration cConf) {
+    this(cConf, null);
+  }
+
+  ArtifactClassLoaderFactory(CConfiguration cConf,
+                             @Nullable ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.cConf = cConf;
-    this.programRunnerClassLoaderFactory = programRunnerClassLoaderFactory;
+    this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -68,15 +77,18 @@ final class ArtifactClassLoaderFactory {
    */
   CloseableClassLoader createClassLoader(File unpackDir) {
     ClassLoader sparkClassLoader = null;
-    try {
-      // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
-      // It is needed because we don't know what program types that an artifact might have.
-      // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
-      sparkClassLoader = programRunnerClassLoaderFactory.createProgramClassLoader(ProgramType.SPARK);
-    } catch (Exception e) {
-      // If Spark is not supported, exception is expected. We'll use the default filter.
-      LOG.warn("Spark is not supported. Not using ProgramClassLoader from Spark");
-      LOG.trace("Failed to create spark program runner with error:", e);
+    if (programRuntimeProviderLoader != null) {
+      try {
+        // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
+        // It is needed because we don't know what program types that an artifact might have.
+        // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
+        sparkClassLoader = programRuntimeProviderLoader.get(ProgramType.SPARK)
+          .createProgramClassLoader(cConf, ProgramType.SPARK);
+      } catch (Exception e) {
+        // If Spark is not supported, exception is expected. We'll use the default filter.
+        LOG.warn("Spark is not supported. Not using ProgramClassLoader from Spark");
+        LOG.trace("Failed to create spark program runner with error:", e);
+      }
     }
 
     ProgramClassLoader programClassLoader = null;
