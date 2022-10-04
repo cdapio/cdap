@@ -22,7 +22,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
-import io.cdap.cdap.proto.artifact.ChangeSummaryResponse;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class ApplicationDetail {
   private final String name;
   private final String appVersion;
   private final String description;
-  private final ChangeSummaryResponse changeSummary;
+  private final ChangeDetail change;
   private final String configuration;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
@@ -60,7 +60,7 @@ public class ApplicationDetail {
   public ApplicationDetail(String name,
                            String appVersion,
                            String description,
-                           @Nullable ChangeSummaryResponse changeSummary,
+                           @Nullable ChangeDetail change,
                            String configuration,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
@@ -70,7 +70,7 @@ public class ApplicationDetail {
     this.name = name;
     this.appVersion = appVersion;
     this.description = description;
-    this.changeSummary = changeSummary;
+    this.change = change;
     this.configuration = configuration;
     this.datasets = datasets;
     this.programs = programs;
@@ -94,8 +94,8 @@ public class ApplicationDetail {
     return configuration;
   }
 
-  public ChangeSummaryResponse getChangeSummary() {
-    return changeSummary;
+  public ChangeDetail getChange() {
+    return change;
   }
 
   public List<DatasetDetail> getDatasets() {
@@ -119,9 +119,8 @@ public class ApplicationDetail {
     return ownerPrincipal;
   }
 
-  public static ApplicationDetail fromSpec(ApplicationSpecification spec,
-                                           @Nullable String ownerPrincipal,
-                                           @Nullable ChangeSummaryResponse changeSummary) {
+  public static ApplicationDetail fromSpec(ApplicationSpecification spec, @Nullable String ownerPrincipal,
+                                           @Nullable ChangeDetail change) {
     // Adding owner, creation time and change summary description fields to the app detail
 
     List<ProgramRecord> programs = new ArrayList<>();
@@ -162,7 +161,7 @@ public class ApplicationDetail {
     // in the meantime, we don't want this api call to null pointer exception.
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
-    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), changeSummary,
+    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), change,
                                  spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
   }
 }

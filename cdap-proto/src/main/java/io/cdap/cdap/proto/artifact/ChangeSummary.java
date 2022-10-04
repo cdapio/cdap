@@ -25,25 +25,25 @@ import javax.annotation.Nullable;
  * Represents the change summary for an update of the application
  */
 @Beta
-public class ChangeSummaryRequest {
+public class ChangeSummary {
   @Nullable
   protected final String description;
   @Nullable
   protected final String parentVersion;
 
-  public ChangeSummaryRequest(@Nullable String description, @Nullable String parentVersion) {
+  public ChangeSummary(@Nullable String description, @Nullable String parentVersion) {
     this.description = description;
     this.parentVersion = parentVersion;
   }
 
   @Nullable
   public String getDescription() {
-    return description == null ? null : description;
+    return description;
   }
 
   @Nullable
   public String getParentVersion() {
-    return parentVersion == null ? null : parentVersion;
+    return parentVersion;
   }
 
   @Override
@@ -55,7 +55,7 @@ public class ChangeSummaryRequest {
       return false;
     }
 
-    ChangeSummaryRequest that = (ChangeSummaryRequest) o;
+    ChangeSummary that = (ChangeSummary) o;
 
     return Objects.equals(description, that.description) && Objects.equals(parentVersion, that.parentVersion);
   }
@@ -67,7 +67,7 @@ public class ChangeSummaryRequest {
 
   @Override
   public String toString() {
-    return "ChangeSummaryRequest{" +
+    return "ChangeSummary{" +
       "description='" + description + '\'' +
       ", parentVersion=" + parentVersion +
       '}';

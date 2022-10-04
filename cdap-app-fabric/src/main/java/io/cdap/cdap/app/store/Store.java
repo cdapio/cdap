@@ -26,7 +26,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
@@ -292,13 +292,12 @@ public interface Store {
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
-   *
    * @param id            application id
    * @param meta          application metadata to store
-   * @param parentVersion version id of the application
+   * @throws ConflictException if the app cannot be deployed when the user provided parent-version doesn't match the
+   * current latest version
    */
-  void addApplication(ApplicationId id, ApplicationMeta meta, @Nullable String parentVersion) throws
-    BadRequestException;
+  void addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException;
 
   /**
    * Return a list of program specifications that are deleted comparing the specification in the store with the

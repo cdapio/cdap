@@ -22,15 +22,14 @@ import javax.annotation.Nullable;
 /**
  * Change Summary returned in the app response.
  */
-public class ChangeSummaryResponse {
-  @Nullable
-  private final String description;
+public class ChangeDetail extends ChangeSummary {
   @Nullable
   private final String author;
   private final long creationTimeMillis;
 
-  public ChangeSummaryResponse(@Nullable String description, @Nullable String author, long creationTimeMillis) {
-    this.description = description;
+  public ChangeDetail(@Nullable String description, @Nullable String parentVersion, @Nullable String author,
+                      long creationTimeMillis) {
+    super(description, parentVersion);
     this.author = author;
     this.creationTimeMillis = creationTimeMillis;
   }
@@ -50,14 +49,6 @@ public class ChangeSummaryResponse {
     return author;
   }
 
-  /**
-   * @return Description of the change.
-   */
-  @Nullable
-  public String getDescription() {
-    return description;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -67,23 +58,21 @@ public class ChangeSummaryResponse {
       return false;
     }
 
-    ChangeSummaryResponse that = (ChangeSummaryResponse) o;
+    ChangeDetail that = (ChangeDetail) o;
 
     return creationTimeMillis == that.creationTimeMillis &&
-      Objects.equals(description, that.description) &&
       Objects.equals(author, that.author);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(description, author, creationTimeMillis);
+    return Objects.hash(author, creationTimeMillis);
   }
 
   @Override
   public String toString() {
-    return "ChangeSummaryResponse{" +
-      "description='" + description + '\'' +
-      ", author='" + author + '\'' +
+    return "ChangeDetail{" +
+      "author='" + author + '\'' +
       ", creationTimeMillis=" + creationTimeMillis +
       '}';
   }

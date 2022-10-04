@@ -46,7 +46,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -63,6 +63,7 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -99,7 +100,6 @@ public abstract class DefaultStoreTest {
   protected static DefaultNamespaceStore nsStore;
   protected static NamespaceAdmin nsAdmin;
   private static final Gson GSON = new Gson();
-  private static final long TEST_CREATION_TIME = System.currentTimeMillis();
 
   private int sourceId;
 
@@ -146,8 +146,10 @@ public abstract class DefaultStoreTest {
   public void testLoadingProgram() throws Exception {
     ApplicationSpecification appSpec = Specifications.from(new FooApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, new ChangeDetail(null, null, null,
+                                                                                            System.
+                                                                                              currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     ProgramDescriptor descriptor = store.loadProgram(appId.mr("mrJob1"));
     Assert.assertNotNull(descriptor);
@@ -474,11 +476,12 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testAddApplication() throws BadRequestException {
+  public void testAddApplication() throws ConflictException {
     ApplicationSpecification spec = Specifications.from(new FooApp());
     ApplicationId appId = new ApplicationId("account1", "application1");
-    ApplicationMeta meta = new ApplicationMeta("application1", spec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta("application1", spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     spec = store.getApplication(appId);
     Assert.assertNotNull(spec);
@@ -486,15 +489,17 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testUpdateChangedApplication() throws BadRequestException {
+  public void testUpdateChangedApplication() throws ConflictException {
     ApplicationId id = new ApplicationId("account1", "application1");
-    ApplicationMeta meta = new ApplicationMeta("application1", Specifications.from(new FooApp()), null,
-                                               TEST_CREATION_TIME, null);
-    store.addApplication(id, meta, null);
+    ApplicationMeta meta = new ApplicationMeta("application1", Specifications.from(new FooApp()),
+                                               new ChangeDetail(null, null, null,
+                                                                System.currentTimeMillis()));
+    store.addApplication(id, meta);
     // update
     ApplicationMeta metaUpdate = new ApplicationMeta("application1", Specifications.from(new ChangedFooApp()),
-                                                     null, TEST_CREATION_TIME, null);
-    store.addApplication(id, metaUpdate, null);
+                                                     new ChangeDetail(null, null, null,
+                                                                      System.currentTimeMillis()));
+    store.addApplication(id, metaUpdate);
 
     ApplicationSpecification spec = store.getApplication(id);
     Assert.assertNotNull(spec);
@@ -545,14 +550,16 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testServiceDeletion() throws BadRequestException {
+  public void testServiceDeletion() throws ConflictException {
     // Store the application specification
     AbstractApplication app = new AppWithServices();
 
     ApplicationSpecification appSpec = Specifications.from(app);
     ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, new ChangeDetail(null, null,
+                                                                                            null, System.
+                                                                                              currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     AbstractApplication newApp = new AppWithNoServices();
 
@@ -565,11 +572,13 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testServiceInstances() throws BadRequestException {
+  public void testServiceInstances() throws ConflictException {
     ApplicationSpecification appSpec = Specifications.from(new AppWithServices());
     ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec, new ChangeDetail(null, null,
+                                                                                            null, System
+                                                                                              .currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     // Test setting of service instances
     ProgramId programId = appId.program(ProgramType.SERVICE, "NoOpService");
@@ -590,11 +599,12 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testWorkerInstances() throws BadRequestException {
+  public void testWorkerInstances() throws ConflictException {
     ApplicationSpecification spec = Specifications.from(new AppWithWorker());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     ProgramId programId = appId.worker(AppWithWorker.WORKER);
     int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
@@ -608,12 +618,13 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testRemoveAll() throws BadRequestException {
+  public void testRemoveAll() throws ConflictException {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app("application1");
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -624,12 +635,13 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testRemoveApplication() throws BadRequestException {
+  public void testRemoveApplication() throws ConflictException {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -640,7 +652,7 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testProgramRunCount() throws BadRequestException {
+  public void testProgramRunCount() throws ConflictException {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
     ArtifactId testArtifact = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
@@ -650,9 +662,9 @@ public abstract class DefaultStoreTest {
     ProgramId nonExistingProgramId = appId.workflow("nonExisting");
 
     // add the application
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME,
-                                                     null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     // add some run records to workflow and service
     for (int i = 0; i < 5; i++) {
@@ -687,12 +699,12 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testRuntimeArgsDeletion() throws BadRequestException {
+  public void testRuntimeArgsDeletion() throws ConflictException {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = new ApplicationId("testDeleteRuntimeArgs", spec.getName());
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME,
-                                               null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -732,7 +744,7 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testHistoryDeletion() throws BadRequestException {
+  public void testHistoryDeletion() throws ConflictException {
 
     // Deploy two apps, write some history for programs
     // Remove application using accountId, AppId and verify
@@ -740,14 +752,15 @@ public abstract class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("testDeleteAll");
     ApplicationId appId1 = namespaceId.app(spec.getName());
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME,
-                                               null);
-    store.addApplication(appId1, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId1, meta);
 
     spec = Specifications.from(new AppWithServices());
     ApplicationId appId2 = namespaceId.app(spec.getName());
-    meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId2, meta, null);
+    meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                      System.currentTimeMillis()));
+    store.addApplication(appId2, meta);
 
     ProgramId mapreduceProgramId1 = appId1.mr("NoOpMR");
     ProgramId workflowProgramId1 = appId1.workflow("NoOpWorkflow");
@@ -805,12 +818,12 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testRunsLimit() throws BadRequestException {
+  public void testRunsLimit() throws ConflictException {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = new ApplicationId("testRunsLimit", spec.getName());
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME,
-                                               null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     ProgramId mapreduceProgramId = new ApplicationId("testRunsLimit", spec.getName())
       .mr(AllProgramsApp.NoOpMR.class.getSimpleName());
@@ -834,13 +847,13 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testCheckDeletedProgramSpecs() throws BadRequestException {
+  public void testCheckDeletedProgramSpecs() throws ConflictException {
     //Deploy program with all types of programs.
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME,
-                                               null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getMapReduce().keySet());
@@ -873,18 +886,19 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testScanApplications() throws BadRequestException {
+  public void testScanApplications() throws ConflictException {
     testScanApplications(store);
   }
 
-  protected void testScanApplications(Store store) throws BadRequestException {
+  protected void testScanApplications(Store store) throws ConflictException {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
     int count = 100;
     for (int i = 0; i < count; i++) {
       String appName = "test" + i;
-      ApplicationMeta meta = new ApplicationMeta(appName, appSpec, null, TEST_CREATION_TIME, null);
-      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), meta, null);
+      ApplicationMeta meta = new ApplicationMeta(appName, appSpec, new ChangeDetail(null, null, null,
+                                                                                    System.currentTimeMillis()));
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), meta);
     }
 
     List<ApplicationId> apps = new ArrayList<ApplicationId>();
@@ -909,20 +923,21 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testScanApplicationsWithNamespace() throws BadRequestException {
+  public void testScanApplicationsWithNamespace() throws ConflictException {
     testScanApplicationsWithNamespace(store);
   }
 
-  public void testScanApplicationsWithNamespace(Store store) throws BadRequestException {
+  public void testScanApplicationsWithNamespace(Store store) throws ConflictException {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
     int count = 100;
     for (int i = 0; i < count / 2; i++) {
       String appName = "test" + (2 * i);
-      ApplicationMeta meta = new ApplicationMeta(appName, appSpec, null, TEST_CREATION_TIME, null);
-      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), meta, null);
+      ApplicationMeta meta = new ApplicationMeta(appName, appSpec, new ChangeDetail(null, null, null,
+                                                                                    System.currentTimeMillis()));
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), meta);
       appName = "test" + (2 * i + 1);
-      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), meta, null);
+      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), meta);
     }
 
     List<ApplicationId> apps = new ArrayList<ApplicationId>();
@@ -957,12 +972,13 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testCheckDeletedWorkflow() throws BadRequestException {
+  public void testCheckDeletedWorkflow() throws ConflictException {
     //Deploy program with all types of programs.
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, null, TEST_CREATION_TIME, null);
-    store.addApplication(appId, meta, null);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec, new ChangeDetail(null, null, null,
+                                                                                      System.currentTimeMillis()));
+    store.addApplication(appId, meta);
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());
