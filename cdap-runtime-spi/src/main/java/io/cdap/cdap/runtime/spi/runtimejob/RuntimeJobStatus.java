@@ -25,7 +25,8 @@ public enum RuntimeJobStatus {
   STOPPING(false),
   STOPPED(true),
   COMPLETED(true),
-  FAILED(true);
+  FAILED(true),
+  UNKNOWN(false);
 
   private final boolean terminated;
 
