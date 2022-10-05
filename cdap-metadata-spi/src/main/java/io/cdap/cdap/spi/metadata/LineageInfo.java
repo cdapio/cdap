@@ -38,16 +38,18 @@ public class LineageInfo {
   private final Map<Asset, Set<Asset>> targetToSources;
   private final Long startTimeMs;
   private final Long endTimeMs;
+  private final String lineageId;
 
   private LineageInfo(Set<Asset> sources, Set<Asset> targets, Map<Asset, Set<Asset>> sourceToTargets,
                       Map<Asset, Set<Asset>> targetToSources, @Nullable Long startTimeMs,
-                      @Nullable Long endTimeMs) {
+                      @Nullable Long endTimeMs, String lineageId) {
     this.sources = Collections.unmodifiableSet(new HashSet<>(sources));
     this.targets = Collections.unmodifiableSet(new HashSet<>(targets));
     this.sourceToTargets = Collections.unmodifiableMap(new HashMap<>(sourceToTargets));
     this.targetToSources = Collections.unmodifiableMap(new HashMap<>(targetToSources));
     this.startTimeMs = startTimeMs;
     this.endTimeMs = endTimeMs;
+    this.lineageId = lineageId;
   }
 
   /**
@@ -94,6 +96,13 @@ public class LineageInfo {
     return endTimeMs;
   }
 
+  /**
+   * Returns the lineage ID.
+   */
+  public String getLineageId() {
+    return lineageId;
+  }
+
   @Override
   public String toString() {
     return "LineageInfo{" +
@@ -103,6 +112,7 @@ public class LineageInfo {
       ", targetToSources=" + targetToSources +
       ", startTimeMs=" + startTimeMs +
       ", endTimeMs=" + endTimeMs +
+      ", lineageId=" + lineageId +
       '}';
   }
 
@@ -120,12 +130,13 @@ public class LineageInfo {
       sourceToTargets.equals(that.sourceToTargets) &&
       targetToSources.equals(that.targetToSources) &&
       Objects.equals(startTimeMs, that.startTimeMs) &&
-      Objects.equals(endTimeMs, that.endTimeMs);
+      Objects.equals(endTimeMs, that.endTimeMs) &&
+      Objects.equals(lineageId, that.lineageId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs);
+    return Objects.hash(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs, lineageId);
   }
 
   public static LineageInfo.Builder builder() {
@@ -142,6 +153,7 @@ public class LineageInfo {
     private final Map<Asset, Set<Asset>> targetToSources;
     private Long startTimeMs;
     private Long endTimeMs;
+    private String lineageId;
 
     private Builder() {
       this.sourceToTargets = new HashMap<>();
@@ -197,7 +209,7 @@ public class LineageInfo {
     }
 
     /**
-     * Set the start time of the program run.
+     * Sets the start time of the program run.
      */
     public Builder setStartTimeMs(@Nullable Long startTimeMs) {
       this.startTimeMs = startTimeMs;
@@ -205,10 +217,18 @@ public class LineageInfo {
     }
 
     /**
-     * Set the end time of the program run.
+     * Sets the end time of the program run.
      */
     public Builder setEndTimeMs(@Nullable Long endTimeMs) {
       this.endTimeMs = endTimeMs;
+      return this;
+    }
+
+    /**
+     * Sets the id of LineageInfo.
+     */
+    public Builder setLineageId(String lineageId) {
+      this.lineageId = lineageId;
       return this;
     }
 
@@ -288,7 +308,7 @@ public class LineageInfo {
      * Creates a new instance of {@link LineageInfo}.
      */
     public LineageInfo build() {
-      return new LineageInfo(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs);
+      return new LineageInfo(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs, lineageId);
     }
   }
 }
