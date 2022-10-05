@@ -38,7 +38,7 @@ public class ProgramRun {
   private final String status;
   private final Map<String, String> properties;
 
-  private ProgramRun(String runId, @Nullable String programId, @Nullable String namespace, @Nullable String application,
+  private ProgramRun(String runId, String programId, String namespace, String application,
                      @Nullable Long startTimeMs, @Nullable Long endTimeMs, @Nullable String status,
                      Map<String, String> properties) {
     if (startTimeMs != null && endTimeMs != null && startTimeMs >= endTimeMs) {
@@ -64,7 +64,6 @@ public class ProgramRun {
   /**
    * Returns the id of the program which created the run.
    */
-  @Nullable
   public String getProgramId() {
     return programId;
   }
@@ -72,7 +71,6 @@ public class ProgramRun {
   /**
    * Returns the namespace in which the program was run.
    */
-  @Nullable
   public String getNamespace() {
     return namespace;
   }
@@ -80,7 +78,6 @@ public class ProgramRun {
   /**
    * Returns the underlying application name for the program.
    */
-  @Nullable
   public String getApplication() {
     return application;
   }
@@ -219,7 +216,7 @@ public class ProgramRun {
     /**
      * Set the program run status.
      */
-    public Builder setStatus(String status) {
+    public Builder setStatus(@Nullable String status) {
       this.status = status;
       return this;
     }
