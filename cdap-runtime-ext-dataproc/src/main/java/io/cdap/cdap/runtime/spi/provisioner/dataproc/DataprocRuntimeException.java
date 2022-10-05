@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.error.api.ErrorTagProvider;
 
@@ -48,8 +49,14 @@ public class DataprocRuntimeException extends RuntimeException implements ErrorT
     this(cause, "", tags);
   }
 
-  public DataprocRuntimeException(@Nullable String operationId, Throwable cause) {
-    super(createMessage(operationId, cause), cause);
+  public DataprocRuntimeException(@Nullable String operationId, Throwable cause, ErrorTag... tags) {
+    this(operationId, null, cause, tags);
+  }
+
+  public DataprocRuntimeException(@Nullable String operationId, @Nullable String troubleshootingMessage,
+                                  Throwable cause, ErrorTag... tags) {
+    super(createMessage(operationId, troubleshootingMessage, cause), cause);
+    errorTags.addAll(Arrays.asList(tags));
   }
 
   @Override
@@ -57,17 +64,23 @@ public class DataprocRuntimeException extends RuntimeException implements ErrorT
     return String.format("ErrorTags: %s,  Msg: %s", errorTags, getMessage() != null ? getMessage() : "");
   }
 
-  private static String createMessage(Throwable cause) {
-    return createMessage(null, cause);
-  }
-
-  private static String createMessage(@Nullable String operationId, Throwable cause) {
+  private static String createMessage(@Nullable String operationId,
+                                      @Nullable String troubleShootingMessage, Throwable cause) {
+    StringBuilder message = new StringBuilder();
     if (operationId != null) {
-      return String.format("Dataproc operation %s failure: %s",
-                           operationId, Throwables.getRootCause(cause).getMessage());
+      message.append("Dataproc operation ")
+        .append(operationId)
+        .append(" failure: ")
+        .append(Throwables.getRootCause(cause).getMessage());
     } else {
-      return String.format("Dataproc operation failure: %s", Throwables.getRootCause(cause).getMessage());
+      message.append("Dataproc operation failure: ")
+        .append(Throwables.getRootCause(cause).getMessage());
     }
+    if (!Strings.isNullOrEmpty(troubleShootingMessage)) {
+      message.append("\n")
+        .append(troubleShootingMessage);
+    }
+    return message.toString();
   }
 
   @Override

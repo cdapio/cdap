@@ -25,17 +25,21 @@ import com.google.api.gax.grpc.GrpcStatusCode;
 import com.google.api.gax.httpjson.HttpJsonStatusCode;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.InvalidArgumentException;
+import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.services.compute.Compute;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
+import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.grpc.Status;
 import org.hamcrest.core.IsInstanceOf;
@@ -62,6 +66,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @PrepareForTest({DataprocClient.class, ClusterControllerClient.class, OperationsClient.class,
   OperationsClient.ListOperationsPagedResponse.class})
@@ -93,15 +103,14 @@ public class DataprocClientTest {
     dataprocConf = DataprocConf.create(properties);
 
     sshDataprocClientFactory = (conf, requireSSH) ->
-      new SSHDataprocClient(dataprocConf, clusterControllerClientMock, dconf -> computeMock);
+      new SSHDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock);
     mockDataprocClientFactory = (conf, requireSSH) ->
-      new MockDataprocClient(dataprocConf, clusterControllerClientMock, dconf -> computeMock);
+      new MockDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock);
 
     Compute.Networks networksMock = Mockito.mock(Compute.Networks.class);
     listMock = Mockito.mock(Compute.Networks.List.class);
     Mockito.when(computeMock.networks()).thenReturn(networksMock);
     Mockito.when(networksMock.list(Mockito.any())).thenReturn(listMock);
-
   }
 
   @Test
@@ -161,10 +170,9 @@ public class DataprocClientTest {
   }
 
 
-
   @Test
   public void apiExceptionWithNon4XXThrowsRetryableException() throws Exception {
-    //500
+    // 500
     ApiException e = new ApiException(new Throwable(), GrpcStatusCode.of(Status.Code.UNKNOWN), true);
 
     PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.anyString(), Mockito.anyString(),
@@ -177,7 +185,7 @@ public class DataprocClientTest {
 
   @Test
   public void apiExceptionWith4XXNotThrowRetryableException() throws Exception {
-    //500
+    // 500
     ApiException e = new ApiException(new Throwable(), GrpcStatusCode.of(Status.Code.UNAUTHENTICATED), true);
 
     PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.anyString(), Mockito.anyString(),
@@ -227,11 +235,66 @@ public class DataprocClientTest {
     Mockito.when(operationFuture.getMetadata()).thenReturn(apiFuture);
     String operationId = "projects/proj/regions/us-east1/operations/myop";
     Mockito.when(operationFuture.getName()).thenReturn(operationId);
+    // When cluster creation fails, client attempts to delete the cluster.
+    // Throw a NotFoundException to handle this call gracefully.
+    Mockito.when(clusterControllerClientMock.getCluster(Mockito.any(GetClusterRequest.class)))
+      .thenThrow(new NotFoundException(new Exception("Cluster not found!"),
+                                       HttpJsonStatusCode.of(404), false));
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectMessage(String.format("Dataproc operation %s failure: %s", operationId, errorMessage));
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
     mockDataprocClientFactory.create(dataprocConf).createCluster("name", "2.0",
                                                                  Collections.emptyMap(), true, null);
+  }
+
+  @Test
+  public void testCreateClusterThrowsUserError() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("troubleshootingDocsURL", "https://abc.com/troubleshooting");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = Mockito.mock(OperationFuture.class);
+    Mockito.when(clusterControllerClientMock.createClusterAsync(Matchers.eq(conf.getProjectId()),
+                                                                Matchers.eq(conf.getRegion()),
+                                                                Mockito.any(Cluster.class)))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = Mockito.mock(ApiFuture.class);
+    String errorMessage = "Invalid machine type";
+    ApiException apiException = new InvalidArgumentException(new IOException(errorMessage),
+                                                             HttpJsonStatusCode.of(404),
+                                                             false);
+    Mockito.when(apiFuture.get()).thenThrow(new ExecutionException(apiException));
+    Mockito.when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    String operationId = "projects/proj/regions/us-east1/operations/myop";
+    Mockito.when(operationFuture.getName()).thenReturn(operationId);
+    // When cluster creation fails, client attempts to delete the cluster.
+    // Throw a NotFoundException to handle this call gracefully.
+    Mockito.when(clusterControllerClientMock.getCluster(Mockito.any(GetClusterRequest.class)))
+      .thenThrow(new NotFoundException(new Exception("Cluster not found!"),
+                                       HttpJsonStatusCode.of(404), false));
+    try {
+      mockDataprocClientFactory.create(conf)
+        .createCluster("name", "2.0", Collections.emptyMap(), true, null);
+      fail("Exception not thrown by createCluster().");
+    } catch (DataprocRuntimeException e) {
+      assertTrue("Thrown exception doesn't contain user error tag.",
+                 e.getErrorTags().contains(ErrorTagProvider.ErrorTag.USER));
+      assertEquals("Exception cause is not of type InvalidArgumentException",
+                   e.getCause().getClass(), InvalidArgumentException.class);
+      assertTrue("Error message doesn't contain troubleshooting docs link.",
+                 e.getMessage().contains("https://abc.com/troubleshooting"));
+    }
+
+    // Ensure help message is absent when troubleshooting docs url is missing.
+    properties.remove("troubleshootingDocsURL");
+    conf = DataprocConf.create(properties);
+    thrown.expect(DataprocRuntimeException.class);
+    thrown.expectMessage(not(containsString("refer to")));
+    mockDataprocClientFactory.create(conf).createCluster("name", "2.0",
+                                                         Collections.emptyMap(), true, null);
   }
 
   @Test

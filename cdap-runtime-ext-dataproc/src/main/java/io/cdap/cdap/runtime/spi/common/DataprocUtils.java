@@ -26,6 +26,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageBatch;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -71,6 +72,11 @@ public final class DataprocUtils {
   private static final SplittableRandom RANDOM = new SplittableRandom();
   private static final int SET_CUSTOM_TIME_MAX_RETRY = 6;
   private static final int SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY = 20000;
+
+  public static final String TROUBLESHOOTING_DOCS_URL_KEY = "troubleshootingDocsURL";
+  // Empty url will ensure help messages don't appear by default in Dataproc error messages.
+  // This property needs to be overridden in cdap-site.
+  public static final String TROUBLESHOOTING_DOCS_URL_DEFAULT = "";
 
   /**
    * HTTP Status-Code 429: RESOURCE_EXHAUSTED.
@@ -391,6 +397,13 @@ public final class DataprocUtils {
         Thread.sleep(RANDOM.nextInt(SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY));
       }
     }
+  }
+
+  public static String getTroubleshootingHelpMessage(@Nullable String troubleshootingDocsURL) {
+    if (Strings.isNullOrEmpty(troubleshootingDocsURL)) {
+      return "";
+    }
+    return String.format("For troubleshooting Dataproc errors, refer to %s", troubleshootingDocsURL);
   }
 
   private DataprocUtils() {

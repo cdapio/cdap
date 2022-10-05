@@ -163,6 +163,11 @@ final class DataprocConf {
   private final int computeConnectionTimeout;
 
   private final boolean disableGCSCaching;
+  private  final String troubleshootingDocsUrl;
+
+  public String getTroubleshootingDocsUrl() {
+    return troubleshootingDocsUrl;
+  }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
@@ -184,7 +189,8 @@ final class DataprocConf {
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
                        boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
-                       @Nullable String rootUrl, boolean disableGCSCaching, boolean disableLocalCaching) {
+                       @Nullable String rootUrl, boolean disableGCSCaching, boolean disableLocalCaching,
+                       String troubleshootingDocsUrl) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -240,6 +246,7 @@ final class DataprocConf {
     this.rootUrl = rootUrl;
     this.disableGCSCaching = disableGCSCaching;
     this.disableLocalCaching = disableLocalCaching;
+    this.troubleshootingDocsUrl = troubleshootingDocsUrl;
   }
 
   String getRegion() {
@@ -691,6 +698,9 @@ final class DataprocConf {
 
     boolean disableGCSCaching = Boolean.parseBoolean(
       properties.getOrDefault(DISABLE_GCS_CACHING, "false"));
+    String troubleshootingDocsURL =
+      properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
+                              DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -706,7 +716,7 @@ final class DataprocConf {
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
                             enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
-                            disableGCSCaching, disableLocalCaching);
+                            disableGCSCaching, disableLocalCaching, troubleshootingDocsURL);
   }
 
   // the UI never sends nulls, it only sends empty strings.
