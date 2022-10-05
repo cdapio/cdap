@@ -140,8 +140,8 @@ public class LineageInfo {
     private Set<Asset> targets;
     private final Map<Asset, Set<Asset>> sourceToTargets;
     private final Map<Asset, Set<Asset>> targetToSources;
-    private Long startTime;
-    private Long endTime;
+    private Long startTimeMs;
+    private Long endTimeMs;
 
     private Builder() {
       this.sourceToTargets = new HashMap<>();
@@ -199,16 +199,16 @@ public class LineageInfo {
     /**
      * Set the start time of the program run.
      */
-    public Builder setStartTime(Long startTime) {
-      this.startTime = startTime;
+    public Builder setStartTimeMs(@Nullable Long startTimeMs) {
+      this.startTimeMs = startTimeMs;
       return this;
     }
 
     /**
      * Set the end time of the program run.
      */
-    public Builder setEndTime(Long endTime) {
-      this.endTime = endTime;
+    public Builder setEndTimeMs(@Nullable Long endTimeMs) {
+      this.endTimeMs = endTimeMs;
       return this;
     }
 
@@ -288,7 +288,7 @@ public class LineageInfo {
      * Creates a new instance of {@link LineageInfo}.
      */
     public LineageInfo build() {
-      return new LineageInfo(sources, targets, sourceToTargets, targetToSources, startTime, endTime);
+      return new LineageInfo(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs);
     }
   }
 }
