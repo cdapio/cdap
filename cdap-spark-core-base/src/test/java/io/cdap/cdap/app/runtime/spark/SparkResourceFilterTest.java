@@ -23,18 +23,18 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link SparkResourceFilters}.
+ * Unit tests for {@link SparkResourceFilter}.
  */
-public class SparkResourceFiltersTest {
+public class SparkResourceFilterTest {
   @Test
   public void testSparkAPIClassPassesSparkFilter() {
-    FilterClassLoader.Filter filter = SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER;
+    FilterClassLoader.Filter filter = new SparkResourceFilter();
     Assert.assertTrue(filter.acceptResource(JavaSparkExecutionContext.class.getName().replace('.', '/')));
   }
 
   @Test
   public void testSparkTwillRunnablePassesSparkFilter() {
-    FilterClassLoader.Filter filter = SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER;
+    FilterClassLoader.Filter filter = new SparkResourceFilter();
     Assert.assertTrue(filter.acceptResource(SparkTwillRunnable.class.getName().replace('.', '/')));
   }
 }

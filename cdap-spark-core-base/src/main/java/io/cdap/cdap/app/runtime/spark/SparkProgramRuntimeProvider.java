@@ -94,11 +94,20 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     boolean rewriteYarnClient = cConf.getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
 
     try {
-      ClassLoader sparkClassloader = sparkClassloader = createClassLoader(filterScalaClasses, rewriteYarnClient,
-                                                                          rewriteCheckpointTempFileName);
-      return new FilterClassLoader(sparkClassloader, SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+      ClassLoader sparkRunnerClassLoader = sparkRunnerClassLoader = createClassLoader(filterScalaClasses,
+                                                                                      rewriteYarnClient,
+                                                                                      rewriteCheckpointTempFileName);
+
+      // SparkResourceFilter must be instantiated using the above classloader as it has the
+      // org.apache.spark.streaming.StreamingContext class, otherwise it will cause NoClassDefFoundError at runtime
+      // because the parent classloader does not have Spark resources loaded.
+      FilterClassLoader.Filter sparkClassLoaderFilter = (FilterClassLoader.Filter) sparkRunnerClassLoader
+        .loadClass(SparkResourceFilter.class.getName()).newInstance();
+      return new FilterClassLoader(sparkRunnerClassLoader, sparkClassLoaderFilter);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Failed to create SparkResourceFilter class", e);
     }
   }
 
