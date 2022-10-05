@@ -197,7 +197,9 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       return Optional.of(
         new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
                                                               getRootUrl(conf),
-                                                              projectId, region, bucket, systemLabels)));
+                                                              projectId, region, bucket, systemLabels),
+                                      Collections.unmodifiableMap(properties)
+        ));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
@@ -221,6 +223,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       return true;
     }
     return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY,
+                           DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
                            DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
                            DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
                            DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT).contains(property);
