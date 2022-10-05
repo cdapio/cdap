@@ -32,7 +32,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.spark.SparkPackageUtils;
 import io.cdap.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
-import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
+import io.cdap.cdap.app.runtime.spark.SparkResourceFilter;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -200,6 +200,6 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
   @Override
   public ClassLoader createProgramClassLoaderParent() {
-    return new FilterClassLoader(getClass().getClassLoader(), SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+    return new FilterClassLoader(getClass().getClassLoader(), new SparkResourceFilter());
   }
 }
