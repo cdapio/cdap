@@ -299,9 +299,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("program-type") String type,
                                   @PathParam("program-id") String programId,
                                   @PathParam("run-id") String runId,
-                                  @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
+                                  @QueryParam("graceful") String gracefulShutdownSecs,
+                                  @QueryParam("version") String version) throws Exception {
     ProgramType programType = getProgramType(type);
-    ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
+    ProgramId program = (version == null) ?
+      new ApplicationId(namespaceId, appId, getLatestAppVersion(namespaceId, appId)).program(programType, programId) :
+      new ApplicationId(namespaceId, appId, version).program(programType, programId);
+
     Integer gracefulShutdownSecsInt;
     try {
       gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
@@ -387,12 +391,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = getProgramType(type);
     ProgramId program = applicationId.program(programType, programId);
     Map<String, String> args = decodeArguments(request);
+    String latestVersion = getLatestAppVersion(namespaceId, appId);
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
       case "start":
+        if (!appVersion.equals(latestVersion)) {
+          throw new BadRequestException("start action is only allowed on the latest program version");
+        }
         lifecycleService.run(program, args, false);
         break;
       case "debug":
+        if (!appVersion.equals(latestVersion)) {
+          throw new BadRequestException("debug action is only allowed on the latest program version");
+        }
         if (!isDebugAllowed(programType)) {
           throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
                                                           programType));
@@ -422,6 +433,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-version") String appVersion,
                                      @QueryParam("start-time-seconds") long startTimeSeconds,
                                      @QueryParam("end-time-seconds") long endTimeSeconds) throws Exception {
+    String latestVersion = getLatestAppVersion(namespaceId, appId);
+    if (!appVersion.equals(latestVersion)) {
+      throw new BadRequestException("start action is only allowed on the latest program version");
+    }
     lifecycleService.restart(new ApplicationId(namespaceId, appId, appVersion), startTimeSeconds, endTimeSeconds);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -577,6 +592,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-version") String appVersion,
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName) throws Exception {
+    String latestVersion = getLatestAppVersion(namespaceId, appName);
+    if (!appVersion.equals(latestVersion)) {
+      throw new BadRequestException("Runtime arguments can only be changed on the latest program version");
+    }
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     saveProgramIdRuntimeArgs(programId, request, responder);
@@ -1272,7 +1291,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-
+    // TODO
     List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     List<ProgramId> programs = batchPrograms.stream()
       .map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
@@ -1337,7 +1356,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     List<BatchProgramResult> issuedStops = new ArrayList<>(programs.size());
     for (final BatchProgram program : programs) {
-      ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
+      ApplicationId applicationId = new ApplicationId(namespaceId, program.getAppId(),
+                                                      getLatestAppVersion(namespaceId, program.getAppId()));
+      ProgramId programId = new ProgramId(applicationId, program.getProgramType(),
                                           program.getProgramId());
       try {
         Collection<ProgramRunId> stoppedRuns = lifecycleService.issueStop(programId, null, gracefulShutdownSecsInt);
@@ -1391,7 +1412,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     List<BatchProgramResult> output = new ArrayList<>(programs.size());
     for (BatchProgramStart program : programs) {
-      ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
+      ApplicationId applicationId = new ApplicationId(namespaceId, program.getAppId(),
+                                                      getLatestAppVersion(namespaceId, program.getAppId()));
+      ProgramId programId = new ProgramId(applicationId, program.getProgramType(),
                                           program.getProgramId());
       try {
         String runId = lifecycleService.run(programId, program.getRuntimeargs(), false).getId();
@@ -1446,7 +1469,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void getInstances(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
-
     List<BatchRunnable> runnables = validateAndGetBatchInput(request, BATCH_RUNNABLES_TYPE);
 
     // cache app specs to perform fewer store lookups
@@ -1463,7 +1485,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         continue;
       }
 
-      ApplicationId appId = new ApplicationId(namespaceId, runnable.getAppId());
+      ApplicationId appId = new ApplicationId(namespaceId, runnable.getAppId(),
+                                              getLatestAppVersion(namespaceId, runnable.getAppId()));
 
       // populate spec cache if this is the first time we've seen the appid.
       if (!appSpecs.containsKey(appId)) {
