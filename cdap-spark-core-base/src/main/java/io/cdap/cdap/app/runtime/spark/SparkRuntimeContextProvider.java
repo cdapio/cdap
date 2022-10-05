@@ -340,7 +340,7 @@ public final class SparkRuntimeContextProvider {
     File programDir = new File(PROGRAM_JAR_EXPANDED_NAME);
 
     ClassLoader parentClassLoader = new FilterClassLoader(SparkRuntimeContextProvider.class.getClassLoader(),
-                                                          SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER);
+                                                          new SparkResourceFilter());
     ClassLoader classLoader = new ProgramClassLoader(cConf, programDir, parentClassLoader);
 
     return new DefaultProgram(new ProgramDescriptor(contextConfig.getProgramId(),
