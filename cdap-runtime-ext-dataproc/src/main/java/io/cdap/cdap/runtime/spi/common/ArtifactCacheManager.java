@@ -117,8 +117,11 @@ public class ArtifactCacheManager {
 
   private void updateCustomTimeAndHoldOnArtifacts(Storage client, String bucket, Map<String, Integer> artifactCount,
                                                   Set<String> artifactsCached, String cachedArtifactsPath) {
+    LOG.error("Artifacts Cached: {}", artifactsCached);
+    LOG.error("Artifacts Count: {}", artifactCount);
     artifactsCached.parallelStream().filter(artifact -> !artifactCount.containsKey(artifact))
       .forEach(artifact -> {
+        LOG.error("Setting hold to false for {}", artifact);
         String cachedArtifactFilePath = getPath(cachedArtifactsPath, artifact);
         try {
           DataprocUtils.setCustomTimeOnGcsArtifact(client, bucket, BlobId.of(bucket, cachedArtifactFilePath),
