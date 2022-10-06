@@ -32,6 +32,7 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.logging.LoggingConfiguration;
 import io.cdap.cdap.logging.appender.system.CDAPLogAppender;
+import io.cdap.cdap.logging.appender.system.LogFileManager;
 import io.cdap.cdap.logging.appender.system.LogPathIdentifier;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.meta.FileMetaDataReader;
@@ -64,16 +65,17 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnitParamsRunner.class)
 public class LogCleanerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
+  private static final long MILLIS_IN_DAY = TimeUnit.DAYS.toMillis(1);
 
   private static Injector injector;
   private static TransactionManager txManager;
@@ -180,7 +182,7 @@ public class LogCleanerTest {
   })
   public void testLogFolderCleanup(int folderCleanupBatchSize,
       long expectedDelayInMillis,
-      int expectedDeleteCount) throws IOException {
+      int expectedDeleteCount) throws IOException, InterruptedException {
     // Create log folders and files
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
@@ -192,21 +194,21 @@ public class LogCleanerTest {
     for (String child : children) {
       Location location = logFolder.append(child);
       location.mkdirs();
-      if (child.equals("/B/B")) {
-        location.append("test.log").createNew();
-      }
     }
+
+    Thread.sleep(1000);
+    logFolder.append("/B/B/test.log").createNew();
 
     // Run log folder cleaner
     LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner,
         locationFactory,
         logFolder,
-        100,
+        500,
         folderCleanupBatchSize,
         10);
 
     // Assert for the returned response for delay in next schedule
-    Assert.assertEquals(expectedDelayInMillis, logCleaner.run());
+    Assert.assertEquals("location size: " + logFolder.list().size(), expectedDelayInMillis, logCleaner.run());
 
     // Assert if folders exists
     children = Arrays.asList("/A", "/A/A", "/A/B", "/A/C", "/B/A", "/B/B", "/B/C", "/C", "/C/A", "/C/B", "/C/C");
@@ -227,38 +229,48 @@ public class LogCleanerTest {
   }
 
   @Test
-  public void testLogFolderCleanupExclusion() throws IOException {
+  public void testLogFolderCleanupExclusion() throws IOException, InterruptedException {
     // Create log folders and files
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    Location logFolder = locationFactory.create("logs");
+    Location logFolder = locationFactory.create("logs" + System.currentTimeMillis());
     logFolder.mkdirs();
 
-    for (int day = 0; day < 4; day++) {
-      long time = System.currentTimeMillis();
-      long millisInDay = 1000 * 60 * 60 * 24;
-      String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(time - day * millisInDay));
-      Location location = logFolder.append(date);
-      location.mkdirs();
+    for (int dayOffset = 5; dayOffset >= 3; dayOffset--) {
+      createFolderWithDateFormat(logFolder, dayOffset);
+    }
+
+    Thread.sleep(5000);
+    for (int dayOffset = 2; dayOffset >= 0; dayOffset--) {
+      createFolderWithDateFormat(logFolder, dayOffset);
     }
 
     // Run log folder cleaner
     LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner,
         locationFactory,
         logFolder,
-        100,
+        2000,
         10,
         10);
     logCleaner.run();
 
     // Assert for the remaining folder count
-    Assert.assertEquals(2, logFolder.list().size());
+    Assert.assertEquals(3, logFolder.list().size());
+  }
+
+  private void createFolderWithDateFormat(Location logFolder, int dayOffset) throws IOException {
+    long time = System.currentTimeMillis();
+    String date = LogFileManager.formatLogDirectoryName(time - dayOffset * MILLIS_IN_DAY);
+    Location location = logFolder.append(date);
+    location.mkdirs();
+    location = location.append("test_child_folder");
+    location.mkdirs();
   }
 
   private Location getLocation(Location logsDirectoryLocation, LogPathIdentifier logPathIdentifier) throws IOException {
     long currentTime = System.currentTimeMillis();
-    String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date(currentTime));
+    String date = LogFileManager.formatLogDirectoryName(currentTime);
     Location contextLocation =
         logsDirectoryLocation.append(logPathIdentifier.getNamespaceId())
             .append(date)
