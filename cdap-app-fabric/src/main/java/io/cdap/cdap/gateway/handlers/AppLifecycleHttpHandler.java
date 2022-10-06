@@ -49,6 +49,7 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
@@ -186,7 +187,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") final String appId)
     throws BadRequestException, NamespaceNotFoundException, AccessException {
 
-    ApplicationId applicationId = validateApplicationId(namespaceId, appId);
+    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, RunIds.generate().getId());
 
     try {
       return deployAppFromArtifact(applicationId);
@@ -330,7 +331,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService
+                                                            .getLatestAppDetail(applicationId)));
   }
 
   /**
@@ -373,9 +375,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
     throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException, AccessException {
-
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(applicationId)));
+    try {
+      String latestAppVersion = getLatestAppVersion(applicationId);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(
+        new ApplicationId(namespaceId, appId, latestAppVersion))));
+    } catch (Exception e) {
+      LOG.error("Failure  to retrieve plugin info", e);
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
   }
 
   /**
@@ -852,6 +860,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw Throwables.propagate(e);
     }
     return namespace;
+  }
+
+  private String getLatestAppVersion(ApplicationId applicationId) throws Exception {
+    ApplicationDetail latestApp = applicationLifecycleService.getLatestAppDetail(applicationId);
+    return latestApp == null ? null : latestApp.getAppVersion();
   }
 
   private ApplicationId validateApplicationId(String namespace, String appId)
