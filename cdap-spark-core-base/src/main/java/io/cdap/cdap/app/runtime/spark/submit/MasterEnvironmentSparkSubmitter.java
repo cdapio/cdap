@@ -157,7 +157,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
 
   @Override
   protected boolean waitForFinish() throws Exception {
-    return sparkDriverWatcher.waitForFinish().get(10, TimeUnit.MINUTES);
+    return sparkDriverWatcher.waitForFinish().get();
   }
 
   private SparkConfig generateOrGetSparkConfig() throws Exception {
