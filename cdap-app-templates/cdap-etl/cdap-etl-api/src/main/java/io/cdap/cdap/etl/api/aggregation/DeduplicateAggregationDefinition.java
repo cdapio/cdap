@@ -47,9 +47,17 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
   }
 
   /**
+   * @return A builder to create a DeduplicateAggregationDefinition.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
    * Get the list of expressions using which a single record will be selected from a group of records for deduplication.
    * Each entry in the list is defined as a pair of an {@link Expression} and {@link FilterFunction}, specifying
    * the function to be executed on the expression.
+   *
    * @return A {@link List} of {@link FilterExpression} objects, each of which is a pair of an {@link Expression}
    * and a {@link FilterFunction}.
    */
@@ -77,7 +85,8 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
 
     /**
      * Creates a new {@link FilterExpression} using the specified {@link Expression} and {@link FilterFunction}.
-     * @param expression the expression using which filtering of duplicate records is to be performed
+     *
+     * @param expression     the expression using which filtering of duplicate records is to be performed
      * @param filterFunction the function to be applied on the duplicate records to select a single record
      */
     public FilterExpression(Expression expression, FilterFunction filterFunction) {
@@ -86,7 +95,6 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
     }
 
     /**
-     *
      * @return the expression used for filtering duplicate records
      */
     public Expression getExpression() {
@@ -94,7 +102,6 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
     }
 
     /**
-     *
      * @return the function applied to select a single record from duplicate records
      */
     public FilterFunction getFilterFunction() {
@@ -120,21 +127,14 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
   }
 
   /**
-   * @return A builder to create a DeduplicateAggregationDefinition.
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  /**
    * Builds a DeduplicateAggregationDefinition using fields to dedup on, fields to select,
    * and fields to use to filter the first record to be output when removing duplicates.
    * The fields to dedup on and the fields to select must be specified.
    */
   public static class Builder {
+    List<FilterExpression> filterExpressions;
     private List<Expression> groupByExpressions;
     private Map<String, Expression> selectExpressions;
-    List<FilterExpression> filterExpressions;
 
     public Builder() {
       groupByExpressions = Collections.emptyList();
@@ -146,6 +146,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
      * Sets the list of expressions to use to group records together with the same value so that
      * only one record from the group is extracted.
      * Any existing dedup expression list is overwritten.
+     *
      * @param dedupExpressions list of {@link Expression}s to deduplicate on.
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
@@ -158,6 +159,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
      * Sets the expressions to use to group records together with the same value so that
      * only one record from the group is extracted.
      * Any existing dedup expression list is overwritten.
+     *
      * @param dedupExpressions {@link Expression}s to deduplicate on.
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
@@ -168,6 +170,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
     /**
      * Sets the list of expressions to select to the specified list of expressions.
      * Any existing list of select expressions is overwritten.
+     *
      * @param selectExpressions list of {@link Expression}s to select.
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
@@ -179,7 +182,8 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
     /**
      * Sets the list of expressions to select to the specified expressions.
      * Any existing list of select expressions is overwritten.
-     * @param key the key to use for this expression
+     *
+     * @param key        the key to use for this expression
      * @param expression expression to use
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
@@ -192,8 +196,9 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
      * Adds the specified expression with the specified filter function to the list of filter expressions.
      * This function is applied on this expression for all the records for which the values of the dedup expressions
      * specified in <code>dedupOn</code> is the same, and the resultant row is extracted by the dedup operation.
+     *
      * @param filterExpression an {@link Expression} on which the filter function will be applied.
-     * @param filterFunction a {@link FilterFunction} to be applied to the filter expression.
+     * @param filterFunction   a {@link FilterFunction} to be applied to the filter expression.
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
     public Builder filterDuplicatesBy(Expression filterExpression, FilterFunction filterFunction) {
@@ -206,6 +211,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
      * The filter function is applied to the respective filter expression for all the records for which the values
      * of the dedup expressions specified in <code>dedupOn</code> is the same, and the resultant row is extracted
      * by the dedup operation.
+     *
      * @param filterExpressions a {@link List} of {@link FilterExpression}.
      * @return a {@link Builder} with the currently built {@link DeduplicateAggregationDefinition}.
      */
@@ -216,6 +222,7 @@ public class DeduplicateAggregationDefinition extends AggregationDefinition {
 
     /**
      * Builds a DeduplicateAggregationDefinition.
+     *
      * @return The DeduplicateAggregationDefinition object.
      * @throws IllegalStateException in case if any of the required fields aren't specified.
      */

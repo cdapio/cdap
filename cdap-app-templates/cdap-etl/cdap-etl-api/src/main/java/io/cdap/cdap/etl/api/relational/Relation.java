@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.etl.api.aggregation.DeduplicateAggregationDefinition;
 import io.cdap.cdap.etl.api.aggregation.GroupByAggregationDefinition;
+import io.cdap.cdap.etl.api.aggregation.WindowAggregationDefinition;
 
 import java.util.Map;
 
@@ -72,7 +73,6 @@ public interface Relation {
    * @return a new relation with same set of columns, but only rows where filter value is true
    */
   Relation filter(Expression filter);
-
   /**
    * Allows to perform a group by based on an aggregation definition.
    * @param aggregationDefinition specifies the details for the group by operation.
@@ -81,7 +81,14 @@ public interface Relation {
   default Relation groupBy(GroupByAggregationDefinition aggregationDefinition) {
     return new InvalidRelation("GroupBy is unsupported");
   }
-
+  /**
+   * Allows to perform a window operation based on an aggregation definition.
+   * @param aggregationDefinition specifies the details for the window aggregation operation.
+   * @return a new relation after the window operation is performed.
+   */
+  default Relation window(WindowAggregationDefinition aggregationDefinition) {
+    return new InvalidRelation("WindowAggregation is unsupported");
+  }
   /**
    * Allows to perform a deduplicate operation based on an aggregation definition.
    * @param aggregationDefinition specifies the details for the deduplicate operation.
