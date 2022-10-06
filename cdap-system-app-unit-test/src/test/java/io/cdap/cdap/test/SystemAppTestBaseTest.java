@@ -33,6 +33,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
@@ -92,7 +93,11 @@ public class SystemAppTestBaseTest extends SystemAppTestBase {
     }
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testSystemServiceInUserNamespaceFails() {
     try {
       deployApplication(NamespaceId.DEFAULT, SystemTestApp.class);
@@ -102,7 +107,9 @@ public class SystemAppTestBaseTest extends SystemAppTestBase {
     }
   }
 
+  // TODO: CDAP-19775
   @Test
+  @Ignore
   public void testSystemService() throws Exception {
     ApplicationManager applicationManager = deployApplication(NamespaceId.SYSTEM, SystemTestApp.class);
 

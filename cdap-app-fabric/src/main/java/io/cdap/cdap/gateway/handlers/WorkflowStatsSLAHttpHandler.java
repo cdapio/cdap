@@ -33,8 +33,8 @@ import io.cdap.cdap.internal.app.store.WorkflowTable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.WorkflowStatsComparison;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -111,9 +111,8 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                                         " less than or equal to 100. Invalid input was " + Double.toString(i));
       }
     }
-
-    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
-    WorkflowStatistics workflowStatistics = store.getWorkflowStatistics(workflow, startTime, endTime, percentiles);
+    WorkflowStatistics workflowStatistics = store.getWorkflowStatistics(new NamespaceId(namespaceId), appId, workflowId,
+                                                                        startTime, endTime, percentiles);
 
     if (workflowStatistics == null) {
       responder.sendString(HttpResponseStatus.OK, "There are no statistics associated with this workflow : "
@@ -161,14 +160,14 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Interval should be greater than 0 and should be specified with one of the 'ms'," +
                                       " 's', 'm', 'h', 'd' units. Entered value was : " + interval);
     }
-    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
     Collection<WorkflowTable.WorkflowRunRecord> workflowRunRecords =
-      store.retrieveSpacedRecords(workflow, runId, limit, timeInterval);
+      store.retrieveSpacedRecords(new NamespaceId(namespaceId), appId, workflowId, runId, limit, timeInterval);
 
     List<WorkflowRunMetrics> workflowRunMetricsList = new ArrayList<>();
     Map<String, Long> startTimes = new HashMap<>();
     for (WorkflowTable.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
-      workflowRunMetricsList.add(getDetailedRecord(workflow, workflowRunRecord.getWorkflowRunId()));
+      workflowRunMetricsList.add(getDetailedRecord(new NamespaceId(namespaceId), appId, workflowId,
+                                                   workflowRunRecord.getWorkflowRunId()));
       startTimes.put(workflowRunRecord.getWorkflowRunId(),
                      RunIds.getTime(RunIds.fromString(workflowRunRecord.getWorkflowRunId()), TimeUnit.SECONDS));
     }
@@ -197,9 +196,9 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                       @PathParam("workflow-id") String workflowId,
                       @PathParam("run-id") String runId,
                       @QueryParam("other-run-id") String otherRunId) throws Exception {
-    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
-    WorkflowRunMetrics detailedStatistics = getDetailedRecord(workflow, runId);
-    WorkflowRunMetrics otherDetailedStatistics = getDetailedRecord(workflow, otherRunId);
+    WorkflowRunMetrics detailedStatistics = getDetailedRecord(new NamespaceId(namespaceId), appId, workflowId, runId);
+    WorkflowRunMetrics otherDetailedStatistics = getDetailedRecord(new NamespaceId(namespaceId), appId, workflowId,
+                                                                   otherRunId);
     if (detailedStatistics == null) {
       throw new NotFoundException("The run-id provided was not found : " + runId);
     }
@@ -234,14 +233,17 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
 
   /**
    * Returns the detailed Record for the Workflow
-   *
-   * @param workflowId Workflow that needs to get its detailed record
+   * @param namespaceId The namespace that the workflow belongs to
+   * @param appName The application that the workflow belongs to
+   * @param workflowName The Workflow that needs to get its detailed record
    * @param runId Run Id of the workflow
    * @return Return the Workflow Run Metrics
    */
   @Nullable
-  private WorkflowRunMetrics getDetailedRecord(WorkflowId workflowId, String runId) throws Exception {
-    WorkflowTable.WorkflowRunRecord workflowRunRecord = store.getWorkflowRun(workflowId, runId);
+  private WorkflowRunMetrics getDetailedRecord(NamespaceId namespaceId, String appName, String workflowName,
+                                               String runId)
+    throws Exception {
+    WorkflowTable.WorkflowRunRecord workflowRunRecord = store.getWorkflowRun(namespaceId, appName, workflowName, runId);
     if (workflowRunRecord == null) {
       return null;
     }
@@ -251,8 +253,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       Map<String, Long> programMap = new HashMap<>();
       String programName = programRun.getName();
       ProgramType programType = programRun.getProgramType();
-      ProgramId program = new ProgramId(workflowId.getNamespace(), workflowId.getApplication(),
-                                        programType, programName);
+      ProgramId program = new ProgramId(namespaceId.getNamespace(), appName, programType, programName);
       String programRunId = programRun.getRunId();
       if (programType == ProgramType.MAPREDUCE) {
         programMap = getMapreduceDetails(program, programRunId);

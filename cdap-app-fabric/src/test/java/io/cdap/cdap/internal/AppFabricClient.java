@@ -38,6 +38,7 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.BufferFileInputStream;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.Instances;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.PluginInstanceDetail;
@@ -474,11 +475,11 @@ public class AppFabricClient {
     return deployedJar;
   }
 
-  public void deployApplication(Id.Application appId, AppRequest appRequest) throws Exception {
-    deployApplication(appId.toEntityId(), appRequest);
+  public ApplicationRecord deployApplication(Id.Application appId, AppRequest appRequest) throws Exception {
+    return deployApplication(appId.toEntityId(), appRequest);
   }
 
-  public void deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+  public ApplicationRecord deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
       String.format("%s/apps/%s/versions/%s/create", getNamespacePath(appId.getNamespace()),
                     appId.getApplication(), appId.getVersion()));
@@ -493,8 +494,10 @@ public class AppFabricClient {
 
     bodyConsumer.chunk(Unpooled.copiedBuffer(GSON.toJson(appRequest), StandardCharsets.UTF_8), mockResponder);
     bodyConsumer.finished(mockResponder);
-    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app (" +
-      mockResponder.getResponseContentAsString() + ")");
+    String responseBody = mockResponder.getResponseContentAsString();
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app (" + responseBody + ")");
+
+    return GSON.fromJson(responseBody, ApplicationRecord.class);
   }
 
   public void updateApplication(ApplicationId appId, AppRequest appRequest) throws Exception {

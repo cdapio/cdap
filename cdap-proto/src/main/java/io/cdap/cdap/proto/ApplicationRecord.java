@@ -19,7 +19,6 @@ package io.cdap.cdap.proto;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
-import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -41,15 +40,6 @@ public class ApplicationRecord {
   public ApplicationRecord(ApplicationDetail detail) {
     this(detail.getArtifact(), detail.getName(),
          detail.getAppVersion(), detail.getDescription(), detail.getOwnerPrincipal(), detail.getChange());
-  }
-
-  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description) {
-    this(artifact, appId.getApplication(), appId.getVersion(), description, null, null);
-  }
-
-  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description,
-                           ChangeDetail changeDetail) {
-    this(artifact, appId.getApplication(), appId.getVersion(), description, null, changeDetail);
   }
 
   public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,

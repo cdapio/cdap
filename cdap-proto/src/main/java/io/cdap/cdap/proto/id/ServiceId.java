@@ -26,6 +26,10 @@ public class ServiceId extends ProgramId implements ParentedId<ApplicationId> {
     super(namespace, application, ProgramType.SERVICE, program);
   }
 
+  public ServiceId(String namespace, String application, String version, String program) {
+    super(namespace, application, version, ProgramType.SERVICE, program);
+  }
+
   public ServiceId(ApplicationId appId, String program) {
     super(appId, ProgramType.SERVICE, program);
   }
