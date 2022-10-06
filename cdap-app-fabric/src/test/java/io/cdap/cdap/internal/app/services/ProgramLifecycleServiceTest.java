@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -166,8 +167,9 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
   @Test
   public void testCreateProgramOptions() throws Exception {
     deploy(AllProgramsApp.class, 200);
+    JsonObject result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
     ProgramId programId = NamespaceId.DEFAULT
-      .app(AllProgramsApp.NAME)
+      .app(AllProgramsApp.NAME, result.get("appVersion").getAsString())
       .program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
     ProgramOptions options = programLifecycleService.createProgramOptions(programId, Collections.emptyMap(),
                                                                           Collections.emptyMap(), false);
@@ -178,6 +180,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
   @Test
   public void testProfileProgramTypeRestrictions() throws Exception {
     deploy(AllProgramsApp.class, 200);
+    JsonObject result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
     ProfileId profileId = NamespaceId.DEFAULT.profile("profABC");
     ProvisionerInfo provisionerInfo = new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList());
     Profile profile = new Profile("profABC", "label", "desc", provisionerInfo);
@@ -189,10 +192,14 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
       Map<String, String> systemArgs = new HashMap<>();
 
       Set<ProgramId> programIds = ImmutableSet.of(
-        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME),
-        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME),
-        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME),
-        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME)
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME, result.get("appVersion").getAsString())
+          .program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME),
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME, result.get("appVersion").getAsString())
+          .program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME),
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME, result.get("appVersion").getAsString())
+          .program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME),
+        NamespaceId.DEFAULT.app(AllProgramsApp.NAME, result.get("appVersion").getAsString())
+          .program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME)
       );
 
       Set<ProgramType> allowCustomProfiles = EnumSet.of(ProgramType.MAPREDUCE, ProgramType.SPARK,

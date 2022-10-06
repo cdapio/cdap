@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -253,12 +252,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testOwnerUsingArtifact() throws Exception {
     ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "artifact", "1.0.0");
     addAppArtifact(Id.Artifact.fromEntityId(artifactId), AllProgramsApp.class);
-    ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
+    ApplicationId applicationId = new ApplicationId(Id.Namespace.DEFAULT.getId(), AllProgramsApp.NAME);
     // deploy an app with a owner
     String ownerPrincipal = "alice/somehost.net@somekdc.net";
     AppRequest<ConfigTestApp.ConfigClass> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, ownerPrincipal);
-    Assert.assertEquals(HttpResponseCodes.SC_OK, deploy(applicationId, appRequest).getResponseCode());
+    HttpResponse deploy = deploy(applicationId, appRequest);
+    Assert.assertEquals(HttpResponseCodes.SC_OK, deploy.getResponseCode());
 
     // should be able to retrieve the owner information of the app
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
@@ -335,17 +335,22 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployVersionedAndNonVersionedApp() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "configapp", "1.0.0");
     addAppArtifact(artifactId, ConfigTestApp.class);
-
+    Set<String> versions = new HashSet<>();
     ApplicationId appId = new ApplicationId(Id.Namespace.DEFAULT.getId(), "cfgAppWithVersion", "1.0.0");
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
     AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
     Assert.assertEquals(200, deploy(appId, request).getResponseCode());
-    // Cannot update the app created by versioned API with versionId not ending with "-SNAPSHOT"
-    Assert.assertEquals(409, deploy(appId, request).getResponseCode());
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "cfgAppWithVersion");
+    String appIdVersion = appDetails.get("appVersion").getAsString();
+    versions.add(appIdVersion);
+    // Can update the app created by versioned API with versionId not ending with "-SNAPSHOT"
+    Assert.assertEquals(200, deploy(appId, request).getResponseCode());
+    appDetails = getAppDetails(appId.getNamespace(), appId.getApplication());
+    versions.add(appDetails.get("appVersion").getAsString());
     Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
                                             "non_existing_version").getResponseCode());
-    Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(),
+    Assert.assertEquals(200, getAppResponse(Id.Namespace.DEFAULT.getId(),
                                             appId.getApplication()).getResponseCode());
 
     // Deploy app with default versionId by non-versioned API
@@ -354,6 +359,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     AppRequest<ConfigTestApp.ConfigClass> requestDefault = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault);
     Assert.assertEquals(200, deploy(appIdDefault, requestDefault).getResponseCode());
+    appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appId.getApplication());
+
+    String appIdDefaultVersion = appDetails.get("appVersion").getAsString();
+    versions.add(appIdDefaultVersion);
 
     // Deploy app with versionId "version_2" by versioned API
     ApplicationId appIdV2 = new ApplicationId(appId.getNamespace(), appId.getApplication(), "2.0.0");
@@ -361,8 +370,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     AppRequest<ConfigTestApp.ConfigClass> requestV2 = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configV2);
     Assert.assertEquals(200, deploy(appIdV2, requestV2).getResponseCode());
+    appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "cfgAppWithVersion");
+    String appIdV2Version = appDetails.get("appVersion").getAsString();
+    versions.add(appIdV2Version);
 
-    Set<String> versions = ImmutableSet.of("-SNAPSHOT", "2.0.0", "1.0.0");
     Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
 
     List<JsonObject> appList = getAppList(appId.getNamespace());
@@ -372,19 +383,19 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     }
     Assert.assertEquals(versions, receivedVersions);
 
-    JsonObject appDetails = getAppDetails(appId.getNamespace(), appId.getApplication(), appId.getVersion());
+    appDetails = getAppDetails(appId.getNamespace(), appId.getApplication(), appIdVersion);
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
-    Assert.assertEquals(appId.getVersion(), appDetails.get("appVersion").getAsString());
+    Assert.assertEquals(appIdVersion, appDetails.get("appVersion").getAsString());
 
     // Get app info for the app with default versionId by versioned API
-    JsonObject appDetailsDefault = getAppDetails(appId.getNamespace(), appId.getApplication(),
-                                                 ApplicationId.DEFAULT_VERSION);
+    JsonObject appDetailsDefault = getAppDetails(appId.getNamespace(), appId.getApplication(), appIdDefaultVersion);
     Assert.assertEquals(GSON.toJson(configDefault), appDetailsDefault.get("configuration").getAsString());
-    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
+    Assert.assertEquals(appIdDefaultVersion, appDetailsDefault.get("appVersion").getAsString());
 
     // Get app info for the app with versionId "version_2" by versioned API
-    JsonObject appDetailsV2 = getAppDetails(appId.getNamespace(), appId.getApplication(), appIdV2.getVersion());
+    JsonObject appDetailsV2 = getAppDetails(appId.getNamespace(), appId.getApplication(), appIdV2Version);
     Assert.assertEquals(GSON.toJson(configV2), appDetailsV2.get("configuration").getAsString());
+    Assert.assertEquals(appIdV2Version, appDetailsV2.get("appVersion").getAsString());
 
     // Update app with default versionId by versioned API
     ConfigTestApp.ConfigClass configDefault2 = new ConfigTestApp.ConfigClass("mno", "pqr");
@@ -396,13 +407,12 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2.get("configuration").getAsString());
 
     // Get updated app info for the app with default versionId by versioned API
-    JsonObject appDetailsDefault2WithVersion = getAppDetails(appIdDefault.getNamespaceId(), appIdDefault.getId(),
-                                                             ApplicationId.DEFAULT_VERSION);
+    JsonObject appDetailsDefault2WithVersion = getAppDetails(appIdDefault.getNamespaceId(), appIdDefault.getId());
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2WithVersion.get("configuration").getAsString());
-    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
-    deleteApp(appId, 200);
+
+    Id.Application appIdDelete = Id.Application.from(appId.getNamespace(), appId.getApplication());
+    deleteApp(appIdDelete, 200);
     deleteApp(appIdDefault, 200);
-    deleteApp(appIdV2, 200);
   }
 
   /**
@@ -695,22 +705,18 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     );
 
     //get and verify app details in testnamespace2
-    List<BatchApplicationDetail> appDetails = getAppDetails(TEST_NAMESPACE2,
+    List<BatchApplicationDetail> appDetails = getAppDetails(TEST_NAMESPACE2, 
                                                             Arrays.asList(ImmutablePair.of(ns2AppName, null),
                                                                           ImmutablePair.of(ns2AppName, VERSION1)));
     Assert.assertEquals(2, appDetails.size());
-    Assert.assertTrue(appDetails.stream().allMatch(d -> d.getStatusCode() == 200));
 
+    Assert.assertEquals(200, appDetails.get(0).getStatusCode());
     ApplicationDetail appDetail = appDetails.get(0).getDetail();
     Assert.assertNotNull(appDetail);
     Assert.assertEquals(ns2AppName, appDetail.getName());
-    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetail.getAppVersion());
 
-    appDetail = appDetails.get(1).getDetail();
-    Assert.assertNotNull(appDetail);
-    Assert.assertEquals(ns2AppName, appDetail.getName());
-    Assert.assertEquals(VERSION1, appDetail.getAppVersion());
-
+    Assert.assertEquals(404, appDetails.get(1).getStatusCode());
+    
     //delete app in testnamespace1
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
@@ -753,6 +759,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Start a service from the App
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    ApplicationId applicationId = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME,
+                                                    appDetails.get("appVersion").getAsString());
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, AllProgramsApp.NAME,
                                          ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     startProgram(program);
@@ -761,7 +770,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + program.getApplication() +
+    Assert.assertEquals("'" + applicationId.toString() +
                           "' could not be deleted. Reason: The following programs are still running: "
                           + program.getId(), response.getResponseBodyAsString());
 
@@ -799,6 +808,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
     ApplicationId appId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION1);
     Assert.assertEquals(200, deploy(appId, appRequest).getResponseCode());
+    JsonObject result = getAppDetails(appId.getNamespace(), appId.getApplication());
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), result.get("appVersion").getAsString());
 
     // Start a service for the App
     ProgramId program1 = appId.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
@@ -884,6 +895,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     disableProfile(profileId, 200);
 
     // clean up
+    JsonObject appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
+    defaultAppId =  new ApplicationId(defaultAppId.getNamespace(), defaultAppId.getApplication(),
+                                      appDetails.get("appVersion").getAsString());
     deleteApp(defaultAppId, 200);
     deleteArtifact(artifactId, 200);
   }

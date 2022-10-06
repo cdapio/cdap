@@ -49,6 +49,10 @@ import javax.ws.rs.PathParam;
  */
 @SuppressWarnings("unused")
 public class DummyAppWithTrackingTable extends AbstractApplication {
+  
+  public String getName() {
+    return "dummy";
+  }
 
   @Override
   public void configure() {

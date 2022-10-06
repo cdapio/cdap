@@ -85,9 +85,10 @@ public class EntityExistenceTest {
     existenceVerifier.ensureExists(new InstanceId(EXISTS));
     existenceVerifier.ensureExists(NAMESPACE);
     existenceVerifier.ensureExists(ARTIFACT);
+    // The app is deleted after the deploy step - as such the app doesn't exist
     ApplicationId app = NAMESPACE.app(AllProgramsApp.NAME);
-    existenceVerifier.ensureExists(app);
-    existenceVerifier.ensureExists(app.mr(AllProgramsApp.NoOpMR.NAME));
+    assertDoesNotExist(app);
+    assertDoesNotExist(app.mr(AllProgramsApp.NoOpMR.NAME));
     existenceVerifier.ensureExists(NAMESPACE.dataset(AllProgramsApp.DATASET_NAME));
   }
 
