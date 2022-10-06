@@ -83,6 +83,7 @@ import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramHistory;
@@ -676,11 +677,11 @@ public abstract class AppFabricTestBase {
     return readResponse(response, new TypeToken<List<BatchApplicationDetail>>() { }.getType());
   }
 
-  protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
+  protected ApplicationDetail getAppDetails(String namespace, String appName) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName);
     assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
-    return readResponse(response, JsonObject.class);
+    return readResponse(response, ApplicationDetail.class);
   }
 
   protected HttpResponse getAppResponse(String namespace, String appName) throws Exception {
@@ -701,11 +702,11 @@ public abstract class AppFabricTestBase {
     return readResponse(response, SET_STRING_TYPE);
   }
 
-  protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
+  protected ApplicationDetail getAppDetails(String namespace, String appName, String appVersion) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName, appVersion);
     assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
-    return readResponse(response, JsonObject.class);
+    return readResponse(response, ApplicationDetail.class);
   }
 
   /**

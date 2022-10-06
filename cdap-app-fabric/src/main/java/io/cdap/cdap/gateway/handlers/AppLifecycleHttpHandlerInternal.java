@@ -20,13 +20,10 @@ import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
@@ -42,7 +39,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
@@ -59,34 +55,18 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandler {
+
+  private static final String APP_LIST_PAGINATED_KEY = "applications";
   private static final Gson GSON = new Gson();
 
-  /**
-   * Runtime program service for running and managing programs.
-   */
-  private final ProgramRuntimeService runtimeService;
-
-  private final CConfiguration configuration;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final NamespacePathLocator namespacePathLocator;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final File tmpDir;
-  public static final String APP_LIST_PAGINATED_KEY = "applications";
-
 
   @Inject
-  AppLifecycleHttpHandlerInternal(CConfiguration configuration,
-                                  ProgramRuntimeService runtimeService,
-                                  NamespaceQueryAdmin namespaceQueryAdmin,
-                                  NamespacePathLocator namespacePathLocator,
+  AppLifecycleHttpHandlerInternal(NamespaceQueryAdmin namespaceQueryAdmin,
                                   ApplicationLifecycleService applicationLifecycleService) {
-    this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.runtimeService = runtimeService;
-    this.namespacePathLocator = namespacePathLocator;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
-                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
   /**
@@ -110,8 +90,7 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
                                @QueryParam("pageToken") String pageToken,
                                @QueryParam("pageSize") Integer pageSize,
                                @QueryParam("orderBy") SortOrder orderBy,
-                               @QueryParam("nameFilter") String nameFilter)
-      throws Exception {
+                               @QueryParam("nameFilter") String nameFilter) throws Exception {
 
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
@@ -136,14 +115,13 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
       ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken, null,
          orderBy, nameFilter);
       JsonWholeListResponder.respond(GSON, responder,
-          jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
-              d -> jsonListResponder.send(d))
+          jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest, jsonListResponder::send)
       );
     }
   }
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String pageToken,
-      Integer pageSize, SortOrder orderBy, String nameFilter) {
+                                                 Integer pageSize, SortOrder orderBy, String nameFilter) {
     ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
     builder.setNamespaceId(new NamespaceId(namespaceId));
     if (pageSize != null) {
@@ -182,8 +160,8 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    ApplicationId appId = new ApplicationId(namespace, application);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(appId)));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(namespaceId, application)));
   }
 
   /**

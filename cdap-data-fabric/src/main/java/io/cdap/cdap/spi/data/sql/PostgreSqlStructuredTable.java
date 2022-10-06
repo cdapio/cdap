@@ -394,8 +394,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Scan range {} with limit {} order {} on index field {}",
               tableSchema.getTableId(), keyRange, limit, sortOrder, orderByField);
     fieldValidator.validateScanRange(keyRange);
-    if (!tableSchema.isIndexColumn(orderByField)) {
-      throw new InvalidFieldException(tableSchema.getTableId(), orderByField, "is not an indexed column");
+    if (!tableSchema.isIndexColumn(orderByField) && !tableSchema.isPrimaryKeyColumn(orderByField)) {
+      throw new InvalidFieldException(tableSchema.getTableId(), orderByField,
+                                      "is not an indexed column or primary key");
     }
 
     String scanQuery = getScanQuery(keyRange, limit, Collections.singleton(orderByField), sortOrder);

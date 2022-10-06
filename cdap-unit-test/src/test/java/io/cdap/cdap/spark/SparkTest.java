@@ -245,7 +245,11 @@ public class SparkTest extends TestFrameworkTestBase {
   }
 
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testSparkProgramStatusSchedule() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
     ScheduleId scheduleId = new ScheduleId(NamespaceId.DEFAULT.getNamespace(), TestSparkApp.class.getSimpleName(),

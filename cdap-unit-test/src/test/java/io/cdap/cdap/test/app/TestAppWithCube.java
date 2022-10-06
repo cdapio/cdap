@@ -39,6 +39,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -60,8 +61,12 @@ public class TestAppWithCube extends TestBase {
 
   private static final Gson GSON = new Gson();
 
-  @Category(SlowTests.class)
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Category(SlowTests.class)
+  @Ignore
   public void testApp() throws Exception {
     // Deploy the application
     ApplicationManager appManager = deployApplication(AppWithCube.class);

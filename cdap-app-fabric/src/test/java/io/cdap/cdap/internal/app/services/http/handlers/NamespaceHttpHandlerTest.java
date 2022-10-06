@@ -339,9 +339,9 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
     Assert.assertEquals(2, getAppList(NAME).size());
-    Assert.assertEquals("AppWithServices", getAppDetails(NAME, "AppWithServices").get("name").getAsString());
+    Assert.assertEquals("AppWithServices", getAppDetails(NAME, "AppWithServices").getName());
     Assert.assertEquals(AppWithDataset.class.getSimpleName(),
-                        getAppDetails(NAME, AppWithDataset.class.getSimpleName()).get("name").getAsString());
+                        getAppDetails(NAME, AppWithDataset.class.getSimpleName()).getName());
     assertResponseCode(200, getNamespace(NAME));
     Assert.assertFalse(dsFramework.hasInstance(myDataset));
     assertResponseCode(200, deleteNamespace(NAME));

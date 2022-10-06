@@ -54,6 +54,7 @@ import io.cdap.cdap.internal.AppFabricClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -202,8 +203,9 @@ public class UnitTestManager extends AbstractTestManager {
 
   @Override
   public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
-    appFabricClient.deployApplication(appId, appRequest);
-    return appManagerFactory.create(appId);
+    ApplicationRecord appRecord = appFabricClient.deployApplication(appId, appRequest);
+    ApplicationId deployedAppId = appId.getNamespaceId().app(appRecord.getName(), appRecord.getAppVersion());
+    return appManagerFactory.create(deployedAppId);
   }
 
   @Override
@@ -418,7 +420,7 @@ public class UnitTestManager extends AbstractTestManager {
 
   @Override
   public ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception {
-    return appFabricClient.getVersionedInfo(applicationId);
+    return appFabricClient.getInfo(applicationId);
   }
 
   @Override
