@@ -56,7 +56,7 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
       throw new NullPointerException("Schedule id cannot be null.");
     }
     this.application = application;
-    this.version = appId.getVersion();
+    this.version = ApplicationId.DEFAULT_VERSION;
     this.schedule = schedule;
   }
 

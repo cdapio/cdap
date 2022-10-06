@@ -688,7 +688,7 @@ public class ProgramScheduleStoreDataset {
     List<Field<?>> keys = new ArrayList<>();
     keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.NAMESPACE_FIELD, appId.getNamespace()));
     keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.APPLICATION_FIELD, appId.getApplication()));
-    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.VERSION_FIELD, appId.getVersion()));
+    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.VERSION_FIELD, ApplicationId.DEFAULT_VERSION));
     return keys;
   }
 
