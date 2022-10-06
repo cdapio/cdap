@@ -22,6 +22,7 @@ package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.etl.api.aggregation.DeduplicateAggregationDefinition;
 import io.cdap.cdap.etl.api.aggregation.GroupByAggregationDefinition;
+import io.cdap.cdap.etl.api.aggregation.WindowAggregationDefinition;
 
 import java.util.Map;
 
@@ -69,6 +70,11 @@ public class InvalidRelation implements Relation {
 
     @Override
     public Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
+        return this;
+    }
+
+    @Override
+    public Relation window(WindowAggregationDefinition aggregationDefinition) {
         return this;
     }
 }
