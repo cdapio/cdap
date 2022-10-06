@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
@@ -38,6 +39,9 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1ConfigMap;
+import io.kubernetes.client.openapi.models.V1ConfigMapVolumeSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1Deployment;
@@ -64,6 +68,7 @@ import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1StatefulSetBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
+import io.kubernetes.client.openapi.models.V1VolumeMountBuilder;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -149,9 +154,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
   private static final String PROGRAM_MEMORY_MULTIPLIER = "program.k8s.container.memory.multiplier";
   private static final String DEFAULT_PROGRAM_MEMORY_MULTIPLIER = "0.5";
+  private static final Set<String> CONFIG_VOLUMES = ImmutableSet.of("cdap-conf", "hadoop-conf");
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
+  private final CoreV1Api coreV1Api;
   private final BatchV1Api batchV1Api;
   private final String kubeNamespace;
   private final PodInfo podInfo;
@@ -192,6 +199,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.masterEnvContext = masterEnvContext;
     this.apiClient = apiClient;
     this.batchV1Api = new BatchV1Api(apiClient);
+    this.coreV1Api = new CoreV1Api(apiClient);
     this.kubeNamespace = kubeNamespace;
     this.programRuntimeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -700,7 +708,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1Job} to for runnable execution in Kubernetes.
    */
   private V1ObjectMeta createJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
-                                 Location runtimeConfigLocation) throws KubeAPIException {
+                                 Location runtimeConfigLocation) throws KubeAPIException, ApiException {
     int parallelism = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
     V1Job job = new V1JobBuilder()
       .withMetadata(metadata)
@@ -724,6 +732,17 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
         LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job.", e.getResponseBody());
       } else {
+        // Clean up config maps
+        LOG.info("Deleting configmaps for runId {} in namespace {}", twillRunId.getId(), programRuntimeNamespace);
+        try {
+        coreV1Api.deleteCollectionNamespacedConfigMap(programRuntimeNamespace, null, null, null, null, null,
+                                                      KubeTwillRunnerService.RUN_ID_LABEL + "=" + twillRunId.getId(),
+                                                      null, null, null, null, null, null, null);
+        } catch (ApiException ex) {
+          LOG.warn("Failed to delete configmaps for runId {} in namespace {}",
+                   twillRunId.getId(), programRuntimeNamespace);
+          e.addSuppressed(ex);
+        }
         throw new KubeAPIException("Failed to create kubernetes job", e);
       }
     }
@@ -735,7 +754,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    */
   private V1ObjectMeta createDeployment(V1ObjectMeta metadata,
                                         Map<String, RuntimeSpecification> runtimeSpecs,
-                                        Location runtimeConfigLocation) throws KubeAPIException {
+                                        Location runtimeConfigLocation) throws KubeAPIException, ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
     V1Deployment deployment = buildDeployment(metadata, runtimeSpecs, runtimeConfigLocation);
@@ -760,7 +779,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private V1ObjectMeta createStatefulSet(V1ObjectMeta metadata,
                                          Map<String, RuntimeSpecification> runtimeSpecs,
                                          Location runtimeConfigLocation,
-                                         StatefulRunnable statefulRunnable) throws KubeAPIException {
+                                         StatefulRunnable statefulRunnable) throws KubeAPIException, ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
     V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpecs, runtimeConfigLocation, statefulRunnable);
@@ -784,7 +803,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * given {@link RuntimeSpecification}
    */
   private V1Deployment buildDeployment(V1ObjectMeta metadata,
-                                       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
+                                       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation)
+    throws ApiException {
     int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
     return new V1DeploymentBuilder()
       .withMetadata(metadata)
@@ -804,7 +824,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * given {@link RuntimeSpecification}
    */
   private V1StatefulSet buildStatefulSet(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
-                                         Location runtimeConfigLocation, StatefulRunnable statefulRunnable) {
+                                         Location runtimeConfigLocation, StatefulRunnable statefulRunnable)
+    throws ApiException {
     List<StatefulDisk> disks = statefulRunnable.getStatefulDisks();
 
     int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
@@ -971,8 +992,25 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    */
   private V1PodSpec createPodSpec(Type resourceType, Location runtimeConfigLocation,
                                   Map<String, RuntimeSpecification> runtimeSpecs,
-                                  V1VolumeMount... extraMounts) {
+                                  V1VolumeMount... extraMounts) throws ApiException {
     return createPodSpec(resourceType, runtimeConfigLocation, runtimeSpecs, "Always", new ArrayList<>(), extraMounts);
+  }
+
+  /**
+   * Returns the mount path for the given volume mount.
+   *
+   * @param volumeMount name of the volume mount
+   * @throws IllegalArgumentException if the volume mount is not found
+=  * @return volume mount path
+   */
+  private String getMountPath(String volumeMount) {
+    Optional<String> mountPath = podInfo.getContainerVolumeMounts().stream()
+      .filter(m -> m.getName().equals(volumeMount))
+      .map(V1VolumeMount::getMountPath).findFirst();
+    if (!mountPath.isPresent()) {
+      throw new IllegalArgumentException(String.format("Volume mount %s not found", volumeMount));
+    }
+    return mountPath.get();
   }
 
   /**
@@ -987,13 +1025,39 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    */
   private V1PodSpec createPodSpec(Type resourceType, Location runtimeConfigLocation,
                                   Map<String, RuntimeSpecification> runtimeSpecs,
-                                  String restartPolicy, List<String> args, V1VolumeMount... extraMounts) {
+                                  String restartPolicy, List<String> args, V1VolumeMount... extraMounts)
+    throws ApiException {
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
     V1Volume workDirVolume = new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource());
+    List<V1Volume> additionalVolumes = new ArrayList<>();
+    List<V1VolumeMount> additionalVolumeMounts = new ArrayList<>();
+
+    if (resourceType.equals(V1Job.class)) {
+      // Create per-run configmaps for cConf and hConf by copying over the configmaps from the default namespace
+      for (V1Volume volume : podInfo.getVolumes()) {
+        if (volume.getConfigMap() != null) {
+          String configMapName = volume.getConfigMap().getName();
+          V1ConfigMap existingMap = coreV1Api.readNamespacedConfigMap(configMapName, cdapInstallNamespace,
+                                                                      null, null, null);
+          String newConfigMapName = configMapName + "-" + twillRunId.getId();
+          V1ConfigMap newMap = new V1ConfigMap().data(existingMap.getData())
+            .metadata(new V1ObjectMeta().name(newConfigMapName).putLabelsItem(KubeTwillRunnerService.RUN_ID_LABEL,
+                                                                              twillRunId.getId()));
+          coreV1Api.createNamespacedConfigMap(programRuntimeNamespace, newMap, null, null, null);
+          LOG.debug("Created configMap {} in kubernetes namespace {}", newConfigMapName, programRuntimeNamespace);
+
+          V1Volume configMapVolume = new V1Volume().name(newConfigMapName)
+            .configMap(new V1ConfigMapVolumeSourceBuilder().withName(newConfigMapName).build());
+          additionalVolumes.add(configMapVolume);
+          String mountPath = getMountPath(volume.getName());
+          additionalVolumeMounts.add(new V1VolumeMountBuilder()
+                                       .withName(newConfigMapName)
+                                       .withMountPath(mountPath).build());
+        }
+      }
+    }
 
     String workDir = "/workDir-" + twillRunId.getId();
-
-    List<V1Volume> additionalVolumes = new ArrayList<>();
     additionalVolumes.add(podInfoVolume);
     additionalVolumes.add(workDirVolume);
 
@@ -1015,12 +1079,16 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .getOrDefault(FILE_LOCALIZER_JVM_OPTS, FILE_LOCALIZER_DEFAULT_JVM_OPTS));
 
     // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
-    List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
+    // Filter out cconf and hconf volume mounts for jobs because we create config volumes for each pipeline run.
+    List<V1VolumeMount> volumeMounts = podInfo.getContainerVolumeMounts().stream()
+      .filter(m-> !resourceType.equals(V1Job.class) || !CONFIG_VOLUMES.contains(m.getName()))
+      .collect(Collectors.toList());
     volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
                        .mountPath(podInfo.getPodInfoDir()).readOnly(true));
     // Add the working directory the file localization by the init container
     volumeMounts.add(new V1VolumeMount().name("workdir").mountPath(workDir));
     volumeMounts.addAll(Arrays.asList(extraMounts));
+    volumeMounts.addAll(additionalVolumeMounts);
 
     // Add workload identity volume, volume mount, and environment variable if applicable.
     // If running in the installation namespace, always mount workload identity ConfigMap.
@@ -1051,10 +1119,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       serviceAccountName = podInfo.getServiceAccountName();
     }
 
+    // Filter out cconf and hconf volumes for jobs because we create config volumes for each pipeline run.
+    List<V1Volume> volumes = podInfo.getVolumes().stream()
+      .filter(v-> !resourceType.equals(V1Job.class) || !CONFIG_VOLUMES.contains(v.getName()))
+      .collect(Collectors.toList());
+
     return podSpecBuilder
       .withServiceAccountName(serviceAccountName)
       .withRuntimeClassName(podInfo.getRuntimeClassName())
-      .addAllToVolumes(podInfo.getVolumes())
+      .addAllToVolumes(volumes)
       .addAllToVolumes(additionalVolumes)
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(),
                                           podInfo.getImagePullPolicy(), workDir, initContainerResourceRequirements,
