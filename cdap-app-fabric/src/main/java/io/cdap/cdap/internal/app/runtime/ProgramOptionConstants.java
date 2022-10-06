@@ -117,6 +117,11 @@ public final class ProgramOptionConstants {
   public static final String PLUGIN_DIR_HASH = "pluginDirHash";
 
   /**
+   * Option to hash value of local file path of program.jar
+   */
+  public static final String PROGRAM_JAR_HASH = "ProgramJarHash";
+
+  /**
    * Option to cacheable file names.
    */
   public static final String CACHEABLE_FILES = "cacheableFiles";

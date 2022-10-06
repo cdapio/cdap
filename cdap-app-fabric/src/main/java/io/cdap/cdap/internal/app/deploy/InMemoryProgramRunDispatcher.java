@@ -280,6 +280,21 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     }
 
     if (!tetheredRun) {
+      ArtifactDescriptor artifactDescriptor = artifactDetail.getDescriptor();
+      if (artifactsComputeHash && (artifactsComputeHashSnapshot ||
+        !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
+        Hasher hasher = Hashing.sha256().newHasher();
+        hasher.putString(artifactDescriptor.getNamespace());
+        hasher.putString(artifactDescriptor.getArtifactId().getName());
+        hasher.putString(artifactDescriptor.getArtifactId().getScope().name());
+        hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion());
+        Map<String, String> arguments = new HashMap<>(options.getArguments().asMap());
+        arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, hasher.hash().toString());
+
+        options = new SimpleProgramOptions(options.getProgramId(), new BasicArguments(arguments),
+                                           new BasicArguments(options.getUserArguments().asMap()), options.isDebug());
+      }
+
       updatedOptions = updateProgramOptions(artifactId, programId, options, runId, clusterMode,
                                             Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
                                                                null),
