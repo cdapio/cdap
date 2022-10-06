@@ -103,6 +103,8 @@ public class ArtifactCacheManager {
                                                            new TypeToken<Map<String, Integer>>() {
                                                            }.getType());
         Set<String> artifactsCached = artifactCount.keySet();
+        LOG.error("Artifacts Cached: {}", artifactsCached);
+        LOG.error("Artifacts Count: {}", artifactCount);
         modifyCacheCounter(cachedArtifacts, cacheCountFilePath, artifactCount, changeValue);
         if (writeCacheCounterToGCS(blob, artifactCount)) {
           updateCustomTimeAndHoldOnArtifacts(client, bucket, artifactCount, artifactsCached, cachedArtifactsPath);
