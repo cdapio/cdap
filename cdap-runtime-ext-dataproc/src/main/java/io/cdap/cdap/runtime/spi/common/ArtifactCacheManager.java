@@ -33,6 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SplittableRandom;
@@ -102,7 +103,7 @@ public class ArtifactCacheManager {
         Map<String, Integer> artifactCount = GSON.fromJson(new String(blob.getContent(), StandardCharsets.UTF_8),
                                                            new TypeToken<Map<String, Integer>>() {
                                                            }.getType());
-        Set<String> artifactsCached = artifactCount.keySet();
+        Set<String> artifactsCached = new HashSet<>(artifactCount.keySet());
         LOG.error("Artifacts Cached: {}", artifactsCached);
         LOG.error("Artifacts Count: {}", artifactCount);
         modifyCacheCounter(cachedArtifacts, cacheCountFilePath, artifactCount, changeValue);
