@@ -31,12 +31,13 @@ public class AppRequest<T> {
   private final ArtifactSummary artifact;
   private final T config;
   private final T configuration;
+  @Nullable
+  private final ChangeSummary change;
   private final PreviewConfig preview;
   @SerializedName("principal")
   private final String ownerPrincipal;
   @SerializedName("app.deploy.update.schedules")
   private final Boolean updateSchedules;
-
 
   public AppRequest(ArtifactSummary artifact) {
     this(artifact, null);
@@ -61,12 +62,19 @@ public class AppRequest<T> {
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
                     @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration) {
+    this(artifact, config, preview, ownerPrincipal, updateSchedules, configuration, null);
+  }
+
+  public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
+                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration,
+                    @Nullable ChangeSummary change) {
     this.artifact = artifact;
     this.config = config;
     this.preview = preview;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
     this.configuration = configuration;
+    this.change = change;
   }
 
   public ArtifactSummary getArtifact() {
@@ -76,6 +84,11 @@ public class AppRequest<T> {
   @Nullable
   public T getConfig() {
     return config != null ? config : configuration;
+  }
+
+  @Nullable
+  public ChangeSummary getChange() {
+    return change;
   }
 
   @Nullable

@@ -188,8 +188,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     try {
       LOG.debug("Deploying preview application for {}", programId);
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
-                                            artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
-                                            request.canUpdateSchedules(), true, userProps);
+                                            artifactSummary, config, request.getChange(),
+                                            NOOP_PROGRAM_TERMINATOR, null, request.canUpdateSchedules(),
+                                            true, userProps);
     } catch (Exception e) {
       PreviewStatus previewStatus = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, submitTimeMillis,
                                                       new BasicThrowable(e), null, null);

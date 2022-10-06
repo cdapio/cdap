@@ -116,7 +116,7 @@ public class SystemAppEnableExecutor {
 
     try {
       return appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                           artifactSummary, configString, x -> { },
+                                           artifactSummary, configString, null, x -> { },
                                            ownerPrincipalId, arguments.canUpdateSchedules(), false,
                                            Collections.emptyMap());
 
