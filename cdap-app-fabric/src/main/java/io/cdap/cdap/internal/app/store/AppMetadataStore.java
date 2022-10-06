@@ -380,7 +380,9 @@ public class AppMetadataStore {
     List<ApplicationId> appIds = new ArrayList<>();
     try (CloseableIterator<StructuredRow> iterator =
            getApplicationSpecificationTable().scan(getNamespaceAndApplicationRange(namespaceId, appId),
-                                                   Integer.MAX_VALUE)) {
+                                                   Integer.MAX_VALUE,
+                                                   StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD,
+                                                   SortOrder.DESC)) {
       while (iterator.hasNext()) {
         appIds.add(getApplicationIdFromRow(iterator.next()));
       }
