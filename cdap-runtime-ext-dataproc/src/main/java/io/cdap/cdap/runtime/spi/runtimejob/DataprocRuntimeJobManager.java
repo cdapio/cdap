@@ -75,7 +75,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -101,9 +100,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
   private static final String LABEL_CDAP_PROGRAM = "cdap-program";
   private static final String LABEL_CDAP_PROGRAM_TYPE = "cdap-program-type";
-
-  private static final int SET_CUSTOM_TIME_MAX_RETRY = 6;
-  private static final int SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY = 20000;
 
   // Dataproc specific error groups
   private static final String ERRGP_GCS = "gcs";
@@ -236,8 +232,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         }
       }
       if (!cachedFiles.isEmpty()) {
-        ArtifactCacheManager.getInstance().recordCacheUsageForArtifacts(getStorageClient(), bucket, cachedFiles,
-                                                                        runRootPath, cacheRootPath);
+        new ArtifactCacheManager().recordCacheUsageForArtifacts(getStorageClient(), bucket, cachedFiles, runRootPath,
+                                                                cacheRootPath, runInfo.getRun());
       }
 
       List<LocalFile> uploadedFiles = new ArrayList<>();
@@ -395,44 +391,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                     URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                     localFile.getLastModified(), localFile.getSize(),
                                     localFile.isArchive(), localFile.getPattern());
-      setCustomTime(storage, blobId, targetFilePath);
-
+      DataprocUtils.setCustomTimeOnGcsArtifact(storage, bucket, blobId, targetFilePath, true);
     } else {
       result = uploadFile(bucket, targetFilePath, localFile, true);
     }
 
-
     return result;
-  }
-
-  private void setCustomTime(Storage storage, BlobId blobId, String targetFilePath) throws InterruptedException {
-    Random rand = new Random();
-    for (int i = 1; i <= SET_CUSTOM_TIME_MAX_RETRY; i++) {
-      try {
-        Blob blob = storage.get(blobId);
-        // get a random jitter between 30min to 90min
-        long jitter = TimeUnit.MINUTES.toMillis(rand.nextInt(60)) + TimeUnit.MINUTES.toMillis(30);
-        if (blob.getCustomTime() == null ||
-          blob.getCustomTime() + jitter < System.currentTimeMillis()) {
-          BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-            .setCustomTime(System.currentTimeMillis())
-            .setTemporaryHold(true)
-            .build();
-          storage.update(blobInfo);
-
-          LOG.debug("Successfully set custom time for gs://{}/{}", bucket, targetFilePath);
-        } else {
-          //custom time is still fresh
-          LOG.debug("Skip setting custom time for gs://{}/{} since it is fresh", bucket, targetFilePath);
-        }
-        return;
-      } catch (Exception ex) {
-        if (i == SET_CUSTOM_TIME_MAX_RETRY) {
-          throw ex;
-        }
-        Thread.sleep(rand.nextInt(SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY));
-      }
-    }
   }
 
   /**
@@ -481,7 +445,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
                   localFile.getURI(), bucket, targetFilePath);
-        setCustomTime(storage, blobId, targetFilePath);
+        DataprocUtils.setCustomTimeOnGcsArtifact(storage, bucket, blobId, targetFilePath, true);
       }
     }
 
