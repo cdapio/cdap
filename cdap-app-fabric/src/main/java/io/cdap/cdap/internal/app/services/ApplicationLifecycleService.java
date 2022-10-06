@@ -906,12 +906,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appSpec the {@link ApplicationSpecification} of the application to be removed
    */
   private void removeAppInternal(ApplicationId applicationId, ApplicationSpecification appSpec) throws Exception {
-    // if the application has only one version, do full deletion, else only delete the specified version
-    if (store.getAllAppVersions(applicationId).size() == 1) {
-      deleteApp(applicationId, appSpec);
-      return;
-    }
-    deleteAppVersion(applicationId, appSpec);
+    deleteApp(applicationId, appSpec);
   }
 
   /**
@@ -1078,12 +1073,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     deleteMetrics(appId, spec);
-
-    //Delete all preferences of the application and of all its programs
-    deletePreferences(appId, spec);
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
-    store.removeApplication(appId);
+
+    // version specific deletion
+    for (ApplicationId versionAppId : store.getAllAppVersionsAppIds(appId)) {
+      //Delete all preferences of the application and of all its programs
+      ApplicationSpecification versionAppSpec = store.getApplication(appId);
+      if (versionAppSpec == null) {
+        throw new NotFoundException(Id.Application.fromEntityId(appId));
+      }
+      deletePreferences(versionAppId, versionAppSpec);
+      store.removeApplication(versionAppId);
+    }
     try {
       // delete the owner as it has already been determined that this is the only version of the app
       ownerAdmin.delete(appId);

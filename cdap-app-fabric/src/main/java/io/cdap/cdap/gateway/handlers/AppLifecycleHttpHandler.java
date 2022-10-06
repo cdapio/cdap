@@ -381,7 +381,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(
         new ApplicationId(namespaceId, appId, latestAppVersion))));
     } catch (Exception e) {
-      LOG.error("Failure  to retrieve plugin info", e);
+      LOG.error("Failure to retrieve plugin info", e);
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
   }
@@ -395,8 +395,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appId) throws Exception {
     ApplicationId id = validateApplicationId(namespaceId, appId);
-    applicationLifecycleService.removeApplication(id);
-    responder.sendStatus(HttpResponseStatus.OK);
+    try {
+      String latestAppVersion = getLatestAppVersion(id);
+      applicationLifecycleService.removeApplication(new ApplicationId(id.getNamespace(), id.getApplication(),
+                                                                      latestAppVersion));
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      LOG.error("Failure to delete application", e);
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
   }
 
   /**
