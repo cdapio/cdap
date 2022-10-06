@@ -264,6 +264,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationId appId1 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION1);
     ApplicationId appId2 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION2);
     Id.Application appDefault = Id.Application.fromEntityId(appId1);
+    ApplicationId appIdDefault = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, ApplicationId.DEFAULT_VERSION);
 
     // deploy app1
     Assert.assertEquals(200, deploy(appId1, appRequest).getResponseCode());
@@ -276,7 +277,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     ProgramId serviceId2 = appId2.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    Id.Program serviceIdDefault = Id.Program.fromEntityId(serviceId1);
+    ProgramId serviceIdDefault = appIdDefault.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
+    Id.Program nonVersionServiceIdDefault = Id.Program.fromEntityId(serviceId1);
     // service is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
     // start service
@@ -287,6 +289,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // start service in version2
     startProgram(serviceId2, 200);
     waitState(serviceId2, RUNNING);
+    // non-version status should return the latest version app
+    Assert.assertEquals(RUNNING, getProgramStatus(nonVersionServiceIdDefault));
     // wordFrequencyServiceDefault is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(serviceIdDefault));
     // start service in default version
@@ -1166,11 +1170,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
-    // deploy another version of the app
-    ApplicationId appV2Id = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME, VERSION2);
-    Assert.assertEquals(200, deploy(appV2Id, request).getResponseCode());
-
-    // list schedules for default version app, for the workflow and for the app, they should be same
+    // list schedules for the latest version app, which is default version,
+    // for the workflow and for the app, they should be same
     List<ScheduleDetail> schedules =
       getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(1, schedules.size());
@@ -1178,6 +1179,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(SchedulableProgramType.WORKFLOW, schedule.getProgram().getProgramType());
     Assert.assertEquals(AppWithSchedule.WORKFLOW_NAME, schedule.getProgram().getProgramName());
     Assert.assertEquals(new TimeTrigger("0/15 * * * * ?"), schedule.getTrigger());
+
+    // deploy another version of the app
+    ApplicationId appV2Id = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME, VERSION2);
+    Assert.assertEquals(200, deploy(appV2Id, request).getResponseCode());
 
     // there should be two schedules now
     List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
@@ -1196,7 +1201,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     testAddSchedule(newSchedule);
     testDeleteSchedule(appV2Id, newSchedule);
     testUpdateSchedule(appV2Id);
-    testReEnableSchedule("reEnabledSchedule");
+    testReEnableSchedule("reEnabledSchedule", appV2Id);
   }
 
   @Test
@@ -1319,7 +1324,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Tasks.waitFor(runs + 1, () -> getProgramRuns(programId, ProgramRunStatus.FAILED).size(), 60, TimeUnit.SECONDS);
   }
 
-  private void testReEnableSchedule(String scheduleName) throws Exception {
+  private void testReEnableSchedule(String scheduleName, ApplicationId appV2Id) throws Exception {
     ProtoTrigger.TimeTrigger protoTime = new ProtoTrigger.TimeTrigger("0 * * * ?");
     ProtoTrigger.PartitionTrigger protoPartition =
       new ProtoTrigger.PartitionTrigger(NamespaceId.DEFAULT.dataset("data"), 5);
@@ -1332,7 +1337,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                    scheduleName, description, programInfo, properties,
                                                    timeTrigger, Collections.emptyList(),
                                                    Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
-    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
+    // Adding the schedule to V2, which is the latest version now
+    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME,
+                                        appV2Id.getVersion(), scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
     // start schedule
@@ -1427,14 +1434,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, orScheduleName, requestOrDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
-    Assert.assertEquals(4, schedules.size());
-    Assert.assertEquals(timeDetail, schedules.get(1));
-    Assert.assertEquals(expectedOrDetail, schedules.get(2));
-    Assert.assertEquals(expectedPartitionDetail, schedules.get(3));
+    List<ScheduleDetail> latestVersionSchedules = getSchedules(TEST_NAMESPACE1,
+                                                               AppWithSchedule.NAME,
+                                                               AppWithSchedule.WORKFLOW_NAME);
+    Assert.assertEquals(1, latestVersionSchedules.size());
+
+    List<ScheduleDetail> defaultVersionSchedules = getSchedules(TEST_NAMESPACE1,
+                                                                AppWithSchedule.NAME,
+                                                                ApplicationId.DEFAULT_VERSION,
+                                                                AppWithSchedule.WORKFLOW_NAME);
+    Assert.assertEquals(4, defaultVersionSchedules.size());
+    Assert.assertEquals(timeDetail, defaultVersionSchedules.get(1));
+    Assert.assertEquals(expectedOrDetail, defaultVersionSchedules.get(2));
+    Assert.assertEquals(expectedPartitionDetail, defaultVersionSchedules.get(3));
 
     List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
-    Assert.assertEquals(schedules, schedulesForApp);
+    Assert.assertEquals(defaultVersionSchedules, schedulesForApp);
 
     // trying to add ScheduleDetail of the same schedule again should fail with AlreadyExistsException
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
@@ -1443,10 +1458,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // although we should be able to add schedule to a different version of the app
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-
-    // this should not have affected the schedules of the default version
-    List<ScheduleDetail> scheds = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
-    Assert.assertEquals(schedules, scheds);
 
     // there should be two schedules now for version 2
     List<ScheduleDetail> schedules2 =
@@ -1458,14 +1469,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(schedules2, schedulesForApp2);
 
     // Add a schedule with no schedule name in spec
+    String newScheduleName = "schedule-100";
     ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2,
                                                 null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
                                                 Collections.emptyList(), TimeUnit.HOURS.toMillis(6), null, null);
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, newScheduleName, detail2);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
-    Assert.assertEquals("schedule-100", detail100.getName());
+    ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, newScheduleName);
+    Assert.assertEquals(newScheduleName, detail100.getName());
     Assert.assertEquals(detail2.getTimeoutMillis(), detail100.getTimeoutMillis());
   }
 
@@ -1479,9 +1491,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
     // trying to delete a valid existing schedule should pass
-    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName);
+    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME,
+                              ApplicationId.DEFAULT_VERSION, scheduleName);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
+    List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME,
+                                                  ApplicationId.DEFAULT_VERSION, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(3, schedules.size());
 
     // the above schedule delete should not have affected the schedule with same name in another version of the app

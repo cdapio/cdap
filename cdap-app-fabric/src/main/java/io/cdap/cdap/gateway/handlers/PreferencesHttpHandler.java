@@ -26,6 +26,7 @@ import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -171,7 +172,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                           @QueryParam("resolved") boolean resolved) throws Exception {
-    ApplicationId applicationId = new ApplicationId(namespace, appId);
+    ApplicationId applicationId = new ApplicationId(namespace, appId, getLatestAppVersion(namespace, appId));
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.GET);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
@@ -191,7 +192,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void putAppPrefs(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
-    ApplicationId applicationId = new ApplicationId(namespace, appId);
+    ApplicationId applicationId = new ApplicationId(namespace, appId, getLatestAppVersion(namespace, appId));
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
@@ -213,7 +214,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteAppPrefs(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
-    ApplicationId applicationId = new ApplicationId(namespace, appId);
+    ApplicationId applicationId = new ApplicationId(namespace, appId, getLatestAppVersion(namespace, appId));
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
@@ -232,7 +233,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                               @PathParam("program-type") String programType, @PathParam("program-id") String programId,
                               @QueryParam("resolved") boolean resolved) throws Exception {
-    ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    ApplicationId applicationId = new ApplicationId(namespace, appId, getLatestAppVersion(namespace, appId));
+    ProgramId program = new ProgramId(applicationId, getProgramType(programType), programId);
     accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.GET);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     if (resolved) {
@@ -250,7 +252,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("application-id") String appId,
                               @PathParam("program-type") String programType,
                               @PathParam("program-id") String programId) throws Exception {
-    ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    ApplicationId applicationId = new ApplicationId(namespace, appId, getLatestAppVersion(namespace, appId));
+    ProgramId program = new ProgramId(applicationId, getProgramType(programType), programId);
     accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     try {
@@ -268,7 +271,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                                  @PathParam("program-type") String programType,
                                  @PathParam("program-id") String programId) throws Exception {
-    ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    ApplicationId applicationId = new ApplicationId(namespace, appId, getLatestAppVersion(namespace, appId));
+    ProgramId program = new ProgramId(applicationId, getProgramType(programType), programId);
     accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     Store.ensureProgramExists(program, store.getApplication(program.getParent()));
     preferencesService.deleteProperties(program);
@@ -287,5 +291,18 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception e) {
       throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
     }
+  }
+
+  /**
+   *
+   * @param namespaceId namespace ID
+   * @param appId application ID
+   * @return latest app version
+   */
+  private String getLatestAppVersion(String namespaceId, String appId) {
+    ApplicationMeta latestApplicationMeta = store.getLatest(new NamespaceId(namespaceId), appId);
+    return latestApplicationMeta == null
+      ? ApplicationId.DEFAULT_VERSION
+      : latestApplicationMeta.getSpec().getAppVersion();
   }
 }
