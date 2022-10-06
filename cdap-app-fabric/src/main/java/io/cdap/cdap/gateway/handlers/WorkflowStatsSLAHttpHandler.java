@@ -23,16 +23,20 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.TimeMathParser;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.WorkflowStatsComparison;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.http.AbstractHttpHandler;
@@ -111,8 +115,8 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                                         " less than or equal to 100. Invalid input was " + Double.toString(i));
       }
     }
-
-    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
+    String version = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    WorkflowId workflow = new WorkflowId(namespaceId, appId, version, workflowId);
     WorkflowStatistics workflowStatistics = store.getWorkflowStatistics(workflow, startTime, endTime, percentiles);
 
     if (workflowStatistics == null) {
@@ -161,7 +165,8 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Interval should be greater than 0 and should be specified with one of the 'ms'," +
                                       " 's', 'm', 'h', 'd' units. Entered value was : " + interval);
     }
-    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
+    String version = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    WorkflowId workflow = new WorkflowId(namespaceId, appId, version, workflowId);
     Collection<WorkflowTable.WorkflowRunRecord> workflowRunRecords =
       store.retrieveSpacedRecords(workflow, runId, limit, timeInterval);
 
@@ -197,7 +202,8 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                       @PathParam("workflow-id") String workflowId,
                       @PathParam("run-id") String runId,
                       @QueryParam("other-run-id") String otherRunId) throws Exception {
-    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
+    String version = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    WorkflowId workflow = new WorkflowId(namespaceId, appId, version, workflowId);
     WorkflowRunMetrics detailedStatistics = getDetailedRecord(workflow, runId);
     WorkflowRunMetrics otherDetailedStatistics = getDetailedRecord(workflow, otherRunId);
     if (detailedStatistics == null) {
@@ -341,5 +347,17 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     List<ProgramMetrics> getProgramMetricsList() {
       return programMetricsList;
     }
+  }
+  /**
+   * @param namespaceId namespace Id
+   * @param appId       app Id
+   * @return latest app version
+   */
+  private String getLatestAppVersion(NamespaceId namespaceId, String appId) throws ApplicationNotFoundException {
+    ApplicationMeta latestApplicationMeta = store.getLatest(namespaceId, appId);
+    if (latestApplicationMeta == null) {
+      throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
+    }
+    return latestApplicationMeta.getSpec().getAppVersion();
   }
 }

@@ -203,6 +203,8 @@ public class UnitTestManager extends AbstractTestManager {
   @Override
   public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
     appFabricClient.deployApplication(appId, appRequest);
+    ApplicationDetail appDetail = appFabricClient.getInfo(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
     return appManagerFactory.create(appId);
   }
 
@@ -418,7 +420,7 @@ public class UnitTestManager extends AbstractTestManager {
 
   @Override
   public ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception {
-    return appFabricClient.getVersionedInfo(applicationId);
+    return appFabricClient.getInfo(applicationId);
   }
 
   @Override

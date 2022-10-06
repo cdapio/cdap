@@ -17,6 +17,7 @@
 package io.cdap.cdap.metadata;
 
 import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -117,9 +118,9 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
 
     // Deploy the application
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-
+    JsonObject result = getAppDetails(namespace, appName);
     // Get and validate the application
-    ApplicationId appId = new ApplicationId(namespace, appName);
+    ApplicationId appId = new ApplicationId(namespace, appName, result.get("appVersion").getAsString());
     ApplicationDetail appDetail = fetcher.get(appId);
     assertAllProgramAppDetail(appDetail);
 

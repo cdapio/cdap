@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.AppWithServicesAndWorker;
 import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -65,8 +66,9 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     // Launching/running a new service should NOT be controlled by flow-control mechanism. 
     // deploy, check the status
     deploy(AppWithServicesAndWorker.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-
-    ApplicationId appId = new ApplicationId(TEST_NAMESPACE1, AppWithServicesAndWorker.NAME);
+    JsonObject result = getAppDetails(TEST_NAMESPACE1, AppWithServicesAndWorker.NAME);
+    ApplicationId appId = new ApplicationId(TEST_NAMESPACE1, AppWithServicesAndWorker.NAME,
+                                            result.get("appVersion").getAsString());
     ProgramId noOpService = appId.service(AppWithServicesAndWorker.NO_OP_SERVICE);
     ProgramId pingService = appId.service(AppWithServicesAndWorker.PING_SERVICE);
     ProgramId noOpWorker = appId.worker(AppWithServicesAndWorker.NO_OP_WORKER);

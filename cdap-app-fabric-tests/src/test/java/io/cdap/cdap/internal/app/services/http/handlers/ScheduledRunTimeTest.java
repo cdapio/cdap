@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.WorkflowApp;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -78,7 +79,8 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
   public void testGetNextRun() throws Exception {
     ApplicationId appId = NamespaceId.DEFAULT.app("test");
     deploy(appId, new AppRequest<>(new ArtifactSummary(ARTIFACT_ID.getName(), ARTIFACT_ID.getVersion().getVersion())));
-
+    JsonObject result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "test");
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), result.get("appVersion").getAsString());
     String scheduleName = "schedule1";
 
     // Add a schedule. Use a constraint to make it not going to be executed
@@ -115,6 +117,8 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
       ApplicationId appId = NamespaceId.DEFAULT.app("test" + i);
       deploy(appId, new AppRequest<>(new ArtifactSummary(ARTIFACT_ID.getName(),
                                                          ARTIFACT_ID.getVersion().getVersion())));
+      JsonObject result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "test" + i);
+      appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), result.get("appVersion").getAsString());
 
       String scheduleName = "schedule" + i;
 

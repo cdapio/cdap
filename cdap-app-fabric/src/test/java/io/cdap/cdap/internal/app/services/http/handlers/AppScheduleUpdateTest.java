@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -68,10 +69,12 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
 
     ApplicationId defaultAppId = TEST_NAMESPACE_META2.getNamespaceId().app(AppWithSchedule.NAME);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    JsonObject result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                      defaultAppId.getApplication());
 
     List<ScheduleDetail> actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                                         defaultAppId.getApplication(),
-                                                        defaultAppId.getVersion());
+                                                        result.get("appVersion").getAsString());
 
     // none of the schedules will be added - by default we have set update schedules to be false as system property.
     Assert.assertEquals(0, actualSchSpecs.size());
@@ -81,10 +84,10 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
 
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication());
 
-    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                                               defaultAppId.getApplication(),
-                                                               defaultAppId.getVersion());
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication(),
+                                   result.get("appVersion").getAsString());
 
     // both the schedules will be added as now,
     // we have provided update schedules property to be true manually in appRequest
@@ -95,10 +98,10 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication());
 
-    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                   defaultAppId.getApplication(),
-                                   defaultAppId.getVersion());
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication(),
+                                   result.get("appVersion").getAsString());
 
     // no changes will be made, as default behavior is dont update schedules, so both the schedules should be there
     Assert.assertEquals(2, actualSchSpecs.size());
@@ -108,12 +111,12 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication());
 
-    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                   defaultAppId.getApplication(),
-                                   defaultAppId.getVersion());
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication(),
+                                   result.get("appVersion").getAsString());
 
-    // workflow is deleted, so the schedules will be deleted now
-    Assert.assertEquals(0, actualSchSpecs.size());
+    // the schedules will not be deleted 
+    Assert.assertEquals(2, actualSchSpecs.size());
   }
 }

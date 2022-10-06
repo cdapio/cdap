@@ -57,6 +57,7 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.CannotBeDeletedException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
@@ -109,6 +110,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,6 +134,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -720,8 +723,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      return deployApp(namespace, appName, null, configStr, null, programTerminator, artifactDetail, ownerPrincipal,
-                       updateSchedules, false, Collections.emptyMap());
+      RunId runId = RunIds.generate();
+      String appVersion = RunIds.getTime(runId, TimeUnit.MILLISECONDS) + runId.getId();
+      return deployApp(namespace, appName, appVersion, configStr, null, programTerminator, artifactDetail,
+                       ownerPrincipal, updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -896,7 +901,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (spec == null) {
       throw new NotFoundException(Id.Application.fromEntityId(appId));
     }
-
     removeAppInternal(appId, spec);
   }
 
@@ -907,11 +911,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appSpec the {@link ApplicationSpecification} of the application to be removed
    */
   private void removeAppInternal(ApplicationId applicationId, ApplicationSpecification appSpec) throws Exception {
-    // if the application has only one version, do full deletion, else only delete the specified version
-    if (store.getAllAppVersions(applicationId).size() == 1) {
-      deleteApp(applicationId, appSpec);
-      return;
-    }
     deleteAppVersion(applicationId, appSpec);
   }
 
@@ -1080,11 +1079,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     deleteMetrics(appId, spec);
 
-    //Delete all preferences of the application and of all its programs
-    deletePreferences(appId, spec);
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
-    store.removeApplication(appId);
+
+    // version specific deletion
+    for (ApplicationId versionAppId : store.getAllAppVersionsAppIds(appId)) {
+      //Delete all preferences of the application and of all its programs
+      ApplicationSpecification versionAppSpec = store.getApplication(appId);
+      if (versionAppSpec == null) {
+        throw new NotFoundException(Id.Application.fromEntityId(appId));
+      }
+      deletePreferences(versionAppId, versionAppSpec);
+      store.removeApplication(versionAppId);
+    }
     try {
       // delete the owner as it has already been determined that this is the only version of the app
       ownerAdmin.delete(appId);
