@@ -1965,12 +1965,18 @@ public class AppMetadataStore {
   private ApplicationMeta decodeRow(StructuredRow row) {
     String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
     String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
-    long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
+    Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
     ApplicationMeta meta = GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
                                          ApplicationMeta.class);
     ApplicationSpecification spec = meta.getSpec();
     String id = meta.getId();
-    return new ApplicationMeta(id, spec, new ChangeDetail(changeSummary, null, author, creationTimeMillis));
+    ChangeDetail changeDetail;
+    if (creationTimeMillis == null) {
+      changeDetail = null;
+    } else {
+      changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis);
+    }
+    return new ApplicationMeta(id, spec, changeDetail);
   }
 
   private void writeToStructuredTableWithPrimaryKeys(

@@ -21,6 +21,8 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 
+import javax.annotation.Nullable;
+
 /**
  * Holds application metadata
  */
@@ -29,9 +31,10 @@ public class ApplicationMeta {
 
   private final String id;
   private final ApplicationSpecification spec;
+  @Nullable
   private final ChangeDetail change;
 
-  public ApplicationMeta(String id, ApplicationSpecification spec, ChangeDetail change) {
+  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable ChangeDetail change) {
     this.id = id;
     this.spec = spec;
     this.change = change;
@@ -45,6 +48,7 @@ public class ApplicationMeta {
     return spec;
   }
 
+  @Nullable
   public ChangeDetail getChange() {
     return change;
   }
