@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,8 @@ public enum Feature {
   PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.7.0"),
   STREAMING_PIPELINE_CHECKPOINT_DELETION("6.7.1"),
   LIFECYCLE_MANAGEMENT_EDIT("6.8.0"),
-  STREAMING_PIPELINE_NATIVE_STATE_TRACKING("6.8.0", false);
+  STREAMING_PIPELINE_NATIVE_STATE_TRACKING("6.8.0", false),
+  PUSHDOWN_TRANSFORMATION_WINDOWAGGREGATION("6.9.0");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
@@ -82,3 +83,4 @@ public enum Feature {
   }
 
 }
+
