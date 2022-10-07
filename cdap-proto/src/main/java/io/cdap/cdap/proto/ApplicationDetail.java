@@ -36,6 +36,7 @@ public class ApplicationDetail {
   private final String name;
   private final String appVersion;
   private final String description;
+  @Nullable
   private final ChangeDetail change;
   private final String configuration;
   private final List<DatasetDetail> datasets;
@@ -94,6 +95,7 @@ public class ApplicationDetail {
     return configuration;
   }
 
+  @Nullable
   public ChangeDetail getChange() {
     return change;
   }
