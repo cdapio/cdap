@@ -31,6 +31,8 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunStartMetadata;
+import io.cdap.cdap.proto.TriggeringInfo;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -39,11 +41,20 @@ import io.cdap.cdap.spi.events.EventWriter;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
 import io.cdap.cdap.spi.events.ProgramStatusEvent;
 import io.cdap.cdap.spi.events.ProgramStatusEventDetails;
+import io.cdap.cdap.spi.events.startmetadata.StartMetadata;
+import io.cdap.cdap.spi.events.startmetadata.StartType;
+import io.cdap.cdap.spi.events.startmetadata.TimeSchedule;
+import io.cdap.cdap.spi.events.trigger.ArgumentMapping;
+import io.cdap.cdap.spi.events.trigger.PluginPropertyMapping;
+import io.cdap.cdap.spi.events.trigger.ProgramEvent;
+import io.cdap.cdap.spi.events.trigger.TriggeringPropertyMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -51,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -135,9 +147,9 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
 
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Notification>> messages) {
-    messages.forEachRemaining(message -> {
-      Notification notification = message.getSecond();
+                                 Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
+    while (messages.hasNext()) {
+      Notification notification = messages.next().getSecond();
       if (!notification.getNotificationType().equals(Notification.Type.PROGRAM_STATUS)) {
         return;
       }
@@ -155,24 +167,31 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
       if (!shouldPublish(programRunId)) {
         return;
       }
-      ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
-        .getBuilder(programRunId.getRun(), programRunId.getApplication(), programRunId.getProgram(),
-                    programRunId.getNamespace(),
-                    programStatus,
-                    RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
       String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
       String sysArgsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
       Type argsMapType = new TypeToken<Map<String, String>>() {
       }.getType();
+      Map<String, String> userArgs = GSON.fromJson(userArgsString, argsMapType);
+      Map<String, String> sysArgs = GSON.fromJson(sysArgsString, argsMapType);
+      AppMetadataStore appMetadataStore = AppMetadataStore.create(structuredTableContext);
+      RunStartMetadata runStartMetadata = appMetadataStore.getRunStartMetadata(sysArgs, programRunId);
+      StartMetadata startMetadata = fromRunStartMetadata(runStartMetadata);
+      ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
+        .getBuilder(programRunId.getRun(), programRunId.getApplication(), programRunId.getProgram(),
+                    programRunId.getNamespace(),
+                    programStatus,
+                    RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS),
+                    startMetadata);
+
       builder = builder
-        .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
-        .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
+        .withUserArgs(userArgs)
+        .withSystemArgs(sysArgs);
       if (programRunStatus.isEndState()) {
         populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId);
       } else {
         writeInEventWriters(builder);
       }
-    });
+    };
   }
 
   private void writeInEventWriters(ProgramStatusEventDetails.Builder builder) {
@@ -223,5 +242,88 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
           writeInEventWriters(newBuilder);
         });
     }
+  }
+
+  private StartMetadata fromRunStartMetadata(RunStartMetadata runStartMetadata) {
+    TriggeringInfo info = runStartMetadata.getTriggeringInfo();
+    switch (runStartMetadata.getType()) {
+      case MANUAL:
+        return new StartMetadata(StartType.MANUAL, null, null);
+      case TIME:
+        TriggeringInfo.TimeTriggeringInfo timeInfo = (TriggeringInfo.TimeTriggeringInfo) info;
+        TimeSchedule timeSchedule = new TimeSchedule(timeInfo.getScheduleId().getNamespace(),
+                                                     timeInfo.getScheduleId().getApplication(),
+                                                     timeInfo.getScheduleId().getVersion(),
+                                                     timeInfo.getScheduleId().getSchedule(),
+                                                     timeInfo.getCronExpression(),
+                                                     timeInfo.getRuntimeArguments());
+        return new StartMetadata(StartType.TIME, timeSchedule, null);
+      case PROGRAM_STATUS:
+        TriggeringInfo.ProgramStatusTriggeringInfo programInfo = (TriggeringInfo.ProgramStatusTriggeringInfo) info;
+        ProgramEvent programEvent = new ProgramEvent(programInfo.getProgramRunId().getRun(),
+                                                     programInfo.getProgramRunId().getProgram(),
+                                                     programInfo.getProgramRunId().getApplication(),
+                                                     programInfo.getProgramRunId().getNamespace());
+        io.cdap.cdap.spi.events.trigger.TriggeringInfo triggeringInfo =
+          new io.cdap.cdap.spi.events.trigger.TriggeringInfo(programInfo.getScheduleId().getNamespace(),
+                                                             programInfo.getScheduleId().getSchedule(),
+                                                             new ArrayList<>(Arrays.asList(programEvent)),
+                                                             null);
+        return new StartMetadata(StartType.PROGRAM_STATUS, null, triggeringInfo);
+      case AND:
+        TriggeringInfo.AndTriggeringInfo andInfo = (TriggeringInfo.AndTriggeringInfo) info;
+        List<ProgramEvent> programEvents = new ArrayList<>();
+        for (TriggeringInfo info1 : andInfo.getTriggeringInfos()) {
+          TriggeringInfo.ProgramStatusTriggeringInfo progInfo = (TriggeringInfo.ProgramStatusTriggeringInfo) info1;
+          ProgramEvent progEvent = new ProgramEvent(progInfo.getProgramRunId().getRun(),
+                                                    progInfo.getProgramRunId().getProgram(),
+                                                    progInfo.getProgramRunId().getApplication(),
+                                                    progInfo.getProgramRunId().getNamespace());
+          programEvents.add(progEvent);
+        }
+
+        io.cdap.cdap.spi.events.trigger.TriggeringInfo trigInfo =
+          new io.cdap.cdap.spi.
+            events.trigger.TriggeringInfo(andInfo.getScheduleId().getNamespace(),
+                                          andInfo.getScheduleId().getSchedule(),
+                                          programEvents,
+                                          fromProtoTriggeringPropertyMapping(andInfo.getTriggeringPropertyMapping()));
+        return new StartMetadata(StartType.AND, null, trigInfo);
+      case OR:
+        TriggeringInfo.AndTriggeringInfo orInfo = (TriggeringInfo.AndTriggeringInfo) info;
+        List<ProgramEvent> programEvents1 = new ArrayList<>();
+        for (TriggeringInfo info1 : orInfo.getTriggeringInfos()) {
+          TriggeringInfo.ProgramStatusTriggeringInfo progInfo = (TriggeringInfo.ProgramStatusTriggeringInfo) info1;
+          ProgramEvent progEvent = new ProgramEvent(progInfo.getProgramRunId().getRun(),
+                                                    progInfo.getProgramRunId().getProgram(),
+                                                    progInfo.getProgramRunId().getApplication(),
+                                                    progInfo.getProgramRunId().getNamespace());
+          programEvents1.add(progEvent);
+        }
+
+        io.cdap.cdap.spi.events.trigger.TriggeringInfo trigInfo1 =
+          new io.cdap.cdap.spi.
+            events.trigger.TriggeringInfo(orInfo.getScheduleId().getNamespace(),
+                                          orInfo.getScheduleId().getSchedule(),
+                                          programEvents1,
+                                          fromProtoTriggeringPropertyMapping(orInfo.getTriggeringPropertyMapping()));
+        return new StartMetadata(StartType.OR, null, trigInfo1);
+      default:
+        return null;
+    }
+  }
+
+  private TriggeringPropertyMapping fromProtoTriggeringPropertyMapping(
+    io.cdap.cdap.proto.TriggeringPropertyMapping mapping) {
+    return new TriggeringPropertyMapping(
+      mapping.getArguments().stream()
+        .map(arg -> new ArgumentMapping(arg.getSource(), arg.getTarget(),
+                                        arg.getTriggeringPipelineId().getNamespace(),
+                                        arg.getTriggeringPipelineId().getName())).collect(Collectors.toList()),
+      mapping.getPluginProperties().stream()
+        .map(arg -> new PluginPropertyMapping(arg.getSource(), arg.getTarget(),
+                                              arg.getTriggeringPipelineId().getNamespace(),
+                                              arg.getTriggeringPipelineId().getName(),
+                                              arg.getStageName())).collect(Collectors.toList()));
   }
 }

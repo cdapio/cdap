@@ -32,6 +32,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.api.worker.WorkerSpecification;
@@ -42,10 +43,13 @@ import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoCodec;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggeringInfoUtil;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.TriggeringInfo;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.codec.ConditionSpecificationCodec;
 import io.cdap.cdap.proto.codec.CustomActionSpecificationCodec;
@@ -96,7 +100,9 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
       .registerTypeAdapter(Constraint.class, new ConstraintCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
-      .registerTypeAdapter(Requirements.class, new RequirementsCodec());
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+      .registerTypeAdapter(TriggerInfo.class, new TriggerInfoCodec())
+      .registerTypeAdapter(TriggeringInfo.class, new TriggeringInfoUtil.TriggeringInfoCodec());
   }
 
   /**

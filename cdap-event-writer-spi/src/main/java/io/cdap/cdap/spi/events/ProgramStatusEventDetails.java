@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spi.events;
 
+import io.cdap.cdap.spi.events.startmetadata.StartMetadata;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -42,13 +44,14 @@ public class ProgramStatusEventDetails {
   private final ExecutionMetrics[] pipelineMetrics;
   @Nullable
   private final String workflowId;
+  private final StartMetadata startMetadata;
 
   private ProgramStatusEventDetails(String runID, String programName, String namespace, String applicationName,
                                     String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
                                     @Nullable String error,
                                     @Nullable ExecutionMetrics[] pipelineMetrics,
-                                    @Nullable String workflowId) {
+                                    @Nullable String workflowId, StartMetadata startMetadata) {
     this.runID = runID;
     this.programName = programName;
     this.namespace = namespace;
@@ -60,11 +63,12 @@ public class ProgramStatusEventDetails {
     this.pipelineMetrics = pipelineMetrics;
     this.workflowId = workflowId;
     this.applicationName = applicationName;
+    this.startMetadata = startMetadata;
   }
 
   public static Builder getBuilder(String runID, String applicationName, String programName, String namespace,
-                                   String status, long eventTime) {
-    return new Builder(runID, applicationName, programName, namespace, status, eventTime);
+                                   String status, long eventTime, StartMetadata startMetadata) {
+    return new Builder(runID, applicationName, programName, namespace, status, eventTime, startMetadata);
   }
 
   @Override
@@ -81,6 +85,7 @@ public class ProgramStatusEventDetails {
       ", error='" + error + '\'' +
       ", pipelineMetrics=" + Arrays.toString(pipelineMetrics) +
       ", workflowId='" + workflowId + '\'' +
+      ", startMetadata=" + startMetadata +
       '}';
   }
 
@@ -100,6 +105,11 @@ public class ProgramStatusEventDetails {
     return applicationName;
   }
 
+  @Nullable
+  public StartMetadata getStartMetadata() {
+    return startMetadata;
+  }
+
   public static class Builder {
 
     private final String runID;
@@ -114,14 +124,17 @@ public class ProgramStatusEventDetails {
     private String error;
     private String workflowId;
     private ExecutionMetrics[] pipelineMetrics;
+    private StartMetadata startMetadata;
 
-    Builder(String runID, String applicationName, String programName, String namespace, String status, long eventTime) {
+    Builder(String runID, String applicationName, String programName, String namespace, String status, long eventTime,
+            StartMetadata startMetadata) {
       this.runID = runID;
       this.programName = programName;
       this.namespace = namespace;
       this.status = status;
       this.eventTime = eventTime;
       this.applicationName = applicationName;
+      this.startMetadata = startMetadata;
     }
 
     public Builder withUserArgs(Map<String, String> userArgs) {
@@ -150,7 +163,7 @@ public class ProgramStatusEventDetails {
     public ProgramStatusEventDetails build() {
       return new ProgramStatusEventDetails(runID, programName, namespace, applicationName, status, eventTime,
                                            userArgs, systemArgs,
-                                           error, pipelineMetrics, workflowId);
+                                           error, pipelineMetrics, workflowId, startMetadata);
     }
   }
 }
