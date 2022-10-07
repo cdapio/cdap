@@ -62,7 +62,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
 
   // The property name for the GCS bucket used by the runtime job manager for launching jobs via the job API
   // It can be overridden by profile runtime arguments (system.profile.properties.bucket)
-  private static final String BUCKET = "bucket";
+  private static final String BUCKET = "gcsBucket";
   // Keys for looking up system properties
   private static final String LABELS_PROPERTY = "labels";
   private static final Pattern SIMPLE_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)$");

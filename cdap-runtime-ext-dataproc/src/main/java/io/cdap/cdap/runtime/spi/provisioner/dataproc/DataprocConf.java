@@ -219,7 +219,7 @@ final class DataprocConf {
     this.pollDeleteDelay = pollDeleteDelay;
     this.pollInterval = pollInterval;
     this.encryptionKeyName = encryptionKeyName;
-    this.gcsBucket = gcsBucket;
+    this.gcsBucket = DataprocUtils.getBucketName(gcsBucket);
     this.serviceAccount = serviceAccount;
     this.preferExternalIP = preferExternalIP;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
