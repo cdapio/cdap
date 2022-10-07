@@ -16,10 +16,13 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import io.cdap.cdap.k8s.runtime.KubeTwillPreparer;
+import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobList;
@@ -38,6 +41,7 @@ class KubeJobCleaner implements MasterEnvironmentTask {
   // The BatchV1Api client for interacting with the Kube API server. This needs to be a volatile to safeguard against
   // multiple concurrent client instance creation.
   private volatile BatchV1Api batchV1Api;
+  private volatile CoreV1Api coreV1Api;
   private final String selector;
   private final int batchSize;
   private final long delayMillis;
@@ -70,6 +74,24 @@ class KubeJobCleaner implements MasterEnvironmentTask {
           if (jobStatus != null && (jobStatus.getSucceeded() != null || jobStatus.getFailed() != null)) {
             String jobName = job.getMetadata().getName();
             String kubeNamespace = job.getMetadata().getNamespace();
+            try {
+              // Delete per-run configmap
+              coreV1Api = getCoreV1Api();
+              String configMapName = KubeTwillPreparer.CONFIGMAP_NAME_PREFIX +
+                job.getMetadata().getLabels().get(KubeTwillRunnerService.RUN_ID_LABEL);
+              coreV1Api.deleteNamespacedConfigMap(configMapName, kubeNamespace, null, null,
+                                                  null, null, null, null);
+            } catch (ApiException e) {
+              if (e.getCode() == 404) {
+                LOG.trace("Ignoring configmap deletion for job {} because configmap was not found", jobName);
+              } else {
+                LOG.warn("Failed to cleanup configmap for job {}. Error code: {}, body: {}",
+                         jobName, e.getCode(), e.getResponseBody());
+                // Proceed with other deletions. This will be retried later.
+                continue;
+              }
+            }
+
             V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
             v1DeleteOptions.setPropagationPolicy("Background");
             try {
@@ -121,6 +143,22 @@ class KubeJobCleaner implements MasterEnvironmentTask {
         return api;
       }
       batchV1Api = api = new BatchV1Api(apiClientFactory.create());
+      return api;
+    }
+  }
+
+  private CoreV1Api getCoreV1Api() throws IOException {
+    CoreV1Api api = coreV1Api;
+    if (api != null) {
+      return api;
+    }
+
+    synchronized (this) {
+      api = coreV1Api;
+      if (api != null) {
+        return api;
+      }
+      coreV1Api = api = new CoreV1Api(apiClientFactory.create());
       return api;
     }
   }
