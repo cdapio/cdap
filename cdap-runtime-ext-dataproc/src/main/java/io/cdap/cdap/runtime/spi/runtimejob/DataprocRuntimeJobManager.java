@@ -420,7 +420,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                     URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                     localFile.getLastModified(), localFile.getSize(),
                                     localFile.isArchive(), localFile.getPattern());
-      DataprocUtils.setCustomTimeOnGCSObject(storage, bucket, blobId, targetFilePath, true);
+      DataprocUtils.setTemporaryHoldOnGCSObject(storage, bucket, blob, targetFilePath);
     } else {
       result = uploadFile(bucket, targetFilePath, localFile, true);
     }
@@ -462,11 +462,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         throw e;
       }
 
+      Blob blob = storage.get(blobId);
       if (!isCacheable) {
         // Precondition fails means the blob already exists, most likely happens due to retries
         // https://cloud.google.com/storage/docs/request-preconditions#special-case
         // Overwrite the file
-        Blob blob = storage.get(blobId);
         BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
         uploadToGCS(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
         LOG.debug("Successfully uploaded file {} to gs://{}/{} by overwriting due to conflict",
@@ -474,7 +474,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
                   localFile.getURI(), bucket, targetFilePath);
-        DataprocUtils.setCustomTimeOnGCSObject(storage, bucket, blobId, targetFilePath, true);
+        DataprocUtils.setTemporaryHoldOnGCSObject(storage, bucket, blob, targetFilePath);
       }
     }
 
