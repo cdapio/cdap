@@ -122,8 +122,8 @@ public class ArtifactCacheManager {
       .forEach(artifact -> {
         String cachedArtifactFilePath = getPath(cachedArtifactsPath, artifact);
         try {
-          DataprocUtils.setCustomTimeOnGCSObject(client, bucket, BlobId.of(bucket, cachedArtifactFilePath),
-                                                 cachedArtifactFilePath, false);
+          DataprocUtils.removeTemporaryHoldOnGCSObject(client, bucket, BlobId.of(bucket, cachedArtifactFilePath),
+                                                       cachedArtifactFilePath);
         } catch (InterruptedException e) {
           LOG.warn("Unable to update custom time and temporary hold on cached artifacts", e);
         }

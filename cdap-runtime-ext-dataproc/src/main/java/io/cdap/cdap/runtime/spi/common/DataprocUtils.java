@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
+import org.apache.commons.lang.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -368,14 +369,27 @@ public final class DataprocUtils {
     throw new RuntimeException(String.format(errorMessageOnFailure, file), exception);
   }
 
-  public static void setCustomTimeOnGCSObject(Storage storage, String bucket, BlobId blobId, String targetFilePath,
-                                              boolean temporaryHold) throws InterruptedException {
+  public static void setTemporaryHoldOnGCSObject(Storage storage, String bucket, Blob blob,
+                                                 String targetFilePath) throws InterruptedException {
+    updateTemporaryHoldOnGCSObject(storage, bucket, blob, blob.getBlobId(), targetFilePath, true);
+  }
+
+  public static void removeTemporaryHoldOnGCSObject(Storage storage, String bucket, BlobId blobId,
+                                                    String targetFilePath) throws InterruptedException {
+    updateTemporaryHoldOnGCSObject(storage, bucket, null, blobId, targetFilePath, false);
+  }
+
+  private static void updateTemporaryHoldOnGCSObject(Storage storage, String bucket, @Nullable Blob blob, BlobId blobId,
+                                                     String targetFilePath,
+                                                     boolean temporaryHold) throws InterruptedException {
     for (int i = 1; i <= SET_CUSTOM_TIME_MAX_RETRY; i++) {
       try {
-        Blob blob = temporaryHold ? storage.get(blobId) : null;
         // get a random jitter between 30min to 90min
         long jitter = TimeUnit.MINUTES.toMillis(RANDOM.nextInt(60)) + TimeUnit.MINUTES.toMillis(30);
-        if (!temporaryHold || blob.getCustomTime() == null || !blob.getTemporaryHold() ||
+        // Blob can be null when we set temporary hold to false as we don't need to check pre-existing custom time.
+        // When setting to true, we'll check if custom time was recently set in which case we'll skip this operation.
+        assert temporaryHold == (blob != null);
+        if (!temporaryHold || blob.getCustomTime() == null || BooleanUtils.isFalse(blob.getTemporaryHold()) ||
           blob.getCustomTime() + jitter < System.currentTimeMillis()) {
           BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
             .setCustomTime(System.currentTimeMillis())
