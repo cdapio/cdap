@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Specifies how a window aggregation operation should be executed.
@@ -33,15 +34,27 @@ public class WindowAggregationDefinition {
   private Map<String, Expression> selectExpressions;
   private List<OrderByExpression> orderByExpressions;
   private WindowFrameType windowFrameType;
+  private boolean unboundedPreceding;
+  private boolean unboundedFollowing;
+  private String preceding;
+  private String following;
 
   private WindowAggregationDefinition(Map<String, Expression> selectExpressions,
                                       List<Expression> partitionExpressions,
-                                      List<OrderByExpression> orderByExpressions,
-                                      WindowFrameType windowFrameType) {
+                                      @Nullable List<OrderByExpression> orderByExpressions,
+                                      WindowFrameType windowFrameType,
+                                      @Nullable boolean unboundedPreceding,
+                                      @Nullable boolean unboundedFollowing,
+                                      @Nullable String preceding,
+                                      @Nullable String following) {
     this.selectExpressions = selectExpressions;
     this.partitionExpressions = partitionExpressions;
     this.orderByExpressions = orderByExpressions;
     this.windowFrameType = windowFrameType;
+    this.unboundedPreceding = unboundedPreceding;
+    this.unboundedFollowing = unboundedFollowing;
+    this.preceding = preceding;
+    this.following = following;
   }
 
   /**
@@ -49,6 +62,38 @@ public class WindowAggregationDefinition {
    */
   public static Builder builder() {
     return new Builder();
+  }
+
+  /**
+   * @return value of unbounded preceding field of WindowAggregationDefinition.
+   */
+  @Nullable
+  public boolean getUnboundedPreceding() {
+    return unboundedPreceding;
+  }
+
+  /**
+   * @return value of UnboundedFollowing field of WindowAggregationDefinition.
+   */
+  @Nullable
+  public boolean getUnboundedFollowing() {
+    return unboundedFollowing;
+  }
+
+  /**
+   * @return value of preceding field of WindowAggregationDefinition.
+   */
+  @Nullable
+  public String getPreceding() {
+    return preceding;
+  }
+
+  /**
+   * @return value of following field of WindowAggregationDefinition.
+   */
+  @Nullable
+  public String getFollowing() {
+    return following;
   }
 
   /**
@@ -68,6 +113,7 @@ public class WindowAggregationDefinition {
   /**
    * @return order by expressions of WindowAggregationDefinition.
    */
+  @Nullable
   public List<OrderByExpression> getOrderByExpressions() {
     return orderByExpressions;
   }
@@ -124,6 +170,7 @@ public class WindowAggregationDefinition {
     /**
      * @return the function applied to order ascending or descending records
      */
+    @Nullable
     public OrderBy getOrderBy() {
       return orderBy;
     }
@@ -155,12 +202,60 @@ public class WindowAggregationDefinition {
     private Map<String, Expression> selectExpressions;
     private List<OrderByExpression> orderByExpressions;
     private WindowFrameType windowFrameType;
+    private boolean unboundedPreceding;
+    private boolean unboundedFollowing;
+    private String preceding;
+    private String following;
 
     private Builder() {
       partitionExpressions = new ArrayList();
       selectExpressions = new HashMap();
       orderByExpressions = new ArrayList();
       windowFrameType = WindowFrameType.NONE;
+    }
+
+    /**
+     * Sets unbounded Preceding if window frame type is row or range
+     *
+     * @param unboundedPreceding value
+     * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
+     */
+    public Builder unboundedPreceding(@Nullable boolean unboundedPreceding) {
+      this.unboundedPreceding = unboundedPreceding;
+      return this;
+    }
+
+    /**
+     * Sets unbounded Preceding if window frame type is row or range
+     *
+     * @param unboundedFollowing value
+     * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
+     */
+    public Builder unboundedFollowing(@Nullable boolean unboundedFollowing) {
+      this.unboundedFollowing = unboundedFollowing;
+      return this;
+    }
+
+    /**
+     * Sets the preceding if window frame type is row or range .
+     *
+     * @param preceding value
+     * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
+     */
+    public Builder preceding(@Nullable String preceding) {
+      this.preceding = preceding;
+      return this;
+    }
+
+    /**
+     * Sets the following if window frame type is row or range .
+     *
+     * @param following value
+     * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
+     */
+    public Builder following(@Nullable String following) {
+      this.following = following;
+      return this;
     }
 
     /**
@@ -180,7 +275,7 @@ public class WindowAggregationDefinition {
      * @param orderByExpressions list of {@link Expression}s.
      * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
      */
-    public Builder orderBy(List<OrderByExpression> orderByExpressions) {
+    public Builder orderBy(@Nullable List<OrderByExpression> orderByExpressions) {
       this.orderByExpressions = orderByExpressions;
       return this;
     }
@@ -241,7 +336,7 @@ public class WindowAggregationDefinition {
         throw new IllegalStateException("Can't build a WindowAggregationDefinition without fields to partition");
       }
       return new WindowAggregationDefinition(selectExpressions, partitionExpressions, orderByExpressions,
-                                             windowFrameType);
+         windowFrameType, unboundedPreceding, unboundedFollowing, preceding, following);
     }
   }
 }
