@@ -125,7 +125,7 @@ public interface StructuredTable extends Closeable {
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
    * @param sortOrder defined primary key sort order. Note that the comparator used is specific to the underlying
-   *                  store and is not nessesarily lexographic.
+   *                  store and is not necessarily lexicographic.
    * @return a {@link CloseableIterator} of rows
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
    *                               do not match
