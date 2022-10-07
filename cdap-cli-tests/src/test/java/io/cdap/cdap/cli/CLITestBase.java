@@ -678,13 +678,9 @@ public abstract class CLITestBase {
     testCommandOutputContains("start workflow " + workflow + " '" + runtimeArgsKV + "'",
                               "Successfully started workflow");
 
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return programClient.getProgramRuns(FAKE_WORKFLOW_ID, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
-                                            Integer.MAX_VALUE).size();
-      }
-    }, 180, TimeUnit.SECONDS);
+    Tasks.waitFor(1, () ->
+      programClient.getProgramRuns(FAKE_WORKFLOW_ID, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
+                                   Integer.MAX_VALUE).size(), 180, TimeUnit.SECONDS);
 
     testCommandOutputContains("cli render as csv", "Now rendering as CSV");
     String commandOutput = getCommandOutput("get workflow runs " + workflow);
@@ -721,21 +717,26 @@ public abstract class CLITestBase {
     testCommandOutputContains("get workflow logs " + workflow, FakeWorkflow.FAKE_LOG);
 
     // Test schedule
+    // Need to specify version
     testCommandOutputContains(
-      String.format("add time schedule %s for workflow %s at \"0 4 * * *\"", FakeWorkflow.SCHEDULE, workflow),
+      String.format("add time schedule %s for workflow %s version %s at \"0 4 * * *\"",
+                    FakeWorkflow.SCHEDULE, workflow, V1_SNAPSHOT),
       String.format("Successfully added schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
+
+    // Get schedules without specifying version will get the latest version
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "0 4 * * *");
 
     testCommandOutputContains(
-      String.format("update time schedule %s for workflow %s description \"testdesc\" at \"* * * * *\" " +
-                      "concurrency 4 properties \"key=value\"", FakeWorkflow.SCHEDULE, workflow),
+      String.format("update time schedule %s for workflow %s version %s description \"testdesc\" at \"* * * * *\" " +
+                      "concurrency 4 properties \"key=value\"", FakeWorkflow.SCHEDULE, workflow, V1_SNAPSHOT),
       String.format("Successfully updated schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "* * * * *");
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "testdesc");
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "{\"key\":\"value\"}");
 
+    // Specify version when deleting, otherwise deleting the latest version
     testCommandOutputContains(
-      String.format("delete schedule %s.%s", FakeApp.NAME, FakeWorkflow.SCHEDULE),
+      String.format("delete schedule %s.%s version %s", FakeApp.NAME, FakeWorkflow.SCHEDULE, V1_SNAPSHOT),
       String.format("Successfully deleted schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
     testCommandOutputNotContains(String.format("get workflow schedules %s", workflow), "* * * * *");
     testCommandOutputNotContains(String.format("get workflow schedules %s", workflow), "testdesc");

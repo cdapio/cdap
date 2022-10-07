@@ -35,6 +35,7 @@ import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -211,7 +212,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-    String appVersion = getLatestAppVersion(namespaceId, appId);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
     ProgramId programId = new ApplicationId(namespaceId, appId, appVersion).program(ProgramType.MAPREDUCE, mapreduceId);
     ProgramRunId run = programId.run(runId);
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
@@ -254,7 +255,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("program-type") String type,
                         @PathParam("program-id") String programId) throws Exception {
     getStatus(request, responder, namespaceId, appId,
-              getLatestAppVersion(namespaceId, appId), type, programId);
+              getLatestAppVersion(new NamespaceId(namespaceId), appId), type, programId);
   }
 
   /**
@@ -352,7 +353,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("program-id") String programId,
                             @PathParam("action") String action) throws Exception {
     doPerformAction(request, responder, namespaceId, appId,
-                    getLatestAppVersion(namespaceId, appId), type, programId, action);
+                    getLatestAppVersion(new NamespaceId(namespaceId), appId), type, programId, action);
   }
 
   @POST
@@ -444,7 +445,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit)
     throws Exception {
     programHistory(request, responder, namespaceId, appName,
-                   getLatestAppVersion(namespaceId, appName), type,
+                   getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
                    programName, status, startTs, endTs, resultLimit);
   }
 
@@ -491,7 +492,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("program-name") String programName,
                                @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
     programRunRecord(request, responder, namespaceId, appName,
-                     getLatestAppVersion(namespaceId, appName), type, programName, runid);
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), type, programName, runid);
   }
 
   /**
@@ -528,7 +529,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(namespaceId, appName);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     getProgramIdRuntimeArgs(programId, responder);
   }
@@ -545,7 +546,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(namespaceId, appName);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     saveProgramIdRuntimeArgs(programId, request, responder);
   }
@@ -600,7 +601,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                    @PathParam("program-type") String type,
                                    @PathParam("program-name") String programName) throws Exception {
     programSpecification(request, responder, namespaceId, appName,
-                         getLatestAppVersion(namespaceId, appName), type, programName);
+                         getLatestAppVersion(new NamespaceId(namespaceId), appName), type, programName);
   }
 
 
@@ -721,7 +722,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName) throws Exception {
-    doGetSchedule(responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
+    doGetSchedule(responder, namespaceId, appName,
+                  getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @GET
@@ -753,7 +755,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus) throws Exception {
     getAllSchedules(request, responder, namespaceId, appName,
-                    getLatestAppVersion(namespaceId, appName), triggerType, scheduleStatus);
+                    getLatestAppVersion(new NamespaceId(namespaceId), appName), triggerType, scheduleStatus);
   }
 
   /**
@@ -791,7 +793,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @QueryParam("trigger-type") String triggerType,
                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
     getProgramSchedules(request, responder, namespace, application,
-                        getLatestAppVersion(namespace, application),
+                        getLatestAppVersion(new NamespaceId(namespace), application),
                         type, program, triggerType, scheduleStatus);
   }
 
@@ -876,7 +878,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                           @PathParam("program-type") String type,
                                           @PathParam("program-name") String program) throws Exception {
     ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(namespaceId, appId);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
     handleScheduleRunTime(responder,
                           new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
                           true);
@@ -893,7 +895,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("program-type") String type,
                                       @PathParam("program-name") String program) throws Exception {
     ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(namespaceId, appId);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
     handleScheduleRunTime(responder,
                           new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
                           false);
@@ -1034,7 +1036,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName)
     throws Exception {
-    doAddSchedule(request, responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
+    doAddSchedule(request, responder, namespaceId, appName,
+                  getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @PUT
@@ -1091,7 +1094,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doUpdateSchedule(request, responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
+    doUpdateSchedule(request, responder, namespaceId, appName,
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @POST
@@ -1152,7 +1156,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doDeleteSchedule(responder, namespaceId, appName, getLatestAppVersion(namespaceId, appName), scheduleName);
+    doDeleteSchedule(responder, namespaceId, appName,
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @DELETE
@@ -1188,7 +1193,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-name") String programName,
                                      @PathParam("run-id") String runId) throws Exception {
     updateLogLevels(request, responder, namespace, appName,
-                    getLatestAppVersion(namespace, appName), type, programName, runId);
+                    getLatestAppVersion(new NamespaceId(namespace), appName), type, programName, runId);
   }
 
   /**
@@ -1223,7 +1228,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-name") String programName,
                                     @PathParam("run-id") String runId) throws Exception {
     resetLogLevels(request, responder, namespace, appName,
-                   getLatestAppVersion(namespace, appName), type, programName, runId);
+                   getLatestAppVersion(new NamespaceId(namespace), appName), type, programName, runId);
   }
 
   /**
@@ -1527,14 +1532,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                     "supported is 100", programs.size()));
     }
 
-    List<ProgramId> programIds =
-      programs.stream()
-        .map(batchProgram ->
-               new ApplicationId(namespaceId,
-                                 batchProgram.getAppId(),
-                                 getLatestAppVersion(namespaceId, batchProgram.getAppId()))
-                 .program(batchProgram.getProgramType(), batchProgram.getProgramId()))
-        .collect(Collectors.toList());
+    // Get latest version runs in CDAP-19654
+    List<ProgramId> programIds = programs.stream()
+      .map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
+                                         batchProgram.getProgramType(),
+                                         batchProgram.getProgramId())).collect(Collectors.toList());
 
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
     for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
@@ -1594,13 +1596,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     List<ProgramId> programIds =
-      programs.stream()
-        .map(batchProgram ->
-               new ApplicationId(namespaceId,
-                                 batchProgram.getAppId(),
-                                 getLatestAppVersion(namespaceId, batchProgram.getAppId()))
-                 .program(batchProgram.getProgramType(), batchProgram.getProgramId()))
-        .collect(Collectors.toList());
+      // Get latest version runs in CDAP-19654
+      programs.stream().map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
+                                                          batchProgram.getProgramType(),
+                                                          batchProgram.getProgramId())).collect(Collectors.toList());
 
     List<BatchProgramHistory> response = new ArrayList<>(programs.size());
     List<ProgramHistory> result = lifecycleService.getRunRecords(programIds, ProgramRunStatus.ALL, 0,
@@ -1638,7 +1637,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("program-type") String type,
                                  @PathParam("program-name") String programName) throws Exception {
     getProgramRunCount(request, responder, namespaceId, appName,
-                       getLatestAppVersion(namespaceId, appName), type, programName);
+                       getLatestAppVersion(new NamespaceId(namespaceId), appName), type, programName);
   }
 
   /**
@@ -1724,7 +1723,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("worker-id") String workerId) throws Exception {
     try {
       ProgramId programId = validateAndGetNamespace(namespaceId)
-        .app(appId, getLatestAppVersion(namespaceId, appId))
+        .app(appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
         .worker(workerId);
       lifecycleService.ensureProgramExists(programId);
       int count = store.getWorkerInstances(programId);
@@ -1751,9 +1750,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("worker-id") String workerId) throws Exception {
     int instances = getInstances(request);
     try {
-      lifecycleService.setInstances(new ApplicationId(namespaceId, appId, getLatestAppVersion(namespaceId, appId))
-                                      .program(ProgramType.WORKER, workerId),
-                                    instances);
+      lifecycleService.setInstances(new ApplicationId(namespaceId, appId,
+                                                      getLatestAppVersion(new NamespaceId(namespaceId), appId))
+                                      .program(ProgramType.WORKER, workerId), instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1770,10 +1769,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @SuppressWarnings("unused")
   public void liveInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                        @PathParam("app-id") String appId, @PathParam("program-category") String programCategory,
-                       @PathParam("program-id") String programId) throws BadRequestException {
+                       @PathParam("program-id") String programId)
+    throws BadRequestException, ApplicationNotFoundException {
     ProgramType type = getProgramType(programCategory);
-    ProgramId program = new ApplicationId(namespaceId, appId,
-                                          getLatestAppVersion(namespaceId, appId)).program(type, programId);
+    ProgramId program = new ApplicationId(namespaceId, appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
+      .program(type, programId);
     getLiveInfo(responder, program, runtimeService);
   }
 
@@ -1797,7 +1797,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("service-id") String serviceId) throws Exception {
     try {
       ProgramId programId = validateAndGetNamespace(namespaceId)
-        .app(appId, getLatestAppVersion(namespaceId, appId))
+        .app(appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
         .service(serviceId);
       lifecycleService.ensureProgramExists(programId);
       int instances = store.getServiceInstances(programId);
@@ -1819,7 +1819,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("service-type") String serviceType,
                                      @PathParam("program-name") String programName) throws Exception {
     getServiceAvailability(request, responder, namespaceId, appName,
-                           getLatestAppVersion(namespaceId, appName), serviceType, programName);
+                           getLatestAppVersion(new NamespaceId(namespaceId), appName), serviceType, programName);
   }
 
   /**
@@ -1871,7 +1871,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId) throws Exception {
     try {
-      ProgramId programId = new ApplicationId(namespaceId, appId, getLatestAppVersion(namespaceId, appId))
+      ProgramId programId = new ApplicationId(namespaceId, appId,
+                                              getLatestAppVersion(new NamespaceId(namespaceId), appId))
         .program(ProgramType.SERVICE, serviceId);
       Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
 
@@ -2068,10 +2069,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param appId       app Id
    * @return latest app version
    */
-  private String getLatestAppVersion(String namespaceId, String appId) {
-    ApplicationMeta latestApplicationMeta = store.getLatest(new NamespaceId(namespaceId), appId);
-    return latestApplicationMeta == null
-      ? ApplicationId.DEFAULT_VERSION
-      : latestApplicationMeta.getSpec().getAppVersion();
+  private String getLatestAppVersion(NamespaceId namespaceId, String appId) throws ApplicationNotFoundException {
+    ApplicationMeta latestApplicationMeta = store.getLatest(namespaceId, appId);
+    if (latestApplicationMeta == null) {
+      throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
+    }
+    return latestApplicationMeta.getSpec().getAppVersion();
   }
 }
