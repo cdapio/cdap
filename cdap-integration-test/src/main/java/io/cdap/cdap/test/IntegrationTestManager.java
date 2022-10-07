@@ -34,7 +34,7 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.MockAppConfigurer;
 import io.cdap.cdap.app.program.ManifestFields;
-import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
+import io.cdap.cdap.app.runtime.spark.SparkResourceFilter;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.ArtifactClient;
 import io.cdap.cdap.client.DatasetClient;
@@ -120,7 +120,7 @@ public class IntegrationTestManager extends AbstractTestManager {
         return true;
       }
       // If it is loading by spark framework, don't include it in the app JAR
-      return !SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
+      return !(new SparkResourceFilter().acceptResource(resourceName));
     }
   };
 
