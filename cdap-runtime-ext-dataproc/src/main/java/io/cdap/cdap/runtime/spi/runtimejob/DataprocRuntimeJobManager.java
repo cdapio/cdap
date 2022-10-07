@@ -20,6 +20,7 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
@@ -43,14 +44,17 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.storage.StorageRetryStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.ArtifactCacheManager;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
+import joptsimple.internal.Strings;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -79,6 +83,8 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and managing
@@ -112,6 +118,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final String region;
   private final String bucket;
   private final Map<String, String> labels;
+  private final Map<String, String> provisionerProperties;
 
   private volatile Storage storageClient;
   private volatile JobControllerClient jobControllerClient;
@@ -121,7 +128,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    *
    * @param clusterInfo dataproc cluster information
    */
-  public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo) {
+  public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
+                                   Map<String, String> provisionerProperties) {
     this.provisionerContext = clusterInfo.getProvisionerContext();
     this.clusterName = clusterInfo.getClusterName();
     this.credentials = clusterInfo.getCredentials();
@@ -130,6 +138,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     this.region = clusterInfo.getRegion();
     this.bucket = clusterInfo.getBucket();
     this.labels = clusterInfo.getLabels();
+    // Provisioner properties contains overrides for properties defined in cdap-site.
+    // These properties are absent in provisionerContext.getProperties().
+    this.provisionerProperties = provisionerProperties;
   }
 
   /**
@@ -256,12 +267,30 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count");
     } catch (Exception e) {
+      String errorMessage = String.format("Error while launching job %s on cluster %s.",
+        getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count", e);
-      throw new DataprocRuntimeException(e, String.format("Error while launching job %s on cluster %s",
-                                                          getJobId(runInfo), clusterName));
+      // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
+      // This usually indicates master VM crashing due to OOM.
+      if (e instanceof ResourceExhaustedException) {
+        String message = String.format("%s Cluster can't accept jobs presently: %s",
+                                       errorMessage,
+                                       Throwables.getRootCause(e).getMessage());
+        String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(
+            provisionerProperties.getOrDefault(
+              DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
+              DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT));
+
+        String combined = Stream.of(message, helpMessage)
+          .filter(s -> !Strings.isNullOrEmpty(s))
+          .collect(Collectors.joining("\n"));
+
+        throw new DataprocRuntimeException(e, combined, ErrorTagProvider.ErrorTag.USER);
+      }
+      throw new DataprocRuntimeException(e, errorMessage);
     } finally {
       if (disableLocalCaching) {
         DataprocUtils.deleteDirectoryContents(tempDir);
