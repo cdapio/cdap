@@ -18,17 +18,29 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public class TriggeringInfoUtil {
+/**
+ * Helper functions for {@link TriggeringInfo}
+ */
+public class TriggeringInfoHelper {
 
   private static Gson gson = new Gson();
+  private static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
 
-  public static TriggeringInfo getTriggeringInfo(DefaultTriggeringScheduleInfo triggeringScheduleInfo,
-                                           Trigger.Type type, ScheduleId scheduleId) {
+  /**
+   * Create a new {@link TriggeringInfo} object given
+   * {@link DefaultTriggeringScheduleInfo}, {@link ScheduleId} and {@link Trigger.Type}
+   * @param triggeringScheduleInfo
+   * @param type
+   * @param scheduleId
+   * @return
+   */
+  public static TriggeringInfo fromTriggeringScheduleInfo(DefaultTriggeringScheduleInfo triggeringScheduleInfo,
+                                                          Trigger.Type type, ScheduleId scheduleId) {
     List<TriggerInfo> triggerInfos = triggeringScheduleInfo.getTriggerInfos();
     switch(type) {
       case PROGRAM_STATUS:
@@ -49,6 +61,7 @@ public class TriggeringInfoUtil {
         return new TriggeringInfo.AndTriggeringInfo(triggeringInfos1, scheduleId, null,
                                                     triggeringPropertyMapping(triggeringScheduleInfo.getProperties()));
       case PARTITION:
+        // TODO implement this
         return null;
       default:
         return null;
@@ -62,14 +75,17 @@ public class TriggeringInfoUtil {
   }
 
   private static TriggeringPropertyMapping triggeringPropertyMapping(Map<String, String> properties) {
-    //TODO use constant
-    if (!properties.containsKey("triggering.properties.mapping")) {
+    if (!properties.containsKey(TRIGGERING_PROPERTIES_MAPPING)) {
       return null;
     }
-    return gson.fromJson(properties.get("triggering.properties.mapping"), TriggeringPropertyMapping.class);
+    return gson.fromJson(properties.get(TRIGGERING_PROPERTIES_MAPPING), TriggeringPropertyMapping.class);
   }
 
+  /**
+   * ProgramType mappings for {@link ProgramType} and {@link io.cdap.cdap.api.app.ProgramType}
+   */
   static Map<io.cdap.cdap.api.app.ProgramType, ProgramType> programTypeMappings = new HashMap<>();
+
   static {
     programTypeMappings.put(io.cdap.cdap.api.app.ProgramType.WORKFLOW, ProgramType.WORKFLOW);
     programTypeMappings.put(io.cdap.cdap.api.app.ProgramType.MAPREDUCE, ProgramType.MAPREDUCE);
@@ -79,16 +95,16 @@ public class TriggeringInfoUtil {
   }
 
   private static List<TriggeringInfo> getTriggeringInfoList(List<TriggerInfo> triggerInfos, ScheduleId scheduleId) {
-    List<TriggeringInfo> triggeringInfos = new ArrayList<>();
-    for (TriggerInfo triggerInfo : triggerInfos) {
-      DefaultProgramStatusTriggerInfo programStatusTriggerInfo1 = (DefaultProgramStatusTriggerInfo) triggerInfo;
-      triggeringInfos.add(new TriggeringInfo
-        .ProgramStatusTriggeringInfo(scheduleId, programStatusTriggerInfo1.getRuntimeArguments(),
-                                     getProgramRunId(programStatusTriggerInfo1)));
-    }
-    return triggeringInfos;
+    return triggerInfos.stream().map(r -> {
+      DefaultProgramStatusTriggerInfo progTrigger = (DefaultProgramStatusTriggerInfo) r;
+      return new TriggeringInfo.ProgramStatusTriggeringInfo(
+        scheduleId, progTrigger.getRuntimeArguments(), getProgramRunId(progTrigger));
+    }).collect(Collectors.toList());
   }
 
+  /**
+   * Serializer/Deserializer for {@link TriggeringInfo}
+   */
   public static class TriggeringInfoCodec implements JsonDeserializer<TriggeringInfo>,
     JsonSerializer<TriggeringInfo> {
 

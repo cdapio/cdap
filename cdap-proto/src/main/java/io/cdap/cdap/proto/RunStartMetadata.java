@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+/**
+ * This class contains the information of how a run is triggered
+ */
 public class RunStartMetadata {
 
   public enum Type {

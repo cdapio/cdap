@@ -174,7 +174,7 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
       Map<String, String> userArgs = GSON.fromJson(userArgsString, argsMapType);
       Map<String, String> sysArgs = GSON.fromJson(sysArgsString, argsMapType);
       AppMetadataStore appMetadataStore = AppMetadataStore.create(structuredTableContext);
-      RunStartMetadata runStartMetadata = appMetadataStore.getRunStartMetadata(sysArgs, programRunId);
+      RunStartMetadata runStartMetadata = appMetadataStore.createRunStartMetadata(sysArgs, programRunId);
       StartMetadata startMetadata = fromRunStartMetadata(runStartMetadata);
       ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
         .getBuilder(programRunId.getRun(), programRunId.getApplication(), programRunId.getProgram(),

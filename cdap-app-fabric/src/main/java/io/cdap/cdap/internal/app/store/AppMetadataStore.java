@@ -46,8 +46,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
-import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggeringInfoUtil;
-import io.cdap.cdap.internal.app.runtime.schedule.trigger.WorkflowTokenCodec;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggeringInfoHelper;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramRunCluster;
@@ -132,7 +131,6 @@ public class AppMetadataStore {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
     new GsonBuilder()
       .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
-      .registerTypeAdapter(WorkflowToken.class, new WorkflowTokenCodec())
     )
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -578,13 +576,13 @@ public class AppMetadataStore {
       return null;
     }
 
-    RunRecordData existing = getRunData(programRunId);
+    RunRecordData existingData = getRunData(programRunId);
     // for some reason, there is an existing run record.
-    if (existing != null) {
+    if (existingData != null) {
       LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
                   + "run record in run state {} and cluster state {}.",
-                programRunId, existing.getRunRecordDetail().getStatus(),
-                existing.getRunRecordDetail().getCluster().getStatus());
+                programRunId, existingData.getRunRecordDetail().getStatus(),
+                existingData.getRunRecordDetail().getCluster().getStatus());
       return null;
     }
 
@@ -609,7 +607,7 @@ public class AppMetadataStore {
       .setArtifactId(artifactId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
       .build();
-    RunStartMetadata runStartMetadata = getRunStartMetadata(systemArgs, programRunId);
+    RunStartMetadata runStartMetadata = createRunStartMetadata(systemArgs, programRunId);
     writeNewRunRecordData(new RunRecordData(meta, runStartMetadata), TYPE_RUN_RECORD_ACTIVE);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONING, programRunId);
     return meta;
@@ -645,14 +643,14 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramProvisioned(ProgramRunId programRunId, int numNodes, byte[] sourceId)
     throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
+    RunRecordData existingData = getRunData(programRunId);
 
-    if (existing == null) {
+    if (existingData == null) {
       LOG.warn("Ignoring unexpected request to transition program run {} from non-existent state to cluster state {}.",
                programRunId, ProgramRunClusterStatus.PROVISIONED);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.PROVISIONED, sourceId)) {
       return null;
     }
@@ -666,7 +664,7 @@ public class AppMetadataStore {
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONED, programRunId);
     return meta;
   }
@@ -685,13 +683,13 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramDeprovisioning(ProgramRunId programRunId, byte[] sourceId)
     throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONING);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONING, sourceId)) {
       return null;
     }
@@ -706,7 +704,7 @@ public class AppMetadataStore {
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONING, programRunId);
     return meta;
   }
@@ -727,13 +725,13 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramDeprovisioned(ProgramRunId programRunId, @Nullable Long endTs, byte[] sourceId)
     throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONED);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.DEPROVISIONED, sourceId)) {
       return null;
     }
@@ -747,7 +745,7 @@ public class AppMetadataStore {
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONED, programRunId);
     return meta;
   }
@@ -767,13 +765,13 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramOrphaned(ProgramRunId programRunId, long endTs, byte[] sourceId)
     throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONED);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.ORPHANED, sourceId)) {
       return null;
     }
@@ -787,7 +785,7 @@ public class AppMetadataStore {
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.ORPHANED, programRunId);
     return meta;
   }
@@ -804,13 +802,13 @@ public class AppMetadataStore {
       return null;
     }
 
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
+    RunRecordData existingData = getRunData(programRunId);
     // for some reason, there is an existing run record?
-    if (existing != null) {
+    if (existingData != null) {
       LOG.error("Ignoring unexpected request to record rejected state for program run {} that has an existing "
                   + "run record in run state {} and cluster state {}.",
-                programRunId, existing.getStatus(), existing.getCluster().getStatus());
+                programRunId, existingData.getRunRecordDetail().getStatus(),
+                existingData.getRunRecordDetail().getCluster().getStatus());
       return null;
     }
 
@@ -829,8 +827,8 @@ public class AppMetadataStore {
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
       .build();
 
-    // TODO add RunMetadata instead of null
-    writeNewRunRecordData(new RunRecordData(meta, null), TYPE_RUN_RECORD_COMPLETED);
+    RunStartMetadata runStartMetadata = createRunStartMetadata(systemArgs, programRunId);
+    writeNewRunRecordData(new RunRecordData(meta, runStartMetadata), TYPE_RUN_RECORD_COMPLETED);
     LOG.trace("Recorded {} for program {}", ProgramRunStatus.REJECTED, programRunId);
     return meta;
   }
@@ -861,19 +859,19 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramStart(ProgramRunId programRunId, @Nullable String twillRunId,
                                             Map<String, String> systemArgs, byte[] sourceId) throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    RunRecordDetail meta;
+    RunRecordData existingData = getRunData(programRunId);
 
     if (systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STARTING, null, sourceId);
     }
 
-    if (existing == null) {
+    if (existingData == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.STARTING);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
+    RunRecordDetail meta;
     if (!isValid(existing, ProgramRunStatus.STARTING, existing.getCluster().getStatus(), sourceId)) {
       return null;
     }
@@ -890,7 +888,7 @@ public class AppMetadataStore {
       .setTwillRunId(twillRunId)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", ProgramRunStatus.STARTING, programRunId);
     return meta;
   }
@@ -910,13 +908,13 @@ public class AppMetadataStore {
   public RunRecordDetail recordProgramRunning(ProgramRunId programRunId, long stateChangeTime,
                                               @Nullable String twillRunId,
                                               byte[] sourceId) throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.RUNNING);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, ProgramRunStatus.RUNNING, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording running if the existing records are not valid
       return null;
@@ -938,7 +936,7 @@ public class AppMetadataStore {
       .setTwillRunId(twillRunId)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", ProgramRunStatus.RUNNING, programRunId);
     return meta;
   }
@@ -955,18 +953,18 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId, long timestamp)
     throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.SUSPENDED);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, ProgramRunStatus.SUSPENDED, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording suspend if the existing record is not valid
       return null;
     }
-    return recordProgramSuspendResume(programRunId, sourceId, runRecordData, "suspend", timestamp);
+    return recordProgramSuspendResume(programRunId, sourceId, existingData, "suspend", timestamp);
   }
 
   /**
@@ -981,18 +979,18 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramResumed(ProgramRunId programRunId, byte[] sourceId, long timestamp)
     throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.RUNNING);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, ProgramRunStatus.RUNNING, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording resumed if the existing records are not valid
       return null;
     }
-    return recordProgramSuspendResume(programRunId, sourceId, runRecordData, "resume", timestamp);
+    return recordProgramSuspendResume(programRunId, sourceId, existingData, "resume", timestamp);
   }
 
   private RunRecordDetail recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
@@ -1036,13 +1034,13 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail recordProgramStopping(ProgramRunId programRunId, byte[] sourceId, long stoppingTsSecs,
                                                long terminateTsSecs) throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.STOPPING);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, ProgramRunStatus.STOPPING, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording running if the existing records are not valid
       return null;
@@ -1064,7 +1062,7 @@ public class AppMetadataStore {
       .setTerminateTs(terminateTsSecs)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", ProgramRunStatus.STOPPING, programRunId);
     return meta;
   }
@@ -1086,13 +1084,13 @@ public class AppMetadataStore {
                                                              ProgramRunStatus runStatus,
                                                              @Nullable BasicThrowable failureCause, byte[] sourceId)
     throws IOException {
-    RunRecordData runRecordData = getRunData(programRunId);
-    RunRecordDetail existing = runRecordData.getRunRecordDetail();
-    if (existing == null) {
+    RunRecordData existingData = getRunData(programRunId);
+    if (existingData == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, runStatus);
       return null;
     }
+    RunRecordDetail existing = existingData.getRunRecordDetail();
     if (!isValid(existing, runStatus, existing.getCluster().getStatus(), sourceId)) {
       // Skip recording stop if the existing records are not valid
       return null;
@@ -1112,7 +1110,7 @@ public class AppMetadataStore {
       .setStatus(runStatus)
       .setSourceId(sourceId)
       .build();
-    writeRunRecordData(key, new RunRecordData(meta, runRecordData.getRunStartMetadata()));
+    writeRunRecordData(key, new RunRecordData(meta, existingData.getRunStartMetadata()));
     LOG.trace("Recorded {} for program {}", runStatus, programRunId);
     return meta;
   }
@@ -2002,12 +2000,18 @@ public class AppMetadataStore {
            row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD));
   }
 
+  /**
+   * Writes a new {@link RunRecordDetail} and {@link RunStartMetadata}, then increments the run count of a program.
+   */
   private void writeNewRunRecordData(RunRecordData meta, String typeRunRecordCompleted) throws IOException {
     writeRunRecordData(meta, typeRunRecordCompleted);
     List<Field<?>> countKey = getProgramCountPrimaryKeys(TYPE_COUNT, meta.getProgramRunId().getParent());
     getProgramCountsTable().increment(countKey, StoreDefinition.AppMetadataStore.COUNTS, 1L);
   }
 
+  /**
+   * Writes {@link RunRecordDetail} and {@link RunStartMetadata} to the run record table
+   */
   private void writeRunRecordData(RunRecordData meta, String typeRunRecordCompleted) throws IOException {
     List<Field<?>> keys = getProgramRunInvertedTimeKey(typeRunRecordCompleted,
                                                          meta.getRunRecordDetail().getProgramRunId(),
@@ -2015,6 +2019,9 @@ public class AppMetadataStore {
     writeRunRecordData(keys, meta);
   }
 
+  /**
+   * Writes {@link RunRecordDetail} and {@link RunStartMetadata} to the run record table
+   */
   private void writeRunRecordData(List<Field<?>> keys, RunRecordData meta) throws IOException {
     keys.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA,
                                 GSON.toJson(meta.getRunRecordDetail())));
@@ -2023,7 +2030,16 @@ public class AppMetadataStore {
     getRunRecordsTable().upsert(keys);
   }
 
-  public RunStartMetadata getRunStartMetadata(Map<String, String> sysArgs, ProgramRunId programRunId)
+  /**
+   * Creates new {@link RunStartMetadata} using sysArgs.
+   * sysArgs has trigger information with key "triggeringScheduleInfo".
+   * if it doesn't then it's a manual run.
+   * @param sysArgs
+   * @param programRunId
+   * @return
+   * @throws IOException
+   */
+  public RunStartMetadata createRunStartMetadata(Map<String, String> sysArgs, ProgramRunId programRunId)
     throws IOException {
     if (sysArgs == null || !sysArgs.containsKey(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO)) {
       return new RunStartMetadata(RunStartMetadata.Type.MANUAL, null);
@@ -2034,25 +2050,38 @@ public class AppMetadataStore {
     // We get program schedule record for knowing the type of the schedule
     ScheduleId scheduleId = new ScheduleId(programRunId.getNamespace(), programRunId.getApplication(),
                                            triggeringScheduleInfo.getName());
+    // DefaultTriggeringScheduleInfo doesn't have trigger type information
+    // So we get it from ScheduleStore
     ProgramScheduleRecord programScheduleRecord = getProgramScheduleRecord(scheduleId);
     Trigger.Type triggerType = programScheduleRecord.getSchedule().getTrigger().getType();
 
-    TriggeringInfo triggeringInfo = TriggeringInfoUtil.getTriggeringInfo(triggeringScheduleInfo,
-                                                                         triggerType, scheduleId);
+    TriggeringInfo triggeringInfo = TriggeringInfoHelper.fromTriggeringScheduleInfo(triggeringScheduleInfo,
+                                                                                    triggerType, scheduleId);
     return new RunStartMetadata(RunStartMetadata.Type.valueOfCategoryName(triggerType.getCategoryName()),
                                 triggeringInfo);
   }
 
+  /**
+   * Gets Schedule details from ScheduleStore.
+   * @param scheduleId
+   * @return
+   * @throws IOException
+   */
   private ProgramScheduleRecord getProgramScheduleRecord(ScheduleId scheduleId) throws IOException {
     try {
       ProgramScheduleStoreDataset programScheduleStoreDataset = Schedulers.getScheduleStore(context);
       return programScheduleStoreDataset.getScheduleRecord(scheduleId);
     } catch (NotFoundException e) {
-      // TODO set exception properly
       throw new IOException(e);
     }
   }
 
+  /**
+   * Gets {@link RunRecordData} for a {@link ProgramRunId}
+   * @param programRunId
+   * @return
+   * @throws IOException
+   */
   private RunRecordData getRunData(ProgramRunId programRunId) throws IOException {
     RunRecordData running = getUnfinishedRunsData(Collections.singleton(programRunId)).get(programRunId);
     if (running != null) {
@@ -2061,6 +2090,12 @@ public class AppMetadataStore {
     return getCompletedRunsData(Collections.singleton(programRunId)).get(programRunId);
   }
 
+  /**
+   * Gets all {@link RunRecordData} for all unfinished runs
+   * @param programRunIds
+   * @return
+   * @throws IOException
+   */
   private Map<ProgramRunId, RunRecordData> getUnfinishedRunsData(Set<ProgramRunId> programRunIds) throws IOException {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
@@ -2074,6 +2109,12 @@ public class AppMetadataStore {
       }, LinkedHashMap::new));
   }
 
+  /**
+   * Gets all {@link RunRecordData} for all completed runs
+   * @param programRunIds
+   * @return
+   * @throws IOException
+   */
   private Map<ProgramRunId, RunRecordData> getCompletedRunsData(Set<ProgramRunId> programRunIds) throws IOException {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
@@ -2087,12 +2128,15 @@ public class AppMetadataStore {
       }, LinkedHashMap::new));
   }
 
+  /**
+   * Represents data stored in each row of RunRecord table
+   */
   public static final class RunRecordData {
     private final RunRecordDetail runRecordDetail;
     @Nullable
     private final RunStartMetadata runStartMetadata;
 
-    public RunRecordData(RunRecordDetail runRecordDetail, RunStartMetadata runStartMetadata) {
+    public RunRecordData(RunRecordDetail runRecordDetail, @Nullable RunStartMetadata runStartMetadata) {
       this.runRecordDetail = runRecordDetail;
       this.runStartMetadata = runStartMetadata;
     }
@@ -2101,6 +2145,7 @@ public class AppMetadataStore {
       return runRecordDetail;
     }
 
+    @Nullable
     public RunStartMetadata getRunStartMetadata() {
       return runStartMetadata;
     }

@@ -8,9 +8,15 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+/**
+ * Class contains the triggering information for a run
+ */
 public abstract class TriggeringInfo implements Trigger {
   private final Type type;
   private final ScheduleId scheduleId;
+  /**
+   * Runtime Arguments propagated from upstream program or properties of time schedule
+   */
   @Nullable
   private final Map<String, String> runtimeArguments;
 
@@ -63,11 +69,12 @@ public abstract class TriggeringInfo implements Trigger {
 
   public abstract static class AbstractCompositeTriggeringInfo<T extends TriggeringInfo> extends TriggeringInfo {
     private final List<T> triggeringInfos;
+    @Nullable
     private final TriggeringPropertyMapping triggeringPropertyMapping;
 
     protected AbstractCompositeTriggeringInfo(Type type, List<T> triggeringInfos, ScheduleId scheduleId,
-                                              Map<String, String> runtimeArguments,
-                                              TriggeringPropertyMapping triggeringPropertyMapping) {
+                                              @Nullable Map<String, String> runtimeArguments,
+                                              @Nullable TriggeringPropertyMapping triggeringPropertyMapping) {
       super(type, scheduleId, runtimeArguments);
       this.triggeringInfos = triggeringInfos;
       this.triggeringPropertyMapping = triggeringPropertyMapping;
@@ -85,8 +92,8 @@ public abstract class TriggeringInfo implements Trigger {
   public static class OrTriggeringInfo extends AbstractCompositeTriggeringInfo<TriggeringInfo> {
 
     public OrTriggeringInfo(List<TriggeringInfo> triggeringInfos, ScheduleId scheduleId,
-                            Map<String, String> runtimeArguments,
-                            TriggeringPropertyMapping triggeringPropertyMapping) {
+                            @Nullable Map<String, String> runtimeArguments,
+                            @Nullable TriggeringPropertyMapping triggeringPropertyMapping) {
       super(Type.OR, triggeringInfos, scheduleId, runtimeArguments, triggeringPropertyMapping);
     }
   }
@@ -94,11 +101,9 @@ public abstract class TriggeringInfo implements Trigger {
   public static class AndTriggeringInfo extends AbstractCompositeTriggeringInfo<TriggeringInfo> {
 
     public AndTriggeringInfo(List<TriggeringInfo> triggeringInfos, ScheduleId scheduleId,
-                             Map<String, String> runtimeArguments,
-                             TriggeringPropertyMapping triggeringPropertyMapping) {
+                             @Nullable Map<String, String> runtimeArguments,
+                             @Nullable TriggeringPropertyMapping triggeringPropertyMapping) {
       super(Type.AND, triggeringInfos, scheduleId, runtimeArguments, triggeringPropertyMapping);
     }
   }
-
-
 }
