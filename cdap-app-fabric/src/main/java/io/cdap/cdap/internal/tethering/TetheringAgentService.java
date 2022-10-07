@@ -124,7 +124,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                         ProvisionerNotifier provisionerNotifier,
                         NamespaceQueryAdmin namespaceQueryAdmin) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
-    this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL, 10L));
+    this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
     this.cConf = cConf;
     this.transactionRunner = transactionRunner;
     this.store = store;

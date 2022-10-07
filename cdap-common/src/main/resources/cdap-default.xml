@@ -5295,7 +5295,7 @@
 
   <property>
     <name>tethering.agent.connection.interval.secs</name>
-    <value>10</value>
+    <value>1</value>
     <description>
       Interval for connecting to the tethering server.
     </description>
