@@ -92,6 +92,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,6 +115,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -187,7 +189,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") final String appId)
     throws BadRequestException, NamespaceNotFoundException, AccessException {
 
-    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, RunIds.generate().getId());
+    RunId runId = RunIds.generate();
+    ApplicationId applicationId =
+      validateApplicationVersionId(namespaceId, appId,
+                                   RunIds.getTime(runId, TimeUnit.MILLISECONDS) + "-" + runId.getId());
 
     try {
       return deployAppFromArtifact(applicationId);
