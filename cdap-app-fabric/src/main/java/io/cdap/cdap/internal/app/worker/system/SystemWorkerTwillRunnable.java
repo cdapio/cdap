@@ -27,11 +27,13 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.OptionalBinder;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
-import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -61,8 +63,16 @@ import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReaderWithLocalization;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.FireAndForgetTwillRunnerService;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
+import io.cdap.cdap.internal.app.worker.RemoteWorkerPluginFinder;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
+import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -108,6 +118,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerTwillRunnable.class);
 
   private SystemWorkerService systemWorker;
+  private ArtifactLocalizerService artifactLocalizerService;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
 
@@ -146,11 +157,20 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       new AuthorizationEnforcementModule().getDistributedModules(),
       Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
         .with(new AbstractModule() {
+          // To enable localisation of artifacts
           @Override
           protected void configure() {
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+            bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+            bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class)
+              .in(Scopes.SINGLETON);
+            bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
+            OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);
+            install(new FactoryModuleBuilder()
+                      .implement(ArtifactManager.class, RemoteArtifactManager.class)
+                      .build(ArtifactManagerFactory.class));
           }
-        }, new DistributedArtifactManagerModule()),
+        }),
       Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
         .with(new AbstractModule() {
           @Override
@@ -246,6 +266,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
     LOG.debug("Starting system worker");
     systemWorker.start();
+    artifactLocalizerService.start();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -261,6 +282,9 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
     if (systemWorker != null) {
       systemWorker.stop();
+    }
+    if (artifactLocalizerService != null) {
+      artifactLocalizerService.stop();
     }
   }
 
@@ -302,5 +326,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
                                                               SystemWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     systemWorker = injector.getInstance(SystemWorkerService.class);
+    artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
   }
 }
