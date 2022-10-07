@@ -1311,9 +1311,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void testReEnableSchedule(String scheduleName) throws Exception {
-    ProtoTrigger.TimeTrigger protoTime = new ProtoTrigger.TimeTrigger("0 * * * ?");
-    ProtoTrigger.PartitionTrigger protoPartition =
-      new ProtoTrigger.PartitionTrigger(NamespaceId.DEFAULT.dataset("data"), 5);
     String description = "Something";
     ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
                                                               AppWithSchedule.WORKFLOW_NAME);

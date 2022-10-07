@@ -171,7 +171,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     MockScanner scanner = new MockScanner(expected.iterator());
     Field<?> filterIndex = Fields.intField("key", 9);
     List<Integer> actual = new ArrayList<>();
-    try (NoSqlStructuredTable.FilterByIndexIterator closeableIterator = new NoSqlStructuredTable.FilterByIndexIterator(
+    try (NoSqlStructuredTable.FilterByFieldIterator closeableIterator = new NoSqlStructuredTable.FilterByFieldIterator(
       (new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA)), filterIndex, SCHEMA)) {
       while (closeableIterator.hasNext()) {
         actual.add(closeableIterator.next().getInteger("key"));
@@ -189,7 +189,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     MockScanner scanner = new MockScanner(expected.iterator());
     Field<?> filterIndex = Fields.intField("key", 9);
     List<Integer> actual = new ArrayList<>();
-    try (NoSqlStructuredTable.FilterByIndexIterator closeableIterator = new NoSqlStructuredTable.FilterByIndexIterator(
+    try (NoSqlStructuredTable.FilterByFieldIterator closeableIterator = new NoSqlStructuredTable.FilterByFieldIterator(
       new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA), filterIndex, SCHEMA)) {
       while (closeableIterator.hasNext()) {
         actual.add(closeableIterator.next().getInteger("key"));
