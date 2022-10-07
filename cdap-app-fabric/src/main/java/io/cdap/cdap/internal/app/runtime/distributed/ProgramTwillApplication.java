@@ -21,6 +21,7 @@ import com.google.common.collect.Iterators;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillApplication;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -135,5 +136,10 @@ public final class ProgramTwillApplication implements ExtendedTwillApplication {
   @Override
   public String getRunId() {
     return programRunId.getRun();
+  }
+
+  @Override
+  public boolean isSystemApplication() {
+    return programRunId.getNamespaceId().equals(NamespaceId.SYSTEM);
   }
 }
