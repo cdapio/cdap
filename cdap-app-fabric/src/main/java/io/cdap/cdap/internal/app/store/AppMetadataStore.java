@@ -1520,28 +1520,42 @@ public class AppMetadataStore {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
       allKeys.add(getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId,
-                                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS)));
+                                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
+                                               false));
     }
-    return getRunRecordsTable().multiRead(allKeys).stream()
-      .map(AppMetadataStore::deserializeRunRecordMeta)
-      .collect(Collectors.toMap(RunRecordDetail::getProgramRunId, r -> r, (r1, r2) -> {
-        throw new IllegalStateException("Duplicate run record for " + r1.getProgramRunId());
-      }, LinkedHashMap::new));
+    
+    return getRangeScanRunsMap(allKeys);
   }
 
   private Map<ProgramRunId, RunRecordDetail> getCompletedRuns(Set<ProgramRunId> programRunIds) throws IOException {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
-      List<Field<?>> keys = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
+      // Get all keys without version
+      List<Field<?>> keysWithoutVersion = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED,
+                                                                    programRunId.getParent(),
+                                                                    false);
       // Get start time from RunId
       long programStartSecs = RunIds.getTime(RunIds.fromString(programRunId.getRun()), TimeUnit.SECONDS);
-      keys.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME,
-                                getInvertedTsKeyPart(programStartSecs)));
-      keys.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, programRunId.getRun()));
-      allKeys.add(keys);
+      keysWithoutVersion.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME,
+                                              getInvertedTsKeyPart(programStartSecs)));
+      keysWithoutVersion.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, programRunId.getRun()));
+      allKeys.add(keysWithoutVersion);
     }
-    return getRunRecordsTable().multiRead(allKeys).stream()
-      .map(AppMetadataStore::deserializeRunRecordMeta)
+
+    return getRangeScanRunsMap(allKeys);
+  }
+
+  private Map<ProgramRunId, RunRecordDetail> getRangeScanRunsMap(List<List<Field<?>>> allKeys) throws IOException {
+    List<RunRecordDetail> runRecordDetails = new ArrayList<>();
+
+    try (CloseableIterator<StructuredRow> iterator =
+           getRunRecordsTable().multiScanPartialKeys(allKeys, Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        runRecordDetails.add(deserializeRunRecordMeta(iterator.next()));
+      }
+    }
+
+    return runRecordDetails.stream()
       .collect(Collectors.toMap(RunRecordDetail::getProgramRunId, r -> r, (r1, r2) -> {
         throw new IllegalStateException("Duplicate run record for " + r1.getProgramRunId());
       }, LinkedHashMap::new));
@@ -2003,13 +2017,23 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getRunRecordProgramPrefix(String status, @Nullable ProgramId programId) {
+  private List<Field<?>> getRunRecordProgramPrefix(String status,
+                                                   @Nullable ProgramId programId) {
+    return getRunRecordProgramPrefix(status, programId, true);
+  }
+
+  private List<Field<?>> getRunRecordProgramPrefix(String status,
+                                                   @Nullable ProgramId programId,
+                                                   boolean includeVersion) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
     if (programId == null) {
-      return getRunRecordStatusPrefix(status);
+      return fields;
     }
-    List<Field<?>> fields =
-      getRunRecordApplicationPrefix(
-        status, new ApplicationId(programId.getNamespace(), programId.getApplication(), programId.getVersion()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, programId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, programId.getApplication()));
+    if (includeVersion) {
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, programId.getVersion()));
+    }
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD, programId.getType().name()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programId.getProgram()));
     return fields;
@@ -2035,17 +2059,19 @@ public class AppMetadataStore {
     return (String) field.getValue();
   }
 
-  private List<Field<?>> addProgramPrimaryKeys(ProgramId programRunId, List<Field<?>> fields) {
+  private List<Field<?>> addProgramPrimaryKeys(ProgramId programRunId, List<Field<?>> fields, boolean includeVersion) {
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, programRunId.getNamespace()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, programRunId.getApplication()));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, programRunId.getVersion()));
+    if (includeVersion) {
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, programRunId.getVersion()));
+    }
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD, programRunId.getType().name()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programRunId.getProgram()));
     return fields;
   }
 
   private List<Field<?>> getProgramRunPrimaryKeys(ProgramRunId programRunId) {
-    List<Field<?>> fields = addProgramPrimaryKeys(programRunId.getParent(), new ArrayList<>());
+    List<Field<?>> fields = addProgramPrimaryKeys(programRunId.getParent(), new ArrayList<>(), true);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, programRunId.getRun()));
     return fields;
   }
@@ -2056,10 +2082,16 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId, long startTs) {
+  private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId,
+                                                      long startTs) {
+    return getProgramRunInvertedTimeKey(recordType, runId, startTs, true);
+  }
+
+  private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId,
+                                                      long startTs, boolean includeVersion) {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, recordType));
-    addProgramPrimaryKeys(runId.getParent(), fields);
+    addProgramPrimaryKeys(runId.getParent(), fields, includeVersion);
     fields.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsKeyPart(startTs)));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, runId.getRun()));
     return fields;
@@ -2068,7 +2100,7 @@ public class AppMetadataStore {
   private List<Field<?>> getProgramCountPrimaryKeys(String type, ProgramId programId) {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.COUNT_TYPE, type));
-    return addProgramPrimaryKeys(programId, fields);
+    return addProgramPrimaryKeys(programId, fields, true);
   }
 
   @Nullable

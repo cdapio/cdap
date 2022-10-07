@@ -59,7 +59,7 @@ public class FieldValidatorTest {
 
     // Success case with prefix
     validator.validatePrimaryKeys(Arrays.asList(Fields.intField(KEY, 10), Fields.longField(KEY2, 100L)),
-                                                true);
+                                  true);
     validator.validatePrimaryKeys(Collections.singletonList(Fields.intField(KEY, 10)), true);
 
     // Test invalid type
@@ -75,6 +75,45 @@ public class FieldValidatorTest {
     try {
       validator.validatePrimaryKeys(Arrays.asList(Fields.intField(KEY, 10), Fields.longField(KEY2, 100L)),
                                     false);
+      Assert.fail("Expected InvalidFieldException");
+    } catch (InvalidFieldException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testValidatePartialPrimaryKeys() {
+    FieldValidator validator = new FieldValidator(schema);
+
+    // Success case
+    validator.validatePartialPrimaryKeys(Arrays.asList(Fields.intField(KEY, 10),
+                                                       Fields.longField(KEY2, 100L),
+                                                       Fields.stringField(KEY3, "s")));
+
+    // Success case with prefix
+    validator.validatePartialPrimaryKeys(Arrays.asList(Fields.intField(KEY, 10),
+                                                       Fields.longField(KEY2, 100L)));
+
+    // Success case with partial keys
+    validator.validatePartialPrimaryKeys(Arrays.asList(Fields.intField(KEY2, 10),
+                                                       Fields.stringField(KEY3, "s")));
+
+    // Test invalid type
+    try {
+      validator.validatePartialPrimaryKeys(Arrays.asList(Fields.stringField(KEY3, "s"),
+                                                         Fields.floatField(KEY, 10.0f),
+                                                         Fields.longField(KEY2, 100L)));
+      Assert.fail("Expected InvalidFieldException");
+    } catch (InvalidFieldException e) {
+      // expected
+    }
+
+    // Test invalid number
+    try {
+      validator.validatePartialPrimaryKeys(Arrays.asList(Fields.intField(KEY, 10),
+                                                         Fields.longField(KEY2, 100L),
+                                                         Fields.longField("notExitField", 100L),
+                                                         Fields.longField(KEY2, 100L)));
       Assert.fail("Expected InvalidFieldException");
     } catch (InvalidFieldException e) {
       // expected

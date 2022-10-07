@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -132,6 +133,42 @@ public final class NoSqlStructuredTable implements StructuredTable {
                              limit);
   }
 
+  @Override
+  public CloseableIterator<StructuredRow> scan(Collection<Field<?>> partialKeys, int limit)
+    throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Scan partial keys {} with limit {}", schema.getTableId(), partialKeys, limit);
+    fieldValidator.validatePartialPrimaryKeys(partialKeys);
+    List<Field<?>> prefixKeyFields = getPrefixPrimaryKeys(partialKeys);
+    Set<String> prefixKeys = prefixKeyFields.stream().map(Field::getName).collect(Collectors.toSet());
+
+    List<Field<?>> filterKeys = partialKeys.stream()
+      .filter(field -> !prefixKeys.contains(field.getName()))
+      .collect(Collectors.toList());
+
+    CloseableIterator<StructuredRow> iterator =
+      new ScannerIterator(getScanner(Range.singleton(prefixKeyFields)), schema);
+
+    for (Field<?> filter : filterKeys) {
+      iterator = new FilterByFieldIterator(iterator, filter, schema);
+    }
+
+    return new LimitIterator(Collections.singleton(iterator).iterator(), limit);
+  }
+
+  private List<Field<?>> getPrefixPrimaryKeys(Collection<Field<?>> partialKeys) {
+    List<Field<?>> prefixKeys = new ArrayList<>();
+    List<String> primaryKeys = schema.getPrimaryKeys();
+    int i = 0;
+    for (Field<?> key : partialKeys) {
+      if (key.getName().equals(primaryKeys.get(i))) {
+        prefixKeys.add(key);
+        i++;
+      } else {
+        break;
+      }
+    }
+    return prefixKeys;
+  }
 
   /*
    *  Sorting in memory for the no-sql implementation. We sort post table scan.
@@ -208,7 +245,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
       throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
     }
     ScannerIterator scannerIterator = new ScannerIterator(getScanner(keyRange), schema);
-    FilterByIndexIterator filterByIndexIterator = new FilterByIndexIterator(scannerIterator, filterIndex, schema);
+    FilterByFieldIterator filterByIndexIterator = new FilterByFieldIterator(scannerIterator, filterIndex, schema);
     return new LimitIterator(Collections.singleton(filterByIndexIterator).iterator(), limit);
   }
 
@@ -249,6 +286,19 @@ public final class NoSqlStructuredTable implements StructuredTable {
         return new ScannerIterator(table.scan(range.getFirst(), range.getSecond()), schema);
       }
     }, limit);
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> multiScanPartialKeys(
+    Collection<? extends Collection<Field<?>>> partialKeysCollections, int limit)
+    throws InvalidFieldException, IOException {
+    Collection<CloseableIterator<StructuredRow>> iterators = new ArrayList<>();
+
+    for (Collection<Field<?>> keys : partialKeysCollections) {
+      iterators.add(scan(keys, Integer.MAX_VALUE));
+    }
+
+    return new LimitIterator(iterators.iterator(), limit);
   }
 
   @Override
@@ -326,7 +376,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
   public long count(Collection<Range> keyRanges) throws IOException {
     LOG.trace("Table {}: count with ranges {}", schema.getTableId(), keyRanges);
     long count = 0;
-    for (Range keyRange: keyRanges) {
+    for (Range keyRange : keyRanges) {
       try (Scanner scanner = getScanner(keyRange)) {
         while (scanner.next() != null) {
           count++;
@@ -345,7 +395,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * Convert the keys to corresponding byte array. The keys can either be a prefix or complete primary keys depending
    * on the value of allowPrefix. The method will always prepend the table name as a prefix for the row keys.
    *
-   * @param keys keys to convert
+   * @param keys        keys to convert
    * @param allowPrefix true if the keys can be prefix false if the keys have to contain all the primary keys.
    * @return the byte array converted
    * @throws InvalidFieldException if the key are not prefix or complete primary keys
@@ -581,38 +631,38 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * Filters elements matching an index {@link ScannerIterator}.
+   * Filters elements matching a field {@link ScannerIterator}.
    */
   @VisibleForTesting
-  static final class FilterByIndexIterator extends AbstractCloseableIterator<StructuredRow> {
+  static final class FilterByFieldIterator extends AbstractCloseableIterator<StructuredRow> {
     private final CloseableIterator<StructuredRow> scannerIterator;
     private final Predicate<StructuredRow> predicate;
 
-    FilterByIndexIterator(CloseableIterator<StructuredRow> scannerIterator, Field<?> filterIndex,
+    FilterByFieldIterator(CloseableIterator<StructuredRow> scannerIterator, Field<?> filterField,
                           StructuredTableSchema schema) {
       this.scannerIterator = scannerIterator;
 
-      switch (filterIndex.getFieldType()) {
+      switch (filterField.getFieldType()) {
         case INTEGER:
-          predicate = row -> Objects.equals(row.getInteger(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getInteger(filterField.getName()), filterField.getValue());
           break;
         case LONG:
-          predicate = row -> Objects.equals(row.getLong(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getLong(filterField.getName()), filterField.getValue());
           break;
         case FLOAT:
-          predicate = row -> Objects.equals(row.getFloat(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getFloat(filterField.getName()), filterField.getValue());
           break;
         case DOUBLE:
-          predicate = row -> Objects.equals(row.getDouble(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getDouble(filterField.getName()), filterField.getValue());
           break;
         case STRING:
-          predicate = row -> Objects.equals(row.getString(filterIndex.getName()), filterIndex.getValue());
+          predicate = row -> Objects.equals(row.getString(filterField.getName()), filterField.getValue());
           break;
         case BYTES:
-          predicate = row -> Arrays.equals(row.getBytes(filterIndex.getName()), (byte[]) filterIndex.getValue());
+          predicate = row -> Arrays.equals(row.getBytes(filterField.getName()), (byte[]) filterField.getValue());
           break;
         default:
-          throw new InvalidFieldException(schema.getTableId(), filterIndex.getName());
+          throw new InvalidFieldException(schema.getTableId(), filterField.getName());
       }
     }
 

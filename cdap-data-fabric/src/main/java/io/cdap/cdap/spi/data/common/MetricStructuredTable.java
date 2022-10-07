@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -173,6 +173,12 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
+  public CloseableIterator<StructuredRow> scan(Collection<Field<?>> partialKeys, int limit)
+    throws InvalidFieldException, IOException {
+    return scan(() -> structuredTable.scan(partialKeys, limit), "scan.partial.keys");
+  }
+
+  @Override
   public CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException, IOException {
     return scan(() -> structuredTable.scan(index), "index.scan.");
   }
@@ -217,6 +223,38 @@ public class MetricStructuredTable implements StructuredTable {
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
                                                     int limit) throws InvalidFieldException, IOException {
     return multiScan(() -> structuredTable.multiScan(keyRanges, limit), "multi.scan.");
+  }
+
+  private interface MultiScanPartialKeysFunction {
+    CloseableIterator<StructuredRow> multiScanPartialKeys() throws InvalidFieldException, IOException;
+  }
+
+  private CloseableIterator<StructuredRow> multiScanPartialKeys(
+    MultiScanPartialKeysFunction multiScanPartialKeysFunction, String metricNamePrefix) throws IOException {
+    try {
+      CloseableIterator<StructuredRow> result;
+      if (!emitTimeMetrics) {
+        result = multiScanPartialKeysFunction.multiScanPartialKeys();
+      } else {
+        long curTime = System.nanoTime();
+        result = multiScanPartialKeysFunction.multiScanPartialKeys();
+        long duration = System.nanoTime() - curTime;
+        metricsCollector.increment(metricPrefix + metricNamePrefix + "time", duration);
+      }
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "count", 1L);
+      return result;
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + metricNamePrefix + "error", 1L);
+      throw e;
+    }
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> multiScanPartialKeys(
+    Collection<? extends Collection<Field<?>>> partialKeysCollections,
+    int limit) throws InvalidFieldException, IOException {
+    return multiScanPartialKeys(
+      () -> structuredTable.multiScanPartialKeys(partialKeysCollections, limit), "multi.scan.partial.keys");
   }
 
   @Override

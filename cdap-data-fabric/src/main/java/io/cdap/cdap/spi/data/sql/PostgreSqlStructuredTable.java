@@ -206,12 +206,19 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public CloseableIterator<StructuredRow> scan(Collection<Field<?>> partialKeys, int limit)
+    throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Scan partial keys fields {} with limit {}", tableSchema.getTableId(), partialKeys, limit);
+    return scan(Range.singleton(partialKeys), limit);
+  }
+
+  @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
 
     LOG.trace("Table {}: Scan range {} with limit {} order {}", tableSchema.getTableId(), keyRange, limit, sortOrder);
-    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
-    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
     String scanQuery = getScanQuery(keyRange, limit, tableSchema.getPrimaryKeys(), sortOrder);
 
     // We don't close the statement here because once it is closed, the result set is also closed.
@@ -240,15 +247,15 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
     // Validate all ranges. Also, find if there is any range that is open on both ends.
     // Also split the scans into actual range scans and singleton scan, which can be done via IN condition.
-    Map<String, Set<Field<?>>> keyFields = new LinkedHashMap<>();
+    List<Range> singletonScans = new ArrayList<>();
     List<Range> rangeScans = new ArrayList<>();
     boolean scanAll = false;
     for (Range range : keyRanges) {
-      fieldValidator.validatePrimaryKeys(range.getBegin(), true);
-      fieldValidator.validatePrimaryKeys(range.getEnd(), true);
+      fieldValidator.validatePartialPrimaryKeys(range.getBegin());
+      fieldValidator.validatePartialPrimaryKeys(range.getEnd());
 
       if (range.isSingleton()) {
-        range.getBegin().forEach(f -> keyFields.computeIfAbsent(f.getName(), k -> new LinkedHashSet<>()).add(f));
+        singletonScans.add(range);
       } else {
         if (range.getBegin().isEmpty() && range.getEnd().isEmpty()) {
           scanAll = true;
@@ -262,7 +269,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
     try {
       // Don't close the statement. Leave it to the ResultSetIterator.close() to close it.
-      PreparedStatement statement = prepareMultiScanQuery(keyFields, rangeScans, limit);
+      PreparedStatement statement = prepareMultiScanQuery(singletonScans, rangeScans, limit);
       LOG.trace("MultiScan SQL statement: {}", statement);
 
       ResultSet resultSet = statement.executeQuery();
@@ -273,38 +280,48 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     }
   }
 
+  @Override
+  public CloseableIterator<StructuredRow> multiScanPartialKeys(
+    Collection<? extends Collection<Field<?>>> partialKeysCollections, int limit)
+    throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: MultiScanPartialKeys {} with limit {}",
+              tableSchema.getTableId(), partialKeysCollections, limit);
+    Collection<Range> keyRanges = partialKeysCollections.stream().map(Range::singleton).collect(Collectors.toList());
+    return multiScan(keyRanges, limit);
+  }
+
   /**
    * Generates a SELECT query for scanning over all the provided ranges. For each of the range, it generates a where
    * clause using the {@link #appendRange(StringBuilder, Range)} method. The where clause of each range are OR together.
    * E.g.
    * <p>
-   * SELECT * FROM table WHERE key1 in (?,?) AND key2 in (?,?)
+   * SELECT * FROM table WHERE (key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?)
    * OR ((key3 >= ?) AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?)) LIMIT limit
    *
-   * @param keyFields a map from field name to field values that the query has to match with
+   * @param singletonRanges the list of singleton ranges to scan
    * @param ranges    the list of ranges to scan
    * @param limit     number of result
    * @return a select query
    */
-  private PreparedStatement prepareMultiScanQuery(Map<String, Set<Field<?>>> keyFields,
+  private PreparedStatement prepareMultiScanQuery(Collection<Range> singletonRanges,
                                                   Collection<Range> ranges, int limit) throws SQLException {
     StringBuilder query = new StringBuilder("SELECT * FROM ")
       .append(tableSchema.getTableId().getName()).append(" WHERE ");
 
-    // Generates "key1 in (?,?) AND key2 in (?,?)..." clause
+    // Generates "(key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?)..." clause
     String separator = "";
-    for (Map.Entry<String, Set<Field<?>>> entry : keyFields.entrySet()) {
-      query
-        .append(separator)
-        .append(entry.getKey()).append(" IN (")
-        .append(IntStream.range(0, entry.getValue().size()).mapToObj(i -> "?").collect(Collectors.joining(",")))
-        .append(")");
-      separator = " AND ";
+    Collection<Field<?>> singletonFields = new ArrayList<>();
+    for (Range singleton : singletonRanges) {
+      query.append(separator).append("(");
+      appendSingletonFields(query, singleton.getBegin());
+      query.append(")");
+      separator = " OR ";
+      singletonFields.addAll(singleton.getBegin());
     }
 
     // Generates the ((key3 >= ?) AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?))
     if (!ranges.isEmpty()) {
-      separator = keyFields.isEmpty() ? "(" : " OR (";
+      separator = singletonRanges.isEmpty() ? "(" : " OR (";
       for (Range range : ranges) {
         query.append(separator).append("(");
         appendRange(query, range);
@@ -320,7 +337,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     statement.setFetchSize(fetchSize);
 
     // Set the parameters
-    int index = setFields(statement, keyFields.values().stream().flatMap(Collection::stream)::iterator, 1);
+    int index = setFields(statement, singletonFields, 1);
     for (Range range : ranges) {
       index = setStatementFieldByRange(range, statement, index);
     }
@@ -877,6 +894,14 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     appendScanBound(query, range.getEnd(), range.getEndBound().equals(Range.Bound.INCLUSIVE) ? "<=" : "<");
   }
 
+  private void appendSingletonFields(StringBuilder query, Collection<Field<?>> fields) {
+    List<String> conditions = fields.stream()
+      .map(field -> field.getName() + " = ?")
+      .collect(Collectors.toList());
+    
+    query.append(String.join(" AND ", conditions));
+  }
+
   private void appendScanBound(StringBuilder sb,
                                Collection<Field<?>> keys, String comparator) {
     if (keys.isEmpty()) {
@@ -890,9 +915,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       valueJoiner.add("?");
     }
 
-    sb.append(keyJoiner.toString())
+    sb.append(keyJoiner)
       .append(comparator)
-      .append(valueJoiner.toString());
+      .append(valueJoiner);
   }
 
   private String getDeleteQuery(Collection<Field<?>> keys) {
