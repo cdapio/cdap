@@ -81,7 +81,6 @@ import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.hadoop.mapreduce.v2.app.webapp.App;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
