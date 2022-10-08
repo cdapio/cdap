@@ -1524,7 +1524,7 @@ public class AppMetadataStore {
                                                false));
     }
     
-    return getRangeScanRunsMap(allKeys);
+    return getRunsByKeys(allKeys);
   }
 
   private Map<ProgramRunId, RunRecordDetail> getCompletedRuns(Set<ProgramRunId> programRunIds) throws IOException {
@@ -1542,10 +1542,10 @@ public class AppMetadataStore {
       allKeys.add(keysWithoutVersion);
     }
 
-    return getRangeScanRunsMap(allKeys);
+    return getRunsByKeys(allKeys);
   }
 
-  private Map<ProgramRunId, RunRecordDetail> getRangeScanRunsMap(List<List<Field<?>>> allKeys) throws IOException {
+  private Map<ProgramRunId, RunRecordDetail> getRunsByKeys(List<List<Field<?>>> allKeys) throws IOException {
     List<RunRecordDetail> runRecordDetails = new ArrayList<>();
 
     try (CloseableIterator<StructuredRow> iterator =
@@ -2017,8 +2017,7 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getRunRecordProgramPrefix(String status,
-                                                   @Nullable ProgramId programId) {
+  private List<Field<?>> getRunRecordProgramPrefix(String status, @Nullable ProgramId programId) {
     return getRunRecordProgramPrefix(status, programId, true);
   }
 
@@ -2082,8 +2081,7 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId,
-                                                      long startTs) {
+  private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId, long startTs) {
     return getProgramRunInvertedTimeKey(recordType, runId, startTs, true);
   }
 
