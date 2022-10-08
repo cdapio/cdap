@@ -219,7 +219,7 @@ final class DataprocConf {
     this.pollDeleteDelay = pollDeleteDelay;
     this.pollInterval = pollInterval;
     this.encryptionKeyName = encryptionKeyName;
-    this.gcsBucket = DataprocUtils.getBucketName(gcsBucket);
+    this.gcsBucket = gcsBucket;
     this.serviceAccount = serviceAccount;
     this.preferExternalIP = preferExternalIP;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
@@ -642,7 +642,7 @@ final class DataprocConf {
     String imageVersion = getString(properties, IMAGE_VERSION);
     String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
     String gcpCmekKeyName = getString(properties, ENCRYPTION_KEY_NAME);
-    String gcpCmekBucket = getString(properties, "gcsBucket");
+    String gcpCmekBucket = DataprocUtils.getBucketName(getString(properties, "gcsBucket"));
 
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
       DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_META_DATA), ";", "\\|"));

@@ -470,7 +470,7 @@
           "widget-type": "textbox",
           "label": "GCS Bucket",
           "name": "gcsBucket",
-          "description": "Google Cloud Storage bucket used to stage job dependencies and config files for running pipelines in Google Cloud Dataproc. If the bucket is unspecified, then the bucket created during an instance creation will be used",
+          "description": "Google Cloud Storage bucket used to stage job dependencies and config files for running pipelines in Google Cloud Dataproc. If the bucket is not specified, then the bucket created during the instance creation will be used",
           "widget-attributes": {
             "size": "medium"
           }
