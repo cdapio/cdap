@@ -479,7 +479,7 @@ public class AppMetadataStore {
       throw new ConflictException(String.format("Cannot deploy the application because parent version '%s' does not " +
                                                   "match the latest version '%s'.",
                                                 parentVersion,
-                                                latest == null ? null : latest.getSpec().getAppVersion()));
+                                                latestVersion));
     }
     // When the app does not exist -it is not an edit
     if (latest != null) {
