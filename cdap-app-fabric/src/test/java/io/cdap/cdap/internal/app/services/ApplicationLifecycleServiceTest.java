@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.services;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
@@ -207,6 +208,9 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertEquals(expected, actual);
 
     // Remove the application and verify that all metadata is removed
+    JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), appWithWorkflowClass.getSimpleName());
+    appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appWithWorkflowClass.getSimpleName(),
+                              appDetails.get("appVersion").getAsString());
     applicationLifecycleService.removeApplication(appId);
     Assert.assertTrue(metadataStorage.read(new Read(appMetadataId)).isEmpty());
   }
@@ -216,7 +220,9 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     deploy(MetadataEmitApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            NamespaceId.DEFAULT.getNamespace());
 
-    ApplicationId appId = NamespaceId.DEFAULT.app(MetadataEmitApp.NAME);
+    JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), MetadataEmitApp.NAME);
+    ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), MetadataEmitApp.NAME,
+                              appDetails.get("appVersion").getAsString());
 
     // check app user metadata gets emitted correctly
     Metadata userMetadata = metadataStorage.read(new Read(appId.toMetadataEntity(), MetadataScope.USER));
@@ -252,10 +258,12 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     // although trying to re-deploy the app with same owner should work
     deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
-           TEST_NAMESPACE2, ownerPrincipal);
+                                 TEST_NAMESPACE2, ownerPrincipal);
+    JsonObject appDetails = getAppDetails(TEST_NAMESPACE2, AllProgramsApp.NAME);
 
     // delete, otherwise it conflicts with other tests
-    deleteAppAndData(new NamespaceId(TEST_NAMESPACE2).app(AllProgramsApp.NAME));
+    deleteAppAndData(new ApplicationId(TEST_NAMESPACE2, AllProgramsApp.NAME,
+                                       appDetails.get("appVersion").getAsString()));
   }
 
   @Test
@@ -303,8 +311,11 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
            impNsMeta.getName(), "bob/somehost.net@somekdc.net");
 
+    JsonObject appDetails = getAppDetails(impNsMeta.getNamespaceId().getNamespace(), AllProgramsApp.NAME);
+
     // delete, otherwise it conflicts with other tests
-    deleteAppAndData(impNsMeta.getNamespaceId().app(AllProgramsApp.NAME));
+    deleteAppAndData(new ApplicationId(impNsMeta.getNamespaceId().getNamespace(), AllProgramsApp.NAME,
+                                       appDetails.get("appVersion").getAsString()));
   }
 
   @Test

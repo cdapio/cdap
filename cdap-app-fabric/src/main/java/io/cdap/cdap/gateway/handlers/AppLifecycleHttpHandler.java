@@ -403,15 +403,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appId) throws Exception {
     ApplicationId id = validateApplicationId(namespaceId, appId);
-    try {
-      String latestAppVersion = getLatestAppVersion(id);
-      id = validateApplicationVersionId(namespaceId, appId, latestAppVersion);
-      applicationLifecycleService.removeApplication(id);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      LOG.error("Failure to delete application", e);
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
+    String latestAppVersion = getLatestAppVersion(id);
+    id = validateApplicationVersionId(namespaceId, appId, latestAppVersion);
+    applicationLifecycleService.removeApplication(id);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
