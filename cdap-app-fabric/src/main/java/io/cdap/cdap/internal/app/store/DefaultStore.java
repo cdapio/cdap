@@ -623,7 +623,7 @@ public class DefaultStore implements Store {
         if (requestRef.get().getSortOrder() != SortOrder.DESC || count.get() != 0) {
           throw e;
         }
-        scanApplicationwWithReorder(requestRef.get(), txBatchSize, consumer);
+        return scanApplicationwWithReorder(requestRef.get(), txBatchSize, consumer);
       }
 
       if (lastKey.get() == null) {
@@ -643,10 +643,11 @@ public class DefaultStore implements Store {
   /**
    * Special case where we are asked to get applications in descending order and the store does not support it.
    * We scan keys in large batches and serve backwards
+   * @return if we read records up to request limit
    */
-  private void scanApplicationwWithReorder(ScanApplicationsRequest request,
-                                           int txBatchSize,
-                                           BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+  private boolean scanApplicationwWithReorder(ScanApplicationsRequest request,
+                                              int txBatchSize,
+                                              BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
     AtomicReference<ScanApplicationsRequest> forwardRequest =
       new AtomicReference<>(ScanApplicationsRequest.builder(request)
       .setSortOrder(SortOrder.ASC)
@@ -688,6 +689,7 @@ public class DefaultStore implements Store {
         });
       }
     }
+    return currentLimit.get() == 0;
   }
 
   @Override
