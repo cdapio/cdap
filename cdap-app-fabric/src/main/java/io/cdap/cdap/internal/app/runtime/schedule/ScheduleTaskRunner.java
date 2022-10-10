@@ -36,6 +36,8 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -76,7 +78,7 @@ public final class ScheduleTaskRunner {
 
   public void launch(Job job) throws Exception {
     ProgramSchedule schedule = job.getSchedule();
-    ProgramId programId = schedule.getProgramId();
+    ProgramId programId = getLatestProgramId(schedule.getProgramId());
 
     Map<String, String> userArgs = getUserArgs(schedule, propertiesResolver);
 
@@ -92,9 +94,9 @@ public final class ScheduleTaskRunner {
 
     try {
       execute(programId, systemArgs, userArgs);
-      LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
+      LOG.info("Successfully started program {} in schedule {}.", programId, schedule.getName());
     } catch (CapabilityNotAvailableException ex) {
-      LOG.debug("Ignoring program {} in schedule {}.", schedule.getProgramId(), schedule.getName(), ex);
+      LOG.debug("Ignoring program {} in schedule {}.", programId, schedule.getName(), ex);
     }
   }
 
@@ -137,5 +139,17 @@ public final class ScheduleTaskRunner {
     } finally {
       SecurityRequestContext.setUserId(originalUserId);
     }
+  }
+
+  /**
+   * Get the latest version for a program.
+   */
+  private ProgramId getLatestProgramId(ProgramId programId) {
+    String latestVersion = store.getLatest(new NamespaceId(programId.getNamespace()), programId.getApplication())
+      .getSpec().getAppVersion();
+    ApplicationId appId = new ApplicationId(programId.getNamespace(),
+                                            programId.getApplication(),
+                                            latestVersion);
+    return new ProgramId(appId, programId.getType(), programId.getProgram());
   }
 }

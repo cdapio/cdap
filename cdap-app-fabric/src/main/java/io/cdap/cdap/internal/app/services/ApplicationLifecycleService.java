@@ -911,7 +911,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appSpec the {@link ApplicationSpecification} of the application to be removed
    */
   private void removeAppInternal(ApplicationId applicationId, ApplicationSpecification appSpec) throws Exception {
-    deleteAppVersion(applicationId, appSpec);
+    deleteApp(applicationId, appSpec);
   }
 
   /**
@@ -1080,16 +1080,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deleteMetrics(appId, spec);
 
     deleteAppMetadata(appId, spec);
+    deletePreferences(appId, spec);
     store.deleteWorkflowStats(appId);
 
+    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(appId);
     // version specific deletion
     for (ApplicationId versionAppId : store.getAllAppVersionsAppIds(appId)) {
       //Delete all preferences of the application and of all its programs
-      ApplicationSpecification versionAppSpec = store.getApplication(appId);
-      if (versionAppSpec == null) {
-        throw new NotFoundException(Id.Application.fromEntityId(appId));
-      }
-      deletePreferences(versionAppId, versionAppSpec);
       store.removeApplication(versionAppId);
     }
     try {

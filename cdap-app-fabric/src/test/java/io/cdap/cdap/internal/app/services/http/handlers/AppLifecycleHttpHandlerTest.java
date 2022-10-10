@@ -410,7 +410,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Id.Application appIdDelete = Id.Application.from(appId.getNamespace(), appId.getApplication());
     deleteApp(appIdDelete, 200);
-    deleteApp(appIdDefault, 200);
   }
 
   /**
