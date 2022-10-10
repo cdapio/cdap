@@ -17,23 +17,24 @@
 package io.cdap.cdap.logging.plugins;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.LogbackException;
+import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.rolling.RollingPolicy;
 import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.TriggeringPolicy;
-import ch.qos.logback.core.spi.FilterReply;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.apache.commons.io.output.NullOutputStream;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.FilterOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -41,7 +42,7 @@ import java.io.OutputStream;
 /**
  * Rolling Appender for {@link Location}
  */
-public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> implements Flushable, Syncable {
+public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEvent> implements Flushable, Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(RollingLocationLogAppender.class);
 
   private TriggeringPolicy<ILoggingEvent> triggeringPolicy;
@@ -60,8 +61,19 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
   private LocationManager locationManager;
   private long fileMaxInactiveTimeMs;
 
+  //Declaring the delegator that handles switching between various locationOutputStreams as and when required
+  private final DelegatingOutputStream delegatingOutputStream;
+
   public RollingLocationLogAppender() {
     setName(getClass().getName());
+
+    //Instantiating delegatingOutputStream class with a null OutputStream delegate which in turn gets
+    // delegated the respective locationOutputStream when required
+    delegatingOutputStream = new DelegatingOutputStream(new NullOutputStream());
+
+    //setting the outputStream defined in OutputStreamAppender to the delegator to enable
+    // switching between streams without involvement of OutputStreamAppender
+    setOutputStream(delegatingOutputStream);
   }
 
   @Override
@@ -90,19 +102,8 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
   }
 
   @Override
-  public void doAppend(ILoggingEvent eventObject) throws LogbackException {
+  protected void append(ILoggingEvent eventObject) throws LogbackException {
     try {
-      // logic from AppenderBase
-      if (!this.started) {
-        LOG.warn("Attempted to append to non started appender {}", this.getName());
-        return;
-      }
-
-      // logic from AppenderBase
-      if (getFilterChainDecision(eventObject) == FilterReply.DENY) {
-        return;
-      }
-
       String namespaceId = eventObject.getMDCPropertyMap().get(LocationManager.TAG_NAMESPACE_ID);
 
       if (namespaceId != null && !namespaceId.equals(NamespaceId.SYSTEM.getNamespace())) {
@@ -110,7 +111,10 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
                                                                                            .getMDCPropertyMap());
         rollover(logLocationIdentifier, eventObject);
         OutputStream locationOutputStream = locationManager.getLocationOutputStream(logLocationIdentifier, filePath);
-        setOutputStream(locationOutputStream);
+
+        //change the locationOutputStream to which outputStream in the OutputStreamAppender points
+        delegatingOutputStream.setDelegate((FilterOutputStream) locationOutputStream);
+
         writeOut(eventObject);
       }
     } catch (IllegalArgumentException iae) {
@@ -145,31 +149,31 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
       locationTriggeringPolicy.setActiveLocationSize(locationOutputStream.getNumOfBytes());
 
       if (locationTriggeringPolicy.isTriggeringEvent(event)) {
-          if (rollingPolicy instanceof LocationRollingPolicy) {
-            // no need to type cast on every event
-            if (locationRollingPolicy == null) {
-              locationRollingPolicy = ((LocationRollingPolicy) rollingPolicy);
-            }
-
-            locationRollingPolicy.setLocation(locationOutputStream.getLocation(), new Closeable() {
-              @Override
-              public void close() throws IOException {
-                locationManager.getActiveLocations().remove(identifier);
-                try {
-                  locationOutputStream.close();
-                } catch (IOException e) {
-                  // If there is an exception while closing the outputstream, remember it and throw an exception so
-                  // that it can be closed on another event append
-                  locationManager.setInvalidOutputStream(locationOutputStream);
-                  LOG.trace("Exception while closing the output stream for {}, will retry to close it later",
-                           identifier, e);
-                  throw e;
-                }
-              }
-            });
-
-            locationRollingPolicy.rollover();
+        if (rollingPolicy instanceof LocationRollingPolicy) {
+          // no need to type cast on every event
+          if (locationRollingPolicy == null) {
+            locationRollingPolicy = ((LocationRollingPolicy) rollingPolicy);
           }
+
+          locationRollingPolicy.setLocation(locationOutputStream.getLocation(), new Closeable() {
+            @Override
+            public void close() throws IOException {
+              locationManager.getActiveLocations().remove(identifier);
+              try {
+                locationOutputStream.close();
+              } catch (IOException e) {
+                // If there is an exception while closing the outputstream, remember it and throw an exception so
+                // that it can be closed on another event append
+                locationManager.setInvalidOutputStream(locationOutputStream);
+                LOG.trace("Exception while closing the output stream for {}, will retry to close it later",
+                          identifier, e);
+                throw e;
+              }
+            }
+          });
+
+          locationRollingPolicy.rollover();
+        }
       }
     }
   }
@@ -206,39 +210,10 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   @Override
   public void stop() {
-    try {
-      LOG.info("Stopping appender {}", this.name);
-      locationManager.close();
-      if (encoder != null) {
-        encoder.close();
-      }
-    } catch (IOException ioe) {
-      LOG.error("Failed to write footer for appender named {}", this.getName(), ioe);
-    } finally {
-      this.started = false;
-    }
-  }
+    LOG.info("Stopping appender {}", this.name);
+    super.stop();
+    locationManager.close();
 
-  // override this method to setOutputStream for every event since this appender is appending to multiple files
-  @Override
-  public void setOutputStream(OutputStream outputStream) {
-    if (encoder == null) {
-      LOG.warn("Encoder has not been set. Cannot invoke its init method.");
-      return;
-    }
-
-    try {
-      encoder.init(outputStream);
-    } catch (IOException ioe) {
-      this.started = false;
-      LOG.error("Failed to initialize encoder for appender named {}", name, ioe);
-    }
-  }
-
-  // Since this appender does not support prudent mode, we override writeOut method from FileAppender
-  @Override
-  protected void writeOut(ILoggingEvent event) throws IOException {
-    this.encoder.doEncode(event);
   }
 
   @VisibleForTesting
@@ -294,5 +269,22 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   public long getFileMaxInactiveTimeMs() {
     return fileMaxInactiveTimeMs;
+  }
+
+  //Implement the class that handles delegation of locationOutputStream to outputStream defined in OutputStreamAppender
+  private class DelegatingOutputStream extends FilterOutputStream {
+    DelegatingOutputStream(OutputStream outputStream) {
+      super(outputStream);
+    }
+
+    public void setDelegate(FilterOutputStream delegate) {
+      this.out = delegate;
+    }
+
+    //Override in order to execute the function in the scope of LocationOutputStream instead of FilterOutputStream
+    @Override
+    public void write(byte[] b) throws IOException {
+      this.out.write(b);
+    }
   }
 }
