@@ -56,6 +56,7 @@ import io.cdap.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.Ids;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
@@ -142,7 +143,8 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private ProgramController getProgramController(String namespaceId, String appId,
                                                  String workflowName, String runId) throws NotFoundException {
-    ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, getLatestAppVersion(namespaceId, appId));
+    ProgramId id = new ProgramId(applicationId, ProgramType.WORKFLOW, workflowName);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
       throw new NotFoundException(id.run(runId));
@@ -206,7 +208,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
 
   private WorkflowToken getWorkflowToken(String namespaceId, String appName, String workflow,
                                          String runId) throws NotFoundException {
-    ApplicationId appId = new ApplicationId(namespaceId, appName);
+    ApplicationId appId = new ApplicationId(namespaceId, appName, getLatestAppVersion(namespaceId, appName));
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new NotFoundException(appId);
@@ -229,7 +231,8 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("workflow-id") String workflowId,
                                     @PathParam("run-id") String runId)
     throws NotFoundException {
-    ApplicationId appId = Ids.namespace(namespaceId).app(applicationId);
+    ApplicationId appId = Ids.namespace(namespaceId)
+      .app(applicationId, getLatestAppVersion(namespaceId, applicationId));
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);
@@ -321,7 +324,8 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private WorkflowSpecification getWorkflowSpecForValidRun(String namespaceId, String applicationId,
                                                            String workflowId, String runId) throws NotFoundException {
-    ApplicationId appId = new ApplicationId(namespaceId, applicationId);
+    ApplicationId appId = new ApplicationId(namespaceId, applicationId,
+                                            getLatestAppVersion(namespaceId, applicationId));
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);
@@ -338,5 +342,14 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
                                                    programId.getType(), programId.getProgram(), runId));
     }
     return workflowSpec;
+  }
+
+  /**
+   * @param namespaceId namespace Id
+   * @param appId       app Id
+   * @return latest app version
+   */
+  private String getLatestAppVersion(String namespaceId, String appId) {
+    return store.getLatest(new NamespaceId(namespaceId), appId).getSpec().getAppVersion();
   }
 }
