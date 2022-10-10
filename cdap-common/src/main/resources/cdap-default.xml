@@ -3005,6 +3005,24 @@
   </property>
 
   <property>
+    <name>metadata.consumer.extensions.dir</name>
+    <value>/opt/cdap/master/ext/metadataconsumers</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master that
+      are scanned for metadata consumer extensions
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.consumer.extensions.enabled.list</name>
+    <value></value>
+    <description>
+      Comma separated list of metadata consumer extension names that are enabled.
+      Extensions that are not present in this list will be ignored.
+    </description>
+  </property>
+
+  <property>
     <name>metrics.writer.extensions.dir</name>
     <value>/opt/cdap/master/ext/metricswriters</value>
     <description>
