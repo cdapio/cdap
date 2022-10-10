@@ -463,7 +463,7 @@ public class ProgramScheduleStoreDataset {
    */
   public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws IOException {
     return listSchedulesRecordsWithPrefix(getScheduleKeysForApplicationScan(programId.getParent()),
-                                          schedule -> programId.isSameProgram(schedule.getProgramId()));
+                                          schedule -> programId.isSameProgramExceptVersion(schedule.getProgramId()));
   }
 
   /**

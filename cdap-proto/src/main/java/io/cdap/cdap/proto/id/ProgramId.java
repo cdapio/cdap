@@ -118,12 +118,15 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
       Objects.equals(program, programId.program);
   }
 
-  public boolean isSameProgram(Object o) {
+  /**
+   * Check whether two programs are the same except version
+   */
+  public boolean isSameProgramExceptVersion(Object o) {
     ProgramId programId = (ProgramId) o;
-    return programId.namespace.equals(namespace) &&
-      programId.application.equals(application) &&
-      programId.type.equals(type) &&
-      programId.program.equals(program);
+    return Objects.equals(namespace, programId.namespace) &&
+      Objects.equals(application, programId.application) &&
+      Objects.equals(type, programId.type) &&
+      Objects.equals(program, programId.program);
   }
 
   @Override
