@@ -58,6 +58,9 @@ import javax.annotation.Nullable;
  */
 public final class DataprocUtils {
 
+  // The property name for the GCS bucket used by the runtime job manager for launching jobs via the job API
+  // It can be overridden by profile runtime arguments (system.profile.properties.gcsBucket)
+  public static final String BUCKET = "gcsBucket";
   public static final String CDAP_GCS_ROOT = "cdap-job";
   public static final String CDAP_CACHED_ARTIFACTS = "cached-artifacts";
   public static final String WORKER_CPU_PREFIX = "Up to";
