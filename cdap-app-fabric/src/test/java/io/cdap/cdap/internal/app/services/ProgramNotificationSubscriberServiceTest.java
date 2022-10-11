@@ -46,6 +46,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -116,9 +117,11 @@ public class ProgramNotificationSubscriberServiceTest {
   @Test
   public void testWorkflowInnerPrograms() throws Exception {
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, ProgramStateWorkflowApp.class, null, cConf);
+    ApplicationDetail appDetail = AppFabricTestHelper.getAppInfo(Id.Namespace.DEFAULT,
+                                                                 ProgramStateWorkflowApp.class.getSimpleName(), cConf);
 
     ProgramRunId workflowRunId = NamespaceId.DEFAULT
-      .app(ProgramStateWorkflowApp.class.getSimpleName())
+      .app(ProgramStateWorkflowApp.class.getSimpleName(), appDetail.getAppVersion())
       .workflow(ProgramStateWorkflowApp.ProgramStateWorkflow.class.getSimpleName())
       .run(RunIds.generate());
 

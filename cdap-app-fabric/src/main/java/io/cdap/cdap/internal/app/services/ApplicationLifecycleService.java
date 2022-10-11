@@ -900,7 +900,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (spec == null) {
       throw new NotFoundException(Id.Application.fromEntityId(appId));
     }
-
     removeAppInternal(appId, spec);
   }
 

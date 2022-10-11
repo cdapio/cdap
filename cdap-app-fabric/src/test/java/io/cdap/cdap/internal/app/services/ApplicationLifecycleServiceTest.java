@@ -141,10 +141,15 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     // deploy same app in two namespaces
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     deploy(AllProgramsApp.class, 200);
-    ProgramId serviceId = new ProgramId(TEST_NAMESPACE1, AllProgramsApp.NAME,
+    JsonObject result = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    ProgramId serviceId = new ProgramId(TEST_NAMESPACE1, AllProgramsApp.NAME, result.get("appVersion").getAsString(),
                                         ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    ApplicationId defaultNSAppId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
     ApplicationId testNSAppId = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    testNSAppId = new ApplicationId(testNSAppId.getNamespace(), testNSAppId.getApplication(),
+                                    result.get("appVersion").getAsString());
+    result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
+    ApplicationId defaultNSAppId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME,
+                                       result.get("appVersion").getAsString());
 
     // start a program in one namespace
     // service is stopped initially

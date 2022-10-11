@@ -185,8 +185,9 @@ public abstract class Id implements EntityIdCompatible {
   public static final class Application extends NamespacedId {
     private final Namespace namespace;
     private final String applicationId;
+    private final String version;
 
-    public Application(final Namespace namespace, final String applicationId) {
+    public Application(final Namespace namespace, final String applicationId, String version) {
       if (namespace == null) {
         throw new NullPointerException("Namespace cannot be null.");
       }
@@ -198,6 +199,11 @@ public abstract class Id implements EntityIdCompatible {
       }
       this.namespace = namespace;
       this.applicationId = applicationId;
+      this.version = version;
+    }
+
+    public Application(final Namespace namespace, final String applicationId) {
+      this(namespace, applicationId, null);
     }
 
     @Override
@@ -209,6 +215,10 @@ public abstract class Id implements EntityIdCompatible {
       return namespace.getId();
     }
 
+    public String getVersion() {
+      return version;
+    }
+
     @Override
     public String getId() {
       return applicationId;
@@ -218,13 +228,18 @@ public abstract class Id implements EntityIdCompatible {
       return new Application(id, applicationId);
     }
 
+    public static Application from(Namespace id, String applicationId, String version) {
+      return new Application(id, applicationId, version);
+    }
+
     public static Application from(String namespaceId, String applicationId) {
       return new Application(Namespace.from(namespaceId), applicationId);
     }
 
     @Override
     public ApplicationId toEntityId() {
-      return new ApplicationId(namespace.getId(), applicationId);
+      return new ApplicationId(namespace.getId(), applicationId, version == null ?
+        ApplicationId.DEFAULT_VERSION : version);
     }
 
     public static Application fromEntityId(ApplicationId applicationId) {
@@ -331,9 +346,13 @@ public abstract class Id implements EntityIdCompatible {
       return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
     }
 
+    public static Program from(String namespaceId, String appId, String version, ProgramType type, String pgmId) {
+      return new Program(new Application(new Namespace(namespaceId), appId, version), type, pgmId);
+    }
+
     @Override
     public ProgramId toEntityId() {
-      return new ProgramId(application.getNamespaceId(), application.getId(), type, id);
+      return new ProgramId(application.getNamespaceId(), application.getId(), application.getVersion(), type, id);
     }
 
     public static Program fromEntityId(ProgramId programId) {

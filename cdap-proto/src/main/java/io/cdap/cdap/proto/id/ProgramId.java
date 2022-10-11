@@ -39,6 +39,10 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
     this(new ApplicationId(namespace, application), type, program);
   }
 
+  public ProgramId(String namespace, String application, String version, ProgramType type, String program) {
+    this(new ApplicationId(namespace, application, version), type, program);
+  }
+
   public ProgramId(ApplicationId appId, ProgramType type, String program) {
     super(appId.getNamespace(), EntityType.PROGRAM);
     if (type == null) {

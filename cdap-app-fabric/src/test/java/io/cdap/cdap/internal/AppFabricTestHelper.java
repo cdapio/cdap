@@ -76,8 +76,10 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -274,6 +276,15 @@ public class AppFabricTestHelper {
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        @Nullable String config, CConfiguration cConf) throws Exception {
     deployApplication(namespace, applicationClz, config, null, cConf);
+  }
+
+
+  public static ApplicationDetail getAppInfo(Id.Namespace namespace, String appName, CConfiguration cConf)
+    throws Exception {
+    ensureNamespaceExists(namespace.toEntityId(), cConf);
+    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
+    ApplicationId appId = new ApplicationId(namespace.getId(), appName);
+    return appFabricClient.getInfo(appId);
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
