@@ -26,12 +26,20 @@ public class ChangeDetail extends ChangeSummary {
   @Nullable
   private final String author;
   private final long creationTimeMillis;
+  @Nullable
+  private final String latest;
 
   public ChangeDetail(@Nullable String description, @Nullable String parentVersion, @Nullable String author,
-                      long creationTimeMillis) {
+                      long creationTimeMillis, @Nullable String latest) {
     super(description, parentVersion);
     this.author = author;
     this.creationTimeMillis = creationTimeMillis;
+    this.latest = latest;
+  }
+
+  public ChangeDetail(@Nullable String description, @Nullable String parentVersion, @Nullable String author,
+                      long creationTimeMillis) {
+      this(description, parentVersion, author, creationTimeMillis, null);
   }
 
   /**
@@ -47,6 +55,14 @@ public class ChangeDetail extends ChangeSummary {
   @Nullable
   public String getAuthor() {
     return author;
+  }
+
+  /**
+   * @return the latest value (true/false) for the app.
+   */
+  @Nullable
+  public String getLatest() {
+    return latest;
   }
 
   @Override
