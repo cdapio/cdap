@@ -47,6 +47,7 @@ import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -77,6 +78,7 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.common.http.HttpResponse;
 import org.jboss.resteasy.util.HttpResponseCodes;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -95,9 +97,20 @@ import java.util.stream.StreamSupport;
  */
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
+  private static CConfiguration cConf;
+
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    initializeAndStartServices(createBasicCConf());
+    cConf = createBasicCConf();
+    initializeAndStartServices(cConf);
+  }
+
+  private void enableLCMFlag(boolean lcmFlag) {
+    if (lcmFlag) {
+      cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), true);
+      return;
+    }
+    cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), false);
   }
 
   @Before
@@ -131,6 +144,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
             messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
       }
     });
+  }
+
+  @After
+  public void afterTest() {
+    enableLCMFlag(false);
   }
 
   /**
@@ -399,8 +417,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2WithVersion.get("configuration").getAsString());
     Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
     deleteApp(appId, 200);
-    deleteApp(appIdDefault, 200);
-    deleteApp(appIdV2, 200);
+    deleteApp(appIdDefault, isLCMFeatureFlagEnabled() ? 404 : 200);
+    deleteApp(appIdV2, isLCMFeatureFlagEnabled() ? 404 : 200);
   }
 
   /**
@@ -663,6 +681,24 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = getAppListResponseWhenFailingWithException(TEST_NAMESPACE1);
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertEquals(exceptionMessage, response.getResponseBodyAsString());
+  }
+
+  /**
+   * Tests deleting with versioned API when LCM feature flag is enabled.
+   */
+  @Test
+  public void testDeleteVersionedAppLCMEnabled() throws Exception {
+    enableLCMFlag(true);
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+
+    HttpResponse response = doDelete(getVersionedAPIPath(
+            String.format("apps/%s/versions/%s", appDetails.get("name").getAsString(),
+                    appDetails.get("appVersion").getAsString()),
+            Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(403, response.getResponseCode());
+    Assert.assertEquals("Forbidden", response.getResponseMessage());
+    Assert.assertEquals("Deletion of specific app version is not allowed.", response.getResponseBodyAsString());
   }
 
   /**

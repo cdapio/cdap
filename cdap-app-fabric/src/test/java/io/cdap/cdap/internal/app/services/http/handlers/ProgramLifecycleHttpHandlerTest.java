@@ -357,10 +357,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // cleanup
     deleteApp(appId1, 200);
-    deleteApp(appId2, 200);
-    deleteApp(appDefault, 200);
-    deleteApp(sleepWorkflowApp1, 200);
-    deleteApp(sleepWorkflowApp2, 200);
+    deleteApp(appId2, isLCMFeatureFlagEnabled() ? 404 : 200);
+    deleteApp(appDefault, isLCMFeatureFlagEnabled() ? 404 : 200);
+    deleteApp(sleepWorkflowApp1, isLCMFeatureFlagEnabled() ? 404 : 200);
+    deleteApp(sleepWorkflowApp2, isLCMFeatureFlagEnabled() ? 404 : 200);
   }
 
   @Category(XSlowTests.class)
@@ -1070,7 +1070,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, triggeredSchedules2.size());
     assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules2);
 
-    deleteApp(app1, 200);
+    deleteApp(app1, isLCMFeatureFlagEnabled() ? 404 : 200);
 
     // Schedule detail of app2 from versioned API
     List<ScheduleDetail> anotherSchedules2 = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
@@ -1078,7 +1078,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(3, anotherSchedules2.size());
     assertProgramInSchedules(AppWithMultipleSchedules.ANOTHER_WORKFLOW, anotherSchedules2);
 
-    deleteApp(app2, 200);
+    deleteApp(app2, isLCMFeatureFlagEnabled() ? 404 : 200);
   }
 
   private void assertProgramInSchedules(String programName, List<ScheduleDetail> schedules) {
@@ -1706,7 +1706,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
     Assert.assertEquals(200, deploy(appId, request).getResponseCode());
     verifyProgramHistory(programId);
-    deleteApp(appId, 200);
+    deleteApp(appId, isLCMFeatureFlagEnabled() ? 404 : 200);
   }
 
   private void verifyProgramHistory(ProgramId program) throws Exception {

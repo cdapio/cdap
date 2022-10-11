@@ -70,6 +70,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -219,6 +220,8 @@ public abstract class AppFabricTestBase {
   private static LogQueryService logQueryService;
 
   private static HttpRequestConfig httpRequestConfig;
+  protected static final String FEATURE_FLAG_PREFIX = "feature.";
+  private static CConfiguration cConf;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -317,7 +320,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected static CConfiguration createBasicCConf() throws IOException {
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     cConf.set(Constants.AppFabric.OUTPUT_DIR, tmpFolder.newFolder("output").getAbsolutePath());
@@ -352,6 +355,10 @@ public abstract class AppFabricTestBase {
     cConf.setInt(Constants.Dataset.Executor.WORKER_THREADS, 2);
     cConf.setInt(Constants.Dataset.Executor.EXEC_THREADS, 5);
     return cConf;
+  }
+
+  protected static boolean isLCMFeatureFlagEnabled() {
+    return cConf.getBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString());
   }
 
   protected static Injector getInjector() {
@@ -704,7 +711,7 @@ public abstract class AppFabricTestBase {
 
   protected void deleteApp(ApplicationId app, int expectedResponseCode) throws Exception {
     HttpResponse response = doDelete(getVersionedAPIPath(
-      String.format("/apps/%s/versions/%s", app.getApplication(), app.getVersion()), app.getNamespace()));
+      String.format("/apps/%s", app.getApplication()), app.getNamespace()));
     assertResponseCode(expectedResponseCode, response);
   }
 

@@ -34,6 +34,7 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -51,6 +52,7 @@ import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
@@ -59,6 +61,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -155,6 +158,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final File tmpDir;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
@@ -173,6 +177,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
   }
 
   /**
@@ -400,6 +405,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") final String namespaceId,
                                @PathParam("app-id") final String appId,
                                @PathParam("version-id") final String versionId) throws Exception {
+    // If LCM flow is enabled - we do not want to delete specific versions of the app.
+    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Deletion of specific app version is not allowed.");
+      return;
+    }
     ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
     applicationLifecycleService.removeApplication(id);
     responder.sendStatus(HttpResponseStatus.OK);
