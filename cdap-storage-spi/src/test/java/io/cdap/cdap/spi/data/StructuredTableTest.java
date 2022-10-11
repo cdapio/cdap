@@ -199,66 +199,120 @@ public abstract class StructuredTableTest {
       Range.singleton(Collections.singleton(Fields.intField(KEY, 46))), max);
     Assert.assertEquals(expected.subList(46, 47), actual);
 
-    // TODO: test invalid range
-    // TODO: test begin only range
-    // TODO: test end only range
+    // Test partial keys singleton scan
+    actual = scanSimpleStructuredRows(
+      Range.singleton(Collections.singleton(Fields.longField(KEY2, (long) 46))), max);
+    Assert.assertEquals(expected.subList(46, 47), actual);
+
+    actual =
+      scanSimpleStructuredRows(
+        Range.singleton(Arrays.asList(Fields.intField(KEY, 2), Fields.longField(KEY2, (long) 35))), max);
+    Assert.assertTrue(actual.isEmpty());
+
+    // Test partial keys actual range scan
+    actual =
+      scanSimpleStructuredRows(
+        Range.create(Collections.singleton(Fields.intField(KEY, 30)), Range.Bound.EXCLUSIVE,
+                     Collections.singleton(Fields.longField(KEY2, (long) 40)), Range.Bound.EXCLUSIVE), max);
+    Assert.assertEquals(expected.subList(31, 40), actual);
+
+    actual =
+      scanSimpleStructuredRows(
+        Range.create(Collections.singleton(Fields.intField(KEY, 5)), Range.Bound.INCLUSIVE,
+                     Collections.singleton(Fields.longField(KEY2, (long) 15)), Range.Bound.EXCLUSIVE), max);
+    Assert.assertEquals(expected.subList(5, 15), actual);
+
+    // Test begin only range
+    actual =
+      scanSimpleStructuredRows(
+        Range.create(Collections.singleton(Fields.longField(KEY2, (long) 5)), Range.Bound.EXCLUSIVE,
+                     null, Range.Bound.INCLUSIVE), max);
+    Assert.assertEquals(expected.subList(6, max), actual);
+
+    // Test end only range
+    actual =
+      scanSimpleStructuredRows(
+        Range.create(null, Range.Bound.INCLUSIVE,
+                     Collections.singleton(Fields.longField(KEY2, (long) 18)), Range.Bound.INCLUSIVE), max);
+    Assert.assertEquals(expected.subList(0, 19), actual);
+
+    // Test invalid range
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try {
+        table.scan(
+          Range.create(Collections.singleton(Fields.stringField(STRING_COL, "invalid")), Range.Bound.EXCLUSIVE,
+                       Collections.singleton(Fields.longField(KEY2, (long) 40)), Range.Bound.EXCLUSIVE), max);
+        Assert.fail("Expected InvalidFieldException since STRING_COL is not primary key");
+      } catch (InvalidFieldException e) {
+        // Expected, see the exception message above
+      }
+    });
+
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try {
+        table.scan(Range.singleton(Collections.singleton(Fields.doubleField(DOUBLE_COL, 1.0))), max);
+        Assert.fail("Expected InvalidFieldException since DOUBLE_COL is not primary key");
+      } catch (InvalidFieldException e) {
+        // Expected, see the exception message above
+      }
+    });
   }
 
   @Test
-  public void testPartialKeysScan() throws Exception {
+  public void testPartialKeysMultiRangeScan() throws Exception {
     int max = 100;
 
     List<Collection<Field<?>>> expected = writeStructuredRowsWithDuplicatePrefix(max, "");
 
-    List<Collection<Field<?>>> actual =
-      scanSimpleStructuredRowsByPartialKeys(
-        Collections.singletonList(Fields.intField(KEY, 3)), max);
-    Assert.assertEquals(expected.subList(30, 40), actual);
+    Collection<Range> ranges = Collections.singletonList(
+      Range.singleton(Arrays.asList(Fields.intField(KEY, 2), Fields.longField(KEY2, (long) 26))));
 
-    actual =
-      scanSimpleStructuredRowsByPartialKeys(
-        Arrays.asList(Fields.intField(KEY, 2), Fields.longField(KEY2, (long) 26)), max);
+    List<String> outPutFields = Arrays.asList(KEY, KEY2, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL);
+
+    List<Collection<Field<?>>> actual = runMultiScan(ranges, max, outPutFields);
     Assert.assertEquals(expected.subList(26, 27), actual);
 
-    actual =
-      scanSimpleStructuredRowsByPartialKeys(
-        Arrays.asList(Fields.intField(KEY, 2), Fields.longField(KEY2, (long) 35)), max);
-    Assert.assertTrue(actual.isEmpty());
-  }
-
-  @Test
-  public void testPartialKeysMultiScan() throws Exception {
-    int max = 100;
-
-    List<Collection<Field<?>>> expected = writeStructuredRowsWithDuplicatePrefix(max, "");
-
-    List<Collection<Field<?>>> actual = runMultiScanPartialKeys(Collections.emptyList(), max);
-    Assert.assertTrue(actual.isEmpty());
-
-    actual = runMultiScanPartialKeys(
-      Collections.singletonList(Arrays.asList(Fields.intField(KEY, 2), Fields.longField(KEY2, (long) 26))), max);
-    Assert.assertEquals(expected.subList(26, 27), actual);
-
-    // MultiScanPartialKeys with multiple collections of fields
-    actual = runMultiScanPartialKeys(
-      Arrays.asList(
-        Collections.singletonList(Fields.intField(KEY, 3)),
-        Collections.singletonList(Fields.intField(KEY, 4))), max);
+    // MultiScan partialKeys with multiple collections of fields
+    ranges = Arrays.asList(
+      Range.singleton(Collections.singletonList(Fields.intField(KEY, 3))),
+      Range.singleton(Collections.singletonList(Fields.intField(KEY, 4))));
+    actual = runMultiScan(ranges, max, outPutFields);
     Assert.assertEquals(expected.subList(30, 50), actual);
 
-    // MultiScanPartialKeys with a mix of singleton and range
-    actual = runMultiScanPartialKeys(
-      Arrays.asList(
-        Collections.singletonList(Fields.longField(KEY2, (long) 28)),
-        Collections.singletonList(Fields.longField(KEY2, (long) 29)),
-        Collections.singletonList(Fields.intField(KEY, 3))), max);
+    // MultiScan partialKeys with a mix of singleton and range, mixed ordering
+    ranges = Arrays.asList(
+      Range.singleton(Collections.singletonList(Fields.longField(KEY2, (long) 29))),
+      Range.singleton(Collections.singletonList(Fields.longField(KEY2, (long) 28))),
+      Range.singleton(Collections.singletonList(Fields.intField(KEY, 3))));
+    actual = runMultiScan(ranges, max, outPutFields);
     Assert.assertEquals(expected.subList(28, 40), actual);
 
-    // MultiScanPartialKeys with limit
-    actual = runMultiScanPartialKeys(
-      Arrays.asList(
-        Collections.singletonList(Fields.intField(KEY, 3)),
-        Collections.singletonList(Fields.intField(KEY, 4))), 15);
+    // MultiScan partialKeys with overlapping ranges
+    ranges = Arrays.asList(
+      Range.singleton(Collections.singletonList(Fields.longField(KEY2, (long) 29))),
+      Range.singleton(Collections.singletonList(Fields.longField(KEY2, (long) 28))),
+      Range.singleton(Collections.singletonList(Fields.intField(KEY, 2))));
+
+    actual = runMultiScan(ranges, max, outPutFields);
+    Assert.assertEquals(expected.subList(20, 30), actual);
+
+    ranges = Arrays.asList(
+      Range.create(Collections.singleton(Fields.longField(KEY2, (long) 5)), Range.Bound.EXCLUSIVE,
+                   Collections.singleton(Fields.longField(KEY2, (long) 45)), Range.Bound.EXCLUSIVE),
+      Range.create(Collections.singleton(Fields.longField(KEY2, (long) 15)), Range.Bound.INCLUSIVE,
+                   Collections.singleton(Fields.longField(KEY2, (long) 60)), Range.Bound.INCLUSIVE));
+
+    actual = runMultiScan(ranges, max, outPutFields);
+    Assert.assertEquals(expected.subList(6, 61), actual);
+
+    // MultiScan partialKeys with limit
+    ranges = Arrays.asList(
+      Range.singleton(Collections.singletonList(Fields.intField(KEY, 4))),
+      Range.singleton(Collections.singletonList(Fields.intField(KEY, 3))));
+    actual = runMultiScan(ranges, 15, outPutFields);
+
     Assert.assertEquals(expected.subList(30, 45), actual);
   }
 
@@ -386,20 +440,15 @@ public abstract class StructuredTableTest {
 
   private List<Collection<Field<?>>> runMultiScan(Collection<Range> ranges, int limit,
                                                   String... outputFields) throws Exception {
+    return runMultiScan(ranges, limit, Arrays.asList(outputFields));
+  }
+
+  private List<Collection<Field<?>>> runMultiScan(Collection<Range> ranges, int limit,
+                                                  List<String> outputFields) throws Exception {
     return TransactionRunners.run(getTransactionRunner(), context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       try (CloseableIterator<StructuredRow> iterator = table.multiScan(ranges, limit)) {
-        return convertRowsToFields(iterator, Arrays.asList(outputFields));
-      }
-    });
-  }
-
-  private List<Collection<Field<?>>> runMultiScanPartialKeys(
-    Collection<? extends Collection<Field<?>>> partialKeysCollections, int limit) throws Exception {
-    return TransactionRunners.run(getTransactionRunner(), context -> {
-      StructuredTable table = context.getTable(SIMPLE_TABLE);
-      try (CloseableIterator<StructuredRow> iterator = table.multiScanPartialKeys(partialKeysCollections, limit)) {
-        return convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL));
+        return convertRowsToFields(iterator, outputFields);
       }
     });
   }
@@ -716,6 +765,16 @@ public abstract class StructuredTableTest {
         Assert.assertEquals(expected.subList(0, num), rows);
       }
 
+      // Partial primary keys range
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.longField(KEY2, num * 100L)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Fields.stringField(STRING_COL, "abc"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(0, num), rows);
+      }
+
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
@@ -803,6 +862,17 @@ public abstract class StructuredTableTest {
         Assert.assertEquals(expectedSubList, rows);
       }
 
+      // Partial primary keys range
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.longField(KEY2, num * 200L)), Range.Bound.EXCLUSIVE),
+                        num * 10, IDX_COL, SortOrder.DESC)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        List<Collection<Field<?>>> expectedSubList = expected.subList(0, num * 2);
+
+        Assert.assertEquals(expectedSubList, rows);
+      }
+
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 3)), Range.Bound.EXCLUSIVE),
@@ -839,8 +909,17 @@ public abstract class StructuredTableTest {
 
       Collection<Range> ranges = Arrays.asList(Range.to(Collections.singletonList(Fields.intField(KEY, 2)),
                                                         Range.Bound.INCLUSIVE),
-                                               Range.from(Collections.singletonList(Fields.intField(KEY, 2)),
+                                               // Intentionally create overlapping range
+                                               Range.from(Collections.singletonList(Fields.intField(KEY, 0)),
                                                           Range.Bound.EXCLUSIVE));
+      Assert.assertEquals(max, table.count(ranges));
+
+      // Partial primary keys range
+      ranges = Arrays.asList(Range.to(Collections.singletonList(Fields.intField(KEY, 4)),
+                                      Range.Bound.INCLUSIVE),
+                             // Intentionally create overlapping range
+                             Range.from(Collections.singletonList(Fields.longField(KEY2, (long) 0)),
+                                        Range.Bound.EXCLUSIVE));
       Assert.assertEquals(max, table.count(ranges));
     });
   }
@@ -1086,26 +1165,6 @@ public abstract class StructuredTableTest {
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       try (CloseableIterator<StructuredRow> iterator = table.scan(range, max)) {
-        while (iterator.hasNext()) {
-          StructuredRow row = iterator.next();
-          actual.add(Arrays.asList(Fields.intField(KEY, row.getInteger(KEY)),
-                                   Fields.longField(KEY2, row.getLong(KEY2)),
-                                   Fields.stringField(STRING_COL, row.getString(STRING_COL)),
-                                   Fields.doubleField(DOUBLE_COL, row.getDouble(DOUBLE_COL)),
-                                   Fields.floatField(FLOAT_COL, row.getFloat(FLOAT_COL)),
-                                   Fields.bytesField(BYTES_COL, row.getBytes(BYTES_COL))));
-        }
-      }
-    });
-    return actual;
-  }
-
-  private List<Collection<Field<?>>> scanSimpleStructuredRowsByPartialKeys(
-    Collection<Field<?>> partialKeys, int max) throws Exception {
-    List<Collection<Field<?>>> actual = new ArrayList<>(max);
-    getTransactionRunner().run(context -> {
-      StructuredTable table = context.getTable(SIMPLE_TABLE);
-      try (CloseableIterator<StructuredRow> iterator = table.scan(partialKeys, max)) {
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
           actual.add(Arrays.asList(Fields.intField(KEY, row.getInteger(KEY)),

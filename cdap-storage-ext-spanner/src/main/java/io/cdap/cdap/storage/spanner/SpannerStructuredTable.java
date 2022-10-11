@@ -182,12 +182,6 @@ public class SpannerStructuredTable implements StructuredTable {
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Collection<Field<?>> partialKeys, int limit)
-    throws InvalidFieldException {
-    return scan(Range.singleton(partialKeys), limit);
-  }
-
-  @Override
   public CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException {
     fieldValidator.validateField(index);
     if (!schema.isIndexColumn(index.getName())) {
@@ -204,8 +198,8 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
     throws InvalidFieldException {
-    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
-    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
     fieldValidator.validateField(filterIndex);
     if (!schema.isIndexColumn(filterIndex.getName())) {
       throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
@@ -227,8 +221,8 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException {
-    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
-    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
     if (!schema.isIndexColumn(orderByField)) {
       throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column");
     }
@@ -266,13 +260,6 @@ public class SpannerStructuredTable implements StructuredTable {
         + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
-  }
-
-  @Override
-  public CloseableIterator<StructuredRow> multiScanPartialKeys(
-    Collection<? extends Collection<Field<?>>> partialKeysCollections, int limit) throws InvalidFieldException {
-    Collection<Range> keyRanges = partialKeysCollections.stream().map(Range::singleton).collect(Collectors.toList());
-    return multiScan(keyRanges, limit);
   }
 
   @Override

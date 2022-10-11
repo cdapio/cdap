@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.data.nosql;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -46,10 +45,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -129,30 +126,48 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException {
     LOG.trace("Table {}: Scan range {} with limit {}", schema.getTableId(), keyRange, limit);
-    return new LimitIterator(Collections.singleton(new ScannerIterator(getScanner(keyRange), schema)).iterator(),
-                             limit);
+    return new LimitIterator(Collections.singleton(getFilterByRangeIterator(keyRange)).iterator(), limit);
   }
 
-  @Override
-  public CloseableIterator<StructuredRow> scan(Collection<Field<?>> partialKeys, int limit)
-    throws InvalidFieldException, IOException {
-    LOG.trace("Table {}: Scan partial keys {} with limit {}", schema.getTableId(), partialKeys, limit);
-    fieldValidator.validatePartialPrimaryKeys(partialKeys);
-    List<Field<?>> prefixKeyFields = getPrefixPrimaryKeys(partialKeys);
-    Set<String> prefixKeys = prefixKeyFields.stream().map(Field::getName).collect(Collectors.toSet());
+  /**
+   * Scan the nosql db with a key range. It gets the longest prefix keys,
+   * scan the DB and do a post filtering on the result.
+   *
+   * @param keyRange key range to scan
+   * @return the iterator after filtering
+   * @throws InvalidFieldException if the key is not primary key
+   */
+  private FilterByRangeIterator getFilterByRangeIterator(Range keyRange) {
+    Range prefixRange = getLongestPrefixRange(keyRange);
+    ScannerIterator scannerIterator = new ScannerIterator(getScanner(prefixRange), schema);
 
-    List<Field<?>> filterKeys = partialKeys.stream()
-      .filter(field -> !prefixKeys.contains(field.getName()))
+    Range filterRange = getFilterRange(keyRange, prefixRange);
+    return new FilterByRangeIterator(scannerIterator, filterRange);
+  }
+
+  private Range getLongestPrefixRange(Range range) {
+    fieldValidator.validatePartialPrimaryKeys(range.getBegin());
+    fieldValidator.validatePartialPrimaryKeys(range.getEnd());
+
+    List<Field<?>> beginPrefixKeys = getPrefixPrimaryKeys(range.getBegin());
+    List<Field<?>> endPrefixKeys = getPrefixPrimaryKeys(range.getEnd());
+
+    return Range.create(beginPrefixKeys, range.getBeginBound(), endPrefixKeys, range.getEndBound());
+  }
+
+  private Range getFilterRange(Range keyRange, Range prefixRange) {
+    List<Field<?>> beginFilterKeys = getFilterKeys(keyRange.getBegin(), prefixRange.getBegin());
+    List<Field<?>> endFilterKeys = getFilterKeys(keyRange.getEnd(), prefixRange.getEnd());
+
+    return Range.create(beginFilterKeys, keyRange.getBeginBound(), endFilterKeys, keyRange.getEndBound());
+  }
+
+  private List<Field<?>> getFilterKeys(Collection<Field<?>> keys, Collection<Field<?>> prefixKeys) {
+    Set<String> prefixKeysSet = prefixKeys.stream().map(Field::getName).collect(Collectors.toSet());
+
+    return keys.stream()
+      .filter(key -> !prefixKeysSet.contains(key.getName()))
       .collect(Collectors.toList());
-
-    CloseableIterator<StructuredRow> iterator =
-      new ScannerIterator(getScanner(Range.singleton(prefixKeyFields)), schema);
-
-    for (Field<?> filter : filterKeys) {
-      iterator = new FilterByFieldIterator(iterator, filter, schema);
-    }
-
-    return new LimitIterator(Collections.singleton(iterator).iterator(), limit);
   }
 
   private List<Field<?>> getPrefixPrimaryKeys(Collection<Field<?>> partialKeys) {
@@ -160,12 +175,11 @@ public final class NoSqlStructuredTable implements StructuredTable {
     List<String> primaryKeys = schema.getPrimaryKeys();
     int i = 0;
     for (Field<?> key : partialKeys) {
-      if (key.getName().equals(primaryKeys.get(i))) {
-        prefixKeys.add(key);
-        i++;
-      } else {
-        break;
+      if (!key.getName().equals(primaryKeys.get(i))) {
+        return prefixKeys;
       }
+      prefixKeys.add(key);
+      i++;
     }
     return prefixKeys;
   }
@@ -185,9 +199,9 @@ public final class NoSqlStructuredTable implements StructuredTable {
       getComparator(orderByField).reversed();
     PriorityQueue<StructuredRow> rows = new PriorityQueue<>(comparator);
 
-    try (ScannerIterator scannerIterator = new ScannerIterator(getScanner(keyRange), schema)) {
-      while (scannerIterator.hasNext()) {
-        rows.offer(scannerIterator.next());
+    try (FilterByRangeIterator filterIterator = getFilterByRangeIterator(keyRange)) {
+      while (filterIterator.hasNext()) {
+        rows.offer(filterIterator.next());
       }
     }
     // return an iterator for the sorted elements
@@ -244,61 +258,53 @@ public final class NoSqlStructuredTable implements StructuredTable {
     if (!schema.isIndexColumn(filterIndex.getName())) {
       throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
     }
-    ScannerIterator scannerIterator = new ScannerIterator(getScanner(keyRange), schema);
-    FilterByFieldIterator filterByIndexIterator = new FilterByFieldIterator(scannerIterator, filterIndex, schema);
+    FilterByFieldIterator filterByIndexIterator = new FilterByFieldIterator(getFilterByRangeIterator(keyRange),
+                                                                            filterIndex, schema);
     return new LimitIterator(Collections.singleton(filterByIndexIterator).iterator(), limit);
   }
 
+  /*
+   * Scan the nosql DB with provided ranges, then we de-duplicate the elements
+   * and sort the result in primary keys order in memory.
+   * */
   @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
                                                     int limit) throws InvalidFieldException, IOException {
-    // Sort the scan keys by the start key and merge overlapping ranges.
-    Deque<ImmutablePair<byte[], byte[]>> scanKeys = new LinkedList<>();
-    keyRanges.stream()
-      .map(this::createScanKeys)
-      .sorted((o1, o2) -> Bytes.compareTo(o1.getFirst(), o2.getFirst()))
-      .forEach(range -> {
-        if (scanKeys.isEmpty()) {
-          scanKeys.add(range);
-        } else {
-          ImmutablePair<byte[], byte[]> last = scanKeys.getLast();
-          if (Bytes.compareTo(last.getSecond(), range.getFirst()) < 0) {
-            // No overlap
-            scanKeys.add(range);
-          } else {
-            // Combine overlapping ranges
-            scanKeys.pollLast();
-            byte[] end = Bytes.compareTo(last.getSecond(), range.getSecond()) > 0
-              ? last.getSecond() : range.getSecond();
-            scanKeys.addLast(ImmutablePair.of(last.getFirst(), end));
-          }
-        }
-      });
+    // TODO: CDAP-19688, instead of scanning all ranges, we could scan the most outbound range and do post filtering
+    List<CloseableIterator<StructuredRow>> iterators =
+      keyRanges.stream().map(range -> scan(range, Integer.MAX_VALUE)).collect(Collectors.toList());
 
-    Iterator<ImmutablePair<byte[], byte[]>> rangeIterator = scanKeys.iterator();
-    return new LimitIterator(new AbstractIterator<ScannerIterator>() {
-      @Override
-      protected ScannerIterator computeNext() {
-        if (!rangeIterator.hasNext()) {
-          return endOfData();
-        }
-        ImmutablePair<byte[], byte[]> range = rangeIterator.next();
-        return new ScannerIterator(table.scan(range.getFirst(), range.getSecond()), schema);
-      }
-    }, limit);
-  }
+    // We need to deduplicate the elements because the keyRanges we pass in
+    // can be partial keys, which can result in duplicate rows
+    DeduplicateIterator deduplicateIterator = new DeduplicateIterator(iterators.iterator());
 
-  @Override
-  public CloseableIterator<StructuredRow> multiScanPartialKeys(
-    Collection<? extends Collection<Field<?>>> partialKeysCollections, int limit)
-    throws InvalidFieldException, IOException {
-    Collection<CloseableIterator<StructuredRow>> iterators = new ArrayList<>();
+    // Sort the rows according to primary keys before return
+    PriorityQueue<StructuredRow> rows = new PriorityQueue<>(
+      (row1, row2) -> Bytes.compareTo(convertKeyToBytes(row1.getPrimaryKeys(), false),
+                                      convertKeyToBytes(row2.getPrimaryKeys(), false)));
 
-    for (Collection<Field<?>> keys : partialKeysCollections) {
-      iterators.add(scan(keys, Integer.MAX_VALUE));
+    while (deduplicateIterator.hasNext()) {
+      rows.offer(deduplicateIterator.next());
     }
 
-    return new LimitIterator(iterators.iterator(), limit);
+    // Return an iterator for the sorted elements
+    CloseableIterator<StructuredRow> abstractCloseableIterator =
+      new AbstractCloseableIterator<StructuredRow>() {
+        @Override
+        protected StructuredRow computeNext() {
+          if (rows.isEmpty()) {
+            return endOfData();
+          }
+          return rows.poll();
+        }
+
+        @Override
+        public void close() {
+          // no-op
+        }
+      };
+
+    return new LimitIterator(abstractCloseableIterator, limit);
   }
 
   @Override
@@ -364,10 +370,9 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public void deleteAll(Range keyRange) throws InvalidFieldException, IOException {
     LOG.trace("Table {}: DeleteAll with range {}", schema.getTableId(), keyRange);
-    try (Scanner scanner = getScanner(keyRange)) {
-      Row row;
-      while ((row = scanner.next()) != null) {
-        table.delete(row.getRow());
+    try (FilterByRangeIterator iterator = getFilterByRangeIterator(keyRange)) {
+      while (iterator.hasNext()) {
+        table.delete(convertKeyToBytes(iterator.next().getPrimaryKeys(), false));
       }
     }
   }
@@ -376,11 +381,12 @@ public final class NoSqlStructuredTable implements StructuredTable {
   public long count(Collection<Range> keyRanges) throws IOException {
     LOG.trace("Table {}: count with ranges {}", schema.getTableId(), keyRanges);
     long count = 0;
-    for (Range keyRange : keyRanges) {
-      try (Scanner scanner = getScanner(keyRange)) {
-        while (scanner.next() != null) {
-          count++;
-        }
+    // Instead of scanning ranges one by one, we call multiScan,
+    // which can deduplicate and sort the result
+    try (CloseableIterator<StructuredRow> iterator = multiScan(keyRanges, Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        iterator.next();
+        count++;
       }
     }
     return count;
@@ -396,7 +402,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * on the value of allowPrefix. The method will always prepend the table name as a prefix for the row keys.
    *
    * @param keys        keys to convert
-   * @param allowPrefix true if the keys can be prefix false if the keys have to contain all the primary keys.
+   * @param allowPrefix true if the keys can be prefixed false if the keys have to contain all the primary keys.
    * @return the byte array converted
    * @throws InvalidFieldException if the key are not prefix or complete primary keys
    */
@@ -668,7 +674,145 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
     @Override
     protected StructuredRow computeNext() {
-      // Postfiltering on scanned rows by index
+      // Post filtering on scanned rows by specified field
+      while (scannerIterator.hasNext()) {
+        StructuredRow row = scannerIterator.next();
+        if (predicate.test(row)) {
+          return row;
+        }
+      }
+      return endOfData();
+    }
+
+    @Override
+    public void close() {
+      scannerIterator.close();
+    }
+  }
+
+  /**
+   * De-duplicate elements returned by a {@link DeduplicateIterator}.
+   */
+  @VisibleForTesting
+  static final class DeduplicateIterator extends AbstractCloseableIterator<StructuredRow> {
+    private final Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator;
+    private CloseableIterator<StructuredRow> currentScanner;
+    private final Set<Collection<Field<?>>> seenElements;
+
+    DeduplicateIterator(Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator) {
+      this.seenElements = new HashSet<>();
+      this.scannerIterator = scannerIterator;
+      this.currentScanner = scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
+    }
+
+    @Override
+    protected StructuredRow computeNext() {
+      // Find the next Scanner that is not iterated
+      while (!currentScanner.hasNext() && scannerIterator.hasNext()) {
+        closeScanner();
+        currentScanner = scannerIterator.next();
+      }
+
+      // The case that we iterate to the end of last scanner
+      if (!currentScanner.hasNext()) {
+        return endOfData();
+      }
+
+      // Iterator the current scanner, return when we find a new unique element
+      while (currentScanner.hasNext()) {
+        StructuredRow row = currentScanner.next();
+        // Each Field has unique HashCode
+        Collection<Field<?>> keys = row.getPrimaryKeys();
+        if (seenElements.contains(keys)) {
+          continue;
+        }
+        seenElements.add(keys);
+        return row;
+      }
+
+      // Done with the current scanner, got to next scanner and repeat
+      return computeNext();
+    }
+
+    @Override
+    public void close() {
+      closeScanner();
+    }
+
+    private void closeScanner() {
+      if (currentScanner != null) {
+        currentScanner.close();
+        currentScanner = null;
+      }
+    }
+  }
+
+  /**
+   * Filters elements matching a range {@link ScannerIterator}.
+   */
+  @VisibleForTesting
+  static final class FilterByRangeIterator extends AbstractCloseableIterator<StructuredRow> {
+    private final CloseableIterator<StructuredRow> scannerIterator;
+    private final Predicate<StructuredRow> predicate;
+
+    FilterByRangeIterator(CloseableIterator<StructuredRow> scannerIterator, Range filterRange) {
+      this.scannerIterator = scannerIterator;
+      this.predicate = buildPredicate(filterRange);
+    }
+
+    private Predicate<StructuredRow> buildPredicate(Range filterRange) {
+      return row -> {
+        for (Field<?> beginField : filterRange.getBegin()) {
+          int comp = compareRowAndField(row, beginField);
+          // comp should be at least > 0
+          if (comp < 0) {
+            return false;
+          }
+          // edge case for =
+          if (filterRange.getBeginBound().equals(Range.Bound.EXCLUSIVE) && comp == 0) {
+            return false;
+          }
+        }
+
+        for (Field<?> endField : filterRange.getEnd()) {
+          int comp = compareRowAndField(row, endField);
+          // comp should be at least < 0
+          if (comp > 0) {
+            return false;
+          }
+          // edge case for =
+          if (filterRange.getEndBound().equals(Range.Bound.EXCLUSIVE) && comp == 0) {
+            return false;
+          }
+        }
+
+        return true;
+      };
+    }
+
+    private int compareRowAndField(StructuredRow row, Field<?> field) {
+      String fieldName = field.getName();
+      switch (field.getFieldType()) {
+        case INTEGER:
+          return Objects.compare(row.getInteger(fieldName), (Integer) field.getValue(), Integer::compare);
+        case LONG:
+          return Objects.compare(row.getLong(fieldName), (Long) (field.getValue()), Long::compare);
+        case FLOAT:
+          return Objects.compare(row.getFloat(fieldName), (Float) (field.getValue()), Float::compare);
+        case DOUBLE:
+          return Objects.compare(row.getDouble(fieldName), (Double) (field.getValue()), Double::compare);
+        case STRING:
+          return Objects.compare(row.getString(fieldName), (String) (field.getValue()), String::compareTo);
+        case BYTES:
+          return new Bytes.ByteArrayComparator().compare(row.getBytes(fieldName), (byte[]) field.getValue());
+        default:
+          throw new RuntimeException(String.format("Exception while comparing row: %s and field: %s", row, field));
+      }
+    }
+
+    @Override
+    protected StructuredRow computeNext() {
+      // Post filtering on scanned rows by range fields
       while (scannerIterator.hasNext()) {
         StructuredRow row = scannerIterator.next();
         if (predicate.test(row)) {

@@ -27,6 +27,7 @@ import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
 
 import java.io.IOException;
@@ -78,7 +79,7 @@ public class AppMetadataStore {
     // Instead of reading by full primary keys, we scan by all keys without version
     // Since we made sure run id is unique
     try (CloseableIterator<StructuredRow> iterator =
-           runRecordsTable.scan(partialPrimaryKeys, 1)) {
+           runRecordsTable.scan(Range.singleton(partialPrimaryKeys), 1)) {
       if (iterator.hasNext()) {
         return deserializeRunRecordMeta(iterator.next());
       }

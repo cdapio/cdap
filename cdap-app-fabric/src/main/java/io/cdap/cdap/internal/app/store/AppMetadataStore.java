@@ -1547,9 +1547,10 @@ public class AppMetadataStore {
 
   private Map<ProgramRunId, RunRecordDetail> getRunsByKeys(List<List<Field<?>>> allKeys) throws IOException {
     List<RunRecordDetail> runRecordDetails = new ArrayList<>();
+    Collection<Range> ranges = allKeys.stream().map(Range::singleton).collect(Collectors.toList());
 
     try (CloseableIterator<StructuredRow> iterator =
-           getRunRecordsTable().multiScanPartialKeys(allKeys, Integer.MAX_VALUE)) {
+           getRunRecordsTable().multiScan(ranges, Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         runRecordDetails.add(deserializeRunRecordMeta(iterator.next()));
       }

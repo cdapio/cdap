@@ -119,20 +119,6 @@ public interface StructuredTable extends Closeable {
   CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException;
 
   /**
-   * Scan a collection of rows from the table matching the partial primary keys.
-   * The rows returned will be sorted on the primary key order.
-   *
-   * @param partialKeys partial primary keys for the scan
-   * @param limit maximum number of rows to return
-   * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
-   * @throws IOException if there is an error scanning the table
-   */
-  CloseableIterator<StructuredRow> scan(Collection<Field<?>> partialKeys, int limit)
-    throws InvalidFieldException, IOException;
-
-  /**
    * Read a set of rows from the table matching the key range.
    * The rows returned will be sorted on the primary key according to sortOrder parameter.
    *
@@ -213,22 +199,6 @@ public interface StructuredTable extends Closeable {
    */
   CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
                                              int limit) throws InvalidFieldException, IOException;
-
-  /**
-   * Scan a collection of rows from the table matching the set of partial primary keys.
-   * The rows returned will be sorted on the primary key order.
-   *
-   * @param partialKeysCollections collection of key ranges for the scan
-   * @param limit maximum number of rows to return
-   * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
-   * @throws IOException if there is an error scanning the table
-   */
-  CloseableIterator<StructuredRow> multiScanPartialKeys(
-    Collection<? extends Collection<Field<?>>> partialKeysCollections,
-    int limit)
-    throws InvalidFieldException, IOException;
 
   /**
    * Atomically compare and swap the value of a column in a row if the expected value matches.

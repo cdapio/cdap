@@ -206,13 +206,6 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Collection<Field<?>> partialKeys, int limit)
-    throws InvalidFieldException, IOException {
-    LOG.trace("Table {}: Scan partial keys fields {} with limit {}", tableSchema.getTableId(), partialKeys, limit);
-    return scan(Range.singleton(partialKeys), limit);
-  }
-
-  @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
 
@@ -278,16 +271,6 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       throw new IOException(String.format("Failed to scan from table %s with ranges %s",
                                           tableSchema.getTableId().getName(), keyRanges), e);
     }
-  }
-
-  @Override
-  public CloseableIterator<StructuredRow> multiScanPartialKeys(
-    Collection<? extends Collection<Field<?>>> partialKeysCollections, int limit)
-    throws InvalidFieldException, IOException {
-    LOG.trace("Table {}: MultiScanPartialKeys {} with limit {}",
-              tableSchema.getTableId(), partialKeysCollections, limit);
-    Collection<Range> keyRanges = partialKeysCollections.stream().map(Range::singleton).collect(Collectors.toList());
-    return multiScan(keyRanges, limit);
   }
 
   /**
@@ -371,8 +354,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
     throws InvalidFieldException, IOException {
 
-    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
-    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
     fieldValidator.validateField(filterIndex);
     if (!tableSchema.isIndexColumn(filterIndex.getName())) {
       throw new InvalidFieldException(tableSchema.getTableId(), filterIndex.getName(), "is not an indexed column");
@@ -404,8 +387,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
     LOG.trace("Table {}: Scan range {} with limit {} order {} on index field {}",
               tableSchema.getTableId(), keyRange, limit, sortOrder, orderByField);
-    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
-    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
+    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
     if (!tableSchema.isIndexColumn(orderByField)) {
       throw new InvalidFieldException(tableSchema.getTableId(), orderByField, "is not an indexed column");
     }
@@ -938,8 +921,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     StringBuilder statement = new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
     boolean whereAdded = false;
     for (Range range : ranges) {
-      fieldValidator.validatePrimaryKeys(range.getBegin(), true);
-      fieldValidator.validatePrimaryKeys(range.getEnd(), true);
+      fieldValidator.validatePartialPrimaryKeys(range.getBegin());
+      fieldValidator.validatePartialPrimaryKeys(range.getEnd());
 
       if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
         if (!whereAdded) {
