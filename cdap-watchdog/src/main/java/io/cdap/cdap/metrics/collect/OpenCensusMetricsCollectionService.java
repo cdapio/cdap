@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * A MetricsCollectionService writing to OpenCensus (and StackDriver)
  */
 @Singleton
-public class OpenCensusMeticsCollectionService extends AggregatedMetricsCollectionService{
+public class OpenCensusMetricsCollectionService extends AggregatedMetricsCollectionService {
   private final ViewManager viewManager = Stats.getViewManager();
   private final StatsRecorder statsRecorder = Stats.getStatsRecorder();
   private final LoadingCache<String, Measure.MeasureLong> metricsCache = CacheBuilder
@@ -52,7 +52,7 @@ public class OpenCensusMeticsCollectionService extends AggregatedMetricsCollecti
       }
     });
 
-  public OpenCensusMeticsCollectionService(CConfiguration cConf) throws IOException {
+  public OpenCensusMetricsCollectionService(CConfiguration cConf) throws IOException {
     super(TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
     if (cConf.getBoolean(Constants.Metrics.STACKDRIVER_ENABLED, true)) {
       StackdriverStatsExporter.createAndRegister();
