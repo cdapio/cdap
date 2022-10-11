@@ -20,7 +20,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
-import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.messaging.data.TopicId;
 import org.apache.tephra.Transaction;
 
 import java.io.Closeable;
@@ -91,7 +91,7 @@ public interface MessageTable extends Closeable {
    * @param startTime the publish time to start from
    * @param limit maximum number of messages to fetch
    * @param transaction an optional {@link Transaction} to use for fetching
-   * @return a {@link CloseableIterator} of {@link Entry}.
+   * @return a {@link Iterator} of {@link Entry}.
    */
   CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime,
                                  int limit, @Nullable Transaction transaction) throws IOException;
@@ -105,7 +105,7 @@ public interface MessageTable extends Closeable {
    *                  or not.
    * @param limit maximum number of messages to fetch
    * @param transaction an optional {@link Transaction} to use for fetching
-   * @return a {@link CloseableIterator} of {@link Entry}.
+   * @return a {@link Iterator} of {@link Entry}.
    */
   CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
                                  int limit, @Nullable Transaction transaction) throws IOException;

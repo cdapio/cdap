@@ -138,7 +138,7 @@ public class MessagingHttpServiceTest {
     TopicId topic1 = nsId.topic("t1");
 
     // Create a topic
-    client.createTopic(new TopicMetadata(topic1));
+    client.createTopic(new TopicMetadata(topic1.toSpiTopicId()));
     final RollbackDetail rollbackDetail = client.publish(StoreRequestBuilder.of(topic1).setTransaction(1L)
                                                      .addPayload("a").addPayload("b").build());
     try {
@@ -179,11 +179,11 @@ public class MessagingHttpServiceTest {
     }
 
     // Create the topic t1
-    client.createTopic(new TopicMetadata(topic1));
+    client.createTopic(new TopicMetadata(topic1.toSpiTopicId()));
 
     // Create an existing topic should fail
     try {
-      client.createTopic(new TopicMetadata(topic1));
+      client.createTopic(new TopicMetadata(topic1.toSpiTopicId()));
       Assert.fail("Expect TopicAlreadyExistsException");
     } catch (TopicAlreadyExistsException e) {
       // Expected
@@ -194,21 +194,21 @@ public class MessagingHttpServiceTest {
                         client.getTopic(topic1).getTTL());
 
     // Update the topic t1 with new TTL
-    client.updateTopic(new TopicMetadata(topic1, "ttl", "5"));
+    client.updateTopic(new TopicMetadata(topic1.toSpiTopicId(), "ttl", "5"));
 
     // Get the topic t1 properties. Verify TTL is updated
     Assert.assertEquals(5, client.getTopic(topic1).getTTL());
 
     // Try to add another topic t2 with invalid ttl, it should fail
     try {
-      client.createTopic(new TopicMetadata(topic2, "ttl", "xyz"));
+      client.createTopic(new TopicMetadata(topic2.toSpiTopicId(), "ttl", "xyz"));
       Assert.fail("Expect BadRequestException");
     } catch (IllegalArgumentException e) {
       // Expected
     }
 
     // Add topic t2 with valid ttl
-    client.createTopic(new TopicMetadata(topic2, "ttl", "5"));
+    client.createTopic(new TopicMetadata(topic2.toSpiTopicId(), "ttl", "5"));
 
     // Get the topic t2 properties. It should have TTL set based on what provided
     Assert.assertEquals(5, client.getTopic(topic2).getTTL());
@@ -231,7 +231,7 @@ public class MessagingHttpServiceTest {
 
     // Update a non exist topic should fail
     try {
-      client.updateTopic(new TopicMetadata(topic1));
+      client.updateTopic(new TopicMetadata(topic1.toSpiTopicId()));
       Assert.fail("Expect TopicNotFoundException");
     } catch (TopicNotFoundException e) {
       // Expected
@@ -244,7 +244,7 @@ public class MessagingHttpServiceTest {
   @Test
   public void testGeMetadata() throws Exception {
     TopicId topicId = new NamespaceId("ns2").topic("d");
-    TopicMetadata metadata = new TopicMetadata(topicId, "ttl", "100");
+    TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), "ttl", "100");
     for (int i = 1; i <= 5; i++) {
       client.createTopic(metadata);
       TopicMetadata topicMetadata = client.getTopic(topicId);
@@ -257,7 +257,7 @@ public class MessagingHttpServiceTest {
   @Test
   public void testDeletes() throws Exception {
     TopicId topicId = new NamespaceId("ns1").topic("del");
-    TopicMetadata metadata = new TopicMetadata(topicId, "ttl", "100");
+    TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), "ttl", "100");
     for (int j = 0; j < 10; j++) {
       client.createTopic(metadata);
       String m1 = String.format("m%d", j);
@@ -301,7 +301,7 @@ public class MessagingHttpServiceTest {
       // Expected
     }
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new TopicMetadata(topicId.toSpiTopicId()));
 
     // Publish a non-transactional message with empty payload should result in failure
     try {
@@ -444,7 +444,7 @@ public class MessagingHttpServiceTest {
     // This test is to verify the message fetching body producer works correctly
     TopicId topicId = new NamespaceId("ns1").topic("testChunkConsume");
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new TopicMetadata(topicId.toSpiTopicId()));
 
     // Publish 10 messages, each payload is half the size of the chunk size
     int payloadSize = cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE) / 2;
@@ -474,7 +474,7 @@ public class MessagingHttpServiceTest {
     // This test is to verify storing transaction messages to the payload table
     TopicId topicId = new NamespaceId("ns1").topic("testPayloadTable");
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new TopicMetadata(topicId.toSpiTopicId()));
 
     // Try to store to Payload table with empty iterator, expected failure
     try {
@@ -603,7 +603,7 @@ public class MessagingHttpServiceTest {
     // This test is to verify storing transaction messages to the payload table
     TopicId topicId = new NamespaceId("ns1").topic("testReuseRequest");
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new TopicMetadata(topicId.toSpiTopicId()));
 
     StoreRequest request = StoreRequestBuilder.of(topicId).addPayload("m1").addPayload("m2").build();
 
@@ -632,7 +632,7 @@ public class MessagingHttpServiceTest {
     String message = Strings.repeat("01234", 1024 * 1024);
 
     TopicId topicId = new NamespaceId("ns1").topic("testLargePublish");
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new TopicMetadata(topicId.toSpiTopicId()));
 
     StoreRequest request = StoreRequestBuilder.of(topicId).addPayload(message).build();
     client.publish(request);

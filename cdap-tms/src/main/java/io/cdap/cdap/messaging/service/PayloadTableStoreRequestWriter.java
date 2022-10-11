@@ -46,7 +46,7 @@ final class PayloadTableStoreRequestWriter extends StoreRequestWriter<PayloadTab
   PayloadTable.Entry getEntry(TopicMetadata metadata, boolean transactional, long transactionWritePointer,
                               long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
     return entry
-      .setTopicId(metadata.getTopicId())
+      .setTopicId(new TopicId(metadata.getTopicId()))
       .setGeneration(metadata.getGeneration())
       .setTransactionWritePointer(transactionWritePointer)
       .setPayloadWriteTimestamp(writeTimestamp)
@@ -107,8 +107,8 @@ final class PayloadTableStoreRequestWriter extends StoreRequestWriter<PayloadTab
     }
 
     @Override
-    public TopicId getTopicId() {
-      return topicId;
+    public io.cdap.cdap.messaging.data.TopicId getTopicId() {
+      return topicId.toSpiTopicId();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,61 +14,34 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.id;
+package io.cdap.cdap.messaging.data;
 
-import io.cdap.cdap.proto.element.EntityType;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.Objects;
 
 /**
  * Uniquely identifies a messaging topic.
  */
-public class TopicId extends NamespacedEntityId implements ParentedId<NamespaceId> {
+// TODO use the TopicId in cdap-api
+public class TopicId {
   private final String topic;
   private transient Integer hashCode;
   private transient byte[] idBytes;
+  private final String namespace;
 
   public TopicId(String namespace, String topic) {
-    super(namespace, EntityType.TOPIC);
     if (topic == null) {
       throw new NullPointerException("Topic ID cannot be null.");
     }
-    ensureValidId("topic", topic);
     this.topic = topic;
+    this.namespace = namespace;
   }
 
-  public TopicId(io.cdap.cdap.messaging.data.TopicId spiTopicId) {
-    this(spiTopicId.getNamespace(), spiTopicId.getTopic());
-  }
   public String getTopic() {
     return topic;
   }
 
-  public io.cdap.cdap.messaging.data.TopicId toSpiTopicId() {
-    return new io.cdap.cdap.messaging.data.TopicId(this.namespace, this.topic);
-  }
-  @Override
-  public Iterable<String> toIdParts() {
-    return Collections.unmodifiableList(Arrays.asList(namespace, topic));
-  }
-
-  @SuppressWarnings("unused")
-  public static TopicId fromIdParts(Iterable<String> idString) {
-    Iterator<String> iterator = idString.iterator();
-    return new TopicId(next(iterator, "namespace"), nextAndEnd(iterator, "topic"));
-  }
-
-  @Override
-  public String getEntityName() {
-    return getTopic();
-  }
-
-  @Override
-  public NamespaceId getParent() {
-    return new NamespaceId(namespace);
+  public String getNamespace() {
+    return namespace;
   }
 
   @Override

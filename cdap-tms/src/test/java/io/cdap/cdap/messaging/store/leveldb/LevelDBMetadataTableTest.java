@@ -35,6 +35,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Tests for {@link LevelDBMetadataTable}.
@@ -63,21 +64,24 @@ public class LevelDBMetadataTableTest extends MetadataTableTest {
     try (MetadataTable metadataTable = createMetadataTable()) {
       LevelDBMetadataTable table = (LevelDBMetadataTable) metadataTable;
       TopicMetadata t1 = new TopicMetadata(
-        NamespaceId.CDAP.topic("t1"), ImmutableMap.of(TopicMetadata.TTL_KEY, "10", TopicMetadata.GENERATION_KEY, "1"));
+        NamespaceId.CDAP.topic("t1").toSpiTopicId(), ImmutableMap.of(TopicMetadata.TTL_KEY, "10",
+                                                                     TopicMetadata.GENERATION_KEY, "1"));
       TopicMetadata t2 = new TopicMetadata(
-        NamespaceId.SYSTEM.topic("t2"), ImmutableMap.of(TopicMetadata.TTL_KEY, "20",
+        NamespaceId.SYSTEM.topic("t2").toSpiTopicId(), ImmutableMap.of(TopicMetadata.TTL_KEY, "20",
                                                         TopicMetadata.GENERATION_KEY, "1"));
       metadataTable.createTopic(t1);
       metadataTable.createTopic(t2);
-      List<TopicId> allTopics = table.listTopics();
+      List<TopicId> allTopics = table.listTopics().stream().map(TopicId::new).collect(Collectors.toList());
       Assert.assertEquals(2, allTopics.size());
       List<TopicMetadata> metadatas = new ArrayList<>();
       Iterators.addAll(metadatas, table.scanTopics());
       Assert.assertEquals(2, metadatas.size());
 
-      allTopics = table.listTopics(NamespaceId.CDAP);
+      allTopics = table.listTopics(NamespaceId.CDAP.getNamespace()).stream().map(TopicId::new).
+        collect(Collectors.toList());
       Assert.assertEquals(1, allTopics.size());
-      allTopics = table.listTopics(NamespaceId.SYSTEM);
+      allTopics = table.listTopics(NamespaceId.SYSTEM.getNamespace()).stream().map(TopicId::new).
+        collect(Collectors.toList());
       Assert.assertEquals(1, allTopics.size());
 
       metadataTable.deleteTopic(t1.getTopicId());
@@ -87,8 +91,8 @@ public class LevelDBMetadataTableTest extends MetadataTableTest {
       Assert.assertEquals(2, metadatas.size());
 
       Assert.assertEquals(1, metadataTable.listTopics().size());
-      Assert.assertEquals(1, metadataTable.listTopics(NamespaceId.SYSTEM).size());
-      Assert.assertTrue(metadataTable.listTopics(NamespaceId.CDAP).isEmpty());
+      Assert.assertEquals(1, metadataTable.listTopics(NamespaceId.SYSTEM.getNamespace()).size());
+      Assert.assertTrue(metadataTable.listTopics(NamespaceId.CDAP.getNamespace()).isEmpty());
 
       metadataTable.deleteTopic(t2.getTopicId());
       metadatas.clear();

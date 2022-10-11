@@ -33,49 +33,52 @@ public abstract class MetadataTableTest {
   public void testBasic() throws Exception {
     try (MetadataTable table = createMetadataTable()) {
       Assert.assertTrue(table.listTopics().isEmpty());
-      Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT).isEmpty());
+      Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT.getNamespace()).isEmpty());
 
       try {
-        table.getMetadata(NamespaceId.DEFAULT.topic("t1"));
+        table.getMetadata(NamespaceId.DEFAULT.topic("t1").toSpiTopicId());
         Assert.fail("Expected exception on topic that doesn't exist");
       } catch (TopicNotFoundException e) {
         // expected
       }
 
       // Create topic default:t1
-      table.createTopic(new TopicMetadata(NamespaceId.DEFAULT.topic("t1"), "ttl", 10));;
-      Assert.assertEquals(1, table.listTopics(NamespaceId.DEFAULT).size());
+      table.createTopic(new TopicMetadata(NamespaceId.DEFAULT.topic("t1").toSpiTopicId(), "ttl", 10));;
+      Assert.assertEquals(1, table.listTopics(NamespaceId.DEFAULT.getNamespace()).size());
 
       // Create topic default:t2
-      TopicMetadata topicMetadata = new TopicMetadata(NamespaceId.DEFAULT.topic("t2"), "ttl", 20);
+      TopicMetadata topicMetadata = new TopicMetadata(NamespaceId.DEFAULT.topic("t2").toSpiTopicId(), "ttl", 20);
       table.createTopic(topicMetadata);
-      Assert.assertEquals(topicMetadata.getTopicId(), table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getTopicId());
-      Assert.assertEquals(topicMetadata.getTTL(), table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getTTL());
-      Assert.assertEquals(1, table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getGeneration());
+      Assert.assertEquals(topicMetadata.getTopicId(), table.getMetadata(NamespaceId.DEFAULT.topic("t2").toSpiTopicId()).
+        getTopicId());
+      Assert.assertEquals(topicMetadata.getTTL(), table.getMetadata(NamespaceId.DEFAULT.topic("t2").toSpiTopicId()).
+        getTTL());
+      Assert.assertEquals(1, table.getMetadata(NamespaceId.DEFAULT.topic("t2").toSpiTopicId()).
+        getGeneration());
 
       // Create topic system:t3
-      table.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("t3"), "ttl", 30));
+      table.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("t3").toSpiTopicId(), "ttl", 30));
 
       // List default namespace, should get 2
-      Assert.assertEquals(2, table.listTopics(NamespaceId.DEFAULT).size());
+      Assert.assertEquals(2, table.listTopics(NamespaceId.DEFAULT.getNamespace()).size());
 
       // List all topics, should get 3
       Assert.assertEquals(3, table.listTopics().size());
 
       // Delete t1
-      table.deleteTopic(NamespaceId.DEFAULT.topic("t1"));
-      Assert.assertEquals(1, table.listTopics(NamespaceId.DEFAULT).size());
+      table.deleteTopic(NamespaceId.DEFAULT.topic("t1").toSpiTopicId());
+      Assert.assertEquals(1, table.listTopics(NamespaceId.DEFAULT.getNamespace()).size());
       Assert.assertEquals(2, table.listTopics().size());
 
       // Delete t2
-      table.deleteTopic(NamespaceId.DEFAULT.topic("t2"));
-      Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT).isEmpty());
-      Assert.assertEquals(1, table.listTopics(NamespaceId.SYSTEM).size());
+      table.deleteTopic(NamespaceId.DEFAULT.topic("t2").toSpiTopicId());
+      Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT.getNamespace()).isEmpty());
+      Assert.assertEquals(1, table.listTopics(NamespaceId.SYSTEM.getNamespace()).size());
 
       // Delete t3
-      table.deleteTopic(NamespaceId.SYSTEM.topic("t3"));
-      Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT).isEmpty());
-      Assert.assertTrue(table.listTopics(NamespaceId.SYSTEM).isEmpty());
+      table.deleteTopic(NamespaceId.SYSTEM.topic("t3").toSpiTopicId());
+      Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT.getNamespace()).isEmpty());
+      Assert.assertTrue(table.listTopics(NamespaceId.SYSTEM.getNamespace()).isEmpty());
       Assert.assertTrue(table.listTopics().isEmpty());
     }
   }
@@ -85,16 +88,16 @@ public abstract class MetadataTableTest {
     try (MetadataTable table = createMetadataTable()) {
       TopicId topicId = NamespaceId.DEFAULT.topic("gtopic");
       for (int i = 1; i <= 50; i++) {
-        table.createTopic(new TopicMetadata(topicId, "ttl", 1));
+        table.createTopic(new TopicMetadata(topicId.toSpiTopicId(), "ttl", 1));
 
-        TopicMetadata metadata = table.getMetadata(topicId);
+        TopicMetadata metadata = table.getMetadata(topicId.toSpiTopicId());
         Assert.assertEquals(i, metadata.getGeneration());
         Assert.assertEquals(1, metadata.getTTL());
 
-        table.deleteTopic(topicId);
+        table.deleteTopic(topicId.toSpiTopicId());
 
         try {
-          table.getMetadata(topicId);
+          table.getMetadata(topicId.toSpiTopicId());
           Assert.fail("Expected TopicNotFoundException");
         } catch (TopicNotFoundException ex) {
           // Expected
@@ -110,35 +113,35 @@ public abstract class MetadataTableTest {
 
       // Update a non-existing topic should fail.
       try {
-        table.updateTopic(new TopicMetadata(topicId, "ttl", 10));
+        table.updateTopic(new TopicMetadata(topicId.toSpiTopicId(), "ttl", 10));
         Assert.fail("Expected TopicNotFoundException");
       } catch (TopicNotFoundException e) {
         // Expected
       }
 
       // Create a topic and validate
-      table.createTopic(new TopicMetadata(topicId, "ttl", 10));
-      Assert.assertEquals(10, table.getMetadata(topicId).getTTL());
+      table.createTopic(new TopicMetadata(topicId.toSpiTopicId(), "ttl", 10));
+      Assert.assertEquals(10, table.getMetadata(topicId.toSpiTopicId()).getTTL());
 
       // Update the property and validate
-      table.updateTopic(new TopicMetadata(topicId, "ttl", 30));
-      Assert.assertEquals(30, table.getMetadata(topicId).getTTL());
+      table.updateTopic(new TopicMetadata(topicId.toSpiTopicId(), "ttl", 30));
+      Assert.assertEquals(30, table.getMetadata(topicId.toSpiTopicId()).getTTL());
 
       // Create the same topic again should fail
       try {
-        table.createTopic(new TopicMetadata(topicId, "ttl", 10));
+        table.createTopic(new TopicMetadata(topicId.toSpiTopicId(), "ttl", 10));
         Assert.fail("Expected TopicAlreadyExistsException");
       } catch (TopicAlreadyExistsException e) {
         // Expected
       }
 
       // It shouldn't affect the topic at all if creation failed
-      Assert.assertEquals(30, table.getMetadata(topicId).getTTL());
+      Assert.assertEquals(30, table.getMetadata(topicId.toSpiTopicId()).getTTL());
 
       // Delete the topic
-      table.deleteTopic(topicId);
+      table.deleteTopic(topicId.toSpiTopicId());
       try {
-        table.getMetadata(topicId);
+        table.getMetadata(topicId.toSpiTopicId());
         Assert.fail("Expected TopicNotFoundException");
       } catch (TopicNotFoundException e) {
         // Expected
@@ -146,7 +149,7 @@ public abstract class MetadataTableTest {
 
       // Delete again should raise a TopicNotFoundException
       try {
-        table.deleteTopic(topicId);
+        table.deleteTopic(topicId.toSpiTopicId());
         Assert.fail("Expected TopicNotFoundException");
       } catch (TopicNotFoundException e) {
         // Expected

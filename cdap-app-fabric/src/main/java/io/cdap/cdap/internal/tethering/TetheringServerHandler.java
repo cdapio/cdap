@@ -331,7 +331,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
 
   private void createTopicIfNeeded(TopicId topicId) throws IOException {
     try {
-      messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
+      messagingService.createTopic(new TopicMetadata(topicId.toSpiTopicId(), Collections.emptyMap()));
     } catch (TopicAlreadyExistsException ex) {
       // no-op
     }

@@ -64,7 +64,7 @@ public abstract class AbstractMessageTable implements MessageTable {
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime, int limit,
                                         @Nullable Transaction transaction) throws IOException {
-    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(new TopicId(metadata.getTopicId()), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, startTime);
@@ -77,7 +77,7 @@ public abstract class AbstractMessageTable implements MessageTable {
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
                                         final int limit, @Nullable final Transaction transaction) throws IOException {
-    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(new TopicId(metadata.getTopicId()), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
@@ -97,7 +97,7 @@ public abstract class AbstractMessageTable implements MessageTable {
   public void rollback(TopicMetadata metadata, RollbackDetail rollbackDetail) throws IOException {
     //long startTimestamp, short startSequenceId,
     //long endTimestamp, short endSequenceId
-    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(new TopicId(metadata.getTopicId()), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, rollbackDetail.getStartTimestamp());
@@ -213,7 +213,7 @@ public abstract class AbstractMessageTable implements MessageTable {
       Entry entry = entries.next();
       // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
       if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
-        topicId = entry.getTopicId();
+        topicId = new TopicId(entry.getTopicId());
         generation = entry.getGeneration();
         topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());
         key = MessageTableKey.fromTopic(topic);

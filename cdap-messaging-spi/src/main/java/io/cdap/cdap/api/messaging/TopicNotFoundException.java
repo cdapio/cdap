@@ -16,15 +16,13 @@
 
 package io.cdap.cdap.api.messaging;
 
-import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Exception thrown when trying to create a topic when a topic of that name already exists.
+ * Exception thrown when attempting an operation on a topic when a topic of that name does not exist.
  */
-@Beta
-public class TopicAlreadyExistsException extends MessagingException {
+public class TopicNotFoundException extends MessagingException {
 
-  public TopicAlreadyExistsException(String namespace, String topic) {
-    super(namespace, topic, "Topic " + namespace + ":" + topic + " already exists.");
+  public TopicNotFoundException(String namespace, String topic) {
+    super(namespace, topic, "Topic " + namespace + ":" + topic + " does not exist.");
   }
 }

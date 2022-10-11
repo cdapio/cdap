@@ -50,7 +50,7 @@ public class BasicMessagingAdmin implements MessagingAdmin {
   public void createTopic(String topic,
                           Map<String, String> properties)
     throws TopicAlreadyExistsException, IOException, UnauthorizedException {
-    messagingService.createTopic(new TopicMetadata(namespace.topic(topic), properties));
+    messagingService.createTopic(new TopicMetadata(namespace.topic(topic).toSpiTopicId(), properties));
   }
 
   @Override
@@ -62,7 +62,7 @@ public class BasicMessagingAdmin implements MessagingAdmin {
   @Override
   public void updateTopic(String topic, Map<String, String> properties)
     throws TopicNotFoundException, IOException, UnauthorizedException {
-    messagingService.updateTopic(new TopicMetadata(namespace.topic(topic), properties));
+    messagingService.updateTopic(new TopicMetadata(namespace.topic(topic).toSpiTopicId(), properties));
   }
 
   @Override

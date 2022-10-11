@@ -19,8 +19,7 @@ package io.cdap.cdap.messaging.store;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.TopicMetadata;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.messaging.data.TopicId;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -75,7 +74,7 @@ public interface MetadataTable extends Closeable {
    * @return {@link List} of topics in that namespace
    * @throws IOException if failed to retrieve topics
    */
-  List<TopicId> listTopics(NamespaceId namespaceId) throws IOException;
+  List<TopicId> listTopics(String namespaceId) throws IOException;
 
   /**
    * List all topics in the messaging system.

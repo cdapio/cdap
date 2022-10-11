@@ -85,7 +85,8 @@ public class LevelDBMessageTableTest extends MessageTableTest {
     TopicId topicId = new TopicId("default", "preview");
     int generation = 1;
     TopicMetadata topicMetadata =
-      new TopicMetadata(topicId, Collections.singletonMap(TopicMetadata.GENERATION_KEY, String.valueOf(generation)));
+      new TopicMetadata(topicId.toSpiTopicId(), Collections.singletonMap(TopicMetadata.GENERATION_KEY,
+                                                                         String.valueOf(generation)));
 
     // write a message to a table, then rename the underlying directory to the old format
     long publishTime = 1000;
@@ -125,7 +126,8 @@ public class LevelDBMessageTableTest extends MessageTableTest {
     TopicId topicId = new TopicId("default", "multipart");
     int generation = 1;
     TopicMetadata topicMetadata =
-      new TopicMetadata(topicId, Collections.singletonMap(TopicMetadata.GENERATION_KEY, String.valueOf(generation)));
+      new TopicMetadata(topicId.toSpiTopicId(), Collections.singletonMap(TopicMetadata.GENERATION_KEY,
+                                                                         String.valueOf(generation)));
 
     try (MessageTable table = tableFactory.createMessageTable(topicMetadata)) {
       List<MessageTable.Entry> writes = new ArrayList<>();

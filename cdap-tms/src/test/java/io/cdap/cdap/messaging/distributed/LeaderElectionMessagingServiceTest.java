@@ -221,7 +221,7 @@ public class LeaderElectionMessagingServiceTest {
         @Override
         public TopicId call() throws Exception {
           try {
-            return messagingService.getTopic(topicId).getTopicId();
+            return new TopicId(messagingService.getTopic(topicId).getTopicId());
           } catch (ServiceUnavailableException e) {
             return null;
           }

@@ -59,8 +59,8 @@ public abstract class PayloadTableTest {
                                                                               Integer.toString(10000),
                                                                               TopicMetadata.GENERATION_KEY,
                                                                               Integer.toString(GENERATION));
-  private static final TopicMetadata M1 = new TopicMetadata(T1, DEFAULT_PROPERTY);
-  private static final TopicMetadata M2 = new TopicMetadata(T2, DEFAULT_PROPERTY);
+  private static final TopicMetadata M1 = new TopicMetadata(T1.toSpiTopicId(), DEFAULT_PROPERTY);
+  private static final TopicMetadata M2 = new TopicMetadata(T2.toSpiTopicId(), DEFAULT_PROPERTY);
 
   protected abstract PayloadTable getPayloadTable(TopicMetadata topicMetadata) throws Exception;
 
@@ -69,7 +69,7 @@ public abstract class PayloadTableTest {
   @Test
   public void testSingleMessage() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("singlePayload");
-    TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+    TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), DEFAULT_PROPERTY);
     String payload = "data";
     long txWritePtr = 123L;
     try (MetadataTable metadataTable = getMetadataTable();
@@ -147,7 +147,7 @@ public abstract class PayloadTableTest {
 
     for (int i = 0; i < 2; i++) {
       final TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), DEFAULT_PROPERTY);
 
       try (MetadataTable metadataTable = getMetadataTable()) {
         metadataTable.createTopic(metadata);
@@ -191,7 +191,7 @@ public abstract class PayloadTableTest {
     // Read from each topic. Each topic should have two messages
     for (int i = 0; i < 2; i++) {
       TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), DEFAULT_PROPERTY);
 
       byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0, (short) 0, rawId, 0);
@@ -257,8 +257,8 @@ public abstract class PayloadTableTest {
     }
 
     @Override
-    public TopicId getTopicId() {
-      return topicId;
+    public io.cdap.cdap.messaging.data.TopicId getTopicId() {
+      return topicId.toSpiTopicId();
     }
 
     @Override

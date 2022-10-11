@@ -75,7 +75,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
                           @PathParam("namespace") String namespace,
                           @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    messagingService.createTopic(new TopicMetadata(topicId, decodeTopicProperties(request.content())));
+    messagingService.createTopic(new TopicMetadata(topicId.toSpiTopicId(), decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -85,7 +85,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
                           @PathParam("namespace") String namespace,
                           @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    messagingService.updateTopic(new TopicMetadata(topicId, decodeTopicProperties(request.content())));
+    messagingService.updateTopic(new TopicMetadata(topicId.toSpiTopicId(), decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

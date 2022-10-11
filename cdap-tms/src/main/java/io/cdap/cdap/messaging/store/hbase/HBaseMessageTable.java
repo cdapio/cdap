@@ -30,6 +30,7 @@ import io.cdap.cdap.messaging.store.MessageTableKey;
 import io.cdap.cdap.messaging.store.RawMessageTableEntry;
 import io.cdap.cdap.messaging.store.RollbackRequest;
 import io.cdap.cdap.messaging.store.ScanRequest;
+import io.cdap.cdap.proto.id.TopicId;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -82,7 +83,8 @@ final class HBaseMessageTable extends AbstractMessageTable {
       .build();
 
     TopicMetadata topicMetadata = scanRequest.getTopicMetadata();
-    byte[] topic = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(), topicMetadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(new TopicId(topicMetadata.getTopicId()),
+                                                  topicMetadata.getGeneration());
     MessageTableKey messageTableKey = MessageTableKey.fromTopic(topic);
     try {
       final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor);

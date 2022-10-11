@@ -209,7 +209,8 @@ public final class LevelDBTableFactory implements TableFactory {
 
   private LevelDBPartitionManager getPartitionedLevelDB(TopicMetadata topicMetadata,
                                                         String tableName) throws IOException {
-    File topicDir = getMessageTablePath(baseDir, topicMetadata.getTopicId(), topicMetadata.getGeneration(), tableName);
+    File topicDir = getMessageTablePath(baseDir, new TopicId(topicMetadata.getTopicId()), topicMetadata.getGeneration(),
+                                        tableName);
     LevelDBPartitionManager partitionManager = partitionedLevelDBs.get(topicDir);
     if (partitionManager != null) {
       return partitionManager;
@@ -232,7 +233,7 @@ public final class LevelDBTableFactory implements TableFactory {
    * Returns the LevelDB {@link DB} object for the given {@link TopicMetadata}, which stores on the given file path.
    */
   private DB getLevelDB(TopicMetadata topicMetadata, String tablePrefix) throws IOException {
-    File dbPath = getDataDBPath(tablePrefix, topicMetadata.getTopicId(), topicMetadata.getGeneration());
+    File dbPath = getDataDBPath(tablePrefix, new TopicId(topicMetadata.getTopicId()), topicMetadata.getGeneration());
 
     DB db = levelDBs.get(dbPath);
     if (db != null) {
@@ -296,7 +297,7 @@ public final class LevelDBTableFactory implements TableFactory {
           Deque<File> filesToDelete = new LinkedList<>();
           for (int olderGeneration = cleanOlderThan - 1; olderGeneration > 0; olderGeneration--) {
             // Message table
-            File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), olderGeneration);
+            File dataDBPath = getDataDBPath(messageTableName, new TopicId(metadata.getTopicId()), olderGeneration);
             if (!dataDBPath.exists()) {
               break;
             }
@@ -305,7 +306,7 @@ public final class LevelDBTableFactory implements TableFactory {
             filesToDelete.add(dataDBPath);
 
             // Payload table
-            dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), olderGeneration);
+            dataDBPath = getDataDBPath(payloadTableName, new TopicId(metadata.getTopicId()), olderGeneration);
             if (!dataDBPath.exists()) {
               break;
             }
@@ -329,7 +330,8 @@ public final class LevelDBTableFactory implements TableFactory {
           partitionManager.prunePartitions(thresholdTimestamp);
 
           // Payload table
-          File dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), metadata.getGeneration());
+          File dataDBPath = getDataDBPath(payloadTableName, new TopicId(metadata.getTopicId()),
+                                          metadata.getGeneration());
           DB levelDB = levelDBs.get(dataDBPath);
           if (levelDB != null && dataDBPath.exists()) {
             new LevelDBPayloadTable(levelDB, metadata).pruneMessages(now);

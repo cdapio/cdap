@@ -145,7 +145,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
   @Test
   public void testInvalidTx() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("invalidTx");
-    TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "1000000",
+    TopicMetadata topic = new TopicMetadata(topicId.toSpiTopicId(), TopicMetadata.TTL_KEY, "1000000",
             TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
          MessageTable messageTable = getMessageTable(topic)) {
@@ -178,7 +178,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
       try (CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, tx)) {
         Assert.assertFalse(iterator.hasNext());
       }
-      metadataTable.deleteTopic(topicId);
+      metadataTable.deleteTopic(topicId.toSpiTopicId());
 
       // Sleep so that the metadata cache expires
       TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);

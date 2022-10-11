@@ -116,7 +116,7 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
   void pruneMessages(long currentTime) throws IOException {
     WriteBatch writeBatch = levelDB.createWriteBatch();
     long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
-    byte[] startRow = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
+    byte[] startRow = MessagingUtils.toDataKeyPrefix(new TopicId(topicMetadata.getTopicId()),
                                                      Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
     byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
 
@@ -127,7 +127,7 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
 
         int dataGeneration = payloadTableEntry.getGeneration();
         int currGeneration = topicMetadata.getGeneration();
-        checkTopic(topicMetadata.getTopicId(), topicMetadata.getGeneration());
+        checkTopic(new TopicId(topicMetadata.getTopicId()), topicMetadata.getGeneration());
         if (MessagingUtils.isOlderGeneration(dataGeneration, currGeneration)) {
           writeBatch.delete(entry.getKey());
           continue;

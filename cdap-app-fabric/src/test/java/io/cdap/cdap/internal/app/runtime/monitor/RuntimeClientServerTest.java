@@ -145,7 +145,7 @@ public class RuntimeClientServerTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
-    messagingService.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("topic")));
+    messagingService.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("topic").toSpiTopicId()));
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
     runtimeServer.startAndWait();

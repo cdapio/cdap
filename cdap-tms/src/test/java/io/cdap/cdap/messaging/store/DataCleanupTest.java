@@ -42,7 +42,7 @@ public abstract class DataCleanupTest {
   @Test
   public void testPayloadTTLCleanup() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("t2");
-    TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
+    TopicMetadata topic = new TopicMetadata(topicId.toSpiTopicId(), "ttl", "3",
             TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
          PayloadTable payloadTable = getPayloadTable(topic);
@@ -81,14 +81,14 @@ public abstract class DataCleanupTest {
       iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId), true, Integer.MAX_VALUE);
       Assert.assertFalse(iterator.hasNext());
       iterator.close();
-      metadataTable.deleteTopic(topicId);
+      metadataTable.deleteTopic(topicId.toSpiTopicId());
     }
   }
 
   @Test
   public void testMessageTTLCleanup() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("t1");
-    TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
+    TopicMetadata topic = new TopicMetadata(topicId.toSpiTopicId(), "ttl", "3",
             TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
          MessageTable messageTable = getMessageTable(topic);
@@ -130,7 +130,7 @@ public abstract class DataCleanupTest {
   @Test
   public void testOldGenCleanup() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("oldGenCleanup");
-    TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "100000",
+    TopicMetadata topic = new TopicMetadata(topicId.toSpiTopicId(), TopicMetadata.TTL_KEY, "100000",
                                             TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable()) {
       int txWritePtr = 100;
@@ -178,11 +178,11 @@ public abstract class DataCleanupTest {
       }
 
       // delete the topic and recreate it with an incremented generation
-      metadataTable.deleteTopic(topicId);
+      metadataTable.deleteTopic(topicId.toSpiTopicId());
 
       Map<String, String> newProperties = new HashMap<>(topic.getProperties());
       newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(topic.getGeneration() + 1));
-      topic = new TopicMetadata(topicId, newProperties);
+      topic = new TopicMetadata(topicId.toSpiTopicId(), newProperties);
       metadataTable.createTopic(topic);
 
       // Sleep so that the metadata cache in coprocessor expires
@@ -190,7 +190,7 @@ public abstract class DataCleanupTest {
       forceFlushAndCompact(Table.MESSAGE);
       forceFlushAndCompact(Table.PAYLOAD);
 
-      topic = metadataTable.getMetadata(topicId);
+      topic = metadataTable.getMetadata(topicId.toSpiTopicId());
       try (MessageTable messageTable = getMessageTable(topic);
            CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
         Assert.assertFalse(iterator.hasNext());
@@ -251,8 +251,8 @@ public abstract class DataCleanupTest {
     }
 
     @Override
-    public TopicId getTopicId() {
-      return topicId;
+    public io.cdap.cdap.messaging.data.TopicId getTopicId() {
+      return topicId.toSpiTopicId();
     }
 
     @Override
@@ -299,8 +299,8 @@ public abstract class DataCleanupTest {
     }
 
     @Override
-    public TopicId getTopicId() {
-      return topicId;
+    public io.cdap.cdap.messaging.data.TopicId getTopicId() {
+      return topicId.toSpiTopicId();
     }
 
     @Override
