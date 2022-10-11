@@ -36,7 +36,7 @@ public class ApplicationRecord {
   @SerializedName("principal")
   private final String ownerPrincipal;
   @Nullable
-  private final ChangeDetail changeDetail;
+  private final ChangeDetail change;
 
   public ApplicationRecord(ApplicationDetail detail) {
     this(detail.getArtifact(), detail.getName(),
@@ -48,14 +48,14 @@ public class ApplicationRecord {
   }
 
   public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
-                           @Nullable String ownerPrincipal, @Nullable ChangeDetail changeDetail) {
+                           @Nullable String ownerPrincipal, @Nullable ChangeDetail change) {
     this.type = "App";
     this.artifact = artifact;
     this.name = name;
     this.description = description;
     this.version = version;
     this.ownerPrincipal = ownerPrincipal;
-    this.changeDetail = changeDetail;
+    this.change = change;
   }
 
   public ArtifactSummary getArtifact() {
@@ -84,8 +84,8 @@ public class ApplicationRecord {
   }
 
   @Nullable
-  public ChangeDetail getChangeDetail() {
-    return changeDetail;
+  public ChangeDetail getChange() {
+    return change;
   }
 
   @Override
@@ -105,12 +105,12 @@ public class ApplicationRecord {
       Objects.equals(description, that.description) &&
       Objects.equals(artifact, that.artifact) &&
       Objects.equals(ownerPrincipal, that.ownerPrincipal) &&
-      Objects.equals(changeDetail, that.changeDetail);
+      Objects.equals(change, that.change);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, changeDetail);
+    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, change);
   }
 
   @Override
@@ -122,7 +122,7 @@ public class ApplicationRecord {
       ", description='" + description + '\'' +
       ", artifact=" + artifact +
       ", ownerPrincipal=" + ownerPrincipal + '\'' +
-      ", changeDetail=" + changeDetail +
+      ", change=" + change +
       '}';
   }
 }
