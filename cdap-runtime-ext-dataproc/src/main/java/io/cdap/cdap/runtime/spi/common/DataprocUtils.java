@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
-import org.apache.commons.lang.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -389,7 +388,8 @@ public final class DataprocUtils {
         // Blob can be null when we set temporary hold to false as we don't need to check pre-existing custom time.
         // When setting to true, we'll check if custom time was recently set in which case we'll skip this operation.
         assert temporaryHold == (blob != null);
-        if (!temporaryHold || blob.getCustomTime() == null || BooleanUtils.isFalse(blob.getTemporaryHold()) ||
+        if (!temporaryHold || blob.getCustomTime() == null ||
+          blob.getTemporaryHold() == null || !blob.getTemporaryHold().booleanValue() ||
           blob.getCustomTime() + jitter < System.currentTimeMillis()) {
           BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
             .setCustomTime(System.currentTimeMillis())
