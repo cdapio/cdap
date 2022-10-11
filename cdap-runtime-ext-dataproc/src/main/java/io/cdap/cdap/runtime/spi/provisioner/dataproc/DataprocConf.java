@@ -642,7 +642,7 @@ final class DataprocConf {
     String imageVersion = getString(properties, IMAGE_VERSION);
     String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
     String gcpCmekKeyName = getString(properties, ENCRYPTION_KEY_NAME);
-    String gcpCmekBucket = DataprocUtils.getBucketName(getString(properties, DataprocUtils.BUCKET));
+    String gcpCmekBucket = DataprocUtils.getBucketName(getString(properties, DataprocUtils.GCS_BUCKET));
 
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
       DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_META_DATA), ";", "\\|"));
