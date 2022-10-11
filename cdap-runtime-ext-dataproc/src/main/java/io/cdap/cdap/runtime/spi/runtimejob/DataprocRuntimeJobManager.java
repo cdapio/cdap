@@ -24,13 +24,14 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
 import com.google.cloud.dataproc.v1beta2.GetJobRequest;
-import com.google.cloud.dataproc.v1beta2.HadoopJob;
 import com.google.cloud.dataproc.v1beta2.Job;
 import com.google.cloud.dataproc.v1beta2.JobControllerClient;
 import com.google.cloud.dataproc.v1beta2.JobControllerSettings;
 import com.google.cloud.dataproc.v1beta2.JobPlacement;
 import com.google.cloud.dataproc.v1beta2.JobReference;
 import com.google.cloud.dataproc.v1beta2.JobStatus;
+import com.google.cloud.dataproc.v1beta2.ListJobsRequest;
+import com.google.cloud.dataproc.v1beta2.SparkJob;
 import com.google.cloud.dataproc.v1beta2.SubmitJobRequest;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -512,8 +513,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
     properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
     properties.put(CDAP_RUNTIME_RUNID, runId);
-
-    HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
+    properties.put("spark.submit.deployMode", "cluster");
+    SparkJob.Builder hadoopJobBuilder = SparkJob.newBuilder()
       // set main class
       .setMainClass(DataprocJobMain.class.getName())
       // set main class arguments
@@ -545,7 +546,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                 // capitals
                 .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
                 .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
-                .setHadoopJob(hadoopJobBuilder.build())
+                .setSparkJob(hadoopJobBuilder.build())
                 .build())
       .build();
   }

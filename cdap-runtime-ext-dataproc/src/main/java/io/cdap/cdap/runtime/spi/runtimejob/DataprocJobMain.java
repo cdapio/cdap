@@ -93,6 +93,7 @@ public class DataprocJobMain {
     URL[] urls = getClasspath((URLClassLoader) cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
                                                                  Constants.Files.APPLICATION_JAR,
                                                                  Constants.Files.TWILL_JAR));
+    LOG.error("Arjan: " + urls.length + " " + Arrays.toString(urls));
     Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
 
     // Create new URL classloader with provided classpath.
@@ -271,6 +272,7 @@ public class DataprocJobMain {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
     URLClassLoader classLoader = new URLClassLoader(classpath, DataprocJobMain.class.getClassLoader().getParent());
     if (containerClassLoaderName == null) {
+      LOG.error("Arjan: classloader Name is NULL!");
       return classLoader;
     }
 
