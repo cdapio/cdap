@@ -27,6 +27,7 @@ import io.cdap.cdap.messaging.store.MessageTableKey;
 import io.cdap.cdap.messaging.store.RawMessageTableEntry;
 import io.cdap.cdap.messaging.store.RollbackRequest;
 import io.cdap.cdap.messaging.store.ScanRequest;
+import io.cdap.cdap.proto.id.TopicId;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;
@@ -88,7 +89,8 @@ final class LevelDBMessageTable extends AbstractMessageTable {
     }
     RawMessageTableEntry tableEntry = new RawMessageTableEntry();
     TopicMetadata topicMetadata = scanRequest.getTopicMetadata();
-    byte[] topic = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(), topicMetadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(new TopicId(topicMetadata.getTopicId()),
+                                                  topicMetadata.getGeneration());
     MessageTableKey messageTableKey = MessageTableKey.fromTopic(topic);
     BiFunction<byte[], byte[], RawMessageTableEntry> decodeFunction = (key, value) -> {
       Map<String, byte[]> columns = decodeValue(value);

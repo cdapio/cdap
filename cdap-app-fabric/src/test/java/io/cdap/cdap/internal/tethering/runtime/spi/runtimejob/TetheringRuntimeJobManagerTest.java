@@ -140,7 +140,7 @@ public class TetheringRuntimeJobManagerTest {
     TetheringConf conf = TetheringConf.fromProperties(PROPERTIES);
     topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                           cConf.get(Constants.Tethering.TOPIC_PREFIX) + TETHERED_INSTANCE_NAME);
-    messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
+    messagingService.createTopic(new TopicMetadata(topicId.toSpiTopicId(), Collections.emptyMap()));
     messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
     runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore,
                                                        injector.getInstance(LocationFactory.class));

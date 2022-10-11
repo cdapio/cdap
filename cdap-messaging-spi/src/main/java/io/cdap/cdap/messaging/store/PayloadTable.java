@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.store;
 
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.messaging.data.TopicId;
@@ -77,7 +78,7 @@ public interface PayloadTable extends Closeable {
    * @param limit maximum number of entries to fetch
    * @return a {@link Iterator} of entries
    */
-  Iterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer, MessageId messageId,
+  CloseableIterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer, MessageId messageId,
                                  boolean inclusive, int limit) throws IOException;
 
   /**

@@ -40,10 +40,16 @@ public class TopicId extends NamespacedEntityId implements ParentedId<NamespaceI
     this.topic = topic;
   }
 
+  public TopicId(io.cdap.cdap.messaging.data.TopicId spiTopicId) {
+    this(spiTopicId.getNamespace(), spiTopicId.getTopic());
+  }
   public String getTopic() {
     return topic;
   }
 
+  public io.cdap.cdap.messaging.data.TopicId toSpiTopicId() {
+    return new io.cdap.cdap.messaging.data.TopicId(this.namespace, this.topic);
+  }
   @Override
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, topic));

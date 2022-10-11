@@ -73,7 +73,7 @@ final class CachingMessageTable implements MessageTable {
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime,
                                         int limit, @Nullable Transaction transaction) throws IOException {
-    MessageCache<Entry> messageCache = cacheProvider.getMessageCache(metadata.getTopicId());
+    MessageCache<Entry> messageCache = cacheProvider.getMessageCache(new TopicId(metadata.getTopicId()));
     if (messageCache == null) {
       // If no caching for the given topic, just return result from table directly
       return messageTable.fetch(metadata, startTime, limit, transaction);
@@ -100,7 +100,7 @@ final class CachingMessageTable implements MessageTable {
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
                                         int limit, @Nullable Transaction transaction) throws IOException {
 
-    MessageCache<Entry> messageCache = cacheProvider.getMessageCache(metadata.getTopicId());
+    MessageCache<Entry> messageCache = cacheProvider.getMessageCache(new TopicId(metadata.getTopicId()));
     if (messageCache == null) {
       // If no caching for the given topic, just return result from table directly
       return messageTable.fetch(metadata, messageId, inclusive, limit, transaction);
@@ -143,7 +143,7 @@ final class CachingMessageTable implements MessageTable {
 
   @Override
   public void rollback(TopicMetadata metadata, RollbackDetail rollbackDetail) throws IOException {
-    MessageCache<Entry> messageCache = cacheProvider.getMessageCache(metadata.getTopicId());
+    MessageCache<Entry> messageCache = cacheProvider.getMessageCache(new TopicId(metadata.getTopicId()));
     if (messageCache != null) {
       // Rollback from the cache first so that we don't have to worry about invalid list pruning for the cache,
       // assuming the rollback from cache shouldn't fail.
@@ -315,7 +315,7 @@ final class CachingMessageTable implements MessageTable {
         return endOfData();
       }
       Entry entry = iterator.next();
-      entries.put(entry.getTopicId(), copyEntry(entry));
+      entries.put(new TopicId(entry.getTopicId()), copyEntry(entry));
 
       return entry;
     }
@@ -348,7 +348,7 @@ final class CachingMessageTable implements MessageTable {
 
     CacheMessageTableEntry(TopicMetadata topicMetadata, long publishTimestamp, short sequenceId) {
       this.lookupOnly = true;
-      this.topicId = topicMetadata.getTopicId();
+      this.topicId = new TopicId(topicMetadata.getTopicId());
       this.generation = topicMetadata.getGeneration();
       this.transactional = false;
       this.payload = null;
@@ -358,7 +358,7 @@ final class CachingMessageTable implements MessageTable {
 
     CacheMessageTableEntry(Entry other) {
       this.lookupOnly = false;
-      this.topicId = other.getTopicId();
+      this.topicId = new TopicId(other.getTopicId());
       this.generation = other.getGeneration();
       this.transactional = other.isTransactional();
       this.transactionWritePointer = other.getTransactionWritePointer();
@@ -378,8 +378,8 @@ final class CachingMessageTable implements MessageTable {
     }
 
     @Override
-    public TopicId getTopicId() {
-      return topicId;
+    public io.cdap.cdap.messaging.data.TopicId getTopicId() {
+      return topicId.toSpiTopicId();
     }
 
     @Override

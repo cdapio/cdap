@@ -136,7 +136,7 @@ final class CoreMessageFetcher extends MessageFetcher {
     private PayloadTable payloadTable;
 
     MessageCloseableIterator(MessageTable messageTable) throws IOException {
-      this.topicId = topicMetadata.getTopicId();
+      this.topicId = new TopicId(topicMetadata.getTopicId());
       this.messageTable = messageTable;
       this.inclusive = isIncludeStart();
       this.messageLimit = getLimit();

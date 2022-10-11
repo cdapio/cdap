@@ -61,7 +61,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer,
                                         MessageId messageId, final boolean inclusive, int limit) throws IOException {
-    byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(new TopicId(metadata.getTopicId()), metadata.getGeneration());
     final byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
     byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
@@ -134,7 +134,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
       Entry entry = entries.next();
       if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
-        topicId = entry.getTopicId();
+        topicId = new TopicId(entry.getTopicId());
         generation = entry.getGeneration();
         topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());
         rowKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];

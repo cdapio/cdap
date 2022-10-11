@@ -60,8 +60,8 @@ public class ConcurrentMessageWriterTest {
     TopicId topicId1 = new NamespaceId("ns1").topic("t1");
     TopicId topicId2 = new NamespaceId("ns2").topic("t2");
 
-    TopicMetadata metadata1 = new TopicMetadata(topicId1, new HashMap<String, String>(), 1);
-    TopicMetadata metadata2 = new TopicMetadata(topicId2, new HashMap<String, String>(), 1);
+    TopicMetadata metadata1 = new TopicMetadata(topicId1.toSpiTopicId(), new HashMap<String, String>(), 1);
+    TopicMetadata metadata2 = new TopicMetadata(topicId2.toSpiTopicId(), new HashMap<String, String>(), 1);
 
     TestStoreRequestWriter testWriter = new TestStoreRequestWriter(new TimeProvider.IncrementalTimeProvider());
     ConcurrentMessageWriter writer = new ConcurrentMessageWriter(testWriter);
@@ -107,7 +107,7 @@ public class ConcurrentMessageWriterTest {
     }
 
     TopicId topicId = new NamespaceId("ns1").topic("t1");
-    TopicMetadata metadata = new TopicMetadata(topicId, new HashMap<String, String>(), 1);
+    TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), new HashMap<String, String>(), 1);
 
     // Write the payloads
     TestStoreRequestWriter testWriter = new TestStoreRequestWriter(new TimeProvider.IncrementalTimeProvider());
@@ -132,7 +132,7 @@ public class ConcurrentMessageWriterTest {
   @Test
   public void testMultiMaxSequence() throws IOException, InterruptedException {
     TopicId topicId = new NamespaceId("ns1").topic("t1");
-    final TopicMetadata metadata = new TopicMetadata(topicId, new HashMap<String, String>(), 1);
+    final TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), new HashMap<String, String>(), 1);
 
     // This test the case when multiple StoreRequests combined exceeding the 65536 payload.
     // See testMaxSequence() for more details when it matters
@@ -213,7 +213,7 @@ public class ConcurrentMessageWriterTest {
     long writeLatencyMillis = 50L;
 
     final TopicId topicId = NamespaceId.DEFAULT.topic("t");
-    final TopicMetadata metadata = new TopicMetadata(topicId, new HashMap<String, String>(), 1);
+    final TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), new HashMap<String, String>(), 1);
     TestStoreRequestWriter testWriter = new TestStoreRequestWriter(new TimeProvider.IncrementalTimeProvider(),
                                                                    writeLatencyMillis);
     final ConcurrentMessageWriter writer = new ConcurrentMessageWriter(testWriter);
@@ -291,7 +291,7 @@ public class ConcurrentMessageWriterTest {
     @Override
     TestEntry getEntry(TopicMetadata metadata, boolean transactional, long transactionWritePointer,
                        long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
-      return new TestEntry(metadata.getTopicId(), transactional, transactionWritePointer, writeTimestamp,
+      return new TestEntry(new TopicId(metadata.getTopicId()), transactional, transactionWritePointer, writeTimestamp,
                            sequenceId, payload);
     }
 

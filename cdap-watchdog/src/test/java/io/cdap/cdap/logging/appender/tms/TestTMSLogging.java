@@ -113,7 +113,7 @@ public class TestTMSLogging {
       topicIds.put(i, NamespaceId.SYSTEM.topic(topicPrefic + i));
     }
     for (TopicId topicId : topicIds.values()) {
-      client.createTopic(new TopicMetadata(topicId));
+      client.createTopic(new TopicMetadata(topicId.toSpiTopicId()));
     }
   }
 

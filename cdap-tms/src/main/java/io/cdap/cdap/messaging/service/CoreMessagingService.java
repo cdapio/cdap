@@ -66,6 +66,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -139,7 +140,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
     try (MetadataTable metadataTable = createMetadataTable()) {
-      metadataTable.deleteTopic(topicId);
+      metadataTable.deleteTopic(topicId.toSpiTopicId());
       topicCache.invalidate(topicId);
       messageTableWriterCache.invalidate(topicId);
       payloadTableWriterCache.invalidate(topicId);
@@ -160,7 +161,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
     try (MetadataTable metadataTable = createMetadataTable()) {
-      return metadataTable.listTopics(namespaceId);
+      return metadataTable.listTopics(namespaceId.getNamespace()).stream().map(e -> new TopicId(e)).
+        collect(Collectors.toList());
     }
   }
 
@@ -302,7 +304,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
    */
   private void createTopicIfNotExists(TopicId topicId) throws IOException {
     try {
-      createTopic(new TopicMetadata(topicId));
+      createTopic(new TopicMetadata(topicId.toSpiTopicId()));
       LOG.debug("System topic created: {}", topicId);
     } catch (TopicAlreadyExistsException e) {
       // OK for the topic already created. Just log a debug as it happens on every restart.
@@ -318,7 +320,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       @Override
       public TopicMetadata load(TopicId topicId) throws Exception {
         try (MetadataTable metadataTable = createMetadataTable()) {
-          return metadataTable.getMetadata(topicId);
+          return metadataTable.getMetadata(topicId.toSpiTopicId());
         }
       }
     });

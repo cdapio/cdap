@@ -119,7 +119,7 @@ public final class ClientMessagingService implements MessagingService {
   @Override
   public void createTopic(TopicMetadata topicMetadata)
     throws TopicAlreadyExistsException, IOException, UnauthorizedException {
-    TopicId topicId = topicMetadata.getTopicId();
+    TopicId topicId = new TopicId(topicMetadata.getTopicId());
 
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId))
       .withBody(GSON.toJson(topicMetadata.getProperties()))
@@ -135,7 +135,7 @@ public final class ClientMessagingService implements MessagingService {
   @Override
   public void updateTopic(TopicMetadata topicMetadata)
     throws TopicNotFoundException, IOException, UnauthorizedException {
-    TopicId topicId = topicMetadata.getTopicId();
+    TopicId topicId = new TopicId(topicMetadata.getTopicId());
 
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId) + "/properties")
       .withBody(GSON.toJson(topicMetadata.getProperties()))
@@ -172,7 +172,7 @@ public final class ClientMessagingService implements MessagingService {
     handleError(response, "Failed to update topic " + topicId);
 
     Map<String, String> properties = GSON.fromJson(response.getResponseBodyAsString(), TOPIC_PROPERTY_TYPE);
-    return new TopicMetadata(topicId, properties);
+    return new TopicMetadata(topicId.toSpiTopicId(), properties);
   }
 
   @Override

@@ -40,8 +40,8 @@ public class TestMessageEntry implements MessageTable.Entry {
   }
 
   @Override
-  public TopicId getTopicId() {
-    return topicId;
+  public io.cdap.cdap.messaging.data.TopicId getTopicId() {
+    return topicId.toSpiTopicId();
   }
 
   @Override

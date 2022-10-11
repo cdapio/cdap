@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.store;
 
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
@@ -92,7 +93,7 @@ public interface MessageTable extends Closeable {
    * @param transaction an optional {@link Transaction} to use for fetching
    * @return a {@link Iterator} of {@link Entry}.
    */
-  Iterator<Entry> fetch(TopicMetadata metadata, long startTime,
+  CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime,
                                  int limit, @Nullable Transaction transaction) throws IOException;
 
   /**
@@ -106,7 +107,7 @@ public interface MessageTable extends Closeable {
    * @param transaction an optional {@link Transaction} to use for fetching
    * @return a {@link Iterator} of {@link Entry}.
    */
-  Iterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
+  CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
                                  int limit, @Nullable Transaction transaction) throws IOException;
 
   /**

@@ -100,7 +100,7 @@ public class CachingMessageTableTest extends LevelDBMessageTableTest {
     cConf.setLong(CachingMessageTable.PRUNE_GRACE_PERIOD, txGracePeriod);
 
     // Insert 10 entries, with different publish time
-    TopicMetadata metadata = new TopicMetadata(NamespaceId.DEFAULT.topic("test"),
+    TopicMetadata metadata = new TopicMetadata(NamespaceId.DEFAULT.topic("test").toSpiTopicId(),
                                                TopicMetadata.GENERATION_KEY, 1,
                                                TopicMetadata.TTL_KEY, 86400);
 
@@ -116,7 +116,8 @@ public class CachingMessageTableTest extends LevelDBMessageTableTest {
 
     for (int i = 0; i < 10; i++) {
       // Key is (topic, generation, publish time, sequence id)
-      byte[] key = Bytes.concat(MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration()),
+      byte[] key = Bytes.concat(MessagingUtils.toDataKeyPrefix(new TopicId(metadata.getTopicId()),
+                                                               metadata.getGeneration()),
                                 Bytes.toBytes((long) i), Bytes.toBytes((short) 0));
       // Store a message with a write pointer
       messageTable.store(

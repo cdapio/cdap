@@ -64,8 +64,8 @@ public abstract class MessageTableTest {
                                                                               Integer.toString(10000),
                                                                               TopicMetadata.GENERATION_KEY,
                                                                               Integer.toString(GENERATION));
-  private static final TopicMetadata M1 = new TopicMetadata(T1, DEFAULT_PROPERTY);
-  private static final TopicMetadata M2 = new TopicMetadata(T2, DEFAULT_PROPERTY);
+  private static final TopicMetadata M1 = new TopicMetadata(T1.toSpiTopicId(), DEFAULT_PROPERTY);
+  private static final TopicMetadata M2 = new TopicMetadata(T2.toSpiTopicId(), DEFAULT_PROPERTY);
 
   protected abstract MessageTable getMessageTable(TopicMetadata topicMetadata) throws Exception;
 
@@ -74,7 +74,7 @@ public abstract class MessageTableTest {
   @Test
   public void testSingleMessage() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("singleMessage");
-    TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+    TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), DEFAULT_PROPERTY);
     String payload = "data";
     long txWritePtr = 123L;
     try (MessageTable table = getMessageTable(metadata);
@@ -210,7 +210,7 @@ public abstract class MessageTableTest {
   @Test
   public void testEmptyPayload() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("testEmptyPayload");
-    TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+    TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), DEFAULT_PROPERTY);
 
     // This test the message table supports for empty payload. This is for the case where message table
     // stores only a reference to the payload table
@@ -256,7 +256,7 @@ public abstract class MessageTableTest {
 
     for (int i = 0; i < 2; i++) {
       final TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), DEFAULT_PROPERTY);
 
       try (MetadataTable metadataTable = getMetadataTable()) {
         metadataTable.createTopic(metadata);
@@ -300,7 +300,7 @@ public abstract class MessageTableTest {
     // Read from each topic. Each topic should have two messages
     for (int i = 0; i < 2; i++) {
       TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new TopicMetadata(topicId.toSpiTopicId(), DEFAULT_PROPERTY);
       try (
         MessageTable messageTable = getMessageTable(metadata);
         CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(metadata, 0, 10, null)

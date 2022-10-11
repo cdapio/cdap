@@ -46,7 +46,7 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
   MessageTable.Entry getEntry(TopicMetadata metadata, boolean transactional, long transactionWritePointer,
                               long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
     return entry
-      .setTopicId(metadata.getTopicId())
+      .setTopicId(new TopicId(metadata.getTopicId()))
       .setGeneration(metadata.getGeneration())
       .setTransactional(transactional)
       .setTransactionWritePointer(transactionWritePointer)
@@ -114,8 +114,8 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
     }
 
     @Override
-    public TopicId getTopicId() {
-      return topicId;
+    public io.cdap.cdap.messaging.data.TopicId getTopicId() {
+      return topicId.toSpiTopicId();
     }
 
     @Override
