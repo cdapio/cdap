@@ -47,6 +47,11 @@ public class ApplicationRecord {
     this(artifact, appId.getApplication(), appId.getVersion(), description, null, null);
   }
 
+  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description,
+                           ChangeDetail changeDetail) {
+    this(artifact, appId.getApplication(), appId.getVersion(), description, null, changeDetail);
+  }
+
   public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
                            @Nullable String ownerPrincipal, @Nullable ChangeDetail change) {
     this.type = "App";
