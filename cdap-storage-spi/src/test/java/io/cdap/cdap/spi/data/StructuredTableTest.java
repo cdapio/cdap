@@ -274,6 +274,33 @@ public abstract class StructuredTableTest {
     List<Collection<Field<?>>> actual = runMultiScan(ranges, max, outPutFields);
     Assert.assertEquals(expected.subList(26, 27), actual);
 
+    // MultiScan with inclusive beginning and exclusive ending
+    ranges = Collections.singletonList(
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.longField(KEY2, (long) 31)),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.longField(KEY2, (long) 35)),
+                   Range.Bound.EXCLUSIVE));
+    actual = runMultiScan(ranges, max, outPutFields);
+    Assert.assertEquals(expected.subList(31, 35), actual);
+
+    // MultiScan with exclusive beginning and exclusive ending
+    ranges = Collections.singletonList(
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.longField(KEY2, (long) 31)),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.longField(KEY2, (long) 35)),
+                   Range.Bound.EXCLUSIVE));
+    actual = runMultiScan(ranges, max, outPutFields);
+    Assert.assertEquals(expected.subList(32, 35), actual);
+
+    // MultiScan with exclusive beginning and inclusive ending
+    ranges = Collections.singletonList(
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.longField(KEY2, (long) 31)),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.longField(KEY2, (long) 35)),
+                   Range.Bound.INCLUSIVE));
+    actual = runMultiScan(ranges, max, outPutFields);
+    Assert.assertEquals(expected.subList(32, 36), actual);
+
     // MultiScan partialKeys with multiple collections of fields
     ranges = Arrays.asList(
       Range.singleton(Collections.singletonList(Fields.intField(KEY, 3))),

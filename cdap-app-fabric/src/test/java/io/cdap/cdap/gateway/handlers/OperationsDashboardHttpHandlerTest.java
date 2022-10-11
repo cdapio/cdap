@@ -175,7 +175,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
     String opsDashboardQueryPath =
       String.format("%s/dashboard?start=%s&duration=%s&namespace=%s&namespace=%s", BASE_PATH,
-                    String.valueOf(startTime1), String.valueOf(endTime), ns1.getNamespace(), ns2.getNamespace());
+                    startTime1, endTime, ns1.getNamespace(), ns2.getNamespace());
     // get ops dashboard query results
     HttpResponse response = doGet(opsDashboardQueryPath);
     Assert.assertEquals(200, response.getResponseCode());
@@ -191,7 +191,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     // for the same time range query only in namespace ns1 to ensure filtering works fine
     opsDashboardQueryPath =
       String.format("%s/dashboard?start=%s&duration=%s&namespace=%s", BASE_PATH,
-                    String.valueOf(startTime1), String.valueOf(endTime), ns2.getNamespace());
+                    startTime1, endTime, ns2.getNamespace());
 
     // get ops dashboard query results
     response = doGet(opsDashboardQueryPath);
@@ -371,7 +371,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
 
     String opsDashboardQueryPath =
       String.format("%s/dashboard?start=%s&duration=%s&namespace=%s", BASE_PATH,
-                    String.valueOf(startTime1), String.valueOf(endTime), ns3.getNamespace());
+                    startTime1, endTime, ns3.getNamespace());
 
     // get ops dashboard query results
     HttpResponse response = doGet(opsDashboardQueryPath);

@@ -142,7 +142,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
     ScannerIterator scannerIterator = new ScannerIterator(getScanner(prefixRange), schema);
 
     Range filterRange = getFilterRange(keyRange, prefixRange);
-    return new FilterByRangeIterator(scannerIterator, filterRange);
+    return new FilterByRangeIterator(scannerIterator, Collections.singleton(filterRange));
   }
 
   private Range getLongestPrefixRange(Range range) {
@@ -258,53 +258,49 @@ public final class NoSqlStructuredTable implements StructuredTable {
     if (!schema.isIndexColumn(filterIndex.getName())) {
       throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
     }
-    FilterByFieldIterator filterByIndexIterator = new FilterByFieldIterator(getFilterByRangeIterator(keyRange),
-                                                                            filterIndex, schema);
+    FilterByFieldIterator filterByIndexIterator =
+      new FilterByFieldIterator(getFilterByRangeIterator(keyRange), filterIndex, schema);
     return new LimitIterator(Collections.singleton(filterByIndexIterator).iterator(), limit);
   }
 
   /*
-   * Scan the nosql DB with provided ranges, then we de-duplicate the elements
-   * and sort the result in primary keys order in memory.
+   * Scan the nosql DB with provided ranges, find out the most outbound range, scan and filter by ranges,
+   * the result should already be sorted by primary keys.
    * */
   @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
                                                     int limit) throws InvalidFieldException, IOException {
-    // TODO: CDAP-19688, instead of scanning all ranges, we could scan the most outbound range and do post filtering
-    List<CloseableIterator<StructuredRow>> iterators =
-      keyRanges.stream().map(range -> scan(range, Integer.MAX_VALUE)).collect(Collectors.toList());
 
-    // We need to deduplicate the elements because the keyRanges we pass in
-    // can be partial keys, which can result in duplicate rows
-    DeduplicateIterator deduplicateIterator = new DeduplicateIterator(iterators.iterator());
-
-    // Sort the rows according to primary keys before return
-    PriorityQueue<StructuredRow> rows = new PriorityQueue<>(
-      (row1, row2) -> Bytes.compareTo(convertKeyToBytes(row1.getPrimaryKeys(), false),
-                                      convertKeyToBytes(row2.getPrimaryKeys(), false)));
-
-    while (deduplicateIterator.hasNext()) {
-      rows.offer(deduplicateIterator.next());
+    if (keyRanges.isEmpty()) {
+      return CloseableIterator.empty();
     }
 
-    // Return an iterator for the sorted elements
-    CloseableIterator<StructuredRow> abstractCloseableIterator =
-      new AbstractCloseableIterator<StructuredRow>() {
-        @Override
-        protected StructuredRow computeNext() {
-          if (rows.isEmpty()) {
-            return endOfData();
-          }
-          return rows.poll();
-        }
+    // Call scan single range when there's only range
+    if (keyRanges.size() == 1) {
+      return scan(keyRanges.iterator().next(), limit);
+    }
 
-        @Override
-        public void close() {
-          // no-op
-        }
-      };
+    FilterByRangeIterator filterIterator =
+      new FilterByRangeIterator(getOutboundRangeIterator(keyRanges), keyRanges);
+    return new LimitIterator(filterIterator, limit);
+  }
 
-    return new LimitIterator(abstractCloseableIterator, limit);
+  /*
+   * Scan the nosql DB with the most outbound range, result should be sorted
+   * */
+  private ScannerIterator getOutboundRangeIterator(Collection<Range> keyRanges) {
+    List<Range> prefixRanges = keyRanges.stream().map(this::getLongestPrefixRange).collect(Collectors.toList());
+    PriorityQueue<byte[]> begins = new PriorityQueue<>(Bytes::compareTo);
+    PriorityQueue<byte[]> ends = new PriorityQueue<>((o1, o2) -> Bytes.compareTo(o2, o1));
+    prefixRanges.stream()
+      .map(this::createScanKeys)
+      .forEach(pair -> {
+        begins.offer(pair.getFirst());
+        ends.offer(pair.getSecond());
+      });
+
+    Scanner scanner = table.scan(begins.poll(), ends.poll());
+    return new ScannerIterator(scanner, schema);
   }
 
   @Override
@@ -339,8 +335,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
 
     return table.compareAndSwap(convertKeyToBytes(keys, false), Bytes.toBytes(oldValue.getName()),
-                                fieldToBytes(oldValue),
-                                fieldToBytes(newValue));
+                                fieldToBytes(oldValue), fieldToBytes(newValue));
   }
 
   @Override
@@ -691,73 +686,16 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * De-duplicate elements returned by a {@link DeduplicateIterator}.
-   */
-  @VisibleForTesting
-  static final class DeduplicateIterator extends AbstractCloseableIterator<StructuredRow> {
-    private final Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator;
-    private CloseableIterator<StructuredRow> currentScanner;
-    private final Set<Collection<Field<?>>> seenElements;
-
-    DeduplicateIterator(Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator) {
-      this.seenElements = new HashSet<>();
-      this.scannerIterator = scannerIterator;
-      this.currentScanner = scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
-    }
-
-    @Override
-    protected StructuredRow computeNext() {
-      // Find the next Scanner that is not iterated
-      while (!currentScanner.hasNext() && scannerIterator.hasNext()) {
-        closeScanner();
-        currentScanner = scannerIterator.next();
-      }
-
-      // The case that we iterate to the end of last scanner
-      if (!currentScanner.hasNext()) {
-        return endOfData();
-      }
-
-      // Iterator the current scanner, return when we find a new unique element
-      while (currentScanner.hasNext()) {
-        StructuredRow row = currentScanner.next();
-        // Each Field has unique HashCode
-        Collection<Field<?>> keys = row.getPrimaryKeys();
-        if (seenElements.contains(keys)) {
-          continue;
-        }
-        seenElements.add(keys);
-        return row;
-      }
-
-      // Done with the current scanner, got to next scanner and repeat
-      return computeNext();
-    }
-
-    @Override
-    public void close() {
-      closeScanner();
-    }
-
-    private void closeScanner() {
-      if (currentScanner != null) {
-        currentScanner.close();
-        currentScanner = null;
-      }
-    }
-  }
-
-  /**
    * Filters elements matching a range {@link ScannerIterator}.
    */
   @VisibleForTesting
   static final class FilterByRangeIterator extends AbstractCloseableIterator<StructuredRow> {
     private final CloseableIterator<StructuredRow> scannerIterator;
-    private final Predicate<StructuredRow> predicate;
+    private final Collection<Predicate<StructuredRow>> predicates;
 
-    FilterByRangeIterator(CloseableIterator<StructuredRow> scannerIterator, Range filterRange) {
+    FilterByRangeIterator(CloseableIterator<StructuredRow> scannerIterator, Collection<Range> filterRanges) {
       this.scannerIterator = scannerIterator;
-      this.predicate = buildPredicate(filterRange);
+      this.predicates = filterRanges.stream().map(this::buildPredicate).collect(Collectors.toList());
     }
 
     private Predicate<StructuredRow> buildPredicate(Range filterRange) {
@@ -774,16 +712,21 @@ public final class NoSqlStructuredTable implements StructuredTable {
           }
         }
 
+        int endIndex = 1;
+        int endFieldsCount = filterRange.getEnd().size();
         for (Field<?> endField : filterRange.getEnd()) {
           int comp = compareRowAndField(row, endField);
           // comp should be at least < 0
           if (comp > 0) {
             return false;
           }
-          // edge case for =
-          if (filterRange.getEndBound().equals(Range.Bound.EXCLUSIVE) && comp == 0) {
+          // Edge case for = when we filter by the last field
+          // This is for case like ([KEY: "ns1", KEY2: 123], INCLUSIVE, [KEY: "ns1", KEY2: 250], EXCLUSIVE)
+          // We need to check the end bound for KEY2, not KEY
+          if (endIndex == endFieldsCount && filterRange.getEndBound().equals(Range.Bound.EXCLUSIVE) && comp == 0) {
             return false;
           }
+          endIndex++;
         }
 
         return true;
@@ -815,8 +758,10 @@ public final class NoSqlStructuredTable implements StructuredTable {
       // Post filtering on scanned rows by range fields
       while (scannerIterator.hasNext()) {
         StructuredRow row = scannerIterator.next();
-        if (predicate.test(row)) {
-          return row;
+        for (Predicate<StructuredRow> predicate : predicates) {
+          if (predicate.test(row)) {
+            return row;
+          }
         }
       }
       return endOfData();
