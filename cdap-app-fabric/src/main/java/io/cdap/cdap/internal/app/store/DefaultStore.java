@@ -595,13 +595,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+  public void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationMeta> consumer) {
     scanApplications(ScanApplicationsRequest.builder().build(), txBatchSize, consumer);
   }
 
   @Override
   public boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
-                               BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+                               BiConsumer<ApplicationId, ApplicationMeta> consumer) {
 
     AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(request);
     AtomicReference<ApplicationId> lastKey = new AtomicReference<>();
@@ -615,7 +615,7 @@ public class DefaultStore implements Store {
           getAppMetadataStore(context).scanApplications(requestRef.get(), entry -> {
             lastKey.set(entry.getKey());
             currentLimit.decrementAndGet();
-            consumer.accept(entry.getKey(), entry.getValue().getSpec());
+            consumer.accept(entry.getKey(), entry.getValue());
             return count.incrementAndGet() < txBatchSize && currentLimit.get() > 0;
           });
         });
@@ -647,7 +647,7 @@ public class DefaultStore implements Store {
    */
   private boolean scanApplicationwWithReorder(ScanApplicationsRequest request,
                                               int txBatchSize,
-                                              BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+                                              BiConsumer<ApplicationId, ApplicationMeta> consumer) {
     AtomicReference<ScanApplicationsRequest> forwardRequest =
       new AtomicReference<>(ScanApplicationsRequest.builder(request)
       .setSortOrder(SortOrder.ASC)
@@ -683,7 +683,7 @@ public class DefaultStore implements Store {
         TransactionRunners.run(transactionRunner, context -> {
           for (int i = 0; !ids.isEmpty() && i < txBatchSize; i++) {
             ApplicationId id = ids.removeLast();
-            consumer.accept(id, getApplicationSpec(getAppMetadataStore(context), id));
+            consumer.accept(id, getApplicationMeta(getAppMetadataStore(context), id));
             currentLimit.decrementAndGet();
           }
         });

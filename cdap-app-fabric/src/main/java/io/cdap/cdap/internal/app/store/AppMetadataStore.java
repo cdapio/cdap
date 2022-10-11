@@ -2118,10 +2118,21 @@ public class AppMetadataStore {
     private final ApplicationId appId;
     private final String rawAppMeta;
     private volatile ApplicationMeta appMeta;
+    @Nullable
+    private final ChangeDetail changeDetail;
 
     private AppScanEntry(StructuredRow row) {
       this.appId = getApplicationIdFromRow(row);
       this.rawAppMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
+      String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
+      String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
+      Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
+      String latest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
+      if (creationTimeMillis == null) {
+        this.changeDetail = null;
+      } else {
+        this.changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
+      }
     }
 
     @Override
@@ -2136,7 +2147,8 @@ public class AppMetadataStore {
       if (meta != null) {
         return meta;
       }
-      appMeta = meta = GSON.fromJson(rawAppMeta, ApplicationMeta.class);
+      ApplicationMeta tempMeta = GSON.fromJson(rawAppMeta, ApplicationMeta.class);
+      appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail);
       return meta;
     }
 
@@ -2154,12 +2166,13 @@ public class AppMetadataStore {
         return false;
       }
       AppScanEntry that = (AppScanEntry) o;
-      return Objects.equals(appId, that.appId) && Objects.equals(rawAppMeta, that.rawAppMeta);
+      return Objects.equals(appId, that.appId) && Objects.equals(rawAppMeta, that.rawAppMeta)
+        && Objects.equals(changeDetail, that.changeDetail);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(appId, rawAppMeta);
+      return Objects.hash(appId, rawAppMeta, changeDetail);
     }
   }
 }
