@@ -20,6 +20,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.model.Network;
@@ -891,10 +892,7 @@ abstract class DataprocClient implements AutoCloseable {
 
   // if there was an API exception that was not a 4xx, we can just try again
   protected RetryableProvisionException handleApiException(ApiException e) throws RetryableProvisionException {
-    if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
-      throw new RetryableProvisionException(e);
-    }
-    throw new DataprocRuntimeException(e);
+    return handleApiException(null, e);
   }
 
   private RetryableProvisionException handleApiException(@Nullable String operationId, ApiException e)
@@ -902,7 +900,11 @@ abstract class DataprocClient implements AutoCloseable {
     if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
       throw new DataprocRetryableException(operationId, e);
     }
-    throw new DataprocRuntimeException(operationId, e);
+    String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(conf.getTroubleshootingDocsUrl());
+    if (e instanceof InvalidArgumentException) {
+      throw new DataprocRuntimeException(operationId, helpMessage, e, ErrorTag.USER);
+    }
+    throw new DataprocRuntimeException(operationId, helpMessage, e);
   }
 
   //Throws retryable Exception for the cases that are transient in nature

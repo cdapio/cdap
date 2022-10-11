@@ -37,7 +37,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.MockAppConfigurer;
 import io.cdap.cdap.app.program.ManifestFields;
-import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
+import io.cdap.cdap.app.runtime.spark.SparkResourceFilter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.StickyEndpointStrategy;
@@ -121,7 +121,7 @@ public class UnitTestManager extends AbstractTestManager {
         // allow developers to exclude spark-core module from their unit tests (it'll work if they don't use spark)
         getClass().getClassLoader().loadClass("io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils");
         // If it is loading by spark framework, don't include it in the app JAR
-        return !SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
+        return !(new SparkResourceFilter().acceptResource(resourceName));
       } catch (ClassNotFoundException e) {
         if (logWarnOnce.compareAndSet(false, true)) {
           LOG.warn("Spark will not be available for unit tests.");
@@ -203,6 +203,8 @@ public class UnitTestManager extends AbstractTestManager {
   @Override
   public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
     appFabricClient.deployApplication(appId, appRequest);
+    ApplicationDetail appDetail = appFabricClient.getInfo(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
     return appManagerFactory.create(appId);
   }
 
@@ -418,7 +420,7 @@ public class UnitTestManager extends AbstractTestManager {
 
   @Override
   public ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception {
-    return appFabricClient.getVersionedInfo(applicationId);
+    return appFabricClient.getInfo(applicationId);
   }
 
   @Override

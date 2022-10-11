@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.api.Config;
@@ -79,9 +80,11 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
     String appName = AllProgramsApp.NAME;
     // Deploy the application.
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    JsonObject result = getAppDetails(namespace, appName);
 
     // Get and validate the schedule
-    ScheduleId scheduleId = new ScheduleId(namespace, appName, "InvalidSchedule");
+    ScheduleId scheduleId = new ScheduleId(namespace, appName, result.get("appVersion").getAsString(),
+                                           "InvalidSchedule");
     try {
       ScheduleDetail scheduleDetail = fetcher.get(scheduleId);
     } finally {
@@ -125,10 +128,12 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
     // Deploy the application with 2 schedules on the workflow
     Config appConfig = new AppWithSchedule.AppConfig(true, true, true);
     deploy(AppWithSchedule.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace, appConfig);
+    JsonObject result = getAppDetails(namespace, appName);
 
     // Get and validate the schedule
     ProgramId programId = new ProgramId(namespace,
                                         appName,
+                                        result.get("appVersion").getAsString(),
                                         ProgramType.WORKFLOW,
                                         AppWithSchedule.WORKFLOW_NAME);
     List<ScheduleDetail> scheduleList = fetcher.list(programId);

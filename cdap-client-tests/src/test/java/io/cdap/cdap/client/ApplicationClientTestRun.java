@@ -251,13 +251,31 @@ public class ApplicationClientTestRun extends ClientTestBase {
     try {
       // app1 should use fake-1.0.0-SNAPSHOT
       appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "otherfake", "1.0.0-SNAPSHOT"));
+      String version = appClient.listAppVersions(NamespaceId.DEFAULT, FakeApp.NAME).get(0);
+      ApplicationDetail otherFakeAppDetail = appClient.get(new ApplicationId
+                                                             (NamespaceId.DEFAULT.getNamespace(),
+                                                              FakeApp.NAME, version));
       appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "fake", "0.1.0-SNAPSHOT"));
+      version = appClient.listAppVersions(NamespaceId.DEFAULT, FakeApp.NAME).get(0);
+      ApplicationDetail fakeAppDetail = appClient.get(new ApplicationId(NamespaceId.DEFAULT.getNamespace(),
+                                                                        FakeApp.NAME, version));
       // app1 should end up with fake-1.0.0-SNAPSHOT
       appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "fake", "1.0.0-SNAPSHOT"));
+      version = appClient.listAppVersions(NamespaceId.DEFAULT, FakeApp.NAME).get(0);
+      ApplicationDetail fakeAppDetail2 = appClient.get(new ApplicationId(NamespaceId.DEFAULT.getNamespace(),
+                                                                         FakeApp.NAME, version));
+
+
       // app2 should use fake-0.1.0-SNAPSHOT
       appClient.deploy(appId2, new AppRequest<Config>(new ArtifactSummary("fake", "0.1.0-SNAPSHOT")));
+      version = appClient.listAppVersions(NamespaceId.DEFAULT, "fake2").get(0);
+      ApplicationDetail appId2Detail = appClient.get(new ApplicationId(appId2.getNamespace(), appId2.getApplication(),
+                                                                       version));
       // app3 should use otherfake-1.0.0-SNAPSHOT
       appClient.deploy(appId3, new AppRequest<Config>(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT")));
+      version = appClient.listAppVersions(NamespaceId.DEFAULT, "fake3").get(0);
+      ApplicationDetail appId3Detail = appClient.get(new ApplicationId(appId3.getNamespace(), appId3.getApplication(),
+                                                                       version));
       appClient.waitForDeployed(appId1, 30, TimeUnit.SECONDS);
       appClient.waitForDeployed(appId2, 30, TimeUnit.SECONDS);
       appClient.waitForDeployed(appId3, 30, TimeUnit.SECONDS);
@@ -274,42 +292,52 @@ public class ApplicationClientTestRun extends ClientTestBase {
       // check filter by name only
       Set<ApplicationRecord> apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", null));
       Set<ApplicationRecord> expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "")
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, "",
+                              fakeAppDetail2.getChange()),
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "",
+                              appId2Detail.getChange())
       );
       Assert.assertEquals(expected, apps);
 
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "otherfake", null));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, ""));
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, "",
+                              appId3Detail.getChange()));
       Assert.assertEquals(expected, apps);
 
       // check filter by multiple names
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, ImmutableSet.of("fake", "otherfake"), null));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, ""));
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, "",
+                              appId3Detail.getChange()),
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, "",
+                              fakeAppDetail2.getChange()),
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "",
+                              appId2Detail.getChange()));
       Assert.assertEquals(expected, apps);
 
       // check filter by version only
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "")
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "",
+                              appId2Detail.getChange())
       );
       Assert.assertEquals(expected, apps);
 
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, ""),
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, "")
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1, "",
+                              fakeAppDetail2.getChange()),
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3, "",
+                              appId3Detail.getChange())
       );
       Assert.assertEquals(expected, apps);
 
       // check filter by both
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "")
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2, "",
+                              appId2Detail.getChange())
       );
       Assert.assertEquals(expected, apps);
     } finally {

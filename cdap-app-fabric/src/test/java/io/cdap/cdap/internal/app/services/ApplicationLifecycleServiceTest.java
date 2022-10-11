@@ -383,6 +383,9 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
         d -> appDetails.add(d));
 
     Assert.assertEquals(appDetails.size(), 1);
+    deleteNamespace("ns1");
+    deleteNamespace("ns2");
+    deleteNamespace("ns3");
   }
 
   @Test
@@ -401,6 +404,9 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
         d -> appDetails.add(d));
 
     Assert.assertEquals(appDetails.size(), 0);
+    deleteNamespace("ns1");
+    deleteNamespace("ns2");
+    deleteNamespace("ns3");
   }
 
   @Test
@@ -444,6 +450,9 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
         Assert.assertTrue(appSpec.getProgramsByType(record.getType().getApiProgramType()).contains(record.getName()));
       }
     }
+    deleteNamespace("ns1");
+    deleteNamespace("ns2");
+    deleteNamespace("ns3");
   }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {

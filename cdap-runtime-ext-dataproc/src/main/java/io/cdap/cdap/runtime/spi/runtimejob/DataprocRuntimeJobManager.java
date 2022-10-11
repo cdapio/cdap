@@ -20,6 +20,7 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
@@ -43,13 +44,17 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.storage.StorageRetryStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.common.ArtifactCacheManager;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
+import joptsimple.internal.Strings;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -69,14 +74,17 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and managing
@@ -99,9 +107,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private static final String LABEL_CDAP_PROGRAM = "cdap-program";
   private static final String LABEL_CDAP_PROGRAM_TYPE = "cdap-program-type";
 
-  private static final int SET_CUSTOM_TIME_MAX_RETRY = 6;
-  private static final int SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY = 20000;
-
   // Dataproc specific error groups
   private static final String ERRGP_GCS = "gcs";
 
@@ -113,6 +118,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final String region;
   private final String bucket;
   private final Map<String, String> labels;
+  private final Map<String, String> provisionerProperties;
 
   private volatile Storage storageClient;
   private volatile JobControllerClient jobControllerClient;
@@ -122,7 +128,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    *
    * @param clusterInfo dataproc cluster information
    */
-  public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo) {
+  public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
+                                   Map<String, String> provisionerProperties) {
     this.provisionerContext = clusterInfo.getProvisionerContext();
     this.clusterName = clusterInfo.getClusterName();
     this.credentials = clusterInfo.getCredentials();
@@ -131,6 +138,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     this.region = clusterInfo.getRegion();
     this.bucket = clusterInfo.getBucket();
     this.labels = clusterInfo.getLabels();
+    // Provisioner properties contains overrides for properties defined in cdap-site.
+    // These properties are absent in provisionerContext.getProperties().
+    this.provisionerProperties = provisionerProperties;
   }
 
   /**
@@ -220,15 +230,23 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
+      Set<String> cachedFiles = new HashSet<>();
       for (LocalFile fileToUpload : localFiles) {
         boolean isCacheable = !disableGCSCaching && fileToUpload instanceof CacheableLocalFile;
-        String targetFilePath = getPath(isCacheable ? cacheRootPath :
-                                          runRootPath, fileToUpload.getName());
+        String targetFilePath = getPath(isCacheable ? cacheRootPath : runRootPath, fileToUpload.getName());
         uploadFutures.add(
           provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
               uploadFile(bucket, targetFilePath, fileToUpload, false))
             .toCompletableFuture());
+        if (isCacheable) {
+          cachedFiles.add(fileToUpload.getName());
+        }
       }
+      if (!cachedFiles.isEmpty()) {
+        new ArtifactCacheManager().recordCacheUsageForArtifacts(getStorageClient(), bucket, cachedFiles, runRootPath,
+                                                                cacheRootPath, runInfo.getRun());
+      }
+
       List<LocalFile> uploadedFiles = new ArrayList<>();
       for (Future<LocalFile> uploadFuture : uploadFutures) {
         uploadedFiles.add(uploadFuture.get());
@@ -249,12 +267,30 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count");
     } catch (Exception e) {
+      String errorMessage = String.format("Error while launching job %s on cluster %s.",
+        getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, region,
                                "provisioner.submitJob.response.count", e);
-      throw new DataprocRuntimeException(e, String.format("Error while launching job %s on cluster %s",
-                                                          getJobId(runInfo), clusterName));
+      // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
+      // This usually indicates master VM crashing due to OOM.
+      if (e instanceof ResourceExhaustedException) {
+        String message = String.format("%s Cluster can't accept jobs presently: %s",
+                                       errorMessage,
+                                       Throwables.getRootCause(e).getMessage());
+        String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(
+            provisionerProperties.getOrDefault(
+              DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
+              DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT));
+
+        String combined = Stream.of(message, helpMessage)
+          .filter(s -> !Strings.isNullOrEmpty(s))
+          .collect(Collectors.joining("\n"));
+
+        throw new DataprocRuntimeException(e, combined, ErrorTagProvider.ErrorTag.USER);
+      }
+      throw new DataprocRuntimeException(e, errorMessage);
     } finally {
       if (disableLocalCaching) {
         DataprocUtils.deleteDirectoryContents(tempDir);
@@ -384,44 +420,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                     URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                     localFile.getLastModified(), localFile.getSize(),
                                     localFile.isArchive(), localFile.getPattern());
-      setCustomTime(storage, blobId, targetFilePath);
-
+      DataprocUtils.setTemporaryHoldOnGCSObject(storage, bucket, blob, targetFilePath);
     } else {
       result = uploadFile(bucket, targetFilePath, localFile, true);
     }
 
-
     return result;
-  }
-
-  private void setCustomTime(Storage storage, BlobId blobId, String targetFilePath) throws InterruptedException {
-    Random rand = new Random();
-    for (int i = 1; i <= SET_CUSTOM_TIME_MAX_RETRY; i++) {
-      try {
-        Blob blob = storage.get(blobId);
-        // get a random jitter between 30min to 90min
-        long jitter = TimeUnit.MINUTES.toMillis(rand.nextInt(60)) + TimeUnit.MINUTES.toMillis(30);
-        if (blob.getCustomTime() == null ||
-          blob.getCustomTime() + jitter < System.currentTimeMillis()) {
-          BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-            .setCustomTime(System.currentTimeMillis())
-            .setTemporaryHold(true)
-            .build();
-          storage.update(blobInfo);
-
-          LOG.debug("Successfully set custom time for gs://{}/{}", bucket, targetFilePath);
-        } else {
-          //custom time is still fresh
-          LOG.debug("Skip setting custom time for gs://{}/{} since it is fresh", bucket, targetFilePath);
-        }
-        return;
-      } catch (Exception ex) {
-        if (i == SET_CUSTOM_TIME_MAX_RETRY) {
-          throw ex;
-        }
-        Thread.sleep(rand.nextInt(SET_CUSTOM_TIME_MAX_SLEEP_MILLIS_BEFORE_RETRY));
-      }
-    }
   }
 
   /**
@@ -458,11 +462,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         throw e;
       }
 
+      Blob blob = storage.get(blobId);
       if (!isCacheable) {
         // Precondition fails means the blob already exists, most likely happens due to retries
         // https://cloud.google.com/storage/docs/request-preconditions#special-case
         // Overwrite the file
-        Blob blob = storage.get(blobId);
         BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
         uploadToGCS(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
         LOG.debug("Successfully uploaded file {} to gs://{}/{} by overwriting due to conflict",
@@ -470,7 +474,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
                   localFile.getURI(), bucket, targetFilePath);
-        setCustomTime(storage, blobId, targetFilePath);
+        DataprocUtils.setTemporaryHoldOnGCSObject(storage, bucket, blob, targetFilePath);
       }
     }
 
@@ -480,7 +484,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   /**
-   *
    * Uploads the file to GCS bucket.
    */
   private void uploadToGCS(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
@@ -651,7 +654,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Returns job name from run info.
    * namespace, application, program, run(36 characters)
    * Example: namespace_application_program_8e1cb2ce-a102-48cf-a959-c4f991a2b475
-   *
+   * <p>
    * The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), or hyphens (-).
    * The maximum length is 100 characters.
    *

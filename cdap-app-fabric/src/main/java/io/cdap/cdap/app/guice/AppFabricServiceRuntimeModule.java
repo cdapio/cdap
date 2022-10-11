@@ -369,6 +369,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           // ArtifactRepositoryReader is required by DefaultArtifactRepository.
           // Keep ArtifactRepositoryReader private to minimize the scope of the binding visibility.
           bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+          expose(ArtifactRepositoryReader.class);
 
           bind(ArtifactRepository.class)
             .annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO))

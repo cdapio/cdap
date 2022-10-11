@@ -269,18 +269,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         authenticationContext.getPrincipal(), StandardPermission.LIST);
 
     try (
-        BatchingConsumer<Entry<ApplicationId, ApplicationSpecification>> batchingConsumer = new BatchingConsumer<>(
+        BatchingConsumer<Entry<ApplicationId, ApplicationMeta>> batchingConsumer = new BatchingConsumer<>(
             list -> processApplications(list, consumer), batchSize
         )
     ) {
 
-      return store.scanApplications(request, batchSize, (appId, appSpec) -> {
-              batchingConsumer.accept(new SimpleEntry<>(appId, appSpec));
+      return store.scanApplications(request, batchSize, (appId, appMeta) -> {
+              batchingConsumer.accept(new SimpleEntry<>(appId, appMeta));
             });
     }
   }
 
-  private void processApplications(List<Map.Entry<ApplicationId, ApplicationSpecification>> list,
+  private void processApplications(List<Map.Entry<ApplicationId, ApplicationMeta>> list,
       Consumer<ApplicationDetail> consumer) {
 
     Set<ApplicationId> appIds = list.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
@@ -294,13 +294,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     try {
       Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appIds);
 
-      for (Map.Entry<ApplicationId, ApplicationSpecification> entry : list) {
+      for (Map.Entry<ApplicationId, ApplicationMeta> entry : list) {
         // TODO : change-summary to be fetched from ApplicationMeta for CDAP-19528
-        ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(),
-                                                                         owners.get(entry.getKey()), null);
+        ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue().getSpec(),
+                                                                         owners.get(entry.getKey()),
+                                                                         entry.getValue().getChange());
 
         try {
-          capabilityReader.checkAllEnabled(entry.getValue());
+          capabilityReader.checkAllEnabled(entry.getValue().getSpec());
         } catch (CapabilityNotAvailableException ex) {
           LOG.debug("Application {} is ignored due to exception.",
               applicationDetail.getName(), ex);
@@ -392,14 +393,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Set<NamespaceId> namespaces = new HashSet<>();
 
     JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(zipOut, StandardCharsets.UTF_8));
-    store.scanApplications(batchSize, (appId, appSpec) -> {
+    store.scanApplications(batchSize, (appId, appMeta) -> {
       // Skip the SYSTEM namespace apps
       if (NamespaceId.SYSTEM.equals(appId.getParent())) {
         return;
       }
       try {
         ApplicationDetail applicationDetail = enforceApplicationDetailAccess(
-          appId, ApplicationDetail.fromSpec(appSpec, null, null));
+          appId, ApplicationDetail.fromSpec(appMeta.getSpec(), null, appMeta.getChange()));
         // Add a directory for the namespace
         if (namespaces.add(appId.getParent())) {
           ZipEntry entry = new ZipEntry(appId.getNamespace() + "/");

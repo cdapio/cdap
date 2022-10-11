@@ -213,11 +213,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       localizeConfigs(createContainerCConf(cConf), createContainerHConf(this.hConf), tempDir, localizeResources);
 
-      // Localize the program jar
-      Location programJarLocation = program.getJarLocation();
-      final String programJarName = programJarLocation.getName();
-      localizeResources.put(programJarName, new LocalizeResource(programJarLocation.toURI(), false));
-
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
                             new LocalizeResource(saveJsonFile(program.getApplicationSpecification(),
@@ -235,9 +230,30 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         copyRuntimeToken(locationFactory, oldOptions.getArguments(), tempDir, localizeResources);
       }
 
+      Map<String, String> extraSystemArgs = new HashMap<>(launchConfig.getExtraSystemArguments());
+
+      // Localize the program jar
+      Location programJarLocation = program.getJarLocation();
+      String programJarName = programJarLocation.getName();
+      if (oldOptions.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
+        // if hash value for program.jar has been provided, we append it to filename.
+        String programJarHash = oldOptions.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
+        programJarName = programJarName.replace(".jar", String.format("_%s%s", programJarHash, ".jar"));
+
+        Set<String> cacheableFiles = new HashSet<>();
+        if (oldOptions.getArguments().hasOption(ProgramOptionConstants.CACHEABLE_FILES)) {
+          cacheableFiles =
+            new HashSet<>(GSON.fromJson(oldOptions.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES),
+                                        new TypeToken<Set<String>>() { }.getType()));
+        }
+        cacheableFiles.add(programJarName);
+        extraSystemArgs.put(ProgramOptionConstants.CACHEABLE_FILES, GSON.toJson(cacheableFiles));
+      }
+
+      localizeResources.put(programJarName, new LocalizeResource(programJarLocation.toURI(), false));
+
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
       // and runs it in the remote container
-      Map<String, String> extraSystemArgs = new HashMap<>(launchConfig.getExtraSystemArguments());
       extraSystemArgs.put(ProgramOptionConstants.PROGRAM_JAR, programJarName);
       extraSystemArgs.put(ProgramOptionConstants.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME);
       extraSystemArgs.put(ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME);
@@ -629,6 +645,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         cacheableFiles.add(pluginDirFileName);
         cacheableFiles.add(pluginArchiveFileName);
         newSystemArgs.put(ProgramOptionConstants.CACHEABLE_FILES, GSON.toJson(cacheableFiles));
+      }
+      if (systemArgs.hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
+        newSystemArgs.remove(ProgramOptionConstants.PROGRAM_JAR_HASH);
       }
 
       // Localize plugins to two files, one expanded into a directory, one not.

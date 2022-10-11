@@ -232,6 +232,10 @@ public abstract class Id implements EntityIdCompatible {
       return new Application(id, applicationId, version);
     }
 
+    public static Application from(String namespaceId, String applicationId, String version) {
+      return new Application(Namespace.from(namespaceId), applicationId, version);
+    }
+
     public static Application from(String namespaceId, String applicationId) {
       return new Application(Namespace.from(namespaceId), applicationId);
     }
@@ -243,7 +247,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     public static Application fromEntityId(ApplicationId applicationId) {
-      return from(applicationId.getNamespace(), applicationId.getApplication());
+      return from(applicationId.getNamespace(), applicationId.getApplication(), applicationId.getVersion());
     }
   }
 

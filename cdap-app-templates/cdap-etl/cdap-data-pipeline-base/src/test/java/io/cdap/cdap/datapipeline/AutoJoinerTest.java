@@ -41,6 +41,7 @@ import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.ETLTransformationPushdown;
 import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -169,6 +170,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    String version = getAppDetail(appId).getAppVersion();
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), version);
 
     // write input data
     List<StructuredRecord> input1Data = new ArrayList<>();
@@ -629,6 +632,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail info = appManager.getInfo();
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), info.getAppVersion());
 
     // write input data
     List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
@@ -695,6 +700,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail info = appManager.getInfo();
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), info.getAppVersion());
 
     // write input data
     List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_BOB, USER_JOHN);
@@ -789,6 +796,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail info = appManager.getInfo();
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), info.getAppVersion());
 
     // write input data
     List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
@@ -879,6 +888,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     // write input data
     List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
@@ -978,6 +989,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     DataSetManager<Table> inputManager;
 
@@ -1060,6 +1073,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     // write input data
     List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
@@ -1372,6 +1387,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     // write input data
     List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
@@ -1545,6 +1562,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     // write input data
     List<StructuredRecord> itemData = new ArrayList<>();
@@ -1737,6 +1756,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     List<StructuredRecord> records = new ArrayList<>();
     records.add(StructuredRecord.builder(userSchema).set("id", 0).set("first_name", "Billy").build());
@@ -1822,6 +1843,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail info = appManager.getInfo();
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), info.getAppVersion());
 
     List<StructuredRecord> records = new ArrayList<>();
     records.add(StructuredRecord.builder(userSchema).set("name", "Alice").set("age", 35).build());
@@ -1928,6 +1951,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     List<StructuredRecord> records = new ArrayList<>();
     records.add(StructuredRecord.builder(salesSchema)
@@ -2010,6 +2035,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     // write input data
     if (!excludeUsers) {
@@ -2152,6 +2179,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
     ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
     ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail detail = getAppDetail(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), detail.getAppVersion());
 
     // write input data
     List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
