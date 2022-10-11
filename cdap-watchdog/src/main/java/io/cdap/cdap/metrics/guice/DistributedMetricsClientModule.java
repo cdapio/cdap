@@ -29,7 +29,7 @@ import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
+import io.cdap.cdap.metrics.collect.OpenCensusMeticsCollectionService;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 
 /**
@@ -43,7 +43,8 @@ final class DistributedMetricsClientModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(MetricsCollectionService.class).to(MessagingMetricsCollectionService.class).in(Scopes.SINGLETON);
+    //TODO: Decide based on configuration
+    bind(MetricsCollectionService.class).to(OpenCensusMeticsCollectionService.class).in(Scopes.SINGLETON);
     expose(MetricsCollectionService.class);
 
     bind(MetricsSystemClient.class).to(RemoteMetricsSystemClient.class).in(Scopes.SINGLETON);

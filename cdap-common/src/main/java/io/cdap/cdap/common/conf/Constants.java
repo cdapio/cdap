@@ -824,6 +824,9 @@ public final class Constants {
     public static final String METRICS_HBASE_TABLE_SPLITS = "metrics.table.splits";
     public static final String METRICS_TABLE_HBASE_SPLIT_POLICY = "metrics.table.hbase.split.policy";
 
+    // Writing to OpenCensus / StackDriver
+    public static final String STACKDRIVER_ENABLED = "metrics.stackdriver";
+
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";

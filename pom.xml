@@ -182,6 +182,7 @@
     <embedded-postgres.version>1.3.1</embedded-postgres.version>
     <dbcp.version>2.6.0</dbcp.version>
     <jacoco.version>0.8.6</jacoco.version>
+    <opencensus.version>0.31.1</opencensus.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -1804,7 +1805,21 @@
         <artifactId>commons-collections</artifactId>
         <version>${commons.collections.version}</version>
       </dependency>
-    </dependencies>
+      <dependency>
+        <groupId>io.opencensus</groupId>
+        <artifactId>opencensus-api</artifactId>
+        <version>${opencensus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opencensus</groupId>
+        <artifactId>opencensus-impl</artifactId>
+        <version>${opencensus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opencensus</groupId>
+        <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
+        <version>${opencensus.version}</version>
+      </dependency>    </dependencies>
   </dependencyManagement>
 
   <build>
