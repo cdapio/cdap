@@ -30,7 +30,6 @@ import com.google.cloud.dataproc.v1beta2.JobControllerSettings;
 import com.google.cloud.dataproc.v1beta2.JobPlacement;
 import com.google.cloud.dataproc.v1beta2.JobReference;
 import com.google.cloud.dataproc.v1beta2.JobStatus;
-import com.google.cloud.dataproc.v1beta2.ListJobsRequest;
 import com.google.cloud.dataproc.v1beta2.SparkJob;
 import com.google.cloud.dataproc.v1beta2.SubmitJobRequest;
 import com.google.cloud.storage.Blob;

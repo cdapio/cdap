@@ -2750,14 +2750,14 @@
   <property>
     <name>metrics.exec.threads</name>
     <value>${http.service.exec.threads}</value>
-    <description>😐
+    <description>
       Number of Netty service executor threads for metrics HTTP services
     </description>
   </property>
 
   <property>
     <name>metrics.meta.table</name>
-    <value>metrics.meta</value>`
+    <value>metrics.meta</value>
     <description>
       Name of the metrics meta table
     </description>

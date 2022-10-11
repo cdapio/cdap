@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -34,9 +35,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -157,7 +161,7 @@ public class DataprocJobMain {
 
   /**
    * This method will generate class path by adding following to urls to front of default classpath:
-   *
+   * <p>
    * expanded.resource.jar
    * expanded.application.jar
    * expanded.application.jar/lib/*.jar
@@ -165,7 +169,6 @@ public class DataprocJobMain {
    * expanded.twill.jar
    * expanded.twill.jar/lib/*.jar
    * expanded.twill.jar/classes
-   *
    */
   private static URL[] getClasspath(URLClassLoader cl, List<String> jarFiles) throws IOException {
     URL[] urls = cl.getURLs();
@@ -245,6 +248,7 @@ public class DataprocJobMain {
 
   /**
    * Converts a POSIX compliant program argument array to a String-to-String Map.
+   *
    * @param args Array of Strings where each element is a POSIX compliant program argument (Ex: "--os=Linux" )
    * @return Map of argument Keys and Values (Ex: Key = "os" and Value = "Linux").
    */
@@ -270,7 +274,8 @@ public class DataprocJobMain {
    */
   private static ClassLoader createContainerClassLoader(URL[] classpath) {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
-    URLClassLoader classLoader = new URLClassLoader(classpath, DataprocJobMain.class.getClassLoader().getParent());
+    FilterClassLoader middle = FilterClassLoader.create(DataprocJobMain.class.getClassLoader().getParent());
+    URLClassLoader classLoader = new URLClassLoader(classpath, middle);
     if (containerClassLoaderName == null) {
       LOG.error("Arjan: classloader Name is NULL!");
       return classLoader;
@@ -291,4 +296,148 @@ public class DataprocJobMain {
       throw new RuntimeException("Failed to create container class loader of class " + containerClassLoaderName, e);
     }
   }
+
+
+}
+
+/**
+ * ClassLoader that filters out certain resources.
+ */
+final class FilterClassLoader extends ClassLoader {
+  private final ClassLoader extensionClassLoader;
+  private final Filter filter;
+
+  /**
+   * Create a {@link FilterClassLoader} that filter classes based on the given {@link Filter} on the given
+   * parent ClassLoader.
+   *
+   * @param parentClassLoader Parent ClassLoader
+   * @param filter            Filter to apply for the ClassLoader
+   */
+  FilterClassLoader(ClassLoader parentClassLoader, Filter filter) {
+    super(parentClassLoader);
+    this.extensionClassLoader = new URLClassLoader(new URL[0], ClassLoader.getSystemClassLoader().getParent());
+    this.filter = filter;
+  }
+
+  /**
+   * Returns the default filter that should applies to all program type. By default
+   * all hadoop classes and cdap-api classes (and dependencies) are allowed.
+   */
+  public static Filter defaultFilter() {
+    final Set<String> visibleResources = new HashSet<>();
+    visibleResources.add("hadoop");
+    final Set<String> visiblePackages = new HashSet<>();
+    visiblePackages.add("hadoop");
+    return new Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        for (String cur : visibleResources) {
+          if (resource.contains(cur)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      @Override
+      public boolean acceptPackage(String packageName) {
+        for (String cur : visiblePackages) {
+          if (packageName.contains(cur)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    };
+  }
+
+  /**
+   * Creates a new {@link FilterClassLoader} that filter classes based on the {@link #defaultFilter()} on the
+   * given parent ClassLoader
+   *
+   * @param parentClassLoader the ClassLoader to filter from.
+   * @return a new intance of {@link FilterClassLoader}.
+   */
+  public static FilterClassLoader create(ClassLoader parentClassLoader) {
+    return new FilterClassLoader(parentClassLoader, defaultFilter());
+  }
+
+  @Override
+  protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    // Try to load it from bootstrap class loader first
+    try {
+      return extensionClassLoader.loadClass(name);
+    } catch (ClassNotFoundException e) {
+      if (filter.acceptResource(classNameToResourceName(name))) {
+        return super.loadClass(name, resolve);
+      }
+      throw e;
+    }
+  }
+
+  @Override
+  protected Package[] getPackages() {
+    List<Package> packages = new ArrayList<Package>();
+    for (Package pkg : super.getPackages()) {
+      if (filter.acceptPackage(pkg.getName())) {
+        packages.add(pkg);
+      }
+    }
+    return packages.toArray(new Package[packages.size()]);
+  }
+
+  @Override
+  protected Package getPackage(String name) {
+    // Replace all '/' with '.' since Java allow both names like "java/lang" or "java.lang" as the name to lookup
+    return (filter.acceptPackage(name.replace('/', '.'))) ? super.getPackage(name) : null;
+  }
+
+  @Override
+  public URL getResource(String name) {
+    URL resource = extensionClassLoader.getResource(name);
+    if (resource != null) {
+      return resource;
+    }
+    return filter.acceptResource(name) ? super.getResource(name) : null;
+  }
+
+  @Override
+  public Enumeration<URL> getResources(String name) throws IOException {
+    Enumeration<URL> resources = extensionClassLoader.getResources(name);
+    if (resources.hasMoreElements()) {
+      return resources;
+    }
+    return filter.acceptResource(name) ? super.getResources(name) : Collections.<URL>emptyEnumeration();
+  }
+
+  @Override
+  public InputStream getResourceAsStream(String name) {
+    InputStream resourceStream = extensionClassLoader.getResourceAsStream(name);
+    if (resourceStream != null) {
+      return resourceStream;
+    }
+    return filter.acceptResource(name) ? super.getResourceAsStream(name) : null;
+  }
+
+  private String classNameToResourceName(String className) {
+    return className.replace('.', '/') + ".class";
+  }
+
+  /**
+   * Represents filtering  that the {@link FilterClassLoader} needs to apply.
+   */
+  public interface Filter {
+
+    /**
+     * Returns the result of whether the given resource is accepted or not.
+     */
+    boolean acceptResource(String resource);
+
+    /**
+     * Returns the result of whether the given package is accepted or not.
+     */
+    boolean acceptPackage(String packageName);
+  }
+
 }

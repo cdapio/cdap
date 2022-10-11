@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.common.lang;
 
-import com.google.common.collect.Lists;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -120,7 +119,7 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   protected Package[] getPackages() {
-    List<Package> packages = Lists.newArrayList();
+    List<Package> packages = new ArrayList<Package>();
     for (Package pkg : super.getPackages()) {
       if (filter.acceptPackage(pkg.getName())) {
         packages.add(pkg);
