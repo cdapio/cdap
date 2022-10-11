@@ -2127,10 +2127,11 @@ public class AppMetadataStore {
       String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
       String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
       Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
+      String latest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
       if (creationTimeMillis == null) {
         this.changeDetail = null;
       } else {
-        this.changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis);
+        this.changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
       }
     }
 
