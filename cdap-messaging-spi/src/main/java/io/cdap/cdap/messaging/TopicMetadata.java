@@ -16,8 +16,7 @@
 
 package io.cdap.cdap.messaging;
 
-import com.google.common.collect.ImmutableMap;
-import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.messaging.data.TopicId;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +27,9 @@ import java.util.Objects;
  */
 public class TopicMetadata {
 
-  public static final String GENERATION_KEY = MessagingUtils.Constants.GENERATION_KEY;
-  public static final String TTL_KEY = MessagingUtils.Constants.TTL_KEY;
+  // TODO get these from MessagingUtils
+  public static final String GENERATION_KEY = "generation";
+  public static final String TTL_KEY = "ttl";
 
   private final TopicId topicId;
   private final Map<String, String> properties;
@@ -51,7 +51,8 @@ public class TopicMetadata {
    */
   public TopicMetadata(TopicId topicId, Map<String, String> properties, boolean validate) {
     this.topicId = topicId;
-    this.properties = ImmutableMap.copyOf(properties);
+    // TODO make an immutableMap
+    this.properties = properties;
     if (validate) {
       validateProperties();
     }

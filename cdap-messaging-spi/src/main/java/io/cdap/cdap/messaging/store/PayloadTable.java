@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.messaging.store;
 
-import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
-import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.messaging.data.TopicId;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -76,9 +75,9 @@ public interface PayloadTable extends Closeable {
    * @param messageId message Id to start from
    * @param inclusive {@code true} to include the entry identified by the given {@link MessageId} as the first message
    * @param limit maximum number of entries to fetch
-   * @return a {@link CloseableIterator} of entries
+   * @return a {@link Iterator} of entries
    */
-  CloseableIterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer, MessageId messageId,
+  Iterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer, MessageId messageId,
                                  boolean inclusive, int limit) throws IOException;
 
   /**

@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.messaging.data;
 
-import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.Bytes;
 
 import java.util.Arrays;
 
