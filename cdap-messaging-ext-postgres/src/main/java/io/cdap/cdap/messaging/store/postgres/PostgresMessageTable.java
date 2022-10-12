@@ -26,8 +26,15 @@ import org.apache.tephra.Transaction;
 import java.io.IOException;
 import java.util.Iterator;
 import javax.annotation.Nullable;
+import javax.sql.DataSource;
 
 public class PostgresMessageTable implements MessageTable {
+  private final DataSource dataSource;
+
+  PostgresMessageTable(DataSource dataSource) {
+    this.dataSource = dataSource;
+  }
+
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime, int limit,
                                         @Nullable Transaction transaction) throws IOException {

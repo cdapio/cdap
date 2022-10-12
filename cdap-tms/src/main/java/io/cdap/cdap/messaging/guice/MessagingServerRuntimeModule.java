@@ -45,7 +45,7 @@ import io.cdap.cdap.messaging.store.cache.CachingTableFactory;
 import io.cdap.cdap.messaging.store.cache.DefaultMessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
-import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
+import io.cdap.cdap.messaging.store.postgres.PostgresTableFactory;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.http.HttpHandler;
 
@@ -121,7 +121,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
         }
       });
 
-      bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
+      bind(TableFactory.class).to(PostgresTableFactory.class).in(Scopes.SINGLETON);
       bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
       expose(MessagingService.class);
 

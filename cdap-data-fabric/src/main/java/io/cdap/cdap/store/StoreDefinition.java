@@ -1095,7 +1095,7 @@ public final class StoreDefinition {
         .withId(TOPIC_METADATA)
         .withFields(Fields.stringType(NAMESPACE_FIELD),
                     Fields.stringType(TOPIC_FIELD),
-                    Fields.stringType(PROPERTIES_FIELD))
+                    Fields.bytesType(PROPERTIES_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, TOPIC_FIELD)
         .build();
 

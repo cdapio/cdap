@@ -16,32 +16,154 @@
 
 package io.cdap.cdap.messaging.store.postgres;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.TableFactory;
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Properties;
+import javax.sql.DataSource;
 
 public class PostgresTableFactory implements TableFactory {
+  public static final String MESSAGES_TABLE = "messages";
+
+  private static final Logger LOG = LoggerFactory.getLogger(PostgresTableFactory.class);
+  private final DataSource dataSource;
+
+  @Inject
+  PostgresTableFactory(CConfiguration cConf, SConfiguration sConf) {
+    this.dataSource = createDataSource(cConf, sConf);
+
+  }
   @Override
   public MetadataTable createMetadataTable() throws IOException {
-    return null;
+    return new PostgresMetadataTable(this.dataSource);
   }
 
   @Override
   public MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException {
-    return null;
+    return new PostgresMessageTable(this.dataSource);
   }
 
   @Override
   public PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException {
-    return null;
+    return new PostgresPayloadTable();
   }
 
   @Override
   public void close() throws IOException {
-
+    if (dataSource instanceof AutoCloseable) {
+      try {
+        ((AutoCloseable) dataSource).close();
+      } catch (Exception e) {
+        LOG.error("Error in close: " + e.getMessage());
+      }
+    }
   }
+
+  /**
+   * Creates a {@link DataSource} for the sql implementation to use. It optionally loads an external JDBC driver
+   * to use with JDBC.
+   */
+  public static DataSource createDataSource(CConfiguration cConf, SConfiguration sConf) {
+    String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
+    if (!storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
+      throw new IllegalArgumentException(String.format("The storage implementation is not %s, cannot create the " +
+                                                         "DataSource", Constants.Dataset.DATA_STORAGE_SQL));
+    }
+
+    if (cConf.getBoolean(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_EXTERNAL)) {
+      loadJDBCDriver(cConf, storageImpl);
+    }
+
+    String jdbcUrl = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL);
+    if (jdbcUrl == null) {
+      throw new IllegalArgumentException("The jdbc connection url is not specified.");
+    }
+    Properties properties = retrieveJDBCConnectionProperties(cConf, sConf);
+    LOG.info("Creating the DataSource with jdbc url: {}", jdbcUrl);
+
+    ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(jdbcUrl, properties);
+    PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+    // The GenericObjectPool is thread safe according to the javadoc,
+    // the PoolingDataSource will be thread safe as long as the connectin pool is thread-safe
+    GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+    poolableConnectionFactory.setPool(connectionPool);
+    connectionPool.setMaxTotal(cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_SIZE));
+    PoolingDataSource<PoolableConnection> dataSource = new PoolingDataSource<>(connectionPool);
+    return dataSource;
+  }
+
+  private static Properties retrieveJDBCConnectionProperties(CConfiguration cConf, SConfiguration sConf) {
+    Properties properties = new Properties();
+    String username = sConf.get(Constants.Dataset.DATA_STORAGE_SQL_USERNAME);
+    String password = sConf.get(Constants.Dataset.DATA_STORAGE_SQL_PASSWORD);
+    if ((username == null) != (password == null)) {
+      throw new IllegalArgumentException("The username and password for the jdbc connection must both be set" +
+                                           " or both not be set.");
+    }
+
+    if (username != null) {
+      properties.setProperty("user", username);
+      properties.setProperty("password", password);
+    }
+
+    for (Map.Entry<String, String> cConfEntry : cConf) {
+      if (cConfEntry.getKey().startsWith(Constants.Dataset.DATA_STORAGE_SQL_PROPERTY_PREFIX)) {
+        properties.put(cConfEntry.getKey().substring(Constants.Dataset.DATA_STORAGE_SQL_PROPERTY_PREFIX.length()),
+                       cConfEntry.getValue());
+      }
+    }
+    return properties;
+  }
+
+  private static void loadJDBCDriver(CConfiguration cConf, String storageImpl) {
+    String driverExtensionPath = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_DIRECTORY);
+    String driverName = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_JDBC_DRIVER_NAME);
+    if (driverExtensionPath == null || driverName == null) {
+      throw new IllegalArgumentException("The JDBC driver directory and driver name must be specified.");
+    }
+
+    File driverExtensionDir = new File(driverExtensionPath, storageImpl);
+    if (!driverExtensionDir.exists()) {
+      throw new IllegalArgumentException("The JDBC driver driver " + driverExtensionDir + " does not exist.");
+    }
+
+    // Create a separate classloader for the JDBC driver, which doesn't have any CDAP dependencies in it.
+    ClassLoader driverClassLoader = new DirectoryClassLoader(driverExtensionDir, null);
+    try {
+      Driver driver = (Driver) Class.forName(driverName, true, driverClassLoader).newInstance();
+
+      // wrap the driver class and register it ourselves since the driver manager will not use driver from other
+      // classloader
+      // JDBCDriverShim driverShim = new JDBCDriverShim(driver);
+      DriverManager.registerDriver(driver);
+    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | SQLException e) {
+      throw Throwables.propagate(e);
+    }
+
+    LOG.info("Successfully loaded {} from {}", driverName, driverExtensionPath);
+  }
+
 }
