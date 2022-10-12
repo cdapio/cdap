@@ -50,6 +50,7 @@ import com.google.common.io.ByteStreams;
 import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
@@ -71,6 +72,7 @@ import java.net.URI;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -116,9 +118,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final String bucket;
   private final Map<String, String> labels;
   private final Map<String, String> provisionerProperties;
+  private final VersionInfo cdapVersionInfo;
 
   private volatile Storage storageClient;
   private volatile JobControllerClient jobControllerClient;
+  List<String> commonArtifactsPerCDAPVersion = new ArrayList<>(
+    Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR, Constants.Files.APPLICATION_JAR)
+  );
 
   /**
    * Created by dataproc provisioner with properties that are needed by dataproc runtime job manager.
@@ -126,7 +132,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * @param clusterInfo dataproc cluster information
    */
   public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
-                                   Map<String, String> provisionerProperties) {
+                                   Map<String, String> provisionerProperties, VersionInfo cdapVersionInfo) {
     this.provisionerContext = clusterInfo.getProvisionerContext();
     this.clusterName = clusterInfo.getClusterName();
     this.credentials = clusterInfo.getCredentials();
@@ -138,6 +144,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     // Provisioner properties contains overrides for properties defined in cdap-site.
     // These properties are absent in provisionerContext.getProperties().
     this.provisionerProperties = provisionerProperties;
+    this.cdapVersionInfo = cdapVersionInfo;
   }
 
   /**
@@ -216,6 +223,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     // In dataproc bucket, the shared folder for artifacts will be <bucket>/cdap-job/cached-artifacts.
     // All instances of CacheableLocalFile will be copied to the shared folder if they do not exist.
     String cacheRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, DataprocUtils.CDAP_CACHED_ARTIFACTS);
+    boolean enableGCSCachingSnapshot = Boolean.parseBoolean(
+      provisionerContext.getProperties().getOrDefault(DataprocUtils.ENABLE_GCS_CACHING_SNAPSHOT, "false"));
+    // cdap_version is of the form "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime"
+    String[] appCDAPVersion = cdapVersionInfo.toString().split("-");
+    boolean enableCommonArtifactsCaching = !disableGCSCaching &&
+      ((appCDAPVersion.length > 1 && !"SNAPSHOT".equals(appCDAPVersion[1])) || enableGCSCachingSnapshot);
+
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
@@ -230,10 +244,22 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       for (LocalFile fileToUpload : localFiles) {
         boolean isCacheable = !disableGCSCaching && fileToUpload instanceof CacheableLocalFile;
         String targetFilePath = getPath(isCacheable ? cacheRootPath : runRootPath, fileToUpload.getName());
-        uploadFutures.add(
-          provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
-              uploadFile(bucket, targetFilePath, fileToUpload, false))
-            .toCompletableFuture());
+        String targetFilePathWithVersion = getPath(cacheRootPath, appCDAPVersion[0], fileToUpload.getName());
+
+        if (commonArtifactsPerCDAPVersion.contains(fileToUpload.getName()) && enableCommonArtifactsCaching) {
+          // upload artifacts common per cdap version to <bucket>/cdap-job/cached-artifacts/<cdapVersion>/
+          uploadFutures.add(
+            provisionerContext.execute(
+              () -> uploadCommonArtifactsPerCDAPVersion(bucket, targetFilePathWithVersion, fileToUpload))
+              .toCompletableFuture());
+        } else {
+          // upload cacheable artifacts to <bucket>/cdap-job/cached-artifacts/ and
+          // non-cacheable artifacts to <bucket>/cdap-job/<runid>/
+          uploadFutures.add(
+            provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
+                uploadFile(bucket, targetFilePath, fileToUpload, false, false))
+              .toCompletableFuture());
+        }
       }
 
       List<LocalFile> uploadedFiles = new ArrayList<>();
@@ -285,6 +311,27 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         DataprocUtils.deleteDirectoryContents(tempDir);
       }
     }
+  }
+
+  private LocalFile uploadCommonArtifactsPerCDAPVersion(String bucket, String targetFilePath, LocalFile localFile)
+    throws IOException, InterruptedException {
+    Storage storage = getStorageClient();
+    BlobId blobId = BlobId.of(bucket, targetFilePath);
+    Blob blob = storage.get(blobId);
+    LocalFile result;
+
+    if (blob != null && blob.exists()) {
+      LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
+                localFile.getURI(), bucket, targetFilePath);
+      result = new DefaultLocalFile(localFile.getName(),
+                                    URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
+                                    localFile.getLastModified(), localFile.getSize(),
+                                    localFile.isArchive(), localFile.getPattern());
+    } else {
+      result = uploadFile(bucket, targetFilePath, localFile, false, true);
+    }
+
+    return result;
   }
 
   @Override
@@ -410,7 +457,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                     localFile.getLastModified(), localFile.getSize(),
                                     localFile.isArchive(), localFile.getPattern());
     } else {
-      result = uploadFile(bucket, targetFilePath, localFile, true);
+      result = uploadFile(bucket, targetFilePath, localFile, true, false);
     }
 
     return result;
@@ -419,8 +466,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Uploads files to gcs.
    */
-  private LocalFile uploadFile(String bucket, String targetFilePath,
-                               LocalFile localFile, boolean isCacheable)
+  private LocalFile uploadFile(String bucket, String targetFilePath, LocalFile localFile,
+                               boolean isCacheable, boolean isCacheablePerVersion)
     throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     String contentType = "application/octet-stream";
@@ -450,7 +497,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         throw e;
       }
 
-      if (!isCacheable) {
+      if (!isCacheable && !isCacheablePerVersion) {
         // Precondition fails means the blob already exists, most likely happens due to retries
         // https://cloud.google.com/storage/docs/request-preconditions#special-case
         // Overwrite the file

@@ -196,7 +196,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
                                                               getRootUrl(conf),
                                                               projectId, region, bucket, systemLabels),
-                                      Collections.unmodifiableMap(properties)
+                                      Collections.unmodifiableMap(properties),
+                                      context.getCDAPVersionInfo()
         ));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
