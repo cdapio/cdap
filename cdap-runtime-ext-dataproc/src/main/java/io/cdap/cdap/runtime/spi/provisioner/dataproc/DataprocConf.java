@@ -95,6 +95,8 @@ final class DataprocConf {
 
   // If true, artifacts will not be cached in GCS regardless of cConf setting.
   static final String DISABLE_GCS_CACHING = "disableGCSCaching";
+  // If true, snapshot artifacts which are same per CDAP version will be cached in GCS.
+  static final String ENABLE_GCS_CACHING_SNAPSHOT = DataprocUtils.ENABLE_GCS_CACHING_SNAPSHOT;
 
   private final String accountKey;
   private final String region;
@@ -164,6 +166,7 @@ final class DataprocConf {
 
   private final boolean disableGCSCaching;
   private  final String troubleshootingDocsUrl;
+  private final boolean enableGCSCachingSnapshot;
 
   public String getTroubleshootingDocsUrl() {
     return troubleshootingDocsUrl;
@@ -190,7 +193,7 @@ final class DataprocConf {
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
                        boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
                        @Nullable String rootUrl, boolean disableGCSCaching, boolean disableLocalCaching,
-                       String troubleshootingDocsUrl) {
+                       String troubleshootingDocsUrl, boolean enableGCSCachingSnapshot) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -198,6 +201,7 @@ final class DataprocConf {
     this.clusterReuseEnabled = clusterReuseEnabled;
     this.clusterReuseThresholdMinutes = clusterReuseThresholdMinutes;
     this.clusterReuseKey = clusterReuseKey;
+    this.enableGCSCachingSnapshot = enableGCSCachingSnapshot;
     this.networkHostProjectID = Strings.isNullOrEmpty(networkHostProjectId) ? projectId : networkHostProjectId;
     this.network = network;
     this.subnet = subnet;
@@ -698,6 +702,8 @@ final class DataprocConf {
 
     boolean disableGCSCaching = Boolean.parseBoolean(
       properties.getOrDefault(DISABLE_GCS_CACHING, "false"));
+    boolean enableGCSCachingSnapshot = Boolean.parseBoolean(
+      properties.getOrDefault(ENABLE_GCS_CACHING_SNAPSHOT, "false"));
     String troubleshootingDocsURL =
       properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
                               DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
@@ -716,7 +722,7 @@ final class DataprocConf {
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
                             enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
-                            disableGCSCaching, disableLocalCaching, troubleshootingDocsURL);
+                            disableGCSCaching, disableLocalCaching, troubleshootingDocsURL, enableGCSCachingSnapshot);
   }
 
   // the UI never sends nulls, it only sends empty strings.
