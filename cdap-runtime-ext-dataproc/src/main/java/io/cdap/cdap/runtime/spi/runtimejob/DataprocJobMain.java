@@ -321,33 +321,40 @@ final class FilterClassLoader extends ClassLoader {
   }
 
   /**
-   * Returns the default filter that should applies to all program type. By default
-   * all hadoop classes and cdap-api classes (and dependencies) are allowed.
+   * Excludes classes and packages containing certain substrings. To prevent conflicts with
+   * Spark classloader.
    */
   public static Filter defaultFilter() {
-    final Set<String> visibleResources = new HashSet<>();
-    visibleResources.add("hadoop");
-    final Set<String> visiblePackages = new HashSet<>();
-    visiblePackages.add("hadoop");
+    final Set<String> hiddenResources = new HashSet<>();
+    // Hide Guvava in parent class loader.
+    hiddenResources.add("google");
+    // Hide logging classes and resources in parent classloader.
+    hiddenResources.add("logback");
+    hiddenResources.add("slf4j");
+    final Set<String> hiddenPackages = new HashSet<>();
+    hiddenPackages.add("google");
+    hiddenPackages.add("logback");
+    hiddenPackages.add("slf4j");
+
     return new Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        for (String cur : visibleResources) {
-          if (resource.contains(cur)) {
-            return true;
+        for (String cur : hiddenResources) {
+          if (resource.toLowerCase().contains(cur)) {
+            return false;
           }
         }
-        return false;
+        return true;
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        for (String cur : visiblePackages) {
-          if (packageName.contains(cur)) {
-            return true;
+        for (String cur : hiddenPackages) {
+          if (packageName.toLowerCase().contains(cur)) {
+            return false;
           }
         }
-        return false;
+        return true;
       }
     };
   }

@@ -553,7 +553,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   private ProgramRunInfo getProgramRunInfo(Job job) {
-    Map<String, String> jobProperties = job.getHadoopJob().getPropertiesMap();
+    Map<String, String> jobProperties = job.getSparkJob().getPropertiesMap();
 
     ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder()
       .setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE))
