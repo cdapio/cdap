@@ -59,10 +59,6 @@ import javax.annotation.Nullable;
 public abstract class AbstractDataprocProvisioner implements Provisioner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDataprocProvisioner.class);
-
-  // The property name for the GCS bucket used by the runtime job manager for launching jobs via the job API
-  // It can be overridden by profile runtime arguments (system.profile.properties.bucket)
-  private static final String BUCKET = "gcsBucket";
   // Keys for looking up system properties
   private static final String LABELS_PROPERTY = "labels";
   private static final Pattern SIMPLE_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)$");
@@ -125,7 +121,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         jobManager.close();
       }
 
-      String bucket = DataprocUtils.getBucketName(properties.get(BUCKET));
+      String bucket = DataprocUtils.getBucketName(properties.get(DataprocUtils.GCS_BUCKET));
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
         .setCredentials(conf.getDataprocCredentials()).build().getService();
       String runId = context.getProgramRunInfo().getRun();
@@ -191,7 +187,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       String clusterName = getClusterName(context);
       String projectId = conf.getProjectId();
       String region = conf.getRegion();
-      String bucket = properties.get(BUCKET);
+      String bucket = properties.get(DataprocUtils.GCS_BUCKET);
 
       Map<String, String> systemLabels = getSystemLabels();
       return Optional.of(
@@ -222,7 +218,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     if (DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(property).find()) {
       return true;
     }
-    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY,
+    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, DataprocUtils.GCS_BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY,
                            DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
                            DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
                            DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
