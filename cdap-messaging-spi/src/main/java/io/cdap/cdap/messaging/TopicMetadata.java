@@ -27,7 +27,7 @@ import java.util.Objects;
  */
 public class TopicMetadata {
 
-  // TODO get these from MessagingUtils
+  // TODO get these constants from MessagingUtils
   public static final String GENERATION_KEY = "generation";
   public static final String TTL_KEY = "ttl";
 

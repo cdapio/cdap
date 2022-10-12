@@ -70,6 +70,7 @@ public final class StoreDefinition {
     CapabilitiesStore.create(tableAdmin);
     TetheringStore.create(tableAdmin);
     AppStateStore.create(tableAdmin);
+    MessageStore.create(tableAdmin);
   }
 
   /**
@@ -1072,6 +1073,46 @@ public final class StoreDefinition {
 
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, STATE_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for Pub/Sub messages
+   */
+  public static final class MessageStore {
+    public static final StructuredTableId MESSAGES = new StructuredTableId("messages");
+    public static final StructuredTableId TOPIC_METADATA = new StructuredTableId("topic_metadata");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TOPIC_FIELD = "topic";
+    public static final String PROPERTIES_FIELD = "properties";
+    public static final String PUBLISH_TIMESTAMP_FIELD = "publish_timestamp";
+    public static final String SEQUENCE_ID_FIELD = "sequence_id";
+    public static final String PAYLOAD_FIELD = "payload";
+
+    public static final StructuredTableSpecification METADATA_TABLE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(TOPIC_METADATA)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(TOPIC_FIELD),
+                    Fields.stringType(PROPERTIES_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, TOPIC_FIELD)
+        .build();
+
+    public static final StructuredTableSpecification MESSAGES_TABLE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(MESSAGES)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(TOPIC_FIELD),
+                    Fields.longType(PUBLISH_TIMESTAMP_FIELD),
+                    Fields.longType(SEQUENCE_ID_FIELD),
+                    Fields.bytesType(PAYLOAD_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, TOPIC_FIELD, SEQUENCE_ID_FIELD)
+        .build();
+
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, METADATA_TABLE_SPEC);
+      createIfNotExists(tableAdmin, MESSAGES_TABLE_SPEC);
     }
   }
 }
