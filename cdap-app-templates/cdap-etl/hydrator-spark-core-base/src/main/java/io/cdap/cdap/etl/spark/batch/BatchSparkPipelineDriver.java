@@ -152,6 +152,11 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   }
 
   @Override
+  protected JavaSparkContext getSparkContext() {
+    return jsc;
+  }
+
+  @Override
   protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec,
                                                            FunctionCache.Factory functionCacheFactory,
                                                            String inputStageName,

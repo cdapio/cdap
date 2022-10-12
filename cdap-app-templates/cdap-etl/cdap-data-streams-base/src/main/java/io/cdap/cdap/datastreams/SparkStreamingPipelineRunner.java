@@ -65,6 +65,7 @@ import io.cdap.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
@@ -144,6 +145,11 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext,
                                                                  stateStoreEnabled);
     return source.getStream(sourceContext);
+  }
+
+  @Override
+  protected JavaSparkContext getSparkContext() {
+    return javaStreamingContext.sparkContext();
   }
 
   @Override
