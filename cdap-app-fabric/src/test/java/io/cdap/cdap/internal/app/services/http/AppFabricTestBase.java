@@ -628,6 +628,33 @@ public abstract class AppFabricTestBase {
     return readResponse(response, JsonObject.class);
   }
 
+  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
+                                                 String filter, String nameFilterType,
+                                                 Boolean latestOnly) throws Exception {
+    String uri = "apps/?pageSize=" + pageSize;
+
+    if (token != null) {
+      uri += ("&pageToken=" + token);
+    }
+
+    if (!Strings.isNullOrEmpty(filter)) {
+      uri += ("&nameFilter=" + filter);
+    }
+
+    if (nameFilterType != null) {
+      uri += ("&nameFilterType=" + nameFilterType);
+    }
+
+    if (latestOnly != null) {
+      uri += ("&latestOnly=" + latestOnly);
+    }
+
+    HttpResponse response = doGet(getVersionedAPIPath(uri,
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    assertResponseCode(200, response);
+    return readResponse(response, JsonObject.class);
+  }
+
   /**
    * Gets a list of {@link BatchApplicationDetail} from the give set of application version
    *

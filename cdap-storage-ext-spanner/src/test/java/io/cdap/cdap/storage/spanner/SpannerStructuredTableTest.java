@@ -25,6 +25,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,6 +76,12 @@ public class SpannerStructuredTableTest extends StructuredTableTest {
   @AfterClass
   public static void closeSpannerStorageProvider() {
     Optional.ofNullable(storageProvider).ifPresent(SpannerStorageProvider::close);
+  }
+
+  @Override
+  @Ignore
+  public void testSortedPrimaryKeyFilteredIndexScan() {
+    // no implementation
   }
 
   @Override

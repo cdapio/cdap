@@ -353,6 +353,12 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
     throws InvalidFieldException, IOException {
+    return scan(keyRange, limit, filterIndex, SortOrder.ASC);
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex, SortOrder sortOrder)
+    throws InvalidFieldException, IOException {
 
     fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
     fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
@@ -361,10 +367,10 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       throw new InvalidFieldException(tableSchema.getTableId(), filterIndex.getName(), "is not an indexed column");
     }
 
-    LOG.trace("Table {}: Scan range {} with filterIndex {} limit {}",
-              tableSchema.getTableId(), keyRange, filterIndex, limit);
+    LOG.trace("Table {}: Scan range {} with filterIndex {} limit {} sortOrder {}",
+              tableSchema.getTableId(), keyRange, filterIndex, limit, sortOrder);
 
-    String scanQuery = getScanIndexQuery(keyRange, limit, filterIndex, SortOrder.ASC);
+    String scanQuery = getScanIndexQuery(keyRange, limit, filterIndex, sortOrder);
 
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
