@@ -85,6 +85,7 @@ import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.streaming.function.RecordInfoWrapper;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,6 +118,8 @@ public abstract class SparkPipelineRunner {
   protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                                    FunctionCache.Factory functionCacheFactory,
                                                                    StageStatisticsCollector collector) throws Exception;
+
+  protected abstract JavaSparkContext getSparkContext();
 
   protected abstract SparkPairCollection<Object, Object> addJoinKey(
     StageSpec stageSpec, FunctionCache.Factory functionCacheFactory, String inputStageName,
@@ -251,7 +254,14 @@ public abstract class SparkPipelineRunner {
 
     StageSpec stageSpec = pipelinePhase.getStage(stageName);
     String pluginType = stageSpec.getPluginType();
+    String pluginName = stageSpec.getPlugin().getName();
+    String artifactInfo = stageSpec.getPlugin().getArtifact().toString();
 
+    JavaSparkContext jsc = getSparkContext();
+    
+    jsc.setCallSite(stageName + " (Plugin " + pluginName + " of Type " + pluginType + ", " + artifactInfo + ")");
+
+    try {
     // don't want to do an additional filter for stages that can emit errors,
     // but aren't connected to an ErrorTransform
     // similarly, don't want to do an additional filter for alerts when the stage isn't connected to
@@ -334,6 +344,9 @@ public abstract class SparkPipelineRunner {
     }
 
     emittedRecords.put(stageName, emittedRecordsForStage);
+    } finally {
+      jsc.clearCallSite();
+    }
   }
 
   private EmittedRecords processOtherPluginTypes(String pluginType, Map<String, EmittedRecords> emittedRecords,
