@@ -86,15 +86,11 @@ final class DataprocConf {
   static final String WORKER_NUM_NODES = "workerNumNodes";
   static final String SECONDARY_WORKER_NUM_NODES = "secondaryWorkerNumNodes";
   static final String AUTOSCALING_POLICY = "autoScalingPolicy";
-  static final String LOCAL_CACHE_DISABLED = DataprocUtils.LOCAL_CACHE_DISABLED;
 
   public static final String COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT = "compute.request.connection.timeout.millis";
   private static final int COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT = 20000;
   public static final String COMPUTE_HTTP_REQUEST_READ_TIMEOUT = "compute.request.read.timeout.millis";
   private static final int COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT = 20000;
-
-  // If true, artifacts will not be cached in GCS regardless of cConf setting.
-  static final String DISABLE_GCS_CACHING = "disableGCSCaching";
 
   private final String accountKey;
   private final String region;
@@ -162,7 +158,7 @@ final class DataprocConf {
   private final int computeReadTimeout;
   private final int computeConnectionTimeout;
 
-  private final boolean disableGCSCaching;
+  private final boolean gcsCacheEnabled;
   private  final String troubleshootingDocsUrl;
 
   public String getTroubleshootingDocsUrl() {
@@ -189,7 +185,7 @@ final class DataprocConf {
                        boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
                        boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
-                       @Nullable String rootUrl, boolean disableGCSCaching, boolean disableLocalCaching,
+                       @Nullable String rootUrl, boolean gcsCacheEnabled, boolean disableLocalCaching,
                        String troubleshootingDocsUrl) {
     this.accountKey = accountKey;
     this.region = region;
@@ -244,7 +240,7 @@ final class DataprocConf {
     this.computeReadTimeout = computeReadTimeout;
     this.computeConnectionTimeout = computeConnectionTimeout;
     this.rootUrl = rootUrl;
-    this.disableGCSCaching = disableGCSCaching;
+    this.gcsCacheEnabled = gcsCacheEnabled;
     this.disableLocalCaching = disableLocalCaching;
     this.troubleshootingDocsUrl = troubleshootingDocsUrl;
   }
@@ -575,9 +571,6 @@ final class DataprocConf {
     boolean enablePredefinedAutoScaling =
       Boolean.parseBoolean(properties.getOrDefault(PREDEFINED_AUTOSCALE_ENABLED, "false"));
 
-    boolean disableLocalCaching =
-      Boolean.parseBoolean(properties.getOrDefault(LOCAL_CACHE_DISABLED, "false"));
-
     if (enablePredefinedAutoScaling) {
       workerNumNodes = PredefinedAutoScaling.getPrimaryWorkerInstances();
       secondaryWorkerNumNodes = PredefinedAutoScaling.getMinSecondaryWorkerInstances();
@@ -696,8 +689,12 @@ final class DataprocConf {
                                           COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT);
     String rootUrl = getString(properties, ROOT_URL);
 
-    boolean disableGCSCaching = Boolean.parseBoolean(
-      properties.getOrDefault(DISABLE_GCS_CACHING, "false"));
+    // If false, artifacts will not be cached in GCS regardless of cConf setting.
+    boolean gcsCacheEnabled = Boolean.parseBoolean(
+      properties.getOrDefault(DataprocUtils.GCS_CACHE_ENABLED, "true"));
+    // If true, artifacts will not be cached locally.
+    boolean disableLocalCaching =
+      Boolean.parseBoolean(properties.getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED, "false"));
     String troubleshootingDocsURL =
       properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
                               DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
@@ -716,7 +713,7 @@ final class DataprocConf {
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
                             enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
-                            disableGCSCaching, disableLocalCaching, troubleshootingDocsURL);
+                            gcsCacheEnabled, disableLocalCaching, troubleshootingDocsURL);
   }
 
   // the UI never sends nulls, it only sends empty strings.

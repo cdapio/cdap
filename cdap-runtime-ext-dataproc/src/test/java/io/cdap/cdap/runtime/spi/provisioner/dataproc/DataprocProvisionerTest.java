@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
-import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -250,11 +249,11 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
-    context.setAppCDAPVersionInfo(new MockVersionInfo("6.5"));
+    context.setAppCDAPVersionInfo(new MockVersionInfo("6.5.0"));
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
-    context.setAppCDAPVersionInfo(new MockVersionInfo("6.4"));
+    context.setAppCDAPVersionInfo(new MockVersionInfo("6.4.0"));
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
@@ -364,21 +363,21 @@ public class DataprocProvisionerTest {
 
   @Test
   public void testVersionComparison() {
-    VersionInfo v0 = new DataprocImageVersion("0");
-    VersionInfo v1 = new DataprocImageVersion("1");
-    VersionInfo v1debian = new DataprocImageVersion("1-debian");
-    VersionInfo v1dot4 = new DataprocImageVersion("1.4");
-    VersionInfo v1dot4dot99 = new DataprocImageVersion("1.4.99");
-    VersionInfo v1dot5 = new DataprocImageVersion("1.5");
-    VersionInfo v1dot5debian = new DataprocImageVersion("1.5-debian");
-    VersionInfo v1dot5dot0 = new DataprocImageVersion("1.5.0");
-    VersionInfo v1dot5dot0debian = new DataprocImageVersion("1.5.0-debian");
-    VersionInfo v1dot5dot0dot0 = new DataprocImageVersion("1.5.0.0");
-    VersionInfo v1dot5dot1 = new DataprocImageVersion("1.5.1");
-    VersionInfo v1dot6 = new DataprocImageVersion("1.6");
-    VersionInfo v2 = new DataprocImageVersion("2");
-    VersionInfo v2debian = new DataprocImageVersion("2-debian");
-    VersionInfo v2dot0 = new DataprocImageVersion("2.0");
+    DataprocImageVersion v0 = new DataprocImageVersion("0");
+    DataprocImageVersion v1 = new DataprocImageVersion("1");
+    DataprocImageVersion v1debian = new DataprocImageVersion("1-debian");
+    DataprocImageVersion v1dot4 = new DataprocImageVersion("1.4");
+    DataprocImageVersion v1dot4dot99 = new DataprocImageVersion("1.4.99");
+    DataprocImageVersion v1dot5 = new DataprocImageVersion("1.5");
+    DataprocImageVersion v1dot5debian = new DataprocImageVersion("1.5-debian");
+    DataprocImageVersion v1dot5dot0 = new DataprocImageVersion("1.5.0");
+    DataprocImageVersion v1dot5dot0debian = new DataprocImageVersion("1.5.0-debian");
+    DataprocImageVersion v1dot5dot0dot0 = new DataprocImageVersion("1.5.0.0");
+    DataprocImageVersion v1dot5dot1 = new DataprocImageVersion("1.5.1");
+    DataprocImageVersion v1dot6 = new DataprocImageVersion("1.6");
+    DataprocImageVersion v2 = new DataprocImageVersion("2");
+    DataprocImageVersion v2debian = new DataprocImageVersion("2-debian");
+    DataprocImageVersion v2dot0 = new DataprocImageVersion("2.0");
 
     Assert.assertTrue(v1dot5.compareTo(v0) > 0);
     Assert.assertTrue(v1dot5.compareTo(v1) > 0);
@@ -399,22 +398,22 @@ public class DataprocProvisionerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNullDataprocImageVersion() {
-    VersionInfo nullVersion = new DataprocImageVersion(null);
+    DataprocImageVersion nullVersion = new DataprocImageVersion(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyDataprocImageVersion() {
-    VersionInfo emptyVersion = new DataprocImageVersion("");
+    DataprocImageVersion emptyVersion = new DataprocImageVersion("");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidSegmentDataprocImageVersion() {
-    VersionInfo emptyVersion = new DataprocImageVersion("1.2.3..6");
+    DataprocImageVersion emptyVersion = new DataprocImageVersion("1.2.3..6");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidDataprocImageVersion() {
-    VersionInfo emptyVersion = new DataprocImageVersion("abcd");
+    DataprocImageVersion emptyVersion = new DataprocImageVersion("abcd");
   }
 
 }

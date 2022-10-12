@@ -22,7 +22,6 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -62,7 +61,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   private static final String LABELS_PROPERTY = "labels";
   private static final Pattern SIMPLE_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)$");
   private static final Pattern CLUSTER_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)-.*");
-  protected static final VersionInfo DATAPROC_1_5_VERSION = new DataprocImageVersion("1.5");
+  protected static final DataprocImageVersion DATAPROC_1_5_VERSION = new DataprocImageVersion("1.5");
   public static final String LABEL_VERSON = "cdap-version";
   public static final String LABEL_PROFILE = "cdap-profile";
   public static final String LABEL_REUSE_KEY = "cdap-reuse-key";
@@ -190,11 +189,10 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
 
       Map<String, String> systemLabels = getSystemLabels();
       return Optional.of(
-        new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
-                                                              getRootUrl(conf),
-                                                              projectId, region, bucket, systemLabels),
-                                      Collections.unmodifiableMap(properties)
-        ));
+        new DataprocRuntimeJobManager(
+          new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(), getRootUrl(conf), projectId,
+                                  region, bucket, systemLabels),
+          Collections.unmodifiableMap(properties), context.getCDAPVersionInfo()));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
@@ -295,7 +293,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   @Nullable
-  protected VersionInfo extractVersion(String imageVersion) {
+  protected DataprocImageVersion extractVersion(String imageVersion) {
     try {
       // Test simple version numbers (e.g. 1.3 1.5 2.0)
       Matcher simpleVersionMatcher = SIMPLE_VERSION_PATTERN.matcher(imageVersion);
