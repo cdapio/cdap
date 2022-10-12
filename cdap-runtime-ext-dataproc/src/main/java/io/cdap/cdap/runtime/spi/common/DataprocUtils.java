@@ -129,7 +129,7 @@ public final class DataprocUtils {
    * Removes prefix gs:// and returns bucket name
    */
   public static String getBucketName(String bucket) {
-    if (bucket.startsWith(GS_PREFIX)) {
+    if (bucket != null && bucket.startsWith(GS_PREFIX)) {
       return bucket.substring(GS_PREFIX.length());
     }
     return bucket;
