@@ -36,7 +36,7 @@ public class ScheduleDetail {
 
   private final String namespace;
   private final String application;
-  private final String applicationVersion;
+  private final transient String applicationVersion;
   private final String name;
   private final String description;
   private final ScheduleProgramInfo program;
