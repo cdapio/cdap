@@ -124,6 +124,15 @@ public final class SparkPackageUtils {
 
   private static Map<String, String> sparkEnv;
 
+  // Hacky function to override spark home instead of passing it as an env variable.
+  private static String getSparkHome() {
+    String sparkHome = System.getenv(SPARK_HOME);
+    if (sparkHome == null) {
+      return "/usr/lib/spark/";
+    }
+    return sparkHome;
+  }
+
   /**
    * Returns the set of jar files for the spark library.
    */
@@ -138,7 +147,8 @@ public final class SparkPackageUtils {
     String sparkLibrary = System.getenv(SPARK_LIBRARY);
 
     // In future, we could have SPARK1 and SPARK2 home.
-    String sparkHome = System.getenv(SPARK_HOME);
+    String sparkHome = getSparkHome();
+
     if (sparkLibrary == null && sparkHome == null) {
       // If both SPARK_LIBRARY and SPARK_HOME are not set, it should be in standalone mode, in which
       // Spark classes are in the classloader of this class, which is loaded via the program runtime provider extension.
@@ -169,7 +179,7 @@ public final class SparkPackageUtils {
 
     archives = new LinkedHashSet<>();
     String archivesPath = System.getenv(PYSPARK_ARCHIVES_PATH);
-    String sparkHome = System.getenv(SPARK_HOME);
+    String sparkHome = getSparkHome();
 
     if (sparkHome == null && archivesPath == null) {
       LOG.warn("Failed to determine location of PySpark libraries. Running PySpark program might fail. " +
@@ -326,7 +336,7 @@ public final class SparkPackageUtils {
       return sparkEnv;
     }
 
-    Map<String, String> env = new LinkedHashMap<>(loadSparkEnv(System.getenv(SPARK_HOME)));
+    Map<String, String> env = new LinkedHashMap<>(loadSparkEnv(getSparkHome()));
     env.putAll(System.getenv());
 
     // Overwrite the system environments with the one set up by the startup script in functions.sh
