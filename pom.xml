@@ -201,6 +201,11 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-monitoring</artifactId>
+        <version>3.4.6</version>
+      </dependency>
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>

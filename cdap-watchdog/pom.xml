@@ -33,6 +33,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-monitoring</artifactId>
+      <version>3.4.6</version>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${project.version}</version>
