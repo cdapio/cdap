@@ -19,6 +19,7 @@ package io.cdap.cdap.metrics.collect;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.MetricValue;
@@ -52,6 +53,7 @@ public class OpenCensusMetricsCollectionService extends AggregatedMetricsCollect
       }
     });
 
+  @Inject
   public OpenCensusMetricsCollectionService(CConfiguration cConf) throws IOException {
     super(TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
     if (cConf.getBoolean(Constants.Metrics.STACKDRIVER_ENABLED, true)) {

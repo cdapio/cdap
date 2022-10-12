@@ -183,6 +183,7 @@
     <dbcp.version>2.6.0</dbcp.version>
     <jacoco.version>0.8.6</jacoco.version>
     <opencensus.version>0.31.1</opencensus.version>
+    <cloud-monitoring.version>3.4.6</cloud-monitoring.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -1819,7 +1820,13 @@
         <groupId>io.opencensus</groupId>
         <artifactId>opencensus-exporter-stats-stackdriver</artifactId>
         <version>${opencensus.version}</version>
-      </dependency>    </dependencies>
+      </dependency>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>google-cloud-monitoring</artifactId>
+        <version>${cloud-monitoring.version}</version>
+      </dependency>
+    </dependencies>
   </dependencyManagement>
 
   <build>
