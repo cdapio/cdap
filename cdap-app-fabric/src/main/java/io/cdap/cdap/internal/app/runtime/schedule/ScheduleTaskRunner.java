@@ -35,7 +35,10 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.PropertiesResolver;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -76,7 +79,7 @@ public final class ScheduleTaskRunner {
 
   public void launch(Job job) throws Exception {
     ProgramSchedule schedule = job.getSchedule();
-    ProgramId programId = schedule.getProgramId();
+    ProgramId programId = getLatestAppProgramId(schedule.getProgramId());
 
     Map<String, String> userArgs = getUserArgs(schedule, propertiesResolver);
 
@@ -92,9 +95,9 @@ public final class ScheduleTaskRunner {
 
     try {
       execute(programId, systemArgs, userArgs);
-      LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
+      LOG.info("Successfully started program {} in schedule {}.", programId, schedule.getName());
     } catch (CapabilityNotAvailableException ex) {
-      LOG.debug("Ignoring program {} in schedule {}.", schedule.getProgramId(), schedule.getName(), ex);
+      LOG.debug("Ignoring program {} in schedule {}.", programId, schedule.getName(), ex);
     }
   }
 
@@ -137,5 +140,20 @@ public final class ScheduleTaskRunner {
     } finally {
       SecurityRequestContext.setUserId(originalUserId);
     }
+  }
+
+  /**
+   * Get the ProgramId of the latest version.
+   */
+  private ProgramId getLatestAppProgramId(ProgramId programId) throws ProgramNotFoundException {
+    ApplicationMeta applicationMeta = store.getLatest(new NamespaceId(programId.getNamespace()),
+                                                      programId.getApplication());
+    if (applicationMeta == null) {
+      throw new ProgramNotFoundException(programId);
+    }
+    ApplicationId appId = new ApplicationId(programId.getNamespace(),
+                                            programId.getApplication(),
+                                            applicationMeta.getSpec().getAppVersion());
+    return new ProgramId(appId, programId.getType(), programId.getProgram());
   }
 }
