@@ -63,7 +63,9 @@ public final class DataprocUtils {
   public static final String CDAP_GCS_ROOT = "cdap-job";
   public static final String CDAP_CACHED_ARTIFACTS = "cached-artifacts";
   public static final String WORKER_CPU_PREFIX = "Up to";
-  public static final String DISABLE_GCS_CACHING = "disableGCSCaching";
+  // The property name for disabling caching of artifacts in GCS uploaded to GCS Bucket used by Dataproc.
+  // It can be overridden by profile runtime arguments (system.profile.properties.gcsCacheEnabled)
+  public static final String GCS_CACHE_ENABLED = "gcsCacheEnabled";
   public static final Path CACHE_DIR_PATH = Paths.get(System.getProperty("java.io.tmpdir"),
                                                       "dataproc.launcher.cache");
   public static final String LOCAL_CACHE_DISABLED = "disableLocalCaching";
