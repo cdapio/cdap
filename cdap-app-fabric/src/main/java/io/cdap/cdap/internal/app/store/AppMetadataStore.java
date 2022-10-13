@@ -1983,6 +1983,7 @@ public class AppMetadataStore {
     String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
     String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
     Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
+    String latest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
     ApplicationMeta meta = GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
                                          ApplicationMeta.class);
     ApplicationSpecification spec = meta.getSpec();
@@ -1991,7 +1992,7 @@ public class AppMetadataStore {
     if (creationTimeMillis == null) {
       changeDetail = null;
     } else {
-      changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis);
+      changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
     }
     return new ApplicationMeta(id, spec, changeDetail);
   }
