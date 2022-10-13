@@ -54,7 +54,7 @@ public class DataprocJobMain {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
   // Hacky way to replicate class loader used by Hadoop job.
   // Spark class loader has extra stuff that interfers with CDAP code.
-  private static final String HADOOP_JOB_CLASSPATH_URLS[] = {
+  private static final String[] HADOOP_JOB_CLASSPATH_URLS = {
     "file:/etc/hadoop/conf.empty/",
     "file:/usr/lib/hadoop/lib/curator-recipes-2.13.0.jar",
     "file:/usr/lib/hadoop/lib/jaxb-impl-2.2.3-1.jar",
@@ -437,10 +437,25 @@ public class DataprocJobMain {
       throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
     }
 
+    ArrayList<URL> haddopURLs = new ArrayList<>();
+    for (String url : HADOOP_JOB_CLASSPATH_URLS) {
+      try {
+        URL u = new URL(url);
+        haddopURLs.add(u);
+      } catch (Exception e) {
+        LOG.error("Exception while casting Hadoop job urls.", e);
+      }
+    }
+    URLClassLoader hadoopClassLoader = new URLClassLoader(
+      haddopURLs.toArray(new URL[0]),
+      ClassLoader.getSystemClassLoader().getParent());
+
     // create classpath from resources, application and twill jars
-    URL[] urls = getClasspath((URLClassLoader) cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
-                                                                 Constants.Files.APPLICATION_JAR,
-                                                                 Constants.Files.TWILL_JAR));
+    URL[] urls = getClasspath(hadoopClassLoader,
+                              (URLClassLoader) DataprocJobMain.class.getClassLoader(),
+                              Arrays.asList(Constants.Files.RESOURCES_JAR,
+                                            Constants.Files.APPLICATION_JAR,
+                                            Constants.Files.TWILL_JAR));
     LOG.error("Arjan: " + urls.length + " " + Arrays.toString(urls));
     Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
 
@@ -514,7 +529,7 @@ public class DataprocJobMain {
    * expanded.twill.jar/lib/*.jar
    * expanded.twill.jar/classes
    */
-  private static URL[] getClasspath(URLClassLoader cl, List<String> jarFiles) throws IOException {
+  private static URL[] getClasspath(URLClassLoader cl, URLClassLoader cl2, List<String> jarFiles) throws IOException {
     URL[] urls = cl.getURLs();
     List<URL> urlList = new ArrayList<>();
     for (String file : jarFiles) {
@@ -528,6 +543,7 @@ public class DataprocJobMain {
     }
 
     urlList.addAll(Arrays.asList(urls));
+    urlList.addAll(Arrays.asList(cl2.getURLs()));
     return urlList.toArray(new URL[0]);
   }
 
@@ -634,24 +650,14 @@ public class DataprocJobMain {
   private static ClassLoader createContainerClassLoader(URL[] classpath) {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
     logClassLoaderHeirarchy(DataprocJobMain.class.getClassLoader());
-    ArrayList<URL> haddopURLs = new ArrayList<>();
-    for (String url : HADOOP_JOB_CLASSPATH_URLS) {
-      try {
-        URL u = new URL(url);
-        haddopURLs.add(u);
-      } catch (Exception e) {
-        LOG.error("Exception while casting Hadoop job urls.", e);
-      }
-    }
-    URLClassLoader hadoopClassLoader = new URLClassLoader(
-      haddopURLs.toArray(new URL[0]),
-      ClassLoader.getSystemClassLoader().getParent());
-    // Set here to replicate the Hadoop env for MainClassLoader
-    Thread.currentThread().setContextClassLoader(hadoopClassLoader);
 
-    URLClassLoader classLoader = new URLClassLoader(classpath, hadoopClassLoader.getParent());
+    URLClassLoader classLoader = new URLClassLoader(
+      classpath, DataprocJobMain.class
+      .getClassLoader()
+      .getParent()
+      .getParent()
+    );
     if (containerClassLoaderName == null) {
-      LOG.error("Arjan: classloader Name is NULL!");
       return classLoader;
     }
 
@@ -660,8 +666,10 @@ public class DataprocJobMain {
       Class<? extends ClassLoader> cls = (Class<? extends ClassLoader>) classLoader.loadClass(containerClassLoaderName);
 
       // Instantiate with constructor (URL[] classpath, ClassLoader parentClassLoader)
-      LOG.error("Classpath = " + classpath + ", classloader name = " + containerClassLoaderName);
-      return cls.getConstructor(URL[].class, ClassLoader.class).newInstance(classpath, classLoader.getParent());
+      ClassLoader ret = cls.getConstructor(URL[].class, ClassLoader.class)
+        .newInstance(classpath, classLoader.getParent());
+      logClassLoaderHeirarchy(ret);
+      return ret;
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("Failed to load container class loader class " + containerClassLoaderName, e);
     } catch (NoSuchMethodException e) {

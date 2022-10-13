@@ -513,6 +513,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
     properties.put(CDAP_RUNTIME_RUNID, runId);
     properties.put("spark.submit.deployMode", "cluster");
+    properties.put("spark.yarn.maxAppAttempts", "1");
+    properties.put("spark.yarn.am.waitTime", "600000");
     // Following line isn't passing the Env variable to the driver.
     // properties.put("spark.yarn.appMasterEnv.SPARM_HOME", "/usr/lib/spark/");
     SparkJob.Builder hadoopJobBuilder = SparkJob.newBuilder()
