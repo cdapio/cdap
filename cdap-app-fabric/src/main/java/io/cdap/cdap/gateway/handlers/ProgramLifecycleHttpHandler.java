@@ -35,6 +35,7 @@ import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -63,6 +64,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.BatchProgram;
@@ -210,7 +212,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    ProgramId programId = new ApplicationId(namespaceId, appId, appVersion).program(ProgramType.MAPREDUCE, mapreduceId);
     ProgramRunId run = programId.run(runId);
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
@@ -251,7 +254,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") String appId,
                         @PathParam("program-type") String type,
                         @PathParam("program-id") String programId) throws Exception {
-    getStatus(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId);
+    getStatus(request, responder, namespaceId, appId,
+              getLatestAppVersion(new NamespaceId(namespaceId), appId), type, programId);
   }
 
   /**
@@ -260,11 +264,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/versions/{version-id}/{program-type}/{program-id}/status")
   public void getStatus(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") String appId,
-                               @PathParam("version-id") String versionId,
-                               @PathParam("program-type") String type,
-                               @PathParam("program-id") String programId) throws Exception {
+                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") String appId,
+                        @PathParam("version-id") String versionId,
+                        @PathParam("program-type") String type,
+                        @PathParam("program-id") String programId) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (SCHEDULES.equals(type)) {
       JsonObject json = new JsonObject();
@@ -297,9 +301,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("program-type") String type,
                                   @PathParam("program-id") String programId,
                                   @PathParam("run-id") String runId,
-                                  @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
+                                  @QueryParam("graceful") String gracefulShutdownSecs,
+                                  @QueryParam("version") String version) throws Exception {
     ProgramType programType = getProgramType(type);
-    ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
+    if (version == null) {
+      version = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    }
+    ProgramId program = new ApplicationId(namespaceId, appId, version).program(programType, programId);
+
     Integer gracefulShutdownSecsInt;
     try {
       gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
@@ -339,6 +348,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Perform an action on the latest version of a program.
+   */
   @POST
   @Path("/apps/{app-id}/{program-type}/{program-id}/{action}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -348,9 +360,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("program-type") String type,
                             @PathParam("program-id") String programId,
                             @PathParam("action") String action) throws Exception {
-    doPerformAction(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId, action);
+    doPerformAction(request, responder, namespaceId, appId,
+                    getLatestAppVersion(new NamespaceId(namespaceId), appId), type, programId, action);
   }
 
+  /**
+   * Perform an action on specific {@code appVersion} of a program.
+   */
   @POST
   @Path("/apps/{app-id}/versions/{app-version}/{program-type}/{program-id}/{action}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -364,6 +380,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doPerformAction(request, responder, namespaceId, appId, appVersion, type, programId, action);
   }
 
+  /**
+   * Perform an action on specific {@code appVersion} of a program.
+   * @param namespaceId namespace of the program
+   * @param appId appId of the program
+   * @param appVersion app version of the program
+   * @param type type of the program
+   * @param programId programId of the program
+   * @param action action to be performed. The value can be one of enable/disable/suspend/resume for schedule
+   * and one of start/stop/debug for other program types. "debug" can only be applied on type
+   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}
+   * @throws NotFoundException if action is an unknown action
+   * @throws BadRequestException if type is schedule and action is not any of enable/disable/suspend/resume
+   * @throws BadRequestException if action is "start" or "debug" and appVersion is not the latest version
+   * @throws NotImplementedException if action is debug and type is not {@link ProgramType#SERVICE} or
+   * {@link ProgramType#WORKER}
+   */
   private void doPerformAction(FullHttpRequest request, HttpResponder responder, String namespaceId, String appId,
                                String appVersion, String type, String programId, String action) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
@@ -384,12 +416,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = getProgramType(type);
     ProgramId program = applicationId.program(programType, programId);
     Map<String, String> args = decodeArguments(request);
+    String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
       case "start":
+        if (!appVersion.equals(latestVersion)) {
+          throw new BadRequestException("start action is only allowed on the latest program version");
+        }
         lifecycleService.run(program, args, false);
         break;
       case "debug":
+        if (!appVersion.equals(latestVersion)) {
+          throw new BadRequestException("debug action is only allowed on the latest program version");
+        }
         if (!isDebugAllowed(programType)) {
           throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
                                                           programType));
@@ -409,7 +448,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Restarts programs which were killed between startTimeSeconds and endTimeSeconds.
    *
    * @param startTimeSeconds lower bound in millis of the stoppage time for programs (inclusive)
-   * @param endTimeSeconds upper bound in millis of the stoppage time for programs (exclusive)
+   * @param endTimeSeconds   upper bound in millis of the stoppage time for programs (exclusive)
    */
   @PUT
   @Path("apps/{app-id}/versions/{app-version}/restart-programs")
@@ -419,6 +458,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-version") String appVersion,
                                      @QueryParam("start-time-seconds") long startTimeSeconds,
                                      @QueryParam("end-time-seconds") long endTimeSeconds) throws Exception {
+    String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    if (!appVersion.equals(latestVersion)) {
+      throw new BadRequestException("start action is only allowed on the latest program version");
+    }
     lifecycleService.restart(new ApplicationId(namespaceId, appId, appVersion), startTimeSeconds, endTimeSeconds);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -439,7 +482,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit)
     throws Exception {
-    programHistory(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type,
+    programHistory(request, responder, namespaceId, appName,
+                   getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
                    programName, status, startTs, endTs, resultLimit);
   }
 
@@ -480,12 +524,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}")
   public void programRunRecord(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-name") String appName,
-                             @PathParam("program-type") String type,
-                             @PathParam("program-name") String programName,
-                             @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
-    programRunRecord(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName, runid);
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-name") String appName,
+                               @PathParam("program-type") String type,
+                               @PathParam("program-name") String programName,
+                               @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
+    programRunRecord(request, responder, namespaceId, appName,
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), type, programName, runid);
   }
 
   /**
@@ -522,7 +567,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
-    ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
+    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     getProgramIdRuntimeArgs(programId, responder);
   }
 
@@ -533,12 +579,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void saveProgramRuntimeArgs(FullHttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-name") String appName,
-                                    @PathParam("program-type") String type,
-                                    @PathParam("program-name") String programName) throws Exception {
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("program-type") String type,
+                                     @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
-    ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
+    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     saveProgramIdRuntimeArgs(programId, request, responder);
   }
 
@@ -570,6 +617,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-version") String appVersion,
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName) throws Exception {
+    String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
+    if (!appVersion.equals(latestVersion)) {
+      throw new BadRequestException("Runtime arguments can only be changed on the latest program version");
+    }
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     saveProgramIdRuntimeArgs(programId, request, responder);
@@ -591,7 +642,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                    @PathParam("namespace-id") String namespaceId, @PathParam("app-name") String appName,
                                    @PathParam("program-type") String type,
                                    @PathParam("program-name") String programName) throws Exception {
-    programSpecification(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+    programSpecification(request, responder, namespaceId, appName,
+                         getLatestAppVersion(new NamespaceId(namespaceId), appName), type, programName);
   }
 
 
@@ -614,8 +666,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Update schedules which were suspended between startTimeMillis and endTimeMillis
+   *
    * @param startTimeMillis lower bound in millis of the update time for schedules (inclusive)
-   * @param endTimeMillis upper bound in millis of the update time for schedules (exclusive)
+   * @param endTimeMillis   upper bound in millis of the update time for schedules (exclusive)
    */
   @PUT
   @Path("schedules/re-enable")
@@ -630,17 +683,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Get schedules containing {@link ProgramStatusTrigger} filtered by triggering program, and optionally by
    * triggering program statuses or schedule status
-   *  @param triggerNamespaceId namespace of the triggering program in {@link ProgramStatusTrigger}
-   * @param triggerAppName application name of the triggering program in {@link ProgramStatusTrigger}
-   * @param triggerAppVersion application version of the triggering program in {@link ProgramStatusTrigger}
-   * @param triggerProgramType program type of the triggering program in {@link ProgramStatusTrigger}
-   * @param triggerProgramName program name of the triggering program in {@link ProgramStatusTrigger}
+   *
+   * @param triggerNamespaceId     namespace of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerAppName         application name of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerAppVersion      application version of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerProgramType     program type of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerProgramName     program name of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramStatuses comma separated {@link ProgramStatus} in {@link ProgramStatusTrigger}.
    *                               Schedules with {@link ProgramStatusTrigger} triggered by none of the
    *                               {@link ProgramStatus} in triggerProgramStatuses will be filtered out.
    *                               If not specified, schedules will be returned regardless of triggering program status.
-   * @param scheduleStatus status of the schedule. Can only be one of "SCHEDULED" or "SUSPENDED".
-   *                       If specified, only schedules with matching status will be returned.
+   * @param scheduleStatus         status of the schedule. Can only be one of "SCHEDULED" or "SUSPENDED".
+   *                               If specified, only schedules with matching status will be returned.
    */
   @GET
   @Path("schedules/trigger-type/program-status")
@@ -648,7 +702,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                         @QueryParam("trigger-namespace-id") String triggerNamespaceId,
                                         @QueryParam("trigger-app-name") String triggerAppName,
                                         @QueryParam("trigger-app-version") @DefaultValue(ApplicationId.DEFAULT_VERSION)
-                                            String triggerAppVersion,
+                                          String triggerAppVersion,
                                         @QueryParam("trigger-program-type") String triggerProgramType,
                                         @QueryParam("trigger-program-name") String triggerProgramName,
                                         @QueryParam("trigger-program-statuses") String triggerProgramStatuses,
@@ -710,7 +764,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName) throws Exception {
-    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doGetSchedule(responder, namespaceId, appName,
+                  getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @GET
@@ -742,17 +797,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus) throws Exception {
     getAllSchedules(request, responder, namespaceId, appName,
-                    ApplicationId.DEFAULT_VERSION, triggerType, scheduleStatus);
+                    getLatestAppVersion(new NamespaceId(namespaceId), appName), triggerType, scheduleStatus);
   }
 
   /**
    * Get schedules in a given application, optionally filtered by the given
    * {@link io.cdap.cdap.proto.ProtoTrigger.Type}.
-   * @param namespaceId namespace of the application to get schedules from
-   * @param appName name of the application to get schedules from
-   * @param appVersion version of the application to get schedules from
-   * @param triggerType trigger type of returned schedules. If not specified, all schedules
-*                    are returned regardless of trigger type
+   *
+   * @param namespaceId    namespace of the application to get schedules from
+   * @param appName        name of the application to get schedules from
+   * @param appVersion     version of the application to get schedules from
+   * @param triggerType    trigger type of returned schedules. If not specified, all schedules
+   *                       are returned regardless of trigger type
    * @param scheduleStatus the status of the schedule, must be values in {@link ProgramScheduleStatus}.
    */
   @GET
@@ -778,7 +834,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("program-name") String program,
                                   @QueryParam("trigger-type") String triggerType,
                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    getProgramSchedules(request, responder, namespace, application, ApplicationId.DEFAULT_VERSION,
+    getProgramSchedules(request, responder, namespace, application,
+                        getLatestAppVersion(new NamespaceId(namespace), application),
                         type, program, triggerType, scheduleStatus);
   }
 
@@ -863,7 +920,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                           @PathParam("program-type") String type,
                                           @PathParam("program-name") String program) throws Exception {
     ProgramType programType = getProgramType(type);
-    handleScheduleRunTime(responder, new NamespaceId(namespaceId).app(appId).program(programType, program), true);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    handleScheduleRunTime(responder,
+                          new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
+                          true);
   }
 
   /**
@@ -877,7 +937,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("program-type") String type,
                                       @PathParam("program-name") String program) throws Exception {
     ProgramType programType = getProgramType(type);
-    handleScheduleRunTime(responder, new NamespaceId(namespaceId).app(appId).program(programType, program), false);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    handleScheduleRunTime(responder,
+                          new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
+                          false);
   }
 
   private void handleScheduleRunTime(HttpResponder responder, ProgramId programId,
@@ -950,15 +1013,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Fetches scheduled run times for a set of programs.
    *
    * @param namespace namespace of the programs
-   * @param programs the list of programs to fetch scheduled run times
-   * @param previous {@code true} to get the previous scheduled times; {@code false} to get the next scheduled times
+   * @param programs  the list of programs to fetch scheduled run times
+   * @param previous  {@code true} to get the previous scheduled times; {@code false} to get the next scheduled times
    * @return a list of {@link BatchProgramSchedule} containing the result
    * @throws SchedulerException if failed to fetch schedules
    */
   private List<BatchProgramSchedule> batchRunTimes(String namespace, Collection<? extends BatchProgram> programs,
                                                    boolean previous) throws Exception {
     List<ProgramId> programIds = programs.stream()
-      .map(p -> new ProgramId(namespace, p.getAppId(), p.getProgramType(), p.getProgramId()))
+      .map(p -> batchProgramToProgramId(namespace, p))
       .collect(Collectors.toList());
 
     Set<ApplicationId> appIds = programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet());
@@ -990,7 +1053,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of {@link ScheduledRuntime} for the given program.
    *
    * @param programId the program to fetch schedules for
-   * @param previous {@code true} to get the previous scheduled times; {@code false} to get the next scheduled times
+   * @param previous  {@code true} to get the previous scheduled times; {@code false} to get the next scheduled times
    * @return a list of {@link ScheduledRuntime}
    * @throws SchedulerException if failed to fetch the schedule
    */
@@ -1015,7 +1078,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName)
     throws Exception {
-    doAddSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doAddSchedule(request, responder, namespaceId, appName,
+                  getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @PUT
@@ -1072,7 +1136,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doUpdateSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doUpdateSchedule(request, responder, namespaceId, appName,
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @POST
@@ -1133,7 +1198,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doDeleteSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doDeleteSchedule(responder, namespaceId, appName,
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), scheduleName);
   }
 
   @DELETE
@@ -1168,8 +1234,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName,
                                      @PathParam("run-id") String runId) throws Exception {
-    updateLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName,
-                    runId);
+    updateLogLevels(request, responder, namespace, appName,
+                    getLatestAppVersion(new NamespaceId(namespace), appName), type, programName, runId);
   }
 
   /**
@@ -1203,8 +1269,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName,
                                     @PathParam("run-id") String runId) throws Exception {
-    resetLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName,
-                   runId);
+    resetLogLevels(request, responder, namespace, appName,
+                   getLatestAppVersion(new NamespaceId(namespace), appName), type, programName, runId);
   }
 
   /**
@@ -1254,10 +1320,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-
     List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     List<ProgramId> programs = batchPrograms.stream()
-      .map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
+      .map(p -> batchProgramToProgramId(namespaceId, p))
       .collect(Collectors.toList());
 
     Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programs);
@@ -1319,8 +1384,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     List<BatchProgramResult> issuedStops = new ArrayList<>(programs.size());
     for (final BatchProgram program : programs) {
-      ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
-                                         program.getProgramId());
+      ApplicationId applicationId = new ApplicationId(namespaceId, program.getAppId(),
+                                                      getLatestAppVersion(new NamespaceId(namespaceId),
+                                                                          program.getAppId()));
+      ProgramId programId = new ProgramId(applicationId, program.getProgramType(),
+                                          program.getProgramId());
       try {
         Collection<ProgramRunId> stoppedRuns = lifecycleService.issueStop(programId, null, gracefulShutdownSecsInt);
         for (ProgramRunId stoppedRun : stoppedRuns) {
@@ -1373,8 +1441,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     List<BatchProgramResult> output = new ArrayList<>(programs.size());
     for (BatchProgramStart program : programs) {
-      ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
-                                          program.getProgramId());
+      ApplicationId applicationId = new ApplicationId(namespaceId, program.getAppId(),
+                                                      getLatestAppVersion(new NamespaceId(namespaceId),
+                                                                          program.getAppId()));
+      ProgramId programId = new ProgramId(applicationId, program.getProgramType(), program.getProgramId());
       try {
         String runId = lifecycleService.run(programId, program.getRuntimeargs(), false).getId();
         output.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, runId));
@@ -1438,13 +1508,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     for (BatchRunnable runnable : runnables) {
       // cant get instances for things that are not flows, services, or workers
       if (!canHaveInstances(runnable.getProgramType())) {
-        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
-                   String.format("Program type '%s' is not a valid program type to get instances",
-                     runnable.getProgramType().getPrettyName())));
+        output.add(
+          new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
+                                     String.format("Program type '%s' is not a valid program type to get instances",
+                                                   runnable.getProgramType().getPrettyName())));
         continue;
       }
 
       ApplicationId appId = new ApplicationId(namespaceId, runnable.getAppId());
+      try {
+        appId = new ApplicationId(namespaceId, runnable.getAppId(),
+                                                getLatestAppVersion(new NamespaceId(namespaceId), runnable.getAppId()));
+      } catch (ApplicationNotFoundException e) {
+        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
+                                              String.format("App: %s not found", appId)));
+        continue;
+      }
 
       // populate spec cache if this is the first time we've seen the appid.
       if (!appSpecs.containsKey(appId)) {
@@ -1452,12 +1531,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       ApplicationSpecification spec = appSpecs.get(appId);
-      if (spec == null) {
-        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
-          String.format("App: %s not found", appId)));
-        continue;
-      }
-
       ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
       output.add(getProgramInstances(runnable, spec, programId));
     }
@@ -1507,10 +1580,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                     "supported is 100", programs.size()));
     }
 
-    List<ProgramId> programIds =
-      programs.stream().map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
-                                                          batchProgram.getProgramType(),
-                                                          batchProgram.getProgramId())).collect(Collectors.toList());
+    List<ProgramId> programIds = programs.stream()
+      .map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
+
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
     for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
       ProgramId programId = runCountResult.getProgramId();
@@ -1569,9 +1641,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     List<ProgramId> programIds =
-      programs.stream().map(batchProgram -> new ProgramId(namespaceId, batchProgram.getAppId(),
-                                                          batchProgram.getProgramType(),
-                                                          batchProgram.getProgramId())).collect(Collectors.toList());
+      programs.stream().map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram))
+        .collect(Collectors.toList());
 
     List<BatchProgramHistory> response = new ArrayList<>(programs.size());
     List<ProgramHistory> result = lifecycleService.getRunRecords(programIds, ProgramRunStatus.ALL, 0,
@@ -1608,7 +1679,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-name") String appName,
                                  @PathParam("program-type") String type,
                                  @PathParam("program-name") String programName) throws Exception {
-    getProgramRunCount(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+    getProgramRunCount(request, responder, namespaceId, appName,
+                       getLatestAppVersion(new NamespaceId(namespaceId), appName), type, programName);
   }
 
   /**
@@ -1693,7 +1765,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appId,
                                  @PathParam("worker-id") String workerId) throws Exception {
     try {
-      ProgramId programId = validateAndGetNamespace(namespaceId).app(appId).worker(workerId);
+      ProgramId programId = validateAndGetNamespace(namespaceId)
+        .app(appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
+        .worker(workerId);
       lifecycleService.ensureProgramExists(programId);
       int count = store.getWorkerInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Instances(count)));
@@ -1719,7 +1793,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("worker-id") String workerId) throws Exception {
     int instances = getInstances(request);
     try {
-      lifecycleService.setInstances(new ProgramId(namespaceId, appId, ProgramType.WORKER, workerId), instances);
+      lifecycleService.setInstances(new ApplicationId(namespaceId, appId,
+                                                      getLatestAppVersion(new NamespaceId(namespaceId), appId))
+                                      .program(ProgramType.WORKER, workerId), instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1736,9 +1812,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @SuppressWarnings("unused")
   public void liveInfo(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                        @PathParam("app-id") String appId, @PathParam("program-category") String programCategory,
-                       @PathParam("program-id") String programId) throws BadRequestException {
+                       @PathParam("program-id") String programId)
+    throws BadRequestException, ApplicationNotFoundException {
     ProgramType type = getProgramType(programCategory);
-    ProgramId program = new ProgramId(namespaceId, appId, type, programId);
+    ProgramId program = new ApplicationId(namespaceId, appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
+      .program(type, programId);
     getLiveInfo(responder, program, runtimeService);
   }
 
@@ -1761,7 +1839,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId) throws Exception {
     try {
-      ProgramId programId = validateAndGetNamespace(namespaceId).app(appId).service(serviceId);
+      ProgramId programId = validateAndGetNamespace(namespaceId)
+        .app(appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
+        .service(serviceId);
       lifecycleService.ensureProgramExists(programId);
       int instances = store.getServiceInstances(programId);
       responder.sendJson(HttpResponseStatus.OK,
@@ -1782,7 +1862,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("service-type") String serviceType,
                                      @PathParam("program-name") String programName) throws Exception {
     getServiceAvailability(request, responder, namespaceId, appName,
-                           ApplicationId.DEFAULT_VERSION, serviceType, programName);
+                           getLatestAppVersion(new NamespaceId(namespaceId), appName), serviceType, programName);
   }
 
   /**
@@ -1834,7 +1914,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId) throws Exception {
     try {
-      ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.SERVICE, serviceId);
+      ProgramId programId = new ApplicationId(namespaceId, appId,
+                                              getLatestAppVersion(new NamespaceId(namespaceId), appId))
+        .program(ProgramType.SERVICE, serviceId);
       Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
 
       int instances = getInstances(request);
@@ -2008,7 +2090,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Parses the give program type into {@link ProgramType} object.
    *
    * @param programType the program type to parse.
-   *
    * @throws BadRequestException if the given program type is not a valid {@link ProgramType}.
    */
   private ProgramType getProgramType(String programType) throws BadRequestException {
@@ -2024,5 +2105,35 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private boolean isTetheredRunRecord(RunRecord runRecord) {
     return runRecord.getPeerName() != null;
+  }
+
+  /**
+   * @param namespaceId namespace Id
+   * @param appId       app Id
+   * @return latest app version
+   */
+  private String getLatestAppVersion(NamespaceId namespaceId, String appId) throws ApplicationNotFoundException {
+    ApplicationMeta latestApplicationMeta = store.getLatest(namespaceId, appId);
+    if (latestApplicationMeta == null) {
+      throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
+    }
+    return latestApplicationMeta.getSpec().getAppVersion();
+  }
+
+  /**
+   * Convert BatchProgram to ProgramId with the latest App version.
+   * Since a programId is needed in BatchProgramResult, default version will be used here if application
+   * can not be found.
+   */
+  private ProgramId batchProgramToProgramId(String namespace, BatchProgram batchProgram) {
+    try {
+      ApplicationId applicationId = new ApplicationId(namespace, batchProgram.getAppId(),
+                                                      getLatestAppVersion(new NamespaceId(namespace),
+                                                                          batchProgram.getAppId()));
+      return new ProgramId(applicationId, batchProgram.getProgramType(), batchProgram.getProgramId());
+    } catch (ApplicationNotFoundException e) {
+      return new ProgramId(namespace, batchProgram.getAppId(), batchProgram.getProgramType(),
+                           batchProgram.getProgramId());
+    }
   }
 }

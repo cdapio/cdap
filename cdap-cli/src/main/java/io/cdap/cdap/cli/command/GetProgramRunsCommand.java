@@ -28,6 +28,7 @@ import io.cdap.cdap.cli.util.RowMaker;
 import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.common.cli.Arguments;
 
@@ -52,6 +53,8 @@ public class GetProgramRunsCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
+    String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
+    String appVersion = version == null ? ApplicationId.DEFAULT_VERSION : version;
     long currentTime = System.currentTimeMillis();
 
     long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
@@ -64,8 +67,8 @@ public class GetProgramRunsCommand extends AbstractCommand {
         throw new CommandInputError(this);
       }
       String programName = programIdParts[1];
-      ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(),
-                                                                               programName);
+      ProgramId programId = cliConfig.getCurrentNamespace().app(appId, appVersion)
+        .program(elementType.getProgramType(), programName);
       if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
         records = programClient.getProgramRuns(programId, arguments.get(ArgumentName.RUN_STATUS.toString()),
                                                startTime, endTime, limit);
@@ -92,8 +95,8 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s runs <%s> [<%s>] [<%s>] [<%s>] [<%s>]", elementType.getShortName(),
-                         elementType.getArgumentName(), ArgumentName.RUN_STATUS,
+    return String.format("get %s runs <%s> [version <%s>] [<%s>] [<%s>] [<%s>] [<%s>]", elementType.getShortName(),
+                         elementType.getArgumentName(), ArgumentName.APP_VERSION, ArgumentName.RUN_STATUS,
                          ArgumentName.START_TIME, ArgumentName.END_TIME, ArgumentName.LIMIT);
   }
 

@@ -126,6 +126,7 @@ public abstract class CLITestBase {
   private static final ApplicationId FAKE_APP_ID_V_1 = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT);
   private static final ArtifactId FAKE_PLUGIN_ID = NamespaceId.DEFAULT.artifact(FakePlugin.NAME, V1);
   private static final ProgramId FAKE_WORKFLOW_ID = FAKE_APP_ID.workflow(FakeWorkflow.NAME);
+  private static final ProgramId FAKE_WORKFLOW_ID_V_1 = FAKE_APP_ID_V_1.workflow(FakeWorkflow.NAME);
   private static final ProgramId FAKE_SPARK_ID = FAKE_APP_ID.spark(FakeSpark.NAME);
   private static final ServiceId PREFIXED_ECHO_HANDLER_ID = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
   private static final DatasetId FAKE_DS_ID = NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME);
@@ -272,12 +273,13 @@ public abstract class CLITestBase {
   @Test
   public void testProgram() throws Exception {
     ProgramClient programClient = getProgramClient();
-    final ProgramId serviceId = FAKE_APP_ID.service(FakeApp.SERVICES.get(0));
+    final ProgramId serviceId = FAKE_APP_ID_V_1.service(FakeApp.SERVICES.get(0));
 
     String qualifiedServiceId = FakeApp.NAME + "." + serviceId.getProgram();
-    testCommandOutputContains("start service " + qualifiedServiceId, "Successfully started service");
+    String versionedQualifiedSparkId = String.format("%s version %s", qualifiedServiceId, V1_SNAPSHOT);
+    testCommandOutputContains("start service " + versionedQualifiedSparkId, "Successfully started service");
     assertProgramStatus(programClient, serviceId, "RUNNING");
-    testCommandOutputContains("stop service " + qualifiedServiceId, "Successfully stopped service");
+    testCommandOutputContains("stop service " + versionedQualifiedSparkId, "Successfully stopped service");
     assertProgramStatus(programClient, serviceId, "STOPPED");
     testCommandOutputContains("get service status " + qualifiedServiceId, "STOPPED");
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -288,8 +290,9 @@ public abstract class CLITestBase {
         return output != null && output.size() != 0;
       }
     }, 5, TimeUnit.SECONDS);
-    testCommandOutputContains("get service runs " + qualifiedServiceId, "KILLED");
-    testCommandOutputContains("get service live " + qualifiedServiceId, serviceId.getProgram());
+    // this does not take a version
+    testCommandOutputContains("get service runs " + versionedQualifiedSparkId, "KILLED");
+    testCommandOutputContains("get service live " + versionedQualifiedSparkId, serviceId.getProgram());
   }
 
   @Test
@@ -452,42 +455,28 @@ public abstract class CLITestBase {
     String serviceV1Argument = String.format("%s version %s", serviceName, V1_SNAPSHOT);
     try {
       // Test service commands with no optional version argument
-      testCommandOutputContains("start service " + serviceName, "Successfully started service");
-      assertProgramStatus(programClient, service, ProgramStatus.RUNNING.name());
+      testCommandOutputContains("start service " + serviceName,
+                                "start action is only allowed on the latest program version");
+      assertProgramStatus(programClient, service, ProgramStatus.STOPPED.name());
       testCommandOutputContains("get endpoints service " + serviceName, "POST");
       testCommandOutputContains("get endpoints service " + serviceName, "/echo");
-      testCommandOutputContains("check service availability " + serviceName, "Service is available");
-      testCommandOutputContains("call service " + serviceName
-                                  + " POST /echo body \"testBody\"", ":testBody");
-      testCommandOutputContains("stop service " + serviceName, "Successfully stopped service");
       assertProgramStatus(programClient, service, ProgramStatus.STOPPED.name());
       // Test service commands with version argument when two versions of the service are running
-      testCommandOutputContains("start service " + serviceArgument, "Successfully started service");
+      testCommandOutputContains("start service " + serviceArgument,
+                                "start action is only allowed on the latest program version");
       testCommandOutputContains("start service " + serviceV1Argument, "Successfully started service");
-      assertProgramStatus(programClient, service, ProgramStatus.RUNNING.name());
+      assertProgramStatus(programClient, service, ProgramStatus.STOPPED.name());
       assertProgramStatus(programClient, serviceV1, ProgramStatus.RUNNING.name());
-      testCommandOutputContains("get endpoints service " + serviceArgument, "POST");
       testCommandOutputContains("get endpoints service " + serviceV1Argument, "POST");
-      testCommandOutputContains("get endpoints service " + serviceArgument, "/echo");
       testCommandOutputContains("get endpoints service " + serviceV1Argument, "/echo");
-      testCommandOutputContains("check service availability " + serviceArgument, "Service is available");
       testCommandOutputContains("check service availability " + serviceV1Argument, "Service is available");
-      testCommandOutputContains("call service " + serviceArgument
-                                  + " POST /echo body \"testBody\"", ":testBody");
       testCommandOutputContains("call service " + serviceV1Argument
                                   + " POST /echo body \"testBody\"", ":testBody");
-      testCommandOutputContains("get service logs " + serviceName, "Starting HTTP server for Service " + service);
+      testCommandOutputContains("get service logs " + serviceName, "Starting HTTP server for Service " + serviceV1);
     } finally {
       // Stop all running services
       programClient.stopAll(NamespaceId.DEFAULT);
     }
-  }
-
-  @Test
-  public void testRuntimeArgs() throws Exception {
-    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
-    ServiceId service = NamespaceId.DEFAULT.app(FakeApp.NAME).service(PrefixedEchoHandler.NAME);
-    testServiceRuntimeArgs(qualifiedServiceId, service);
   }
 
   @Test
@@ -528,14 +517,15 @@ public abstract class CLITestBase {
     ProgramClient programClient = getProgramClient();
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
-    ProgramId spark = NamespaceId.DEFAULT.app(FakeApp.NAME).spark(sparkId);
+    String versionedQualifiedSparkId = String.format("%s version %s", qualifiedSparkId, V1_SNAPSHOT);
+    ProgramId spark = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT).spark(sparkId);
 
     testCommandOutputContains("list spark", sparkId);
-    testCommandOutputContains("start spark " + qualifiedSparkId, "Successfully started Spark");
+    testCommandOutputContains("start spark " + versionedQualifiedSparkId, "Successfully started Spark");
     assertProgramStatus(programClient, spark, "RUNNING");
     assertProgramStatus(programClient, spark, "STOPPED");
-    testCommandOutputContains("get spark status " + qualifiedSparkId, "STOPPED");
-    testCommandOutputContains("get spark runs " + qualifiedSparkId, "COMPLETED");
+    testCommandOutputContains("get spark status " + versionedQualifiedSparkId, "STOPPED");
+    testCommandOutputContains("get spark runs " + versionedQualifiedSparkId, "COMPLETED");
     testCommandOutputContains("get spark logs " + qualifiedSparkId, "HelloFakeSpark");
   }
 
@@ -672,22 +662,19 @@ public abstract class CLITestBase {
   public void testWorkflows() throws Exception {
     ProgramClient programClient = getProgramClient();
     String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
+    String versionedWorkflow = String.format("%s version %s", workflow, V1_SNAPSHOT);
     File doneFile = TMP_FOLDER.newFile("fake.done");
     Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
     String runtimeArgsKV = SPACE_EQUALS_JOINER.join(runtimeArgs);
-    testCommandOutputContains("start workflow " + workflow + " '" + runtimeArgsKV + "'",
+    testCommandOutputContains("start workflow " + versionedWorkflow + " '" + runtimeArgsKV + "'",
                               "Successfully started workflow");
 
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return programClient.getProgramRuns(FAKE_WORKFLOW_ID, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
-                                            Integer.MAX_VALUE).size();
-      }
-    }, 180, TimeUnit.SECONDS);
+    Tasks.waitFor(1, () ->
+      programClient.getProgramRuns(FAKE_WORKFLOW_ID_V_1, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
+                                   Integer.MAX_VALUE).size(), 180, TimeUnit.SECONDS);
 
     testCommandOutputContains("cli render as csv", "Now rendering as CSV");
-    String commandOutput = getCommandOutput("get workflow runs " + workflow);
+    String commandOutput = getCommandOutput("get workflow runs " + versionedWorkflow);
     String[] lines = commandOutput.split("\\r?\\n");
     Assert.assertEquals(2, lines.length);
     String[] split = lines[1].split(",");
@@ -721,21 +708,26 @@ public abstract class CLITestBase {
     testCommandOutputContains("get workflow logs " + workflow, FakeWorkflow.FAKE_LOG);
 
     // Test schedule
+    // Need to specify version
     testCommandOutputContains(
-      String.format("add time schedule %s for workflow %s at \"0 4 * * *\"", FakeWorkflow.SCHEDULE, workflow),
+      String.format("add time schedule %s for workflow %s version %s at \"0 4 * * *\"",
+                    FakeWorkflow.SCHEDULE, workflow, V1_SNAPSHOT),
       String.format("Successfully added schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
+
+    // Get schedules without specifying version will get the latest version
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "0 4 * * *");
 
     testCommandOutputContains(
-      String.format("update time schedule %s for workflow %s description \"testdesc\" at \"* * * * *\" " +
-                      "concurrency 4 properties \"key=value\"", FakeWorkflow.SCHEDULE, workflow),
+      String.format("update time schedule %s for workflow %s version %s description \"testdesc\" at \"* * * * *\" " +
+                      "concurrency 4 properties \"key=value\"", FakeWorkflow.SCHEDULE, workflow, V1_SNAPSHOT),
       String.format("Successfully updated schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "* * * * *");
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "testdesc");
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "{\"key\":\"value\"}");
 
+    // Specify version when deleting, otherwise deleting the latest version
     testCommandOutputContains(
-      String.format("delete schedule %s.%s", FakeApp.NAME, FakeWorkflow.SCHEDULE),
+      String.format("delete schedule %s.%s version %s", FakeApp.NAME, FakeWorkflow.SCHEDULE, V1_SNAPSHOT),
       String.format("Successfully deleted schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
     testCommandOutputNotContains(String.format("get workflow schedules %s", workflow), "* * * * *");
     testCommandOutputNotContains(String.format("get workflow schedules %s", workflow), "testdesc");
