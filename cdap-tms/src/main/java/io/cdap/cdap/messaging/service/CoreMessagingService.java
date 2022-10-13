@@ -34,6 +34,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.utils.TimeProvider;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.MessagingService;
@@ -245,7 +246,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       createTopicIfNotExists(topicId);
     } catch (Exception e) {
       // If failed, add it to a list so that the retry will happen asynchronously
-      LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
+      LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId,
+               Exceptions.condenseThrowableMessage(e));
       LOG.debug("Topic {} creation failure stacktrace", topicId, e);
       creationFailureTopics.add(topicId);
     }

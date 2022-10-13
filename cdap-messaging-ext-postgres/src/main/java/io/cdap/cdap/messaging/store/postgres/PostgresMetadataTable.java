@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import javax.sql.DataSource;
 
 public class PostgresMetadataTable implements MetadataTable {
@@ -48,11 +49,11 @@ public class PostgresMetadataTable implements MetadataTable {
   @Override
   public TopicMetadata getMetadata(TopicId topicId) throws TopicNotFoundException, IOException {
     try (Connection connection = dataSource.getConnection()) {
-      String existsSql = "select properties from " + TOPIC_TABLE + " where topic =" + topicId.getTopic();
+      String existsSql = "select properties from " + TOPIC_TABLE + " where topic ='" + topicId.getTopic() + "'";
       Statement stmt = connection.createStatement();
       ResultSet rs = stmt.executeQuery(existsSql);
       if (rs.next()) {
-        byte[] value = rs.getBytes(0);
+        byte[] value = rs.getBytes(1);
         Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
         return new TopicMetadata(topicId, properties);
       } else {
@@ -60,23 +61,32 @@ public class PostgresMetadataTable implements MetadataTable {
       }
 
     } catch (SQLException e) {
-      throw new IOException("Error in topic creation", e);
+      throw new IOException("Error in getting topic properties", e);
     }
   }
 
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     TopicId topicId = topicMetadata.getTopicId();
+    TreeMap<String, String> properties = new TreeMap<>(topicMetadata.getProperties());
+    // TODO: use MessagingUtils.Constants.DEFAULT_GENERATION
+    properties.put(TopicMetadata.GENERATION_KEY, "1");
+    byte[] value = Bytes.toBytes(GSON.toJson(properties, MAP_TYPE));
+    String hexStrValue = Bytes.toHexString(value);
+
     try (Connection connection = dataSource.getConnection()) {
-      String existsSql = "select count(*) from " + TOPIC_TABLE + " where topic =" + topicId.getTopic();
+      String existsSql = "select count(*) from " + TOPIC_TABLE + " where topic ='" + topicId.getTopic() + "'";
       Statement stmt = connection.createStatement();
       ResultSet rs = stmt.executeQuery(existsSql);
-      if (rs.next()) {
+      rs.next();
+      if (rs.getInt(1) > 0) {
         throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
       }
 
-      String insertSql = String.format("insert into %s (namespace, topic) values ('%s', '%s')", TOPIC_TABLE,
-                                       topicId.getNamespace(), topicId.getTopic());
+      String insertSql = String.format("insert into %s (namespace, topic, properties) values ('%s', '%s', " +
+                                         "decode('%s', 'hex'))",
+                                       TOPIC_TABLE,
+                                       topicId.getNamespace(), topicId.getTopic(), hexStrValue);
       stmt = connection.createStatement();
       stmt.executeUpdate(insertSql);
     } catch (SQLException e) {

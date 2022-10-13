@@ -46,7 +46,6 @@ import java.util.Properties;
 import javax.sql.DataSource;
 
 public class PostgresTableFactory implements TableFactory {
-  public static final String MESSAGES_TABLE = "messages";
 
   private static final Logger LOG = LoggerFactory.getLogger(PostgresTableFactory.class);
   private final DataSource dataSource;

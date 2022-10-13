@@ -1107,7 +1107,7 @@ public final class StoreDefinition {
                     Fields.longType(PUBLISH_TIMESTAMP_FIELD),
                     Fields.longType(SEQUENCE_ID_FIELD),
                     Fields.bytesType(PAYLOAD_FIELD))
-        .withPrimaryKeys(NAMESPACE_FIELD, TOPIC_FIELD, SEQUENCE_ID_FIELD)
+        // .withPrimaryKeys(NAMESPACE_FIELD, TOPIC_FIELD, SEQUENCE_ID_FIELD)
         .build();
 
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
