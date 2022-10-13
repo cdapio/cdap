@@ -17,9 +17,11 @@
 package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.master.environment.k8s.PodInfo;
+import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
+import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillSpecification;
@@ -31,6 +33,7 @@ import org.junit.Test;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,14 +41,35 @@ import java.util.Map;
  */
 public class KubeTwillPreparerTest {
 
+  private MasterEnvironmentContext createMasterEnvironmentContext() {
+    return new MasterEnvironmentContext() {
+      private final Map<String, String> configurations = new HashMap<>();
+
+      @Override
+      public LocationFactory getLocationFactory() {
+        return null;
+      }
+
+      @Override
+      public Map<String, String> getConfigurations() {
+        return configurations;
+      }
+
+      @Override
+      public String[] getRunnableArguments(Class<? extends MasterEnvironmentRunnable> runnableClass,
+                                           String... runnableArgs) {
+        return new String[0];
+      }
+    };
+  }
+
   private ResourceSpecification createResourceSpecification() {
     return new DefaultResourceSpecification(1, 100,
                                             1, 1, 1);
   }
 
-  @Test
-  public void testWithDependentRunnables() throws Exception {
-    TwillSpecification twillSpecification = TwillSpecification.Builder.with()
+  private TwillSpecification createTwillSpecification() throws Exception {
+    return TwillSpecification.Builder.with()
       .setName("NAME")
       .withRunnable()
       .add(new MainRunnable(), createResourceSpecification())
@@ -63,32 +87,22 @@ public class KubeTwillPreparerTest {
       .apply()
       .anyOrder()
       .build();
+  }
 
-    PodInfo podInfo = new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
-                                  "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
-                                  "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
-                                  "test-pod-service-account", "test-pod-runtime-class",
-                                  Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",
-                                  Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
-                                  "test-pod-image-pull-policy");
-    KubeTwillPreparer preparer = new KubeTwillPreparer(new MasterEnvironmentContext() {
-      @Override
-      public LocationFactory getLocationFactory() {
-        return null;
-      }
+  private PodInfo createPodInfo() {
+    return new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
+                       "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
+                       "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
+                       "test-pod-service-account", "test-pod-runtime-class",
+                       Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",
+                       Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
+                       "test-pod-image-pull-policy");
+  }
 
-      @Override
-      public Map<String, String> getConfigurations() {
-        return Collections.emptyMap();
-      }
-
-      @Override
-      public String[] getRunnableArguments(Class<? extends MasterEnvironmentRunnable> runnableClass,
-                                           String... runnableArgs) {
-        return new String[0];
-      }
-    }, null, "default",
-                                                       podInfo, twillSpecification, null, null,
+  @Test
+  public void testWithDependentRunnables() throws Exception {
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(), null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
                                                        null, null, null);
 
     // test catching main runnable depends on itself
@@ -130,6 +144,114 @@ public class KubeTwillPreparerTest {
     // test valid dependency
     preparer.dependentRunnableNames(MainRunnable.class.getSimpleName(), SidecarRunnable.class.getSimpleName(),
                                     SidecarRunnable2.class.getSimpleName());
+  }
+
+  @Test
+  public void testCreateDefaultResourceSpecification() throws Exception {
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(), null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
+                                                       null, null, null);
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    Assert.assertEquals("1", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
+    Assert.assertEquals("100Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
+  }
+
+  @Test
+  public void testCreateDefaultSystemResourceSpecification() throws Exception {
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(), null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
+                                                       null, null, null);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "system");
+    preparer.withConfiguration(config);
+
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    Assert.assertEquals("1", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
+    Assert.assertEquals("100Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
+  }
+
+  @Test
+  public void testCreateResourceSpecificationWithCustomResourceMultipliers() throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.CPU_MULTIPLIER, "0.5");
+    masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.MEMORY_MULTIPLIER, "0.25");
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
+                                                       null, null, null);
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    Assert.assertEquals("500m", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
+    Assert.assertEquals("25Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
+  }
+
+  @Test
+  public void testCreateDefaultUserResourceSpecification() throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
+                                                       null, null, null);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "non-system-namespace");
+    preparer.withConfiguration(config);
+
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    Assert.assertEquals("500m", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
+    Assert.assertEquals("50Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
+    Assert.assertEquals("1", gotResourceRequirements.getLimits().get("cpu").toSuffixedString());
+    Assert.assertEquals("100Mi", gotResourceRequirements.getLimits().get("memory").toSuffixedString());
+  }
+
+  @Test
+  public void testCreateUserResourceSpecificationWithCustomResourceMultipliers() throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.PROGRAM_CPU_MULTIPLIER, "0.3");
+    masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.PROGRAM_MEMORY_MULTIPLIER, "0.7");
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
+                                                       null, null, null);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "non-system-namespace");
+    preparer.withConfiguration(config);
+
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    Assert.assertEquals("300m", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
+    Assert.assertEquals("70Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
+    Assert.assertEquals("1", gotResourceRequirements.getLimits().get("cpu").toSuffixedString());
+    Assert.assertEquals("100Mi", gotResourceRequirements.getLimits().get("memory").toSuffixedString());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateUserResourceSpecificationInvalidProgramCPUMultiplier() throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.PROGRAM_CPU_MULTIPLIER, "2");
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
+                                                       null, null, null);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "non-system-namespace");
+    preparer.withConfiguration(config);
+
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    preparer.createResourceRequirements(resourceSpecification);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateUserResourceSpecificationInvalidProgramMemoryMultiplier() throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.PROGRAM_MEMORY_MULTIPLIER, "2");
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
+                                                       createPodInfo(), createTwillSpecification(), null, null,
+                                                       null, null, null);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "non-system-namespace");
+    preparer.withConfiguration(config);
+
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    preparer.createResourceRequirements(resourceSpecification);
   }
 
 
