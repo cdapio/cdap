@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.command;
 
+import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.english.Article;
@@ -23,6 +24,7 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.exception.CommandInputError;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.common.cli.Arguments;
 
@@ -51,14 +53,18 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
 
     String appId = programIdParts[0];
     String programName = programIdParts[1];
-    ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
+    String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
+    String appVersion = version == null ? ApplicationId.DEFAULT_VERSION : version;
+    ProgramId programId = cliConfig.getCurrentNamespace().app(appId, appVersion)
+      .program(elementType.getProgramType(), programName);
     String status = programClient.getStatus(programId);
     output.println(status);
   }
 
   @Override
   public String getPattern() {
-    return String.format("get %s status <%s>", elementType.getShortName(), elementType.getArgumentName());
+    return String.format("get %s status <%s> [version <%s>]", elementType.getShortName(), elementType.getArgumentName(),
+                         ArgumentName.APP_VERSION);
   }
 
   @Override
