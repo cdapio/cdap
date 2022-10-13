@@ -254,96 +254,99 @@ public abstract class SparkPipelineRunner {
 
     StageSpec stageSpec = pipelinePhase.getStage(stageName);
     String pluginType = stageSpec.getPluginType();
-    String pluginName = stageSpec.getPlugin().getName();
-    String artifactInfo = stageSpec.getPlugin().getArtifact().toString();
-
     JavaSparkContext jsc = getSparkContext();
-    
-    jsc.setCallSite(stageName + " (Plugin " + pluginName + " of Type " + pluginType + ", " + artifactInfo + ")");
 
     try {
-    // don't want to do an additional filter for stages that can emit errors,
-    // but aren't connected to an ErrorTransform
-    // similarly, don't want to do an additional filter for alerts when the stage isn't connected to
-    // an AlertPublisher
-    boolean hasErrorOutput = false;
-    boolean hasAlertOutput = false;
-    Set<String> outputs = pipelinePhase.getStageOutputs(stageName);
-    for (String output : outputs) {
-      String outputPluginType = pipelinePhase.getStage(output).getPluginType();
-      //noinspection ConstantConditions
-      if (ErrorTransform.PLUGIN_TYPE.equals(outputPluginType)) {
-        hasErrorOutput = true;
-      } else if (AlertPublisher.PLUGIN_TYPE.equals(outputPluginType)) {
-        hasAlertOutput = true;
+      String pluginName = stageSpec.getPlugin().getName();
+      String artifactInfo = "";
+      if (stageSpec.getPlugin().getArtifact() != null) {
+        artifactInfo = stageSpec.getPlugin().getArtifact().toString();
       }
-    }
+      jsc.setCallSite(stageName + " (Plugin " + pluginName + " of Type " + pluginType + ", " + artifactInfo + ")");
 
-    Set<String> stageInputs = pipelinePhase.getStageInputs(stageName);
-    Map<String, SparkCollection<Object>> inputDataCollections = getInputDataCollections(pipelinePhase, emittedRecords,
-                                                                                        stageName, pluginType,
-                                                                                        stageInputs);
-    SparkCollection<Object> stageData = getStageData(pluginType, inputDataCollections);
-
-    boolean isConnectorSource =
-      Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSources().contains(stageName);
-    boolean isConnectorSink =
-      Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSinks().contains(stageName);
-
-    StageStatisticsCollector collector = collectors.get(stageName) == null ? new NoopStageStatisticsCollector()
-      : collectors.get(stageName);
-
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    EmittedRecords emittedRecordsForStage = EmittedRecords.builder().build();
-    if (stageData == null) {
-
-      // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
-      // null in the other else-if conditions
-      if (sourcePluginType.equals(pluginType) || isConnectorSource) {
-        SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, functionCacheFactory, collector);
-        EmittedRecords.Builder emittedBuilder = EmittedRecords.builder();
-        emittedRecordsForStage = getEmittedRecords(pipelinePhase, stageSpec, combinedData, groupedDag, branchers,
-                                                   shufflers, hasErrorOutput, hasAlertOutput);
-      } else {
-        throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
-      }
-
-    } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
-      sinkRunnables.add(getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData, pluginFunctionContext, time));
-    } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
-
-      SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
-      sinkRunnables.add(getSparkSinkRunnable(stageSpec, stageData, sparkSink, time));
-
-    } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
-
-      // union all the alerts coming into this stage
-      SparkCollection<Alert> inputAlerts = null;
-      for (String inputStage : stageInputs) {
-        SparkCollection<Alert> inputErrorsFromStage = emittedRecords.get(inputStage).getAlertRecords();
-        if (inputErrorsFromStage == null) {
-          continue;
+      // don't want to do an additional filter for stages that can emit errors,
+      // but aren't connected to an ErrorTransform
+      // similarly, don't want to do an additional filter for alerts when the stage isn't connected to
+      // an AlertPublisher
+      boolean hasErrorOutput = false;
+      boolean hasAlertOutput = false;
+      Set<String> outputs = pipelinePhase.getStageOutputs(stageName);
+      for (String output : outputs) {
+        String outputPluginType = pipelinePhase.getStage(output).getPluginType();
+        //noinspection ConstantConditions
+        if (ErrorTransform.PLUGIN_TYPE.equals(outputPluginType)) {
+          hasErrorOutput = true;
+        } else if (AlertPublisher.PLUGIN_TYPE.equals(outputPluginType)) {
+          hasAlertOutput = true;
         }
-        if (inputAlerts == null) {
-          inputAlerts = inputErrorsFromStage;
+      }
+
+      Set<String> stageInputs = pipelinePhase.getStageInputs(stageName);
+      Map<String, SparkCollection<Object>> inputDataCollections = getInputDataCollections(pipelinePhase, emittedRecords,
+                                                                                          stageName, pluginType,
+                                                                                          stageInputs);
+      SparkCollection<Object> stageData = getStageData(pluginType, inputDataCollections);
+
+      boolean isConnectorSource =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSources().contains(stageName);
+      boolean isConnectorSink =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSinks().contains(stageName);
+
+      StageStatisticsCollector collector = collectors.get(stageName) == null ? new NoopStageStatisticsCollector()
+        : collectors.get(stageName);
+
+      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+      EmittedRecords emittedRecordsForStage = EmittedRecords.builder().build();
+      if (stageData == null) {
+
+        // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
+        // null in the other else-if conditions
+        if (sourcePluginType.equals(pluginType) || isConnectorSource) {
+          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, functionCacheFactory, collector);
+          EmittedRecords.Builder emittedBuilder = EmittedRecords.builder();
+          emittedRecordsForStage = getEmittedRecords(pipelinePhase, stageSpec, combinedData, groupedDag, branchers,
+                                                     shufflers, hasErrorOutput, hasAlertOutput);
         } else {
-          inputAlerts = inputAlerts.union(inputErrorsFromStage);
+          throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
+
+      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
+        sinkRunnables.add(getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData,
+                pluginFunctionContext, time));
+      } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
+
+        SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
+        sinkRunnables.add(getSparkSinkRunnable(stageSpec, stageData, sparkSink, time));
+
+      } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
+
+        // union all the alerts coming into this stage
+        SparkCollection<Alert> inputAlerts = null;
+        for (String inputStage : stageInputs) {
+          SparkCollection<Alert> inputErrorsFromStage = emittedRecords.get(inputStage).getAlertRecords();
+          if (inputErrorsFromStage == null) {
+            continue;
+          }
+          if (inputAlerts == null) {
+            inputAlerts = inputErrorsFromStage;
+          } else {
+            inputAlerts = inputAlerts.union(inputErrorsFromStage);
+          }
+        }
+
+        if (inputAlerts != null) {
+          inputAlerts.publishAlerts(stageSpec, collector);
+        }
+
+      } else {
+        emittedRecordsForStage = processOtherPluginTypes(pluginType, emittedRecords, stageInputs, stageSpec, collector,
+                                                         pluginFunctionContext, functionCacheFactory, pipelinePhase,
+                                                         groupedDag, branchers, shufflers, stageName, hasErrorOutput,
+                                                         hasAlertOutput, stageData, inputDataCollections,
+                                                         stagePartitions, pluginContext, macroEvaluator);
       }
 
-      if (inputAlerts != null) {
-        inputAlerts.publishAlerts(stageSpec, collector);
-      }
-
-    } else {
-      emittedRecordsForStage = processOtherPluginTypes(pluginType, emittedRecords, stageInputs, stageSpec, collector,
-                                                       pluginFunctionContext, functionCacheFactory, pipelinePhase,
-                                                       groupedDag, branchers, shufflers, stageName, hasErrorOutput,
-                                                       hasAlertOutput, stageData, inputDataCollections, stagePartitions,
-                                                       pluginContext, macroEvaluator);
-    }
-
-    emittedRecords.put(stageName, emittedRecordsForStage);
+      emittedRecords.put(stageName, emittedRecordsForStage);
     } finally {
       jsc.clearCallSite();
     }
