@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2020 Cask Data, Inc.
+ * Copyright © 2015-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package io.cdap.cdap.logging.gateway.handlers.store;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
@@ -26,12 +27,12 @@ import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -74,12 +75,17 @@ public class AppMetadataStore {
     return getRunRecordMeta(runningKey);
   }
 
-  private RunRecordDetail getRunRecordMeta(List<Field<?>> primaryKeys) throws IOException {
-    Optional<StructuredRow> row = runRecordsTable.read(primaryKeys);
-    if (!row.isPresent()) {
-      return null;
+  @Nullable
+  private RunRecordDetail getRunRecordMeta(List<Field<?>> partialPrimaryKeys) throws IOException {
+    // Instead of reading by full primary keys, we scan by all keys without version
+    // Since we made sure run id is unique
+    try (CloseableIterator<StructuredRow> iterator =
+           runRecordsTable.scan(Range.singleton(partialPrimaryKeys), 1)) {
+      if (iterator.hasNext()) {
+        return deserializeRunRecordMeta(iterator.next());
+      }
     }
-    return deserializeRunRecordMeta(row.get());
+    return null;
   }
 
   private static RunRecordDetail deserializeRunRecordMeta(StructuredRow row) {
@@ -143,16 +149,15 @@ public class AppMetadataStore {
     if (applicationId == null) {
       return fields;
     }
-    fields.addAll(getApplicationPrimaryKeys(
-      applicationId.getNamespace(), applicationId.getApplication(), applicationId.getVersion()));
+    fields.addAll(getNoVersionAppPrimaryKeys(applicationId.getNamespace(),
+                                             applicationId.getApplication()));
     return fields;
   }
 
-  private List<Field<?>> getApplicationPrimaryKeys(String namespaceId, String appId, String versionId) {
+  private List<Field<?>> getNoVersionAppPrimaryKeys(String namespaceId, String appId) {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, versionId));
     return fields;
   }
 }
