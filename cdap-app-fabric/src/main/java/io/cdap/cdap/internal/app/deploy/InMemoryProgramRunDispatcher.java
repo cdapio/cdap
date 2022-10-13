@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -130,6 +131,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private final PluginFinder pluginFinder;
   private final ArtifactRepository noAuthArtifactRepository;
   private final boolean artifactsComputeHash;
+  private final int artifactsComputeHashTimeBucketDays;
   private final boolean artifactsComputeHashSnapshot;
   private RemoteAuthenticator remoteAuthenticator;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
@@ -152,6 +154,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     this.artifactsComputeHash = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH);
     this.artifactsComputeHashSnapshot = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_SNAPSHOT);
+    this.artifactsComputeHashTimeBucketDays = cConf.getInt(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS);
   }
 
   /**
@@ -289,7 +292,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         hasher.putString(artifactDescriptor.getArtifactId().getScope().name());
         hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion());
         Map<String, String> arguments = new HashMap<>(options.getArguments().asMap());
-        arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, hasher.hash().toString());
+        arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, getArtifactHash(hasher));
 
         options = new SimpleProgramOptions(options.getProgramId(), new BasicArguments(arguments),
                                            new BasicArguments(options.getUserArguments().asMap()), options.isDebug());
@@ -571,7 +574,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     LOG.debug("Plugin artifacts of {} copied to {}", programId, tempDir.getAbsolutePath());
     arguments.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
     if (computeHash) {
-      arguments.put(ProgramOptionConstants.PLUGIN_DIR_HASH, hasher.hash().toString());
+      arguments.put(ProgramOptionConstants.PLUGIN_DIR_HASH, getArtifactHash(hasher));
     }
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(ImmutableMap.copyOf(arguments)),
                                     options.getUserArguments(), options.isDebug());
@@ -624,5 +627,38 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private Map<String, String> getExtraProgramOptions(boolean isDistributed) {
     return !isDistributed && Objects.nonNull(hostname) ? Collections.singletonMap(ProgramOptionConstants.HOST, hostname)
       : Collections.emptyMap();
+  }
+
+  private String getArtifactHash(Hasher hasher) {
+    String hashVal = hasher.hash().toString();
+    if (artifactsComputeHashTimeBucketDays > 0) {
+      return timeBucketHash(hashVal, artifactsComputeHashTimeBucketDays, System.currentTimeMillis());
+    }
+    return hashVal;
+  }
+
+  /**
+   * Return timed bucketed hash value. Therefore, for a given hash, result is identical as long as call to this
+   * method has happened within the given window.
+   * This method also uses a jitter based on provided hash to reduce likelihood of two time bucket with different hashes
+   * to be identical.
+   * For a given n as the jitter chosen from 0 to window-1, time bucket windows will be as follows:
+   * [window -n, 2*window -n), [2*window -n , 3*window -n), ...
+   * The beginning of an above time bucket window which currentTime lies in uniquely identifies the time bucket window
+   * for the given hash.
+   *
+   * @param hash        value that needs to be time bucketed.
+   * @param window      in days
+   * @param currentTime current time in millisecond
+   * @return
+   */
+  @VisibleForTesting
+  public static String timeBucketHash(String hash, int window, long currentTime) {
+    // jitter is used to avoid having identical time bucket windows for different keys
+    long jitter = TimeUnit.DAYS.toMillis(hash.hashCode() % window);
+    long windowMSec = TimeUnit.DAYS.toMillis(window);
+
+    long nextBucket = (currentTime / windowMSec) * windowMSec + windowMSec - jitter;
+    return String.format("%s_%s", hash, nextBucket);
   }
 }
