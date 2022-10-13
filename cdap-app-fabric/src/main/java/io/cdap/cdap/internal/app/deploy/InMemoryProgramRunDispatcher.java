@@ -57,6 +57,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.TimeBucketHasher;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
@@ -130,6 +131,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private final PluginFinder pluginFinder;
   private final ArtifactRepository noAuthArtifactRepository;
   private final boolean artifactsComputeHash;
+  private final int artifactsComputeHashTimeBucketDays;
   private final boolean artifactsComputeHashSnapshot;
   private RemoteAuthenticator remoteAuthenticator;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
@@ -152,6 +154,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     this.artifactsComputeHash = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH);
     this.artifactsComputeHashSnapshot = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_SNAPSHOT);
+    this.artifactsComputeHashTimeBucketDays = cConf.getInt(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS);
   }
 
   /**
@@ -289,7 +292,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         hasher.putString(artifactDescriptor.getArtifactId().getScope().name());
         hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion());
         Map<String, String> arguments = new HashMap<>(options.getArguments().asMap());
-        arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, hasher.hash().toString());
+        arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, getArtifactHash(hasher));
 
         options = new SimpleProgramOptions(options.getProgramId(), new BasicArguments(arguments),
                                            new BasicArguments(options.getUserArguments().asMap()), options.isDebug());
@@ -571,10 +574,18 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     LOG.debug("Plugin artifacts of {} copied to {}", programId, tempDir.getAbsolutePath());
     arguments.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
     if (computeHash) {
-      arguments.put(ProgramOptionConstants.PLUGIN_DIR_HASH, hasher.hash().toString());
+      arguments.put(ProgramOptionConstants.PLUGIN_DIR_HASH, getArtifactHash(hasher));
     }
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(ImmutableMap.copyOf(arguments)),
                                     options.getUserArguments(), options.isDebug());
+  }
+
+  private String getArtifactHash(Hasher hasher) {
+    String hashVal = hasher.hash().toString();
+    if (artifactsComputeHashTimeBucketDays > 0) {
+      return TimeBucketHasher.timeBucketHash(hashVal, artifactsComputeHashTimeBucketDays, System.currentTimeMillis());
+    }
+    return hashVal;
   }
 
   /**
@@ -625,4 +636,5 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     return !isDistributed && Objects.nonNull(hostname) ? Collections.singletonMap(ProgramOptionConstants.HOST, hostname)
       : Collections.emptyMap();
   }
+
 }

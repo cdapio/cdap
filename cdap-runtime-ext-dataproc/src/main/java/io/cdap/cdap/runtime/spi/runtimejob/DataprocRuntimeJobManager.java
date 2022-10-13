@@ -50,7 +50,6 @@ import com.google.common.io.ByteStreams;
 import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
-import io.cdap.cdap.runtime.spi.common.ArtifactCacheManager;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
@@ -230,7 +229,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
-      Set<String> cachedFiles = new HashSet<>();
       for (LocalFile fileToUpload : localFiles) {
         boolean isCacheable = !disableGCSCaching && fileToUpload instanceof CacheableLocalFile;
         String targetFilePath = getPath(isCacheable ? cacheRootPath : runRootPath, fileToUpload.getName());
@@ -238,13 +236,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
               uploadFile(bucket, targetFilePath, fileToUpload, false))
             .toCompletableFuture());
-        if (isCacheable) {
-          cachedFiles.add(fileToUpload.getName());
-        }
-      }
-      if (!cachedFiles.isEmpty()) {
-        new ArtifactCacheManager().recordCacheUsageForArtifacts(getStorageClient(), bucket, cachedFiles, runRootPath,
-                                                                cacheRootPath, runInfo.getRun());
       }
 
       List<LocalFile> uploadedFiles = new ArrayList<>();
@@ -420,7 +411,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                     URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                     localFile.getLastModified(), localFile.getSize(),
                                     localFile.isArchive(), localFile.getPattern());
-      DataprocUtils.setTemporaryHoldOnGCSObject(storage, bucket, blob, targetFilePath);
     } else {
       result = uploadFile(bucket, targetFilePath, localFile, true);
     }
@@ -433,12 +423,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private LocalFile uploadFile(String bucket, String targetFilePath,
                                LocalFile localFile, boolean isCacheable)
-    throws IOException, StorageException, InterruptedException {
+    throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     String contentType = "application/octet-stream";
     BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId);
     if (isCacheable) {
-      blobInfoBuilder.setCustomTime(System.currentTimeMillis()).setTemporaryHold(true);
+      blobInfoBuilder.setCustomTime(System.currentTimeMillis());
     }
     BlobInfo blobInfo = blobInfoBuilder.setContentType(contentType).build();
     Storage storage = getStorageClient();
@@ -462,11 +452,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         throw e;
       }
 
-      Blob blob = storage.get(blobId);
       if (!isCacheable) {
         // Precondition fails means the blob already exists, most likely happens due to retries
         // https://cloud.google.com/storage/docs/request-preconditions#special-case
         // Overwrite the file
+        Blob blob = storage.get(blobId);
         BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
         uploadToGCS(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
         LOG.debug("Successfully uploaded file {} to gs://{}/{} by overwriting due to conflict",
@@ -474,7 +464,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
                   localFile.getURI(), bucket, targetFilePath);
-        DataprocUtils.setTemporaryHoldOnGCSObject(storage, bucket, blob, targetFilePath);
       }
     }
 
