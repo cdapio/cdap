@@ -21,7 +21,9 @@ import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A field validator class which can be used to validate the given field.
@@ -86,9 +88,33 @@ public final class FieldValidator {
       if (!key.getName().equals(primaryKeys.get(i))) {
         throw new InvalidFieldException(
           tableSchema.getTableId(), keys,
-          String.format("Given keys %s are not the prefix of the primary keys %s", keys, primaryKeys));
+          String.format("Given key %s in keys %s are not the prefix of the primary keys %s", key, keys, primaryKeys));
       }
       i++;
+    }
+  }
+
+  /**
+   * Validate if the given keys are partial primary keys.
+   *
+   * @param keys the keys to validate
+   * @throws InvalidFieldException if the given keys have extra key which is not in primary key.
+   */
+  public void validatePartialPrimaryKeys(Collection<Field<?>> keys) throws InvalidFieldException {
+    Set<String> primaryKeys = new HashSet<>(tableSchema.getPrimaryKeys());
+    if (keys.size() > primaryKeys.size()) {
+      throw new InvalidFieldException(
+        tableSchema.getTableId(), keys,
+        String.format("Given keys %s contain more fields than the primary keys %s", keys, primaryKeys));
+    }
+
+    for (Field<?> key : keys) {
+      validateField(key);
+      if (!primaryKeys.contains(key.getName())) {
+        throw new InvalidFieldException(
+          tableSchema.getTableId(), keys,
+          String.format("Given key %s in %s not partial primary keys %s", key, keys, primaryKeys));
+      }
     }
   }
 }
