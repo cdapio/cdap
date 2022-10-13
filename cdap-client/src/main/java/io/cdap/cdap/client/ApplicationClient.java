@@ -197,7 +197,7 @@ public class ApplicationClient {
   public ApplicationDetail get(ApplicationId appId)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
-    String path = String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion());
+    String path = String.format("apps/%s", appId.getApplication());
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(appId.getParent(), path),
                                                config.getAccessToken(),
