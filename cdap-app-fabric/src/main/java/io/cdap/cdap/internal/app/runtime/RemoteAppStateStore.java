@@ -34,6 +34,8 @@ import io.cdap.common.http.HttpResponse;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 /**
@@ -64,10 +66,12 @@ public class RemoteAppStateStore implements AppStateStore {
       throw new IllegalArgumentException("Received null or empty value for required argument 'key'");
     }
     try {
+      //Encode the key
+      String encodedKey = Base64.getEncoder().encodeToString(key.getBytes(StandardCharsets.UTF_8));
       return Retries.callWithRetries(() -> {
         HttpRequest.Builder requestBuilder =
           remoteClient.requestBuilder(HttpMethod.GET,
-                                      String.format(REMOTE_END_POINT, namespace, appName, key));
+                                      String.format(REMOTE_END_POINT, namespace, appName, encodedKey));
         HttpResponse httpResponse = remoteClient.execute(requestBuilder.build());
         int responseCode = httpResponse.getResponseCode();
         if (responseCode == 200) {
@@ -96,10 +100,11 @@ public class RemoteAppStateStore implements AppStateStore {
       throw new IllegalArgumentException("Received null or empty value for required argument 'value'");
     }
     try {
+      String encodedKey = Base64.getEncoder().encodeToString(key.getBytes(StandardCharsets.UTF_8));
       //Retries are ok since this is a PUT request
       Retries.runWithRetries(() -> {
         HttpRequest.Builder requestBuilder =
-          remoteClient.requestBuilder(HttpMethod.PUT, String.format(REMOTE_END_POINT, namespace, appName, key))
+          remoteClient.requestBuilder(HttpMethod.PUT, String.format(REMOTE_END_POINT, namespace, appName, encodedKey))
             .withBody(ByteBuffer.wrap(value));
         HttpResponse httpResponse = remoteClient.execute(requestBuilder.build());
         int responseCode = httpResponse.getResponseCode();
