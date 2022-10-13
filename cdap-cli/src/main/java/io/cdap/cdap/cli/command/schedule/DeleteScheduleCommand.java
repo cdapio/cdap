@@ -16,6 +16,7 @@
 package io.cdap.cdap.cli.command.schedule;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.english.Article;
@@ -23,6 +24,7 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.exception.CommandInputError;
 import io.cdap.cdap.cli.util.AbstractCommand;
 import io.cdap.cdap.client.ScheduleClient;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.common.cli.Arguments;
 
@@ -43,14 +45,16 @@ public final class DeleteScheduleCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-    String[] programIdParts = arguments.get(ElementType.SCHEDULE.getArgumentName().toString()).split("\\.");
+    String[] programIdParts = arguments.get(ArgumentName.SCHEDULE.toString()).split("\\.");
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);
     }
 
     String appId = programIdParts[0];
     String scheduleName = programIdParts[1];
-    ScheduleId schedule = cliConfig.getCurrentNamespace().app(appId).schedule(scheduleName);
+    String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
+    String appVersion = version == null ? ApplicationId.DEFAULT_VERSION : version;
+    ScheduleId schedule = cliConfig.getCurrentNamespace().app(appId, appVersion).schedule(scheduleName);
 
     scheduleClient.delete(schedule);
     printStream.printf("Successfully deleted schedule '%s' in app '%s'\n", scheduleName, appId);
@@ -58,7 +62,7 @@ public final class DeleteScheduleCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("delete schedule <%s>", ElementType.SCHEDULE.getArgumentName());
+    return String.format("delete schedule <%s> [version <%s>]", ArgumentName.SCHEDULE, ArgumentName.APP_VERSION);
   }
 
   @Override

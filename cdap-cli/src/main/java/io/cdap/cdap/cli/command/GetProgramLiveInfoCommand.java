@@ -18,6 +18,7 @@ package io.cdap.cdap.cli.command;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.english.Article;
@@ -29,6 +30,7 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.DistributedProgramLiveInfo;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.common.cli.Arguments;
 
@@ -57,7 +59,10 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
     }
     String appId = programIdParts[0];
     String programName = programIdParts[1];
-    ProgramId program = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
+    String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
+    String appVersion = version == null ? ApplicationId.DEFAULT_VERSION : version;
+    ProgramId program = cliConfig.getCurrentNamespace().app(appId, appVersion)
+      .program(elementType.getProgramType(), programName);
     DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(program);
 
     if (liveInfo == null) {
@@ -92,7 +97,8 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s live <%s>", elementType.getName(), elementType.getArgumentName());
+    return String.format("get %s live <%s> [version <%s>]", elementType.getName(), elementType.getArgumentName(),
+                         ArgumentName.APP_VERSION);
   }
 
   @Override
