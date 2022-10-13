@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.capability;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.annotation.Requirements;
@@ -93,7 +94,8 @@ import java.util.UUID;
       capabilityWriter.addOrUpdateCapability(capability, CapabilityStatus.ENABLED, capabilityConfig);
     }
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapabilities);
-
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapabilities);
+    String appNameWithCapabilitiesVersion = appDetails.get("appVersion").getAsString();
     //Deploy application without capability
     Class<WorkflowAppWithFork> appNoCapabilityClass = WorkflowAppWithFork.class;
     Requirements declaredAnnotation1 = appNoCapabilityClass.getDeclaredAnnotation(Requirements.class);
@@ -101,6 +103,8 @@ import java.util.UUID;
     Assert.assertNull(declaredAnnotation1);
     String appNameWithoutCapability = appNoCapabilityClass.getSimpleName() + UUID.randomUUID();
     deployArtifactAndApp(appNoCapabilityClass, appNameWithoutCapability);
+    appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithoutCapability);
+    String appNameWithoutCapabilityVersion = appDetails.get("appVersion").getAsString();
 
     //verify that list applications return the application tagged with capability only
     for (String capability : declaredAnnotation.capabilities()) {
@@ -116,7 +120,8 @@ import java.util.UUID;
     }
 
     //delete the app and verify nothing is returned.
-    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithCapabilities, TEST_VERSION));
+    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithCapabilities,
+                                                                          appNameWithCapabilitiesVersion));
     for (String capability : declaredAnnotation.capabilities()) {
       Set<ApplicationId> applicationIds = new HashSet<>(capabilityApplier
                                                           .getApplications(NamespaceId.DEFAULT, capability, null, 0, 10)
@@ -125,7 +130,8 @@ import java.util.UUID;
         applicationLifecycleService.getAppDetails(applicationIds).values());
       Assert.assertTrue(appsReturned.isEmpty());
     }
-    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithoutCapability, TEST_VERSION));
+    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithoutCapability,
+                                                                          appNameWithoutCapabilityVersion));
     artifactRepository.deleteArtifact(
       Id.Artifact.from(new Id.Namespace(NamespaceId.DEFAULT.getNamespace()), appNameWithoutCapability, TEST_VERSION));
     for (String capability : declaredAnnotation.capabilities()) {
@@ -149,8 +155,12 @@ import java.util.UUID;
                                                                   Collections.emptyList()));
     }
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapability1);
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapability1);
+    String appNameWithCapability1Version = appDetails.get("appVersion").getAsString();
     String appNameWithCapability2 = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapability2);
+    appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapability2);
+    String appNameWithCapability2Version = appDetails.get("appVersion").getAsString();
 
     //search with offset and limit
     String capability = declaredAnnotation.capabilities()[0];
@@ -165,8 +175,10 @@ import java.util.UUID;
       .getApplications(NamespaceId.DEFAULT, capability, appsForCapability.getCursor(), 2, 1);
     Assert.assertEquals(0, appsForCapabilityNext.getEntities().size());
 
-    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithCapability1, TEST_VERSION));
-    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithCapability2, TEST_VERSION));
+    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithCapability1,
+                                                                          appNameWithCapability1Version));
+    applicationLifecycleService.removeApplication(NamespaceId.DEFAULT.app(appNameWithCapability2,
+                                                                          appNameWithCapability2Version));
     artifactRepository.deleteArtifact(
       Id.Artifact.from(new Id.Namespace(NamespaceId.DEFAULT.getNamespace()), appNameWithCapability1, TEST_VERSION));
     artifactRepository.deleteArtifact(

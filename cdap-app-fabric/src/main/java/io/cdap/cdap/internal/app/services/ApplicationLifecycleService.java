@@ -763,6 +763,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
+    RunId runId = RunIds.generate();
+    appVersion = RunIds.getTime(runId, TimeUnit.MILLISECONDS) + runId.getId();
     return deployApp(namespace, appName, appVersion, artifactId, configStr,  null, programTerminator,
                      null, true);
   }

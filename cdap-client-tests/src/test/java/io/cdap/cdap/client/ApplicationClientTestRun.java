@@ -111,6 +111,9 @@ public class ApplicationClientTestRun extends ClientTestBase {
     // deploy app
     LOG.info("Deploying app");
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, FakeApp.NAME, "1.0.0-SNAPSHOT"));
+    ApplicationDetail appDetail = appClient.get(app);
+    app = new ApplicationId(app.getNamespace(), app.getApplication(), appDetail.getAppVersion());
+    ArtifactSummary expected = new ArtifactSummary(FakeApp.NAME, "1.0.0-SNAPSHOT");
     appClient.waitForDeployed(app, 30, TimeUnit.SECONDS);
     Assert.assertEquals(1, appClient.list(NamespaceId.DEFAULT).size());
 
@@ -132,8 +135,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms(NamespaceId.DEFAULT));
 
-      ApplicationDetail appDetail = appClient.get(app);
-      ArtifactSummary expected = new ArtifactSummary(FakeApp.NAME, "1.0.0-SNAPSHOT");
+
       Assert.assertEquals(expected, appDetail.getArtifact());
     } finally {
       // delete app
@@ -148,9 +150,11 @@ public class ApplicationClientTestRun extends ClientTestBase {
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testDataset");
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(ConfigTestApp.class), config);
-    Assert.assertEquals(1, appClient.list(NamespaceId.DEFAULT).size());
-
     ApplicationId app = NamespaceId.DEFAULT.app(ConfigTestApp.NAME);
+    ApplicationDetail appDetail = appClient.get(app);
+    Assert.assertEquals(1, appClient.list(NamespaceId.DEFAULT).size());
+    app = new ApplicationId(app.getNamespace(), app.getApplication(), appDetail.getAppVersion());
+
     try {
       appClient.exists(app);
     } finally {
@@ -181,6 +185,8 @@ public class ApplicationClientTestRun extends ClientTestBase {
       AppRequest<ConfigurableProgramsApp.Programs> request = new AppRequest<>(
         new ArtifactSummary(artifactIdV1.getArtifact(), artifactIdV1.getVersion()), conf);
       appClient.deploy(appId, request);
+      ApplicationDetail info = appClient.get(appId);
+      appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), info.getAppVersion());
 
       // should only have the worker
       Assert.assertTrue(appClient.listPrograms(appId, ProgramType.SERVICE).isEmpty());
@@ -191,6 +197,8 @@ public class ApplicationClientTestRun extends ClientTestBase {
       request = new AppRequest<>(
         new ArtifactSummary(artifactIdV1.getArtifact(), artifactIdV1.getVersion()), conf);
       appClient.update(appId, request);
+      info = appClient.get(appId);
+      appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), info.getAppVersion());
 
       // should only have the service
       Assert.assertTrue(appClient.listPrograms(appId, ProgramType.WORKER).isEmpty());
@@ -230,6 +238,8 @@ public class ApplicationClientTestRun extends ClientTestBase {
       AppRequest<ConfigurableProgramsApp2.Programs> request2 = new AppRequest<>(
         new ArtifactSummary(artifactIdV2.getArtifact(), artifactIdV2.getVersion()), conf2);
       appClient.update(appId, request2);
+      info = appClient.get(appId);
+      appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), info.getAppVersion());
 
       // should only have a single workflow
       Assert.assertTrue(appClient.listPrograms(appId, ProgramType.WORKER).isEmpty());
@@ -361,12 +371,16 @@ public class ApplicationClientTestRun extends ClientTestBase {
       // deploy first app
       LOG.info("Deploying first app");
       appClient.deploy(namespace, createAppJarFile(FakeApp.class));
+      ApplicationDetail appDetail = appClient.get(app);
+      app = new ApplicationId(app.getNamespace(), app.getApplication(), appDetail.getAppVersion());
       appClient.waitForDeployed(app, 30, TimeUnit.SECONDS);
       Assert.assertEquals(1, appClient.list(namespace).size());
 
       // deploy second app
       LOG.info("Deploying second app");
       appClient.deploy(namespace, createAppJarFile(AppReturnsArgs.class));
+      ApplicationDetail app2Detail = appClient.get(app);
+      app = new ApplicationId(app2.getNamespace(), app2.getApplication(), app2Detail.getAppVersion());
       appClient.waitForDeployed(app2, 30, TimeUnit.SECONDS);
       Assert.assertEquals(2, appClient.list(namespace).size());
     } finally {
