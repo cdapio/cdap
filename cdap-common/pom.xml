@@ -112,12 +112,6 @@
       <groupId>com.google.inject.extensions</groupId>
       <artifactId>guice-multibindings</artifactId>
     </dependency>
-    <!-- Try to provide jersey 1.x in classpath of Dataproc Job   -->
-     <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-client</artifactId>
-        <version>1.9</version>
-    </dependency>
     <dependency>
       <groupId>com.google.inject.extensions</groupId>
       <artifactId>guice-assistedinject</artifactId>
