@@ -417,6 +417,15 @@
 
   <!-- Applications Configuration -->
   <property>
+    <name>app.artifact.compute.hash.time.bucket.days</name>
+    <value>15</value>
+    <description>
+      If greater than 0, ensures that has values are time bucketed every x days.
+      Therefore, generating hash of an identical value x days apart will result in different hash values.
+    </description>
+  </property>
+
+  <property>
     <name>app.artifact.compute.hash</name>
     <value>false</value>
     <description>
