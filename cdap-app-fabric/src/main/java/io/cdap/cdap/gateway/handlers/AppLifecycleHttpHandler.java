@@ -352,9 +352,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") final String namespaceId,
-                         @PathParam("app-id") final String appId)
-    throws Exception {
-
+                         @PathParam("app-id") final String appId) throws Exception {
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService
                                                             .getLatestAppDetail(applicationId)));
@@ -398,18 +396,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/plugins")
   public void getPluginsInfo(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
-                             @PathParam("app-id") final String appId)
-    throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException, AccessException {
-
+                             @PathParam("app-id") final String appId) throws Exception {
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    try {
-      String latestAppVersion = getLatestAppVersion(applicationId);
-      applicationId = validateApplicationVersionId(namespaceId, appId, latestAppVersion);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(applicationId)));
-    } catch (Exception e) {
-      LOG.error("Failure to retrieve plugin info", e);
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
+    String latestAppVersion = getLatestAppVersion(applicationId);
+    applicationId = validateApplicationVersionId(namespaceId, appId, latestAppVersion);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getPlugins(applicationId)));
   }
 
   /**
@@ -437,7 +428,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") final String appId,
                                @PathParam("version-id") final String versionId) throws Exception {
     ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
-    applicationLifecycleService.removeApplication(id);
+    applicationLifecycleService.removeApplicationVersion(id);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

@@ -907,13 +907,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
+   * Delete a specific application version specified by appId.
+   *
+   * @param appId the {@link ApplicationId} of the application to be removed
+   * @throws Exception
+   */
+  public void removeApplicationVersion(ApplicationId appId) throws Exception {
+    // enforce DELETE privileges on the app
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+    ensureNoRunningPrograms(appId);
+    ApplicationSpecification spec = store.getApplication(appId);
+    if (spec == null) {
+      throw new NotFoundException(Id.Application.fromEntityId(appId));
+    }
+    deleteAppVersion(appId, spec);
+  }
+
+  /**
    * Remove application by the appId and appSpec, note that this method does not have any auth check
    *
    * @param applicationId the {@link ApplicationId} of the application to be removed
    * @param appSpec the {@link ApplicationSpecification} of the application to be removed
    */
   private void removeAppInternal(ApplicationId applicationId, ApplicationSpecification appSpec) throws Exception {
-    deleteAppVersion(applicationId, appSpec);
+    deleteApp(applicationId, appSpec);
   }
 
   /**
