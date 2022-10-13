@@ -377,7 +377,7 @@ public class AppMetadataStore {
         return decodeRow(iterator.next());
       }
     }
-    // This is the case when when the app currently doesn't exist
+    // This is the case when the app currently doesn't exist
     return null;
   }
 
@@ -483,13 +483,16 @@ public class AppMetadataStore {
     throws IOException, ConflictException {
     // Fetch the latest version
     String parentVersion = appMeta.getChange().getParentVersion();
+    // Fetch the latest version
     ApplicationMeta latest = getLatest(id.getNamespaceId(), id.getApplication());
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
     if (!deployAppAllowed(parentVersion, latest)) {
       throw new ConflictException(String.format("Cannot deploy the application because parent version '%s' does not " +
-                                                  "match the latest version '%s'.", parentVersion, latestVersion));
+                                                  "match the latest version '%s'.",
+                                                parentVersion,
+                                                latestVersion));
     }
-    // When the app does not exist -it is not an edit).
+    // When the app does not exist -it is not an edit
     if (latest != null) {
       List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
                                                         latest.getSpec().getAppVersion());

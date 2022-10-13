@@ -1073,12 +1073,12 @@ public abstract class AppFabricTestBase {
     String path = String.format("apps/%s/versions/%s/%s/%s/status",
                                 programId.getApplication(),
                                 programId.getVersion(),
-                                programId.getType().getCategoryName(), programId.getProgram());
+                                programId.getType().getCategoryName(),
+                                programId.getProgram());
     HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespace()));
     assertResponseCode(200, response);
     Map<String, String> o = GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
     return o.get("status");
-
   }
 
   private String getStatus(HttpResponse response) {
@@ -1096,6 +1096,7 @@ public abstract class AppFabricTestBase {
     return response.getResponseCode();
   }
 
+  // suspend the latest version schedule
   protected int suspendSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleSuspend = String.format("apps/%s/schedules/%s/suspend", appName, schedule);
     String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
@@ -1104,6 +1105,7 @@ public abstract class AppFabricTestBase {
     return response.getResponseCode();
   }
 
+  // resume the latest version schedule
   protected int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
     HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
@@ -1517,5 +1519,4 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals("Wrong response code with message " + response.getResponseBodyAsString(),
                         expectedCode, response.getResponseCode());
   }
-
 }

@@ -264,6 +264,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationId appId1 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION1);
     ApplicationId appId2 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION2);
     Id.Application appDefault = Id.Application.fromEntityId(appId1);
+    ApplicationId appIdDefault = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, ApplicationId.DEFAULT_VERSION);
 
     // deploy app1
     Assert.assertEquals(200, deploy(appId1, appRequest).getResponseCode());
@@ -276,37 +277,32 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     ProgramId serviceId2 = appId2.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    Id.Program serviceIdDefault = Id.Program.fromEntityId(serviceId1);
+    ProgramId serviceIdDefault = appIdDefault.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
+    Id.Program nonVersionServiceIdDefault = Id.Program.fromEntityId(serviceId1);
     // service is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
-    // start service
-    startProgram(serviceId1, 200);
-    waitState(serviceId1, RUNNING);
+    // cannot start an old version program
+    startProgram(serviceId1, 400);
+    startProgram(serviceIdDefault, 400);
+
     // wordFrequencyService2 is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(serviceId2));
     // start service in version2
     startProgram(serviceId2, 200);
     waitState(serviceId2, RUNNING);
+    // non-version status should return the latest version app
+    Assert.assertEquals(RUNNING, getProgramStatus(nonVersionServiceIdDefault));
     // wordFrequencyServiceDefault is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(serviceIdDefault));
-    // start service in default version
-    startProgram(serviceIdDefault, 200);
-    waitState(serviceIdDefault, RUNNING);
-    // same service cannot be run concurrently in the same app version
-    startProgram(serviceId1, 409);
-    stopProgram(serviceId1, null, 200, null);
-    waitState(serviceId1, STOPPED);
-    Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
-    // wordFrequencyService1 can be run after wordFrequencyService1 is stopped
-    startProgram(serviceId1, 200);
-    waitState(serviceId1, RUNNING);
 
-    stopProgram(serviceId1, null, 200, null);
+    // same service cannot be run concurrently in the same app version
+    startProgram(serviceId2, 409);
+
+    // cannot stop program that's not running
+    stopProgram(serviceId1, null, 400, null);
+    stopProgram(serviceIdDefault, null, 400, null);
     stopProgram(serviceId2, null, 200, null);
-    stopProgram(serviceIdDefault, null, 200, null);
-    waitState(serviceId1, STOPPED);
     waitState(serviceId2, STOPPED);
-    waitState(serviceIdDefault, STOPPED);
 
     Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
     addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
@@ -324,36 +320,32 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // workflow is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
     // start workflow in a wrong version
-    startProgram(sleepWorkflow2, 404);
+    startProgram(sleepWorkflow2, 400);
     // Start wordCountApp2
     Assert.assertEquals(200, deploy(sleepWorkflowApp2, sleepWorkflowRequest).getResponseCode());
 
     // start multiple workflow simultaneously with a long sleep time
     Map<String, String> args = Collections.singletonMap("sleep.ms", "120000");
-    startProgram(sleepWorkflow1, args, 200);
+    // Only the latest version program can be started
+    startProgram(sleepWorkflow1, args, 400);
     startProgram(sleepWorkflow2, args, 200);
-    startProgram(sleepWorkflow1, args, 200);
+    startProgram(sleepWorkflow1, args, 400);
     startProgram(sleepWorkflow2, args, 200);
 
     // Make sure they are all running. Otherwise on slow machine, it's possible that the TMS states hasn't
     // been consumed and write to the store before we stop the program and query for STOPPED state.
-    Tasks.waitFor(2, () -> getProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING).size(),
-                  10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
     Tasks.waitFor(2, () -> getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING).size(),
                   10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
 
     // stop multiple workflow simultaneously
-    // This will stop all concurrent runs of the Workflow version 1.0.0
-    stopProgram(sleepWorkflow1, null, 200, null);
     // This will stop all concurrent runs of the Workflow version 2.0.0
     stopProgram(sleepWorkflow2, null, 200, null);
 
     // Wait until all are stopped
-    waitState(sleepWorkflow1, STOPPED);
     waitState(sleepWorkflow2, STOPPED);
 
-    //Test for runtime args
-    testVersionedProgramRuntimeArgs(sleepWorkflow1);
+    //Test for runtime args on latest program
+    testVersionedProgramRuntimeArgs(sleepWorkflow2);
 
     // cleanup
     deleteApp(appId1, 200);
