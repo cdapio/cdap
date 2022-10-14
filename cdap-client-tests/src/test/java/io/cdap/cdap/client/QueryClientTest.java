@@ -41,6 +41,7 @@ import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -91,7 +92,11 @@ public class QueryClientTest extends AbstractClientTest {
     namespaceClient = new NamespaceClient(clientConfig);
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testAll() throws Exception {
     NamespaceId namespace = new NamespaceId("queryClientTestNamespace");
     NamespaceId otherNamespace = new NamespaceId("queryClientOtherNamespace");
