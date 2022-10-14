@@ -86,6 +86,32 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
   }
 
   @Override
+  public ClassLoader createProgramClassLoader(CConfiguration cConf, ProgramType type) {
+    Preconditions.checkArgument(type == ProgramType.SPARK, "Unsupported program type %s. Only %s is supported",
+                                type, ProgramType.SPARK);
+    boolean rewriteCheckpointTempFileName =
+      cConf.getBoolean(SparkRuntimeUtils.SPARK_STREAMING_CHECKPOINT_REWRITE_ENABLED);
+    boolean rewriteYarnClient = cConf.getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
+
+    try {
+      ClassLoader sparkRunnerClassLoader = sparkRunnerClassLoader = createClassLoader(filterScalaClasses,
+                                                                                      rewriteYarnClient,
+                                                                                      rewriteCheckpointTempFileName);
+
+      // SparkResourceFilter must be instantiated using the above classloader as it has the
+      // org.apache.spark.streaming.StreamingContext class, otherwise it will cause NoClassDefFoundError at runtime
+      // because the parent classloader does not have Spark resources loaded.
+      FilterClassLoader.Filter sparkClassLoaderFilter = (FilterClassLoader.Filter) sparkRunnerClassLoader
+        .loadClass(SparkResourceFilter.class.getName()).newInstance();
+      return new FilterClassLoader(sparkRunnerClassLoader, sparkClassLoaderFilter);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Failed to create SparkResourceFilter class", e);
+    }
+  }
+
+  @Override
   public ProgramRunner createProgramRunner(ProgramType type, Mode mode, Injector injector) {
     Preconditions.checkArgument(type == ProgramType.SPARK, "Unsupported program type %s. Only %s is supported",
                                 type, ProgramType.SPARK);
