@@ -691,7 +691,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1Job} to for runnable execution in Kubernetes.
    */
   private V1ObjectMeta createJob(V1ObjectMeta metadata, Map<String, RuntimeSpecification> runtimeSpecs,
-                                 Location runtimeConfigLocation) throws ApiException {
+                                 Location runtimeConfigLocation) throws KubeAPIException {
     int parallelism = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification().getInstances();
     V1Job job = new V1JobBuilder()
       .withMetadata(metadata)
@@ -713,10 +713,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       LOG.debug("Created Job {} in Kubernetes.", metadata.getName());
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
-        LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job." , e.getResponseBody());
+        LOG.warn("The kubernetes job already exists : {}. Ignoring resubmission of the job.", e.getResponseBody());
       } else {
-        LOG.error("Failed to create kubernetes job: {}", e.getResponseBody());
-        throw e;
+        throw new KubeAPIException("Failed to create kubernetes job", e);
       }
     }
     return job.getMetadata();
@@ -727,13 +726,22 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    */
   private V1ObjectMeta createDeployment(V1ObjectMeta metadata,
                                         Map<String, RuntimeSpecification> runtimeSpecs,
-                                        Location runtimeConfigLocation) throws ApiException {
+                                        Location runtimeConfigLocation) throws KubeAPIException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
     V1Deployment deployment = buildDeployment(metadata, runtimeSpecs, runtimeConfigLocation);
 
-    deployment = appsApi.createNamespacedDeployment(programRuntimeNamespace, deployment, "true", null, null);
-    LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
+    try {
+      deployment = appsApi.createNamespacedDeployment(programRuntimeNamespace, deployment, "true", null, null);
+      LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.warn("The kubernetes deployment already exists : {}. Ignoring resubmission of the deployment.",
+                 e.getResponseBody());
+      } else {
+        throw new KubeAPIException("Failed to create deployment", e);
+      }
+    }
     return deployment.getMetadata();
   }
 
@@ -743,13 +751,22 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private V1ObjectMeta createStatefulSet(V1ObjectMeta metadata,
                                          Map<String, RuntimeSpecification> runtimeSpecs,
                                          Location runtimeConfigLocation,
-                                         StatefulRunnable statefulRunnable) throws ApiException {
+                                         StatefulRunnable statefulRunnable) throws KubeAPIException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
     V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpecs, runtimeConfigLocation, statefulRunnable);
 
-    statefulSet = appsApi.createNamespacedStatefulSet(programRuntimeNamespace, statefulSet, "true", null, null);
-    LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
+    try {
+      statefulSet = appsApi.createNamespacedStatefulSet(programRuntimeNamespace, statefulSet, "true", null, null);
+      LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
+    } catch (ApiException e) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+        LOG.warn("The kubernetes statefulset already exists : {}. Ignoring resubmission of the statefulset.",
+                 e.getResponseBody());
+      } else {
+        throw new KubeAPIException("Failed to create kubernetes statefulset", e);
+      }
+    }
     return statefulSet.getMetadata();
   }
 
