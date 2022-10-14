@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
-import com.google.gson.JsonObject;
 import io.cdap.cdap.SleepingWorkflowApp;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -25,6 +24,7 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
@@ -63,9 +63,9 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
 
     // Deploy an app containing a workflow
     deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    JsonObject result1 = getAppDetails(TEST_NAMESPACE1, SleepingWorkflowApp.NAME);
+    ApplicationDetail appDetails = getAppDetails(TEST_NAMESPACE1, SleepingWorkflowApp.NAME);
     // TODO : to fix after CDAP-19775 is addressed
-    String appVersion = result1.get("appVersion").getAsString();
+    String appVersion = appDetails.getAppVersion();
     ProgramId programId = new ProgramId(namespace, application, appVersion, ProgramType.WORKFLOW, program);
 
     // Run program once

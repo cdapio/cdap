@@ -23,7 +23,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AppWithFrequentScheduledWorkflows;
 import io.cdap.cdap.AppWithMultipleSchedules;
@@ -70,6 +69,7 @@ import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -269,9 +269,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     AppRequest<? extends Config> appRequest = new AppRequest<>(
       new ArtifactSummary(appArtifactId.getName(), appArtifactId.getVersion().getVersion()));
     deploy(appId, appRequest);
-    JsonObject result = getAppDetails(appId.getNamespace(), appId.getApplication());
-    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(),
-                                            result.get("appVersion").getAsString());
+    ApplicationDetail appDetails = getAppDetails(appId.getNamespace(), appId.getApplication());
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetails.getAppVersion());
 
     // Resume the schedule because schedules are initialized as paused
     enableSchedule(appId, AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1);
@@ -368,9 +367,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   public void testProgramEvents() throws Exception {
     // Deploy the app
     deploy(AppWithMultipleSchedules.class, 200);
-    JsonObject result = getAppDetails(Id.Namespace.DEFAULT.getId(), AppWithMultipleSchedules.NAME);
-    appMultId = new ApplicationId(appMultId.getNamespace(), appMultId.getApplication(),
-                                  result.get("appVersion").getAsString());
+    ApplicationDetail appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), AppWithMultipleSchedules.NAME);
+    appMultId = new ApplicationId(appMultId.getNamespace(), appMultId.getApplication(), appDetails.getAppVersion());
     ProgramId someWorkflow = appMultId.program(ProgramType.WORKFLOW, AppWithMultipleSchedules.SOME_WORKFLOW);
     ProgramId anotherWorkflow = appMultId.program(ProgramType.WORKFLOW, AppWithMultipleSchedules.ANOTHER_WORKFLOW);
     ProgramId triggeredWorkflow = appMultId.program(ProgramType.WORKFLOW, AppWithMultipleSchedules.TRIGGERED_WORKFLOW);
@@ -385,7 +383,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     ArtifactId artifactId = anotherWorkflow.getNamespaceId().artifact("test", "1.0").toApiArtifactId();
     ApplicationSpecification appSpec = new DefaultApplicationSpecification(
-      AppWithMultipleSchedules.NAME, result.get("appVersion").getAsString(), ProjectInfo.getVersion().toString(),
+      AppWithMultipleSchedules.NAME, appDetails.getAppVersion(), ProjectInfo.getVersion().toString(),
       "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
@@ -414,7 +412,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // Enable the schedule
     ApplicationId appId = new ApplicationId(appMultId.getNamespace(), appMultId.getApplication(),
-                                            result.get("appVersion").getAsString());
+                                            appDetails.getAppVersion());
     scheduler.enableSchedule(appId.schedule(AppWithMultipleSchedules.WORKFLOW_COMPLETED_SCHEDULE));
 
     // Start a program with user arguments
