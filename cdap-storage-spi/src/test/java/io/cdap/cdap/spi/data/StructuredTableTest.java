@@ -994,6 +994,62 @@ public abstract class StructuredTableTest {
   }
 
   @Test
+  public void testSortedPrimaryKeyFilteredIndexScan() throws Exception {
+    int num = 100;
+    // Write a few records
+    List<Collection<Field<?>>> expected = new ArrayList<>();
+
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      int counter = 0;
+      for (int i = 0; i < num * 3; ++i) {
+        Collection<Field<?>> fields = Arrays.asList(Fields.intField(KEY, counter),
+                                                    Fields.longField(KEY2, counter * 100L),
+                                                    Fields.longField(IDX_COL, (long) 100));
+        table.upsert(fields);
+        expected.add(fields);
+        ++counter;
+      }
+    });
+    List<String> columns = Arrays.asList(KEY, KEY2, IDX_COL);
+
+    // Verify write
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), num * 10)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected, rows);
+      }
+    });
+
+    // Scan by keyRange and filter on index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 3)), Range.Bound.EXCLUSIVE),
+                        num * 10, Fields.longField(IDX_COL, (long) 100), SortOrder.ASC)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        List<Collection<Field<?>>> expectedSubList = expected.subList(num, num * 3);
+
+        Assert.assertEquals(expectedSubList, rows);
+      }
+
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10, Fields.longField(IDX_COL, (long) 100), SortOrder.DESC)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        List<Collection<Field<?>>> expectedSubList = expected.subList(0, num * 2);
+        Collections.reverse(expectedSubList);
+
+        Assert.assertEquals(expectedSubList, rows);
+      }
+    });
+  }
+
+  @Test
   public void testCount() throws Exception {
     // Write records
     int max = 5;

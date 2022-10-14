@@ -313,7 +313,9 @@ public class AppMetadataStore {
 
     StructuredTable table = getApplicationSpecificationTable();
     int limit = request.getLimit();
-    try (CloseableIterator<StructuredRow> iterator = table.scan(range, Integer.MAX_VALUE, request.getSortOrder())) {
+    boolean latestOnly = request.getLatestOnly();
+    try (CloseableIterator<StructuredRow> iterator = getScanApplicationsIterator(table, range,
+                                                                                 request.getSortOrder(), latestOnly)) {
       boolean keepScanning = true;
       while (iterator.hasNext() && keepScanning && limit > 0) {
         StructuredRow row = iterator.next();
@@ -324,6 +326,17 @@ public class AppMetadataStore {
         }
       }
     }
+  }
+
+  private CloseableIterator<StructuredRow> getScanApplicationsIterator(StructuredTable table,
+                                                                       Range range,
+                                                                       SortOrder sortOrder,
+                                                                       boolean latestOnly) throws IOException {
+    if (latestOnly) {
+      return table.scan(range, Integer.MAX_VALUE,
+                        Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"), sortOrder);
+    }
+    return table.scan(range, Integer.MAX_VALUE, sortOrder);
   }
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) throws IOException {

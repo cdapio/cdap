@@ -36,6 +36,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -103,6 +104,12 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
   @Test
   public void testScannerIteratorMulti() throws Exception {
     testScannerIterator(10);
+  }
+
+  @Override
+  @Ignore
+  public void testSortedPrimaryKeyFilteredIndexScan() throws Exception {
+    // no implementation
   }
 
   private void testScannerIterator(int max) throws Exception {

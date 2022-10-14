@@ -38,6 +38,7 @@ public class ScanApplicationsRequest {
   private final List<ApplicationFilter> filters;
   private final SortOrder sortOrder;
   private final int limit;
+  private final boolean latestOnly;
 
   /**
    * @param namespaceId  namespace to return applications for or null for all namespaces
@@ -51,13 +52,15 @@ public class ScanApplicationsRequest {
                                   @Nullable ApplicationId scanFrom,
                                   @Nullable ApplicationId scanTo,
                                   List<ApplicationFilter> filters,
-                                  SortOrder sortOrder, int limit) {
+                                  SortOrder sortOrder, int limit,
+                                  boolean latestOnly) {
     this.namespaceId = namespaceId;
     this.scanFrom = scanFrom;
     this.scanTo = scanTo;
     this.filters = filters;
     this.sortOrder = sortOrder;
     this.limit = limit;
+    this.latestOnly = latestOnly;
   }
 
   /**
@@ -113,6 +116,14 @@ public class ScanApplicationsRequest {
     return limit;
   }
 
+  /**
+   *
+   * @return whether to return the latest version of an application
+   */
+  public boolean getLatestOnly() {
+    return latestOnly;
+  }
+
   @Override
   public String toString() {
     return "ScanApplicationsRequest{" +
@@ -122,6 +133,7 @@ public class ScanApplicationsRequest {
       ", filters=" + filters +
       ", sortOrder=" + sortOrder +
       ", limit=" + limit +
+      ", latestOnly=" + latestOnly +
       '}';
   }
 
@@ -152,6 +164,7 @@ public class ScanApplicationsRequest {
     private List<ApplicationFilter> filters = new ArrayList<>();
     private SortOrder sortOrder = SortOrder.ASC;
     private int limit = Integer.MAX_VALUE;
+    private boolean latestOnly;
 
     private Builder() {
     }
@@ -163,6 +176,7 @@ public class ScanApplicationsRequest {
       this.filters = request.filters;
       this.sortOrder = request.sortOrder;
       this.limit = request.limit;
+      this.latestOnly = request.latestOnly;
     }
 
     /**
@@ -228,12 +242,22 @@ public class ScanApplicationsRequest {
       this.limit = limit;
       return this;
     }
+
+    /**
+     *
+     * @param latestOnly whether to return the latest version of an application
+     */
+    public Builder setLatestOnly(boolean latestOnly) {
+      this.latestOnly = latestOnly;
+      return this;
+    }
+
     /**
      *
      * @return new {@link ScanApplicationsRequest}
      */
     public ScanApplicationsRequest build() {
-      return new ScanApplicationsRequest(namespaceId, scanFrom, scanTo, filters, sortOrder, limit);
+      return new ScanApplicationsRequest(namespaceId, scanFrom, scanTo, filters, sortOrder, limit, latestOnly);
     }
   }
 }
