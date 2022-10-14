@@ -161,7 +161,21 @@ public final class NoSqlStructuredTable implements StructuredTable {
     List<Field<?>> beginPrefixKeys = getPrefixPrimaryKeys(range.getBegin());
     List<Field<?>> endPrefixKeys = getPrefixPrimaryKeys(range.getEnd());
 
-    return Range.create(beginPrefixKeys, range.getBeginBound(), endPrefixKeys, range.getEndBound());
+    // Edge case for table with primary keys of [KEY, KEY2, KEY3...]
+    // We give range of ([KEY: "ns1", KEY3: 123], EXCLUSIVE, [KEY: "ns1", KEY3: 789], EXCLUSIVE)
+    // KEY: "ns1" should be INCLUSIVE while scanning
+    // The longest prefix range should only be EXCLUSIVE when there's no keyholes and bound is EXCLUSIVE
+    Range.Bound beginBound =
+      beginPrefixKeys.size() == range.getBegin().size()
+        && range.getBeginBound() == Range.Bound.EXCLUSIVE
+        ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
+
+    Range.Bound endBound =
+      beginPrefixKeys.size() == range.getBegin().size()
+        && range.getEndBound() == Range.Bound.EXCLUSIVE
+        ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
+
+    return Range.create(beginPrefixKeys, beginBound, endPrefixKeys, endBound);
   }
 
   private Range getFilterRange(Range keyRange, Range prefixRange) {

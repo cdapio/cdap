@@ -66,6 +66,7 @@ public abstract class StructuredTableTest {
   private static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simpleTable");
   private static final String KEY = "key";
   private static final String KEY2 = "key2";
+  private static final String KEY3 = "key3";
   private static final String STRING_COL = "col1";
   private static final String DOUBLE_COL = "col2";
   private static final String FLOAT_COL = "col3";
@@ -79,10 +80,10 @@ public abstract class StructuredTableTest {
     try {
       SIMPLE_SPEC = new StructuredTableSpecification.Builder()
         .withId(SIMPLE_TABLE)
-        .withFields(Fields.intType(KEY), Fields.stringType(STRING_COL), Fields.longType(KEY2),
+        .withFields(Fields.intType(KEY), Fields.longType(KEY2), Fields.stringType(KEY3), Fields.stringType(STRING_COL),
                     Fields.doubleType(DOUBLE_COL), Fields.floatType(FLOAT_COL), Fields.bytesType(BYTES_COL),
                     Fields.longType(LONG_COL), Fields.longType(IDX_COL))
-        .withPrimaryKeys(KEY, KEY2)
+        .withPrimaryKeys(KEY, KEY2, KEY3)
         .withIndexes(STRING_COL, IDX_COL)
         .build();
       SIMPLE_SCHEMA = new StructuredTableSchema(SIMPLE_SPEC);
@@ -165,12 +166,14 @@ public abstract class StructuredTableTest {
     // Read all of them back using multiRead
     Collection<Collection<Field<?>>> keys = new ArrayList<>();
     for (int i = 0; i < max; i++) {
-      keys.add(Arrays.asList(Fields.intField(KEY, i), Fields.longField(KEY2, (long) i)));
+      keys.add(Arrays.asList(Fields.intField(KEY, i),
+                             Fields.longField(KEY2, (long) i),
+                             Fields.stringField(KEY3, "key3")));
     }
     // There is no particular ordering of the result, hence use a set to compare
     Set<Collection<Field<?>>> result = TransactionRunners.run(getTransactionRunner(), context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
-      return new HashSet<>(convertRowsToFields(table.multiRead(keys).iterator(), Arrays.asList(KEY, KEY2)));
+      return new HashSet<>(convertRowsToFields(table.multiRead(keys).iterator(), Arrays.asList(KEY, KEY2, KEY3)));
     });
 
     Assert.assertEquals(10, result.size());
@@ -270,7 +273,7 @@ public abstract class StructuredTableTest {
     Collection<Range> ranges = Collections.singletonList(
       Range.singleton(Arrays.asList(Fields.intField(KEY, 26), Fields.longField(KEY2, (long) 6))));
 
-    List<String> outPutFields = Arrays.asList(KEY, KEY2, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL);
+    List<String> outPutFields = Arrays.asList(KEY, KEY2, KEY3, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL);
 
     List<Collection<Field<?>>> actual = runMultiScan(ranges, max, outPutFields);
     Assert.assertEquals(expectedAll.subList(26, 27), actual);
@@ -327,7 +330,7 @@ public abstract class StructuredTableTest {
   }
 
   @Test
-  public void testPartialKeysMultiRangeScan() throws Exception {
+  public void testPartialKeysRangeScan() throws Exception {
     int max = 100;
 
     List<Collection<Field<?>>> expectedAll = writeStructuredRowsWithDuplicatePrefix(max, "");
@@ -335,7 +338,7 @@ public abstract class StructuredTableTest {
     Collection<Range> ranges = Collections.singletonList(
       Range.singleton(Arrays.asList(Fields.intField(KEY, 2), Fields.longField(KEY2, (long) 26))));
 
-    List<String> outPutFields = Arrays.asList(KEY, KEY2, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL);
+    List<String> outPutFields = Arrays.asList(KEY, KEY2, KEY3, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL);
 
     List<Collection<Field<?>>> actual = runMultiScan(ranges, max, outPutFields);
     Assert.assertEquals(expectedAll.subList(26, 27), actual);
@@ -370,6 +373,69 @@ public abstract class StructuredTableTest {
     newExpected.addAll(expectedAll.subList(32, 35));
     newExpected.addAll(expectedAll.subList(42, 50));
     Assert.assertEquals(newExpected, actual);
+
+    // MultiScan with multiple ranges that cannot merge the longest prefix keys
+    ranges = Arrays.asList(
+      // INCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 1), Fields.stringField(KEY3, String.valueOf(11))),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 1), Fields.stringField(KEY3, String.valueOf(15))),
+                   Range.Bound.INCLUSIVE),
+      // INCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(KEY3, String.valueOf(31))),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(KEY3, String.valueOf(35))),
+                   Range.Bound.EXCLUSIVE),
+      // EXCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 5), Fields.stringField(KEY3, String.valueOf(52))),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 5), Fields.stringField(KEY3, String.valueOf(58))),
+                   Range.Bound.EXCLUSIVE),
+      // EXCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 7), Fields.stringField(KEY3, String.valueOf(71))),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 7), Fields.stringField(KEY3, String.valueOf(79))),
+                   Range.Bound.INCLUSIVE));
+
+    actual = runMultiScan(ranges, max, outPutFields);
+    newExpected = new LinkedList<>();
+    newExpected.addAll(expectedAll.subList(11, 16));
+    newExpected.addAll(expectedAll.subList(31, 35));
+    newExpected.addAll(expectedAll.subList(53, 58));
+    newExpected.addAll(expectedAll.subList(72, 80));
+    Assert.assertEquals(newExpected, actual);
+
+    actual = scanSimpleStructuredRows(
+      // INCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 1), Fields.stringField(KEY3, String.valueOf(11))),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 1), Fields.stringField(KEY3, String.valueOf(15))),
+                   Range.Bound.INCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(11, 16), actual);
+
+    actual = scanSimpleStructuredRows(
+      // INCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(KEY3, String.valueOf(31))),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(KEY3, String.valueOf(35))),
+                   Range.Bound.EXCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(31, 35), actual);
+
+    actual = scanSimpleStructuredRows(
+      // EXCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 5), Fields.stringField(KEY3, String.valueOf(52))),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 5), Fields.stringField(KEY3, String.valueOf(58))),
+                   Range.Bound.EXCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(53, 58), actual);
+
+    actual = scanSimpleStructuredRows(
+      // EXCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 7), Fields.stringField(KEY3, String.valueOf(71))),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 7), Fields.stringField(KEY3, String.valueOf(79))),
+                   Range.Bound.INCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(72, 80), actual);
 
     // MultiScan partialKeys with multiple collections of fields
     ranges = Arrays.asList(
@@ -472,6 +538,7 @@ public abstract class StructuredTableTest {
     for (int i = 0; i < max; i++) {
       List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i / 10),
                                             Fields.longField(KEY2, (long) i),
+                                            Fields.stringField(KEY3, "key3"),
                                             Fields.stringField(STRING_COL, VAL + i),
                                             Fields.doubleField(DOUBLE_COL, (double) i),
                                             Fields.floatField(FLOAT_COL, (float) i),
@@ -585,7 +652,7 @@ public abstract class StructuredTableTest {
     newValues.put(LONG_COL, Fields.longField(LONG_COL, 500L));
 
     // Compare and swap an existing row
-    Collection<Field<?>> keys = Arrays.asList(oldValues.get(KEY), oldValues.get(KEY2));
+    Collection<Field<?>> keys = Arrays.asList(oldValues.get(KEY), oldValues.get(KEY2), oldValues.get(KEY3));
     for (Map.Entry<String, Field<?>> newField : newValues.entrySet()) {
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
@@ -622,7 +689,9 @@ public abstract class StructuredTableTest {
   @Test
   public void testCompareAndSwapNonExistent() throws Exception {
     // Compare and swap a non-existent row
-    Collection<Field<?>> nonExistentKeys = Arrays.asList(Fields.intField(KEY, -100), Fields.longField(KEY2, -10L));
+    Collection<Field<?>> nonExistentKeys = Arrays.asList(Fields.intField(KEY, -100),
+                                                         Fields.longField(KEY2, -10L),
+                                                         Fields.stringField(KEY3, "key3"));
 
     // Verify row does not exist first
     getTransactionRunner().run(context -> {
@@ -654,7 +723,9 @@ public abstract class StructuredTableTest {
 
   @Test
   public void testIncrement() throws Exception {
-    Collection<Field<?>> keys = Arrays.asList(Fields.intField(KEY, 100), Fields.longField(KEY2, 200L));
+    Collection<Field<?>> keys = Arrays.asList(Fields.intField(KEY, 100),
+                                              Fields.longField(KEY2, 200L),
+                                              Fields.stringField(KEY3, "key3"));
 
     // Increment
     long increment = 30;
@@ -771,7 +842,8 @@ public abstract class StructuredTableTest {
       for (String value : Arrays.asList("abc", "def", "ghi")) {
         for (int i = 0; i < num; ++i) {
           Collection<Field<?>> keys = Arrays.asList(Fields.intField(KEY, counter),
-                                                    Fields.longField(KEY2, counter * 100L));
+                                                    Fields.longField(KEY2, counter * 100L),
+                                                    Fields.stringField(KEY3, "key3"));
           Collection<Field<?>> fields = new ArrayList<>(keys);
           fields.add(Fields.stringField(STRING_COL, value));
           table.upsert(fields);
@@ -781,11 +853,13 @@ public abstract class StructuredTableTest {
       }
     });
 
+    List<String> columns = Arrays.asList(KEY, KEY2, KEY3, STRING_COL);
+
     // Verify write
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), 1000)) {
-        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(expected, rows);
       }
     });
@@ -794,18 +868,18 @@ public abstract class StructuredTableTest {
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.stringField(STRING_COL, "def"))) {
-        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(expected.subList(num, 2 * num), rows);
       }
 
       try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.stringField(STRING_COL, "abc"))) {
-        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(expected.subList(0, num), rows);
       }
 
       // non-existent index value
       try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.stringField(STRING_COL, "non"))) {
-        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(Collections.emptyList(), rows);
       }
 
@@ -831,6 +905,7 @@ public abstract class StructuredTableTest {
         for (int i = 0; i < num; ++i) {
           Collection<Field<?>> fields = Arrays.asList(Fields.intField(KEY, counter),
                                                       Fields.longField(KEY2, counter * 100L),
+                                                      Fields.stringField(KEY3, "key3"),
                                                       Fields.stringField(STRING_COL, value));
           table.upsert(fields);
           expected.add(fields);
@@ -839,7 +914,7 @@ public abstract class StructuredTableTest {
       }
     });
 
-    List<String> columns = Arrays.asList(KEY, KEY2, STRING_COL);
+    List<String> columns = Arrays.asList(KEY, KEY2, KEY3, STRING_COL);
 
     // Verify write
     getTransactionRunner().run(context -> {
@@ -927,6 +1002,7 @@ public abstract class StructuredTableTest {
         // insert data ascending by primary keys and descending by IDX_COL
         Collection<Field<?>> fields = Arrays.asList(Fields.intField(KEY, counter),
                                                     Fields.longField(KEY2, counter * 100L),
+                                                    Fields.stringField(KEY3, "key3"),
                                                     Fields.longField(IDX_COL, (long) -i));
         table.upsert(fields);
         expected.add(fields);
@@ -934,7 +1010,7 @@ public abstract class StructuredTableTest {
       }
     });
 
-    List<String> columns = Arrays.asList(KEY, KEY2, IDX_COL);
+    List<String> columns = Arrays.asList(KEY, KEY2, KEY3, IDX_COL);
 
     // Verify write
     getTransactionRunner().run(context -> {
@@ -1005,13 +1081,14 @@ public abstract class StructuredTableTest {
       for (int i = 0; i < num * 3; ++i) {
         Collection<Field<?>> fields = Arrays.asList(Fields.intField(KEY, counter),
                                                     Fields.longField(KEY2, counter * 100L),
+                                                    Fields.stringField(KEY3, "key3"),
                                                     Fields.longField(IDX_COL, (long) 100));
         table.upsert(fields);
         expected.add(fields);
         ++counter;
       }
     });
-    List<String> columns = Arrays.asList(KEY, KEY2, IDX_COL);
+    List<String> columns = Arrays.asList(KEY, KEY2, KEY3, IDX_COL);
 
     // Verify write
     getTransactionRunner().run(context -> {
@@ -1081,6 +1158,7 @@ public abstract class StructuredTableTest {
   public void testUpdate() throws Exception {
     List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, 1),
                                           Fields.longField(KEY2, 2L),
+                                          Fields.stringField(KEY3, "key3"),
                                           Fields.stringField(STRING_COL, "str1"),
                                           Fields.doubleField(DOUBLE_COL, (double) 1.0),
                                           Fields.floatField(FLOAT_COL, (float) 1.0),
@@ -1092,15 +1170,17 @@ public abstract class StructuredTableTest {
 
     List<Field<?>> updates = Arrays.asList(Fields.intField(KEY, 1),
                                            Fields.longField(KEY2, 2L),
+                                           Fields.stringField(KEY3, "key3"),
                                            Fields.stringField(STRING_COL, "str2"),
                                            Fields.floatField(FLOAT_COL, (float) 2.0));
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       table.update(updates);
     });
-    List<Field<?>> compoundKey = new ArrayList<>(2);
+    List<Field<?>> compoundKey = new ArrayList<>(3);
     compoundKey.add(Fields.intField(KEY, 1));
     compoundKey.add(Fields.longField(KEY2, 2L));
+    compoundKey.add(Fields.stringField(KEY3, "key3"));
     AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
 
     List<String> columns = new ArrayList<>();
@@ -1119,6 +1199,7 @@ public abstract class StructuredTableTest {
                                                       fields.stream().map(Field::getName).collect(Collectors.toList()));
     List<Field<?>> expectedFields = Arrays.asList(Fields.intField(KEY, 1),
                                                   Fields.longField(KEY2, 2L),
+                                                  Fields.stringField(KEY3, "key3"),
                                                   Fields.stringField(STRING_COL, "str2"),
                                                   Fields.doubleField(DOUBLE_COL, (double) 1.0),
                                                   Fields.floatField(FLOAT_COL, (float) 2.0),
@@ -1130,6 +1211,7 @@ public abstract class StructuredTableTest {
   public void testUpdatePrimaryKeyNotSpecified() throws Exception {
     List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, 1),
                                           Fields.longField(KEY2, 2L),
+                                          Fields.stringField(KEY3, "key3"),
                                           Fields.stringField(STRING_COL, "str1"),
                                           Fields.doubleField(DOUBLE_COL, (double) 1.0),
                                           Fields.floatField(FLOAT_COL, (float) 1.0),
@@ -1152,6 +1234,7 @@ public abstract class StructuredTableTest {
   public void testUpdateKeyNotFound() throws Exception {
     List<Field<?>> updates = Arrays.asList(Fields.intField(KEY, 1),
                                            Fields.longField(KEY2, 2L),
+                                           Fields.stringField(KEY3, "key3"),
                                            Fields.floatField(FLOAT_COL, (float) 2.0));
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
@@ -1161,6 +1244,7 @@ public abstract class StructuredTableTest {
     List<Field<?>> compoundKey = new ArrayList<>(2);
     compoundKey.add(Fields.intField(KEY, 1));
     compoundKey.add(Fields.longField(KEY2, 2L));
+    compoundKey.add(Fields.stringField(KEY3, "key3"));
     AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
     List<String> columns = new ArrayList<>();
     columns.add(STRING_COL);
@@ -1182,6 +1266,7 @@ public abstract class StructuredTableTest {
     for (int i = max - 1; i >= 0; i--) {
       List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i),
                                             Fields.longField(KEY2, (long) i),
+                                            Fields.stringField(KEY3, "key3"),
                                             Fields.stringField(STRING_COL, VAL + i + suffix),
                                             Fields.doubleField(DOUBLE_COL, (double) i),
                                             Fields.floatField(FLOAT_COL, (float) i),
@@ -1204,6 +1289,7 @@ public abstract class StructuredTableTest {
       // Adding rows that have same "KEY" every 10 elements
       List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i / 10),
                                             Fields.longField(KEY2, (long) i),
+                                            Fields.stringField(KEY3, String.valueOf(i)),
                                             Fields.stringField(STRING_COL, VAL + i + suffix),
                                             Fields.doubleField(DOUBLE_COL, (double) i),
                                             Fields.floatField(FLOAT_COL, (float) i),
@@ -1227,6 +1313,7 @@ public abstract class StructuredTableTest {
       // Adding rows that have same "KEY" every 10 elements
       List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i),
                                             Fields.longField(KEY2, (long) i % 10),
+                                            Fields.stringField(KEY3, "key3"),
                                             Fields.stringField(STRING_COL, VAL + i + suffix),
                                             Fields.doubleField(DOUBLE_COL, (double) i),
                                             Fields.floatField(FLOAT_COL, (float) i),
@@ -1257,6 +1344,7 @@ public abstract class StructuredTableTest {
     List<String> fields = new ArrayList<>();
     fields.add(KEY);
     fields.add(KEY2);
+    fields.add(KEY3);
     fields.add(STRING_COL);
     fields.add(DOUBLE_COL);
     fields.add(FLOAT_COL);
@@ -1268,6 +1356,7 @@ public abstract class StructuredTableTest {
       List<Field<?>> compoundKey = new ArrayList<>(2);
       compoundKey.add(Fields.intField(KEY, i));
       compoundKey.add(Fields.longField(KEY2, (long) i));
+      compoundKey.add(Fields.stringField(KEY3, "key3"));
       AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
 
       getTransactionRunner().run(context -> {
@@ -1328,6 +1417,7 @@ public abstract class StructuredTableTest {
       List<Field<?>> compoundKey = new ArrayList<>(2);
       compoundKey.add(Fields.intField(KEY, i));
       compoundKey.add(Fields.longField(KEY2, (long) i));
+      compoundKey.add(Fields.stringField(KEY3, "key3"));
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
@@ -1345,6 +1435,7 @@ public abstract class StructuredTableTest {
           StructuredRow row = iterator.next();
           actual.add(Arrays.asList(Fields.intField(KEY, row.getInteger(KEY)),
                                    Fields.longField(KEY2, row.getLong(KEY2)),
+                                   Fields.stringField(KEY3, row.getString(KEY3)),
                                    Fields.stringField(STRING_COL, row.getString(STRING_COL)),
                                    Fields.doubleField(DOUBLE_COL, row.getDouble(DOUBLE_COL)),
                                    Fields.floatField(FLOAT_COL, row.getFloat(FLOAT_COL)),
