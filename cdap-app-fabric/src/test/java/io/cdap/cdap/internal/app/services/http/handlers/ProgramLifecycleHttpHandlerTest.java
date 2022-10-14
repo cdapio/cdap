@@ -1177,6 +1177,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  @Ignore // TODO: CDAP-19775
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
@@ -1191,6 +1192,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
     JsonObject result = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
+    // TODO: CDAP-19775, this is calling versioned schedule api
     List<ScheduleDetail> actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                                          defaultAppId.getApplication(),
                                                          result.get("appVersion").getAsString());
