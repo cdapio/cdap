@@ -30,14 +30,15 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.gateway.handlers.AppStateHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.CustomTypeSafeMatcher;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -47,6 +48,8 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 /**
@@ -55,6 +58,11 @@ import java.util.Optional;
 public class RemoteAppStateStoreTest {
 
   private static final String NAMESPACE = "ns1";
+  private static final String NOT_FOUND_APP = "non_existing_app";
+  private static final String SUCCESS_APP = "app_that_works";
+  private static final String ERROR_APP = "app_that_throws_error";
+  private static final String TEST_VALUE = "test value";
+  private static final String MISSING_KEY = "missing_key";
 
   private static NettyHttpService httpService;
   private static ApplicationLifecycleService applicationLifecycleService;
@@ -88,6 +96,79 @@ public class RemoteAppStateStoreTest {
     httpService.start();
     cancellable = discoveryService
       .register(URIScheme.createDiscoverable(Constants.Service.APP_FABRIC_HTTP, httpService));
+    setUpMockBehaviorForApplicationLifeCycleService();
+  }
+
+  private static void setUpMockBehaviorForApplicationLifeCycleService() throws ApplicationNotFoundException {
+    //Throw ApplicationNotFoundException when ever NOT_FOUND_APP is used
+    Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(NAMESPACE, NOT_FOUND_APP)))
+      .when(applicationLifecycleService)
+      .saveState(Mockito.argThat(new AppNameAppStateKeyValueMatcher("NOT_FOUND_APP", NOT_FOUND_APP)));
+    Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(NAMESPACE, NOT_FOUND_APP)))
+      .when(applicationLifecycleService)
+      .getState(Mockito.argThat(new AppNameAppStateKeyMatcher("NOT_FOUND_APP", NOT_FOUND_APP)));
+
+    //Throw RuntimeException whenever error app is being used
+    Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
+      .saveState(Mockito.argThat(new AppNameAppStateKeyValueMatcher("ERROR_APP", ERROR_APP)));
+    Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
+      .getState(Mockito.argThat(new AppNameAppStateKeyMatcher("ERROR_APP", ERROR_APP)));
+
+    String encodedInvalidKey = Base64.getEncoder().encodeToString(MISSING_KEY.getBytes(StandardCharsets.UTF_8));
+    // Different response for valid and invalid keys
+    Mockito.when(
+        applicationLifecycleService.getState(
+          Mockito.argThat(new CustomTypeSafeMatcher<AppStateKey>("valid key match") {
+            @Override
+            protected boolean matchesSafely(AppStateKey item) {
+              return item.getAppName().equals(SUCCESS_APP) && !item.getStateKey().equals(encodedInvalidKey);
+            }
+          })))
+      .thenReturn(Optional.of(TEST_VALUE.getBytes(StandardCharsets.UTF_8)));
+
+    Mockito.when(
+        applicationLifecycleService.getState(
+          Mockito.argThat(new CustomTypeSafeMatcher<AppStateKey>("invalid key match") {
+            @Override
+            protected boolean matchesSafely(AppStateKey item) {
+              return item.getAppName().equals(SUCCESS_APP) && item.getStateKey().equals(encodedInvalidKey);
+            }
+          })))
+      .thenReturn(Optional.empty());
+  }
+
+  /**
+   * Simple AppStateKeyValue matcher that matches for appname
+   */
+  private static class AppNameAppStateKeyValueMatcher extends CustomTypeSafeMatcher<AppStateKeyValue> {
+    private final String appName;
+
+    public AppNameAppStateKeyValueMatcher(String description, String appName) {
+      super(description);
+      this.appName = appName;
+    }
+
+    @Override
+    protected boolean matchesSafely(AppStateKeyValue item) {
+      return item.getAppName().equals(appName);
+    }
+  }
+
+  /**
+   * Simple AppStateKey matcher that matches for appname
+   */
+  private static class AppNameAppStateKeyMatcher extends CustomTypeSafeMatcher<AppStateKey> {
+    private final String appName;
+
+    public AppNameAppStateKeyMatcher(String description, String appName) {
+      super(description);
+      this.appName = appName;
+    }
+
+    @Override
+    protected boolean matchesSafely(AppStateKey item) {
+      return item.getAppName().equals(appName);
+    }
   }
 
   @AfterClass
@@ -98,95 +179,88 @@ public class RemoteAppStateStoreTest {
 
   @Test
   public void testSaveSuccess() throws IOException {
-    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE, "app1");
-    byte[] value = "testvalue".getBytes();
-    remoteAppStateStore.saveState("key1", value);
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+                                                                      NAMESPACE, SUCCESS_APP);
+    remoteAppStateStore.saveState("valid-key", "some_value".getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void testSaveSuccessWithSpaceInKey() throws IOException {
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+                                                                      NAMESPACE, SUCCESS_APP);
+    remoteAppStateStore.saveState("valid key with space", "some_value".getBytes(StandardCharsets.UTF_8));
   }
 
   @Test
   public void testSaveInvalidNamespace() throws IOException {
     expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
-    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, "invalid", "app1");
-    byte[] value = "testvalue".getBytes();
-    remoteAppStateStore.saveState("key1", value);
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+                                                                      "invalid", "some_app");
+    remoteAppStateStore.saveState("some_key", "some_value".getBytes(StandardCharsets.UTF_8));
   }
 
   @Test
-  public void testSaveInvalidApp() throws ApplicationNotFoundException, IOException {
+  public void testSaveInvalidApp() throws IOException {
     expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
-    String testAppName = "app1";
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
-                                                                      testAppName);
-    byte[] value = "testvalue".getBytes();
-    String testKey = "key1";
-    Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(
-      NAMESPACE, testAppName))).when(applicationLifecycleService).saveState(Mockito.any());
-    remoteAppStateStore.saveState(testKey, value);
+                                                                      NOT_FOUND_APP);
+    remoteAppStateStore.saveState("some_key", "some value".getBytes());
   }
 
   @Test
-  public void testSaveFail() throws ApplicationNotFoundException, IOException {
+  public void testSaveFail() throws IOException {
     expectedException.expectCause(CoreMatchers.isA(IOException.class));
-    String testAppName = "app1";
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
-                                                                      testAppName);
-    byte[] value = "testvalue".getBytes();
-    String testKey = "key1";
-    Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService).saveState(Mockito.any());
-    remoteAppStateStore.saveState(testKey, value);
+                                                                      ERROR_APP);
+    remoteAppStateStore.saveState("some_key", "some value".getBytes());
   }
 
   @Test
-  public void testGetSuccess() throws ApplicationNotFoundException, IOException {
-    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE, "app1");
-    byte[] value = "testvalue".getBytes();
-    Mockito.when(applicationLifecycleService.getState(Mockito.any())).thenReturn(Optional.of(value));
-    Optional<byte[]> state = remoteAppStateStore.getState("key1");
-    Assert.assertEquals(new String(value), new String(state.get()));
+  public void testGetWithValidKeys() throws IOException {
+    getWithValidKeys("key");
+  }
+
+  @Test
+  public void testGetSuccessWithSpaceInKey() throws IOException {
+    getWithValidKeys("key with space");
+  }
+
+  private void getWithValidKeys(String key) throws IOException {
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+                                                                      NAMESPACE, SUCCESS_APP);
+    Optional<byte[]> state = remoteAppStateStore.getState(key);
+    Assert.assertEquals(TEST_VALUE, new String(state.get()));
   }
 
   @Test
   public void testGetInvalidNamespace() throws IOException {
     expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
-    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, "invalid", "app1");
-    remoteAppStateStore.getState("key1");
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+                                                                      "invalid", "some_app");
+    remoteAppStateStore.getState("some_key");
   }
 
   @Test
-  public void testGetInvalidApp() throws ApplicationNotFoundException, IOException {
+  public void testGetInvalidApp() throws IOException {
     expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
-    String testAppName = "app1";
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
-                                                                      testAppName);
-    String testKey = "key1";
-    AppStateKey appStateKey = new AppStateKey(new NamespaceId(NAMESPACE), testAppName, testKey);
-    Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(
-      NAMESPACE, testAppName))).when(applicationLifecycleService).getState(Mockito.refEq(appStateKey));
-    remoteAppStateStore.getState(testKey);
+                                                                      NOT_FOUND_APP);
+    remoteAppStateStore.getState("some_key");
   }
 
   @Test
-  public void testGetInvalidKey() throws ApplicationNotFoundException, IOException {
-    String testAppName = "app2";
+  public void testGetInvalidKey() throws IOException {
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
-                                                                      testAppName);
-    String testKey = "key1";
-    AppStateKey appStateKey = new AppStateKey(new NamespaceId(NAMESPACE), testAppName, testKey);
-    Mockito.when(applicationLifecycleService.getState(Mockito.refEq(appStateKey))).thenReturn(Optional.empty());
-    Optional<byte[]> state = remoteAppStateStore.getState(testKey);
+                                                                      SUCCESS_APP);
+    Optional<byte[]> state = remoteAppStateStore.getState(MISSING_KEY);
     Assert.assertEquals(Optional.empty(), state);
   }
 
   @Test
-  public void testGetFail() throws ApplicationNotFoundException, IOException {
+  public void testGetFail() throws IOException {
     expectedException.expectCause(CoreMatchers.isA(IOException.class));
-    String testAppName = "app3";
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
-                                                                      testAppName);
-    String testKey = "key1";
-    AppStateKey appStateKey = new AppStateKey(new NamespaceId(NAMESPACE), testAppName, testKey);
-    Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
-      .getState(Mockito.refEq(appStateKey));
-    remoteAppStateStore.getState(testKey);
+                                                                      ERROR_APP);
+    remoteAppStateStore.getState("some_key");
   }
 }
