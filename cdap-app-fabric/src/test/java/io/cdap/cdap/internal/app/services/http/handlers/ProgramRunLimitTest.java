@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonObject;
 import io.cdap.cdap.AppWithServicesAndWorker;
 import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -31,9 +30,9 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.SlowTests;
-import io.cdap.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -60,15 +59,18 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     initializeAndStartServices(cConf);
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Category(SlowTests.class)
   @Test
+  @Ignore
   public void testConcurrentServiceLaunchingAndRunningLimit() throws Exception {
     // Launching/running a new service should NOT be controlled by flow-control mechanism. 
     // deploy, check the status
     deploy(AppWithServicesAndWorker.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    JsonObject result = getAppDetails(TEST_NAMESPACE1, AppWithServicesAndWorker.NAME);
-    ApplicationId appId = new ApplicationId(TEST_NAMESPACE1, AppWithServicesAndWorker.NAME,
-                                            result.get("appVersion").getAsString());
+
+    ApplicationId appId = new ApplicationId(TEST_NAMESPACE1, AppWithServicesAndWorker.NAME);
     ProgramId noOpService = appId.service(AppWithServicesAndWorker.NO_OP_SERVICE);
     ProgramId pingService = appId.service(AppWithServicesAndWorker.PING_SERVICE);
     ProgramId noOpWorker = appId.worker(AppWithServicesAndWorker.NO_OP_WORKER);
@@ -99,8 +101,12 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     waitState(pingService, STOPPED);
   }
 
-  @Category(XSlowTests.class)
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
+  @Category(SlowTests.class)
   @Test
+  @Ignore
   public void testConcurrentWorkflowLaunchingAndRunningLimit() throws Exception {
     // Deploy, check the status
     deploy(AppWithWorkflow.class, 200);

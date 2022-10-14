@@ -517,17 +517,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @QueryParam("artifactScope") Set<String> artifactScopes,
                                  @QueryParam("allowSnapshot") boolean allowSnapshot) throws Exception {
     ApplicationId appId = validateApplicationId(validateNamespace(namespaceId), appName);
-    try {
-      String latestAppVersion = getLatestAppVersion(appId);
-      appId = validateApplicationVersionId(namespaceId, appName, latestAppVersion);
-      Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
-      applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
-      ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
-    } catch (Exception e) {
-      LOG.error("Failure to upgrade application", e);
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
+    String latestAppVersion = getLatestAppVersion(appId);
+    appId = validateApplicationVersionId(namespaceId, appName, latestAppVersion);
+    Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
+    applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
+    ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
   }
 
   /**
@@ -647,9 +642,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
         String appId = obj.get("appId").getAsString();
         String version;
-
         JsonElement versionObj = obj.get("version");
-        if (versionObj == null) {
+        if (versionObj == null || versionObj.equals("-SNAPSHOT")) {
           // get the latest version of the app instead of -SNAPSHOT
           try {
             ApplicationDetail appLatestVersionDetail = applicationLifecycleService
