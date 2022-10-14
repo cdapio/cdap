@@ -24,6 +24,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -39,6 +40,7 @@ import io.cdap.cdap.proto.id.WorkflowId;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -70,10 +72,15 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
   @After
   public void tearDown() throws Exception {
-    appClient.delete(appId);
+    ApplicationDetail appDetail = appClient.get(appId);
+    appClient.delete(new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion()));
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testWorkflowClient() throws Exception {
     String keyValueTableType = "io.cdap.cdap.api.dataset.lib.KeyValueTable";
     String filesetType = "io.cdap.cdap.api.dataset.lib.FileSet";
