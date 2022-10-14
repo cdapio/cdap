@@ -1326,7 +1326,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programsMap.values());
 
-    List<BatchProgramStatus> result = new ArrayList<>(programsMap.values().size());
+    List<BatchProgramStatus> result = new ArrayList<>(programsMap.size());
     for (BatchProgram program : batchPrograms) {
       ProgramId programId = programsMap.get(program);
       ProgramStatus status = statuses.get(programId);
