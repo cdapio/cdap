@@ -204,8 +204,10 @@ public class UnitTestManager extends AbstractTestManager {
   public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
     appFabricClient.deployApplication(appId, appRequest);
     ApplicationDetail appDetail = appFabricClient.getInfo(appId);
-    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
-    return appManagerFactory.create(appId);
+    ApplicationId versionedAppId = new ApplicationId(appId.getNamespace(),
+                                                     appId.getApplication(),
+                                                     appDetail.getAppVersion());
+    return appManagerFactory.create(versionedAppId);
   }
 
   @Override
