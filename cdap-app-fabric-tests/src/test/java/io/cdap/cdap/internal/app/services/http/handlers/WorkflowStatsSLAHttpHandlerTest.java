@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.WorkflowApp;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -35,6 +34,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PercentileInformation;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -97,9 +97,9 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testStatistics() throws Exception {
     deploy(WorkflowApp.class, 200);
-    JsonObject result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
+    ApplicationDetail appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
     ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp",
-                                                  result.get("appVersion").getAsString());
+                                                  appDetails.getAppVersion());
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
@@ -214,9 +214,9 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDetails() throws Exception {
     deploy(WorkflowApp.class, 200);
-    JsonObject result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
+    ApplicationDetail appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
     ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp",
-                                                  result.get("appVersion").getAsString());
+                                                  appDetails.getAppVersion());
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
@@ -271,9 +271,9 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCompare() throws Exception {
     deploy(WorkflowApp.class, 200);
-    JsonObject result = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
+    ApplicationDetail appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
     ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp",
-                                                  result.get("appVersion").getAsString());
+                                                  appDetails.getAppVersion());
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";

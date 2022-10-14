@@ -243,7 +243,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (!applicationLifecycleService.updateAppAllowed(applicationId)) {
       responder.sendString(HttpResponseStatus.CONFLICT,
-                           String.format("Cannot update the application because version %s already exists", uuidVersion));
+                           String.format("Cannot update the application because version %s already exists",
+                                         uuidVersion));
     }
     try {
       return deployAppFromArtifact(applicationId);

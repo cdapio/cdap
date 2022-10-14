@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.capability;
 
-import com.google.gson.JsonObject;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.annotation.Requirements;
@@ -94,8 +93,8 @@ import java.util.UUID;
       capabilityWriter.addOrUpdateCapability(capability, CapabilityStatus.ENABLED, capabilityConfig);
     }
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapabilities);
-    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapabilities);
-    String appNameWithCapabilitiesVersion = appDetails.get("appVersion").getAsString();
+    ApplicationDetail appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapabilities);
+    String appNameWithCapabilitiesVersion = appDetails.getAppVersion();
     //Deploy application without capability
     Class<WorkflowAppWithFork> appNoCapabilityClass = WorkflowAppWithFork.class;
     Requirements declaredAnnotation1 = appNoCapabilityClass.getDeclaredAnnotation(Requirements.class);
@@ -104,7 +103,7 @@ import java.util.UUID;
     String appNameWithoutCapability = appNoCapabilityClass.getSimpleName() + UUID.randomUUID();
     deployArtifactAndApp(appNoCapabilityClass, appNameWithoutCapability);
     appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithoutCapability);
-    String appNameWithoutCapabilityVersion = appDetails.get("appVersion").getAsString();
+    String appNameWithoutCapabilityVersion = appDetails.getAppVersion();
 
     //verify that list applications return the application tagged with capability only
     for (String capability : declaredAnnotation.capabilities()) {
@@ -155,12 +154,12 @@ import java.util.UUID;
                                                                   Collections.emptyList()));
     }
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapability1);
-    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapability1);
-    String appNameWithCapability1Version = appDetails.get("appVersion").getAsString();
+    ApplicationDetail appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapability1);
+    String appNameWithCapability1Version = appDetails.getAppVersion();
     String appNameWithCapability2 = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapability2);
     appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), appNameWithCapability2);
-    String appNameWithCapability2Version = appDetails.get("appVersion").getAsString();
+    String appNameWithCapability2Version = appDetails.getAppVersion();
 
     //search with offset and limit
     String capability = declaredAnnotation.capabilities()[0];
