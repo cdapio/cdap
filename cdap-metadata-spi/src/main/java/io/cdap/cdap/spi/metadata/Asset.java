@@ -26,21 +26,24 @@ import java.util.Objects;
  * FQN is formed by using the plugin properties that together identifies an asset. For e.g. in case of DB plugins,
  * the plugin can be of the form {dbType}.{host}: {port}.{database}.{schema}.
  * If location is not known for an asset, it is set to "unknown" by default.
+ * If project ID is not known for an asset, it is set to "" by default.
  */
 @Beta
 public class Asset {
 
-  private static final String DEFAULT_LOCATION = "unknown";
+  private static final String DEFAULT_LOCATION = "global";
+  private static final String DEFAULT_PROJECT = "";
 
   private final String fqn;
   private final String location;
+  private final String projectId;
 
   /**
    * Creates an instance of Asset. Location will be "unknown" if not set.
    * @param fqn fully-qualified name of the Asset.
    */
   public Asset(String fqn) {
-    this(fqn, DEFAULT_LOCATION);
+    this(fqn, DEFAULT_LOCATION, DEFAULT_PROJECT);
   }
 
   /**
@@ -49,8 +52,19 @@ public class Asset {
    * @param location location of the Asset.
    */
   public Asset(String fqn, String location) {
+    this(fqn, location, DEFAULT_PROJECT);
+  }
+
+  /**
+   * Creates an instance of Asset.
+   * @param fqn fully-qualified name of the Asset.
+   * @param location location of the Asset.
+   * @param projectId project for the Asset.
+   */
+  public Asset(String fqn, String location, String projectId) {
     this.fqn = fqn;
     this.location = location;
+    this.projectId = projectId;
   }
 
   /**
@@ -67,6 +81,13 @@ public class Asset {
     return location;
   }
 
+  /**
+   * @return the project ID of the {@link Asset}, if applicable.
+   */
+  public String getProjectId() {
+    return projectId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -76,12 +97,12 @@ public class Asset {
       return false;
     }
     Asset asset = (Asset) o;
-    return fqn.equals(asset.fqn) && getLocation().equals(asset.getLocation());
+    return fqn.equals(asset.fqn) && location.equals(asset.location) && projectId.equals(asset.projectId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(fqn, location);
+    return Objects.hash(fqn, location, projectId);
   }
 
   @Override
@@ -89,6 +110,7 @@ public class Asset {
     return "Dataset{" +
       "fqn='" + fqn + '\'' +
       ", location='" + location + '\'' +
+      ", projectId='" + projectId + '\'' +
       '}';
   }
 }
