@@ -412,7 +412,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Id.Application appIdDelete = Id.Application.from(appId.getNamespace(), appId.getApplication());
     deleteApp(appIdDelete, 200);
-    deleteApp(appIdDefault, 200);
   }
 
   /**
@@ -569,6 +568,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testListAndGetForPaginatedAPIWithNameFilterType() throws Exception {
+    deleteApp(Id.Application.from(TEST_NAMESPACE1, AllProgramsApp.NAME), 200);
     for (int i = 0; i < 2; i++) {
       //deploy with name to testnamespace1
       String ns1AppName = AllProgramsApp.NAME + String.join("", Collections.nCopies(i, "1"));
@@ -721,6 +721,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
 
+    apps = getAppList(TEST_NAMESPACE2);
     //delete app in testnamespace2
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getResponseCode());

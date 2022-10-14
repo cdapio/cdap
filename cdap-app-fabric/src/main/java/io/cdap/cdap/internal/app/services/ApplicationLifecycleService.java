@@ -1097,18 +1097,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     deleteMetrics(appId, spec);
-
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
+    deletePreferences(appId, spec);
 
     // version specific deletion
     for (ApplicationId versionAppId : store.getAllAppVersionsAppIds(appId)) {
-      //Delete all preferences of the application and of all its programs
-      ApplicationSpecification versionAppSpec = store.getApplication(appId);
-      if (versionAppSpec == null) {
-        throw new NotFoundException(Id.Application.fromEntityId(appId));
-      }
-      deletePreferences(versionAppId, versionAppSpec);
       store.removeApplication(versionAppId);
     }
     try {

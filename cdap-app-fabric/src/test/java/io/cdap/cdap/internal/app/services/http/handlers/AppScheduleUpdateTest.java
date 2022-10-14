@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
-import com.google.gson.JsonObject;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -28,6 +27,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
@@ -56,7 +56,11 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     }
   };
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
@@ -69,12 +73,10 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
 
     ApplicationId defaultAppId = TEST_NAMESPACE_META2.getNamespaceId().app(AppWithSchedule.NAME);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    JsonObject result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                      defaultAppId.getApplication());
 
     List<ScheduleDetail> actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                                         defaultAppId.getApplication(),
-                                                        result.get("appVersion").getAsString());
+                                                        defaultAppId.getVersion());
 
     // none of the schedules will be added - by default we have set update schedules to be false as system property.
     Assert.assertEquals(0, actualSchSpecs.size());
@@ -84,10 +86,10 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
 
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication());
 
-    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication(),
-                                   result.get("appVersion").getAsString());
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                                               defaultAppId.getApplication(),
+                                                               defaultAppId.getVersion());
 
     // both the schedules will be added as now,
     // we have provided update schedules property to be true manually in appRequest
@@ -98,10 +100,10 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication());
 
-    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication(),
-                                   result.get("appVersion").getAsString());
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                   defaultAppId.getApplication(),
+                                   defaultAppId.getVersion());
 
     // no changes will be made, as default behavior is dont update schedules, so both the schedules should be there
     Assert.assertEquals(2, actualSchSpecs.size());
@@ -111,12 +113,12 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    result = getAppDetails(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication());
 
-    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(), defaultAppId.getApplication(),
-                                   result.get("appVersion").getAsString());
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                   defaultAppId.getApplication(),
+                                   defaultAppId.getVersion());
 
-    // the schedules will not be deleted 
-    Assert.assertEquals(2, actualSchSpecs.size());
+    // workflow is deleted, so the schedules will be deleted now
+    Assert.assertEquals(0, actualSchSpecs.size());
   }
 }

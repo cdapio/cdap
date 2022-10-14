@@ -28,6 +28,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -57,6 +58,7 @@ public class EntityExistenceTest {
   private static final String DOES_NOT_EXIST = "doesNotExist";
   private static final NamespaceId NAMESPACE = new NamespaceId(EXISTS);
   private static final ArtifactId ARTIFACT = NAMESPACE.artifact(EXISTS, "1");
+  private static ApplicationDetail appInfo;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -72,6 +74,7 @@ public class EntityExistenceTest {
     File artifactFile = new File(AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class).toURI());
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(ARTIFACT), artifactFile);
     AppFabricTestHelper.deployApplication(Id.Namespace.fromEntityId(NAMESPACE), AllProgramsApp.class, null, cConf);
+    appInfo = AppFabricTestHelper.getAppInfo(Id.Namespace.fromEntityId(NAMESPACE), AllProgramsApp.NAME, cConf);
   }
 
   @AfterClass
@@ -85,10 +88,9 @@ public class EntityExistenceTest {
     existenceVerifier.ensureExists(new InstanceId(EXISTS));
     existenceVerifier.ensureExists(NAMESPACE);
     existenceVerifier.ensureExists(ARTIFACT);
-    // The app is deleted after the deploy step - as such the app doesn't exist
-    ApplicationId app = NAMESPACE.app(AllProgramsApp.NAME);
-    assertDoesNotExist(app);
-    assertDoesNotExist(app.mr(AllProgramsApp.NoOpMR.NAME));
+    ApplicationId app = NAMESPACE.app(AllProgramsApp.NAME, appInfo.getAppVersion());
+    existenceVerifier.ensureExists(app);
+    existenceVerifier.ensureExists(app.mr(AllProgramsApp.NoOpMR.NAME));
     existenceVerifier.ensureExists(NAMESPACE.dataset(AllProgramsApp.DATASET_NAME));
   }
 
@@ -97,7 +99,7 @@ public class EntityExistenceTest {
     assertDoesNotExist(new InstanceId(DOES_NOT_EXIST));
     assertDoesNotExist(new NamespaceId(DOES_NOT_EXIST));
     assertDoesNotExist(NamespaceId.DEFAULT.artifact(DOES_NOT_EXIST, "1.0"));
-    ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, appInfo.getAppVersion());
     assertDoesNotExist(NamespaceId.DEFAULT.app(DOES_NOT_EXIST));
     assertDoesNotExist(app.mr(DOES_NOT_EXIST));
     assertDoesNotExist(NamespaceId.DEFAULT.dataset(DOES_NOT_EXIST));
