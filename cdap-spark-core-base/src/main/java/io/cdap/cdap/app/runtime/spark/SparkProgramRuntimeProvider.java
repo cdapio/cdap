@@ -113,6 +113,8 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
 
   @Override
   public ProgramRunner createProgramRunner(ProgramType type, Mode mode, Injector injector) {
+    LOG.error("wyzhang: SparkProgramRuntimeProvider: createProgramRunner start: ProgramType={}, Mode={}",
+              type, mode);
     Preconditions.checkArgument(type == ProgramType.SPARK, "Unsupported program type %s. Only %s is supported",
                                 type, ProgramType.SPARK);
 

@@ -38,19 +38,21 @@ import org.junit.Test;
 public class SystemAppTaskTest {
 
   @Test
-  public void testInjector() {
-    MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
+  public void testInjector() throws InterruptedException {
 
-    Injector injector = SystemAppTask.createInjector(CConfiguration.create());
-
-    injector.getInstance(ArtifactRepositoryReader.class);
-    injector.getInstance(ArtifactRepository.class);
-    injector.getInstance(Impersonator.class);
-    injector.getInstance(PreferencesFetcher.class);
-    injector.getInstance(PluginFinder.class);
-    injector.getInstance(DiscoveryServiceClient.class);
-    injector.getInstance(SecureStore.class);
-
-    injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.DEFAULT, RetryStrategies.noRetry());
+    while (true) Thread.sleep(10000);
+//    MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
+//
+//    Injector injector = SystemAppTask.createInjector(CConfiguration.create());
+//
+//    injector.getInstance(ArtifactRepositoryReader.class);
+//    injector.getInstance(ArtifactRepository.class);
+//    injector.getInstance(Impersonator.class);
+//    injector.getInstance(PreferencesFetcher.class);
+//    injector.getInstance(PluginFinder.class);
+//    injector.getInstance(DiscoveryServiceClient.class);
+//    injector.getInstance(SecureStore.class);
+//
+//    injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.DEFAULT, RetryStrategies.noRetry());
   }
 }

@@ -315,6 +315,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           twillPreparer.enableDebugging();
         }
 
+        LOG.error("wyzhang: DistributedProgramRunner: logProgramstart");
         logProgramStart(program, options);
 
         // Add scheduler queue name if defined
@@ -550,7 +551,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       LoggingContextAccessor.setLoggingContext(loggingContext);
     String userArguments = Joiner.on(", ").withKeyValueSeparator("=").join(options.getUserArguments());
 
-    LOG.info("Starting {} Program '{}' with Arguments [{}], with debugging {}",
+    LOG.info("wyzhang: DistributedProgramRunner: Starting {} Program '{}' with Arguments [{}], with debugging {}",
              program.getType(), program.getName(), userArguments, options.isDebug());
     saveContextCancellable.cancel();
   }

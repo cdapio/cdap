@@ -60,6 +60,7 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
+    LOG.error("wyzhang: DataprocJobMain start");
     Map<String, Collection<String>> arguments = fromPosixArray(args);
 
     if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {
@@ -112,7 +113,7 @@ public class DataprocJobMain {
       try {
         // call initialize() method on dataprocEnvClass
         Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class);
-        LOG.info("Invoking initialize() on {} with {}", dataprocEnvClassName, sparkCompat);
+        LOG.info("wyzhang: Invoking initialize() on {} with {}", dataprocEnvClassName, sparkCompat);
         initializeMethod.invoke(newDataprocEnvInstance, sparkCompat);
 
         // call run() method on runtimeJobClass
@@ -135,7 +136,19 @@ public class DataprocJobMain {
           }
         }));
 
-        LOG.info("Invoking run() on {}", runtimeJobClassName);
+        /*
+                --runtimeJobClass=io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob
+                --sparkCompat=spark3_2.12
+                --archive=artifacts
+                --archive=application.jar
+                --archive=log-appender-ext
+                --archive=twill.jar
+                --archive=resources.jar
+                --archive=runtime.config.jar
+                --proplogback.configurationFile="logback.xml"
+                --proptwill.container.class.loader="io.cdap.cdap.common.app.MainClassLoader"
+         */
+        LOG.info("wyzhang: Invoking run() on {}", runtimeJobClassName);
         runMethod.invoke(runner, newDataprocEnvInstance);
       } finally {
         // call destroy() method on envProviderClass
