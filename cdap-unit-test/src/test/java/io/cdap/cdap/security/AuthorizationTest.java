@@ -227,6 +227,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(updated, namespaceAdmin.get(AUTH_NAMESPACE));
   }
 
+  // TODO: CDAP-19784
   @Test
   @Ignore
   @Category(SlowTests.class)
@@ -443,6 +444,7 @@ public class AuthorizationTest extends TestBase {
     pluginArtifactManager.delete();
   }
 
+  // TODO: CDAP-19784
   @Test
   @Ignore
   public void testPrograms() throws Exception {
@@ -1241,6 +1243,7 @@ public class AuthorizationTest extends TestBase {
    * Note that the impersonation is not actually happening since we do not have keytab files for unit test,
    * all impersonation doAs will be no-op, but we can still simulate the namespace deploy and app creation in the test
    */
+  // TODO: CDAP-19784
   @Test
   @Ignore
   public void testCreationWithOwner() throws Exception {
