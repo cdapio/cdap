@@ -269,6 +269,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("version-id") String versionId,
                         @PathParam("program-type") String type,
                         @PathParam("program-id") String programId) throws Exception {
+    versionId = replaceDefaultVersionWithLatest(namespaceId, appId, versionId);
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (SCHEDULES.equals(type)) {
       JsonObject json = new JsonObject();
