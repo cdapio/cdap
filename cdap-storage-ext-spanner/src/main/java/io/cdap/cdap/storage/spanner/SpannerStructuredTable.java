@@ -162,8 +162,10 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException {
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
+    if (!isRangePrimaryKeys(keyRange)) {
+      // Spanner KeySet is requiring primary keys, instead we use SQL statement
+      return multiScan(Collections.singleton(keyRange), limit);
+    }
 
     KeySet keySet;
     if (keyRange.getBegin().isEmpty() && keyRange.getEnd().isEmpty()) {
@@ -179,6 +181,17 @@ public class SpannerStructuredTable implements StructuredTable {
 
     return new ResultSetIterator(schema, transactionContext.read(schema.getTableId().getName(),
                                                                  keySet, schema.getFieldNames()));
+  }
+
+  private boolean isRangePrimaryKeys(Range range) {
+    try {
+      fieldValidator.validatePartialPrimaryKeys(range.getBegin());
+      fieldValidator.validatePartialPrimaryKeys(range.getEnd());
+      return true;
+    } catch (InvalidFieldException ex) {
+      LOG.trace("Scanning non-primary key range: {}", range);
+      return false;
+    }
   }
 
   @Override
@@ -198,8 +211,7 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
     throws InvalidFieldException {
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
+    fieldValidator.validateScanRange(keyRange);
     fieldValidator.validateField(filterIndex);
     if (!schema.isIndexColumn(filterIndex.getName())) {
       throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
@@ -211,7 +223,7 @@ public class SpannerStructuredTable implements StructuredTable {
 
     Statement.Builder builder = Statement.newBuilder(
       "SELECT * FROM " + escapeName(schema.getTableId().getName())
-        + " WHERE " + rangeClause + " AND " + indexClause
+        + " WHERE " + (rangeClause.isEmpty() ? "true" : rangeClause) + " AND " + indexClause
         + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName).collect(Collectors.joining(","))
         + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
@@ -221,18 +233,17 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException {
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
+    fieldValidator.validateScanRange(keyRange);
     if (!schema.isIndexColumn(orderByField)) {
       throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column");
     }
 
     Map<String, Value> parameters = new HashMap<>();
-    String whereClause = getRangeWhereClause(keyRange, parameters);
+    String rangeClause = getRangeWhereClause(keyRange, parameters);
 
     Statement.Builder builder = Statement.newBuilder(
       "SELECT * FROM " + escapeName(schema.getTableId().getName())
-        + " WHERE " + whereClause
+        + " WHERE " + (rangeClause.isEmpty() ? "true" : rangeClause)
         + " ORDER BY " + (sortOrder == SortOrder.ASC ? orderByField : orderByField + " DESC")
         + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
@@ -410,7 +421,7 @@ public class SpannerStructuredTable implements StructuredTable {
       // This is for case like ([KEY: "ns1", KEY2: 123], INCLUSIVE, [KEY: "ns1", KEY2: 250], EXCLUSIVE)
       // We need to check the ending bound for KEY2, not KEY
       String symbol =
-        endIndex == endFieldsCount && range.getEndBound().equals(Range.Bound.EXCLUSIVE)  ? " < " : " <= ";
+        endIndex == endFieldsCount && range.getEndBound().equals(Range.Bound.EXCLUSIVE) ? " < " : " <= ";
       conditions.add(escapeName(field.getName()) + symbol + "@p_" + paramIndex);
       parameters.put("p_" + paramIndex, getValue(field));
       paramIndex++;
@@ -454,8 +465,7 @@ public class SpannerStructuredTable implements StructuredTable {
     List<Range> rangeScans = new ArrayList<>();
     boolean scanAll = false;
     for (Range range : ranges) {
-      fieldValidator.validatePartialPrimaryKeys(range.getBegin());
-      fieldValidator.validatePartialPrimaryKeys(range.getEnd());
+      fieldValidator.validateScanRange(range);
 
       if (range.isSingleton()) {
         singletonScans.add(range);
