@@ -481,8 +481,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      String latestAppVersion = getLatestAppVersion(appId);
-      appId = validateApplicationVersionId(namespaceId, appName, latestAppVersion);
       applicationLifecycleService.updateApp(appId, appRequest, createProgramTerminator());
       responder.sendString(HttpResponseStatus.OK, "Update complete.");
     } catch (InvalidArtifactException e) {
@@ -499,7 +497,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * upgrades the latest version of an existing application.
+   * upgrades the existing application.
    */
   @POST
   @Path("/apps/{app-id}/upgrade")
@@ -510,8 +508,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @QueryParam("artifactScope") Set<String> artifactScopes,
                                  @QueryParam("allowSnapshot") boolean allowSnapshot) throws Exception {
     ApplicationId appId = validateApplicationId(validateNamespace(namespaceId), appName);
-    String latestAppVersion = getLatestAppVersion(appId);
-    appId = validateApplicationVersionId(namespaceId, appName, latestAppVersion);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
     applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
     ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId);
@@ -672,9 +668,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           throw new BadRequestException("Missing 'name' in the request element for app-id.");
         }
         if (element.getAppVersion() == null) {
-          // fetch the latest version
-          String latestAppVersion = getLatestAppVersion(validateApplicationId(namespaceId, element.getName()));
-          appIds.add(validateApplicationVersionId(namespaceId, element.getName(), latestAppVersion));
+          appIds.add(validateApplicationId(namespaceId, element.getName()));
         } else {
           appIds.add(validateApplicationVersionId(namespaceId, element.getName(), element.getAppVersion()));
         }
