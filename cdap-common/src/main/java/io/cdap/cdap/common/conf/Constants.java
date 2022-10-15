@@ -238,6 +238,7 @@ public final class Constants {
     public static final String PROGRAM_TERMINATE_TIME_BUFFER_SECS = "app.program.terminate.time.buffer.secs";
     public static final String PROGRAM_TERMINATOR_TX_BATCH_SIZE = "app.program.terminator.tx.batch.size";
     public static final String ARTIFACTS_COMPUTE_HASH = "app.artifact.compute.hash";
+    public static final String ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS = "app.artifact.compute.hash.time.bucket.days";
     public static final String ARTIFACTS_COMPUTE_HASH_SNAPSHOT = "app.artifact.compute.hash.snapshot";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String SYSTEM_ARTIFACTS_MAX_PARALLELISM = "app.artifact.parallelism.max";

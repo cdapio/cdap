@@ -23,7 +23,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.runtime.spi.VersionInfo;
-import io.cdap.cdap.runtime.spi.common.ArtifactCacheManager;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -130,7 +129,6 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         .setCredentials(conf.getDataprocCredentials()).build().getService();
       String runId = context.getProgramRunInfo().getRun();
       String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runId);
-      new ArtifactCacheManager().releaseCacheUsageForArtifacts(storageClient, bucket, runRootPath, runId);
       DataprocUtils.deleteGCSPath(storageClient, bucket, runRootPath);
     }
 
