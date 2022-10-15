@@ -73,6 +73,7 @@ public class ETLSpark extends AbstractSpark {
 
   @Override
   protected void configure() {
+    LOG.error("wyzhang: ETLSpark: configure()");
     setName(phaseSpec.getPhaseName());
     setDescription(phaseSpec.getDescription());
 
@@ -81,6 +82,7 @@ public class ETLSpark extends AbstractSpark {
     phaseSpec.getPhase().registerPlugins(getConfigurer(), runtimeConfigurer, deployedNamespace);
 
     setMainClass(BatchSparkPipelineDriver.class);
+    LOG.error("wyzhang: ETLSpark: configure(): set main class = {}", BatchSparkPipelineDriver.class.getName());
 
     setExecutorResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getDriverResources());
@@ -95,6 +97,7 @@ public class ETLSpark extends AbstractSpark {
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void initialize() throws Exception {
+    LOG.error("wyzhang: ETLSpark: initialize()");
     SparkClientContext context = getContext();
 
     SparkConf sparkConf = new SparkConf();

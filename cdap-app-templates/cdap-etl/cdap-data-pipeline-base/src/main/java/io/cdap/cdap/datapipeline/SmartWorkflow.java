@@ -165,6 +165,9 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   protected void configure() {
     LOG.error("wyzhang: SmartWorkflow: configure()");
+    for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+      System.out.println("wyzhang: SmartWorkflow : configure() call stack: " + ste + "\n");
+    }
     setName(NAME);
     setDescription("Data Pipeline Workflow");
 
@@ -479,7 +482,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                            "Please use Spark engine.", context.getApplicationSpecification().getName());
     }
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
-    WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
+    WRAPPERLOGGER.info("wyzhang: SmartWorkflow: initialize: Pipeline '{}' is started by user '{}' with arguments {}",
                        context.getApplicationSpecification().getName(),
                        UserGroupInformation.getCurrentUser().getShortUserName(),
                        pipelineRuntime.getArguments().asMap());
@@ -514,7 +517,8 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     }
 
-    WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
+    WRAPPERLOGGER.info("wyzhang: SmartWorkflow: initialize: Pipeline '{}' running",
+                       context.getApplicationSpecification().getName());
   }
 
   @Override
