@@ -59,6 +59,37 @@ public final class FieldValidator {
     }
   }
 
+  /**
+   * Validate if the given range fields matches the schema. The given range is invalid if:
+   * its field is not present in the given schema,
+   * its field type is different from the given schema,
+   * if its field is a primary key but the given value is null,
+   * or it is not Rang.all() and does not start with a primary key.
+   *
+   * @param range the range to validate
+   * @throws InvalidFieldException if the field does not pass the validation
+   */
+  public void validateScanRange(Range range) throws InvalidFieldException {
+    range.getBegin().forEach(this::validateField);
+    range.getEnd().forEach(this::validateField);
+
+    validateFirstKeyInScanRange(range.getBegin());
+    validateFirstKeyInScanRange(range.getEnd());
+  }
+
+  private void validateFirstKeyInScanRange(Collection<Field<?>> fields) {
+    if (fields.isEmpty()) {
+      return;
+    }
+    
+    Field<?> firstField = fields.iterator().next();
+
+    if (!firstField.getName().equals(tableSchema.getPrimaryKeys().get(0))) {
+      throw new InvalidFieldException(
+        tableSchema.getTableId(), fields,
+        String.format("Given Range fields %s do not start with a primary key", fields));
+    }
+  }
 
   /**
    * Validate if the given keys are prefix or complete primary keys.

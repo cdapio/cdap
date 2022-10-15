@@ -82,6 +82,58 @@ public class FieldValidatorTest {
   }
 
   @Test
+  public void testValidateScanRange() {
+    FieldValidator validator = new FieldValidator(schema);
+
+    // Success case
+    validator.validateScanRange(Range.all());
+    validator.validateScanRange(Range.create(Arrays.asList(Fields.intField(KEY, 10),
+                                                           Fields.longField(KEY2, 110L)),
+                                             Range.Bound.INCLUSIVE,
+                                             Arrays.asList(Fields.intField(KEY, 20),
+                                                           Fields.longField(KEY2, 100L)),
+                                             Range.Bound.EXCLUSIVE));
+
+    validator.validateScanRange(Range.create(Collections.singletonList(Fields.intField(KEY, 10)),
+                                             Range.Bound.INCLUSIVE,
+                                             Collections.singletonList(Fields.intField(KEY, 20)),
+                                             Range.Bound.INCLUSIVE));
+
+    // Test invalid range: no primary keys
+    try {
+      validator.validateScanRange(Range.create(Collections.singletonList(Fields.stringField(STRING_COL, "110L")),
+                                               Range.Bound.INCLUSIVE,
+                                               Collections.singletonList(Fields.stringField(STRING_COL, "120L")),
+                                               Range.Bound.INCLUSIVE));
+      Assert.fail("Expected InvalidFieldException because of not staring with a primary key");
+    } catch (InvalidFieldException e) {
+      // expected
+    }
+
+    // Test invalid range: no primary keys
+    try {
+      validator.validateScanRange(Range.create(Collections.singletonList(Fields.longField(KEY2, 110L)),
+                                               Range.Bound.INCLUSIVE,
+                                               null,
+                                               Range.Bound.INCLUSIVE));
+      Assert.fail("Expected InvalidFieldException because of not staring with a prefixed key");
+    } catch (InvalidFieldException e) {
+      // expected
+    }
+
+    // Test invalid field
+    try {
+      validator.validateScanRange(Range.create(Collections.singletonList(Fields.intField("NONEXISTKEY", 110)),
+                                               Range.Bound.INCLUSIVE,
+                                               Collections.singletonList(Fields.longField(KEY2, 100L)),
+                                               Range.Bound.INCLUSIVE));
+      Assert.fail("Expected InvalidFieldException because of invalid field");
+    } catch (InvalidFieldException e) {
+      // expected
+    }
+  }
+
+  @Test
   public void testValidatePartialPrimaryKeys() {
     FieldValidator validator = new FieldValidator(schema);
 
