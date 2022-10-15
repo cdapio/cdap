@@ -114,6 +114,16 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   }
 
   @Override
+  public void stop(String version) {
+    ProgramId versionedProgramId = new ProgramId(programId.getNamespace(),
+                                                 programId.getApplication(),
+                                                 version,
+                                                 programId.getType(),
+                                                 programId.getProgram());
+    applicationManager.stopProgram(versionedProgramId);
+  }
+
+  @Override
   public boolean isRunning() {
     return applicationManager.isRunning(programId);
   }
