@@ -210,8 +210,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     throws InvalidFieldException, IOException {
 
     LOG.trace("Table {}: Scan range {} with limit {} order {}", tableSchema.getTableId(), keyRange, limit, sortOrder);
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
+    fieldValidator.validateFields(keyRange.getBegin());
+    fieldValidator.validateFields(keyRange.getEnd());
     String scanQuery = getScanQuery(keyRange, limit, tableSchema.getPrimaryKeys(), sortOrder);
 
     // We don't close the statement here because once it is closed, the result set is also closed.
@@ -244,8 +244,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     List<Range> rangeScans = new ArrayList<>();
     boolean scanAll = false;
     for (Range range : keyRanges) {
-      fieldValidator.validatePartialPrimaryKeys(range.getBegin());
-      fieldValidator.validatePartialPrimaryKeys(range.getEnd());
+      fieldValidator.validateFields(range.getBegin());
+      fieldValidator.validateFields(range.getEnd());
 
       if (range.isSingleton()) {
         singletonScans.add(range);
@@ -363,9 +363,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
-
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
+    fieldValidator.validateFields(keyRange.getBegin());
+    fieldValidator.validateFields(keyRange.getEnd());
     fieldValidator.validateField(filterIndex);
     if (!tableSchema.isIndexColumn(filterIndex.getName())) {
       throw new InvalidFieldException(tableSchema.getTableId(), filterIndex.getName(), "is not an indexed column");
@@ -397,8 +396,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
     LOG.trace("Table {}: Scan range {} with limit {} order {} on index field {}",
               tableSchema.getTableId(), keyRange, limit, sortOrder, orderByField);
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getBegin());
-    fieldValidator.validatePartialPrimaryKeys(keyRange.getEnd());
+    fieldValidator.validateFields(keyRange.getBegin());
+    fieldValidator.validateFields(keyRange.getEnd());
     if (!tableSchema.isIndexColumn(orderByField)) {
       throw new InvalidFieldException(tableSchema.getTableId(), orderByField, "is not an indexed column");
     }
@@ -537,8 +536,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   @Override
   public void deleteAll(Range keyRange) throws InvalidFieldException, IOException {
     LOG.trace("Table {}: DeleteAll with range {}", tableSchema.getTableId(), keyRange);
-    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
-    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    fieldValidator.validateFields(keyRange.getBegin());
+    fieldValidator.validateFields(keyRange.getEnd());
     String sql = getDeleteAllStatement(keyRange);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
       setStatementFieldByRange(keyRange, statement);
@@ -923,8 +922,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     StringBuilder statement = new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
     boolean whereAdded = false;
     for (Range range : ranges) {
-      fieldValidator.validatePartialPrimaryKeys(range.getBegin());
-      fieldValidator.validatePartialPrimaryKeys(range.getEnd());
+      fieldValidator.validateFields(range.getBegin());
+      fieldValidator.validateFields(range.getEnd());
 
       if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
         if (!whereAdded) {

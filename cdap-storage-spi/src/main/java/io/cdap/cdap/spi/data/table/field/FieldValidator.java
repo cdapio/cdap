@@ -59,6 +59,17 @@ public final class FieldValidator {
     }
   }
 
+  /**
+   * Validate if the given fields matches the schema. The given field is invalid if: it is not present in the given
+   * schema, its type is different than the given schema, or if it is a primary key but the given value is null.
+   *
+   * @param fields the field to validate
+   * @throws InvalidFieldException if the field does not pass the validation
+   */
+  public void validateFields(Collection<Field<?>> fields) throws InvalidFieldException {
+    fields.forEach(this::validateField);
+  }
+
 
   /**
    * Validate if the given keys are prefix or complete primary keys.
