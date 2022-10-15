@@ -118,6 +118,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                           FunctionCache.Factory functionCacheFactory,
                                                           StageStatisticsCollector collector) {
+    LOG.error("wyzhang: BatchSparkPipelineDriver : getSource : start");
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
       new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());

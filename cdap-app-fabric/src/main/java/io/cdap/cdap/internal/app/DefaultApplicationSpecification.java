@@ -45,6 +45,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Nullable
   private final String appCDAPVersion;
   private final String description;
+  // wyzhang: stageSpec
   private final String configuration;
   private final ArtifactId artifactId;
   private final Map<String, String> datasetModules;
