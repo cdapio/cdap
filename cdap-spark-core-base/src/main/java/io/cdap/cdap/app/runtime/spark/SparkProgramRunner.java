@@ -148,7 +148,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
-    LOG.trace("Starting Spark program {} with SparkProgramRunner of ClassLoader {}",
+    LOG.error("wyzhang: SparkProgramRunner: runt(): start");
+    LOG.error("wyzhang: Starting Spark program {} with SparkProgramRunner of ClassLoader {}",
               program.getId(), getClass().getClassLoader());
 
     // Get the RunId first. It is used for the creation of the ClassLoader closing thread.
@@ -231,7 +232,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
-      LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
+      LOG.error("wyzhang: SparkProgramRunner: run(): start sparkRuntimeService with sparkRuntimeContext={}",
+                runtimeContext);
       if (isLocal || UserGroupInformation.isSecurityEnabled()) {
         sparkRuntimeService.start();
       } else {
