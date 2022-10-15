@@ -706,12 +706,12 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                                           ImmutablePair.of(ns2AppName, VERSION1)));
     Assert.assertEquals(2, appDetails.size());
 
-    Assert.assertEquals(200, appDetails.get(0).getStatusCode());
-    ApplicationDetail appDetail = appDetails.get(0).getDetail();
+    Assert.assertEquals(200, appDetails.get(1).getStatusCode());
+    ApplicationDetail appDetail = appDetails.get(1).getDetail();
     Assert.assertNotNull(appDetail);
     Assert.assertEquals(ns2AppName, appDetail.getName());
 
-    Assert.assertEquals(404, appDetails.get(1).getStatusCode());
+    Assert.assertEquals(404, appDetails.get(0).getStatusCode());
     
     //delete app in testnamespace1
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
