@@ -100,6 +100,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExternalResource;
@@ -227,6 +228,7 @@ public class AuthorizationTest extends TestBase {
   }
 
   @Test
+  @Ignore
   @Category(SlowTests.class)
   public void testApps() throws Exception {
     try {
@@ -442,6 +444,7 @@ public class AuthorizationTest extends TestBase {
   }
 
   @Test
+  @Ignore
   public void testPrograms() throws Exception {
     createAuthNamespace();
     grantAndAssertSuccess(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), ALICE,
@@ -1239,6 +1242,7 @@ public class AuthorizationTest extends TestBase {
    * all impersonation doAs will be no-op, but we can still simulate the namespace deploy and app creation in the test
    */
   @Test
+  @Ignore
   public void testCreationWithOwner() throws Exception {
     // this test will test deploy app without app owner specified. Like namespace impersonation
     testDeployAppWithoutOwner();
