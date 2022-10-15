@@ -27,6 +27,7 @@ import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,7 +136,7 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
       LOG.error("Failed to monitor the remote process and exhausted retries. Terminating the program {}",
                 programRunId, e);
       try {
-        processController.kill();
+        processController.kill(RuntimeJobStatus.RUNNING);
       } catch (Exception e1) {
         LOG.warn("Failed to kill the remote process for program {}. "
                    + "The remote process may need to be killed manually.", programRunId, e1);

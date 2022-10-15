@@ -31,7 +31,6 @@ import com.google.cloud.dataproc.v1beta2.JobControllerSettings;
 import com.google.cloud.dataproc.v1beta2.JobPlacement;
 import com.google.cloud.dataproc.v1beta2.JobReference;
 import com.google.cloud.dataproc.v1beta2.JobStatus;
-import com.google.cloud.dataproc.v1beta2.ListJobsRequest;
 import com.google.cloud.dataproc.v1beta2.SubmitJobRequest;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -65,12 +64,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
@@ -252,49 +249,23 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   @Override
-  public List<RuntimeJobDetail> list() throws IOException {
-    Set<String> filters = new HashSet<>();
-    // Dataproc jobs can be filtered by status.state filter. In this case we only want ACTIVE jobs.
-    filters.add("status.state=ACTIVE");
-    // Filter by labels that were added to the job when this runtime job manager submitted dataproc job. Note that
-    // dataproc only supports AND filter.
-    for (Map.Entry<String, String> entry : labels.entrySet()) {
-      filters.add("labels." + entry.getKey() + "=" + entry.getValue());
-    }
-    String jobFilter = Joiner.on(" AND ").join(filters);
-
-    LOG.debug("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
-              clusterName, jobFilter);
-    JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
-      getJobControllerClient().listJobs(
-        ListJobsRequest.newBuilder()
-          .setProjectId(projectId).setRegion(region).setClusterName(clusterName)
-          .setFilter(jobFilter).build());
-
-    List<RuntimeJobDetail> jobsDetail = new ArrayList<>();
-    for (Job job : listJobsPagedResponse.iterateAll()) {
-      jobsDetail.add(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
-    }
-    return jobsDetail;
+  public void stop(ProgramRunInfo programRunInfo) throws Exception {
+    RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
+    kill(jobDetail);
   }
 
   @Override
-  public void stop(ProgramRunInfo programRunInfo) throws Exception {
-    RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
+  public void kill(RuntimeJobDetail jobDetail) throws Exception {
     if (jobDetail == null) {
       return;
     }
+
     RuntimeJobStatus status = jobDetail.getStatus();
     if (status.isTerminated() || status == RuntimeJobStatus.STOPPING) {
       return;
     }
     // stop dataproc job
     stopJob(getJobId(jobDetail.getRunInfo()));
-  }
-
-  @Override
-  public void kill(ProgramRunInfo programRunInfo) throws Exception {
-    stop(programRunInfo);
   }
 
   @Override
