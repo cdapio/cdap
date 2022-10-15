@@ -140,7 +140,9 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     // Setup the launch config
     ApplicationSpecification appSpec = program.getApplicationSpecification();
+    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig : ApplicationSpecification={}", appSpec);
     SparkSpecification spec = appSpec.getSpark().get(program.getName());
+    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig : SparkSpeicifcation={}", appSpec);
 
     Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client",
                                                                    options.getUserArguments().asMap());
@@ -177,6 +179,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
       .addExtraDependencies(SparkProgramRuntimeProvider.class)
       .addExtraSystemArgument(SparkRuntimeContextConfig.DISTRIBUTED_MODE, Boolean.TRUE.toString())
       .setClassAcceptor(createBundlerClassAcceptor());
+    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig : launchConfig={}", launchConfig);
   }
 
   private ClassAcceptor createBundlerClassAcceptor() throws MalformedURLException {

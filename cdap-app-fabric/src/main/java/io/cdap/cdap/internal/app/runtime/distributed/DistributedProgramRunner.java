@@ -177,6 +177,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   @Override
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
+    LOG.error("wyzhang: DistributedProgramRunner : start");
     validateOptions(program, oldOptions);
 
     CConfiguration cConf = CConfiguration.copy(this.cConf);
