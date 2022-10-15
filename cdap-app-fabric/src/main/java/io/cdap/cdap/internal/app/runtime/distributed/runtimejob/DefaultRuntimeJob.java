@@ -266,7 +266,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
-      LOG.error("wyzhang: DefaultRuntimeJob ProgramRunner class type = ", programRunner.getClass().getClass());
+      LOG.error("wyzhang: DefaultRuntimeJob : ProgramRunnerRunner class type = {}", programRunner.getClass().getClass());
 
       // Create and run the program. The program files should be present in current working directory.
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {

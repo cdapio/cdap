@@ -164,6 +164,7 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   @Override
   protected void configure() {
+    LOG.error("wyzhang: SmartWorkflow: configure()");
     setName(NAME);
     setDescription("Data Pipeline Workflow");
 
@@ -178,6 +179,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                                             ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
                                                             AlertPublisher.PLUGIN_TYPE),
                                             config.getEngine(), getConfigurer()).generateSpec(config);
+      LOG.error("wyzhang: SmartWorkflow: BatchPipelineSpec = {}", spec);
     } catch (ValidationException e) {
       throw new IllegalArgumentException(
         String.format("Failed to configure pipeline: %s",
@@ -198,8 +200,11 @@ public class SmartWorkflow extends AbstractWorkflow {
         useSpark = true;
       }
     }
+    LOG.error("wyzhang: SmartWorkflow: StageSpec = {}", stageSpecs);
 
     plan = createPlan();
+
+    LOG.error("wyzhang: SmartWorkflow: PipelinePlan = {}", plan);
 
     WorkflowProgramAdder programAdder = new TrunkProgramAdder(getConfigurer());
     // single phase, just add the program directly
