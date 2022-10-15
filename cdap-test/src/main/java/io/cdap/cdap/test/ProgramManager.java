@@ -128,6 +128,11 @@ public interface ProgramManager<T extends ProgramManager> {
   void stop();
 
   /**
+   * Stops the program with versionId.
+   */
+  void stop(String versionId);
+
+  /**
    * Checks if program is running
    */
   boolean isRunning();
