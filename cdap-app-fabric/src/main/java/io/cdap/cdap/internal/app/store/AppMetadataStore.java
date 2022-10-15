@@ -1947,13 +1947,6 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getApplicationKeys(String namespaceId, String appId) {
-    List<Field<?>> fields = new ArrayList<>();
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
-    return fields;
-  }
-
   private Range getNamespaceRange(String namespaceId) {
     return Range.singleton(
       ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId)));

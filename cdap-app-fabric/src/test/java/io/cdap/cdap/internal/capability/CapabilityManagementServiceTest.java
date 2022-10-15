@@ -493,7 +493,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     String appNameWithOutCapability = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();
     deployArtifactAndApp(appNoCapabilityClass, appNameWithOutCapability, testVersion);
     ApplicationDetail appWithOutCapabilityDetail =
-      applicationLifecycleService.getLatestAppDetail(NamespaceId.DEFAULT.app(appNameWithOutCapability));
+      applicationLifecycleService.getLatestAppDetail(NamespaceId.DEFAULT, appNameWithOutCapability);
 
     //enable the capabilities
     List<CapabilityConfig> capabilityConfigs = Arrays.stream(declaredAnnotation.capabilities())
@@ -514,7 +514,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
                  null, programId -> {
         });
     ApplicationDetail appWithCapabilityDetail =
-      applicationLifecycleService.getLatestAppDetail(NamespaceId.DEFAULT.app(appNameWithCapability));
+      applicationLifecycleService.getLatestAppDetail(NamespaceId.DEFAULT, appNameWithCapability);
 
     applicationLifecycleService.removeApplication(
       NamespaceId.DEFAULT.app(appNameWithCapability, appWithCapabilityDetail.getAppVersion()));

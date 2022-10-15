@@ -182,8 +182,8 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    ApplicationId appId = new ApplicationId(namespace, application);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getLatestAppDetail(appId)));
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(namespaceId, application)));
   }
 
   /**
