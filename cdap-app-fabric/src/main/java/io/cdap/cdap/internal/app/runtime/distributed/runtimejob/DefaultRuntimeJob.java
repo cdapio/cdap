@@ -266,8 +266,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
-      LOG.error("wyzhang: DefaultRuntimeJob : run(): ProgramRunnerRunner class type = {}",
-                programRunner.getClass().getClass());
+      LOG.error("wyzhang: DefaultRuntimeJob : run(): instantiate ProgramRunner class.name={}",
+                programRunner.getClass().getName());
 
       // Create and run the program. The program files should be present in current working directory.
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
@@ -316,8 +316,10 @@ public class DefaultRuntimeJob implements RuntimeJob {
           controller.stop();
         }
 
+        LOG.error("wyzhang: DefaultRuntimeJob : run(): wait for completion");
         // Block on the completion
         programCompletion.get();
+        LOG.error("wyzhang: DefaultRuntimeJob : run(): wait for completion done");
       } finally {
         if (programRunner instanceof Closeable) {
           Closeables.closeQuietly((Closeable) programRunner);
