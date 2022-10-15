@@ -24,7 +24,6 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -72,8 +71,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
   @After
   public void tearDown() throws Exception {
-    ApplicationDetail appDetail = appClient.get(appId);
-    appClient.delete(new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion()));
+    appClient.deleteApp(appId);
   }
 
   /*
