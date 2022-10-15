@@ -61,9 +61,12 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   public final <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext,
                                             Map<String, String> configs, List<LocalizeResource> resources,
                                             URI jobFile, final V result) throws Exception {
+    LOG.error("wyzhang: AbstractSparkSubmitter: submit(): start");
     SparkSpecification spec = runtimeContext.getSparkSpecification();
+    LOG.error("wyzhang: AbstractSparkSubmitter: submit(): SparkSpecification={}", spec);
 
     List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
+    LOG.error("wyzhang: AbstractSparkSubmitter: submit(): args={}", args);
 
     // Spark submit is called from this executor
     // Use an executor to simplify logic that is needed to interrupt the running thread on stopping
@@ -191,14 +194,15 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   private void submit(SparkRuntimeContext runtimeContext, String[] args) {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(runtimeContext.getProgramInvocationClassLoader());
     try {
-      LOG.debug("Calling SparkSubmit for {} {}: {}",
+      LOG.error("wyzhang: AbstractSparkSubmitter: submit(): Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
       // Explicitly set the SPARK_SUBMIT property as it is no longer set on the System properties by the SparkSubmit
       // after the class rewrite. This property only control logging of a warning when submitting the Spark job,
       // hence it's harmless to just leave it there.
       System.setProperty("SPARK_SUBMIT", "true");
       SparkSubmit.main(args);
-      LOG.debug("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
+      LOG.error("wyzhang: AbstractSparkSubmitter: submit(): SparkSubmit returned for {} {}",
+                runtimeContext.getProgram().getId(), runtimeContext.getRunId());
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }

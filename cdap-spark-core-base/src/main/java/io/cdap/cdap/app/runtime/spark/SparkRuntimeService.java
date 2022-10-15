@@ -194,6 +194,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
+    LOG.error("wyzhang: SparkRuntimeService: startup(): start");
     // additional spark job initialization at run-time
     // This context is for calling initialize and destroy on the Spark program
 
@@ -232,6 +233,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
 
       if (masterEnv != null) {
+        LOG.error("wyzhang: SparkRuntimeService: startup(): masterEnv != null");
         // Add cconf, hconf, metrics.properties, logback for master environment
         localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
         Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
@@ -272,6 +274,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
 
       } else if (isLocal) {
+        LOG.error("wyzhang: SparkRuntimeService: startup(): isLocal=true");
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
 
@@ -282,6 +285,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         extractPySparkLibrary(tempDir, extraPySparkFiles);
       } else {
+        LOG.error("wyzhang: SparkRuntimeService: startup(): run distributed mode");
         // Localize all user requested files in distributed mode
         distributedUserResources(context.getLocalizeResources(), localizeResources);
 
@@ -360,6 +364,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         if (!isRunning()) {
           return SparkJobFuture.immeidateCancelled();
         }
+        LOG.error("wyzhang: SparkRuntimeService: call sparkSubmitter.submit()");
         return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFile,
                                      runtimeContext.getRunId());
       };
@@ -410,6 +415,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
+    LOG.error("wyzhang: SparkRuntimeService: run(): start");
     SparkJobFuture<RunId> jobCompletion = completion.getAndSet(submitSpark.call());
     // If the jobCompletion is not null, meaning the stop() was called before the atomic reference "completion" has been
     // updated. This mean the job is cancelled. We also need to cancel the future returned by submitSpark.call().
@@ -437,6 +443,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
+    LOG.error("wyzhang: SparkRuntimeService: shutDown(): start");
     // Try to get from the submission future to see if the job completed successfully.
     SparkJobFuture<RunId> jobCompletion = completion.get();
     ProgramState state = new ProgramState(ProgramStatus.COMPLETED, null);
@@ -466,6 +473,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
+    LOG.error("wyzhang: SparkRuntimeService: triggerShutdown(): start");
     LOG.debug("Stop requested for Spark Program {}", runtimeContext);
     // Replace the completion future with a cancelled one.
     // Also, try to cancel the current completion future if it exists.

@@ -523,6 +523,7 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   @Override
   public void destroy() {
+    LOG.error("wyzhang: SmartWorkflow: destory(): start");
     WorkflowContext workflowContext = getContext();
     PipelineRuntime pipelineRuntime = new PipelineRuntime(workflowContext, workflowMetrics);
     // Execute the post actions only if pipeline is not running in preview mode.
@@ -576,7 +577,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     if (status == ProgramStatus.FAILED) {
       WRAPPERLOGGER.error("Pipeline '{}' failed.", getContext().getApplicationSpecification().getName());
     } else {
-      WRAPPERLOGGER.info("Pipeline '{}' {}.", getContext().getApplicationSpecification().getName(),
+      WRAPPERLOGGER.info("wyzhang: SmartWorkflow: deploy(): Pipeline '{}' {}.",
+                         getContext().getApplicationSpecification().getName(),
                          status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
     }
 
