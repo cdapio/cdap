@@ -921,9 +921,7 @@ public class DefaultStore implements Store {
   @Override
   public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latest = getLatest(request.getNamespaceId(), request.getAppName());
-      verifyApplicationExists(request.getNamespaceId(), request.getAppName(),
-                              latest == null ? null : latest.getSpec().getAppVersion());
+      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
       return getAppStateTable(context).get(request);
     }, ApplicationNotFoundException.class);
   }
@@ -931,9 +929,7 @@ public class DefaultStore implements Store {
   @Override
   public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latest = getLatest(request.getNamespaceId(), request.getAppName());
-      verifyApplicationExists(request.getNamespaceId(), request.getAppName(),
-                              latest == null ? null : latest.getSpec().getAppVersion());
+      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).save(request);
     }, ApplicationNotFoundException.class);
   }
@@ -941,9 +937,7 @@ public class DefaultStore implements Store {
   @Override
   public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latest = getLatest(request.getNamespaceId(), request.getAppName());
-      verifyApplicationExists(request.getNamespaceId(), request.getAppName(),
-                              latest == null ? null : latest.getSpec().getAppVersion());
+      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).delete(request);
     }, ApplicationNotFoundException.class);
   }
@@ -951,8 +945,7 @@ public class DefaultStore implements Store {
   @Override
   public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latest = getLatest(namespaceId, appName);
-      verifyApplicationExists(namespaceId, appName, latest == null ? null : latest.getSpec().getAppVersion());
+      verifyApplicationExists(namespaceId, appName);
       getAppStateTable(context).deleteAll(namespaceId, appName);
     }, ApplicationNotFoundException.class);
   }
@@ -961,16 +954,12 @@ public class DefaultStore implements Store {
     return new AppStateTable(context);
   }
 
-  private void verifyApplicationExists(NamespaceId namespaceId, String appName, String version)
+  private void verifyApplicationExists(NamespaceId namespaceId, String appName)
     throws ApplicationNotFoundException {
     // Check if app exists
-    if (version == null) {
+    ApplicationMeta latest = getLatest(namespaceId, appName);
+    if (latest == null || latest.getSpec() == null) {
       throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
-    }
-    ApplicationId appId = new ApplicationId(namespaceId.getNamespace(), appName, version);
-    ApplicationSpecification appSpec = getApplication(appId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId);
     }
   }
 

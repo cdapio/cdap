@@ -754,6 +754,20 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                          TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationDetail appDetails1 = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    ApplicationId appv1 = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME,
+                                                    appDetails1.getAppVersion());
+
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationDetail appDetails2 = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    ApplicationId appv2 = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME,
+                                                    appDetails2.getAppVersion());
+    // the versioned delete endpoint must delete both an older and the latest version
+    deleteApp(appv1, 200);
+    deleteApp(appv2, 200);
+
+
     // Start a service from the App
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     ApplicationDetail appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
