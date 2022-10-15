@@ -56,7 +56,6 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
   @Test
   public void testFileUploadService() throws Exception {
     ApplicationManager appManager = deployApplication(FileUploadApp.class);
-    String version = appManager.getInfo().getAppVersion();
 
     // Start the service
     ServiceManager serviceManager = appManager.getServiceManager(FileUploadApp.SERVICE_NAME).start();
@@ -117,7 +116,7 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(content.length * 2, sum);
 
     } finally {
-      serviceManager.stop(version);
+      serviceManager.stop();
       serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     }
   }
