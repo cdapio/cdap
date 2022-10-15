@@ -384,6 +384,31 @@ public class AppMetadataStore {
     return null;
   }
 
+  public Collection<ApplicationId> getLatestAppIds(NamespaceId namespace, Collection<String> appNames)
+    throws IOException {
+    Range range = Range.singleton(
+      ImmutableList.of(
+        Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespace.getNamespace())));
+    // scan based on: latest field set to true
+    Field<?> latestField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
+    Set<String> appSet = new HashSet<>(appNames);
+
+    List<ApplicationId> appIds = new ArrayList<>();
+    // TODO: switch to multiScan after CDAP-19781 is done
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().scan(range, appNames.size(), latestField)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        String application = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD);
+        if (appSet.contains(application)) {
+          String version = row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD);
+          appIds.add(namespace.app(application, version));
+        }
+      }
+    }
+    return appIds;
+  }
+
   public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) throws IOException {
     return scanWithRange(
       getNamespaceAndApplicationRange(namespaceId, appId),
