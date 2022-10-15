@@ -78,11 +78,13 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
 
   @Override
   public ProgramRunner create(ProgramType programType) {
+    LOG.error("wyzhang: DefaultProgramRunnerFactory: create(): start");
     ProgramRuntimeProvider provider = runtimeProviderLoader.get(programType);
     ProgramRunner runner;
 
     if (provider != null) {
-      LOG.trace("Using runtime provider {} for program type {}", provider, programType);
+      LOG.error("wyzhang: DefaultProgramRunnerFactory: create(): Using runtime provider {} for program type {}",
+                provider, programType);
       runner = provider.createProgramRunner(programType, mode, injector);
     } else {
       Provider<ProgramRunner> defaultProvider = defaultRunnerProviders.get(programType);

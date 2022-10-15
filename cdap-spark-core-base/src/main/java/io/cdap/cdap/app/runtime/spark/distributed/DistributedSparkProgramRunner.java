@@ -104,6 +104,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   @Override
   protected void validateOptions(Program program, ProgramOptions options) {
     super.validateOptions(program, options);
+    LOG.error("wyzhang: DistributedSparkProgramRunner: validateOptions(): start");
 
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
@@ -122,6 +123,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   @Override
   protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
+    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig(): start");
 
     // Update the container hConf
     if (clusterMode == ClusterMode.ON_PREMISE) {
@@ -140,9 +142,9 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     // Setup the launch config
     ApplicationSpecification appSpec = program.getApplicationSpecification();
-    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig : ApplicationSpecification={}", appSpec);
+    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig() : ApplicationSpecification={}", appSpec);
     SparkSpecification spec = appSpec.getSpark().get(program.getName());
-    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig : SparkSpeicifcation={}", appSpec);
+    LOG.error("wyzhang: DistributedSparkProgramRunner: setupLuanchConfig() : SparkSpeicifcation={}", appSpec);
 
     Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client",
                                                                    options.getUserArguments().asMap());

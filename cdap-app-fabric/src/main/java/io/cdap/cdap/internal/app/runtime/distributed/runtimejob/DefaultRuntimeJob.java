@@ -172,7 +172,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   @Override
   public void run(RuntimeJobEnvironment runtimeJobEnv) throws Exception {
-    LOG.error("wyzhang: DefaultRuntimeJob start");
+    LOG.error("wyzhang: DefaultRuntimeJob: run(): start");
     // Setup process wide settings
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -195,7 +195,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     // Get App spec
     ApplicationSpecification appSpec = readJsonFile(new File(DistributedProgramRunner.APP_SPEC_FILE_NAME),
                                                     ApplicationSpecification.class);
-    LOG.error("wyzhang: DefaultRuntimeJob appSpec = {}", appSpec);
+    LOG.error("wyzhang: DefaultRuntimeJob: run(): appSpec = {}", appSpec);
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // Create injector and get program runner
@@ -266,10 +266,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
-      LOG.error("wyzhang: DefaultRuntimeJob : ProgramRunnerRunner class type = {}", programRunner.getClass().getClass());
+      LOG.error("wyzhang: DefaultRuntimeJob : run(): ProgramRunnerRunner class type = {}",
+                programRunner.getClass().getClass());
 
       // Create and run the program. The program files should be present in current working directory.
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
+        LOG.error("wyzhang: DefaultRuntimeJob : run(): created project={}", program);
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
         runtimeClientService.onProgramStopRequested(terminateTs -> {

@@ -96,6 +96,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   @Override
   protected void validateOptions(Program program, ProgramOptions options) {
     super.validateOptions(program, options);
+    LOG.error("wyzhang: DistributedWorkflowProgramRunner: validateOptions(): start");
 
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
@@ -124,6 +125,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   @Override
   protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
+    LOG.error("wyzhang: DistributedWorkflowProgramRunner: setupLaunchConfig(): start");
 
     WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
     List<ClassAcceptor> acceptors = new ArrayList<>();
