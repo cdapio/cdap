@@ -246,7 +246,8 @@ public class ApplicationClientTestRun extends ClientTestBase {
       Assert.assertTrue(appClient.listPrograms(appId, ProgramType.SERVICE).isEmpty());
       Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.WORKFLOW).size());
     } finally {
-      appClient.delete(appId);
+      // updating an app will create a new version, so here we need to delete both versions
+      appClient.deleteApp(appId);
       appClient.waitForDeleted(appId, 30, TimeUnit.SECONDS);
       artifactClient.delete(artifactIdV1);
       artifactClient.delete(artifactIdV2);
