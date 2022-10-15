@@ -514,8 +514,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       try {
         ArtifactDetail currentArtifactDetail = artifactStore.getArtifact(artifactId);
         if (!shouldUpdateSytemArtifact(currentArtifactDetail, systemArtifactInfo)) {
-          LOG.info("Artifact {} already exists and it did not change, will not try loading it again.", artifactId);
-          return;
+          LOG.info("wyzhang: Artifact {} already exists and it did not change, but still try loading it again.",
+                   artifactId);
         }
       } catch (ArtifactNotFoundException e) {
         // this is fine, means it doesn't exist yet and we should add it
