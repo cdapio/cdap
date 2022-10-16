@@ -240,7 +240,7 @@ public class AppMetadataStore {
   public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     return getApplicationSpecificationTable().read(fields)
-      .map(r -> decodeRow(r))
+      .map(this::decodeRow)
       .orElse(null);
   }
 
@@ -471,8 +471,6 @@ public class AppMetadataStore {
     return appIds;
   }
 
-
-
   /**
    * Filter the given set of programs and return those that exist.
    *
@@ -510,13 +508,6 @@ public class AppMetadataStore {
     return programIds.stream().filter(existingPrograms::contains).collect(Collectors.toSet());
   }
 
-
-  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec,
-                               ChangeDetail change) throws IOException {
-    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec, null)),
-                               change.getCreationTimeMillis(), change.getAuthor(), change.getDescription());
-  }
-
   /**
    * Persisting a new application version in the table.
    *
@@ -526,10 +517,10 @@ public class AppMetadataStore {
    * @throws ConflictException if parent-version provided in the request doesn't match the latest version, do not allow
    * app to be created
    */
-  public void createApplicationVersion(ApplicationId id, ApplicationMeta appMeta) 
-    throws IOException, ConflictException {
+  public void createApplicationVersion(ApplicationId id,
+                                       ApplicationMeta appMeta) throws IOException, ConflictException {
     // Fetch the latest version
-    String parentVersion = appMeta.getChange().getParentVersion();
+    String parentVersion = Optional.ofNullable(appMeta.getChange()).map(ChangeDetail::getParentVersion).orElse(null);
     // Fetch the latest version
     ApplicationMeta latest = getLatest(id.getNamespaceId(), id.getApplication());
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
@@ -550,6 +541,13 @@ public class AppMetadataStore {
     writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(), appMeta.getChange());
   }
 
+  @VisibleForTesting
+  void writeApplication(String namespaceId, String appId, String versionId,
+                        ApplicationSpecification spec, ChangeDetail change) throws IOException {
+    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec, null)),
+                               change.getCreationTimeMillis(), change.getAuthor(), change.getDescription());
+  }
+
   /**
    * To determine whether the app is allowed to be deployed:
    * Do not deploy when the parent version is not the latest.
@@ -559,17 +557,12 @@ public class AppMetadataStore {
    * @return whether the app version is allowed to be deployed
    */
   private boolean deployAppAllowed(@Nullable String parentVersion, @Nullable ApplicationMeta latest)  {
-    if (parentVersion == null) {
+    // Always allow deploy if either parent version or application does not exist
+    if (parentVersion == null || latest == null) {
       return true;
     }
-    // App does not exist
-    if (latest == null) {
-      // parent version should be null when the app does not exist
-      return parentVersion == null;
-    }
-    String latestVersion = latest.getSpec().getAppVersion();
-    // If latest version is the parent version then we allow deploy
-    return latestVersion.equals(parentVersion);
+    // If latest version is the parent version then we allow deployment
+    return Objects.equals(parentVersion, latest.getSpec().getAppVersion());
   }
 
   public void deleteApplication(String namespaceId, String appId, String versionId)
@@ -1410,9 +1403,7 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) throws IOException {
     Map<ProgramRunId, RunRecordDetail> result = new LinkedHashMap<>();
-    scanActiveRuns(programId, r -> {
-      result.put(r.getProgramRunId(), r);
-    });
+    scanActiveRuns(programId, r -> result.put(r.getProgramRunId(), r));
     return result;
   }
 
