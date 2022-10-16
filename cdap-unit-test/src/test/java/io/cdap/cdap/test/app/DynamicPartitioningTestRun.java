@@ -37,6 +37,7 @@ import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -69,7 +70,11 @@ public class DynamicPartitioningTestRun extends TestFrameworkTestBase {
     getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testDynamicPartitioningWithFailure() throws Exception {
     // deploy app
     ApplicationManager appManager = deployApplication(testSpace, AppWithDynamicPartitioning.class);
