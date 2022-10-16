@@ -37,6 +37,8 @@ import javax.annotation.Nullable;
 @Beta
 public final class SparkSpecification extends AbstractProgramSpecification implements PropertyProvider {
 
+  // wyzhang: className = io.cdap.cdap.etl.spark.batch.ETLSpark
+  // wyzhang: mainClassName = io.cdap.cdap.etl.spark.batch.BatchSparkPipelineDriver
   private final String mainClassName;
   private final Set<String> datasets;
   private final Map<String, String> properties;
