@@ -245,19 +245,9 @@ public abstract class StructuredTableTest {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       try {
         table.scan(
-          Range.create(Collections.singleton(Fields.stringField(STRING_COL, "invalid")), Range.Bound.EXCLUSIVE,
+          Range.create(Collections.singleton(Fields.stringField("NON-EXIST_FIELD", "invalid")), Range.Bound.EXCLUSIVE,
                        Collections.singleton(Fields.longField(KEY2, (long) 40)), Range.Bound.EXCLUSIVE), max);
         Assert.fail("Expected InvalidFieldException since STRING_COL is not primary key");
-      } catch (InvalidFieldException e) {
-        // Expected, see the exception message above
-      }
-    });
-
-    getTransactionRunner().run(context -> {
-      StructuredTable table = context.getTable(SIMPLE_TABLE);
-      try {
-        table.scan(Range.singleton(Collections.singleton(Fields.doubleField(DOUBLE_COL, 1.0))), max);
-        Assert.fail("Expected InvalidFieldException since DOUBLE_COL is not primary key");
       } catch (InvalidFieldException e) {
         // Expected, see the exception message above
       }
@@ -365,7 +355,7 @@ public abstract class StructuredTableTest {
                    Range.Bound.EXCLUSIVE,
                    Arrays.asList(Fields.intField(KEY, 4), Fields.longField(KEY2, (long) 49)),
                    Range.Bound.INCLUSIVE));
-    
+
     actual = runMultiScan(ranges, max, outPutFields);
     List<Collection<Field<?>>> newExpected = new LinkedList<>();
     newExpected.addAll(expectedAll.subList(11, 16));
@@ -477,6 +467,120 @@ public abstract class StructuredTableTest {
     actual = runMultiScan(ranges, 15, outPutFields);
 
     Assert.assertEquals(expectedAll.subList(30, 45), actual);
+  }
+
+  @Test
+  public void testNonPrimaryKeysRangeScan() throws Exception {
+    int max = 100;
+    List<Collection<Field<?>>> expectedAll = writeStructuredRowsWithDuplicatePrefix(max, "");
+    List<String> outPutFields = Arrays.asList(KEY, KEY2, KEY3, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL);
+
+    // Scan on single range
+    List<Collection<Field<?>>> actual = scanSimpleStructuredRows(
+      // INCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 1), Fields.doubleField(DOUBLE_COL, (double) 11)),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 1), Fields.doubleField(DOUBLE_COL, (double) 115)),
+                   Range.Bound.INCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(11, 20), actual);
+
+    actual = scanSimpleStructuredRows(
+      // INCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(STRING_COL, VAL + "31")),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(STRING_COL, VAL + "35")),
+                   Range.Bound.EXCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(31, 35), actual);
+
+    actual = scanSimpleStructuredRows(
+      // EXCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 5), Fields.doubleField(DOUBLE_COL, (double) 52)),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 5), Fields.doubleField(DOUBLE_COL, (double) 58)),
+                   Range.Bound.EXCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(53, 58), actual);
+
+    actual = scanSimpleStructuredRows(
+      // EXCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 7), Fields.stringField(STRING_COL, VAL + "71")),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 7), Fields.stringField(STRING_COL, VAL + "79")),
+                   Range.Bound.INCLUSIVE), max);
+    Assert.assertEquals(expectedAll.subList(72, 80), actual);
+
+    // MultiScan with multiple ranges that cannot merge the longest prefix keys
+    Collection<Range> ranges = Arrays.asList(
+      // INCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 1), Fields.doubleField(DOUBLE_COL, (double) 11)),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 1), Fields.doubleField(DOUBLE_COL, (double) 15)),
+                   Range.Bound.INCLUSIVE),
+      // INCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.doubleField(DOUBLE_COL, (double) 32)),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.doubleField(DOUBLE_COL, (double) 39)),
+                   Range.Bound.EXCLUSIVE),
+      // EXCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 5), Fields.stringField(STRING_COL, VAL + "53")),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 5), Fields.stringField(STRING_COL, VAL + "55")),
+                   Range.Bound.EXCLUSIVE),
+      // EXCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 7), Fields.doubleField(DOUBLE_COL, (double) 70)),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 7), Fields.doubleField(DOUBLE_COL, (double) 79)),
+                   Range.Bound.INCLUSIVE));
+
+    actual = runMultiScan(ranges, max, outPutFields);
+    List<Collection<Field<?>>> newExpected = new LinkedList<>();
+    newExpected.addAll(expectedAll.subList(11, 16));
+    newExpected.addAll(expectedAll.subList(32, 39));
+    newExpected.addAll(expectedAll.subList(54, 55));
+    newExpected.addAll(expectedAll.subList(71, 80));
+    Assert.assertEquals(newExpected, actual);
+
+    // MultiScan with multiple ranges
+    ranges = Arrays.asList(
+      // INCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 1), Fields.doubleField(DOUBLE_COL, (double) 11)),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 1), Fields.doubleField(DOUBLE_COL, (double) 15)),
+                   Range.Bound.INCLUSIVE),
+      // INCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 2), Fields.doubleField(DOUBLE_COL, (double) 22)),
+                   Range.Bound.INCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 2), Fields.doubleField(DOUBLE_COL, (double) 29)),
+                   Range.Bound.EXCLUSIVE),
+      // EXCLUSIVE beginning and EXCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(STRING_COL, VAL + "33")),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 3), Fields.stringField(STRING_COL, VAL + "37")),
+                   Range.Bound.EXCLUSIVE),
+      // EXCLUSIVE beginning and INCLUSIVE ending
+      Range.create(Arrays.asList(Fields.intField(KEY, 4), Fields.doubleField(DOUBLE_COL, (double) 40)),
+                   Range.Bound.EXCLUSIVE,
+                   Arrays.asList(Fields.intField(KEY, 4), Fields.doubleField(DOUBLE_COL, (double) 79)),
+                   Range.Bound.INCLUSIVE));
+
+    actual = runMultiScan(ranges, max, outPutFields);
+    newExpected = new LinkedList<>();
+    newExpected.addAll(expectedAll.subList(11, 16));
+    newExpected.addAll(expectedAll.subList(22, 29));
+    newExpected.addAll(expectedAll.subList(34, 37));
+    newExpected.addAll(expectedAll.subList(41, 50));
+    Assert.assertEquals(newExpected, actual);
+
+
+    // MultiScan partialKeys with non-primary keys
+    ranges = Arrays.asList(
+      Range.singleton(Arrays.asList(Fields.longField(KEY2, (long) 29),
+                                    Fields.stringField(STRING_COL, VAL + "29"))),
+      Range.singleton(Arrays.asList(Fields.intField(KEY, 3),
+                                    Fields.stringField(STRING_COL, VAL + "30")))
+    );
+
+    actual = runMultiScan(ranges, max, outPutFields);
+    Assert.assertEquals(expectedAll.subList(29, 31), actual);
   }
 
   @Test
