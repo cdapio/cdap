@@ -276,6 +276,7 @@ public class AppMetadataStore {
         request.getNamespaceId().getNamespace()));
     Range.Bound endBound = Range.Bound.INCLUSIVE;
     Collection<Field<?>> endFields = startFields;
+    boolean queryVersionHistory = request.getQueryHistoryVersion();
 
     if (request.getScanFrom() != null) {
       if (request.getNamespaceId() != null &&
@@ -285,7 +286,9 @@ public class AppMetadataStore {
         );
       }
       startBound = Range.Bound.EXCLUSIVE;
-      startFields = getApplicationPrimaryKeys(request.getScanFrom());
+      startFields = queryVersionHistory ?
+        getApplicationNamespaceAppCreationKeys(request.getScanFrom()) :
+        getApplicationPrimaryKeys(request.getScanFrom());
     }
     if (request.getScanTo() != null) {
       if (request.getNamespaceId() != null &&
@@ -295,7 +298,9 @@ public class AppMetadataStore {
         );
       }
       endBound = Range.Bound.EXCLUSIVE;
-      endFields = getApplicationPrimaryKeys(request.getScanTo());
+      endFields = queryVersionHistory ?
+        getApplicationNamespaceAppCreationKeys(request.getScanTo()) :
+        getApplicationPrimaryKeys(request.getScanTo());
     }
 
     Range range;
@@ -323,8 +328,8 @@ public class AppMetadataStore {
     StructuredTable table = getApplicationSpecificationTable();
     int limit = request.getLimit();
     boolean latestOnly = request.getLatestOnly();
-    try (CloseableIterator<StructuredRow> iterator = getScanApplicationsIterator(table, range,
-                                                                                 request.getSortOrder(), latestOnly)) {
+    try (CloseableIterator<StructuredRow> iterator = getScanApplicationsIterator(table, range, request.getSortOrder(),
+                                                                                 latestOnly, queryVersionHistory)) {
       boolean keepScanning = true;
       while (iterator.hasNext() && keepScanning && limit > 0) {
         StructuredRow row = iterator.next();
@@ -340,11 +345,19 @@ public class AppMetadataStore {
   private CloseableIterator<StructuredRow> getScanApplicationsIterator(StructuredTable table,
                                                                        Range range,
                                                                        SortOrder sortOrder,
-                                                                       boolean latestOnly) throws IOException {
+                                                                       boolean latestOnly,
+                                                                       boolean queryVersionHistory) throws IOException {
     if (latestOnly) {
+      // if only return latest version of the app, whether the range uses version field or creationTime field
+      // doesn't matter, since records will be sort on appName
       return table.scan(range, Integer.MAX_VALUE,
                         Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"), sortOrder);
     }
+    if (queryVersionHistory) {
+      // Version History should be sort on creationTime
+      return table.scan(range, Integer.MAX_VALUE, StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, sortOrder);
+    }
+    // default behavior should be sorting on pk
     return table.scan(range, Integer.MAX_VALUE, sortOrder);
   }
 
@@ -1954,6 +1967,18 @@ public class AppMetadataStore {
 
   private List<Field<?>> getApplicationPrimaryKeys(ApplicationId appId) {
     return getApplicationPrimaryKeys(appId.getNamespace(), appId.getApplication(), appId.getVersion());
+  }
+
+  private List<Field<?>> getApplicationNamespaceAppCreationKeys(ApplicationId appId) throws IOException {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, appId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId.getApplication()));
+    ApplicationMeta applicationMeta = getApplication(appId);
+    Long creationTime = applicationMeta.getChange() != null ?
+      applicationMeta.getChange().getCreationTimeMillis() :
+      null;
+    fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, creationTime));
+    return fields;
   }
 
   private List<Field<?>> getLatestApplicationKeys(String namespaceId, String appName) {
