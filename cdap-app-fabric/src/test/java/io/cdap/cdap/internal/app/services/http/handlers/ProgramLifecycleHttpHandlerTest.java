@@ -83,6 +83,7 @@ import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -931,6 +932,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  @Ignore // TODO: CDAP-19775
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
     NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
@@ -946,8 +948,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, deploy(app1, appRequest).getResponseCode());
     Assert.assertEquals(200, deploy(app2, appRequest).getResponseCode());
     ApplicationDetail appDetails = getAppDetails(app2.getNamespace(), app2.getApplication());
-    ApplicationId versionedApp2 = new ApplicationId(app2.getNamespace(), app2.getApplication(),
-                                                    appDetails.getAppVersion());
 
     // Schedule details from non-versioned API
     List<ScheduleDetail> someSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
@@ -1011,7 +1011,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Schedules triggered by SOME_WORKFLOW's completed or failed or killed status
     // we should only find these schedules in the latest version
-    ProgramId someWorkflow = versionedApp2.workflow(AppWithMultipleSchedules.SOME_WORKFLOW);
+    ProgramId someWorkflow = app2.workflow(AppWithMultipleSchedules.SOME_WORKFLOW);
     List<ScheduleDetail> triggeredSchedules1 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
                                                                              ProgramStatus.COMPLETED,
                                                                              ProgramStatus.FAILED,
@@ -1037,19 +1037,20 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, triggeredByCompletedSchedules.size());
     assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredByCompletedSchedules);
     // Schedules triggered by ANOTHER_WORKFLOW regardless of program status
-    ProgramId anotherWorkflow = versionedApp2.workflow(AppWithMultipleSchedules.ANOTHER_WORKFLOW);
+    ProgramId anotherWorkflow = app2.workflow(AppWithMultipleSchedules.ANOTHER_WORKFLOW);
     List<ScheduleDetail> triggeredSchedules2 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, anotherWorkflow);
     Assert.assertEquals(1, triggeredSchedules2.size());
     assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules2);
 
     // Schedule detail of app2 from versioned API
     List<ScheduleDetail> anotherSchedules2 = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
-                                                          versionedApp2.getVersion(),
-                                                          AppWithMultipleSchedules.ANOTHER_WORKFLOW);
+                                                          VERSION2, AppWithMultipleSchedules.ANOTHER_WORKFLOW);
     Assert.assertEquals(3, anotherSchedules2.size());
     assertProgramInSchedules(AppWithMultipleSchedules.ANOTHER_WORKFLOW, anotherSchedules2);
 
     deleteApp(appDefault, 200);
+    deleteApp(app1, 200);
+    deleteApp(app2, 200);
   }
 
   private void assertProgramInSchedules(String programName, List<ScheduleDetail> schedules) {
@@ -1127,6 +1128,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  @Ignore // TODO: CDAP-19775
   public void testSchedules() throws Exception {
     // deploy an app with schedule
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META1.getNamespaceId()),
@@ -1151,8 +1153,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(new TimeTrigger("0/15 * * * * ?"), schedule.getTrigger());
 
     ApplicationDetail appDetails = getAppDetails(appV2Id.getNamespace(), appV2Id.getApplication());
-    ApplicationId versionedAppV2Id = new ApplicationId(appV2Id.getNamespace(), appV2Id.getApplication(),
-                                                       appDetails.getAppVersion());
 
     // there should be two schedules now
     List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME,
@@ -1171,12 +1171,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     String newSchedule = "newTimeSchedule";
     testAddSchedule(appDetails.getAppVersion(), newSchedule);
-    testDeleteSchedule(versionedAppV2Id, newSchedule);
-    testUpdateSchedule(versionedAppV2Id);
+    testDeleteSchedule(appV2Id, newSchedule);
+    testUpdateSchedule(appV2Id);
     testReEnableSchedule("reEnabledSchedule");
   }
 
   @Test
+  @Ignore // TODO: CDAP-19775
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
@@ -1203,6 +1204,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication(), appDetails.getAppVersion());
@@ -1213,6 +1215,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     // schedule should not be updated
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
@@ -1225,6 +1228,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication(),
@@ -1236,6 +1240,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication(),
@@ -1248,6 +1253,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication(),
@@ -1259,6 +1265,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
+    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication(),
@@ -1421,7 +1428,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.CONFLICT.code(), response.getResponseCode());
 
     // Since schedule is versionless, this is conflicting with the existing schedule
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, version, scheduleName, timeDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.CONFLICT.code(), response.getResponseCode());
 
     // this should not have affected the schedules of the default version
@@ -1430,21 +1437,21 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // there should be four schedules now in total
     List<ScheduleDetail> schedules2 =
-      getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, version, AppWithSchedule.WORKFLOW_NAME);
+      getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(4, schedules2.size());
     Assert.assertEquals(timeDetail, schedules2.get(1));
 
-    List<ScheduleDetail> schedulesForApp2 = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, version);
+    List<ScheduleDetail> schedulesForApp2 = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2);
     Assert.assertEquals(schedules2, schedulesForApp2);
 
     // Add a schedule with no schedule name in spec
-    ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, version,
+    ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2,
                                                 null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
                                                 Collections.emptyList(), TimeUnit.HOURS.toMillis(6), null, null);
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, version, "schedule-100", detail2);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, version, "schedule-100");
+    ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
     Assert.assertEquals("schedule-100", detail100.getName());
     Assert.assertEquals(detail2.getTimeoutMillis(), detail100.getTimeoutMillis());
   }
@@ -1679,7 +1686,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                          ProgramType.MAPREDUCE, DUMMY_MR_NAME);
     verifyProgramHistory(program.toEntityId());
     deleteApp(program.getApplication(), 200);
-    ApplicationId appId = new ApplicationId(TEST_NAMESPACE2, program.getApplicationId(), appDetails.getAppVersion());
+    ApplicationId appId = new ApplicationId(TEST_NAMESPACE2, program.getApplicationId(), VERSION1);
     Id.Artifact artifactId = Id.Artifact.from(program.getNamespace(), app.getSimpleName(), "1.0.0");
     addAppArtifact(artifactId, app);
     AppRequest<Config> request = new AppRequest<>(
