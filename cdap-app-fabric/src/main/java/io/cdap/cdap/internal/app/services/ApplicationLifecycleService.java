@@ -342,14 +342,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ApplicationNotFoundException if the specified application does not exist
    */
   public ApplicationDetail getLatestAppDetail(ApplicationId appId) throws ApplicationNotFoundException, IOException {
+    return getLatestAppDetail(appId, true);
+  }
+
+  /**
+   * Get details about the latest version of the specified application
+   *
+   * @param appId the id of the application to get
+   * @return detail about the latest version of the specified application
+   * @throws ApplicationNotFoundException if the specified application does not exist
+   */
+  public ApplicationDetail getLatestAppDetail(ApplicationId appId, boolean enforceOwnerPrincipal)
+    throws ApplicationNotFoundException, IOException {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
     ApplicationMeta latestApp = store.getLatest(appId.getNamespaceId(), appId.getApplication());
     if (latestApp == null || latestApp.getSpec() == null) {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal,
-                                                                            latestApp.getChange()));
+    if (enforceOwnerPrincipal) {
+      return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal,
+                                                                              latestApp.getChange()));
+    }
+    return ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal,
+                                      latestApp.getChange());
   }
 
   /**
@@ -911,7 +927,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     // The latest app is retrieved here and passed to deleteApp -
     // that deletes the schedules, triggers and other metadata info.
-    ApplicationDetail appDetail = getLatestAppDetail(appId);
+    // since already checked DELETE privileges above, no need to check again for appDetail
+    ApplicationDetail appDetail = getLatestAppDetail(appId, false);
     appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
     ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {

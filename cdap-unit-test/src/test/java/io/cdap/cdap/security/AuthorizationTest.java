@@ -227,9 +227,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(updated, namespaceAdmin.get(AUTH_NAMESPACE));
   }
 
-  // TODO: CDAP-19784
   @Test
-  @Ignore
   @Category(SlowTests.class)
   public void testApps() throws Exception {
     try {
@@ -444,9 +442,7 @@ public class AuthorizationTest extends TestBase {
     pluginArtifactManager.delete();
   }
 
-  // TODO: CDAP-19784
   @Test
-  @Ignore
   public void testPrograms() throws Exception {
     createAuthNamespace();
     grantAndAssertSuccess(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), ALICE,
