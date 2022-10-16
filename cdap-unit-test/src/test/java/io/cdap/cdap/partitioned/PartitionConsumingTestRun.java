@@ -32,6 +32,7 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -53,7 +54,11 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
   private static final String LINE2 = "b a b";
   private static final String LINE3 = "c c c";
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testMapReduceConsumer() throws Exception {
     testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {
       @Override
@@ -71,7 +76,11 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(10, totalOut);
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testWorkerConsumer() throws Exception {
     testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {
       @Override
