@@ -252,7 +252,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @QueryParam("orderBy") SortOrder orderBy,
                          @QueryParam("nameFilter") String nameFilter,
                          @QueryParam("nameFilterType") NameFilterType nameFilterType,
-                         @QueryParam("latestOnly") Boolean latestOnly
+                         @QueryParam("latestOnly") Boolean latestOnly,
+                         @QueryParam("sortCreationTime") Boolean sortCreationTime
       )
       throws Exception {
     validateNamespace(namespaceId);
@@ -268,7 +269,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
         AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
         ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, pageSize,
-                                                             orderBy, nameFilter, names, nameFilterType, latestOnly);
+                                                             orderBy, nameFilter, names, nameFilterType, latestOnly,
+                                                             sortCreationTime);
         boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
           ApplicationRecord record = new ApplicationRecord(appDetail);
           jsonListResponder.send(record);
@@ -280,7 +282,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       });
     } else {
       ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion, pageToken, null,
-                                                           orderBy, nameFilter, names, nameFilterType, latestOnly);
+                                                           orderBy, nameFilter, names, nameFilterType, latestOnly,
+                                                           sortCreationTime);
       JsonWholeListResponder.respond(GSON, responder,
           jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest,
               d -> jsonListResponder.send(new ApplicationRecord(d)))
@@ -290,7 +293,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion, String pageToken,
                                                  Integer pageSize, SortOrder orderBy, String nameFilter,
-                                                 Set<String> names, NameFilterType nameFilterType, Boolean latestOnly) {
+                                                 Set<String> names, NameFilterType nameFilterType, Boolean latestOnly,
+                                                 Boolean sortCreationTime) {
     ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
     builder.setNamespaceId(new NamespaceId(namespaceId));
     if (pageSize != null) {
@@ -319,6 +323,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     if (latestOnly != null) {
       builder.setLatestOnly(latestOnly);
+    }
+    if (sortCreationTime != null) {
+      builder.setSortCreationTime(sortCreationTime);
     }
     if (pageToken != null && !pageToken.isEmpty()) {
       builder.setScanFrom(ApplicationId.fromIdParts(Iterables.concat(
