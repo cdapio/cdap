@@ -133,12 +133,13 @@ public final class SparkExecutionService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LOG.info("wyzhang: SparkExecutionService: startup(): start");
     httpServer.start();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down SparkExecutionService");
+    LOG.info("wyzhang: SparkExecutionService: shutdown(): Shutting down SparkExecutionService");
     long waitSeconds = shutdownWaitSeconds.get();
     long currentTs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     long terminateTs = (Long.MAX_VALUE - currentTs < waitSeconds) ? Long.MAX_VALUE : currentTs + waitSeconds;

@@ -49,6 +49,7 @@ object SparkMainWrapper {
   }
 
   def main(args: Array[String]): Unit = {
+    LOG.info("wyzhang: SparkMainWrapper: main(): start");
     if (stopped) {
       readyLatch.countDown()
       return
@@ -92,7 +93,7 @@ object SparkMainWrapper {
           getMainMethod(cls).invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
       }
 
-      LOG.info("Spark main returned {}", userSparkClass)
+      LOG.info("wyzhang: SparkMainWrapper: main(): Spark main returned {}", userSparkClass)
       executionContext.waitForSparkHttpService()
 
       completion.completed()
