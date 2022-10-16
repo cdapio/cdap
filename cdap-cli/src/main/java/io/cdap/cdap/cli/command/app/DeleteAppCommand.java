@@ -24,6 +24,7 @@ import io.cdap.cdap.cli.english.Article;
 import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.common.cli.Arguments;
 
@@ -45,6 +46,8 @@ public class DeleteAppCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ApplicationId appId = parseApplicationId(arguments);
+    ApplicationDetail appDetail = appClient.get(appId);
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
     appClient.delete(appId);
     output.printf("Successfully deleted application '%s.%s'\n", appId.getEntityName(), appId.getVersion());
   }

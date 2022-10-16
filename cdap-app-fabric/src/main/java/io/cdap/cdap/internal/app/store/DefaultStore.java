@@ -717,6 +717,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Collection<ApplicationId> getLatestAppIds(NamespaceId namespace, Collection<String> appNames) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getLatestAppIds(namespace, appNames);
+    });
+  }
+
+  @Override
   public Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
@@ -954,12 +961,12 @@ public class DefaultStore implements Store {
     return new AppStateTable(context);
   }
 
-  private void verifyApplicationExists(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
+  private void verifyApplicationExists(NamespaceId namespaceId, String appName)
+    throws ApplicationNotFoundException {
     // Check if app exists
-    ApplicationId appId = namespaceId.app(appName);
-    ApplicationSpecification appSpec = getApplication(appId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId);
+    ApplicationMeta latest = getLatest(namespaceId, appName);
+    if (latest == null || latest.getSpec() == null) {
+      throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
     }
   }
 

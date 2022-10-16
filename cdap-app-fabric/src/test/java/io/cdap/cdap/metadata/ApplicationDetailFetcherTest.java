@@ -117,9 +117,9 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
 
     // Deploy the application
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-
+    ApplicationDetail appDetails = getAppDetails(namespace, appName);
     // Get and validate the application
-    ApplicationId appId = new ApplicationId(namespace, appName);
+    ApplicationId appId = new ApplicationId(namespace, appName, appDetails.getAppVersion());
     ApplicationDetail appDetail = fetcher.get(appId);
     assertAllProgramAppDetail(appDetail);
 

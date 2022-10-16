@@ -24,6 +24,7 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
@@ -51,18 +52,21 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
     programRunRecordFetcher = new RemoteProgramRunRecordFetcher(
       getInjector().getInstance(RemoteClientFactory.class));
   }
-
+  
   @Test
   public void testGetRunRecordMeta() throws Exception {
     String namespace = TEST_NAMESPACE1;
     String application = SleepingWorkflowApp.NAME;
     String program = "SleepWorkflow";
-    ProgramId programId = new ProgramId(namespace, application, ProgramType.WORKFLOW, program);
     ProgramRunId programRunId = null;
     String runId = null;
 
     // Deploy an app containing a workflow
     deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    ApplicationDetail appDetails = getAppDetails(TEST_NAMESPACE1, SleepingWorkflowApp.NAME);
+    // TODO : to fix after CDAP-19775 is addressed
+    String appVersion = appDetails.getAppVersion();
+    ProgramId programId = new ProgramId(namespace, application, appVersion, ProgramType.WORKFLOW, program);
 
     // Run program once
     startProgram(programId);
@@ -75,7 +79,7 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
     runId = runRecordList.get(0).getPid();
 
     // Get the RunRecordDetail via internal REST API and verify
-    programRunId = new ProgramRunId(namespace, application, ProgramType.WORKFLOW, program, runId);
+    programRunId = new ProgramRunId(programId.getParent(), ProgramType.WORKFLOW, program, runId);
     RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRunId);
     Assert.assertTrue(runRecordMeta.getProperties().size() > 0);
     Assert.assertNotNull(runRecordMeta.getCluster());
