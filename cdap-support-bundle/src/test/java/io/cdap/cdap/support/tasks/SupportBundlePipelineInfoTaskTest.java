@@ -59,6 +59,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,7 +131,11 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
 
   //Contains two sub-task supportBundleRuntimeInfo and supportBundlePipelineRunLog
   //So we will test all three files together
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testSupportBundlePipelineInfo() throws Exception {
     String runId = generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =

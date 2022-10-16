@@ -333,14 +333,13 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
-    ProgramId programId = new ProgramId(namespaceId, applicationId, ProgramType.WORKFLOW, workflowId);
+    ProgramId programId = new ProgramId(appId, ProgramType.WORKFLOW, workflowId);
     if (workflowSpec == null) {
       throw new ProgramNotFoundException(programId);
     }
 
     if (store.getRun(programId.run(runId)) == null) {
-      throw new NotFoundException(new ProgramRunId(programId.getNamespace(), programId.getApplication(),
-                                                   programId.getType(), programId.getProgram(), runId));
+      throw new NotFoundException(new ProgramRunId(appId, programId.getType(), programId.getProgram(), runId));
     }
     return workflowSpec;
   }

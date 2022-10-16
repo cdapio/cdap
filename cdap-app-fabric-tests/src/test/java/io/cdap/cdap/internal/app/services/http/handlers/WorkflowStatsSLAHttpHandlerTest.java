@@ -34,6 +34,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PercentileInformation;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -62,8 +63,6 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link WorkflowStatsSLAHttpHandler}
  */
 public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
-
-  private static final ApplicationId WORKFLOW_APP = NamespaceId.DEFAULT.app("WorkflowApp");
   private static MetricStore metricStore;
   private static Store store;
 
@@ -98,14 +97,17 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testStatistics() throws Exception {
     deploy(WorkflowApp.class, 200);
+    ApplicationDetail appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
+    ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp",
+                                                  appDetails.getAppVersion());
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
 
-    ProgramId workflowProgram = WORKFLOW_APP.workflow(workflowName);
-    ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
-    ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
-    ArtifactId artifactId = WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    ProgramId workflowProgram = workflowApp.workflow(workflowName);
+    ProgramId mapreduceProgram = workflowApp.mr(mapreduceName);
+    ProgramId sparkProgram = workflowApp.spark(sparkName);
+    ArtifactId artifactId = workflowApp.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
     long startTime = System.currentTimeMillis();
     long currentTimeMillis = startTime;
@@ -204,23 +206,25 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             System.currentTimeMillis(),
                             "99");
     response = doGet(request);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    Assert.assertTrue(
-      response.getResponseBodyAsString().startsWith("There are no statistics associated with this workflow : "));
+    // no apps found
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
   }
 
 
   @Test
   public void testDetails() throws Exception {
     deploy(WorkflowApp.class, 200);
+    ApplicationDetail appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
+    ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp",
+                                                  appDetails.getAppVersion());
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
 
-    WorkflowId workflowProgram = WORKFLOW_APP.workflow(workflowName);
-    ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
-    ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
-    ArtifactId artifactId = WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    WorkflowId workflowProgram = workflowApp.workflow(workflowName);
+    ProgramId mapreduceProgram = workflowApp.mr(mapreduceName);
+    ProgramId sparkProgram = workflowApp.spark(sparkName);
+    ArtifactId artifactId = workflowApp.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
     List<RunId> runIdList = setupRuns(workflowProgram, mapreduceProgram, sparkProgram, store, 13, artifactId);
 
     String request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=%s&interval=%s",
@@ -267,14 +271,17 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testCompare() throws Exception {
     deploy(WorkflowApp.class, 200);
+    ApplicationDetail appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
+    ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp",
+                                                  appDetails.getAppVersion());
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
 
-    WorkflowId workflowProgram = WORKFLOW_APP.workflow(workflowName);
-    ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
-    ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
-    ArtifactId artifactId = WORKFLOW_APP.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
+    WorkflowId workflowProgram = workflowApp.workflow(workflowName);
+    ProgramId mapreduceProgram = workflowApp.mr(mapreduceName);
+    ProgramId sparkProgram = workflowApp.spark(sparkName);
+    ArtifactId artifactId = workflowApp.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
     List<RunId> workflowRunIdList = setupRuns(workflowProgram, mapreduceProgram, sparkProgram, store, 2, artifactId);
     RunId workflowRun1 = workflowRunIdList.get(0);

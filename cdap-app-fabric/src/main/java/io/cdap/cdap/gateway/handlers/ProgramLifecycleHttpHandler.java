@@ -1321,16 +1321,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
-    List<ProgramId> programs = batchPrograms.stream()
-      .map(p -> batchProgramToProgramId(namespaceId, p))
-      .collect(Collectors.toList());
+    Map<BatchProgram, ProgramId> programsMap = batchPrograms.stream()
+      .collect(Collectors.toMap(p -> p, p -> batchProgramToProgramId(namespaceId, p)));
 
-    Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programs);
+    Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programsMap.values());
 
-    List<BatchProgramStatus> result = new ArrayList<>(programs.size());
+    List<BatchProgramStatus> result = new ArrayList<>(programsMap.size());
     for (BatchProgram program : batchPrograms) {
-      ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
-                                          program.getProgramId());
+      ProgramId programId = programsMap.get(program);
       ProgramStatus status = statuses.get(programId);
       if (status == null) {
         result.add(new BatchProgramStatus(program, HttpResponseStatus.NOT_FOUND.code(),

@@ -37,6 +37,7 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -65,7 +66,11 @@ public class MetricsClientTestRun extends ClientTestBase {
     metricsClient = new MetricsClient(clientConfig);
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testAll() throws Exception {
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class));
 

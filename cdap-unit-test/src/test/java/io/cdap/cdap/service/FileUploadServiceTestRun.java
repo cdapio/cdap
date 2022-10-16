@@ -36,6 +36,7 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -53,7 +54,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class FileUploadServiceTestRun extends TestFrameworkTestBase {
 
+  // TODO: CDAP-19775
   @Test
+  @Ignore
   public void testFileUploadService() throws Exception {
     ApplicationManager appManager = deployApplication(FileUploadApp.class);
 
