@@ -133,6 +133,7 @@ public abstract class SparkPipelineRunner {
                           Set<String> uncombinableSinks,
                           boolean consolidateStages,
                           boolean cacheFunctions) throws Exception {
+    LOG.error("wyzhang: SparkPipelineRunner: runPipeline(): start");
     PipelinePhase pipelinePhase = phaseSpec.getPhase();
     BasicArguments arguments = new BasicArguments(sec);
     FunctionCache.Factory functionCacheFactory = FunctionCache.Factory.newInstance(cacheFunctions);

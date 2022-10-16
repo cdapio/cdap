@@ -154,6 +154,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
+    LOG.error("wyzhang: BatchSparkPipelineDriver: run(): start");
     this.jsc = new JavaSparkContext();
     this.sec = sec;
 
