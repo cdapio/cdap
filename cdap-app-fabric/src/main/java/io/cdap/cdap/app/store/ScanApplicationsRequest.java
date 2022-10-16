@@ -39,6 +39,7 @@ public class ScanApplicationsRequest {
   private final SortOrder sortOrder;
   private final int limit;
   private final boolean latestOnly;
+  private final boolean sortCreationTime;
 
   /**
    * @param namespaceId  namespace to return applications for or null for all namespaces
@@ -53,7 +54,7 @@ public class ScanApplicationsRequest {
                                   @Nullable ApplicationId scanTo,
                                   List<ApplicationFilter> filters,
                                   SortOrder sortOrder, int limit,
-                                  boolean latestOnly) {
+                                  boolean latestOnly, boolean sortCreationTime) {
     this.namespaceId = namespaceId;
     this.scanFrom = scanFrom;
     this.scanTo = scanTo;
@@ -61,6 +62,7 @@ public class ScanApplicationsRequest {
     this.sortOrder = sortOrder;
     this.limit = limit;
     this.latestOnly = latestOnly;
+    this.sortCreationTime = sortCreationTime;
   }
 
   /**
@@ -124,6 +126,16 @@ public class ScanApplicationsRequest {
     return latestOnly;
   }
 
+  /**
+   *
+   * @return a boolean to determine the application scan range field
+   *          if true, range should use (namespace-app-creationTime)
+   *          if false, range should use default (namespace-app-version)
+   */
+  public boolean getSortCreationTime() {
+    return sortCreationTime;
+  }
+
   @Override
   public String toString() {
     return "ScanApplicationsRequest{" +
@@ -134,6 +146,7 @@ public class ScanApplicationsRequest {
       ", sortOrder=" + sortOrder +
       ", limit=" + limit +
       ", latestOnly=" + latestOnly +
+      ", sortCreationTime=" + sortCreationTime +
       '}';
   }
 
@@ -165,6 +178,7 @@ public class ScanApplicationsRequest {
     private SortOrder sortOrder = SortOrder.ASC;
     private int limit = Integer.MAX_VALUE;
     private boolean latestOnly;
+    private boolean sortCreationTime;
 
     private Builder() {
     }
@@ -177,6 +191,7 @@ public class ScanApplicationsRequest {
       this.sortOrder = request.sortOrder;
       this.limit = request.limit;
       this.latestOnly = request.latestOnly;
+      this.sortCreationTime = request.sortCreationTime;
     }
 
     /**
@@ -253,11 +268,22 @@ public class ScanApplicationsRequest {
     }
 
     /**
+     * @param sortCreationTime a boolean to determine the application scan range field
+     *                            if true, range should use (namespace-app-creationTime)
+     *                            if false, range should use default (namespace-app-version)
+     */
+    public Builder setSortCreationTime(boolean sortCreationTime) {
+      this.sortCreationTime = sortCreationTime;
+      return this;
+    }
+
+    /**
      *
      * @return new {@link ScanApplicationsRequest}
      */
     public ScanApplicationsRequest build() {
-      return new ScanApplicationsRequest(namespaceId, scanFrom, scanTo, filters, sortOrder, limit, latestOnly);
+      return new ScanApplicationsRequest(namespaceId, scanFrom, scanTo, filters, sortOrder, limit, latestOnly,
+                                         sortCreationTime);
     }
   }
 }
