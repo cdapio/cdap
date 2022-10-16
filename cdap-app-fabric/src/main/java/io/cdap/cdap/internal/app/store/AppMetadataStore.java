@@ -384,31 +384,6 @@ public class AppMetadataStore {
     return null;
   }
 
-  public Collection<ApplicationId> getLatestAppIds(NamespaceId namespace, Collection<String> appNames)
-    throws IOException {
-    Range range = Range.singleton(
-      ImmutableList.of(
-        Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespace.getNamespace())));
-    // scan based on: latest field set to true
-    Field<?> latestField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
-    Set<String> appSet = new HashSet<>(appNames);
-
-    List<ApplicationId> appIds = new ArrayList<>();
-    // TODO: switch to multiScan after CDAP-19781 is done
-    try (CloseableIterator<StructuredRow> iterator =
-           getApplicationSpecificationTable().scan(range, appNames.size(), latestField)) {
-      while (iterator.hasNext()) {
-        StructuredRow row = iterator.next();
-        String application = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD);
-        if (appSet.contains(application)) {
-          String version = row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD);
-          appIds.add(namespace.app(application, version));
-        }
-      }
-    }
-    return appIds;
-  }
-
   public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) throws IOException {
     return scanWithRange(
       getNamespaceAndApplicationRange(namespaceId, appId),
@@ -441,12 +416,29 @@ public class AppMetadataStore {
    */
   public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds)
     throws IOException {
-    Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
     List<List<Field<?>>> multiKeys = new ArrayList<>();
+
+    Map<NamespaceId, Set<String>> latestAppNames = new HashMap<>();
+
+    // TODO: switch to multiScan for all apps
     for (ApplicationId appId: appIds) {
-      multiKeys.add(getApplicationPrimaryKeys(appId));
+      // For -SNAPSHOT version, ignore the version in the key and fetch with latest = true instead
+      if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
+        // TODO: range with latest=true for appIds with -SNAPSHOT version after CDAP-19781 is done
+        latestAppNames.computeIfAbsent(appId.getNamespaceId(), k -> new HashSet<>()).add(appId.getApplication());
+      } else {
+        multiKeys.add(getApplicationPrimaryKeys(appId));
+      }
     }
 
+    // TODO: This can be removed after CDAP-19781 is done
+    for (Map.Entry<NamespaceId, Set<String>> entry : latestAppNames.entrySet()) {
+      getLatestAppIds(entry.getKey(), entry.getValue()).forEach(appId -> {
+        multiKeys.add(getApplicationPrimaryKeys(appId));
+      });
+    }
+
+    Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
     for (StructuredRow row : getApplicationSpecificationTable().multiRead(multiKeys)) {
       ApplicationId appId = getApplicationIdFromRow(row);
       result.put(appId, GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
@@ -455,6 +447,31 @@ public class AppMetadataStore {
 
     return result;
   }
+
+  private Collection<ApplicationId> getLatestAppIds(NamespaceId namespace, Set<String> appNames) throws IOException {
+    Range range = Range.singleton(
+      ImmutableList.of(
+        Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespace.getNamespace())));
+    // scan based on: latest field set to true
+    Field<?> latestField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
+
+    List<ApplicationId> appIds = new ArrayList<>();
+    // TODO: switch to multiScan after CDAP-19781 is done
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().scan(range, Integer.MAX_VALUE, latestField)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        String application = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD);
+        if (appNames.contains(application)) {
+          String version = row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD);
+          appIds.add(namespace.app(application, version));
+        }
+      }
+    }
+    return appIds;
+  }
+
+
 
   /**
    * Filter the given set of programs and return those that exist.

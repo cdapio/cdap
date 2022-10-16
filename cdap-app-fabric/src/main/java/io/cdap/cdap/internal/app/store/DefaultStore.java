@@ -717,13 +717,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<ApplicationId> getLatestAppIds(NamespaceId namespace, Collection<String> appNames) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getLatestAppIds(namespace, appNames);
-    });
-  }
-
-  @Override
   public Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());

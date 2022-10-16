@@ -387,15 +387,6 @@ public interface Store {
   ApplicationMeta getLatest(NamespaceId namespace, String appName);
 
   /**
-   * Returns a list of the latest version of applications in a namespace
-   *
-   * @param namespace namespace
-   * @param appNames application id
-   * @return The list of the latest application id with version info.
-   */
-  Collection<ApplicationId> getLatestAppIds(NamespaceId namespace, Collection<String> appNames);
-
-  /**
    * Returns a list of all versions' ApplicationId's of the application by id
    *
    * @param id application id

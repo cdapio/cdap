@@ -624,7 +624,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                                 FullHttpRequest request) throws BadRequestException {
     try {
       List<ApplicationId> result = new ArrayList<>();
-      Collection<String> appNames = new ArrayList<>();
       JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
       if (array == null) {
         throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
@@ -638,17 +637,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           throw new BadRequestException("Missing 'appId' in the request element.");
         }
         String appId = obj.get("appId").getAsString();
-        JsonElement versionObj = obj.get("version");
-        if (versionObj == null || versionObj.getAsString().equals("-SNAPSHOT")) {
-          // get the latest version of the app instead of -SNAPSHOT
-          appNames.add(appId);
-        } else {
-          // Specified version
-          result.add(validateApplicationVersionId(namespaceId, appId, versionObj.getAsString()));
-        }
+        String version = Optional.ofNullable(obj.get("version"))
+          .map(JsonElement::getAsString)
+          .orElse(ApplicationId.DEFAULT_VERSION);
+        result.add(validateApplicationVersionId(namespaceId, appId, version));
       }
-      Collection<ApplicationId> apps = applicationLifecycleService.getLatestAppVersions(namespaceId, appNames);
-      result.addAll(apps);
       return result;
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());

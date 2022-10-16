@@ -274,9 +274,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         )
     ) {
 
-      return store.scanApplications(request, batchSize, (appId, appMeta) -> {
-              batchingConsumer.accept(new SimpleEntry<>(appId, appMeta));
-            });
+      return store.scanApplications(request, batchSize,
+                                    (appId, appMeta) -> batchingConsumer.accept(new SimpleEntry<>(appId, appMeta)));
     }
   }
 
@@ -358,18 +357,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     return ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
                                       appMeta.getChange());
-  }
-
-  /**
-   * Get the latest version of the specified applications
-   *
-   * @param namespace the namespace of the application to get
-   * @param appNames the applications of the latest versions to get
-   * @return list of application Ids about the latest version of the specified application
-   */
-  public Collection<ApplicationId> getLatestAppVersions(NamespaceId namespace, Collection<String> appNames) {
-    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
-    return store.getLatestAppIds(namespace, appNames);
   }
 
   /**
