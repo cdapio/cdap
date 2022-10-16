@@ -128,6 +128,7 @@ import javax.annotation.Nullable;
 /**
  * Unit tests with authorization enabled.
  */
+@Ignore
 public class AuthorizationTest extends TestBase {
 
   @ClassRule
