@@ -276,7 +276,7 @@ public class AppMetadataStore {
         );
       }
       startBound = Range.Bound.EXCLUSIVE;
-      startFields = getApplicationPrimaryKeys(request.getScanFrom());
+      startFields = getApplicationNamespaceAppCreationKeys(request.getScanFrom());
     }
     if (request.getScanTo() != null) {
       if (request.getNamespaceId() != null &&
@@ -286,7 +286,7 @@ public class AppMetadataStore {
         );
       }
       endBound = Range.Bound.EXCLUSIVE;
-      endFields = getApplicationPrimaryKeys(request.getScanTo());
+      endFields = getApplicationNamespaceAppCreationKeys(request.getScanTo());
     }
 
     Range range;
@@ -1910,6 +1910,16 @@ public class AppMetadataStore {
 
   private List<Field<?>> getApplicationPrimaryKeys(ApplicationId appId) {
     return getApplicationPrimaryKeys(appId.getNamespace(), appId.getApplication(), appId.getVersion());
+  }
+
+  private List<Field<?>> getApplicationNamespaceAppCreationKeys(ApplicationId appId) throws IOException {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, appId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId.getApplication()));
+    ApplicationMeta applicationMeta = getApplication(appId);
+    Long creationTime = applicationMeta.getChange().getCreationTimeMillis();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, String.valueOf(creationTime)));
+    return fields;
   }
 
   private List<Field<?>> getApplicationPrimaryKeys(String namespaceId, String appId, String versionId) {
