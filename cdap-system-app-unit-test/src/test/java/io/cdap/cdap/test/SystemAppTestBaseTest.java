@@ -107,7 +107,9 @@ public class SystemAppTestBaseTest extends SystemAppTestBase {
     }
   }
 
+  // TODO: CDAP-19775
   @Test
+  @Ignore
   public void testSystemService() throws Exception {
     ApplicationManager applicationManager = deployApplication(NamespaceId.SYSTEM, SystemTestApp.class);
 
