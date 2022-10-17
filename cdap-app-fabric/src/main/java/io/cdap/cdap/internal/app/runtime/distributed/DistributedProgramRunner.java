@@ -309,6 +309,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         // Add twill configurations coming from the runtime arguments
         twillConfigs.putAll(SystemArguments.getNamespaceConfigs(options.getArguments().asMap()));
         twillConfigs.putAll(SystemArguments.getTwillApplicationConfigs(userArgs));
+        twillConfigs.put(ProgramOptionConstants.RUNTIME_NAMESPACE, program.getNamespaceId());
         twillPreparer.withConfiguration(twillConfigs);
 
         // Setup per runnable configurations
