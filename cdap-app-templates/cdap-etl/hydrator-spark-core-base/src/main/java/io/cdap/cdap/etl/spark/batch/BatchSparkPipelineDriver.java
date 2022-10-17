@@ -234,7 +234,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         }
       }
 
-      LOG.error("wyzhang: BatchSparkPipelineDriver: run(): runPipeline with phaseSpec={}", phaseSpec);
+      LOG.error("wyzhang: BatchSparkPipelineDriver: run(): runPipeline with phaseSpec.phase={}", phaseSpec.getPhase());
       runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
                   sinkFactory.getUncombinableSinks(), shouldConsolidateStages, shouldCacheFunctions);
     } catch (Throwable t) {
