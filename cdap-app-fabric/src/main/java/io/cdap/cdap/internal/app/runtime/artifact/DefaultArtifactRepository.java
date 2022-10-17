@@ -291,7 +291,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                                               additionalPlugins);
     ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(), parentArtifacts,
                                          properties);
+    LOG.error("wyzhang: DefaultArtifactRepository(): addArtifact(): artifactStore.write start");
     ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
+    LOG.error("wyzhang: DefaultArtifactRepository(): addArtifact(): artifactStore.write end artifactDetail={}",
+              artifactDetail);
     ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
     // info hides some fields that are available in detail, such as the location of the artifact
     ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
