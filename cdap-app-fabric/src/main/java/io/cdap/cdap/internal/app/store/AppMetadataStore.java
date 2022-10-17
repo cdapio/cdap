@@ -267,6 +267,7 @@ public class AppMetadataStore {
         request.getNamespaceId().getNamespace()));
     Range.Bound endBound = Range.Bound.INCLUSIVE;
     Collection<Field<?>> endFields = startFields;
+    boolean latestOnly = request.getLatestOnly();
 
     if (request.getScanFrom() != null) {
       if (request.getNamespaceId() != null &&
@@ -276,7 +277,9 @@ public class AppMetadataStore {
         );
       }
       startBound = Range.Bound.EXCLUSIVE;
-      startFields = getApplicationNamespaceAppCreationKeys(request.getScanFrom());
+      startFields = latestOnly ?
+        getApplicationPrimaryKeys(request.getScanFrom()) :
+        getApplicationNamespaceAppCreationKeys(request.getScanFrom());
     }
     if (request.getScanTo() != null) {
       if (request.getNamespaceId() != null &&
@@ -286,7 +289,9 @@ public class AppMetadataStore {
         );
       }
       endBound = Range.Bound.EXCLUSIVE;
-      endFields = getApplicationNamespaceAppCreationKeys(request.getScanTo());
+      endFields = latestOnly ?
+        getApplicationPrimaryKeys(request.getScanTo()) :
+        getApplicationNamespaceAppCreationKeys(request.getScanTo());
     }
 
     Range range;
@@ -313,7 +318,6 @@ public class AppMetadataStore {
 
     StructuredTable table = getApplicationSpecificationTable();
     int limit = request.getLimit();
-    boolean latestOnly = request.getLatestOnly();
     try (CloseableIterator<StructuredRow> iterator = getScanApplicationsIterator(table, range,
                                                                                  request.getSortOrder(), latestOnly)) {
       boolean keepScanning = true;
@@ -336,7 +340,7 @@ public class AppMetadataStore {
       return table.scan(range, Integer.MAX_VALUE,
                         Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"), sortOrder);
     }
-    return table.scan(range, Integer.MAX_VALUE, sortOrder);
+    return table.scan(range, Integer.MAX_VALUE, StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, sortOrder);
   }
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) throws IOException {
@@ -1945,7 +1949,7 @@ public class AppMetadataStore {
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId.getApplication()));
     ApplicationMeta applicationMeta = getApplication(appId);
     Long creationTime = applicationMeta.getChange().getCreationTimeMillis();
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, String.valueOf(creationTime)));
+    fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, creationTime));
     return fields;
   }
 
