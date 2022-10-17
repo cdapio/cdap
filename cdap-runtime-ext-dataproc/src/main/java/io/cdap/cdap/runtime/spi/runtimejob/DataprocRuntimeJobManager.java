@@ -44,6 +44,7 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.storage.StorageRetryStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -53,7 +54,6 @@ import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
-import joptsimple.internal.Strings;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -82,6 +82,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and managing
@@ -297,7 +298,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                                   .setRegion(region)
                                                   .setJobId(jobId)
                                                   .build());
-      return Optional.of(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
+      return Optional.of(new DataprocRuntimeJobDetail(getProgramRunInfo(job),
+                                                      getRuntimeJobStatus(job),
+                                                      getJobStatusDetails(job)));
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
         throw new Exception(String.format("Error while getting details for job %s on cluster %s.",
@@ -615,6 +618,15 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                                       job.getPlacement().getClusterName()));
     }
     return runtimeJobStatus;
+  }
+
+  /**
+   * Returns job state details, such as an error description if the state is ERROR.
+   * For other job states, returns null.
+   */
+  @Nullable
+  private String getJobStatusDetails(Job job) {
+    return job.getStatus().getDetails();
   }
 
   /**
