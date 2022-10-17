@@ -267,7 +267,6 @@ public class AppMetadataStore {
         request.getNamespaceId().getNamespace()));
     Range.Bound endBound = Range.Bound.INCLUSIVE;
     Collection<Field<?>> endFields = startFields;
-    boolean latestOnly = request.getLatestOnly();
 
     if (request.getScanFrom() != null) {
       if (request.getNamespaceId() != null &&
@@ -277,9 +276,7 @@ public class AppMetadataStore {
         );
       }
       startBound = Range.Bound.EXCLUSIVE;
-      startFields = latestOnly ?
-        getApplicationPrimaryKeys(request.getScanFrom()) :
-        getApplicationNamespaceAppCreationKeys(request.getScanFrom());
+      startFields = getApplicationNamespaceAppCreationKeys(request.getScanFrom());
     }
     if (request.getScanTo() != null) {
       if (request.getNamespaceId() != null &&
@@ -289,9 +286,7 @@ public class AppMetadataStore {
         );
       }
       endBound = Range.Bound.EXCLUSIVE;
-      endFields = latestOnly ?
-        getApplicationPrimaryKeys(request.getScanTo()) :
-        getApplicationNamespaceAppCreationKeys(request.getScanTo());
+      endFields = getApplicationNamespaceAppCreationKeys(request.getScanTo());
     }
 
     Range range;
@@ -318,6 +313,7 @@ public class AppMetadataStore {
 
     StructuredTable table = getApplicationSpecificationTable();
     int limit = request.getLimit();
+    boolean latestOnly = request.getLatestOnly();
     try (CloseableIterator<StructuredRow> iterator = getScanApplicationsIterator(table, range,
                                                                                  request.getSortOrder(), latestOnly)) {
       boolean keepScanning = true;
