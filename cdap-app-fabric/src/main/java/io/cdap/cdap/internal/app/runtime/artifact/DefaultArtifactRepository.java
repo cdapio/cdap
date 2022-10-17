@@ -510,6 +510,9 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws Exception {
     String fileName = systemArtifactInfo.getArtifactFile().getName();
+      LOG.info("wyzhang: DefaultArtifactRepository: addSystemArtifact(): start: id={}, file={}",
+               systemArtifactInfo.getArtifactId(),
+               systemArtifactInfo.getArtifactFile().getName());
     try {
       Id.Artifact artifactId = systemArtifactInfo.getArtifactId();
 
