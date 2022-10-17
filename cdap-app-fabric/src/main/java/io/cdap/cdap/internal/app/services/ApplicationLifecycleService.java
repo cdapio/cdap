@@ -341,8 +341,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return detail about the latest version of the specified application
    */
   public ApplicationDetail getLatestAppDetail(NamespaceId namespaceId,
-                                              String appName,
-                                              boolean enforceOwnerPrincipal) throws IOException, NotFoundException {
+                                              String appName) throws IOException, NotFoundException {
     ApplicationMeta appMeta = store.getLatest(namespaceId, appName);
     if (appMeta == null || appMeta.getSpec() == null) {
       throw new NotFoundException(String.format("Application '%s' not found in namespace '%s'",
@@ -351,12 +350,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ApplicationId appId = namespaceId.app(appMeta.getSpec().getName(), appMeta.getSpec().getAppVersion());
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    if (enforceOwnerPrincipal) {
-      return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
-                                                                              appMeta.getChange()));
-    }
-    return ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
-                                      appMeta.getChange());
+    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
+                                                                            appMeta.getChange()));
   }
 
   /**
@@ -927,15 +922,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // The latest app is retrieved here and passed to deleteApp -
     // that deletes the schedules, triggers and other metadata info.
 
-    // since already checked DELETE privileges above, no need to check again for appDetail
-    ApplicationDetail appDetail = getLatestAppDetail(appId.getNamespaceId(), appId.getApplication(), false);
-    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
-    ApplicationSpecification spec = store.getApplication(appId);
-    if (spec == null) {
-      throw new NotFoundException(Id.Application.fromEntityId(appId));
+    ApplicationMeta appMeta = store.getLatest(appId.getNamespaceId(), appId.getApplication());
+    if (appMeta == null || appMeta.getSpec() == null) {
+      throw new ApplicationNotFoundException(appId);
     }
+
+    // since already checked DELETE privileges above, no need to check again for appDetail
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appMeta.getSpec().getAppVersion());
     ensureNoRunningPrograms(appId);
-    deleteApp(appId, spec);
+    deleteApp(appId, appMeta.getSpec());
   }
 
   /**

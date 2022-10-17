@@ -352,8 +352,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = validateApplicationId(namespaceId, appName);
     responder.sendJson(HttpResponseStatus.OK,
                        GSON.toJson(applicationLifecycleService.getLatestAppDetail(applicationId.getNamespaceId(),
-                                                                                  applicationId.getApplication(),
-                                                                                  true)));
+                                                                                  applicationId.getApplication())));
   }
 
   /**
