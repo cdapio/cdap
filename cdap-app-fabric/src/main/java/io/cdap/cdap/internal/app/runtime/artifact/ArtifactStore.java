@@ -93,6 +93,9 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata cannot be changed
@@ -172,6 +175,8 @@ import javax.annotation.Nullable;
  * to use the table will be: artifact_data -> app_data -> plugin_data -> universal_plugin_data
  */
 public class ArtifactStore {
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactStore.class);
+
   private static final String ARTIFACTS_PATH = "artifacts";
 
   private static final Gson GSON = new GsonBuilder()
@@ -685,7 +690,8 @@ public class ArtifactStore {
         StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
         ArtifactCell artifactCell = new ArtifactCell(artifactId);
         if (table.read(artifactCell.keys).isPresent()) {
-          throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
+          LOG.error("wyzhang: ArtifactStore: write(): write even for snapshot");
+//          throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
         }
       }, ArtifactAlreadyExistsException.class, IOException.class);
     }
