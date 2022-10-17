@@ -524,11 +524,13 @@ public class DefaultArtifactRepository implements ArtifactRepository {
         // this is fine, means it doesn't exist yet and we should add it
       }
 
+      LOG.info("wyzhang: DefaultArtifactRepository: addSystemArtifact(): going to add artifact={}", artifactId);
       addArtifact(artifactId,
                   systemArtifactInfo.getArtifactFile(),
                   systemArtifactInfo.getConfig().getParents(),
                   systemArtifactInfo.getConfig().getPlugins(),
                   systemArtifactInfo.getConfig().getProperties());
+      LOG.info("wyzhang: DefaultArtifactRepository: addSystemArtifact(): added artifact={}", artifactId);
       LOG.info("Added system artifact {}.", artifactId);
     } catch (ArtifactAlreadyExistsException e) {
       // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
