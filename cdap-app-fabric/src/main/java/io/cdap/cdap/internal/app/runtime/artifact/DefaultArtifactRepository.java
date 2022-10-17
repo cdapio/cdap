@@ -528,11 +528,17 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       }
 
       LOG.info("wyzhang: DefaultArtifactRepository: addSystemArtifact(): going to add artifact={}", artifactId);
-      addArtifact(artifactId,
-                  systemArtifactInfo.getArtifactFile(),
-                  systemArtifactInfo.getConfig().getParents(),
-                  systemArtifactInfo.getConfig().getPlugins(),
-                  systemArtifactInfo.getConfig().getProperties());
+      try {
+        addArtifact(artifactId,
+                    systemArtifactInfo.getArtifactFile(),
+                    systemArtifactInfo.getConfig().getParents(),
+                    systemArtifactInfo.getConfig().getPlugins(),
+                    systemArtifactInfo.getConfig().getProperties());
+      } catch (Exception e) {
+        LOG.info("wyzhang: DefaultArtifactRepository: addSystemArtifact(): failed={}", e);
+        e.printStackTrace();
+        throw e;
+      }
       LOG.info("wyzhang: DefaultArtifactRepository: addSystemArtifact(): added artifact={}", artifactId);
       LOG.info("Added system artifact {}.", artifactId);
     } catch (ArtifactAlreadyExistsException e) {
