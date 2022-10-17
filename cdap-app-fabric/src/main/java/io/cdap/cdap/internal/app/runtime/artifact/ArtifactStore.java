@@ -690,7 +690,7 @@ public class ArtifactStore {
         StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
         ArtifactCell artifactCell = new ArtifactCell(artifactId);
         if (table.read(artifactCell.keys).isPresent()) {
-          LOG.error("wyzhang: ArtifactStore: write(): write even for snapshot");
+          LOG.error("wyzhang: ArtifactStore: write(): write even for snapshot 1");
 //          throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
         }
       }, ArtifactAlreadyExistsException.class, IOException.class);
@@ -714,8 +714,9 @@ public class ArtifactStore {
         Optional<StructuredRow> optional = artifactDataTable.read(artifactCell.keys);
         boolean isSnapshot = artifactId.getVersion().isSnapshot();
         if (optional.isPresent() && !isSnapshot) {
+          LOG.error("wyzhang: ArtifactStore: write(): write even for snapshot 2");
           // non-snapshot artifacts are immutable. If there is existing metadata, stop here.
-          throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
+//          throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
         }
 
         ArtifactData data = new ArtifactData(destination, artifactMeta);
