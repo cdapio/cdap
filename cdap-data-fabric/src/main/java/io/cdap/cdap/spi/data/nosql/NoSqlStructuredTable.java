@@ -155,9 +155,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   private Range getLongestPrefixRange(Range range) {
-    // Allow passing in non-primary key range
-    fieldValidator.validateFields(range.getBegin());
-    fieldValidator.validateFields(range.getEnd());
+    fieldValidator.validateScanRange(range);
 
     List<Field<?>> beginPrefixKeys = getPrefixPrimaryKeys(range.getBegin());
     List<Field<?>> endPrefixKeys = getPrefixPrimaryKeys(range.getEnd());
@@ -172,7 +170,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
         ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
 
     Range.Bound endBound =
-      beginPrefixKeys.size() == range.getBegin().size()
+      endPrefixKeys.size() == range.getEnd().size()
         && range.getEndBound() == Range.Bound.EXCLUSIVE
         ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
 

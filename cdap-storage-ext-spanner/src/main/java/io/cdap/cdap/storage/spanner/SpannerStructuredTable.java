@@ -211,8 +211,7 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
     throws InvalidFieldException {
-    fieldValidator.validateFields(keyRange.getBegin());
-    fieldValidator.validateFields(keyRange.getEnd());
+    fieldValidator.validateScanRange(keyRange);
     fieldValidator.validateField(filterIndex);
     if (!schema.isIndexColumn(filterIndex.getName())) {
       throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
@@ -234,8 +233,7 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException {
-    fieldValidator.validateFields(keyRange.getBegin());
-    fieldValidator.validateFields(keyRange.getEnd());
+    fieldValidator.validateScanRange(keyRange);
     if (!schema.isIndexColumn(orderByField)) {
       throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column");
     }
@@ -262,10 +260,13 @@ public class SpannerStructuredTable implements StructuredTable {
 
     Map<String, Value> parameters = new HashMap<>();
     String whereClause = getRangesWhereClause(keyRanges, parameters);
+    if (whereClause == null) {
+      return scan(Range.all(), limit);
+    }
 
     Statement.Builder builder = Statement.newBuilder(
       "SELECT * FROM " + escapeName(schema.getTableId().getName())
-        + " WHERE " + (whereClause == null ? "true" : whereClause)
+        + " WHERE " + whereClause
         + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName).collect(Collectors.joining(","))
         + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
@@ -464,8 +465,7 @@ public class SpannerStructuredTable implements StructuredTable {
     List<Range> rangeScans = new ArrayList<>();
     boolean scanAll = false;
     for (Range range : ranges) {
-      fieldValidator.validateFields(range.getBegin());
-      fieldValidator.validateFields(range.getEnd());
+      fieldValidator.validateScanRange(range);
 
       if (range.isSingleton()) {
         singletonScans.add(range);
