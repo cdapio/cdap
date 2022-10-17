@@ -32,9 +32,11 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
+import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +116,16 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
         if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
           return ClusterStatus.RUNNING;
+        }
+
+        if (jobDetail != null
+            && jobDetail.getStatus() == RuntimeJobStatus.FAILED
+            && (jobDetail instanceof DataprocRuntimeJobDetail)) {
+          // Status details is specific to dataproc jobs, so it was not added to RuntimeJobDetail spi.
+          String statusDetails = ((DataprocRuntimeJobDetail) jobDetail).getJobStatusDetails();
+          if (statusDetails != null) {
+            LOG.error("Dataproc job failed with the status details: {}", statusDetails);
+          }
         }
       } finally {
         jobManager.close();
