@@ -41,7 +41,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
-import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
@@ -57,7 +56,7 @@ import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.BatchApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
@@ -89,7 +88,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Tests for {@link AppLifecycleHttpHandler}
@@ -614,7 +615,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testListAndGetForPaginatedAPIWithLatestOnly() throws Exception {
     for (int i = 0; i < 2; i++) {
       //deploy with name to testnamespace1
-      String ns1AppName = AllProgramsApp.NAME;
       Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
       Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
                                                    "1.0.0-SNAPSHOT");
@@ -659,8 +659,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = deploy(appId, new AppRequest<>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getResponseCode());
 
-    // deploy with name and version to testnamespace2
-    ApplicationId app1 = new ApplicationId(TEST_NAMESPACE2, ns2AppName, VERSION1);
+    // deploy the same app again to testnamespace2. This should create a new version.
+    ApplicationId app1 = new ApplicationId(TEST_NAMESPACE2, ns2AppName);
     response = deploy(app1, new AppRequest<>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getResponseCode());
 
@@ -689,7 +689,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<ProgramRecord> programRecords = applicationDetail.getPrograms();
     int totalPrograms = Arrays.stream(io.cdap.cdap.api.app.ProgramType.values())
       .mapToInt(type -> spec.getProgramsByType(type).size())
-      .reduce(0, (l, r) -> l + r);
+      .reduce(0, Integer::sum);
     Assert.assertEquals(totalPrograms, programRecords.size());
 
     Assert.assertTrue(programRecords.stream().allMatch(
@@ -700,24 +700,22 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       }
     ));
 
-    //get and verify app details in testnamespace2
-    List<BatchApplicationDetail> appDetails = getAppDetails(TEST_NAMESPACE2,
-                                                            Arrays.asList(ImmutablePair.of(ns2AppName, null),
-                                                                          ImmutablePair.of(ns2AppName, VERSION1)));
-    Assert.assertEquals(2, appDetails.size());
+    //get and verify app details in testnamespace2. We expected two versions of the same app.
+    apps = getAppList(TEST_NAMESPACE2);
 
-    Assert.assertEquals(200, appDetails.get(1).getStatusCode());
-    ApplicationDetail appDetail = appDetails.get(1).getDetail();
-    Assert.assertNotNull(appDetail);
-    Assert.assertEquals(ns2AppName, appDetail.getName());
+    Map<String, List<ApplicationRecord>> ns2Apps = apps.stream()
+      .map(jobj -> GSON.fromJson(jobj, ApplicationRecord.class))
+      .collect(Collectors.groupingBy(ApplicationRecord::getName));
 
-    Assert.assertEquals(404, appDetails.get(0).getStatusCode());
-    
+    Assert.assertTrue(ns2Apps.containsKey(ns2AppName));
+    Assert.assertEquals(2, ns2Apps.get(ns2AppName).size());
+
     //delete app in testnamespace1
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
+    apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertTrue(apps.isEmpty());
 
-    apps = getAppList(TEST_NAMESPACE2);
     //delete app in testnamespace2
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getResponseCode());
@@ -725,7 +723,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     //verify testnamespace2 has 0 app
     apps = getAppList(TEST_NAMESPACE2);
-    Assert.assertEquals(0, apps.size());
+    Assert.assertTrue(apps.isEmpty());
   }
 
   @Test
@@ -781,7 +779,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + applicationId.toString() +
+    Assert.assertEquals("'" + applicationId +
                           "' could not be deleted. Reason: The following programs are still running: "
                           + program.getId(), response.getResponseBodyAsString());
 
