@@ -233,20 +233,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        @PathParam("version-id") final String versionId)
     throws Exception {
 
-    String appVersion = RunIds.generate().getId();
-    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, appVersion);
-
-    if (!applicationLifecycleService.updateAppAllowed(applicationId)) {
-      responder.sendString(HttpResponseStatus.CONFLICT,
-                           String.format("Cannot update the application because version %s already exists",
-                                         appVersion));
-    }
-    try {
-      return deployAppFromArtifact(applicationId);
-    } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
-      return null;
-    }
+    // Ignore the version provided by the user. Treating it the same as deploy without version
+    return create(request, responder, namespaceId, appId);
   }
 
   /**
