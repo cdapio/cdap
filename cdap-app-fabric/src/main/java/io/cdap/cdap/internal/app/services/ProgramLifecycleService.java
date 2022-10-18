@@ -40,6 +40,7 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.ProgramRunForbiddenException;
 import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
@@ -103,6 +104,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -290,7 +292,7 @@ public class ProgramLifecycleService {
     if (programSpec == null) {
       throw new NotFoundException(programId);
     }
-    return store.getRuns(programId, programRunStatus, start, end, limit).values().stream().collect(Collectors.toList());
+    return new ArrayList<>(store.getRuns(programId, programRunStatus, start, end, limit).values());
   }
 
   public List<RunRecord> getRunRecords(ProgramId programId, ProgramRunStatus programRunStatus,
@@ -758,7 +760,7 @@ public class ProgramLifecycleService {
 
     if (activeRunRecords.isEmpty()) {
       // Error out if no run information from run record
-      Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+      ensureProgramExists(programId);
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
 
@@ -796,7 +798,7 @@ public class ProgramLifecycleService {
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+    ensureProgramExists(programId);
     preferencesService.setProperties(programId, runtimeArgs);
   }
 
@@ -812,7 +814,7 @@ public class ProgramLifecycleService {
    */
   public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+    ensureProgramExists(programId);
     return preferencesService.getProperties(programId);
   }
 
@@ -869,7 +871,23 @@ public class ProgramLifecycleService {
    */
   public void ensureProgramExists(ProgramId programId) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+
+    ProgramId pid = programId;
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
+    if (appSpec == null) {
+      throw new ProgramNotFoundException(programId);
+    }
+
+    // The -SNAPSHOT version can be a reference to the actual latest version, hence the appSpec is the one
+    // containing the true version.
+    if (ApplicationId.DEFAULT_VERSION.equals(pid.getVersion())
+        && !Objects.equals(pid.getVersion(), appSpec.getAppVersion())) {
+      pid = pid.getNamespaceId()
+        .app(appSpec.getName(), appSpec.getAppVersion())
+        .program(programId.getType(), programId.getProgram());
+    }
+
+    Store.ensureProgramExists(pid, appSpec);
   }
 
   private boolean isStopped(ProgramId programId) throws Exception {

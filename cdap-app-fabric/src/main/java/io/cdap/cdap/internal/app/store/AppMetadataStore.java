@@ -231,14 +231,23 @@ public class AppMetadataStore {
     return subscriberStateTable;
   }
 
+  /**
+   * Gets the {@link ApplicationMeta} of the given application. If the application version is
+   * {@link ApplicationId#DEFAULT_VERSION}, the latest version of the application will be returned.
+   * If no latest version was found due to legacy app deployment, the one with version equals to
+   * {@link ApplicationId#DEFAULT_VERSION} will be returned.
+   *
+   * @param appId the application ID to get the metadata
+   * @return the {@link ApplicationMeta} of the given application id, or {@code null} if no such application was found.
+   * @throws IOException if failed to read from the underlying {@link StructuredTable}
+   */
   @Nullable
   public ApplicationMeta getApplication(ApplicationId appId) throws IOException {
-    return getApplication(appId.getNamespace(), appId.getApplication(), appId.getVersion());
-  }
+    if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
+      return getLatest(appId.getNamespaceId(), appId.getApplication());
+    }
 
-  @Nullable
-  public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) throws IOException {
-    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
+    List<Field<?>> fields = getApplicationPrimaryKeys(appId);
     return getApplicationSpecificationTable().read(fields)
       .map(this::decodeRow)
       .orElse(null);
@@ -365,17 +374,28 @@ public class AppMetadataStore {
     Range range = getNamespaceAndApplicationRange(namespaceId.getNamespace(), appName);
     // scan based on: latest field set to true
     Field<?> indexField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
-    try (CloseableIterator<StructuredRow> iterator =
-           getApplicationSpecificationTable().scan(range, 1, indexField)) {
+    StructuredTable appSpecTable = getApplicationSpecificationTable();
+
+    try (CloseableIterator<StructuredRow> iterator = appSpecTable.scan(range, 1, indexField)) {
       if (iterator.hasNext()) {
         // There must be only one entry corresponding to latest = true
         return decodeRow(iterator.next());
       }
     }
-    // To handle apps added prior to 6.8.0, which have latest = null in the table, a deterministic choice for a version
-    // needs to be made. The app corresponding to the smallest version-id string is made as a choice.
-    try (CloseableIterator<StructuredRow> iterator = getApplicationSpecificationTable()
-      .scan(range, 1, SortOrder.ASC)) {
+
+    // To handle apps added prior to 6.8.0, which have latest = null in the table, we treat
+    // the -SNAPSHOT version as the latest.
+    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId.app(appName));
+    ApplicationMeta appMeta = appSpecTable.read(fields).map(this::decodeRow).orElse(null);
+    if (appMeta != null) {
+      return appMeta;
+    }
+
+    // If no -SNAPSHOT version was found, then we sort the version id
+    // with the larger version-ID string as the latest.
+    try (CloseableIterator<StructuredRow> iterator = appSpecTable.scan(range, 1,
+                                                                       StoreDefinition.AppMetadataStore.VERSION_FIELD,
+                                                                       SortOrder.DESC)) {
       if (iterator.hasNext()) {
         return decodeRow(iterator.next());
       }
@@ -491,8 +511,8 @@ public class AppMetadataStore {
    */
   public void createApplicationVersion(ApplicationId id,
                                        ApplicationMeta appMeta) throws IOException, ConflictException {
-    // Fetch the latest version
     String parentVersion = Optional.ofNullable(appMeta.getChange()).map(ChangeDetail::getParentVersion).orElse(null);
+
     // Fetch the latest version
     ApplicationMeta latest = getLatest(id.getNamespaceId(), id.getApplication());
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
@@ -502,7 +522,7 @@ public class AppMetadataStore {
                                                 parentVersion,
                                                 latestVersion));
     }
-    // When the app does not exist -it is not an edit
+    // When the app does not exist, it is not an edit
     if (latest != null) {
       List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
                                                         latest.getSpec().getAppVersion());
