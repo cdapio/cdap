@@ -417,25 +417,19 @@ public class AppMetadataStore {
   public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds)
     throws IOException {
     List<Range> multiRanges = new ArrayList<>();
-    Map<NamespaceId, Set<String>> latestAppNames = new HashMap<>();
 
     // multiScan for all apps
     for (ApplicationId appId: appIds) {
       // For -SNAPSHOT version, ignore the version in the key and fetch with latest = true instead
       if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
-        latestAppNames.computeIfAbsent(appId.getNamespaceId(), k -> new HashSet<>()).add(appId.getApplication());
+        multiRanges.add(Range.singleton(getLatestApplicationKeys(appId.getNamespaceId().getNamespace(),
+                                                                 appId.getApplication())));
       } else {
         multiRanges.add(Range.singleton(getApplicationPrimaryKeys(appId)));
       }
     }
 
-    for (Map.Entry<NamespaceId, Set<String>> entry : latestAppNames.entrySet()) {
-      entry.getValue().forEach(
-        appName -> multiRanges.add(Range.singleton(getLatestApplicationKeys(entry.getKey().getNamespace(), appName))));
-    }
-
     Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
-
     try (CloseableIterator<StructuredRow> iterator =
            getApplicationSpecificationTable().multiScan(multiRanges, appIds.size())) {
       while (iterator.hasNext()) {
