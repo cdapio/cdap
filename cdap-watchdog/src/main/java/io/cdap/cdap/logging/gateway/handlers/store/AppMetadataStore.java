@@ -91,12 +91,10 @@ public class AppMetadataStore {
   private static RunRecordDetail deserializeRunRecordMeta(StructuredRow row) {
     RunRecordDetail existing =
       GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordDetail.class);
-    RunRecordDetail newMeta =
-      RunRecordDetail.builder(existing)
-        .setProgramRunId(
-          getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(existing.getPid()))
-        .build();
-    return newMeta;
+    return RunRecordDetail.builder(existing)
+      .setProgramRunId(
+        getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(existing.getPid()))
+      .build();
   }
 
   private static ProgramId getProgramIdFromRunRecordsPrimaryKeys(List<Field<?>> primaryKeys) {

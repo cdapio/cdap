@@ -602,11 +602,14 @@ public class AppMetadataStore {
 
     // Get the run record of the Workflow which started this program
     List<Field<?>> runRecordFields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, workflowRunId,
-                                                                  RunIds.getTime(workflowRun, TimeUnit.SECONDS));
+                                                                  RunIds.getTime(workflowRun, TimeUnit.SECONDS),
+                                                                  false);
+    RunRecordDetail record;
 
-    RunRecordDetail record = getRunRecordsTable().read(runRecordFields)
-      .map(AppMetadataStore::deserializeRunRecordMeta)
-      .orElse(null);
+    try (CloseableIterator<StructuredRow> iterator =
+           getRunRecordsTable().scan(Range.singleton(runRecordFields), 1)) {
+      record =  iterator.hasNext() ? deserializeRunRecordMeta(iterator.next()) : null;
+    }
 
     // If the workflow is gone, just ignore the update
     if (record == null) {
@@ -748,7 +751,8 @@ public class AppMetadataStore {
     // Delete the old run record
     delete(existing);
 
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, existing.getProgramRunId(),
+                                                      existing.getStartTs());
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, numNodes);
     RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setCluster(cluster)
@@ -756,7 +760,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONED, programRunId);
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONED, existing.getProgramRunId());
     return meta;
   }
 
@@ -786,7 +790,8 @@ public class AppMetadataStore {
 
     delete(existing);
 
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, existing.getProgramRunId(),
+                                                      existing.getStartTs());
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING, null,
                                                       existing.getCluster().getNumNodes());
@@ -796,7 +801,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONING, programRunId);
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONING, existing.getProgramRunId());
     return meta;
   }
 
@@ -827,7 +832,8 @@ public class AppMetadataStore {
     }
 
     delete(existing);
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, existing.getProgramRunId(),
+                                                      existing.getStartTs());
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED, endTs,
                                                       existing.getCluster().getNumNodes());
@@ -837,7 +843,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONED, programRunId);
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.DEPROVISIONED, existing.getProgramRunId());
     return meta;
   }
 
@@ -867,7 +873,8 @@ public class AppMetadataStore {
     }
 
     delete(existing);
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, existing.getProgramRunId(),
+                                                      existing.getStartTs());
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.ORPHANED, endTs,
                                                       existing.getCluster().getNumNodes());
@@ -877,7 +884,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.ORPHANED, programRunId);
+    LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.ORPHANED, existing.getProgramRunId());
     return meta;
   }
 
@@ -969,7 +976,8 @@ public class AppMetadataStore {
 
     // Delete the old run record
     delete(existing);
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, existing.getProgramRunId(),
+                                                      existing.getStartTs());
     meta = RunRecordDetail.builder(existing)
       .setStatus(ProgramRunStatus.STARTING)
       .setSystemArgs(newSystemArgs)
@@ -978,7 +986,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", ProgramRunStatus.STARTING, programRunId);
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.STARTING, existing.getProgramRunId());
     return meta;
   }
 
@@ -1010,12 +1018,13 @@ public class AppMetadataStore {
     Map<String, String> systemArgs = existing.getSystemArgs();
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       // Program was started by Workflow. Add row corresponding to its node state.
-      addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.RUNNING, null, sourceId);
+      addWorkflowNodeState(existing.getProgramRunId(), systemArgs, ProgramRunStatus.RUNNING, null, sourceId);
     }
 
     // Delete the old run record
     delete(existing);
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, existing.getProgramRunId(),
+                                                      existing.getStartTs());
 
     // The existing record's properties already contains the workflowRunId
     RunRecordDetail meta = RunRecordDetail.builder(existing)
@@ -1026,7 +1035,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", ProgramRunStatus.RUNNING, programRunId);
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.RUNNING, existing.getProgramRunId());
     return meta;
   }
 
@@ -1052,7 +1061,7 @@ public class AppMetadataStore {
       // Skip recording suspend if the existing record is not valid
       return null;
     }
-    return recordProgramSuspendResume(programRunId, sourceId, existing, "suspend", timestamp);
+    return recordProgramSuspendResume(sourceId, existing, "suspend", timestamp);
   }
 
   /**
@@ -1077,11 +1086,11 @@ public class AppMetadataStore {
       // Skip recording resumed if the existing records are not valid
       return null;
     }
-    return recordProgramSuspendResume(programRunId, sourceId, existing, "resume", timestamp);
+    return recordProgramSuspendResume(sourceId, existing, "resume", timestamp);
   }
 
-  private RunRecordDetail recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
-                                                     RunRecordDetail existing, String action, long timestamp)
+  private RunRecordDetail recordProgramSuspendResume(byte[] sourceId, RunRecordDetail existing,
+                                                     String action, long timestamp)
     throws IOException {
     ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
 
@@ -1090,7 +1099,8 @@ public class AppMetadataStore {
     }
     // Delete the old run record
     delete(existing);
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, existing.getProgramRunId(),
+                                                      existing.getStartTs());
     RunRecordDetail.Builder builder = RunRecordDetail.builder(existing).setStatus(toStatus).setSourceId(sourceId);
     if (timestamp != -1) {
       if (action.equals("resume")) {
@@ -1102,7 +1112,7 @@ public class AppMetadataStore {
     RunRecordDetail meta = builder.build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", toStatus, programRunId);
+    LOG.trace("Recorded {} for program {}", toStatus, existing.getProgramRunId());
     return meta;
   }
 
@@ -1134,12 +1144,13 @@ public class AppMetadataStore {
     Map<String, String> systemArgs = existing.getSystemArgs();
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       // Program was started by Workflow. Add row corresponding to its node state.
-      addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STOPPING, null, sourceId);
+      addWorkflowNodeState(existing.getProgramRunId(), systemArgs, ProgramRunStatus.STOPPING, null, sourceId);
     }
 
     // Delete the old run record
     delete(existing);
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, existing.getProgramRunId(),
+                                                      existing.getStartTs());
 
     // The existing record's properties already contains the workflowRunId
     RunRecordDetail meta = RunRecordDetail.builder(existing)
@@ -1150,7 +1161,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", ProgramRunStatus.STOPPING, programRunId);
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.STOPPING, existing.getProgramRunId());
     return meta;
   }
 
@@ -1187,10 +1198,11 @@ public class AppMetadataStore {
     // Record in the workflow
     Map<String, String> systemArgs = existing.getSystemArgs();
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
-      addWorkflowNodeState(programRunId, systemArgs, runStatus, failureCause, sourceId);
+      addWorkflowNodeState(existing.getProgramRunId(), systemArgs, runStatus, failureCause, sourceId);
     }
 
-    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
+    List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, existing.getProgramRunId(),
+                                                      existing.getStartTs());
     RunRecordDetailWithExistingStatus meta = RunRecordDetailWithExistingStatus.buildWithExistingStatus(existing)
       .setStopTime(stopTs)
       .setStatus(runStatus)
@@ -1198,7 +1210,7 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    LOG.trace("Recorded {} for program {}", runStatus, programRunId);
+    LOG.trace("Recorded {} for program {}", runStatus, existing.getProgramRunId());
     return meta;
   }
 
@@ -1427,7 +1439,7 @@ public class AppMetadataStore {
 
   /**
    * Get runs for an optional {@link ProgramId} that fits the given set of criteria.
-   * If the program id is not provided, it fetches all runs that matches with the criteria.
+   * If the program id is not provided, it fetches all runs that match with the criteria.
    *
    * @param programId an optional program id to match
    * @param status to filter by
