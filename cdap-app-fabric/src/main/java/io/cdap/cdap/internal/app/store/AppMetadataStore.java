@@ -416,59 +416,37 @@ public class AppMetadataStore {
    */
   public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds)
     throws IOException {
-    List<List<Field<?>>> multiKeys = new ArrayList<>();
-
+    List<Range> multiRanges = new ArrayList<>();
     Map<NamespaceId, Set<String>> latestAppNames = new HashMap<>();
 
-    // TODO: switch to multiScan for all apps
+    // multiScan for all apps
     for (ApplicationId appId: appIds) {
       // For -SNAPSHOT version, ignore the version in the key and fetch with latest = true instead
       if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
-        // TODO: range with latest=true for appIds with -SNAPSHOT version after CDAP-19781 is done
         latestAppNames.computeIfAbsent(appId.getNamespaceId(), k -> new HashSet<>()).add(appId.getApplication());
       } else {
-        multiKeys.add(getApplicationPrimaryKeys(appId));
+        multiRanges.add(Range.singleton(getApplicationPrimaryKeys(appId)));
       }
     }
 
-    // TODO: This can be removed after CDAP-19781 is done
     for (Map.Entry<NamespaceId, Set<String>> entry : latestAppNames.entrySet()) {
-      getLatestAppIds(entry.getKey(), entry.getValue()).forEach(appId -> {
-        multiKeys.add(getApplicationPrimaryKeys(appId));
-      });
+      entry.getValue().forEach(
+        appName -> multiRanges.add(Range.singleton(getLatestApplicationKeys(entry.getKey().getNamespace(), appName))));
     }
 
     Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
-    for (StructuredRow row : getApplicationSpecificationTable().multiRead(multiKeys)) {
-      ApplicationId appId = getApplicationIdFromRow(row);
-      result.put(appId, GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
-                                      ApplicationMeta.class));
+
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().multiScan(multiRanges, appIds.size())) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        ApplicationId appId = getApplicationIdFromRow(row);
+        result.put(appId, GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
+                                        ApplicationMeta.class));
+      }
     }
 
     return result;
-  }
-
-  private Collection<ApplicationId> getLatestAppIds(NamespaceId namespace, Set<String> appNames) throws IOException {
-    Range range = Range.singleton(
-      ImmutableList.of(
-        Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespace.getNamespace())));
-    // scan based on: latest field set to true
-    Field<?> latestField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
-
-    List<ApplicationId> appIds = new ArrayList<>();
-    // TODO: switch to multiScan after CDAP-19781 is done
-    try (CloseableIterator<StructuredRow> iterator =
-           getApplicationSpecificationTable().scan(range, Integer.MAX_VALUE, latestField)) {
-      while (iterator.hasNext()) {
-        StructuredRow row = iterator.next();
-        String application = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD);
-        if (appNames.contains(application)) {
-          String version = row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD);
-          appIds.add(namespace.app(application, version));
-        }
-      }
-    }
-    return appIds;
   }
 
   /**
@@ -1945,6 +1923,14 @@ public class AppMetadataStore {
 
   private List<Field<?>> getApplicationPrimaryKeys(ApplicationId appId) {
     return getApplicationPrimaryKeys(appId.getNamespace(), appId.getApplication(), appId.getVersion());
+  }
+
+  private List<Field<?>> getLatestApplicationKeys(String namespaceId, String appName) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appName));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"));
+    return fields;
   }
 
   private List<Field<?>> getApplicationPrimaryKeys(String namespaceId, String appId, String versionId) {
