@@ -636,6 +636,11 @@ public class AppMetadataStore {
       return;
     }
 
+    // Use the actual runID from DB
+    workflowRunId = record.getProgramRunId();
+    runRecordFields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, workflowRunId,
+                                                   RunIds.getTime(workflowRun, TimeUnit.SECONDS));
+
     List<Field<?>> primaryKeys = getWorkflowPrimaryKeys(workflowRunId, workflowNodeId);
     WorkflowNodeStateDetail nodeState = getWorkflowNodeStateTable().read(primaryKeys)
       .map(r -> r.getString(StoreDefinition.AppMetadataStore.NODE_STATE_DATA))
