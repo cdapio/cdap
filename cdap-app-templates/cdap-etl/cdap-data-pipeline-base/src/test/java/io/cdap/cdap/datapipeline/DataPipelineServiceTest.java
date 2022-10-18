@@ -25,7 +25,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.retry.RetryableException;
-import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.service.Retries;
@@ -131,7 +131,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
       try {
         appManager.getInfo();
         throw new RetryableException(String.format("App %s not yet removed", pipeline));
-      } catch (ApplicationNotFoundException exception) {
+      } catch (NotFoundException exception) {
         return false;
       }
     }, RetryStrategies.limit(10, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
