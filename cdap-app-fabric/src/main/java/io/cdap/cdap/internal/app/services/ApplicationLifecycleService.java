@@ -110,7 +110,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,7 +133,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -388,7 +386,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param zipOut the {@link ZipOutputStream} for writing out the application details
    */
-  public void createAppDetailsArchive(ZipOutputStream zipOut) throws Exception {
+  public void createAppDetailsArchive(ZipOutputStream zipOut) {
     accessEnforcer.enforce(new InstanceId(cConf.get(Constants.INSTANCE_NAME)),
                            authenticationContext.getPrincipal(), StandardPermission.GET);
 
@@ -432,23 +430,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return store.getAllAppVersionsAppIds(namespaceId.app(application)).stream()
       .map(ApplicationId::getVersion)
       .collect(Collectors.toList());
-  }
-
-  /**
-   * To determine whether the app version is allowed to be deployed
-   *
-   * @param appId the id of the application to be determined
-   * @return whether the app version is allowed to be deployed
-   */
-  public boolean updateAppAllowed(ApplicationId appId) throws Exception {
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      // App does not exist. Allow to create a new one
-      return true;
-    }
-    String version = appId.getVersion();
-    return version.endsWith(ApplicationId.DEFAULT_VERSION);
   }
 
   /**
@@ -594,14 +575,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                           Set<ArtifactScope> allowedArtifactScopes,
                                           boolean allowSnapshot) throws Exception {
 
-    ApplicationMeta appMeta;
-    if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
-      // upgrade the latest version of the app if the version is -SNAPSHOT
-      appMeta = store.getLatest(appId.getNamespaceId(), appId.getApplication());
-    } else {
-      appMeta = store.getApplicationMetadata(appId);
-    }
-
+    ApplicationMeta appMeta = store.getApplicationMetadata(appId);
     ApplicationSpecification currentSpec = Optional.ofNullable(appMeta).map(ApplicationMeta::getSpec).orElse(null);
 
     if (currentSpec == null) {
@@ -614,9 +588,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Check if the current user has admin privileges on it before updating.
     accessEnforcer.enforce(currentAppId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
-
     ArtifactId currentArtifact = currentSpec.getArtifactId();
-
     ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(currentAppId, currentArtifact,
                                                                        allowedArtifactScopes,
                                                                        allowSnapshot);
@@ -780,13 +752,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
    *                   the actual exception
    */
-  public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
+  public ApplicationWithPrograms deployApp(NamespaceId namespace,
+                                           @Nullable String appName,
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
-    RunId runId = RunIds.generate();
-    appVersion = RunIds.getTime(runId, TimeUnit.MILLISECONDS) + runId.getId();
-    return deployApp(namespace, appName, appVersion, artifactId, configStr,  null, programTerminator,
+    String appVersion = RunIds.generate().getId();
+    return deployApp(namespace, appName, appVersion, artifactId, configStr, null, programTerminator,
                      null, true);
   }
 
@@ -1247,7 +1219,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       byte[] decodedBytes = Base64.getDecoder().decode(authenticationContext.getPrincipal().getName());
       decodedUserId = new String(decodedBytes);
     } catch (Exception e) {
-      LOG.debug("Failed to decode userId with exception {}", e);
+      LOG.debug("Failed to decode userId", e);
     }
     return decodedUserId;
   }

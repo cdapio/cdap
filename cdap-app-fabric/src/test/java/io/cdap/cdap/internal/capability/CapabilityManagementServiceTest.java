@@ -477,7 +477,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       //deploy app
       Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, appNameWithCapability, testVersion);
       applicationLifecycleService
-        .deployApp(NamespaceId.DEFAULT, appNameWithCapability, testVersion, artifactId,
+        .deployApp(NamespaceId.DEFAULT, appNameWithCapability, artifactId,
                    null, programId -> {
           });
       Assert.fail("Expecting exception");
@@ -510,7 +510,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Id.Artifact artifactId = Id.Artifact
       .from(Id.Namespace.DEFAULT, appNameWithCapability, testVersion);
     applicationLifecycleService
-      .deployApp(NamespaceId.DEFAULT, appNameWithCapability, testVersion, artifactId,
+      .deployApp(NamespaceId.DEFAULT, appNameWithCapability, artifactId,
                  null, programId -> {
         });
     ApplicationDetail appWithCapabilityDetail =
@@ -562,7 +562,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Id.Artifact artifactId = Id.Artifact
       .from(new Id.Namespace(namespace), appName, version);
     ApplicationWithPrograms applicationWithPrograms = applicationLifecycleService
-      .deployApp(new NamespaceId(namespace), appName, null, artifactId, null, op -> {
+      .deployApp(new NamespaceId(namespace), appName, artifactId, null, op -> {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
@@ -648,7 +648,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Id.Artifact artifactId = Id.Artifact
       .from(new Id.Namespace(namespace), appName, version);
     ApplicationWithPrograms applicationWithPrograms = applicationLifecycleService
-      .deployApp(new NamespaceId(namespace), appName, null, artifactId, null, op -> {
+      .deployApp(new NamespaceId(namespace), appName, artifactId, null, op -> {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
@@ -830,7 +830,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     artifactRepository.addArtifact(artifactId, appJarFile);
     //deploy app
     applicationLifecycleService
-      .deployApp(NamespaceId.DEFAULT, appName, testVersion, artifactId,
+      .deployApp(NamespaceId.DEFAULT, appName, artifactId,
                  null, programId -> {
         });
   }

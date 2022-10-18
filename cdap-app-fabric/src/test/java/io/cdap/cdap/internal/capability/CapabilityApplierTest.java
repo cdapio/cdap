@@ -198,7 +198,7 @@ import java.util.UUID;
     artifactRepository.addArtifact(artifactId, appJarFile);
     //deploy app
     applicationLifecycleService
-      .deployApp(NamespaceId.DEFAULT, appName, TEST_VERSION, artifactId,
+      .deployApp(NamespaceId.DEFAULT, appName, artifactId,
                  null, programId -> {
         });
   }
