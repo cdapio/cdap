@@ -62,7 +62,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -298,10 +297,11 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
                                                                        endPointFieldSetMap) {
       return endPointFieldSetMap.entrySet().stream()
         .collect(Collectors.toMap(entry -> getAssetForEndpoint(entry.getKey().getEndPoint()),
-                                  entry -> new HashSet<>(entry.getValue().stream()
-                                                           .map(endPointField ->
-                                                                  getAssetForEndpoint(endPointField.getEndPoint()))
-                                                           .collect(Collectors.toList()))));
+                                  entry -> entry.getValue().stream()
+                                    .map(endPointField ->
+                                           getAssetForEndpoint(endPointField.getEndPoint()))
+                                    .collect(Collectors.toSet()),
+                                  (first, second) -> first));
     }
   }
 }
