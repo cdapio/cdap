@@ -44,16 +44,17 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.storage.StorageRetryStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
-import joptsimple.internal.Strings;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -71,6 +72,7 @@ import java.net.URI;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -116,9 +118,16 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final String bucket;
   private final Map<String, String> labels;
   private final Map<String, String> provisionerProperties;
+  private final VersionInfo cdapVersionInfo;
 
   private volatile Storage storageClient;
   private volatile JobControllerClient jobControllerClient;
+  // CDAP specific artifacts which will be cached in GCS.
+  private static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
+    Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR, Constants.Files.APPLICATION_JAR)
+  );
+  private static final int SNAPSHOT_EXPIRE_DAYS = 7;
+  private static final int EXPIRE_DAYS = 730;
 
   /**
    * Created by dataproc provisioner with properties that are needed by dataproc runtime job manager.
@@ -126,7 +135,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * @param clusterInfo dataproc cluster information
    */
   public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
-                                   Map<String, String> provisionerProperties) {
+                                   Map<String, String> provisionerProperties, VersionInfo cdapVersionInfo) {
     this.provisionerContext = clusterInfo.getProvisionerContext();
     this.clusterName = clusterInfo.getClusterName();
     this.credentials = clusterInfo.getCredentials();
@@ -138,6 +147,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     // Provisioner properties contains overrides for properties defined in cdap-site.
     // These properties are absent in provisionerContext.getProperties().
     this.provisionerProperties = provisionerProperties;
+    this.cdapVersionInfo = cdapVersionInfo;
   }
 
   /**
@@ -196,13 +206,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
 
     // Caching is disabled if it's been explicitly disabled or delete lifecycle is not set on the bucket.
-    boolean disableGCSCaching = Boolean.parseBoolean(
-      provisionerContext.getProperties().getOrDefault(DataprocUtils.DISABLE_GCS_CACHING, "false"))
+    boolean gcsCacheEnabled = Boolean.parseBoolean(
+      provisionerContext.getProperties().getOrDefault(DataprocUtils.GCS_CACHE_ENABLED, "true"))
       || !isDeleteLifecycleEnabled(bucket);
 
     LOG.debug("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
               runInfo.getRun(), clusterName, projectId, region, bucket);
-    if (disableGCSCaching) {
+    if (!gcsCacheEnabled) {
       LOG.warn("Launching run {} without GCS caching. This slows launch time.", runInfo.getRun());
     }
 
@@ -216,6 +226,15 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     // In dataproc bucket, the shared folder for artifacts will be <bucket>/cdap-job/cached-artifacts.
     // All instances of CacheableLocalFile will be copied to the shared folder if they do not exist.
     String cacheRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, DataprocUtils.CDAP_CACHED_ARTIFACTS);
+    String cdapVersion;
+    if (cdapVersionInfo.isSnapshot()) {
+      cdapVersion = String.format("%s.%s.%s-SNAPSHOT", cdapVersionInfo.getMajor(), cdapVersionInfo.getMinor(),
+                                  cdapVersionInfo.getFix());
+    } else {
+      cdapVersion = String.format("%s.%s.%s", cdapVersionInfo.getMajor(), cdapVersionInfo.getMinor(),
+                                  cdapVersionInfo.getFix());
+    }
+
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
@@ -228,12 +247,27 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
       for (LocalFile fileToUpload : localFiles) {
-        boolean isCacheable = !disableGCSCaching && fileToUpload instanceof CacheableLocalFile;
-        String targetFilePath = getPath(isCacheable ? cacheRootPath : runRootPath, fileToUpload.getName());
-        uploadFutures.add(
-          provisionerContext.execute(() -> isCacheable ? uploadCacheableFile(bucket, targetFilePath, fileToUpload) :
-              uploadFile(bucket, targetFilePath, fileToUpload, false))
-            .toCompletableFuture());
+        boolean cacheable = gcsCacheEnabled && fileToUpload instanceof CacheableLocalFile;
+        String targetFilePath = getPath(cacheable ? cacheRootPath : runRootPath, fileToUpload.getName());
+        String targetFilePathWithVersion = getPath(cacheRootPath, cdapVersion, fileToUpload.getName());
+
+        if (gcsCacheEnabled && artifactsCacheablePerCDAPVersion.contains(fileToUpload.getName())) {
+          // upload artifacts cacheable per cdap version to <bucket>/cdap-job/cached-artifacts/<cdapVersion>/
+          uploadFutures.add(
+            provisionerContext.execute(
+              () -> uploadCacheableFile(bucket, targetFilePathWithVersion, fileToUpload)).toCompletableFuture());
+        } else {
+          if (cacheable) {
+            // upload cacheable artifacts to <bucket>/cdap-job/cached-artifacts/
+            uploadFutures.add(
+              provisionerContext.execute(
+                () -> uploadCacheableFile(bucket, targetFilePath, fileToUpload)).toCompletableFuture());
+          } else {
+            // non-cacheable artifacts to <bucket>/cdap-job/<runid>/
+            uploadFutures.add(provisionerContext.execute(
+              () -> uploadFile(bucket, targetFilePath, fileToUpload, false)).toCompletableFuture());
+          }
+        }
       }
 
       List<LocalFile> uploadedFiles = new ArrayList<>();
@@ -396,15 +430,34 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
                                         LocalFile localFile)
-    throws IOException, StorageException, InterruptedException {
+    throws IOException, StorageException {
     Storage storage = getStorageClient();
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     Blob blob = storage.get(blobId);
     LocalFile result;
 
     if (blob != null && blob.exists()) {
-      LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
-                localFile.getURI(), bucket, targetFilePath);
+
+      if (artifactsCacheablePerCDAPVersion.contains(localFile.getName())
+        && (blob.getUpdateTime() < cdapVersionInfo.getBuildTime())) {
+        // if the GCS object creation time is older than the build time, replace the artifact.
+        BlobInfo newBlobInfo =
+          blob.toBuilder().setCustomTime(getCustomTime()).build();
+        try {
+          uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo, Storage.BlobWriteOption.generationMatch(),
+                          Storage.BlobWriteOption.metagenerationMatch());
+        } catch (StorageException e) {
+          if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
+            throw e;
+          }
+          // Precondition failed means file has already been replaced, hence ignore it.
+          LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
+                    localFile.getURI(), bucket, targetFilePath);
+        }
+      } else {
+        LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
+                  localFile.getURI(), bucket, targetFilePath);
+      }
       result = new DefaultLocalFile(localFile.getName(),
                                     URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                     localFile.getLastModified(), localFile.getSize(),
@@ -420,13 +473,18 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Uploads files to gcs.
    */
   private LocalFile uploadFile(String bucket, String targetFilePath,
-                               LocalFile localFile, boolean isCacheable)
+                               LocalFile localFile, boolean cacheable)
     throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     String contentType = "application/octet-stream";
     BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId);
-    if (isCacheable) {
-      blobInfoBuilder.setCustomTime(System.currentTimeMillis());
+    // don't set custom time on artifacts cacheable per CDAP version.
+    if (cacheable) {
+      long customTime = System.currentTimeMillis();
+      if (artifactsCacheablePerCDAPVersion.contains(localFile.getName())) {
+        customTime = getCustomTime();
+      }
+      blobInfoBuilder.setCustomTime(customTime);
     }
     BlobInfo blobInfo = blobInfoBuilder.setContentType(contentType).build();
     Storage storage = getStorageClient();
@@ -450,15 +508,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         throw e;
       }
 
-      if (!isCacheable) {
+      if (!cacheable) {
         // Precondition fails means the blob already exists, most likely happens due to retries
         // https://cloud.google.com/storage/docs/request-preconditions#special-case
         // Overwrite the file
-        Blob blob = storage.get(blobId);
-        BlobInfo existingBlobInfo = BlobInfo.newBuilder(blob.getBlobId()).setContentType(contentType).build();
-        uploadToGCS(localFile.getURI(), storage, existingBlobInfo, Storage.BlobWriteOption.generationMatch());
-        LOG.debug("Successfully uploaded file {} to gs://{}/{} by overwriting due to conflict",
-                  localFile.getURI(), bucket, targetFilePath);
+        Blob existingBlob = storage.get(blobId);
+        BlobInfo newBlobInfo = existingBlob.toBuilder().setContentType(contentType).build();
+        uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo, Storage.BlobWriteOption.generationNotMatch());
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
                   localFile.getURI(), bucket, targetFilePath);
@@ -468,6 +524,25 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                 localFile.getLastModified(), localFile.getSize(),
                                 localFile.isArchive(), localFile.getPattern());
+  }
+
+  private long getCustomTime() {
+    // if the version is SNAPSHOT, set a custom time of buildTime + 7 days for cleanup,
+    // otherwise set a custom time of buildTime + 2 years for cleanup.
+    return cdapVersionInfo.getBuildTime() +
+      TimeUnit.DAYS.toMillis(cdapVersionInfo.isSnapshot() ? SNAPSHOT_EXPIRE_DAYS : EXPIRE_DAYS);
+  }
+
+  /**
+   * Uploads the file to GCS Bucket.
+   */
+  private void uploadToGCSUtil(LocalFile localFile, Storage storage, String targetFilePath, BlobInfo blobInfo,
+                               Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
+    long start = System.nanoTime();
+    uploadToGCS(localFile.getURI(), storage, blobInfo, blobWriteOptions);
+    long end = System.nanoTime();
+    LOG.debug("Successfully uploaded file {} to gs://{}/{} in {} ms.",
+              localFile.getURI(), bucket, targetFilePath, TimeUnit.NANOSECONDS.toMillis(end - start));
   }
 
   /**

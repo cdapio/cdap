@@ -17,7 +17,6 @@
 package io.cdap.cdap.runtime.spi.common;
 
 import com.google.common.base.Strings;
-import io.cdap.cdap.runtime.spi.VersionInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,7 @@ import javax.annotation.Nullable;
 /**
  * Class used to compare versions from Dataproc cluster images
  */
-public class DataprocImageVersion implements VersionInfo {
+public class DataprocImageVersion implements Comparable<Object> {
   private static final Pattern IS_NUMBER_PATTERN = Pattern.compile("^\\d+$");
   private final List<Integer> versionSegments;
 

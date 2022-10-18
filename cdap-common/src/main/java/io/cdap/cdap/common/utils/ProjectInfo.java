@@ -133,6 +133,7 @@ public final class ProjectInfo {
       this.buildTime = buildTime;
     }
 
+    @Override
     public int getMajor() {
       return major;
     }
@@ -141,14 +142,17 @@ public final class ProjectInfo {
       return minor;
     }
 
+    @Override
     public int getFix() {
       return fix;
     }
 
+    @Override
     public boolean isSnapshot() {
       return snapshot;
     }
 
+    @Override
     public long getBuildTime() {
       return buildTime;
     }
