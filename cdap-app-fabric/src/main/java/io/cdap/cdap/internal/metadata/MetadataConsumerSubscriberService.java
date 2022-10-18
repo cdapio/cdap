@@ -256,7 +256,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
       this.consumers.forEach((key, consumer) -> {
         try {
           DefaultMetadataConsumerContext metadataConsumerContext =
-            new DefaultMetadataConsumerContext(cConf, consumer.getName());
+            new DefaultMetadataConsumerContext(cConf);
           // if there is any error from the implementation, log and continue here
           // as we are already retrying at the service level
           consumer.consumeLineage(metadataConsumerContext, run, info);
