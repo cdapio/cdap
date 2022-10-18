@@ -602,23 +602,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       appMeta = store.getApplicationMetadata(appId);
     }
 
-    if (appMeta == null) {
+    ApplicationSpecification currentSpec = Optional.ofNullable(appMeta).map(ApplicationMeta::getSpec).orElse(null);
+
+    if (currentSpec == null) {
       LOG.debug("Application {} not found for upgrade.", appId);
       throw new ApplicationNotFoundException(appId);
     }
 
+    ApplicationId currentAppId = appId.getNamespaceId().app(currentSpec.getName(), currentSpec.getAppVersion());
+
     // Check if the current user has admin privileges on it before updating.
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    accessEnforcer.enforce(currentAppId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
-    ApplicationSpecification currentSpec = appMeta.getSpec();
 
-    if (currentSpec == null) {
-      LOG.info("Application {} not found for upgrade.", appId);
-      throw new NotFoundException(appId);
-    }
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
-    ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(appId, currentArtifact,
+    ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(currentAppId, currentArtifact,
                                                                        allowedArtifactScopes,
                                                                        allowSnapshot);
     ArtifactVersion candidateArtifactVersion = new ArtifactVersion(candidateArtifact.getVersion());
@@ -633,12 +632,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactId newArtifactId =
       new ArtifactId(candidateArtifact.getName(), candidateArtifactVersion, candidateArtifact.getScope());
 
-    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
+    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(currentAppId.getParent(),
+                                                                                   newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
 
-    return updateApplicationInternal(appId, currentSpec.getConfiguration(), programId -> { }, newArtifactDetail,
+    return updateApplicationInternal(currentAppId, currentSpec.getConfiguration(), programId -> { }, newArtifactDetail,
                                      Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
-                                     allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId));
+                                     allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(currentAppId));
   }
 
   /**
