@@ -32,9 +32,10 @@ public class DefaultMetadataConsumerContext implements MetadataConsumerContext {
 
   /**
    * @param cConf An instance of an injected ${@link CConfiguration}.
+   * @param metadataConsumerName name of the Metadata Consumer extension
    */
-  DefaultMetadataConsumerContext(CConfiguration cConf) {
-    String prefix = Constants.MetadataConsumer.METADATA_CONSUMER_PREFIX;
+  DefaultMetadataConsumerContext(CConfiguration cConf, String metadataConsumerName) {
+    String prefix = String.format("%s.%s.", Constants.MetadataConsumer.METADATA_CONSUMER_PREFIX, metadataConsumerName);
     this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
   }
 
