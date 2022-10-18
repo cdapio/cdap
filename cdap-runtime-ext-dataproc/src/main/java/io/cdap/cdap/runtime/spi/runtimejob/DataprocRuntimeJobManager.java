@@ -437,13 +437,14 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     LocalFile result;
 
     if (blob != null && blob.exists()) {
-
       if (artifactsCacheablePerCDAPVersion.contains(localFile.getName())
         && (blob.getUpdateTime() < cdapVersionInfo.getBuildTime())) {
-        // if the GCS object creation time is older than the build time, replace the artifact.
+        // if the GCS object modification time is older than the build time, replace the artifact.
         BlobInfo newBlobInfo =
           blob.toBuilder().setCustomTime(getCustomTime()).build();
         try {
+          LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{}",
+                    localFile.getSize(), localFile.getURI(), bucket, targetFilePath);
           uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo, Storage.BlobWriteOption.generationMatch(),
                           Storage.BlobWriteOption.metagenerationMatch());
         } catch (StorageException e) {
@@ -498,11 +499,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
               localFile.getSize(), localFile.getURI(), bucket, targetFilePath,
               bucketObj.getLocationType(), bucketObj.getLocation());
     try {
-      long start = System.nanoTime();
-      uploadToGCS(localFile.getURI(), storage, blobInfo, Storage.BlobWriteOption.doesNotExist());
-      long end = System.nanoTime();
-      LOG.debug("Successfully uploaded file {} to gs://{}/{} in {} ms.",
-                localFile.getURI(), bucket, targetFilePath, TimeUnit.NANOSECONDS.toMillis(end - start));
+      uploadToGCSUtil(localFile, storage, targetFilePath, blobInfo, Storage.BlobWriteOption.doesNotExist());
     } catch (StorageException e) {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
         throw e;
