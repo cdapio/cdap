@@ -33,10 +33,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -222,8 +223,8 @@ public abstract class AbstractProgramController implements ProgramController {
     };
 
     try {
-      // Use a synchronous queue to communicate the Cancellable to return
-      final SynchronousQueue<Cancellable> result = new SynchronousQueue<>();
+      // Use a blocking queue to communicate the Cancellable to return
+      BlockingQueue<Cancellable> result = new ArrayBlockingQueue<>(1);
 
       // Use the single thread executor to add the listener and call init
       executor.submit(() -> {
