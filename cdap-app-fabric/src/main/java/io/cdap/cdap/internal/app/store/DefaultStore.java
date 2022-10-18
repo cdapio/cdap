@@ -295,7 +295,7 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
       if (latestAppMeta == null) {
-        throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
+        throw new ApplicationNotFoundException(namespaceId.app(appName));
       }
       WorkflowId id = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
                                      workflowName);
@@ -316,7 +316,7 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
       if (latestAppMeta == null) {
-        throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
+        throw new ApplicationNotFoundException(namespaceId.app(appName));
       }
       WorkflowId workflowId = new WorkflowId(namespaceId.getNamespace(), appName,
                                              latestAppMeta.getSpec().getAppVersion(), workflowName);
@@ -331,7 +331,7 @@ public class DefaultStore implements Store {
     return  TransactionRunners.run(transactionRunner, context -> {
       ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
       if (latestAppMeta == null) {
-        throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
+        throw new ApplicationNotFoundException(namespaceId.app(appName));
       }
       WorkflowId workflow = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
                                      program);
@@ -985,7 +985,7 @@ public class DefaultStore implements Store {
     // Check if app exists
     ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespaceId, appName);
     if (latest == null || latest.getSpec() == null) {
-      throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
+      throw new ApplicationNotFoundException(namespaceId.app(appName));
     }
   }
 
