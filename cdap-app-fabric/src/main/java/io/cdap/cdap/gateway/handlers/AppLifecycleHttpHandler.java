@@ -697,11 +697,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           ChangeSummary changeSummary = appRequest.getChange();
 
           try {
-            applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                  artifactSummary, configString, changeSummary,
-                                                  createProgramTerminator(), ownerPrincipalId,
-                                                  appRequest.canUpdateSchedules(), false,
-                                                  Collections.emptyMap());
+            ApplicationWithPrograms app = applicationLifecycleService.deployApp(
+              appId.getParent(), appId.getApplication(), appId.getVersion(), artifactSummary, configString,
+              changeSummary, createProgramTerminator(), ownerPrincipalId, appRequest.canUpdateSchedules(),
+              false, Collections.emptyMap());
+
+            LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
+                       "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
+                     app.getArtifactId(), configString, app.getOwnerPrincipal());
+
+            responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
+
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();
@@ -709,7 +715,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
               throw e;
             }
           }
-          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
         } catch (ConflictException e) {
@@ -728,6 +733,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
     };
+  }
+
+  private ApplicationRecord getApplicationRecord(ApplicationWithPrograms deployedApp) {
+    return new ApplicationRecord(
+      ArtifactSummary.from(deployedApp.getArtifactId().toApiArtifactId()),
+      deployedApp.getApplicationId().getApplication(),
+      deployedApp.getApplicationId().getVersion(),
+      deployedApp.getSpecification().getDescription(),
+      Optional.ofNullable(deployedApp.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
+      deployedApp.getChangeDetail());
   }
 
   private BodyConsumer deployApplication(final HttpResponder responder,
@@ -793,8 +808,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
                      "principal {}", app.getApplicationId().getApplication(), namespace.getNamespace(), artifactId,
                    configString, finalOwnerPrincipalId);
-          responder.sendString(HttpResponseStatus.OK, String.format("Successfully deployed app %s",
-                                                                    app.getApplicationId().getApplication()));
+          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (ArtifactAlreadyExistsException e) {
