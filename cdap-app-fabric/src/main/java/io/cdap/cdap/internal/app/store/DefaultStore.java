@@ -290,9 +290,15 @@ public class DefaultStore implements Store {
 
   @Override
   @Nullable
-  public WorkflowStatistics getWorkflowStatistics(WorkflowId id, long startTime,
-                                                  long endTime, List<Double> percentiles) {
+  public WorkflowStatistics getWorkflowStatistics(NamespaceId namespaceId, String appName, String workflowName,
+                                                  long startTime, long endTime, List<Double> percentiles) {
     return TransactionRunners.run(transactionRunner, context -> {
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      if (latestAppMeta == null) {
+        throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
+      }
+      WorkflowId id = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
+                                     workflowName);
       return getWorkflowTable(context).getStatistics(id, startTime, endTime, percentiles);
     });
   }
@@ -305,11 +311,30 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflow,
-                                                                           String runId,
-                                                                           int limit,
+  public WorkflowTable.WorkflowRunRecord getWorkflowRun(NamespaceId namespaceId, String appName, String workflowName,
+                                                        String runId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      if (latestAppMeta == null) {
+        throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
+      }
+      WorkflowId workflowId = new WorkflowId(namespaceId.getNamespace(), appName,
+                                             latestAppMeta.getSpec().getAppVersion(), workflowName);
+      return getWorkflowTable(context).getRecord(workflowId, runId);
+    });
+  }
+
+  @Override
+  public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(NamespaceId namespaceId, String appName,
+                                                                           String program, String runId, int limit,
                                                                            long timeInterval) {
     return  TransactionRunners.run(transactionRunner, context -> {
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      if (latestAppMeta == null) {
+        throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appName));
+      }
+      WorkflowId workflow = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
+                                     program);
       return getWorkflowTable(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
     });
   }
