@@ -2041,7 +2041,7 @@ public final class Constants {
    * Constants for MetadataConsumer
    */
   public static final class MetadataConsumer {
-    public static final String METADATA_CONSUMER_PREFIX = "metadata.consumer.";
+    public static final String METADATA_CONSUMER_PREFIX = "metadata.consumer";
     public static final String METADATA_CONSUMER_EXTENSIONS_ENABLED_LIST = "metadata.consumer.extensions.enabled.list";
     public static final String METADATA_CONSUMER_EXTENSIONS_DIR = "metadata.consumer.extensions.dir";
   }
