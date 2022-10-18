@@ -223,6 +223,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
                                           options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       }
+      LOG.error("wyzhang: SparkProgramRunner: run(): submit className={}", submitter.getClass().getName());
 
       SparkRuntimeService sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                                         runtimeContext, submitter, locationFactory,
