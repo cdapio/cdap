@@ -165,7 +165,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   protected ProvisionerSystemContext getSystemContext() {
     ProvisionerSystemContext context = Objects.requireNonNull(
       systemContext, "System context is not available. Please make sure the initialize method has been called.");
-    context.reloadProperties();
+//    context.reloadProperties();
     return context;
   }
 
