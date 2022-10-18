@@ -85,7 +85,7 @@ public class ArtifactCacheManager {
 
   private void changeUsageCountForArtifacts(Storage client, String bucket, Set<String> cachedArtifacts,
                                             String cachedArtifactsPath, int changeValue) throws InterruptedException {
-    if (cachedArtifacts.isEmpty()) {
+    if (cachedArtifacts == null || cachedArtifacts.isEmpty()) {
       LOG.debug("No Cached Artifacts found for this run!");
       return;
     }
@@ -184,6 +184,9 @@ public class ArtifactCacheManager {
     for (int i = 0; i < MAX_RETRIES_TO_FETCH_CACHED_ARTIFACTS_FOR_RUN; i++) {
       try {
         Blob blob = client.get(blobId);
+        if (blob == null || blob.getContent() == null) {
+          continue;
+        }
         files = GSON.fromJson(new String(blob.getContent(), StandardCharsets.UTF_8),
                               new TypeToken<Set<String>>() {
                               }.getType());
