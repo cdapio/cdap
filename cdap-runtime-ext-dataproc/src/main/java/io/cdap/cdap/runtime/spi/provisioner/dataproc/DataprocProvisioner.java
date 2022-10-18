@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
-import io.cdap.cdap.runtime.spi.VersionInfo;
+import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -185,7 +185,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       // Check dataproc cluster version if a custom image is not being used
       if (conf.getCustomImageUri() == null) {
         // Determine cluster version and fail if version is smaller than 1.5
-        VersionInfo comparableImageVersion = extractVersion(imageVersion);
+        DataprocImageVersion comparableImageVersion = extractVersion(imageVersion);
         if (comparableImageVersion == null) {
           LOG.warn("Unable to extract Dataproc version from string '{}'.", imageVersion);
         } else if (DATAPROC_1_5_VERSION.compareTo(comparableImageVersion) > 0) {
