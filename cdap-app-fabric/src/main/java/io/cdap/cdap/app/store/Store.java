@@ -192,6 +192,20 @@ public interface Store {
                                              long startTime, long endTime, int limit);
 
   /**
+   * Fetches run records of all versions for particular program.
+   * Returned ProgramRunRecords are sorted by their startTime.
+   *
+   * @param id        id of the program
+   * @param status    status of the program running/completed/failed or all
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of entries to fetch for this history call
+   * @return          map of logged runs
+   */
+  Map<ProgramRunId, RunRecordDetail> getAllVersionsRuns(ProgramId id, ProgramRunStatus status,
+                                             long startTime, long endTime, int limit);
+
+  /**
    * Fetches the run records for the particular status. Same as calling
    * {@link #getRuns(ProgramRunStatus, long, long, int, Predicate)
    * getRuns(status, 0, Long.MAX_VALUE, Integer.MAX_VALUE, filter)}
@@ -551,6 +565,14 @@ public interface Store {
    * @return the run count result of each program in the collection
    */
   List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds);
+
+  /**
+   * Get the run count of all versions of the given program collection
+   *
+   * @param programIds collection of program ids to get the count
+   * @return the run count result of each program in the collection
+   */
+  List<RunCountResult> getProgramAllVersionsRunCounts(Collection<ProgramId> programIds);
 
   /**
    * Fetches run records for multiple programs.

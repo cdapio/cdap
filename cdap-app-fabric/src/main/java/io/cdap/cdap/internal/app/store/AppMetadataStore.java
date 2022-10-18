@@ -1513,6 +1513,43 @@ public class AppMetadataStore {
   }
 
   /**
+   * Get all versions runs for an optional {@link ProgramId} that fits the given set of criteria.
+   * If the program id is not provided, it fetches all runs that match with the criteria.
+   *
+   * @param programId an optional program id to match
+   * @param status to filter by
+   * @param startTime the run has to be started on or after this time
+   * @param endTime the run has to be started before this time
+   * @param limit of number of records to return
+   * @param filter of RunRecordDetail to post filter by
+   * @return map of run id to run record meta
+   */
+  public Map<ProgramRunId, RunRecordDetail> getAllVersionsRuns(@Nullable ProgramId programId, ProgramRunStatus status,
+                                                    long startTime, long endTime, int limit,
+                                                    @Nullable Predicate<RunRecordDetail> filter)
+    throws IOException {
+    switch (status) {
+      case ALL:
+        Map<ProgramRunId, RunRecordDetail> runRecords = getProgramAllVersionsRuns(programId, status, startTime, endTime,
+                                                                       limit, filter, TYPE_RUN_RECORD_ACTIVE);
+        if (runRecords.size() < limit) {
+          runRecords.putAll(getProgramAllVersionsRuns(programId, status, startTime, endTime,
+                                           limit - runRecords.size(), filter, TYPE_RUN_RECORD_COMPLETED));
+        }
+        return runRecords;
+      case PENDING:
+      case STARTING:
+      case RUNNING:
+      case SUSPENDED:
+      case STOPPING:
+        return getProgramAllVersionsRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_ACTIVE);
+      default:
+        return getProgramAllVersionsRuns(programId, status, startTime, endTime, limit, filter,
+                                         TYPE_RUN_RECORD_COMPLETED);
+    }
+  }
+
+  /**
    * Get runs in the given application.
    *
    * @param applicationId given application
@@ -1763,6 +1800,26 @@ public class AppMetadataStore {
     return getRuns(scanRange, status, limit, keyFilter, filter);
   }
 
+  private Map<ProgramRunId, RunRecordDetail> getProgramAllVersionsRuns(@Nullable ProgramId programId,
+                                                                       ProgramRunStatus status,
+                                                                       long startTime, long endTime, int limit,
+                                                                       @Nullable Predicate<RunRecordDetail> filter,
+                                                                       String recordType) throws IOException {
+    List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId, false);
+    Range scanRange;
+    Predicate<StructuredRow> keyFilter = null;
+
+    if (programId == null) {
+      // Cannot use the run start time field if programId is missing. Need to use a key filter.
+      keyFilter = getKeyFilterByTimeRange(startTime, endTime);
+      scanRange = Range.singleton(prefix);
+    } else {
+      scanRange = createRunRecordScanRange(prefix, startTime, endTime);
+    }
+
+    return getRuns(scanRange, status, limit, keyFilter, filter);
+  }
+
   private Map<ProgramRunId, RunRecordDetail> getRuns(Range range, ProgramRunStatus status, int limit,
                                                      @Nullable Predicate<StructuredRow> keyFilter,
                                                      @Nullable Predicate<RunRecordDetail> valueFilter)
@@ -1912,6 +1969,45 @@ public class AppMetadataStore {
         .program(ProgramType.valueOf(row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD)),
                  row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
       result.put(programId, row.getLong(StoreDefinition.AppMetadataStore.COUNTS));
+    }
+    return result;
+  }
+
+  /**
+   * Get the run counts of all versions of the given program collections.
+   *
+   * @param programIds the collection of program ids to get the program
+   * @return the map of the program id to its run count
+   */
+  public Map<ProgramId, Long> getProgramRunCountsMultiScan(Collection<ProgramId> programIds)
+    throws BadRequestException, IOException {
+    if (programIds.size() > 100) {
+      throw new BadRequestException(String.format("%d programs found, the maximum number supported is 100",
+                                                  programIds.size()));
+    }
+
+    Map<ProgramId, Long> result = programIds.stream()
+      .collect(Collectors.toMap(id -> id, id -> 0L, (v1, v2) -> 0L, LinkedHashMap::new));
+
+    List<Range> keyRanges = programIds.stream()
+      .map(id -> {
+        List<Field<?>> programCountPrimaryKeys = getProgramCountPrimaryKeys(TYPE_COUNT, id, false);
+        return Range.create(programCountPrimaryKeys, Range.Bound.INCLUSIVE,
+                            programCountPrimaryKeys, Range.Bound.INCLUSIVE);
+      }).collect(Collectors.toList());
+
+    for (CloseableIterator<StructuredRow> it =
+         getProgramCountsTable().multiScan(keyRanges, Integer.MAX_VALUE); it.hasNext(); ) {
+      StructuredRow row = it.next();
+      ProgramId programId = getDefaultApplicationIdFromRow(row)
+        .program(ProgramType.valueOf(row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD)),
+                 row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
+      if (result.containsKey(programId)) {
+        // increment the runcount
+        result.put(programId, result.get(programId) + row.getLong(StoreDefinition.AppMetadataStore.COUNTS));
+      } else {
+        result.put(programId, row.getLong(StoreDefinition.AppMetadataStore.COUNTS));
+      }
     }
     return result;
   }
@@ -2215,6 +2311,12 @@ public class AppMetadataStore {
     return addProgramPrimaryKeys(programId, fields, true);
   }
 
+  private List<Field<?>> getProgramCountPrimaryKeys(String type, ProgramId programId, boolean includeVersion) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.COUNT_TYPE, type));
+    return addProgramPrimaryKeys(programId, fields, includeVersion);
+  }
+
   @Nullable
   private Predicate<StructuredRow> getKeyFilterByTimeRange(long startTime, long endTime) {
     if (startTime <= 0 && endTime == Long.MAX_VALUE) {
@@ -2232,6 +2334,11 @@ public class AppMetadataStore {
     return new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
       .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
            row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD));
+  }
+
+  private static ApplicationId getDefaultApplicationIdFromRow(StructuredRow row) {
+    return new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
+      .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD));
   }
 
   /**

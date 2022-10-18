@@ -250,6 +250,37 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the program run count of all versions of the given program id list.
+   *
+   * @param programIds the list of program ids to get the count
+   * @return the counts of given program ids
+   */
+  public List<RunCountResult> getProgramAllVersionsRunCounts(List<ProgramId> programIds) throws Exception {
+    // filter the result
+    Principal principal = authenticationContext.getPrincipal();
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programIds), principal);
+    Set<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toSet());
+
+    Map<ProgramId, RunCountResult> programCounts = store.getProgramAllVersionsRunCounts(filteredIds).stream()
+      .collect(Collectors.toMap(RunCountResult::getProgramId, c -> c));
+
+    List<RunCountResult> result = new ArrayList<>();
+    for (ProgramId programId : programIds) {
+      if (!visibleEntities.contains(programId)) {
+        result.add(new RunCountResult(programId, null, new UnauthorizedException(principal, programId)));
+      } else {
+        RunCountResult count = programCounts.get(programId);
+        if (count != null) {
+          result.add(count);
+        } else {
+          result.add(new RunCountResult(programId, 0L, null));
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
    * Returns the {@link RunRecordDetail} for the given program run.
    *
    * @param programRunId the program run to fetch
@@ -295,9 +326,39 @@ public class ProgramLifecycleService {
     return new ArrayList<>(store.getRuns(programId, programRunStatus, start, end, limit).values());
   }
 
+  /**
+   * Get runs of all versions within the specified start and end times for the specified program.
+   *
+   * @param programId the program to get runs for
+   * @param programRunStatus status of runs to return
+   * @param start earliest start time of runs to return
+   * @param end latest start time of runs to return
+   * @param limit the maximum number of runs to return
+   * @return runs of all versions for the program sorted by start time, with the newest run as the first run
+   * @throws NotFoundException if the application to which this program belongs was not found or the program is not
+   *                           found in the app
+   * @throws UnauthorizedException if the principal does not have access to the program
+   * @throws Exception if there was some other exception performing authorization checks
+   */
+  public List<RunRecordDetail> getAllVersionsRunRecordMetas(ProgramId programId, ProgramRunStatus programRunStatus,
+                                                 long start, long end, int limit) throws Exception {
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programId);
+    if (programSpec == null) {
+      throw new NotFoundException(programId);
+    }
+    return new ArrayList<>(store.getAllVersionsRuns(programId, programRunStatus, start, end, limit).values());
+  }
+
   public List<RunRecord> getRunRecords(ProgramId programId, ProgramRunStatus programRunStatus,
                                        long start, long end, int limit) throws Exception {
     return getRunRecordMetas(programId, programRunStatus, start, end, limit).stream()
+      .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
+  }
+
+  public List<RunRecord> getAllVersionsRunRecords(ProgramId programId, ProgramRunStatus programRunStatus,
+                                       long start, long end, int limit) throws Exception {
+    return getAllVersionsRunRecordMetas(programId, programRunStatus, start, end, limit).stream()
       .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
   }
 

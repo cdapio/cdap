@@ -349,6 +349,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Map<ProgramRunId, RunRecordDetail> getAllVersionsRuns(ProgramId id, ProgramRunStatus status,
+                                                    long startTime, long endTime, int limit) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getAllVersionsRuns(id, status, startTime, endTime, limit, null);
+    });
+  }
+
+  @Override
   public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status,
                                                     Predicate<RunRecordDetail> filter) {
     return getRuns(status, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
@@ -908,6 +916,26 @@ public class DefaultStore implements Store {
 
       Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCounts(
         appMetadataStore.filterProgramsExistence(programIds));
+
+      for (ProgramId programId : programIds) {
+        Long count = runCounts.get(programId);
+        if (count == null) {
+          result.add(new RunCountResult(programId, null, new NotFoundException(programId)));
+        } else {
+          result.add(new RunCountResult(programId, count, null));
+        }
+      }
+      return result;
+    });
+  }
+
+  @Override
+  public List<RunCountResult> getProgramAllVersionsRunCounts(Collection<ProgramId> programIds) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      List<RunCountResult> result = new ArrayList<>();
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+
+      Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCountsMultiScan(programIds);
 
       for (ProgramId programId : programIds) {
         Long count = runCounts.get(programId);

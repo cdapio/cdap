@@ -480,11 +480,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
-                             @QueryParam("limit") @DefaultValue("100") final int resultLimit)
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit,
+                             @QueryParam("allVersions") boolean allVersions)
     throws Exception {
-    programHistory(request, responder, namespaceId, appName,
-                   getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
-                   programName, status, startTs, endTs, resultLimit);
+    if (!allVersions) {
+      programHistory(request, responder, namespaceId, appName,
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
+                     programName, status, startTs, endTs, resultLimit);
+      return;
+    }
+    // get runs of all versions
+    ProgramType programType = getProgramType(type);
+
+    long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
+    long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
+
+    ProgramId program = new ApplicationId(namespaceId, appName).program(programType, programName);
+    ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+      ProgramRunStatus.valueOf(status.toUpperCase());
+
+    List<RunRecord> records = lifecycleService.getAllVersionsRunRecords(program, runStatus, start, end, resultLimit)
+      .stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList());
+
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
   }
 
   /**
@@ -1536,9 +1554,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the run counts for all program runnables that are passed into the data. The data is an array of
-   * Json objects where each object must contain the following three elements: appId, programType, and programId.
-   * The max number of programs in the request is 100.
+   * Returns the run counts for all program runnables of all versions that are passed into the data. The data is an
+   * array of Json objects where each object must contain the following three elements: appId, programType,
+   * and programId. The max number of programs in the request is 100.
    * <p>
    * Example input:
    * <pre><code>
@@ -1571,18 +1589,28 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/runcount")
   public void getRunCounts(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) throws Exception {
+                           @PathParam("namespace-id") String namespaceId,
+                           @QueryParam("allVersions") boolean allVersions) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     if (programs.size() > 100) {
       throw new BadRequestException(String.format("%d programs found in the request, the maximum number " +
                                                     "supported is 100", programs.size()));
     }
 
-    List<ProgramId> programIds = programs.stream()
-      .map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
+    List<ProgramId> programIds;
+    List<RunCountResult> runCountResults;
+    if (!allVersions) {
+      programIds = programs.stream()
+        .map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
+      runCountResults = lifecycleService.getProgramRunCounts(programIds);
+    } else {
+      programIds = programs.stream()
+        .map(batchProgram -> batchProgramToDefaultProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
+      runCountResults = lifecycleService.getProgramAllVersionsRunCounts(programIds);
+    }
 
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
-    for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
+    for (RunCountResult runCountResult : runCountResults) {
       ProgramId programId = runCountResult.getProgramId();
       Exception exception = runCountResult.getException();
       if (exception == null) {
@@ -2133,5 +2161,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return new ProgramId(namespace, batchProgram.getAppId(), batchProgram.getProgramType(),
                            batchProgram.getProgramId());
     }
+  }
+
+  /**
+   * Convert BatchProgram to ProgramId with the default App version.
+   */
+  private ProgramId batchProgramToDefaultProgramId(String namespace, BatchProgram batchProgram) {
+    ApplicationId applicationId = new ApplicationId(namespace, batchProgram.getAppId());
+    return new ProgramId(applicationId, batchProgram.getProgramType(), batchProgram.getProgramId());
+  }
+
+  /**
+   * Convert BatchProgram to ProgramIds with all app versions
+   */
+  private List<ProgramId> batchProgramToProgramIds(String namespace, BatchProgram batchProgram) {
+    Collection<ApplicationSpecification> allAppVersions = store.getAllAppVersions(
+      new NamespaceId(namespace), batchProgram.getAppId());
+    return allAppVersions.stream().map(applicationSpecification -> {
+                                         ApplicationId applicationId = new ApplicationId(
+                                           namespace, applicationSpecification.getName(),
+                                           applicationSpecification.getAppVersion());
+                                         return new ProgramId(applicationId, batchProgram.getProgramType(),
+                                                              batchProgram.getProgramId());
+                                       }
+    ).collect(Collectors.toList());
   }
 }
