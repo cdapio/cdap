@@ -26,11 +26,13 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggeringInfos;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunStartMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -39,6 +41,7 @@ import io.cdap.cdap.spi.events.EventWriter;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
 import io.cdap.cdap.spi.events.ProgramStatusEvent;
 import io.cdap.cdap.spi.events.ProgramStatusEventDetails;
+import io.cdap.cdap.spi.events.StartMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -160,13 +163,16 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
                     programRunId.getNamespace(),
                     programStatus,
                     RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
-      String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
-      String sysArgsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
       Type argsMapType = new TypeToken<Map<String, String>>() {
       }.getType();
+      Map<String, String> userArgs = GSON.fromJson(properties.get(ProgramOptionConstants.USER_OVERRIDES),
+                                                   argsMapType);
+      Map<String, String> sysArgs = GSON.fromJson(properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES),
+                                                  argsMapType);
       builder = builder
-        .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
-        .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
+        .withUserArgs(userArgs)
+        .withSystemArgs(sysArgs);
+      setStartMetadata(builder, sysArgs, programRunId);
       if (programRunStatus.isEndState()) {
         populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId);
       } else {
@@ -223,5 +229,13 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
           writeInEventWriters(newBuilder);
         });
     }
+  }
+
+  private void setStartMetadata(final ProgramStatusEventDetails.Builder builder,
+                                Map<String, String> sysArgs,
+                                ProgramRunId programRunId) {
+    RunStartMetadata runStartMetadata = AppMetadataStore.createRunStartMetadata(sysArgs, programRunId);
+    StartMetadata startMetadata = TriggeringInfos.fromProtoToSpi(runStartMetadata);
+    builder.withStartMetadata(startMetadata);
   }
 }

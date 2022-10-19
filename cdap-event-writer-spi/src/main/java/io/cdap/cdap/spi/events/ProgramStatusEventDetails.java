@@ -42,13 +42,15 @@ public class ProgramStatusEventDetails {
   private final ExecutionMetrics[] pipelineMetrics;
   @Nullable
   private final String workflowId;
+  @Nullable
+  private final StartMetadata startMetadata;
 
   private ProgramStatusEventDetails(String runID, String programName, String namespace, String applicationName,
                                     String status, long eventTime,
                                     @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
                                     @Nullable String error,
                                     @Nullable ExecutionMetrics[] pipelineMetrics,
-                                    @Nullable String workflowId) {
+                                    @Nullable String workflowId, @Nullable StartMetadata startMetadata) {
     this.runID = runID;
     this.programName = programName;
     this.namespace = namespace;
@@ -60,6 +62,7 @@ public class ProgramStatusEventDetails {
     this.pipelineMetrics = pipelineMetrics;
     this.workflowId = workflowId;
     this.applicationName = applicationName;
+    this.startMetadata = startMetadata;
   }
 
   public static Builder getBuilder(String runID, String applicationName, String programName, String namespace,
@@ -100,6 +103,11 @@ public class ProgramStatusEventDetails {
     return applicationName;
   }
 
+  @Nullable
+  public StartMetadata getStartMetadata() {
+    return startMetadata;
+  }
+
   public static class Builder {
 
     private final String runID;
@@ -114,6 +122,7 @@ public class ProgramStatusEventDetails {
     private String error;
     private String workflowId;
     private ExecutionMetrics[] pipelineMetrics;
+    private StartMetadata startMetadata;
 
     Builder(String runID, String applicationName, String programName, String namespace, String status, long eventTime) {
       this.runID = runID;
@@ -147,10 +156,15 @@ public class ProgramStatusEventDetails {
       return this;
     }
 
+    public Builder withStartMetadata(StartMetadata startMetadata) {
+      this.startMetadata = startMetadata;
+      return this;
+    }
+
     public ProgramStatusEventDetails build() {
       return new ProgramStatusEventDetails(runID, programName, namespace, applicationName, status, eventTime,
                                            userArgs, systemArgs,
-                                           error, pipelineMetrics, workflowId);
+                                           error, pipelineMetrics, workflowId, startMetadata);
     }
   }
 }

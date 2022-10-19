@@ -62,7 +62,7 @@ public class TriggeringInfoCodec implements JsonDeserializer<TriggeringInfo>,
 
   @Override
   @Nullable
-  public TriggeringInfo deserialize(JsonElement json, Type type,
+  public TriggeringInfo deserialize(@Nullable JsonElement json, Type type,
                                     JsonDeserializationContext context) throws JsonParseException {
     if (json == null) {
       return null;
