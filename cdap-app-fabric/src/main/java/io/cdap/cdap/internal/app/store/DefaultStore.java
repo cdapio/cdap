@@ -144,7 +144,7 @@ public class DefaultStore implements Store {
   @Override
   public ProgramDescriptor loadProgram(ProgramId id) throws NotFoundException {
     ApplicationMeta appMeta = TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
+      return getAppMetadataStore(context).getApplication(id.getParent());
     });
 
     if (appMeta == null) {
@@ -290,9 +290,15 @@ public class DefaultStore implements Store {
 
   @Override
   @Nullable
-  public WorkflowStatistics getWorkflowStatistics(WorkflowId id, long startTime,
-                                                  long endTime, List<Double> percentiles) {
+  public WorkflowStatistics getWorkflowStatistics(NamespaceId namespaceId, String appName, String workflowName,
+                                                  long startTime, long endTime, List<Double> percentiles) {
     return TransactionRunners.run(transactionRunner, context -> {
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      if (latestAppMeta == null) {
+        throw new ApplicationNotFoundException(namespaceId.app(appName));
+      }
+      WorkflowId id = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
+                                     workflowName);
       return getWorkflowTable(context).getStatistics(id, startTime, endTime, percentiles);
     });
   }
@@ -305,11 +311,30 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflow,
-                                                                           String runId,
-                                                                           int limit,
+  public WorkflowTable.WorkflowRunRecord getWorkflowRun(NamespaceId namespaceId, String appName, String workflowName,
+                                                        String runId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      if (latestAppMeta == null) {
+        throw new ApplicationNotFoundException(namespaceId.app(appName));
+      }
+      WorkflowId workflowId = new WorkflowId(namespaceId.getNamespace(), appName,
+                                             latestAppMeta.getSpec().getAppVersion(), workflowName);
+      return getWorkflowTable(context).getRecord(workflowId, runId);
+    });
+  }
+
+  @Override
+  public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(NamespaceId namespaceId, String appName,
+                                                                           String program, String runId, int limit,
                                                                            long timeInterval) {
     return  TransactionRunners.run(transactionRunner, context -> {
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      if (latestAppMeta == null) {
+        throw new ApplicationNotFoundException(namespaceId.app(appName));
+      }
+      WorkflowId workflow = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
+                                     program);
       return getWorkflowTable(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
     });
   }
@@ -440,7 +465,7 @@ public class DefaultStore implements Store {
                                                                     ApplicationSpecification appSpec) {
 
     ApplicationMeta existing = TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
+      return getAppMetadataStore(context).getApplication(id);
     });
 
     List<ProgramSpecification> deletedProgramSpecs = Lists.newArrayList();
@@ -476,7 +501,7 @@ public class DefaultStore implements Store {
     Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s", instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
-      ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, id);
+      ApplicationSpecification appSpec = getApplicationSpec(metaStore, id.getParent());
       WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
       WorkerSpecification newSpecification = new WorkerSpecification(workerSpec.getClassName(),
                                                                      workerSpec.getName(),
@@ -499,7 +524,7 @@ public class DefaultStore implements Store {
     Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s", instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
-      ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, id);
+      ApplicationSpecification appSpec = getApplicationSpec(metaStore, id.getParent());
       ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
 
       // Create a new spec copy from the old one, except with updated instances number
@@ -518,7 +543,7 @@ public class DefaultStore implements Store {
   @Override
   public int getServiceInstances(ProgramId id) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
+      ApplicationSpecification appSpec = getApplicationSpec(getAppMetadataStore(context), id.getParent());
       ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
       return serviceSpec.getInstances();
     });
@@ -527,7 +552,7 @@ public class DefaultStore implements Store {
   @Override
   public int getWorkerInstances(ProgramId id) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
+      ApplicationSpecification appSpec = getApplicationSpec(getAppMetadataStore(context), id.getParent());
       WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
       return workerSpec.getInstances();
     });
@@ -745,15 +770,16 @@ public class DefaultStore implements Store {
     });
   }
 
-  private ApplicationSpecification getApplicationSpec(AppMetadataStore mds, ApplicationId id)
-    throws IOException, TableNotFoundException {
-    ApplicationMeta meta = getApplicationMeta(mds, id);
-    return meta == null ? null : meta.getSpec();
+  @Nullable
+  private ApplicationSpecification getApplicationSpec(AppMetadataStore mds,
+                                                      ApplicationId id) throws IOException, TableNotFoundException {
+    return Optional.ofNullable(getApplicationMeta(mds, id)).map(ApplicationMeta::getSpec).orElse(null);
   }
 
-  private ApplicationMeta getApplicationMeta(AppMetadataStore mds, ApplicationId id)
-    throws IOException, TableNotFoundException {
-    return mds.getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
+  @Nullable
+  private ApplicationMeta getApplicationMeta(AppMetadataStore mds,
+                                             ApplicationId id) throws IOException, TableNotFoundException {
+    return mds.getApplication(id);
   }
 
   private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,
@@ -781,7 +807,12 @@ public class DefaultStore implements Store {
     }
   }
 
-  private static ServiceSpecification getServiceSpecOrFail(ProgramId id, ApplicationSpecification appSpec) {
+  private static ServiceSpecification getServiceSpecOrFail(ProgramId id, @Nullable ApplicationSpecification appSpec) {
+    if (appSpec == null) {
+      throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
+                                         ", app id: " + id.getApplication());
+    }
+
     ServiceSpecification spec = appSpec.getServices().get(id.getProgram());
     if (spec == null) {
       throw new NoSuchElementException("no such service @ namespace id: " + id.getNamespace() +
@@ -791,7 +822,12 @@ public class DefaultStore implements Store {
     return spec;
   }
 
-  private static WorkerSpecification getWorkerSpecOrFail(ProgramId id, ApplicationSpecification appSpec) {
+  private static WorkerSpecification getWorkerSpecOrFail(ProgramId id, @Nullable ApplicationSpecification appSpec) {
+    if (appSpec == null) {
+      throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
+                                         ", app id: " + id.getApplication());
+    }
+
     WorkerSpecification workerSpecification = appSpec.getWorkers().get(id.getProgram());
     if (workerSpecification == null) {
       throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
@@ -799,21 +835,6 @@ public class DefaultStore implements Store {
                                          ", worker id: " + id.getProgram());
     }
     return workerSpecification;
-  }
-
-  private ApplicationSpecification getAppSpecOrFail(AppMetadataStore mds, ProgramId id)
-    throws IOException, TableNotFoundException {
-    return getAppSpecOrFail(mds, id.getParent());
-  }
-
-  private ApplicationSpecification getAppSpecOrFail(AppMetadataStore mds, ApplicationId id)
-    throws IOException, TableNotFoundException {
-    ApplicationSpecification appSpec = getApplicationSpec(mds, id);
-    if (appSpec == null) {
-      throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
-                                         ", app id: " + id.getApplication());
-    }
-    return appSpec;
   }
 
   private static ApplicationSpecification replaceWorkerInAppSpec(ApplicationSpecification appSpec,
@@ -921,7 +942,7 @@ public class DefaultStore implements Store {
   @Override
   public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
     return TransactionRunners.run(transactionRunner, context -> {
-      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
+      verifyApplicationExists(context, request.getNamespaceId(), request.getAppName());
       return getAppStateTable(context).get(request);
     }, ApplicationNotFoundException.class);
   }
@@ -929,7 +950,7 @@ public class DefaultStore implements Store {
   @Override
   public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
+      verifyApplicationExists(context, request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).save(request);
     }, ApplicationNotFoundException.class);
   }
@@ -937,7 +958,7 @@ public class DefaultStore implements Store {
   @Override
   public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      verifyApplicationExists(request.getNamespaceId(), request.getAppName());
+      verifyApplicationExists(context, request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).delete(request);
     }, ApplicationNotFoundException.class);
   }
@@ -945,7 +966,7 @@ public class DefaultStore implements Store {
   @Override
   public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      verifyApplicationExists(namespaceId, appName);
+      verifyApplicationExists(context, namespaceId, appName);
       getAppStateTable(context).deleteAll(namespaceId, appName);
     }, ApplicationNotFoundException.class);
   }
@@ -954,12 +975,13 @@ public class DefaultStore implements Store {
     return new AppStateTable(context);
   }
 
-  private void verifyApplicationExists(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
+  private void verifyApplicationExists(StructuredTableContext context,
+                                       NamespaceId namespaceId,
+                                       String appName) throws ApplicationNotFoundException, IOException {
     // Check if app exists
-    ApplicationId appId = namespaceId.app(appName);
-    ApplicationSpecification appSpec = getApplication(appId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId);
+    ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespaceId, appName);
+    if (latest == null || latest.getSpec() == null) {
+      throw new ApplicationNotFoundException(namespaceId.app(appName));
     }
   }
 

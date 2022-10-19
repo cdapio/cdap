@@ -26,6 +26,10 @@ public class WorkflowId extends ProgramId implements ParentedId<ApplicationId> {
     super(namespace, application, ProgramType.WORKFLOW, program);
   }
 
+  public WorkflowId(String namespace, String application, String version, String program) {
+    super(namespace, application, version, ProgramType.WORKFLOW, program);
+  }
+
   public WorkflowId(ApplicationId appId, String program) {
     super(appId, ProgramType.WORKFLOW, program);
   }
