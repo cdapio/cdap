@@ -195,7 +195,7 @@ public class ProgramLifecycleService {
   public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramId> programIds) throws Exception {
     // filter the result
     Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new LinkedHashSet<>(programIds),
-                                                                              authenticationContext.getPrincipal());
+                                                                       authenticationContext.getPrincipal());
     List<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toList());
 
     Map<ProgramId, ProgramStatus> result = new HashMap<>();
@@ -234,7 +234,7 @@ public class ProgramLifecycleService {
       .collect(Collectors.toMap(RunCountResult::getProgramId, c -> c));
 
     List<RunCountResult> result = new ArrayList<>();
-    for (ProgramId programId : programIds) {
+    for (ProgramId programId : programCounts.keySet()) {
       if (!visibleEntities.contains(programId)) {
         result.add(new RunCountResult(programId, null, new UnauthorizedException(principal, programId)));
       } else {
@@ -339,16 +339,9 @@ public class ProgramLifecycleService {
   private void addProgramHistory(List<ProgramHistory> histories, List<ProgramId> programs,
                                  ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
     Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programs),
-                                                                              authenticationContext.getPrincipal());
-    for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit)) {
-      ProgramId programId = programHistory.getProgramId();
-      if (visibleEntities.contains(programId)) {
-        histories.add(programHistory);
-      } else {
-        histories.add(new ProgramHistory(programId, Collections.emptyList(),
-                                      new UnauthorizedException(authenticationContext.getPrincipal(), programId)));
-      }
-    }
+                                                                       authenticationContext.getPrincipal());
+    List<ProgramId> filteredIds = programs.stream().filter(visibleEntities::contains).collect(Collectors.toList());
+    histories.addAll(store.getRuns(filteredIds, programRunStatus, start, end, limit));
   }
 
   /**

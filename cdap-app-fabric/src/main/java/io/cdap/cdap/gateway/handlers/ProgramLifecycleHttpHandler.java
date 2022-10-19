@@ -1021,7 +1021,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private List<BatchProgramSchedule> batchRunTimes(String namespace, Collection<? extends BatchProgram> programs,
                                                    boolean previous) throws Exception {
     List<ProgramId> programIds = programs.stream()
-      .map(p -> batchProgramToProgramId(namespace, p))
+      .map(p -> new ProgramId(namespace, p.getAppId(), p.getProgramType(), p.getProgramId()))
       .collect(Collectors.toList());
 
     Set<ApplicationId> appIds = programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet());
@@ -1321,23 +1321,34 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
-    Map<BatchProgram, ProgramId> programsMap = batchPrograms.stream()
-      .collect(Collectors.toMap(p -> p, p -> batchProgramToProgramId(namespaceId, p)));
+    List<ProgramId> programs = batchPrograms.stream()
+      .map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
+      .collect(Collectors.toList());
 
-    Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programsMap.values());
+    // Get the program status of the latest app version, ProgramId is the latest
+    Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programs);
 
-    List<BatchProgramStatus> result = new ArrayList<>(programsMap.size());
+    List<BatchProgramStatus> result = new ArrayList<>(programs.size());
     for (BatchProgram program : batchPrograms) {
-      ProgramId programId = programsMap.get(program);
-      ProgramStatus status = statuses.get(programId);
-      if (status == null) {
+      ProgramId programId = findProgramId(namespaceId, program, statuses.keySet());
+      if (programId == null) {
         result.add(new BatchProgramStatus(program, HttpResponseStatus.NOT_FOUND.code(),
-                                          new NotFoundException(programId).getMessage(), null));
+                                          new NotFoundException(program).getMessage(), null));
       } else {
-        result.add(new BatchProgramStatus(program, HttpResponseStatus.OK.code(), null, status.name()));
+        result.add(new BatchProgramStatus(program, HttpResponseStatus.OK.code(),
+                                          null, statuses.get(programId).name()));
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+
+  private ProgramId findProgramId(String namespaceId, BatchProgram program, Set<ProgramId> programIds) {
+    List<ProgramId> matched = programIds.stream()
+      .filter(programId ->
+                Objects.equal(namespaceId, programId.getNamespace())
+                  && Objects.equal(program, programId.getBatchProgram())).collect(Collectors.toList());
+
+    return matched.isEmpty() ? null : matched.get(0);
   }
 
   /**
@@ -1579,7 +1590,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     List<ProgramId> programIds = programs.stream()
-      .map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
+      .map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
+      .collect(Collectors.toList());
 
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
     for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
@@ -1639,7 +1651,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     List<ProgramId> programIds =
-      programs.stream().map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram))
+      programs.stream().map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
         .collect(Collectors.toList());
 
     List<BatchProgramHistory> response = new ArrayList<>(programs.size());
@@ -2116,22 +2128,5 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
     }
     return latestApplicationMeta.getSpec().getAppVersion();
-  }
-
-  /**
-   * Convert BatchProgram to ProgramId with the latest App version.
-   * Since a programId is needed in BatchProgramResult, default version will be used here if application
-   * can not be found.
-   */
-  private ProgramId batchProgramToProgramId(String namespace, BatchProgram batchProgram) {
-    try {
-      ApplicationId applicationId = new ApplicationId(namespace, batchProgram.getAppId(),
-                                                      getLatestAppVersion(new NamespaceId(namespace),
-                                                                          batchProgram.getAppId()));
-      return new ProgramId(applicationId, batchProgram.getProgramType(), batchProgram.getProgramId());
-    } catch (ApplicationNotFoundException e) {
-      return new ProgramId(namespace, batchProgram.getAppId(), batchProgram.getProgramType(),
-                           batchProgram.getProgramId());
-    }
   }
 }

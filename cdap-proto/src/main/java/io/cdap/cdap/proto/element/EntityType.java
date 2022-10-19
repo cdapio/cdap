@@ -16,6 +16,7 @@
 package io.cdap.cdap.proto.element;
 
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
@@ -51,6 +52,7 @@ public enum EntityType {
   INSTANCE(InstanceId.class),
   KERBEROSPRINCIPAL(KerberosPrincipalId.class),
   NAMESPACE(NamespaceId.class),
+  APPLICATIONREFERENCE(ApplicationReference.class),
   APPLICATION(ApplicationId.class),
   PROGRAM(ProgramId.class),
   PROGRAM_RUN(ProgramRunId.class),

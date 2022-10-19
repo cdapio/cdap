@@ -76,6 +76,10 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
     return new NamespaceId(namespace);
   }
 
+  public ApplicationReference getApplicationReference() {
+    return new ApplicationReference(namespace, application);
+  }
+
   public ProgramId program(ProgramType type, String program) {
     return new ProgramId(this, type, program);
   }

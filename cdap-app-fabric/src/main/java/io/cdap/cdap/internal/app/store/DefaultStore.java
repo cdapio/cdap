@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.store;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -910,7 +911,7 @@ public class DefaultStore implements Store {
         appMetadataStore.filterProgramsExistence(programIds));
 
       for (ProgramId programId : programIds) {
-        Long count = runCounts.get(programId);
+        Long count = getRunCount(programId, runCounts);
         if (count == null) {
           result.add(new RunCountResult(programId, null, new NotFoundException(programId)));
         } else {
@@ -919,6 +920,21 @@ public class DefaultStore implements Store {
       }
       return result;
     });
+  }
+
+  // Passed in ProgramId is always "-SNAPSHOT" version
+  // Get the run count from actual latest version or "-SNAPSHOT" version
+  private Long getRunCount(ProgramId program, Map<ProgramId, Long> runCounts) {
+    List<ProgramId> matched = runCounts.keySet()
+      .stream()
+      .filter(programId ->
+                Objects.equal(program, new ProgramId(programId.getNamespace(),
+                                                     programId.getApplication(),
+                                                     programId.getType(),
+                                                     programId.getProgram())))
+      .collect(Collectors.toList());
+
+    return matched.isEmpty() ? null : runCounts.get(matched.get(0));
   }
 
   @Override
@@ -931,20 +947,36 @@ public class DefaultStore implements Store {
       Set<ProgramId> existingPrograms = appMetadataStore.filterProgramsExistence(programs);
 
       for (ProgramId programId : programs) {
-        if (!existingPrograms.contains(programId)) {
+        ProgramId latestProgramId = findAppProgramId(programId, existingPrograms);
+        if (latestProgramId == null) {
           result.add(new ProgramHistory(programId, Collections.emptyList(), new ProgramNotFoundException(programId)));
           continue;
         }
 
-        List<RunRecord> runs = appMetadataStore.getRuns(programId, status, startTime, endTime,
+        List<RunRecord> runs = appMetadataStore.getRuns(latestProgramId, status, startTime, endTime,
                                                         limitPerProgram, null)
           .values().stream()
           .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
-        result.add(new ProgramHistory(programId, runs, null));
+        result.add(new ProgramHistory(latestProgramId, runs, null));
       }
 
       return result;
     });
+  }
+
+  // Passed in ProgramId is always "-SNAPSHOT" version
+  // Get the actual latest version or "-SNAPSHOT" version
+  private ProgramId findAppProgramId(ProgramId program, Set<ProgramId> existingPrograms) {
+    List<ProgramId> matched = existingPrograms
+      .stream()
+      .filter(programId ->
+                Objects.equal(program, new ProgramId(programId.getNamespace(),
+                                                     programId.getApplication(),
+                                                     programId.getType(),
+                                                     programId.getProgram())))
+      .collect(Collectors.toList());
+
+    return matched.isEmpty() ? null : matched.get(0);
   }
 
   @Override

@@ -16,6 +16,7 @@
 package io.cdap.cdap.proto.id;
 
 import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
 import org.apache.twill.api.RunId;
@@ -95,6 +96,14 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   @Override
   public ApplicationId getParent() {
     return new ApplicationId(namespace, application, version);
+  }
+
+  public ApplicationReference getApplicationReference() {
+    return new ApplicationReference(namespace, application);
+  }
+
+  public BatchProgram getBatchProgram() {
+    return new BatchProgram(application, type, program);
   }
 
   /**

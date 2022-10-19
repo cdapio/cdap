@@ -50,6 +50,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -464,7 +465,8 @@ public class AppMetadataStore {
   }
 
   /**
-   * Filter the given set of programs and return those that exist.
+   * Filter the given set of programs and return the latest versions that exist.
+   * If the latest version does not exist, get "-SNAPSHOT" version
    *
    * @param programIds the set of program ids to filter
    * @return the set of program ids that exist
@@ -472,32 +474,64 @@ public class AppMetadataStore {
    */
   public Set<ProgramId> filterProgramsExistence(Collection<ProgramId> programIds) throws IOException {
     Set<ApplicationId> appIds = programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet());
-    List<List<Field<?>>> multiKeys = new ArrayList<>();
+    List<Range> multiRanges = new ArrayList<>();
     for (ApplicationId appId: appIds) {
-      multiKeys.add(getApplicationPrimaryKeys(appId));
+      // Create Scan ranges to get the "latest" and "-SNAPSHOT" versions
+      multiRanges.add(Range.singleton(getLatestApplicationKeys(appId)));
+      multiRanges.add(Range.singleton(getApplicationPrimaryKeys(appId)));
     }
 
-    Set<ProgramId> existingPrograms = new HashSet<>();
-    for (StructuredRow row : getApplicationSpecificationTable().multiRead(multiKeys)) {
-      ApplicationId appId = getApplicationIdFromRow(row);
-      String appMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
-      if (appMeta == null) {
-        throw new IOException("Missing application metadata for application " + appId);
-      }
-      try (JsonReader reader = new JsonReader(new StringReader(appMeta))) {
-        reader.beginObject();
-        while (reader.peek() != JsonToken.END_OBJECT) {
-          String name = reader.nextName();
-          if (name.equals("spec")) {
-            existingPrograms.addAll(ApplicationSpecificationAdapter.getProgramIds(appId, reader));
-          } else {
-            reader.skipValue();
-          }
+    Map<ApplicationReference, Set<ProgramId>> latestProgramIdsMap = new HashMap<>();
+    Map<ApplicationReference, String> latestAppVersions = new HashMap<>();
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().multiScan(multiRanges, appIds.size() * 2)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        ApplicationId appId = getApplicationIdFromRow(row);
+        String appMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
+        if (appMeta == null) {
+          throw new IOException("Missing application metadata for application " + appId);
         }
-        reader.endObject();
+        Set<ProgramId> currentProgramIds = new HashSet<>();
+        try (JsonReader reader = new JsonReader(new StringReader(appMeta))) {
+          reader.beginObject();
+          while (reader.peek() != JsonToken.END_OBJECT) {
+            String name = reader.nextName();
+            if (name.equals("spec")) {
+              currentProgramIds = ApplicationSpecificationAdapter.getProgramIds(appId, reader);
+            } else {
+              reader.skipValue();
+            }
+          }
+          reader.endObject();
+        }
+        ApplicationReference appRef = appId.getApplicationReference();
+        String isLatest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
+        // Get either the latest versioned or "-SNAPSHOT" programs
+        if (Objects.equals(isLatest, "true") || !latestProgramIdsMap.containsKey(appRef)) {
+          latestProgramIdsMap.put(appRef, currentProgramIds);
+          latestAppVersions.put(appRef, appId.getVersion());
+        }
       }
     }
-    return programIds.stream().filter(existingPrograms::contains).collect(Collectors.toSet());
+
+    List<ProgramId> versionedProgramIds = new ArrayList<>();
+    for (ProgramId id : programIds) {
+      ApplicationReference appRef = id.getApplicationReference();
+      if (latestAppVersions.containsKey(appRef)) {
+        ProgramId newId = appRef.app(latestAppVersions.get(appRef)).program(id.getType(), id.getProgram());
+        versionedProgramIds.add(newId);
+      } else {
+        versionedProgramIds.add(id);
+      }
+    }
+
+    Set<ProgramId> existingPrograms = latestProgramIdsMap.values()
+      .stream()
+      .flatMap(Collection::stream)
+      .collect(Collectors.toSet());
+
+    return versionedProgramIds.stream().filter(existingPrograms::contains).collect(Collectors.toSet());
   }
 
   /**
@@ -636,12 +670,12 @@ public class AppMetadataStore {
       return;
     }
 
-    // Use the actual runID from DB
-    workflowRunId = record.getProgramRunId();
-    runRecordFields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, workflowRunId,
-                                                   RunIds.getTime(workflowRun, TimeUnit.SECONDS));
+    // Use the actual ProgramRunId from DB
+    ProgramRunId actualProgramRunId = record.getProgramRunId();
+    List<Field<?>> actualRunRecordFields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, actualProgramRunId,
+                                                                        RunIds.getTime(workflowRun, TimeUnit.SECONDS));
 
-    List<Field<?>> primaryKeys = getWorkflowPrimaryKeys(workflowRunId, workflowNodeId);
+    List<Field<?>> primaryKeys = getWorkflowPrimaryKeys(actualProgramRunId, workflowNodeId);
     WorkflowNodeStateDetail nodeState = getWorkflowNodeStateTable().read(primaryKeys)
       .map(r -> r.getString(StoreDefinition.AppMetadataStore.NODE_STATE_DATA))
       .map(f -> GSON.fromJson(f, WorkflowNodeStateDetail.class))
@@ -665,7 +699,7 @@ public class AppMetadataStore {
       Map<String, String> properties = new HashMap<>(record.getProperties());
       properties.put(workflowNodeId, programRunId.getRun());
       writeToStructuredTableWithPrimaryKeys(
-        runRecordFields, RunRecordDetail.builder(record).setProperties(properties).setSourceId(sourceId).build(),
+        actualRunRecordFields, RunRecordDetail.builder(record).setProperties(properties).setSourceId(sourceId).build(),
         getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     }
   }
@@ -1974,6 +2008,10 @@ public class AppMetadataStore {
 
   private List<Field<?>> getApplicationPrimaryKeys(ApplicationId appId) {
     return getApplicationPrimaryKeys(appId.getNamespace(), appId.getApplication(), appId.getVersion());
+  }
+
+  private List<Field<?>> getLatestApplicationKeys(ApplicationId appId) {
+    return getLatestApplicationKeys(appId.getNamespace(), appId.getApplication());
   }
 
   private List<Field<?>> getLatestApplicationKeys(String namespaceId, String appName) {
