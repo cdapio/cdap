@@ -480,11 +480,32 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
-                             @QueryParam("limit") @DefaultValue("100") final int resultLimit)
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit,
+                             @QueryParam("allVersions") Boolean allVersions)
     throws Exception {
-    programHistory(request, responder, namespaceId, appName,
-                   getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
-                   programName, status, startTs, endTs, resultLimit);
+    if (allVersions != null && allVersions) {
+      // get runs of all versions
+      ProgramType programType = getProgramType(type);
+      long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
+      long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
+      List<RunRecord> records = new ArrayList<>();
+      Collection<ApplicationSpecification> allAppVersions = store.getAllAppVersions(
+        new ApplicationId(namespaceId, appName));
+      for (ApplicationSpecification applicationSpecification : allAppVersions) {
+        ProgramId program = new ApplicationId(namespaceId, appName, applicationSpecification.getAppVersion())
+          .program(programType, programName);
+        ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+          ProgramRunStatus.valueOf(status.toUpperCase());
+        records.addAll(lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit)
+                         .stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList()));
+      }
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
+    } else {
+      // get latest version
+      programHistory(request, responder, namespaceId, appName,
+                     getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
+                     programName, status, startTs, endTs, resultLimit);
+    }
   }
 
   /**
