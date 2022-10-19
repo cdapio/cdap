@@ -59,6 +59,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -432,11 +433,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramId> programIds) {
+  public Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramReference> programRefs) {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       // Get the active runs for programs that exist
-      return getAppMetadataStore(context).getActiveRuns(appMetadataStore.filterProgramsExistence(programIds));
+      return appMetadataStore.getActiveRuns(appMetadataStore.filterProgramsExistence(programRefs));
     });
   }
 
@@ -901,20 +902,24 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds) {
+  public List<RunCountResult> getProgramRunCounts(Collection<ProgramReference> programRefs) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<RunCountResult> result = new ArrayList<>();
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
 
       Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCounts(
-        appMetadataStore.filterProgramsExistence(programIds));
+        appMetadataStore.filterProgramsExistence(programRefs));
 
-      for (ProgramId programId : programIds) {
-        Long count = runCounts.get(programId);
-        if (count == null) {
-          result.add(new RunCountResult(programId, null, new NotFoundException(programId)));
+      Map<ProgramReference, ProgramId> programRefsMap =
+        runCounts.keySet().stream().collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
+
+      for (ProgramReference programRef : programRefs) {
+        ProgramId program = programRefsMap.get(programRef);
+        if (program == null) {
+          result.add(new RunCountResult(programRef.id(ApplicationId.DEFAULT_VERSION),
+                                        null, new NotFoundException(programRef)));
         } else {
-          result.add(new RunCountResult(programId, count, null));
+          result.add(new RunCountResult(program, runCounts.get(program), null));
         }
       }
       return result;
@@ -922,25 +927,30 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
+  public List<ProgramHistory> getRuns(Collection<ProgramReference> programs, ProgramRunStatus status,
                                       long startTime, long endTime, int limitPerProgram) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<ProgramHistory> result = new ArrayList<>(programs.size());
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
 
       Set<ProgramId> existingPrograms = appMetadataStore.filterProgramsExistence(programs);
+      Map<ProgramReference, ProgramId> programRefsMap =
+        existingPrograms.stream().collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
 
-      for (ProgramId programId : programs) {
-        if (!existingPrograms.contains(programId)) {
-          result.add(new ProgramHistory(programId, Collections.emptyList(), new ProgramNotFoundException(programId)));
+      for (ProgramReference programRef : programs) {
+        ProgramId latestProgramId = programRefsMap.get(programRef);
+        if (latestProgramId == null) {
+          ProgramId defaultVersion = programRef.id(ApplicationId.DEFAULT_VERSION);
+          result.add(new ProgramHistory(defaultVersion, Collections.emptyList(),
+                                        new ProgramNotFoundException(defaultVersion)));
           continue;
         }
 
-        List<RunRecord> runs = appMetadataStore.getRuns(programId, status, startTime, endTime,
+        List<RunRecord> runs = appMetadataStore.getRuns(latestProgramId, status, startTime, endTime,
                                                         limitPerProgram, null)
           .values().stream()
           .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
-        result.add(new ProgramHistory(programId, runs, null));
+        result.add(new ProgramHistory(latestProgramId, runs, null));
       }
 
       return result;

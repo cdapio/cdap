@@ -539,7 +539,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(120000));
     startProgram(workflowId, args);
 
-    // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
+    // should be safe to wait for starting since the provisioner is configured to sleep while creating a cluster
     waitState(workflowId, io.cdap.cdap.proto.ProgramStatus.STARTING.name());
     List<RunRecord> runRecords = getProgramRuns(workflowId, ProgramRunStatus.PENDING);
     Assert.assertEquals(1, runRecords.size());
