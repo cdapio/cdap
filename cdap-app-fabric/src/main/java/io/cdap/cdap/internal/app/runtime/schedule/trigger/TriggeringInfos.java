@@ -141,6 +141,11 @@ public final class TriggeringInfos {
     }
   }
 
+  /**
+   * Converts proto {@link RunStartMetadata} to spi {@link StartMetadata}
+   * @param runStartMetadata
+   * @return StartMetadata event writer spi
+   */
   public static StartMetadata fromProtoToSpi(RunStartMetadata runStartMetadata) {
     return new StartMetadata(StartType.valueOfCategoryName(runStartMetadata.getType().getCategoryName()),
                              fromProtoToSpi(runStartMetadata.getTriggeringInfo()));
