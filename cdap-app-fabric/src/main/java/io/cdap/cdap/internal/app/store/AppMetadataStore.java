@@ -1709,6 +1709,26 @@ public class AppMetadataStore {
     return getRuns(Range.singleton(prefix), status, limit, null, filter);
   }
 
+  /**
+   * Check if there are active runs in the given application, active runs means program run with status STARTING,
+   * PENDING, RUNNING or SUSPENDED.
+   *
+   * @param namespaceId of the  given app
+   * @param appName of the  given app
+   * @return true if there are active runs associated with the app else return false.
+   */
+  public boolean hasActiveRuns(NamespaceId namespaceId, String appName) throws IOException {
+    List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId, appName);
+    return !getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, 1, null, null).isEmpty();
+  }
+
+  private List<Field<?>> getRunRecordApplicationPrefix(String status, NamespaceId namespaceId, String appName) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appName));
+    return fields;
+  }
+
 
   private Map<ProgramRunId, RunRecordDetail> getProgramRuns(@Nullable ProgramId programId, ProgramRunStatus status,
                                                             long startTime, long endTime, int limit,

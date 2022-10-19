@@ -768,9 +768,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Start a service from the App
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    ApplicationDetail appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
-    ApplicationId applicationId = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME,
-                                                    appDetails.getAppVersion());
+    ApplicationId applicationId = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, AllProgramsApp.NAME,
                                          ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     startProgram(program);
@@ -779,9 +777,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + applicationId +
-                          "' could not be deleted. Reason: The following programs are still running: "
-                          + program.getId(), response.getResponseBodyAsString());
+    Assert.assertEquals("'" + applicationId + 
+                          "' could not be deleted. Reason: The app has programs that are still running.",
+                        response.getResponseBodyAsString());
 
     stopProgram(program);
     waitState(program, "STOPPED");
@@ -817,7 +815,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
     ApplicationId appId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION1);
     Assert.assertEquals(200, deploy(appId, appRequest).getResponseCode());
-    appDetails = getAppDetails(appId.getNamespace(), appId.getApplication());
+    ApplicationDetail appDetails = getAppDetails(appId.getNamespace(), appId.getApplication());
     appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetails.getAppVersion());
 
     // Start a service for the App

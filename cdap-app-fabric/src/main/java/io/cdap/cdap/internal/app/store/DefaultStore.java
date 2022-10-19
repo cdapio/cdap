@@ -440,6 +440,13 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Override
+  public boolean hasActiveRuns(NamespaceId namespaceId, String appName) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).hasActiveRuns(namespaceId, appName);
+    });
+  }
+
   /**
    * Returns run record for a given run.
    *

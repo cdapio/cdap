@@ -902,8 +902,23 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     // since already checked DELETE privileges above, no need to check again for appDetail
     appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appMeta.getSpec().getAppVersion());
-    ensureNoRunningPrograms(appId);
+    // ensure no running programs across all versions of the application
+    ensureNoRunningPrograms(appId.getNamespaceId(), appId.getApplication());
     deleteApp(appId, appMeta.getSpec());
+  }
+
+  /**
+   * Find if the given application has running programs
+   *
+   * @param namespaceId the namespaceId find running programs for
+   * @param appName the name of the application to find running programs for
+   * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
+   */
+  private void ensureNoRunningPrograms(NamespaceId namespaceId, String appName) throws CannotBeDeletedException {
+    //Check if all are stopped.
+    if (store.hasActiveRuns(namespaceId, appName)) {
+      throw new CannotBeDeletedException(namespaceId.app(appName), "The app has programs that are still running.");
+    }
   }
 
   /**

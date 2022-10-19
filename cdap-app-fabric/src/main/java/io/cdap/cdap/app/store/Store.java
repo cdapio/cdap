@@ -247,6 +247,14 @@ public interface Store {
   void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer);
 
   /**
+   * Checks if there are active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ApplicationId.
+   * @param namespaceId the namespace id to match against
+   * @param appName the app name to match against
+   * @return if the application has active run records (true) else false
+   */
+  boolean hasActiveRuns(NamespaceId namespaceId, String appName);
+
+  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
    * @param namespaceId the namespace id to match against
    * @return map of logged runs
@@ -371,7 +379,8 @@ public interface Store {
   /**
    * Returns a collection of all application specs of all the versions of the application by id
    *
-   * @param id application id
+   * @param namespaceId the namespace id
+   * @param appName the name of the application
    * @return collection of all application specs of all the application versions
    */
   Collection<ApplicationSpecification> getAllAppVersions(NamespaceId namespaceId, String appName);
