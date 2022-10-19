@@ -25,11 +25,18 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
 import io.cdap.cdap.proto.ArgumentMapping;
 import io.cdap.cdap.proto.PluginPropertyMapping;
+import io.cdap.cdap.proto.RunStartMetadata;
 import io.cdap.cdap.proto.TriggeringInfo;
 import io.cdap.cdap.proto.TriggeringPipelineId;
 import io.cdap.cdap.proto.TriggeringPropertyMapping;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.spi.events.StartMetadata;
+import io.cdap.cdap.spi.events.StartType;
+import io.cdap.cdap.spi.events.trigger.CompositeTriggeringInfo;
+import io.cdap.cdap.spi.events.trigger.PartitionTriggeringInfo;
+import io.cdap.cdap.spi.events.trigger.ProgramStatusTriggeringInfo;
+import io.cdap.cdap.spi.events.trigger.TimeTriggeringInfo;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +52,8 @@ import java.util.Map;
 public class TriggeringInfosTest {
 
   private static TriggerInfo time, program, partition;
-  private static String namespace, appName, programName, version, cron;
+  private static TriggeringInfo timeProto, programProto, partitionProto, andProto;
+  private static String namespace, appName, programName, version, cron, scheduleName, runId;
   private static String triggerMappingString = "{\"arguments\": [],\"pluginProperties\": [{\"pipelineId\": " +
     "{\"namespace\": \"testNameSpace\",\"pipelineName\": \"pipeline\"},\"stageName\": \"File\",\"source\": " +
     "\"sampleSize\",\"target\": \"sample-size-arg\"}]}";
@@ -57,11 +65,40 @@ public class TriggeringInfosTest {
     programName = "testProgram";
     version = "1.0.0";
     cron = "* * * * 1 1";
+    scheduleName = "testSchedule";
+    runId = "678d2401-1dd4-11b2-8ff7-000000dae054";
     time = new DefaultTimeTriggerInfo(cron, 1000000);
     program = new DefaultProgramStatusTriggerInfo(namespace, appName, ProgramType.WORKFLOW, programName,
                                                   RunIds.generate(), ProgramStatus.COMPLETED,
                                                   null, Collections.emptyMap());
     partition = new DefaultPartitionTriggerInfo(namespace, "testDataset", 10, 20);
+
+    TriggeringPropertyMapping mapping = new TriggeringPropertyMapping(
+      Arrays.asList(new ArgumentMapping[]{}),
+      Arrays.asList(new PluginPropertyMapping[]{
+        new PluginPropertyMapping("File", "sampleSize", "sample-size-arg",
+                                  new TriggeringPipelineId(namespace, "pipeline"))
+      })
+    );
+
+    timeProto = new TriggeringInfo
+      .TimeTriggeringInfo(createScheduleId(), Collections.emptyMap(), cron);
+    programProto = new TriggeringInfo.ProgramStatusTriggeringInfo(createScheduleId(),
+                                   Collections.emptyMap(),
+                                   new ProgramRunId(namespace, appName,
+                                                    io.cdap.cdap.proto.ProgramType.WORKFLOW, programName,
+                                                    runId));
+    partitionProto = new TriggeringInfo
+      .PartitionTriggeringInfo(createScheduleId(), Collections.emptyMap(),
+                               "testDataset", namespace, 10, 20);
+    TriggeringInfo timeTriggeringInfo = new TriggeringInfo
+      .TimeTriggeringInfo(createScheduleId(), Collections.emptyMap(), cron);
+    TriggeringInfo partTriggeringInfo = new TriggeringInfo
+      .PartitionTriggeringInfo(createScheduleId(), Collections.emptyMap(),
+                               "testDataset", namespace, 10, 20);
+    andProto = new TriggeringInfo
+      .AndTriggeringInfo(Arrays.asList(new TriggeringInfo[]{partTriggeringInfo, timeTriggeringInfo}),
+                         createScheduleId(), Collections.emptyMap(), mapping);
   }
 
   @Test
@@ -73,14 +110,8 @@ public class TriggeringInfosTest {
     TriggeringInfo triggeringInfo = TriggeringInfos
       .fromTriggeringScheduleInfo(info, Trigger.Type.PROGRAM_STATUS, createScheduleId());
 
-    TriggeringInfo progTrigInfo = new TriggeringInfo
-      .ProgramStatusTriggeringInfo(createScheduleId(),
-                                   Collections.emptyMap(),
-                                   new ProgramRunId(namespace, appName,
-                                                    io.cdap.cdap.proto.ProgramType.WORKFLOW, programName,
-                                                    "678d2401-1dd4-11b2-8ff7-000000dae054"));
     verifyProgramStatusTriggeringInfo((TriggeringInfo.ProgramStatusTriggeringInfo) triggeringInfo,
-                                      (TriggeringInfo.ProgramStatusTriggeringInfo) progTrigInfo);
+                                      (TriggeringInfo.ProgramStatusTriggeringInfo) programProto);
   }
 
   @Test
@@ -90,9 +121,7 @@ public class TriggeringInfosTest {
                                                                     Collections.emptyMap());
     TriggeringInfo triggeringInfo = TriggeringInfos
       .fromTriggeringScheduleInfo(info, Trigger.Type.TIME, createScheduleId());
-    TriggeringInfo timeTriggeringInfo = new TriggeringInfo
-      .TimeTriggeringInfo(createScheduleId(), Collections.emptyMap(), cron);
-    Assert.assertEquals(triggeringInfo, timeTriggeringInfo);
+    Assert.assertEquals(triggeringInfo, timeProto);
   }
 
   @Test
@@ -102,10 +131,7 @@ public class TriggeringInfosTest {
                                                                     Collections.emptyMap());
     TriggeringInfo triggeringInfo = TriggeringInfos
       .fromTriggeringScheduleInfo(info, Trigger.Type.PARTITION, createScheduleId());
-    TriggeringInfo partTriggeringInfo = new TriggeringInfo
-      .PartitionTriggeringInfo(createScheduleId(), Collections.emptyMap(),
-                               "testDataset", namespace, 10, 20);
-    Assert.assertEquals(triggeringInfo, partTriggeringInfo);
+    Assert.assertEquals(triggeringInfo, partitionProto);
   }
 
   @Test
@@ -117,26 +143,62 @@ public class TriggeringInfosTest {
                                                                     props);
     TriggeringInfo triggeringInfo = TriggeringInfos
       .fromTriggeringScheduleInfo(info, Trigger.Type.AND, createScheduleId());
-    TriggeringInfo timeTriggeringInfo = new TriggeringInfo
-      .TimeTriggeringInfo(createScheduleId(), Collections.emptyMap(), cron);
-    TriggeringInfo partTriggeringInfo = new TriggeringInfo
-      .PartitionTriggeringInfo(createScheduleId(), Collections.emptyMap(),
-                               "testDataset", namespace, 10, 20);
-    TriggeringPropertyMapping mapping = new TriggeringPropertyMapping(
-      Arrays.asList(new ArgumentMapping[]{}),
-      Arrays.asList(new PluginPropertyMapping[]{
-        new PluginPropertyMapping("File", "sampleSize", "sample-size-arg",
-                                  new TriggeringPipelineId(namespace, "pipeline"))
-      })
-    );
-    TriggeringInfo andTriggeringInfo = new TriggeringInfo
-      .AndTriggeringInfo(Arrays.asList(new TriggeringInfo[]{partTriggeringInfo, timeTriggeringInfo}),
-                         createScheduleId(), Collections.emptyMap(), mapping);
-    Assert.assertEquals(triggeringInfo, andTriggeringInfo);
+    Assert.assertEquals(triggeringInfo, andProto);
   }
 
-  private ScheduleId createScheduleId() {
-    return new ScheduleId(namespace, appName, version, "testSchedule");
+  @Test
+  public void testFromProtoToSpi() {
+    // Program status
+    StartMetadata programFromProto =
+      TriggeringInfos.fromProtoToSpi(new RunStartMetadata(RunStartMetadata.Type.PROGRAM_STATUS, programProto));
+    ProgramStatusTriggeringInfo programSpi =
+      new ProgramStatusTriggeringInfo(new io.cdap.cdap.spi.events.trigger.ScheduleId(appName, scheduleName),
+                                      runId, programName, appName, namespace, Collections.emptyMap());
+    StartMetadata programStartMetadata = new StartMetadata(StartType.PROGRAM_STATUS, programSpi);
+    Assert.assertEquals(programFromProto, programStartMetadata);
+
+    // Time
+    StartMetadata timeFromProto =
+      TriggeringInfos.fromProtoToSpi(new RunStartMetadata(RunStartMetadata.Type.TIME, timeProto));
+    TimeTriggeringInfo timeSpi =
+      new TimeTriggeringInfo(new io.cdap.cdap.spi.events.trigger.ScheduleId(appName, scheduleName),
+                                      cron, Collections.emptyMap());
+    StartMetadata timeStartMetadata = new StartMetadata(StartType.TIME, timeSpi);
+    Assert.assertEquals(timeFromProto, timeStartMetadata);
+
+    // Partition
+    StartMetadata partitionFromProto =
+      TriggeringInfos.fromProtoToSpi(new RunStartMetadata(RunStartMetadata.Type.PARTITION, partitionProto));
+    PartitionTriggeringInfo partitionSpi =
+      new PartitionTriggeringInfo(namespace, "testDataset", 10, 20);
+    StartMetadata partitionStartMetadata = new StartMetadata(StartType.PARTITION, partitionSpi);
+    Assert.assertEquals(partitionFromProto, partitionStartMetadata);
+
+    // And
+    StartMetadata andFromProto =
+      TriggeringInfos.fromProtoToSpi(new RunStartMetadata(RunStartMetadata.Type.AND, andProto));
+    CompositeTriggeringInfo compositeSpi
+      = new CompositeTriggeringInfo(io.cdap.cdap.spi.events.trigger.TriggeringInfo.Type.AND,
+                                    new io.cdap.cdap.spi.events.trigger.ScheduleId(appName, scheduleName),
+                                    Arrays.asList(new io.cdap.cdap.spi.events
+                                      .trigger.TriggeringInfo[] {partitionSpi, timeSpi}),
+                                    getSpiMapping());
+    StartMetadata andStartMetadata = new StartMetadata(StartType.AND, compositeSpi);
+    Assert.assertEquals(andFromProto, andStartMetadata);
+  }
+
+  private static ScheduleId createScheduleId() {
+    return new ScheduleId(namespace, appName, version, scheduleName);
+  }
+
+  private static io.cdap.cdap.spi.events.trigger.TriggeringPropertyMapping getSpiMapping() {
+    return new io.cdap.cdap.spi.events.trigger.TriggeringPropertyMapping(
+      Arrays.asList(new io.cdap.cdap.spi.events.trigger.ArgumentMapping[]{}),
+      Arrays.asList(new io.cdap.cdap.spi.events.trigger.PluginPropertyMapping[]{
+        new io.cdap.cdap.spi.events.trigger.PluginPropertyMapping("File",
+                                                                  "sampleSize", "sample-size-arg",
+                                                                  namespace, "pipeline")})
+    );
   }
 
   private void verifyProgramStatusTriggeringInfo(TriggeringInfo.ProgramStatusTriggeringInfo a,

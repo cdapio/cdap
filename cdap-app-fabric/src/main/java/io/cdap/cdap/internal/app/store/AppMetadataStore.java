@@ -2199,7 +2199,7 @@ public class AppMetadataStore {
    * @return
    * @throws IOException
    */
-  public RunStartMetadata createRunStartMetadata(Map<String, String> sysArgs, ProgramRunId programRunId) {
+  public static RunStartMetadata createRunStartMetadata(Map<String, String> sysArgs, ProgramRunId programRunId) {
     if (sysArgs == null || !sysArgs.containsKey(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO)) {
       return new RunStartMetadata(RunStartMetadata.Type.MANUAL, null);
     }
