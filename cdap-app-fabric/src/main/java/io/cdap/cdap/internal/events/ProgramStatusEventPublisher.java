@@ -217,13 +217,13 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
     }
     if (status.isEndState()) {
       CompletableFuture.supplyAsync(() -> {
-          try {
-            return metricsProvider.retrieveMetrics(runId);
-          } catch (MetricRetrievalException e) {
-            LOG.error("Error retrieving metrics from provider. ", e);
-            return new ExecutionMetrics[]{};
-          }
-        })
+        try {
+          return metricsProvider.retrieveMetrics(runId);
+        } catch (MetricRetrievalException e) {
+          LOG.error("Error retrieving metrics from provider. ", e);
+          return new ExecutionMetrics[]{};
+        }
+      })
         .thenAccept(metrics -> {
           ProgramStatusEventDetails.Builder newBuilder = builder.withPipelineMetrics(metrics);
           writeInEventWriters(newBuilder);
