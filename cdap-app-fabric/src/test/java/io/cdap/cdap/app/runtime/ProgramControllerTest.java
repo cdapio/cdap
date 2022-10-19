@@ -21,20 +21,25 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.twill.common.Threads;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
@@ -89,6 +94,39 @@ public class ProgramControllerTest {
     Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
   }
 
+  @Test
+  public void testAddListenerRace() throws InterruptedException, ExecutionException, TimeoutException {
+    ProgramRunId runId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+
+    // Testing race condition described in https://cdap.atlassian.net/browse/CDAP-19827
+    // Basically is the race condition between addListener and the executor thread when there is thread
+    // interruption to the caller thread of the addListener method.
+    for (int i = 0; i < 100; i++) {
+      TestController controller = new TestController(runId);
+      CompletableFuture<ProgramController.State> future = new CompletableFuture<>();
+      Thread t = new Thread(() -> {
+        try {
+          controller.addListener(new AbstractListener() {
+            @Override
+            public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+              future.complete(currentState);
+            }
+          }, Threads.SAME_THREAD_EXECUTOR);
+        } catch (Exception e) {
+          // Interrupted exception is expected
+          if (!(e.getCause() instanceof InterruptedException)) {
+            future.completeExceptionally(e.getCause());
+          }
+        }
+      });
+      t.start();
+      t.interrupt();
+      t.join();
+
+      Assert.assertEquals(ProgramController.State.STARTING, future.get(5, TimeUnit.SECONDS));
+    }
+  }
+
   private static final class TestService extends AbstractIdleService {
 
     private final long startDelay;
@@ -107,6 +145,33 @@ public class ProgramControllerTest {
     @Override
     protected void shutDown() throws Exception {
       TimeUnit.MILLISECONDS.sleep(stopDelay);
+    }
+  }
+
+  private static final class TestController extends AbstractProgramController {
+
+    TestController(ProgramRunId programRunId) {
+      super(programRunId);
+    }
+
+    @Override
+    protected void doSuspend() throws Exception {
+
+    }
+
+    @Override
+    protected void doResume() throws Exception {
+
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+
+    }
+
+    @Override
+    protected void doCommand(String name, Object value) throws Exception {
+
     }
   }
 }
