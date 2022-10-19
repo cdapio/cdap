@@ -113,7 +113,6 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -2144,20 +2143,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Convert BatchProgram to ProgramIds with all app versions
    */
   private List<ProgramId> batchProgramToProgramIds(String namespace, BatchProgram batchProgram) {
-    try {
-      Collection<ApplicationSpecification> allAppVersions = store.getAllAppVersions(
-        new ApplicationId(namespace, batchProgram.getAppId()));
-      return allAppVersions.stream().map(applicationSpecification -> {
-                                           ApplicationId applicationId = new ApplicationId(
-                                             namespace, applicationSpecification.getName(),
-                                             applicationSpecification.getAppVersion());
-                                           return new ProgramId(applicationId, batchProgram.getProgramType(),
-                                                                batchProgram.getProgramId());
-                                         }
-      ).collect(Collectors.toList());
-    } catch (Exception e) {
-      return Arrays.asList(new ProgramId(namespace, batchProgram.getAppId(), batchProgram.getProgramType(),
-                                         batchProgram.getProgramId()));
-    }
+    Collection<ApplicationSpecification> allAppVersions = store.getAllAppVersions(
+      new ApplicationId(namespace, batchProgram.getAppId()));
+    return allAppVersions.stream().map(applicationSpecification -> {
+                                         ApplicationId applicationId = new ApplicationId(
+                                           namespace, applicationSpecification.getName(),
+                                           applicationSpecification.getAppVersion());
+                                         return new ProgramId(applicationId, batchProgram.getProgramType(),
+                                                              batchProgram.getProgramId());
+                                       }
+    ).collect(Collectors.toList());
   }
 }
