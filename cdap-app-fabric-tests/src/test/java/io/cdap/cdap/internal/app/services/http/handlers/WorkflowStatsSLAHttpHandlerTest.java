@@ -98,7 +98,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
   public void testStatistics() throws Exception {
     deploy(WorkflowApp.class, 200);
     ApplicationDetail appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp");
-    ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WorkflowApp",
+    ApplicationId workflowApp = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appDetails.getName(),
                                                   appDetails.getAppVersion());
     String workflowName = "FunWorkflow";
     String mapreduceName = "ClassicWordCount";
@@ -206,8 +206,9 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                             System.currentTimeMillis(),
                             "99");
     response = doGet(request);
-    // no apps found
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    Assert.assertTrue(
+      response.getResponseBodyAsString().startsWith("There are no statistics associated with this workflow : "));
   }
 
 

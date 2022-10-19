@@ -338,8 +338,9 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       throw new ProgramNotFoundException(programId);
     }
 
-    if (store.getRun(programId.run(runId)) == null) {
-      throw new NotFoundException(new ProgramRunId(appId, programId.getType(), programId.getProgram(), runId));
+    ProgramRunId programRunId = programId.run(runId);
+    if (store.getRun(programRunId) == null) {
+      throw new NotFoundException(programRunId);
     }
     return workflowSpec;
   }

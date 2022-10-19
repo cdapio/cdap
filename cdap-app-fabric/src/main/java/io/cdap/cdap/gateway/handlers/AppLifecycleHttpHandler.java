@@ -177,12 +177,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Creates an application with the specified name from an artifact.
+   * Deploy an application with the specified name from an artifact.
    */
   @PUT
   @Path("/apps/{app-id}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public BodyConsumer create(HttpRequest request, HttpResponder responder,
+  public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
     throws BadRequestException, NamespaceNotFoundException, AccessException {
@@ -222,8 +222,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Creates an application with the specified name and app-id from an artifact.
+   * Deploy an application with the specified name and app-id from an artifact.
    */
+  @Deprecated
   @POST
   @Path("/apps/{app-id}/versions/{version-id}/create")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -234,7 +235,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
 
     // Ignore the version provided by the user. Treating it the same as deploy without version
-    return create(request, responder, namespaceId, appId);
+    return deploy(request, responder, namespaceId, appId);
   }
 
   /**
@@ -337,10 +338,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @PathParam("namespace-id") final String namespaceId,
                          @PathParam("app-id") final String appName) throws Exception {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
-    ApplicationId applicationId = validateApplicationId(namespaceId, appName);
+    validateApplicationId(namespaceId, appName);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(applicationId.getNamespaceId(),
-                                                                                  applicationId.getApplication())));
+                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(new NamespaceId(namespaceId),
+                                                                                  appName)));
   }
 
   /**
@@ -352,11 +353,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("namespace-id") final String namespaceId,
                               @PathParam("app-id") final String appName) throws Exception {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
-    ApplicationId applicationId = validateApplicationId(namespaceId, appName);
-    Collection<String> versions = applicationLifecycleService.getAppVersions(applicationId.getNamespaceId(),
-                                                                             applicationId.getApplication());
+    validateApplicationId(namespaceId, appName);
+    Collection<String> versions = applicationLifecycleService.getAppVersions(new NamespaceId(namespaceId),
+                                                                             appName);
     if (versions.isEmpty()) {
-      throw new ApplicationNotFoundException(applicationId);
+      throw new ApplicationNotFoundException(new ApplicationId(namespaceId, appName));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(versions));
   }
@@ -385,10 +386,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appName) throws Exception {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
-    ApplicationId applicationId = validateApplicationId(namespaceId, appName);
+    validateApplicationId(namespaceId, appName);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getPlugins(applicationId.getNamespaceId(),
-                                                                          applicationId.getApplication())));
+                       GSON.toJson(applicationLifecycleService.getPlugins(new NamespaceId(namespaceId),
+                                                                          appName)));
   }
 
   /**
@@ -399,8 +400,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appName) throws Exception {
-    ApplicationId appId = validateApplicationId(namespaceId, appName);
-    applicationLifecycleService.removeApplication(appId);
+    validateApplicationId(namespaceId, appName);
+    applicationLifecycleService.removeApplication(new ApplicationId(namespaceId, appName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -461,7 +462,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") final String appName)
     throws NotFoundException, BadRequestException, AccessException, IOException {
 
-    ApplicationId appId = validateApplicationId(namespaceId, appName);
+    validateApplicationId(namespaceId, appName);
 
     AppRequest appRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
@@ -474,7 +475,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      applicationLifecycleService.updateApp(appId, appRequest, createProgramTerminator());
+      applicationLifecycleService.updateApp(new ApplicationId(namespaceId, appName), appRequest,
+                                            createProgramTerminator());
       responder.sendString(HttpResponseStatus.OK, "Update complete.");
     } catch (InvalidArtifactException e) {
       throw new BadRequestException(e.getMessage());
@@ -500,8 +502,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appName,
                                  @QueryParam("artifactScope") Set<String> artifactScopes,
                                  @QueryParam("allowSnapshot") boolean allowSnapshot) throws Exception {
-    ApplicationId appId = validateApplicationId(namespaceId, appName);
+    validateApplicationId(namespaceId, appName);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
+    ApplicationId appId = new ApplicationId(namespaceId, appName);
     appId = applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
     ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
@@ -655,7 +658,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           throw new BadRequestException("Missing 'name' in the request element for app-id.");
         }
         if (element.getAppVersion() == null) {
-          appIds.add(validateApplicationId(namespaceId, element.getName()));
+          validateApplicationId(namespaceId, element.getName());
+          appIds.add(namespaceId.app(element.getName()));
         } else {
           appIds.add(validateApplicationVersionId(namespaceId, element.getName(), element.getAppVersion()));
         }
@@ -881,13 +885,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return namespaceId;
   }
 
-  private ApplicationId validateApplicationId(@Nullable String namespace, @Nullable String appId)
+  private void validateApplicationId(@Nullable String namespace, @Nullable String appId)
     throws BadRequestException, NamespaceNotFoundException, AccessException {
-    return validateApplicationId(validateNamespace(namespace), appId);
+    validateApplicationId(validateNamespace(namespace), appId);
   }
 
-  private ApplicationId validateApplicationId(NamespaceId namespaceId, String appId) throws BadRequestException {
-    return validateApplicationVersionId(namespaceId, appId, ApplicationId.DEFAULT_VERSION);
+  private void  validateApplicationId(NamespaceId namespaceId, String appId) throws BadRequestException {
+    validateApplicationVersionId(namespaceId, appId, ApplicationId.DEFAULT_VERSION);
   }
 
   private ApplicationId validateApplicationVersionId(@Nullable String namespace,

@@ -374,7 +374,7 @@ public interface Store {
    * @param id application id
    * @return collection of all application specs of all the application versions
    */
-  Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id);
+  Collection<ApplicationSpecification> getAllAppVersions(NamespaceId namespaceId, String appName);
 
   /**
    * Returns the latest version of an application in a namespace

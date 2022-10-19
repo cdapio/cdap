@@ -295,7 +295,8 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
       if (latestAppMeta == null) {
-        throw new ApplicationNotFoundException(namespaceId.app(appName));
+        // if app is not found then there is no workflow stats
+        return null;
       }
       WorkflowId id = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
                                      workflowName);
@@ -726,9 +727,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id) {
+  public Collection<ApplicationSpecification> getAllAppVersions(NamespaceId namespaceId, String appName) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAllAppVersions(id.getNamespace(), id.getApplication()).stream()
+      return getAppMetadataStore(context).getAllAppVersions(namespaceId.getNamespace(), appName).stream()
         .map(ApplicationMeta::getSpec).collect(Collectors.toList());
     });
   }

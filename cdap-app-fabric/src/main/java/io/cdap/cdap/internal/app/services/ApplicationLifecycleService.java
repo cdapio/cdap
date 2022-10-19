@@ -832,6 +832,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable Boolean updateSchedules, boolean isPreview,
                                            Map<String, String> userProps)
     throws Exception {
+    // TODO CDAP-19828 - remove appVersion parameter from method signature
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
