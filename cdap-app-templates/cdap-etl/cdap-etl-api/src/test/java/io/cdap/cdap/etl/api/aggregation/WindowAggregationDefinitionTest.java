@@ -37,6 +37,7 @@ public class WindowAggregationDefinitionTest {
   @Test
   public void testDefinitionBuild() {
     List<Expression> partitionExpressions = new ArrayList<>();
+    Map<String, Expression> aggregateExpressions = new HashMap<>();
     List<WindowAggregationDefinition.OrderByExpression> orderByExpressions = new ArrayList<>();
     Map<String, Expression> selectExpressions = new HashMap<>();
     WindowAggregationDefinition.WindowFrameType windowFrameType = WindowAggregationDefinition.WindowFrameType.ROW;
@@ -70,29 +71,26 @@ public class WindowAggregationDefinitionTest {
 
     partitionExpressions.add(factory.compile("firstName"));
     partitionExpressions.add(factory.compile("managerId"));
+    aggregateExpressions.put("id", factory.compile("Rank()"));
     selectExpressions.put("employeeId", factory.compile("employeeId"));
     selectExpressions.put("firstName", factory.compile("firstName"));
     selectExpressions.put("lastName", factory.compile("lastName"));
     orderByExpressions.add(new WindowAggregationDefinition.OrderByExpression(factory.compile("age"),
       WindowAggregationDefinition.OrderBy.ASCENDING));
     WindowAggregationDefinition definition = WindowAggregationDefinition.builder()
-      .partition(partitionExpressions)
-      .select(selectExpressions)
-      .orderBy(orderByExpressions)
-      .windowFrameType(windowFrameType)
-      .build();
+      .partition(partitionExpressions).aggregate(aggregateExpressions).select(selectExpressions)
+      .orderBy(orderByExpressions).windowFrameType(windowFrameType).build();
 
     Assert.assertEquals(partitionExpressions, definition.getPartitionExpressions());
+    Assert.assertEquals(aggregateExpressions, definition.getAggregateExpressions());
     Assert.assertEquals(selectExpressions, definition.getSelectExpressions());
     Assert.assertEquals(orderByExpressions, definition.getOrderByExpressions());
     Assert.assertEquals(windowFrameType, definition.getWindowFrameType());
 
     try {
       WindowAggregationDefinition invalidDefinition = WindowAggregationDefinition.builder()
-        .partition(partitionExpressions)
-        .orderBy(orderByExpressions)
-        .windowFrameType(windowFrameType)
-        .build();
+        .partition(partitionExpressions).aggregate(aggregateExpressions).orderBy(orderByExpressions)
+        .windowFrameType(windowFrameType).build();
       Assert.fail("Expected IllegalStateException");
     } catch (IllegalStateException ignored) {
       // expected
@@ -100,8 +98,7 @@ public class WindowAggregationDefinitionTest {
 
     try {
       WindowAggregationDefinition invalidSelectDefinition = WindowAggregationDefinition.builder()
-        .select(selectExpressions)
-        .build();
+        .select(selectExpressions).build();
       Assert.fail("Expected IllegalStateException");
     } catch (IllegalStateException ignored) {
       // expected
