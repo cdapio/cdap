@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
  */
 public class WindowAggregationDefinition {
   private List<Expression> partitionExpressions;
+  private Map<String, Expression> aggregateExpressions;
   private Map<String, Expression> selectExpressions;
   private List<OrderByExpression> orderByExpressions;
   private WindowFrameType windowFrameType;
@@ -41,6 +42,7 @@ public class WindowAggregationDefinition {
 
   private WindowAggregationDefinition(Map<String, Expression> selectExpressions,
                                       List<Expression> partitionExpressions,
+                                      Map<String, Expression> aggregateExpressions,
                                       @Nullable List<OrderByExpression> orderByExpressions,
                                       WindowFrameType windowFrameType,
                                       @Nullable boolean unboundedPreceding,
@@ -49,6 +51,7 @@ public class WindowAggregationDefinition {
                                       @Nullable String following) {
     this.selectExpressions = selectExpressions;
     this.partitionExpressions = partitionExpressions;
+    this.aggregateExpressions = aggregateExpressions;
     this.orderByExpressions = orderByExpressions;
     this.windowFrameType = windowFrameType;
     this.unboundedPreceding = unboundedPreceding;
@@ -126,6 +129,13 @@ public class WindowAggregationDefinition {
   }
 
   /**
+   * @return aggregate expressions of WindowAggregationDefinition.
+   */
+  public Map<String, Expression> getAggregateExpressions() {
+    return aggregateExpressions;
+  }
+
+  /**
    * An enumeration that specifies the type of windowFrame
    */
   public enum WindowFrameType {
@@ -199,6 +209,7 @@ public class WindowAggregationDefinition {
    */
   public static class Builder {
     private List<Expression> partitionExpressions;
+    private Map<String, Expression> aggregateExpressions;
     private Map<String, Expression> selectExpressions;
     private List<OrderByExpression> orderByExpressions;
     private WindowFrameType windowFrameType;
@@ -209,6 +220,7 @@ public class WindowAggregationDefinition {
 
     private Builder() {
       partitionExpressions = new ArrayList();
+      aggregateExpressions = new HashMap();
       selectExpressions = new HashMap();
       orderByExpressions = new ArrayList();
       windowFrameType = WindowFrameType.NONE;
@@ -270,6 +282,17 @@ public class WindowAggregationDefinition {
     }
 
     /**
+     * Sets the list of expressions to perform aggregate to the specified list.
+     *
+     * @param aggregateExpressions list of {@link Expression}s.
+     * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
+     */
+    public Builder aggregate(Map<String, Expression> aggregateExpressions) {
+      this.aggregateExpressions = aggregateExpressions;
+      return this;
+    }
+
+    /**
      * Sets the list of expressions to perform order by to the specified list.
      *
      * @param orderByExpressions list of {@link Expression}s.
@@ -289,6 +312,19 @@ public class WindowAggregationDefinition {
      */
     public Builder partition(Expression... partitionExpressions) {
       return partition(Arrays.asList(partitionExpressions));
+    }
+
+    /**
+     * Sets the aggregate function to perform aggregation to the specified expressions.
+     * Any existing aggregation expression key is overwritten.
+     *
+     * @param key {@link String} to put in aggregate expressions
+     * @param expression {@link Expression} aggregate function of key in aggregate expressions
+     * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
+     */
+    public Builder aggregate(String key, Expression expression) {
+      this.aggregateExpressions.put(key, expression);
+      return this;
     }
 
     /**
@@ -334,9 +370,11 @@ public class WindowAggregationDefinition {
         throw new IllegalStateException("Can't build a WindowAggregationDefinition without select fields");
       } else if (partitionExpressions.isEmpty()) {
         throw new IllegalStateException("Can't build a WindowAggregationDefinition without fields to partition");
+      } else if (aggregateExpressions.isEmpty()) {
+        throw new IllegalStateException("Can't build a WindowAggregationDefinition without fields to Aggregate");
       }
-      return new WindowAggregationDefinition(selectExpressions, partitionExpressions, orderByExpressions,
-         windowFrameType, unboundedPreceding, unboundedFollowing, preceding, following);
+      return new WindowAggregationDefinition(selectExpressions, partitionExpressions, aggregateExpressions,
+        orderByExpressions, windowFrameType, unboundedPreceding, unboundedFollowing, preceding, following);
     }
   }
 }
