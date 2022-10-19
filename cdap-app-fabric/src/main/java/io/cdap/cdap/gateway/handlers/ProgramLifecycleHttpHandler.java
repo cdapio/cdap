@@ -94,6 +94,7 @@ import io.cdap.cdap.proto.ServiceInstances;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.scheduler.ProgramScheduleService;
@@ -212,8 +213,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
-    ProgramId programId = new ApplicationId(namespaceId, appId, appVersion).program(ProgramType.MAPREDUCE, mapreduceId);
+    // Pass in "-SNAPSHOT" version regardless
+    ProgramId programId = new ApplicationId(namespaceId, appId).program(ProgramType.MAPREDUCE, mapreduceId);
     ProgramRunId run = programId.run(runId);
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
@@ -222,6 +223,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
       throw new NotFoundException(programId);
     }
+    // runId is uuid, can be retrieved ignoring version
     RunRecordDetail runRecordMeta = store.getRun(run);
     if (runRecordMeta == null || isTetheredRunRecord(runRecordMeta)) {
       throw new NotFoundException(run);
@@ -239,7 +241,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
     }
 
-    // JobClient (in DistributedMRJobInfoFetcher) can return NaN as some of the values, and GSON otherwise fails
+    // JobClient (in DistributedMRJobInfoFetcher) can return NaN as some values, and GSON otherwise fails
     Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
     responder.sendJson(HttpResponseStatus.OK, gson.toJson(mrJobInfo, mrJobInfo.getClass()));
   }
@@ -254,8 +256,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") String appId,
                         @PathParam("program-type") String type,
                         @PathParam("program-id") String programId) throws Exception {
-    getStatus(request, responder, namespaceId, appId,
-              getLatestAppVersion(new NamespaceId(namespaceId), appId), type, programId);
+    getStatus(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId);
   }
 
   /**
@@ -272,11 +273,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (SCHEDULES.equals(type)) {
       JsonObject json = new JsonObject();
-      ScheduleId scheduleId = applicationId.schedule(programId);
       ApplicationSpecification appSpec = store.getApplication(applicationId);
       if (appSpec == null) {
         throw new NotFoundException(applicationId);
       }
+      // Use the actual version from appSpec
+      ScheduleId scheduleId = applicationId.getAppReference().app(appSpec.getAppVersion()).schedule(programId);
       json.addProperty("status", programScheduleService.getStatus(scheduleId).toString());
       responder.sendJson(HttpResponseStatus.OK, json.toString());
       return;
@@ -1321,34 +1323,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
-    List<ProgramId> programs = batchPrograms.stream()
-      .map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
+    List<ProgramReference> programs = batchPrograms.stream()
+      .map(p -> new ProgramReference(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
       .collect(Collectors.toList());
 
-    // Get the program status of the latest app version, ProgramId is the latest
     Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programs);
 
+    Map<ProgramReference, ProgramId> programRefsMap =
+      statuses.keySet().stream().collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
+
     List<BatchProgramStatus> result = new ArrayList<>(programs.size());
-    for (BatchProgram program : batchPrograms) {
-      ProgramId programId = findProgramId(namespaceId, program, statuses.keySet());
+    for (ProgramReference program : programs) {
+      ProgramId programId = programRefsMap.get(program);
       if (programId == null) {
-        result.add(new BatchProgramStatus(program, HttpResponseStatus.NOT_FOUND.code(),
+        result.add(new BatchProgramStatus(program.getBatchProgram(), HttpResponseStatus.NOT_FOUND.code(),
                                           new NotFoundException(program).getMessage(), null));
       } else {
-        result.add(new BatchProgramStatus(program, HttpResponseStatus.OK.code(),
+        result.add(new BatchProgramStatus(program.getBatchProgram(), HttpResponseStatus.OK.code(),
                                           null, statuses.get(programId).name()));
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
-  }
-
-  private ProgramId findProgramId(String namespaceId, BatchProgram program, Set<ProgramId> programIds) {
-    List<ProgramId> matched = programIds.stream()
-      .filter(programId ->
-                Objects.equal(namespaceId, programId.getNamespace())
-                  && Objects.equal(program, programId.getBatchProgram())).collect(Collectors.toList());
-
-    return matched.isEmpty() ? null : matched.get(0);
   }
 
   /**
@@ -1589,12 +1584,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                     "supported is 100", programs.size()));
     }
 
-    List<ProgramId> programIds = programs.stream()
-      .map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
+    List<ProgramReference> programRefs = programs.stream()
+      .map(p -> new ProgramReference(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
       .collect(Collectors.toList());
 
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
-    for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
+    for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programRefs)) {
       ProgramId programId = runCountResult.getProgramId();
       Exception exception = runCountResult.getException();
       if (exception == null) {
@@ -1650,12 +1645,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getLatestRuns(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
-    List<ProgramId> programIds =
-      programs.stream().map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
+    List<ProgramReference> programRefs =
+      programs.stream().map(p -> new ProgramReference(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
         .collect(Collectors.toList());
 
     List<BatchProgramHistory> response = new ArrayList<>(programs.size());
-    List<ProgramHistory> result = lifecycleService.getRunRecords(programIds, ProgramRunStatus.ALL, 0,
+    List<ProgramHistory> result = lifecycleService.getRunRecords(programRefs, ProgramRunStatus.ALL, 0,
                                                                  Long.MAX_VALUE, 1);
     for (ProgramHistory programHistory : result) {
       ProgramId programId = programHistory.getProgramId();

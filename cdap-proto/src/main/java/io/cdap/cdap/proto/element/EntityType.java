@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.QueryId;
 import io.cdap.cdap.proto.id.ScheduleId;
@@ -54,6 +55,7 @@ public enum EntityType {
   NAMESPACE(NamespaceId.class),
   APPLICATIONREFERENCE(ApplicationReference.class),
   APPLICATION(ApplicationId.class),
+  PROGRAMREFERENCE(ProgramReference.class),
   PROGRAM(ProgramId.class),
   PROGRAM_RUN(ProgramRunId.class),
 

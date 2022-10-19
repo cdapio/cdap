@@ -76,6 +76,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
@@ -182,24 +183,30 @@ public class ProgramLifecycleService {
       throw new NotFoundException(appId);
     }
 
+    programId = new ProgramId(programId.getNamespace(),
+                              programId.getApplication(),
+                              appSpec.getAppVersion(),
+                              programId.getType(),
+                              programId.getProgram());
     return getExistingAppProgramStatus(appSpec, programId);
   }
 
   /**
    * Gets the {@link ProgramStatus} for the given set of programs.
    *
-   * @param programIds collection of program ids for retrieving status
+   * @param programRefs collection of versionless program ids for retrieving status
    * @return a {@link Map} from the {@link ProgramId} to the corresponding status; there will be no entry for programs
    * that do not exist.
    */
-  public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramId> programIds) throws Exception {
+  public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramReference> programRefs) throws Exception {
     // filter the result
-    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new LinkedHashSet<>(programIds),
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new LinkedHashSet<>(programRefs),
                                                                        authenticationContext.getPrincipal());
-    List<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toList());
+    List<ProgramReference> filteredRefs = programRefs.stream()
+      .filter(visibleEntities::contains).collect(Collectors.toList());
 
     Map<ProgramId, ProgramStatus> result = new HashMap<>();
-    for (Map.Entry<ProgramId, Collection<RunRecordDetail>> entry : store.getActiveRuns(filteredIds).entrySet()) {
+    for (Map.Entry<ProgramId, Collection<RunRecordDetail>> entry : store.getActiveRuns(filteredRefs).entrySet()) {
       result.put(entry.getKey(), getProgramStatus(entry.getValue()));
     }
     return result;
@@ -221,21 +228,22 @@ public class ProgramLifecycleService {
   /**
    * Returns the program run count of the given program id list.
    *
-   * @param programIds the list of program ids to get the count
+   * @param programRefs the list of program ids to get the count
    * @return the counts of given program ids
    */
-  public List<RunCountResult> getProgramRunCounts(List<ProgramId> programIds) throws Exception {
+  public List<RunCountResult> getProgramRunCounts(List<ProgramReference> programRefs) throws Exception {
     // filter the result
     Principal principal = authenticationContext.getPrincipal();
-    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programIds), principal);
-    Set<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toSet());
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programRefs), principal);
+    Set<ProgramReference> filteredRefs = programRefs.stream()
+      .filter(visibleEntities::contains).collect(Collectors.toSet());
 
-    Map<ProgramId, RunCountResult> programCounts = store.getProgramRunCounts(filteredIds).stream()
+    Map<ProgramId, RunCountResult> programCounts = store.getProgramRunCounts(filteredRefs).stream()
       .collect(Collectors.toMap(RunCountResult::getProgramId, c -> c));
 
     List<RunCountResult> result = new ArrayList<>();
     for (ProgramId programId : programCounts.keySet()) {
-      if (!visibleEntities.contains(programId)) {
+      if (!visibleEntities.contains(programId.getProgramReference())) {
         result.add(new RunCountResult(programId, null, new UnauthorizedException(principal, programId)));
       } else {
         RunCountResult count = programCounts.get(programId);
@@ -315,14 +323,14 @@ public class ProgramLifecycleService {
    * @throws UnauthorizedException if the principal does not have access to the program
    * @throws Exception if there was some other exception performing authorization checks
    */
-  public List<ProgramHistory> getRunRecords(Collection<ProgramId> programs, ProgramRunStatus programRunStatus,
+  public List<ProgramHistory> getRunRecords(Collection<ProgramReference> programs, ProgramRunStatus programRunStatus,
                                             long start, long end, int limit) throws Exception {
     List<ProgramHistory> result = new ArrayList<>();
 
     // do this in batches to avoid transaction timeouts.
-    List<ProgramId> batch = new ArrayList<>(20);
+    List<ProgramReference> batch = new ArrayList<>(20);
 
-    for (ProgramId program : programs) {
+    for (ProgramReference program : programs) {
       batch.add(program);
 
       if (batch.size() >= 20) {
@@ -336,12 +344,21 @@ public class ProgramLifecycleService {
     return result;
   }
 
-  private void addProgramHistory(List<ProgramHistory> histories, List<ProgramId> programs,
+  private void addProgramHistory(List<ProgramHistory> histories, List<ProgramReference> programs,
                                  ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
     Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programs),
                                                                        authenticationContext.getPrincipal());
-    List<ProgramId> filteredIds = programs.stream().filter(visibleEntities::contains).collect(Collectors.toList());
-    histories.addAll(store.getRuns(filteredIds, programRunStatus, start, end, limit));
+
+    for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit)) {
+      ProgramReference programId = programHistory.getProgramId().getProgramReference();
+      if (visibleEntities.contains(programId)) {
+        histories.add(programHistory);
+      } else {
+        histories.add(new ProgramHistory(programHistory.getProgramId(), Collections.emptyList(),
+                                         new UnauthorizedException(authenticationContext.getPrincipal(),
+                                                                   programHistory.getProgramId())));
+      }
+    }
   }
 
   /**

@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.Objects;
 
 /**
- * Identifies an application without version.
+ * Identifies a versionless application.
  */
 public class ApplicationReference extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String application;

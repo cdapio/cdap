@@ -76,7 +76,7 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
     return new NamespaceId(namespace);
   }
 
-  public ApplicationReference getApplicationReference() {
+  public ApplicationReference getAppReference() {
     return new ApplicationReference(namespace, application);
   }
 
