@@ -785,7 +785,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName) throws Exception {
-    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doGetSchedule(responder, namespaceId, appName, scheduleName);
   }
 
   @GET
@@ -795,12 +795,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-name") String appName,
                           @PathParam("app-version") String appVersion,
                           @PathParam("schedule-name") String scheduleName) throws Exception {
-    doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName);
+    doGetSchedule(responder, namespaceId, appName, scheduleName);
   }
 
-  private void doGetSchedule(HttpResponder responder, String namespace,
-                             String app, String version, String scheduleName) throws Exception {
-    ScheduleId scheduleId = new ApplicationId(namespace, app, version).schedule(scheduleName);
+  private void doGetSchedule(HttpResponder responder, String namespace, String app, String scheduleName)
+    throws Exception {
+    ScheduleId scheduleId = new ApplicationId(namespace, app).schedule(scheduleName);
     ProgramScheduleRecord record = programScheduleService.getRecord(scheduleId);
     ScheduleDetail detail = record.toScheduleDetail();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ScheduleDetail.class));
@@ -816,8 +816,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("app-name") String appName,
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    getAllSchedulesVersioned(request, responder, namespaceId, appName,
-                    getLatestAppVersion(new NamespaceId(namespaceId), appName), triggerType, scheduleStatus);
+    doGetSchedules(responder, new NamespaceId(namespaceId).app(appName), null, triggerType, scheduleStatus);
   }
 
   /**
@@ -839,7 +838,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("app-version") String appVersion,
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    doGetSchedules(responder, new NamespaceId(namespaceId).app(appName, appVersion), null, triggerType, scheduleStatus);
+    doGetSchedules(responder, new NamespaceId(namespaceId).app(appName), null, triggerType, scheduleStatus);
   }
 
   /**
@@ -854,9 +853,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("program-name") String program,
                                   @QueryParam("trigger-type") String triggerType,
                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    getProgramSchedulesVersioned(request, responder, namespace, application,
-                        getLatestAppVersion(new NamespaceId(namespace), application),
-                        type, program, triggerType, scheduleStatus);
+    getProgramSchedulesVersioned(request, responder, namespace, application, ApplicationId.DEFAULT_VERSION,
+                                 type, program, triggerType, scheduleStatus);
   }
 
   /**
@@ -878,8 +876,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Program type " + programType + " cannot have schedule");
     }
 
-    ProgramId programId = new ApplicationId(namespace, application, appVersion).program(programType, program);
-    doGetSchedules(responder, new NamespaceId(namespace).app(application, appVersion), programId,
+    ProgramId programId = new ApplicationId(namespace, application).program(programType, program);
+    doGetSchedules(responder, new NamespaceId(namespace).app(application), programId,
                    triggerType, scheduleStatus);
   }
 
@@ -1098,7 +1096,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName)
     throws Exception {
-    doAddSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doAddSchedule(request, responder, namespaceId, appName, scheduleName);
   }
 
   @PUT
@@ -1110,13 +1108,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-version") String appVersion,
                           @PathParam("schedule-name") String scheduleName)
     throws Exception {
-    doAddSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
+    doAddSchedule(request, responder, namespaceId, appName, scheduleName);
   }
 
   private void doAddSchedule(FullHttpRequest request, HttpResponder responder, String namespace, String appName,
-                             String appVersion, String scheduleName) throws Exception {
+                             String scheduleName) throws Exception {
 
-    final ApplicationId applicationId = new ApplicationId(namespace, appName, appVersion);
+    final ApplicationId applicationId = new ApplicationId(namespace, appName);
     ScheduleDetail scheduleFromRequest = readScheduleDetailBody(request, scheduleName);
 
     if (scheduleFromRequest.getProgram() == null) {
@@ -1155,7 +1153,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doUpdateSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doUpdateSchedule(request, responder, namespaceId, appName, scheduleName);
   }
 
   @POST
@@ -1166,13 +1164,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-name") String appName,
                              @PathParam("app-version") String appVersion,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doUpdateSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
+    doUpdateSchedule(request, responder, namespaceId, appName, scheduleName);
   }
 
   private void doUpdateSchedule(FullHttpRequest request, HttpResponder responder, String namespaceId, String appId,
-                                String appVersion, String scheduleName) throws Exception {
+                                String scheduleName) throws Exception {
 
-    ScheduleId scheduleId = new ApplicationId(namespaceId, appId, appVersion).schedule(scheduleName);
+    ScheduleId scheduleId = new ApplicationId(namespaceId, appId).schedule(scheduleName);
     ScheduleDetail scheduleDetail = readScheduleDetailBody(request, scheduleName);
 
     programScheduleService.update(scheduleId, scheduleDetail);
@@ -1216,7 +1214,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-name") String appName,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doDeleteSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+    doDeleteSchedule(responder, namespaceId, appName, scheduleName);
   }
 
   @DELETE
@@ -1226,12 +1224,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-name") String appName,
                              @PathParam("app-version") String appVersion,
                              @PathParam("schedule-name") String scheduleName) throws Exception {
-    doDeleteSchedule(responder, namespaceId, appName, appVersion, scheduleName);
+    doDeleteSchedule(responder, namespaceId, appName, scheduleName);
   }
 
   private void doDeleteSchedule(HttpResponder responder, String namespaceId, String appName,
-                                String appVersion, String scheduleName) throws Exception {
-    ScheduleId scheduleId = new ApplicationId(namespaceId, appName, appVersion).schedule(scheduleName);
+                                String scheduleName) throws Exception {
+    ScheduleId scheduleId = new ApplicationId(namespaceId, appName).schedule(scheduleName);
     programScheduleService.delete(scheduleId);
     responder.sendStatus(HttpResponseStatus.OK);
   }

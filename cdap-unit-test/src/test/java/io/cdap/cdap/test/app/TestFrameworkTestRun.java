@@ -854,9 +854,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     return runId;
   }
 
-  /*
-  * TODO : To be ignored until CDAP-19777 is fixed
-  * */
   @Category(XSlowTests.class)
   @Test
   @Ignore

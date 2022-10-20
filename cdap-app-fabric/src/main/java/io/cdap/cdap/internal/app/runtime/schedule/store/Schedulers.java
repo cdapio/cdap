@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -58,7 +59,10 @@ public class Schedulers {
   }
 
   public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
-    return "programStatus:" + programId.toString() +  "." + programStatus.toString().toLowerCase();
+    return String.format("programStatus:program:%s.%s.%s.%s.%s.%s", programId.getNamespace(),
+                         programId.getApplication(), ApplicationId.DEFAULT_VERSION,
+                         programId.getType().getPrettyName().toLowerCase(),
+                         programId.getProgram(), programStatus.toString().toLowerCase());
   }
 
   public static Set<String> triggerKeysForProgramStatuses(ProgramId programId, Set<ProgramStatus> programStatuses) {

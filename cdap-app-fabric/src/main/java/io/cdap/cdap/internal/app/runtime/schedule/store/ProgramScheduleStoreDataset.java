@@ -301,7 +301,7 @@ public class ProgramScheduleStoreDataset {
         String serializedSchedule = row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE);
         if (serializedSchedule != null) {
           ProgramSchedule schedule = GSON.fromJson(serializedSchedule, ProgramSchedule.class);
-          if (programId.equals(schedule.getProgramId())) {
+          if (programId.isSameProgramExceptVersion(schedule.getProgramId())) {
             markScheduleAsDeleted(row, deleteTime);
             Collection<Field<?>> deleteKeys = getScheduleKeys(row);
             triggerStore.deleteAll(Range.singleton(deleteKeys));
@@ -442,7 +442,7 @@ public class ProgramScheduleStoreDataset {
    */
   public List<ProgramSchedule> listSchedules(ProgramId programId) throws IOException {
     return listSchedulesWithPrefix(getScheduleKeysForApplicationScan(programId.getParent()),
-                                   schedule -> programId.equals(schedule.getProgramId()));
+                                   schedule -> programId.isSameProgramExceptVersion(schedule.getProgramId()));
   }
 
   /**
