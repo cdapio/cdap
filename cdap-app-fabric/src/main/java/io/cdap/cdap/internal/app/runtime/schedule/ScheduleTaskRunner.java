@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.schedule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 import io.cdap.cdap.app.store.Store;
@@ -91,7 +92,9 @@ public final class ScheduleTaskRunner {
                                                                                 userArgs, systemArgs);
 
     TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
+    Trigger.Type triggeringScheduleInfoType = getTriggerType(job);
     systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
+    systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO_TYPE, GSON.toJson(triggeringScheduleInfoType));
 
     try {
       execute(programId, systemArgs, userArgs);
@@ -119,6 +122,10 @@ public final class ScheduleTaskRunner {
     ProgramSchedule schedule = job.getSchedule();
     return new DefaultTriggeringScheduleInfo(schedule.getName(), schedule.getDescription(),
                                              triggerInfo, schedule.getProperties());
+  }
+
+  private Trigger.Type getTriggerType(Job job) {
+    return job.getSchedule().getTrigger().getType();
   }
 
   /**
