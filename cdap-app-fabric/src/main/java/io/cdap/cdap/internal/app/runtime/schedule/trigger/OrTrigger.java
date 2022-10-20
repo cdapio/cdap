@@ -60,7 +60,7 @@ public class OrTrigger extends AbstractSatisfiableCompositeTrigger {
     List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
     for (SatisfiableTrigger trigger : getTriggers()) {
       if (trigger instanceof ProgramStatusTrigger &&
-        programId.equals(((ProgramStatusTrigger) trigger).getProgramId())) {
+        programId.isSameProgramExceptVersion(((ProgramStatusTrigger) trigger).getProgramId())) {
         // this program status trigger will never be satisfied, skip adding it to updatedTriggers
         continue;
       }
