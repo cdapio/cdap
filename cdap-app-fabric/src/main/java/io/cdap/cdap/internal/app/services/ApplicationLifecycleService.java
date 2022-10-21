@@ -57,6 +57,7 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.CannotBeDeletedException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
@@ -271,9 +272,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         )
     ) {
 
-      return store.scanApplications(request, batchSize, (appId, appMeta) -> {
-              batchingConsumer.accept(new SimpleEntry<>(appId, appMeta));
-            });
+      return store.scanApplications(request, batchSize,
+                                    (appId, appMeta) -> batchingConsumer.accept(new SimpleEntry<>(appId, appMeta)));
     }
   }
 
@@ -334,19 +334,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Get details about the latest version of the specified application
    *
-   * @param appId the id of the application to get
+   * @param namespaceId the namespace of the application
+   * @param appName the name of the application to fetch for details
    * @return detail about the latest version of the specified application
-   * @throws ApplicationNotFoundException if the specified application does not exist
    */
-  public ApplicationDetail getLatestAppDetail(ApplicationId appId) throws Exception {
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationMeta latestApp = store.getLatest(appId.getNamespaceId(), appId.getApplication());
-    if (latestApp == null || latestApp.getSpec() == null) {
-      throw new ApplicationNotFoundException(appId);
+  public ApplicationDetail getLatestAppDetail(NamespaceId namespaceId,
+                                              String appName) throws IOException, NotFoundException {
+    ApplicationMeta appMeta = store.getLatest(namespaceId, appName);
+    if (appMeta == null || appMeta.getSpec() == null) {
+      throw new NotFoundException(String.format("Application '%s' not found in namespace '%s'",
+                                                appName, namespaceId.getNamespace()));
     }
+
+    ApplicationId appId = namespaceId.app(appMeta.getSpec().getName(), appMeta.getSpec().getAppVersion());
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(latestApp.getSpec(), ownerPrincipal,
-                                                                            latestApp.getChange()));
+    return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
+                                                                            appMeta.getChange()));
   }
 
   /**
@@ -359,7 +362,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public Map<ApplicationId, ApplicationDetail> getAppDetails(Collection<ApplicationId> appIds) throws Exception {
     Set<? extends EntityId> visibleIds = accessEnforcer.isVisible(new HashSet<>(appIds),
-                                                                         authenticationContext.getPrincipal());
+                                                                  authenticationContext.getPrincipal());
     Set<ApplicationId> filterIds = appIds.stream().filter(visibleIds::contains).collect(Collectors.toSet());
     Map<ApplicationId, ApplicationSpecification> appSpecs = store.getApplications(filterIds);
     Map<ApplicationId, String> principals = ownerAdmin.getOwnerPrincipals(filterIds);
@@ -383,7 +386,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param zipOut the {@link ZipOutputStream} for writing out the application details
    */
-  public void createAppDetailsArchive(ZipOutputStream zipOut) throws Exception {
+  public void createAppDetailsArchive(ZipOutputStream zipOut) {
     accessEnforcer.enforce(new InstanceId(cConf.get(Constants.INSTANCE_NAME)),
                            authenticationContext.getPrincipal(), StandardPermission.GET);
 
@@ -416,30 +419,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     });
   }
 
-  public Collection<String> getAppVersions(String namespace, String application) {
-    Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(new ApplicationId(namespace, application));
-    List<String> versions = new ArrayList<>();
-    for (ApplicationId appId : appIds) {
-      versions.add(appId.getVersion());
-    }
-    return versions;
-  }
-
   /**
-   * To determine whether the app version is allowed to be deployed
+   * Returns all the application versions for the given application name.
    *
-   * @param appId the id of the application to be determined
-   * @return whether the app version is allowed to be deployed
+   * @param namespaceId namespace of the application
+   * @param application the application name to look for versions
+   * @return a collection of verion strings
    */
-  public boolean updateAppAllowed(ApplicationId appId) throws Exception {
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      // App does not exist. Allow to create a new one
-      return true;
-    }
-    String version = appId.getVersion();
-    return version.endsWith(ApplicationId.DEFAULT_VERSION);
+  public Collection<String> getAppVersions(NamespaceId namespaceId, String application) {
+    return store.getAllAppVersionsAppIds(namespaceId.app(application)).stream()
+      .map(ApplicationId::getVersion)
+      .collect(Collectors.toList());
   }
 
   /**
@@ -571,6 +561,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appId the id of the application to upgrade.
    * @param allowedArtifactScopes artifact scopes allowed while looking for latest artifacts for upgrade.
    * @param allowSnapshot whether to consider snapshot version of artifacts or not for upgrade.
+   * @return the {@link ApplicationId} of the application version being updated.
    * @throws IllegalStateException if something unexpected happened during upgrade.
    * @throws IOException if there was an IO error during initializing application class from artifact.
    * @throws JsonIOException if there was an error in serializing or deserializing app config.
@@ -580,24 +571,25 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
    *                   the actual exception
    */
-  public void upgradeApplication(ApplicationId appId, Set<ArtifactScope> allowedArtifactScopes, boolean allowSnapshot)
-    throws Exception {
-    // Check if the current user has admin privileges on it before updating.
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+  public ApplicationId upgradeApplication(ApplicationId appId,
+                                          Set<ArtifactScope> allowedArtifactScopes,
+                                          boolean allowSnapshot) throws Exception {
 
-    // upgrade the latest version of the app
-    ApplicationMeta currentApp = store.getLatest(appId.getNamespaceId(), appId.getApplication());
-    ApplicationSpecification currentSpec = Optional.ofNullable(currentApp)
-      .map(ApplicationMeta::getSpec)
-      .orElse(null);
-    
+    ApplicationMeta appMeta = store.getApplicationMetadata(appId);
+    ApplicationSpecification currentSpec = Optional.ofNullable(appMeta).map(ApplicationMeta::getSpec).orElse(null);
+
     if (currentSpec == null) {
-      LOG.info("Application {} not found for upgrade.", appId);
-      throw new NotFoundException(appId);
+      LOG.debug("Application {} not found for upgrade.", appId);
+      throw new ApplicationNotFoundException(appId);
     }
-    ArtifactId currentArtifact = currentSpec.getArtifactId();
 
-    ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(appId, currentArtifact,
+    ApplicationId currentAppId = appId.getNamespaceId().app(currentSpec.getName(), currentSpec.getAppVersion());
+
+    // Check if the current user has admin privileges on it before updating.
+    accessEnforcer.enforce(currentAppId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+
+    ArtifactId currentArtifact = currentSpec.getArtifactId();
+    ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(currentAppId, currentArtifact,
                                                                        allowedArtifactScopes,
                                                                        allowSnapshot);
     ArtifactVersion candidateArtifactVersion = new ArtifactVersion(candidateArtifact.getVersion());
@@ -612,27 +604,27 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactId newArtifactId =
       new ArtifactId(candidateArtifact.getName(), candidateArtifactVersion, candidateArtifact.getScope());
 
-    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
+    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(currentAppId.getParent(),
+                                                                                   newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
 
-    updateApplicationInternal(appId, currentSpec.getConfiguration(), programId -> { }, newArtifactDetail,
-                              Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
-                              allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId), false);
+    return updateApplicationInternal(currentAppId, currentSpec.getConfiguration(), programId -> { }, newArtifactDetail,
+                                     Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
+                                     allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(currentAppId));
   }
 
   /**
    * Updates an application config by applying given update actions. The app should know how to apply these actions
    * to its config.
    */
-  private void updateApplicationInternal(ApplicationId appId,
-                                         @Nullable String currentConfigStr,
-                                         ProgramTerminator programTerminator,
-                                         ArtifactDetail artifactDetail,
-                                         List<ApplicationConfigUpdateAction> updateActions,
-                                         Set<ArtifactScope> allowedArtifactScopes,
-                                         boolean allowSnapshot,
-                                         @Nullable KerberosPrincipalId ownerPrincipal,
-                                         boolean updateSchedules) throws Exception {
+  private ApplicationId updateApplicationInternal(ApplicationId appId,
+                                                  @Nullable String currentConfigStr,
+                                                  ProgramTerminator programTerminator,
+                                                  ArtifactDetail artifactDetail,
+                                                  List<ApplicationConfigUpdateAction> updateActions,
+                                                  Set<ArtifactScope> allowedArtifactScopes,
+                                                  boolean allowSnapshot,
+                                                  @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
       // This should never happen.
@@ -659,7 +651,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           String.format("Application main class is of invalid type: %s",
                         appMain.getClass().getName()));
       }
-      Application app = (Application) appMain;
+      Application<?> app = (Application<?>) appMain;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (!app.isUpdateSupported()) {
         String errorMessage = String.format("Application %s does not support update.", appId);
@@ -669,16 +661,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
     }
     Principal requestingUser = authenticationContext.getPrincipal();
+
     // Deploy application with with potentially new app config and new artifact.
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(artifactId)
       .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
       .setApplicationClass(appClass)
-      .setApplicationId(appId)
+      .setNamespaceId(appId.getNamespaceId())
+      .setAppName(appId.getApplication())
+      .setAppVersion(RunIds.generate().getId())
       .setConfigString(updatedAppConfig)
       .setOwnerPrincipal(ownerPrincipal)
-      .setUpdateSchedules(updateSchedules)
-      .setChangeDetail(new ChangeDetail(null, null, requestingUser == null ? null :
+      .setUpdateSchedules(false)
+      .setChangeDetail(new ChangeDetail(null, appId.getVersion(), requestingUser == null ? null :
         requestingUser.getName(), System.currentTimeMillis()))
       .build();
 
@@ -693,6 +688,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
                                            applicationWithPrograms.getSpecification());
+
+    return applicationWithPrograms.getApplicationId();
   }
 
   /**
@@ -720,8 +717,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      return deployApp(namespace, appName, null, configStr, null, programTerminator, artifactDetail, ownerPrincipal,
-                       updateSchedules, false, Collections.emptyMap());
+      String appVersion = RunIds.generate().getId();
+      return deployApp(namespace, appName, appVersion, configStr, null, programTerminator, artifactDetail,
+                       ownerPrincipal, updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -754,11 +752,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
    *                   the actual exception
    */
-  public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
+  public ApplicationWithPrograms deployApp(NamespaceId namespace,
+                                           @Nullable String appName,
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
-    return deployApp(namespace, appName, appVersion, artifactId, configStr,  null, programTerminator,
+    String appVersion = RunIds.generate().getId();
+    return deployApp(namespace, appName, appVersion, artifactId, configStr, null, programTerminator,
                      null, true);
   }
 
@@ -832,6 +832,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable Boolean updateSchedules, boolean isPreview,
                                            Map<String, String> userProps)
     throws Exception {
+    // TODO CDAP-19828 - remove appVersion parameter from method signature
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
@@ -878,7 +879,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     // All Apps are STOPPED, delete them
     for (ApplicationId appId : apps.keySet()) {
-      removeAppInternal(appId, apps.get(appId));
+      deleteApp(appId, apps.get(appId));
     }
   }
 
@@ -891,28 +892,50 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public void removeApplication(ApplicationId appId) throws Exception {
     // enforce DELETE privileges on the app
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+    // The latest app is retrieved here and passed to deleteApp -
+    // that deletes the schedules, triggers and other metadata info.
+
+    ApplicationMeta appMeta = store.getLatest(appId.getNamespaceId(), appId.getApplication());
+    if (appMeta == null || appMeta.getSpec() == null) {
+      throw new ApplicationNotFoundException(appId);
+    }
+
+    // since already checked DELETE privileges above, no need to check again for appDetail
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appMeta.getSpec().getAppVersion());
+    // ensure no running programs across all versions of the application
+    ensureNoRunningPrograms(appId.getNamespaceId(), appId.getApplication());
+    deleteApp(appId, appMeta.getSpec());
+  }
+
+  /**
+   * Find if the given application has running programs
+   *
+   * @param namespaceId the namespaceId find running programs for
+   * @param appName the name of the application to find running programs for
+   * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
+   */
+  private void ensureNoRunningPrograms(NamespaceId namespaceId, String appName) throws CannotBeDeletedException {
+    //Check if all are stopped.
+    if (store.hasActiveRuns(namespaceId, appName)) {
+      throw new CannotBeDeletedException(namespaceId.app(appName), "The app has programs that are still running.");
+    }
+  }
+
+  /**
+   * Delete a specific application version specified by appId.
+   *
+   * @param appId the {@link ApplicationId} of the application to be removed
+   * @throws Exception
+   */
+  public void removeApplicationVersion(ApplicationId appId) throws Exception {
+    // enforce DELETE privileges on the app
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     ensureNoRunningPrograms(appId);
     ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
       throw new NotFoundException(Id.Application.fromEntityId(appId));
     }
-
-    removeAppInternal(appId, spec);
-  }
-
-  /**
-   * Remove application by the appId and appSpec, note that this method does not have any auth check
-   *
-   * @param applicationId the {@link ApplicationId} of the application to be removed
-   * @param appSpec the {@link ApplicationSpecification} of the application to be removed
-   */
-  private void removeAppInternal(ApplicationId applicationId, ApplicationSpecification appSpec) throws Exception {
-    // if the application has only one version, do full deletion, else only delete the specified version
-    if (store.getAllAppVersions(applicationId).size() == 1) {
-      deleteApp(applicationId, appSpec);
-      return;
-    }
-    deleteAppVersion(applicationId, appSpec);
+    deleteAppVersion(appId, spec);
   }
 
   /**
@@ -951,8 +974,31 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
+    return getPluginInstanceDetails(appSpec);
+  }
+
+  /**
+   * Get plugin details for the latest version of the given application
+   *
+   * @param namespaceId namespace of the application
+   * @param appName name of the application
+   * @return a list of {@link PluginInstanceDetail} for the latest version of the given application
+   * @throws ApplicationNotFoundException if the given application does not exist
+   * @throws IOException if failed to fetch plugin details
+   */
+  public List<PluginInstanceDetail> getPlugins(NamespaceId namespaceId,
+                                               String appName) throws NotFoundException, IOException {
+    ApplicationMeta appMeta = store.getLatest(namespaceId, appName);
+    if (appMeta == null || appMeta.getSpec() == null) {
+      throw new NotFoundException(String.format("Application '%s' not found in namespace '%s'",
+                                                appName, namespaceId.getNamespace()));
+    }
+    return getPluginInstanceDetails(appMeta.getSpec());
+  }
+
+  private List<PluginInstanceDetail> getPluginInstanceDetails(ApplicationSpecification appSpec) {
     List<PluginInstanceDetail> pluginInstanceDetails = new ArrayList<>();
-    for (Map.Entry<String, Plugin> entry : appSpec.getPlugins().entrySet()) {
+    for (Entry<String, Plugin> entry : appSpec.getPlugins().entrySet()) {
       pluginInstanceDetails.add(new PluginInstanceDetail(entry.getKey(), entry.getValue()));
     }
     return pluginInstanceDetails;
@@ -1067,11 +1113,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Delete the specified application without performing checks that its programs are stopped.
    *
-   * @param appId the id of the application to delete
-   * @param spec the spec of the application to delete
+   * @param appId the {@link ApplicationId} of the application to be removed
+   * @param spec the {@link ApplicationSpecification} of the application to be removed
    * @throws Exception
    */
-  private void deleteApp(ApplicationId appId, ApplicationSpecification spec) throws Exception {
+  private void deleteApp(ApplicationId appId, ApplicationSpecification spec) throws IOException {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
@@ -1079,12 +1125,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     deleteMetrics(appId, spec);
-
-    //Delete all preferences of the application and of all its programs
-    deletePreferences(appId, spec);
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
-    store.removeApplication(appId);
+    deletePreferences(appId, spec);
+
+    // version specific deletion
+    for (ApplicationId versionAppId : store.getAllAppVersionsAppIds(appId)) {
+      store.removeApplication(versionAppId);
+    }
     try {
       // delete the owner as it has already been determined that this is the only version of the app
       ownerAdmin.delete(appId);
@@ -1187,7 +1235,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       byte[] decodedBytes = Base64.getDecoder().decode(authenticationContext.getPrincipal().getName());
       decodedUserId = new String(decodedBytes);
     } catch (Exception e) {
-      LOG.debug("Failed to decode userId with exception {}", e);
+      LOG.debug("Failed to decode userId", e);
     }
     return decodedUserId;
   }

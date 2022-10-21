@@ -114,7 +114,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public void stopAll() {
     try {
-      ApplicationDetail appDetail = appFabricClient.getVersionedInfo(application);
+      ApplicationDetail appDetail = appFabricClient.getInfo(application);
       for (ProgramRecord programRecord : appDetail.getPrograms()) {
         try {
           appFabricClient.stopProgram(application.getNamespace(), application.getApplication(),
@@ -123,7 +123,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
           // Ignore this as this will be throw if the program is not running, which is fine as there could
           // be programs in the application that are currently not running.
         }
-        waitForStopped(application.program(programRecord.getType(), programRecord.getName()));
+        waitForStopped(new ProgramId(application.getNamespace(), application.getApplication(),
+                                     appDetail.getAppVersion(), programRecord.getType(), programRecord.getName()));
       }
     } catch (NamespaceNotFoundException e) {
       // This can be safely ignore if the unit-test already deleted the namespace

@@ -44,6 +44,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -71,7 +72,11 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     remoteMonitorServicesFetcher = injector.getInstance(RemoteMonitorServicesFetcher.class);
   }
 
+  /*
+   * TODO : to fix after CDAP-19775 is addressed
+   * */
   @Test
+  @Ignore
   public void testSupportBundleSystemLogTask() throws Exception {
     generateWorkflowLog();
     String uuid = UUID.randomUUID().toString();

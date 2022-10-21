@@ -234,8 +234,8 @@ public class SpannerStructuredTable implements StructuredTable {
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
     throws InvalidFieldException {
     fieldValidator.validateScanRange(keyRange);
-    if (!schema.isIndexColumn(orderByField)) {
-      throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column");
+    if (!schema.isIndexColumn(orderByField) && !schema.isPrimaryKeyColumn(orderByField)) {
+      throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column or primary key");
     }
 
     Map<String, Value> parameters = new HashMap<>();

@@ -247,6 +247,14 @@ public interface Store {
   void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer);
 
   /**
+   * Checks if there are active (i.e STARTING or RUNNING or SUSPENDED) run records for a given app.
+   * @param namespaceId the namespace id to match against
+   * @param appName the app name to match against
+   * @return if the application has active run records (true) else false
+   */
+  boolean hasActiveRuns(NamespaceId namespaceId, String appName);
+
+  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
    * @param namespaceId the namespace id to match against
    * @return map of logged runs
@@ -369,15 +377,16 @@ public interface Store {
   Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids);
 
   /**
-   * Returns a collection of all application specs of all the versions of the application by id
+   * Returns a collection of all application specs of all the versions of an app
    *
-   * @param id application id
+   * @param namespaceId the namespace id
+   * @param appName the name of the application
    * @return collection of all application specs of all the application versions
    */
-  Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id);
+  Collection<ApplicationSpecification> getAllAppVersions(NamespaceId namespaceId, String appName);
 
   /**
-   * Returns latest version of an application in a namespace
+   * Returns the latest version of an application in a namespace
    *
    * @param namespace namespace
    * @param appName application id
@@ -474,13 +483,15 @@ public interface Store {
    * Used by {@link io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler} to get the statistics of all completed
    * workflows in a time range.
    *
-   * @param workflowId Workflow that needs to have its statistics returned
+   * @param namespaceId The namespace that the workflow belongs to
+   * @param appName The application that the workflow belongs to
+   * @param workflowName The name of the workflow
    * @param startTime StartTime of the range
    * @param endTime EndTime of the range
    * @param percentiles List of percentiles that the user wants to see
    * @return the statistics for a given workflow
    */
-  WorkflowStatistics getWorkflowStatistics(WorkflowId workflowId, long startTime,
+  WorkflowStatistics getWorkflowStatistics(NamespaceId namespaceId, String appName, String workflowName, long startTime,
                                            long endTime, List<Double> percentiles);
 
   /**
@@ -493,16 +504,31 @@ public interface Store {
   WorkflowTable.WorkflowRunRecord getWorkflowRun(WorkflowId workflowId, String runId);
 
   /**
+   * Returns the record that represents the run of a workflow.
+   *
+   * @param namespaceId The namespace that the workflow belongs to
+   * @param appName The application that the workflow belongs to
+   * @param workflowName The Workflow whose run needs to be queried
+   * @param runId RunId of the workflow run
+   * @return A workflow run record corresponding to the runId
+   */
+  WorkflowTable.WorkflowRunRecord getWorkflowRun(NamespaceId namespaceId, String appName, String workflowName,
+                                                 String runId);
+
+  /**
    * Get a list of workflow runs that are spaced apart by time interval in both directions from the run id provided.
    *
-   * @param workflowId The workflow whose statistics need to be obtained
+   * @param namespaceId The namespace that the workflow belongs to
+   * @param appName The application that the workflow belongs to
+   * @param workflowName The name of the workflow
    * @param runId The run id of the workflow
    * @param limit The number of the records that the user wants to compare against on either side of the run
    * @param timeInterval The timeInterval with which the user wants to space out the runs
    * @return Map of runId of Workflow to DetailedStatistics of the run
    */
-  Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflowId, String runId,
-                                                                    int limit, long timeInterval);
+  Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(NamespaceId namespaceId, String appName,
+                                                                    String workflowName,  String runId, int limit,
+                                                                    long timeInterval);
 
   /**
    * @return programs that were running between given start and end time.
