@@ -114,7 +114,9 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       throwable = throwable.getCause();
     }
 
-    modifiableMDC.put(ERROR_TAGS, tagsSb.toString());
+    if (tagsSb.length() > 0) {
+      modifiableMDC.put(ERROR_TAGS, tagsSb.toString());
+    }
   }
 
   /**
