@@ -613,29 +613,27 @@ public abstract class AppFabricTestBase {
 
   protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
                                                  String filter) throws Exception {
-    String uri = "apps/?pageSize=" + pageSize;
-
-    if (token != null) {
-      uri += ("&pageToken=" + token);
-    }
-
-    if (!Strings.isNullOrEmpty(filter)) {
-      uri += ("&nameFilter=" + filter);
-    }
-
-    HttpResponse response = doGet(getVersionedAPIPath(uri,
-                                  Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    assertResponseCode(200, response);
-    return readResponse(response, JsonObject.class);
+    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, null, null, null);
   }
 
   protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
                                                  String filter, String nameFilterType,
-                                                 Boolean latestOnly) throws Exception {
+                                                 Boolean latestOnly, Boolean sortCreationTime) throws Exception {
+    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, nameFilterType, latestOnly,
+                                     sortCreationTime);
+  }
+
+  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
+                                                 String orderBy, String filter, String nameFilterType,
+                                                 Boolean latestOnly, Boolean sortCreationTime) throws Exception {
     String uri = "apps/?pageSize=" + pageSize;
 
     if (token != null) {
       uri += ("&pageToken=" + token);
+    }
+
+    if (orderBy != null) {
+      uri += ("&orderBy=" + orderBy);
     }
 
     if (!Strings.isNullOrEmpty(filter)) {
@@ -648,6 +646,10 @@ public abstract class AppFabricTestBase {
 
     if (latestOnly != null) {
       uri += ("&latestOnly=" + latestOnly);
+    }
+
+    if (sortCreationTime != null) {
+      uri += ("&sortCreationTime=" + sortCreationTime);
     }
 
     HttpResponse response = doGet(getVersionedAPIPath(uri,
