@@ -30,6 +30,10 @@ public class UnauthenticatedException extends AccessException implements HttpErr
     super();
   }
 
+  public UnauthenticatedException(Throwable throwable) {
+    super(throwable);
+  }
+
   public UnauthenticatedException(String msg, Throwable throwable) {
     super(msg, throwable);
   }

@@ -18,6 +18,7 @@ package io.cdap.cdap.common.http;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -89,7 +90,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
         if (idx < 0) {
           LOG.error("Invalid Authorization header format for {}@{}", currentUserID, currentUserIP);
           if (internalAuthEnabled) {
-            throw new IllegalArgumentException("Invalid Authorization header format");
+            throw new UnauthenticatedException("Invalid Authorization header format");
           }
         } else {
           String credentialTypeStr = authHeader.substring(0, idx);
@@ -100,7 +101,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
             SecurityRequestContext.setUserCredential(currentUserCredential);
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
-            throw e;
+            throw new UnauthenticatedException(e);
           }
         }
       }
