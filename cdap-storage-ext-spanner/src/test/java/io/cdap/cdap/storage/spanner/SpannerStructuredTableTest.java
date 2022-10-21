@@ -16,19 +16,31 @@
 
 package io.cdap.cdap.storage.spanner;
 
+import com.google.cloud.spanner.ErrorCode;
+import com.google.cloud.spanner.SpannerException;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.spi.data.StorageProviderContext;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableTest;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
+import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -82,6 +94,61 @@ public class SpannerStructuredTableTest extends StructuredTableTest {
   @Ignore
   public void testSortedPrimaryKeyFilteredIndexScan() {
     // no implementation
+  }
+
+  @Override
+  @Test
+  public void testUniqueIndex() throws Exception {
+    int max = 10;
+
+    // No rows to read before any write
+    List<Collection<Field<?>>> actual = readSimpleStructuredRows(max);
+    Assert.assertEquals(Collections.emptyList(), actual);
+
+    // Write rows that have null values in unique index and read them
+    List<Collection<Field<?>>> expected = new ArrayList<>(max);
+    List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, max),
+                                          Fields.longField(KEY2, (long) max),
+                                          Fields.stringField(KEY3, "key3"),
+                                          Fields.stringField(STRING_COL, "unique index test"),
+                                          Fields.doubleField(DOUBLE_COL, (double) max),
+                                          Fields.floatField(FLOAT_COL, (float) max),
+                                          Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-" + max)));
+
+    // Should be able to insert the first unique index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+
+      expected.add(fields);
+      table.upsert(fields);
+    });
+
+    actual = readSimpleStructuredRows(max + 1);
+    Assert.assertEquals(expected, actual);
+
+    List<Field<?>> sameUniqueIndex = Arrays.asList(Fields.intField(KEY, max),
+                                                   Fields.longField(KEY2, (long) max),
+                                                   Fields.stringField(KEY3, "a different key"),
+                                                   // forming same unique index
+                                                   Fields.stringField(STRING_COL, "unique index test"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) max),
+                                                   Fields.floatField(FLOAT_COL, (float) max),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-" + max)));
+    // Should fail to insert the same unique index
+    try {
+      getTransactionRunner().run(context -> {
+        StructuredTable table = context.getTable(SIMPLE_TABLE);
+        table.upsert(sameUniqueIndex);
+        Assert.fail("Expected TransactionException/SpannerException since unique index cannot be duplicated");
+      });
+    } catch (TransactionException e) {
+      Throwable cause = e.getCause();
+      Assert.assertTrue(cause instanceof SpannerException);
+      Assert.assertEquals(((SpannerException) cause).getErrorCode(), ErrorCode.ALREADY_EXISTS);
+    }
+
+    actual = readSimpleStructuredRows(max + 1);
+    Assert.assertEquals(expected, actual);
   }
 
   @Override

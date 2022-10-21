@@ -112,6 +112,12 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     // no implementation
   }
 
+  @Override
+  @Ignore
+  public void testUniqueIndex() throws Exception {
+    // TODO: https://cdap.atlassian.net/browse/CDAP-19950
+  }
+
   private void testScannerIterator(int max) throws Exception {
     List<Integer> expected = IntStream.range(0, max).boxed().collect(Collectors.toList());
     MockScanner scanner = new MockScanner(expected.iterator());

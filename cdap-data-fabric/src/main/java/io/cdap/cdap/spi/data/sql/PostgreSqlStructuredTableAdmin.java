@@ -41,9 +41,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
@@ -138,6 +140,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       LOG.debug("Updating table schema {}", newSpec);
       addColumns(connection, newSchema, existingSchema);
       addIndices(connection, newSchema, existingSchema);
+      updateUniqueIndex(connection, newSchema, existingSchema);
       schemaCache.invalidate(tableId);
     } catch (SQLException e) {
       throw new IOException(String.format("Error updating table schema: %s", tableId.getName()), e);
@@ -154,9 +157,16 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
         }
 
         // Create indexes
-        for (String indexStatement : getCreateIndexStatements(spec.getTableId(), new HashSet<>(spec.getIndexes()))) {
+        for (String indexStatement : getCreateIndexStatements(spec.getTableId(), spec.getIndexes())) {
           LOG.debug("Creating index statement: {}", indexStatement);
           statement.execute(indexStatement);
+        }
+
+        if (!spec.getUniqueIndexes().isEmpty()) {
+          // Create unique index
+          String uniqueIndexStatement = getCreateUniqueIndexStatement(spec.getTableId(), spec.getUniqueIndexes());
+          LOG.debug("Creating unique index statement: {}", uniqueIndexStatement);
+          statement.execute(uniqueIndexStatement);
         }
       }
     } catch (SQLException e) {
@@ -228,6 +238,37 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     }
   }
 
+  private void updateUniqueIndex(Connection connection,
+                                 StructuredTableSchema newSchema,
+                                 StructuredTableSchema existingSchema) throws IOException, TableNotFoundException {
+    if (Objects.equals(newSchema.getUniqueIndexes(), existingSchema.getUniqueIndexes())) {
+      return;
+    }
+    try (Statement statement = connection.createStatement()) {
+      if (!newSchema.getUniqueIndexes().isEmpty()) {
+        // Create unique index
+        String uniqueIndexStatement = getCreateUniqueIndexStatement(newSchema.getTableId(),
+                                                                    newSchema.getUniqueIndexes());
+        LOG.debug("Creating unique index statement: {}", uniqueIndexStatement);
+        statement.execute(uniqueIndexStatement);
+      }
+
+      if (!existingSchema.getUniqueIndexes().isEmpty()) {
+        // Drop existing unique index
+        String dropIndexStatement = getDropUniqueIndexStatement(existingSchema.getTableId(),
+                                                                existingSchema.getUniqueIndexes());
+        LOG.debug("Dropping existing unique index statement: {}", dropIndexStatement);
+        statement.execute(dropIndexStatement);
+      }
+    } catch (SQLException e) {
+      if (TABLE_UNDEFINED_SQL_STATE.equalsIgnoreCase(e.getSQLState())) {
+        throw new TableNotFoundException(newSchema.getTableId());
+      }
+      throw new IOException(String.format("Error updating unique index to table: %s",
+                                          newSchema.getTableId().getName()), e);
+    }
+  }
+
   private String getCreateStatement(StructuredTableSpecification specification) {
     StringBuilder createStmt = new StringBuilder();
     createStmt.append("CREATE TABLE ").append(specification.getTableId().getName()).append(" (");
@@ -244,12 +285,31 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     return createStmt.toString();
   }
 
-  private List<String> getCreateIndexStatements(StructuredTableId tableId, Set<String> indexColumns) {
+  private List<String> getCreateIndexStatements(StructuredTableId tableId, Collection<String> indexColumns) {
     String tableName = tableId.getName();
     return indexColumns.stream()
       .map(indexColumn -> String.format("CREATE INDEX IF NOT EXISTS %s_%s_idx ON %s (%s)",
                                         tableName, indexColumn, tableName, indexColumn))
       .collect(Collectors.toList());
+  }
+
+  // By default Postgresql treats NULL as DISTINCT (not equal)
+  // It means a unique index could contain multiple null values in a column
+  private String getCreateUniqueIndexStatement(StructuredTableId tableId, List<String> uniqueIndexColumns) {
+    String tableName = tableId.getName();
+    return String.format("CREATE UNIQUE INDEX IF NOT EXISTS %s ON %s (%s);",
+                         getUniqueIndexName(tableName, uniqueIndexColumns),
+                         tableName,
+                         String.join(",", uniqueIndexColumns));
+  }
+
+  private String getDropUniqueIndexStatement(StructuredTableId tableId, List<String> uniqueIndexColumns) {
+    return String.format("DROP INDEX IF EXISTS %s;", getUniqueIndexName(tableId.getName(), uniqueIndexColumns));
+  }
+
+  private String getUniqueIndexName(String tableName, List<String> uniqueIndexColumns) {
+    return uniqueIndexColumns.stream()
+      .collect(Collectors.joining("_", tableName + "_", "_idx"));
   }
 
   private Optional<String> getAddColumnStatement(StructuredTableId tableId,
@@ -321,20 +381,22 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     // Query the information_schema, pg_index and pg_attribute to reconstruct the StructuredTableSchema
     // using just one query, instead of calling MetaData.getColumns(), MetaData.getPrimaryKeys() and
     // MetaData.getIndexInfo() that is hitting Database 3 times
-    String schemaStatement = String.format("SELECT C.column_name, C.data_type, I.is_primarykey_index, I.index_order "
-                                             + "FROM information_schema.columns C LEFT JOIN "
-                                             + "(SELECT a.attname AS column_name, i.indisprimary AS "
-                                             + "is_primarykey_index, format_type(a.atttypid, a.atttypmod) "
-                                             + "AS data_type, array_position(i.indkey, a.attnum) as index_order "
+    String schemaStatement = String.format("SELECT C.column_name, C.data_type, I.is_primarykey_index, "
+                                             + "I.is_unique_index, I.index_order FROM information_schema.columns C "
+                                             + "LEFT JOIN (SELECT a.attname AS column_name, i.indisprimary AS "
+                                             + "is_primarykey_index, i.indisunique AS is_unique_index, "
+                                             + "format_type(a.atttypid, a.atttypmod) AS data_type, "
+                                             + "array_position(i.indkey, a.attnum) as index_order "
                                              + "FROM pg_index i JOIN pg_attribute a ON a.attrelid = "
                                              + "i.indrelid AND a.attnum = ANY(i.indkey) WHERE i.indrelid = "
                                              + "'%s'::regclass) I ON I.column_name=C.column_name "
                                              + "WHERE table_name='%s' order by ordinal_position;",
-                                             tableId.getName(), tableId.getName());
+                                           tableId.getName(), tableId.getName());
 
-    List<FieldType> fields = new ArrayList<>();
+    LinkedHashSet<FieldType> fields = new LinkedHashSet<>();
     SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
     Set<String> indexes = new LinkedHashSet<>();
+    List<String> uniqueIndex = new ArrayList<>();
 
     try (Connection connection = dataSource.getConnection()) {
       Statement statement = connection.createStatement();
@@ -342,7 +404,10 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       while (resultSet.next()) {
         String columnName = resultSet.getString("column_name");
         String indexType = resultSet.getString("is_primarykey_index");
+        String isIndexUnique = resultSet.getString("is_unique_index");
 
+        // The query result can return duplicate fields for index and primary keys
+        // We use LinkedHashSet to maintain the field order as well as field uniqueness
         fields.add(new FieldType(columnName, fromSQLType(resultSet.getString("data_type"))));
 
         // "t" as true indicates primary key index
@@ -352,6 +417,10 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
           primaryKeysOrderMap.put(resultSet.getLong("index_order"), columnName);
         } else if ("f".equalsIgnoreCase(indexType)) {
           indexes.add(columnName);
+        }
+
+        if ("t".equalsIgnoreCase(isIndexUnique) && "f".equalsIgnoreCase(indexType)) {
+          uniqueIndex.add(columnName);
         }
       }
     } catch (SQLException e) {
@@ -369,6 +438,6 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     // Primary Key fields can still be overly added when it's part of other index, exclude them
     List<String> primaryKeys = new ArrayList<>(primaryKeysOrderMap.values());
     Set<String> nonPrimaryKeyIndexes = Sets.difference(indexes, new HashSet<>(primaryKeys));
-    return new StructuredTableSchema(tableId, fields, primaryKeys, nonPrimaryKeyIndexes);
+    return new StructuredTableSchema(tableId, new ArrayList<>(fields), primaryKeys, nonPrimaryKeyIndexes, uniqueIndex);
   }
 }

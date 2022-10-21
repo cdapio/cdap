@@ -56,6 +56,7 @@ public abstract class StructuredTableAdminTest {
         Fields.longType("updated_field2"))
       .withPrimaryKeys(KEY_FIELD.getName())
       .withIndexes(STR_FIELD.getName(), LONG_FIELD.getName())
+      .withUniqueIndexes(KEY_FIELD.getName(), LONG_FIELD.getName())
       .build();
 
   protected static final StructuredTableSpecification INCOMPATIBLE_TABLE_SPEC =

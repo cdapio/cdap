@@ -46,9 +46,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -67,6 +69,10 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
   static String getIndexName(StructuredTableId tableId, String column) {
     return String.format("%s_%s_idx", tableId.getName(), column);
+  }
+
+  static String getUniqueIndexName(StructuredTableId tableId, Collection<String> columns) {
+    return columns.stream().collect(Collectors.joining("_", tableId.getName() + "_", "_idx"));
   }
 
   public SpannerStructuredTableAdmin(Spanner spanner, DatabaseId databaseId) {
@@ -139,6 +145,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     List<String> statements = new ArrayList<>();
     statements.addAll(getAddColumnsStatement(newTableSchema, cachedTableSchema));
     statements.addAll(getAddIndicesStatement(newTableSchema, cachedTableSchema));
+    addUpdateUniqueIndexStatement(statements, newTableSchema, cachedTableSchema);
     try {
       Uninterruptibles.getUninterruptibly(adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
                                                                         databaseId.getDatabase(), statements, null));
@@ -198,16 +205,48 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     // Query the information_schema to reconstruct the StructuredTableSchema
     // See https://cloud.google.com/spanner/docs/information-schema for details
     Statement schemaStatement = Statement.newBuilder(
-        "SELECT C.column_name, C.spanner_type, I.index_type, I.ordinal_position FROM information_schema.columns C " +
-          "LEFT JOIN information_schema.index_columns I " +
-          "ON C.column_name = I.column_name AND C.table_name = I.table_name AND I.ordinal_position is not NULL " +
-          "WHERE C.table_name = @table_name ORDER BY C.ordinal_position")
+        "SELECT" +
+          "  C.column_name," +
+          "  C.spanner_type," +
+          "  I.index_type," +
+          "  I.ordinal_position," +
+          "  I.is_unique_index" +
+          " FROM" +
+          "  information_schema.columns C" +
+          " LEFT JOIN (" +
+          "  SELECT" +
+          "    IC.table_name," +
+          "    IC.column_name," +
+          "    IC.index_type," +
+          "    IC.ordinal_position," +
+          "    I.is_unique AS is_unique_index" +
+          "  FROM" +
+          "    information_schema.indexes I" +
+          "  JOIN" +
+          "    information_schema.index_columns IC" +
+          "  ON" +
+          "    I.table_name = IC.table_name" +
+          "    AND I.index_name = IC.index_name" +
+          "    AND I.index_type = IC.index_type" +
+          "  WHERE" +
+          "    I.table_name = @table_name" +
+          "  ORDER BY" +
+          "    IC.ordinal_position) I" +
+          " ON" +
+          "  C.column_name = I.column_name" +
+          "  AND C.table_name = I.table_name" +
+          "  AND I.ordinal_position IS NOT NULL" +
+          " WHERE" +
+          "  C.table_name = @table_name" +
+          " ORDER BY" +
+          "  C.ordinal_position")
       .bind("table_name").to(tableId.getName())
       .build();
 
-    List<FieldType> fields = new ArrayList<>();
+    LinkedHashSet<FieldType> fields = new LinkedHashSet<>();
     SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
     Set<String> indexes = new LinkedHashSet<>();
+    List<String> uniqueIndex = new ArrayList<>();
 
     try (ReadOnlyTransaction tx = databaseClient.readOnlyTransaction()) {
       try (ResultSet resultSet = tx.executeQuery(schemaStatement)) {
@@ -225,6 +264,12 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
           } else if ("INDEX".equalsIgnoreCase(indexType) && isIndex) {
             indexes.add(columnName);
           }
+
+          if (!row.isNull("is_unique_index") &&
+            row.getBoolean("is_unique_index") &&
+            "INDEX".equalsIgnoreCase(indexType)) {
+            uniqueIndex.add(columnName);
+          }
         }
       }
     }
@@ -237,7 +282,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     // Primary Key fields can still be overly added when it's part of other index, exclude them
     Set<String> nonPrimaryKeyIndexes = Sets.difference(indexes, new HashSet<>(primaryKeys));
 
-    return new StructuredTableSchema(tableId, fields, primaryKeys, nonPrimaryKeyIndexes);
+    return new StructuredTableSchema(tableId, new ArrayList<>(fields),
+                                     primaryKeys, nonPrimaryKeyIndexes, uniqueIndex);
   }
 
   private String getCreateTableStatement(StructuredTableSpecification spec) {
@@ -274,6 +320,20 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       createIndex += " STORING (" + String.join(",", storingFields) + ")";
     }
     return createIndex;
+  }
+
+  // Creating null-filtered unique index: null value row will be ignored
+  private String getCreateUniqueIndexStatement(StructuredTableSchema schema) {
+    return String.format("CREATE UNIQUE NULL_FILTERED INDEX %s ON %s (%s)",
+                         escapeName(getUniqueIndexName(schema.getTableId(), schema.getUniqueIndexes())),
+                         escapeName(schema.getTableId().getName()),
+                         schema.getUniqueIndexes().stream()
+                           .map(this::escapeName).collect(Collectors.joining(",")));
+  }
+
+  private String getDropUniqueIndexStatement(StructuredTableSchema schema) {
+    return String.format("DROP INDEX %s",
+                         escapeName(getUniqueIndexName(schema.getTableId(), schema.getUniqueIndexes())));
   }
 
   private String getSpannerType(FieldType.Type fieldType) {
@@ -320,6 +380,9 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     StructuredTableSchema schema = new StructuredTableSchema(spec);
     spec.getIndexes()
       .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+    if (!schema.getUniqueIndexes().isEmpty()) {
+      statements.add(getCreateUniqueIndexStatement(schema));
+    }
 
     try {
       Uninterruptibles.getUninterruptibly(adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
@@ -377,5 +440,21 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       .filter(field -> !existingSchemaIndices.contains(field))
       .map(field -> getCreateIndexStatement(field, newSchema))
       .collect(Collectors.toList());
+  }
+
+  private void addUpdateUniqueIndexStatement(List<String> statements,
+                                             StructuredTableSchema newSpannerSchema,
+                                             StructuredTableSchema cachedTableSchema) {
+    if (Objects.equals(newSpannerSchema.getUniqueIndexes(), cachedTableSchema.getUniqueIndexes())) {
+      return;
+    }
+
+    if (!newSpannerSchema.getUniqueIndexes().isEmpty()) {
+      statements.add(getCreateUniqueIndexStatement(newSpannerSchema));
+    }
+    
+    if (!cachedTableSchema.getUniqueIndexes().isEmpty()) {
+      statements.add(getDropUniqueIndexStatement(cachedTableSchema));
+    }
   }
 }

@@ -540,7 +540,7 @@ public class AppMetadataStore {
     if (latest != null) {
       List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
                                                         latest.getSpec().getAppVersion());
-      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "false"));
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
       getApplicationSpecificationTable().upsert(fields);
     }
     // Add a new version of the app

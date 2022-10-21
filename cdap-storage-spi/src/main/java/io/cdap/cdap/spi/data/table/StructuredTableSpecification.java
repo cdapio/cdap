@@ -25,9 +25,11 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
  *   <li>fields - the schema of the table, consists of the column names and their types</li>
  *   <li>primaryKeys - the primary key for each row</li>
  *   <li>indexes - the columns to index on. Only one column can be part of an index</li>
+ *   <li>uniqueIndexes - the columns to be uniquely index on. The index will be null filtered</li>
  * </ul>
  */
 @Beta
@@ -51,16 +54,18 @@ public final class StructuredTableSpecification {
   private final List<FieldType> fieldTypes;
   private final List<String> primaryKeys;
   private final List<String> indexes;
+  private final List<String> uniqueIndexes;
 
   /**
    * Use {@link Builder} to create instances.
    */
   private StructuredTableSpecification(StructuredTableId tableId, List<FieldType> fieldTypes, List<String> primaryKeys,
-                                       List<String> indexes) {
+                                       List<String> indexes, List<String> uniqueIndexes) {
     this.tableId = tableId;
     this.fieldTypes = Collections.unmodifiableList(fieldTypes);
     this.primaryKeys = Collections.unmodifiableList(primaryKeys);
     this.indexes = Collections.unmodifiableList(indexes);
+    this.uniqueIndexes = Collections.unmodifiableList(uniqueIndexes);
   }
 
   /**
@@ -91,6 +96,13 @@ public final class StructuredTableSpecification {
     return indexes;
   }
 
+  /**
+   * @return the list of indexes defined on the table
+   */
+  public List<String> getUniqueIndexes() {
+    return uniqueIndexes;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -103,12 +115,13 @@ public final class StructuredTableSpecification {
     return Objects.equals(tableId, that.tableId) &&
       Objects.equals(fieldTypes, that.fieldTypes) &&
       Objects.equals(primaryKeys, that.primaryKeys) &&
-      Objects.equals(indexes, that.indexes);
+      Objects.equals(indexes, that.indexes) &&
+      Objects.equals(uniqueIndexes, that.uniqueIndexes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tableId, fieldTypes, primaryKeys, indexes);
+    return Objects.hash(tableId, fieldTypes, primaryKeys, indexes, uniqueIndexes);
   }
 
   @Override
@@ -118,6 +131,7 @@ public final class StructuredTableSpecification {
       ", fieldTypes=" + fieldTypes +
       ", primaryKeys=" + primaryKeys +
       ", indexes=" + indexes +
+      ", uniqueIndexes=" + uniqueIndexes +
       '}';
   }
 
@@ -129,6 +143,7 @@ public final class StructuredTableSpecification {
     private List<FieldType> fieldTypes;
     private List<String> primaryKeys;
     private List<String> indexes;
+    private List<String> uniqueIndexes;
 
     /**
      * Create a builder that is initialized with all the information from an existing specification.
@@ -137,6 +152,7 @@ public final class StructuredTableSpecification {
       this.fieldTypes = new ArrayList<>();
       this.primaryKeys = new ArrayList<>();
       this.indexes = new ArrayList<>();
+      this.uniqueIndexes = new ArrayList<>();
     }
 
     /**
@@ -147,6 +163,7 @@ public final class StructuredTableSpecification {
       this.fieldTypes = new ArrayList<>(existing.getFieldTypes());
       this.primaryKeys = new ArrayList<>(existing.getPrimaryKeys());
       this.indexes = new ArrayList<>(existing.getIndexes());
+      this.uniqueIndexes = new ArrayList<>(existing.getUniqueIndexes());
     }
 
     /**
@@ -198,13 +215,29 @@ public final class StructuredTableSpecification {
     }
 
     /**
+     * Set the fields that need to be uniquely indexed in the table.
+     * The indexed fields should all be null-filtered.
+     * A table need not define any indexes.
+     * See {@link FieldType#INDEX_COLUMN_TYPES} for valid index field types.
+     *
+     * @param uniqueIndexes list of field names for the null-filtered index
+     * @return Builder instance
+     */
+    public Builder withUniqueIndexes(String... uniqueIndexes) {
+      if (this.uniqueIndexes != null) {
+        this.uniqueIndexes = Arrays.asList(uniqueIndexes);
+      }
+      return this;
+    }
+
+    /**
      * Build the table specification
      *
      * @return the table specification
      */
     public StructuredTableSpecification build() throws InvalidFieldException {
       validate();
-      return new StructuredTableSpecification(tableId, fieldTypes, primaryKeys, indexes);
+      return new StructuredTableSpecification(tableId, fieldTypes, primaryKeys, indexes, uniqueIndexes);
     }
 
     private void validate() throws InvalidFieldException {
@@ -254,6 +287,7 @@ public final class StructuredTableSpecification {
       }
 
       // Validate that the indexes are part of the fields defined and of valid type
+      Set<String> keysSet = new HashSet<>(primaryKeys);
       for (String index : indexes) {
         FieldType.Type type = typeMap.get(index);
         if (type == null) {
@@ -263,6 +297,23 @@ public final class StructuredTableSpecification {
           throw new InvalidFieldException(
             tableId, index,
             String.format("has wrong type for an index column. Valid types are: %s", FieldType.INDEX_COLUMN_TYPES));
+        }
+        if (keysSet.contains(index)) {
+          throw new InvalidFieldException(tableId, index, "is a primary key, no need to be singly indexed");
+        }
+      }
+
+      // Validate that the unique indexes are part of the fields defined and of valid type
+      for (String uniqueIndex : uniqueIndexes) {
+        FieldType.Type type = typeMap.get(uniqueIndex);
+        if (type == null) {
+          throw new InvalidFieldException(tableId, uniqueIndex, "is not defined as an index column");
+        }
+        if (!Fields.isIndexColumnType(type)) {
+          throw new InvalidFieldException(
+            tableId, uniqueIndex,
+            String.format("has wrong type for a unique index column. Valid types are: %s",
+                          FieldType.INDEX_COLUMN_TYPES));
         }
       }
     }

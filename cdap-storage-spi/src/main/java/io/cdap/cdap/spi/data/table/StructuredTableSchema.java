@@ -40,18 +40,21 @@ public class StructuredTableSchema {
   // primary keys have to be ordered as defined in the table schema
   private final List<String> primaryKeys;
   private final Set<String> indexes;
+  private final List<String> uniqueIndexes;
 
   public StructuredTableSchema(StructuredTableSpecification spec) {
-    this(spec.getTableId(), spec.getFieldTypes(), spec.getPrimaryKeys(), spec.getIndexes());
+    this(spec.getTableId(), spec.getFieldTypes(), spec.getPrimaryKeys(), spec.getIndexes(), spec.getUniqueIndexes());
   }
 
   public StructuredTableSchema(StructuredTableId tableId, List<FieldType> fields,
-                               List<String> primaryKeys, Collection<String> indexes) {
+                               List<String> primaryKeys, Collection<String> indexes,
+                               Collection<String> uniqueIndexes) {
     this.tableId = tableId;
     this.fields = Collections.unmodifiableMap(fields.stream().collect(
       Collectors.toMap(FieldType::getName, FieldType::getType)));
     this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(primaryKeys));
     this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
+    this.uniqueIndexes = Collections.unmodifiableList(new ArrayList<>(uniqueIndexes));
   }
 
   public StructuredTableId getTableId() {
@@ -64,6 +67,10 @@ public class StructuredTableSchema {
 
   public Set<String> getIndexes() {
     return indexes;
+  }
+
+  public List<String> getUniqueIndexes() {
+    return uniqueIndexes;
   }
 
   /**
@@ -113,12 +120,13 @@ public class StructuredTableSchema {
     return Objects.equals(tableId, that.tableId)
       && Objects.equals(fields, that.fields)
       && Objects.equals(primaryKeys, that.primaryKeys)
-      && Objects.equals(indexes, that.indexes);
+      && Objects.equals(indexes, that.indexes)
+      && Objects.equals(uniqueIndexes, that.uniqueIndexes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tableId, fields, primaryKeys, indexes);
+    return Objects.hash(tableId, fields, primaryKeys, indexes, uniqueIndexes);
   }
 
   /**
@@ -161,6 +169,9 @@ public class StructuredTableSchema {
    *   </li>
    *   <li>
    *     The new schema contains all the indexes in the existing schema.
+   *   </li>
+   *   <li>
+   *     The new schema contains all the unique indexes in the existing schema.
    *   </li>
    * </ol>
    *

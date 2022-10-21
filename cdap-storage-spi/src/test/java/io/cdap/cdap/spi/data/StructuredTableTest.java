@@ -35,6 +35,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -63,14 +65,14 @@ public abstract class StructuredTableTest {
   // TODO: test complex schema will all allowed data types
   protected static final StructuredTableSpecification SIMPLE_SPEC;
 
-  private static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simpleTable");
-  private static final String KEY = "key";
-  private static final String KEY2 = "key2";
-  private static final String KEY3 = "key3";
-  private static final String STRING_COL = "col1";
-  private static final String DOUBLE_COL = "col2";
-  private static final String FLOAT_COL = "col3";
-  private static final String BYTES_COL = "col4";
+  protected static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simpleTable");
+  protected static final String KEY = "key";
+  protected static final String KEY2 = "key2";
+  protected static final String KEY3 = "key3";
+  protected static final String STRING_COL = "col1";
+  protected static final String DOUBLE_COL = "col2";
+  protected static final String FLOAT_COL = "col3";
+  protected static final String BYTES_COL = "col4";
   private static final String LONG_COL = "col5";
   private static final String IDX_COL = "col6";
   private static final String VAL = "val";
@@ -85,6 +87,7 @@ public abstract class StructuredTableTest {
                     Fields.longType(LONG_COL), Fields.longType(IDX_COL))
         .withPrimaryKeys(KEY, KEY2, KEY3)
         .withIndexes(STRING_COL, IDX_COL)
+        .withUniqueIndexes(KEY, KEY2, STRING_COL)
         .build();
       SIMPLE_SCHEMA = new StructuredTableSchema(SIMPLE_SPEC);
     } catch (InvalidFieldException e) {
@@ -154,6 +157,58 @@ public abstract class StructuredTableTest {
     deleteSimpleStructuredRows(max);
     actual = readSimpleStructuredRows(max);
     Assert.assertEquals(Collections.emptyList(), actual);
+  }
+
+  @Test
+  public void testUniqueIndex() throws Exception {
+    int max = 10;
+
+    // No rows to read before any write
+    List<Collection<Field<?>>> actual = readSimpleStructuredRows(max);
+    Assert.assertEquals(Collections.emptyList(), actual);
+
+    // Write rows that have null values in unique index and read them
+    List<Collection<Field<?>>> expected = new ArrayList<>(max);
+    List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, max),
+                                          Fields.longField(KEY2, (long) max),
+                                          Fields.stringField(KEY3, "key3"),
+                                          Fields.stringField(STRING_COL, "unique index test"),
+                                          Fields.doubleField(DOUBLE_COL, (double) max),
+                                          Fields.floatField(FLOAT_COL, (float) max),
+                                          Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-" + max)));
+
+    // Should be able to insert the first unique index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+
+      expected.add(fields);
+      table.upsert(fields);
+    });
+
+    actual = readSimpleStructuredRows(max + 1);
+    Assert.assertEquals(expected, actual);
+
+    List<Field<?>> sameUniqueIndex = Arrays.asList(Fields.intField(KEY, max),
+                                                   Fields.longField(KEY2, (long) max),
+                                                   Fields.stringField(KEY3, "a different key"),
+                                                   // forming same unique index
+                                                   Fields.stringField(STRING_COL, "unique index test"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) max),
+                                                   Fields.floatField(FLOAT_COL, (float) max),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-" + max)));
+    // Should fail to insert the same unique index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try {
+        table.upsert(sameUniqueIndex);
+        Assert.fail("Expected IOException since unique index cannot be duplicated");
+      } catch (IOException e) {
+        Throwable cause = e.getCause();
+        Assert.assertTrue(cause instanceof SQLException);
+      }
+    });
+    actual = readSimpleStructuredRows(max + 1);
+    Assert.assertEquals(expected, actual);
   }
 
   @Test
@@ -1478,7 +1533,7 @@ public abstract class StructuredTableTest {
     return expected;
   }
 
-  private List<Collection<Field<?>>> readSimpleStructuredRows(int max) throws Exception {
+  protected List<Collection<Field<?>>> readSimpleStructuredRows(int max) throws Exception {
     return readSimpleStructuredRows(max, Collections.emptyList());
   }
 
