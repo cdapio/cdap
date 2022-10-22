@@ -117,6 +117,24 @@ public class SpannerStructuredTableAdminTest extends StructuredTableAdminTest {
     Assert.assertTrue(updateSimpleTableSchema.isCompatible(UPDATED_SIMPLE_TABLE_SPEC));
   }
 
+  @Test
+  @Override
+  public void testInconsistentKeyOrderInSchema() throws Exception {
+    StructuredTableAdmin admin = getStructuredTableAdmin();
+
+    // Assert INCONSISTENT_PRIMARY_KEY_TABLE Empty
+    Assert.assertFalse(admin.exists(INCONSISTENT_PRIMARY_KEY_TABLE));
+
+    // Create INCONSISTENT_PRIMARY_KEY_TABLE
+    admin.createOrUpdate(INCONSISTENT_PRIMARY_KEY_TABLE_SPEC);
+    Assert.assertTrue(admin.exists(INCONSISTENT_PRIMARY_KEY_TABLE));
+
+    // Assert INCONSISTENT_PRIMARY_KEY_TABLE schema
+    StructuredTableSchema tableSchema = admin.getSchema(INCONSISTENT_PRIMARY_KEY_TABLE);
+    // ONLY checking compatibility because of INT/LONG to INT64 conversion in Spanner
+    Assert.assertTrue(tableSchema.isCompatible(INCONSISTENT_PRIMARY_KEY_TABLE_SPEC));
+  }
+
   private static final class MockStorageProviderContext implements StorageProviderContext {
 
     private final Map<String, String> config;
