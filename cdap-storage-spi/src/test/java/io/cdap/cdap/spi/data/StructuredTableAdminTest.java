@@ -32,7 +32,10 @@ public abstract class StructuredTableAdminTest {
   private static final FieldType KEY_FIELD = Fields.intType("i");
   private static final FieldType STR_FIELD = Fields.stringType("s");
   private static final FieldType LONG_FIELD = Fields.longType("l");
+  private static final FieldType IDX_FIELD = Fields.stringType("idx");
   protected static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simple_table");
+  protected static final StructuredTableId INCONSISTENT_PRIMARY_KEY_TABLE =
+    new StructuredTableId("another_table");
 
   protected static final StructuredTableSpecification SIMPLE_TABLE_SPEC =
     new StructuredTableSpecification.Builder()
@@ -62,6 +65,14 @@ public abstract class StructuredTableAdminTest {
       .withPrimaryKeys(KEY_FIELD.getName())
       .build();
 
+  protected static final StructuredTableSpecification INCONSISTENT_PRIMARY_KEY_TABLE_SPEC =
+    new StructuredTableSpecification.Builder()
+      .withId(INCONSISTENT_PRIMARY_KEY_TABLE)
+      .withFields(KEY_FIELD, STR_FIELD, LONG_FIELD, IDX_FIELD)
+      .withPrimaryKeys(KEY_FIELD.getName(), LONG_FIELD.getName(), STR_FIELD.getName())
+      .withIndexes(IDX_FIELD.getName())
+      .build();
+
   /**
    * @return the right implementation of the table admin based on the underlying storage.
    */
@@ -74,7 +85,11 @@ public abstract class StructuredTableAdminTest {
     if (admin.exists(SIMPLE_TABLE)) {
       admin.drop(SIMPLE_TABLE);
     }
+    if (admin.exists(INCONSISTENT_PRIMARY_KEY_TABLE)) {
+      admin.drop(INCONSISTENT_PRIMARY_KEY_TABLE);
+    }
     Assert.assertFalse(admin.exists(SIMPLE_TABLE));
+    Assert.assertFalse(admin.exists(INCONSISTENT_PRIMARY_KEY_TABLE));
   }
 
   @Test
@@ -127,5 +142,21 @@ public abstract class StructuredTableAdminTest {
     } catch (TableSchemaIncompatibleException e) {
       // Expected
     }
+  }
+
+  @Test
+  public void testInconsistentKeyOrderInSchema() throws Exception {
+    StructuredTableAdmin admin = getStructuredTableAdmin();
+
+    // Assert INCONSISTENT_PRIMARY_KEY_TABLE Empty
+    Assert.assertFalse(admin.exists(INCONSISTENT_PRIMARY_KEY_TABLE));
+
+    // Create INCONSISTENT_PRIMARY_KEY_TABLE
+    admin.createOrUpdate(INCONSISTENT_PRIMARY_KEY_TABLE_SPEC);
+    Assert.assertTrue(admin.exists(INCONSISTENT_PRIMARY_KEY_TABLE));
+
+    // Assert INCONSISTENT_PRIMARY_KEY_TABLE schema
+    StructuredTableSchema tableSchema = admin.getSchema(INCONSISTENT_PRIMARY_KEY_TABLE);
+    Assert.assertEquals(tableSchema, new StructuredTableSchema(INCONSISTENT_PRIMARY_KEY_TABLE_SPEC));
   }
 }

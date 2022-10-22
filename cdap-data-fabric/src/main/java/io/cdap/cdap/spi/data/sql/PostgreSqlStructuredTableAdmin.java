@@ -42,9 +42,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -133,8 +136,8 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       // Since each add column and create index statement has "IF NOT EXIST", it should not throw in
       // a race condition when multiple table updates process at the same time, hence no need to retry updateTable
       LOG.debug("Updating table schema {}", newSpec);
-      addColumns(connection, newSchema);
-      addIndices(connection, newSchema);
+      addColumns(connection, newSchema, existingSchema);
+      addIndices(connection, newSchema, existingSchema);
       schemaCache.invalidate(tableId);
     } catch (SQLException e) {
       throw new IOException(String.format("Error updating table schema: %s", tableId.getName()), e);
@@ -151,8 +154,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
         }
 
         // Create indexes
-        Set<String> nonExistIndexes = getNonExistIndexes(connection, new StructuredTableSchema(spec));
-        for (String indexStatement : getCreateIndexStatements(spec.getTableId(), nonExistIndexes)) {
+        for (String indexStatement : getCreateIndexStatements(spec.getTableId(), new HashSet<>(spec.getIndexes()))) {
           LOG.debug("Creating index statement: {}", indexStatement);
           statement.execute(indexStatement);
         }
@@ -186,14 +188,13 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   // Add new non-primary key columns to table
-  private void addColumns(Connection connection, StructuredTableSchema schema)
+  private void addColumns(Connection connection, StructuredTableSchema newSchema, StructuredTableSchema existingSchema)
     throws IOException, TableNotFoundException {
-    StructuredTableId tableId = schema.getTableId();
+    StructuredTableId tableId = newSchema.getTableId();
     try {
-      Optional<String> columnStatement = getAddColumnStatement(tableId,
-                                                               connection.getMetaData(), schema);
+      Optional<String> columnStatement = getAddColumnStatement(tableId, newSchema, existingSchema);
       if (!columnStatement.isPresent()) {
-        LOG.debug("No new columns to add for table {}", schema.getTableId());
+        LOG.debug("No new columns to add for table {}", newSchema.getTableId());
         return;
       }
       try (Statement statement = connection.createStatement()) {
@@ -210,40 +211,21 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   // Add new non-primary key indices to table
-  private void addIndices(Connection connection, StructuredTableSchema schema)
+  private void addIndices(Connection connection, StructuredTableSchema newSchema, StructuredTableSchema existingSchema)
     throws IOException, TableNotFoundException {
     try (Statement statement = connection.createStatement()) {
       // Create indexes
-      for (String indexStatement : getCreateIndexStatements(schema.getTableId(),
-                                                            getNonExistIndexes(connection, schema))) {
+      Set<String> newIndexes = Sets.difference(newSchema.getIndexes(), existingSchema.getIndexes());
+      for (String indexStatement : getCreateIndexStatements(newSchema.getTableId(), newIndexes)) {
         LOG.debug("Create index statement: {}", indexStatement);
         statement.execute(indexStatement);
       }
     } catch (SQLException e) {
       if (TABLE_UNDEFINED_SQL_STATE.equalsIgnoreCase(e.getSQLState())) {
-        throw new TableNotFoundException(schema.getTableId());
+        throw new TableNotFoundException(newSchema.getTableId());
       }
-      throw new IOException(String.format("Error adding indices to table: %s", schema.getTableId().getName()), e);
+      throw new IOException(String.format("Error adding indices to table: %s", newSchema.getTableId().getName()), e);
     }
-  }
-
-  private Set<String> getNonExistIndexes(Connection connection,
-                                         StructuredTableSchema schema) throws SQLException {
-    DatabaseMetaData metaData = connection.getMetaData();
-    Set<String> existingIndexes = new HashSet<>();
-    try (ResultSet rs = metaData.getIndexInfo(null, null,
-                                              schema.getTableId().getName(), false, false)) {
-      while (rs.next()) {
-        // the COLUMN_NAME will return the column that is indexed, which is more intuitive to use INDEX_NAME, also
-        // null can be returned if the created index is of tableIndexStatistic, though we don't create indexes of this
-        // type, it is safe to only add non-null column name.
-        String columnName = rs.getString("COLUMN_NAME");
-        if (columnName != null) {
-          existingIndexes.add(columnName);
-        }
-      }
-    }
-    return Sets.difference(schema.getIndexes(), existingIndexes);
   }
 
   private String getCreateStatement(StructuredTableSpecification specification) {
@@ -271,28 +253,19 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   private Optional<String> getAddColumnStatement(StructuredTableId tableId,
-                                                 DatabaseMetaData metaData,
-                                                 StructuredTableSchema schema) throws SQLException {
-    Set<String> existingFields = new HashSet<>();
-    ResultSet resultSet = metaData.getColumns(null, null, tableId.getName(), null);
-    while (resultSet.next()) {
-      existingFields.add(resultSet.getString("COLUMN_NAME"));
-    }
-
+                                                 StructuredTableSchema newSchema,
+                                                 StructuredTableSchema existingSchema) throws SQLException {
     // Since schema is backward compatible, they have the same primary keys
     // The new different fields are all non-primary key columns
-    List<String> fieldsToAdd = schema.getFieldNames()
-      .stream()
-      .filter(f -> !existingFields.contains(f))
-      .collect(Collectors.toList());
+    Set<String> fieldsToAdd = Sets.difference(newSchema.getFieldNames(), existingSchema.getFieldNames());
 
     if (fieldsToAdd.isEmpty()) {
       return Optional.empty();
     }
 
     String addColumnsStatement = fieldsToAdd.stream()
-      .map(fieldName ->
-             String.format(" ADD COLUMN IF NOT EXISTS %s %s", fieldName, getPostgreSQLType(schema.getType(fieldName))))
+      .map(fieldName -> String.format(" ADD COLUMN IF NOT EXISTS %s %s", fieldName,
+                                      getPostgreSQLType(newSchema.getType(fieldName))))
       .collect(Collectors.joining(", ", "ALTER TABLE " + tableId.getName(), ";"));
 
     return Optional.of(addColumnsStatement);
@@ -319,7 +292,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       default:
         // this should never happen since all the fields are from the specification and validated there
         throw new IllegalStateException(
-          String.format("UnSupported type: %s", fieldType));
+          String.format("Unsupported type: %s", fieldType));
     }
   }
 
@@ -339,7 +312,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       case "bytea":
         return FieldType.Type.BYTES;
       default:
-        throw new IllegalArgumentException("Unsupport spanner type " + sqlType);
+        throw new IllegalArgumentException("Unsupported type " + sqlType);
     }
   }
 
@@ -348,19 +321,20 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
     // Query the information_schema, pg_index and pg_attribute to reconstruct the StructuredTableSchema
     // using just one query, instead of calling MetaData.getColumns(), MetaData.getPrimaryKeys() and
     // MetaData.getIndexInfo() that is hitting Database 3 times
-    String schemaStatement = String.format("SELECT C.column_name, C.data_type, I.is_primarykey_index "
+    String schemaStatement = String.format("SELECT C.column_name, C.data_type, I.is_primarykey_index, I.index_order "
                                              + "FROM information_schema.columns C LEFT JOIN "
                                              + "(SELECT a.attname AS column_name, i.indisprimary AS "
                                              + "is_primarykey_index, format_type(a.atttypid, a.atttypmod) "
-                                             + "AS data_type FROM pg_index i JOIN pg_attribute a ON a.attrelid = "
+                                             + "AS data_type, array_position(i.indkey, a.attnum) as index_order "
+                                             + "FROM pg_index i JOIN pg_attribute a ON a.attrelid = "
                                              + "i.indrelid AND a.attnum = ANY(i.indkey) WHERE i.indrelid = "
                                              + "'%s'::regclass) I ON I.column_name=C.column_name "
                                              + "WHERE table_name='%s' order by ordinal_position;",
                                              tableId.getName(), tableId.getName());
 
     List<FieldType> fields = new ArrayList<>();
-    List<String> primaryKeys = new ArrayList<>();
-    List<String> indexes = new ArrayList<>();
+    SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
+    Set<String> indexes = new LinkedHashSet<>();
 
     try (Connection connection = dataSource.getConnection()) {
       Statement statement = connection.createStatement();
@@ -371,9 +345,11 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
 
         fields.add(new FieldType(columnName, fromSQLType(resultSet.getString("data_type"))));
 
-        // "t" as true indicates primary key index, "f" as false indicates normal index, null means it's just a column
+        // "t" as true indicates primary key index
+        // "f" as false indicates normal index, but it can still be a primary key field that is part of other index
+        // null means it's just a column
         if ("t".equalsIgnoreCase(indexType)) {
-          primaryKeys.add(columnName);
+          primaryKeysOrderMap.put(resultSet.getLong("index_order"), columnName);
         } else if ("f".equalsIgnoreCase(indexType)) {
           indexes.add(columnName);
         }
@@ -390,6 +366,9 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       throw new TableNotFoundException(tableId);
     }
 
-    return new StructuredTableSchema(tableId, fields, primaryKeys, indexes);
+    // Primary Key fields can still be overly added when it's part of other index, exclude them
+    List<String> primaryKeys = new ArrayList<>(primaryKeysOrderMap.values());
+    Set<String> nonPrimaryKeyIndexes = Sets.difference(indexes, new HashSet<>(primaryKeys));
+    return new StructuredTableSchema(tableId, fields, primaryKeys, nonPrimaryKeyIndexes);
   }
 }

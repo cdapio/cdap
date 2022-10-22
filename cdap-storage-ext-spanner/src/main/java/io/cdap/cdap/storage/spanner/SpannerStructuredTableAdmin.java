@@ -29,6 +29,7 @@ import com.google.cloud.spanner.Struct;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -49,6 +50,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -203,8 +206,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       .build();
 
     List<FieldType> fields = new ArrayList<>();
-    List<String> primaryKeys = new ArrayList<>();
-    List<String> indexes = new ArrayList<>();
+    SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
+    Set<String> indexes = new LinkedHashSet<>();
 
     try (ReadOnlyTransaction tx = databaseClient.readOnlyTransaction()) {
       try (ResultSet resultSet = tx.executeQuery(schemaStatement)) {
@@ -218,7 +221,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
           fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type"))));
           if ("PRIMARY_KEY".equalsIgnoreCase(indexType)) {
-            primaryKeys.add(columnName);
+            primaryKeysOrderMap.put(row.getLong("ordinal_position"), columnName);
           } else if ("INDEX".equalsIgnoreCase(indexType) && isIndex) {
             indexes.add(columnName);
           }
@@ -230,7 +233,11 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       throw new TableNotFoundException(tableId);
     }
 
-    return new StructuredTableSchema(tableId, fields, primaryKeys, indexes);
+    List<String> primaryKeys = new ArrayList<>(primaryKeysOrderMap.values());
+    // Primary Key fields can still be overly added when it's part of other index, exclude them
+    Set<String> nonPrimaryKeyIndexes = Sets.difference(indexes, new HashSet<>(primaryKeys));
+
+    return new StructuredTableSchema(tableId, fields, primaryKeys, nonPrimaryKeyIndexes);
   }
 
   private String getCreateTableStatement(StructuredTableSpecification spec) {
