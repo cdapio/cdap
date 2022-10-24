@@ -122,6 +122,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", null) ||
       endsWith(uriParts, "metadata", "search") ||
       beginsWith(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
+      endsWith(uriParts, "runs", null, "endpoints") ||
       beginsWith(uriParts, "v3", "metadata", "search"))) {
       return METADATA_SERVICE;
     } else if (beginsWith(uriParts, "v3", "security", "authorization") ||

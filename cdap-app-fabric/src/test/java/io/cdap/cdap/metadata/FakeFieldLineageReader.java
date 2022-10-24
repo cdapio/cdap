@@ -19,7 +19,9 @@ package io.cdap.cdap.metadata;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageReader;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
+import org.apache.twill.api.RunId;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,5 +86,10 @@ public class FakeFieldLineageReader implements FieldLineageReader {
   @Override
   public List<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end) {
     return programRunOperations;
+  }
+
+  @Override
+  public List<EndPoint> getEndpoints(String namespaceId, ProgramReference programReference, RunId runId) {
+    return new ArrayList<>();
   }
 }
