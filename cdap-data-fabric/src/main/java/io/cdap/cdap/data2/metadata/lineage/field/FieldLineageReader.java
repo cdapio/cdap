@@ -18,7 +18,9 @@ package io.cdap.cdap.data2.metadata.lineage.field;
 
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
+import org.apache.twill.api.RunId;
 
 import java.util.List;
 import java.util.Set;
@@ -89,4 +91,14 @@ public interface FieldLineageReader {
    * @return the operations and program run information
    */
   List<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end);
+
+  /**
+   * Get the list of Endpoints in pipeline run corresponding to the input run.
+   *
+   * @param namespaceId the namespace in which the pipeline ran
+   * @param programReference the program run ID
+   * @param runId run ID which is a UUID
+   * @return the list of endpoints in the pipeline run
+   */
+  List<EndPoint> getEndpoints(String namespaceId, ProgramReference programReference, RunId runId);
 }

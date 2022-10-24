@@ -901,6 +901,7 @@ public final class StoreDefinition {
     public static final String DIRECTION_FIELD = "direction";
     public static final String ENDPOINT_NAMESPACE_FIELD = "endpoint_namespace";
     public static final String ENDPOINT_NAME_FIELD = "endpoint";
+    public static final String ENDPOINT_PROPERTIES_FIELD = "endpoint_properties";
     public static final String START_TIME_FIELD = "start_time";
     public static final String CHECKSUM_FIELD = "checksum";
     public static final String PROGRAM_RUN_FIELD = "program_run";
@@ -914,6 +915,7 @@ public final class StoreDefinition {
         .withFields(Fields.stringType(DIRECTION_FIELD),
                     Fields.stringType(ENDPOINT_NAMESPACE_FIELD),
                     Fields.stringType(ENDPOINT_NAME_FIELD),
+                    Fields.stringType(ENDPOINT_PROPERTIES_FIELD),
                     Fields.longType(START_TIME_FIELD),
                     Fields.longType(CHECKSUM_FIELD),
                     Fields.stringType(PROGRAM_RUN_FIELD))
