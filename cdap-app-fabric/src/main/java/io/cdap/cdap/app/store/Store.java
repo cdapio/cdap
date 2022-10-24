@@ -278,6 +278,16 @@ public interface Store {
   Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId);
 
   /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records for the latest version of the
+   * given application.
+   * @param namespaceId namespace of the application
+   * @param appName aplicaiton name
+   * @return map of logged runs. If no active run exists, return an empty map.
+   * TODO replace params with ApplicationReference
+   */
+  Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(NamespaceId namespaceId, String appName);
+
+  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ProgramId.
    * @param programId the program id to match against
    * @return map of logged runs

@@ -567,8 +567,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
                                         CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
     // Capability management service might not yet have deployed application.
     // So wait till program exists and is in running state.
-
-    // TODO : to fix after CDAP-19775 is addressed
     waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
 
@@ -649,8 +647,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
                                         CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
     // Capability management service might not yet have deployed application.
     // So wait till program exists and is in running state.
-
-    // TODO : to fix after CDAP-19775 is addressed
     waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
 

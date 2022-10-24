@@ -135,7 +135,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       }, 10, TimeUnit.SECONDS);
     } finally {
       try {
-        appClient.delete(appId);
+        appClient.deleteApp(appId);
       } catch (Exception e) {
         LOG.error("Error deleting app {} during test cleanup.", appId, e);
       }

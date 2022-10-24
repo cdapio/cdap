@@ -73,7 +73,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     Assert.assertTrue(new ApplicationClient(clientConfig).list(namespace).isEmpty());
 
   }
-  
+
   @Test
   public void testSQLQuery() throws Exception {
     getTestManager().deployDatasetModule(NamespaceId.DEFAULT.datasetModule("my-kv"), AppUsingCustomModule.Module.class);
