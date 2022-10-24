@@ -183,11 +183,6 @@ public class ProgramLifecycleService {
       throw new NotFoundException(appId);
     }
 
-    programId = new ProgramId(programId.getNamespace(),
-                              programId.getApplication(),
-                              appSpec.getAppVersion(),
-                              programId.getType(),
-                              programId.getProgram());
     return getExistingAppProgramStatus(appSpec, programId);
   }
 

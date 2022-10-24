@@ -213,8 +213,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-    // Pass in "-SNAPSHOT" version regardless
-    ProgramId programId = new ApplicationId(namespaceId, appId).program(ProgramType.MAPREDUCE, mapreduceId);
+    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
+    ProgramId programId = new ApplicationId(namespaceId, appId, appVersion).program(ProgramType.MAPREDUCE, mapreduceId);
     ProgramRunId run = programId.run(runId);
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
@@ -256,7 +256,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") String appId,
                         @PathParam("program-type") String type,
                         @PathParam("program-id") String programId) throws Exception {
-    getStatus(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId);
+    getStatus(request, responder, namespaceId, appId,
+              getLatestAppVersion(new NamespaceId(namespaceId), appId), type, programId);
   }
 
   /**
@@ -273,12 +274,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (SCHEDULES.equals(type)) {
       JsonObject json = new JsonObject();
+      ScheduleId scheduleId = applicationId.schedule(programId);
       ApplicationSpecification appSpec = store.getApplication(applicationId);
       if (appSpec == null) {
         throw new NotFoundException(applicationId);
       }
-      // Use the actual version from appSpec
-      ScheduleId scheduleId = applicationId.getAppReference().app(appSpec.getAppVersion()).schedule(programId);
       json.addProperty("status", programScheduleService.getStatus(scheduleId).toString());
       responder.sendJson(HttpResponseStatus.OK, json.toString());
       return;
