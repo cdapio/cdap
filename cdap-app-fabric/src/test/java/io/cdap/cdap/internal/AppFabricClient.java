@@ -180,7 +180,7 @@ public class AppFabricClient {
       request.content().writeCharSequence(argString, StandardCharsets.UTF_8);
     }
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId, appVersion,
+    programLifecycleHttpHandler.performActionVersioned(request, responder, namespaceId, appId, appVersion,
                                               type.getCategoryName(), programId, "start");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
   }
@@ -204,7 +204,7 @@ public class AppFabricClient {
                                getNamespacePath(namespaceId), appId, appVersion, type.getCategoryName(), programId);
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId, appVersion,
+    programLifecycleHttpHandler.performActionVersioned(request, responder, namespaceId, appId, appVersion,
                                               type.getCategoryName(), programId, "stop");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
@@ -226,8 +226,8 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/versions/%s/%s/%s/status", getNamespacePath(namespaceId),
                                appId, appVersion, type, programId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, appVersion, type.getCategoryName(),
-                                          programId);
+    programLifecycleHttpHandler.getStatusVersioned(request, responder, namespaceId, appId, appVersion,
+                                                   type.getCategoryName(), programId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
     Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
     return json.get("status");
@@ -377,7 +377,7 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/versions/%s/%s/runs?status=" + status.name(),
                                getNamespacePath(namespace), application, applicationVersion, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.programHistory(request, responder, namespace, application, applicationVersion,
+    programLifecycleHttpHandler.programHistoryVersioned(request, responder, namespace, application, applicationVersion,
                                                categoryName, programName, status.name(), null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
@@ -612,7 +612,7 @@ public class AppFabricClient {
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     request.content().writeCharSequence(GSON.toJson(scheduleDetail), StandardCharsets.UTF_8);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.addSchedule(request, responder, application.getNamespace(),
+    programLifecycleHttpHandler.addScheduleVersioned(request, responder, application.getNamespace(),
                                             application.getApplication(), application.getVersion(),
                                             scheduleDetail.getName());
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Add schedule failed");
@@ -625,7 +625,7 @@ public class AppFabricClient {
                                scheduleId.getApplication(), scheduleId.getSchedule());
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     HttpUtil.setContentLength(request, 0);
-    programLifecycleHttpHandler.performAction(request, responder, scheduleId.getNamespace(),
+    programLifecycleHttpHandler.performActionVersioned(request, responder, scheduleId.getNamespace(),
                                               scheduleId.getApplication(), scheduleId.getVersion(),
                                               "schedules", scheduleId.getSchedule(), "enable");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Enable schedule failed");
@@ -640,7 +640,7 @@ public class AppFabricClient {
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     request.content().writeCharSequence(GSON.toJson(scheduleDetail), StandardCharsets.UTF_8);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.updateSchedule(request, responder, application.getNamespace(),
+    programLifecycleHttpHandler.updateScheduleVersioned(request, responder, application.getNamespace(),
                                                application.getApplication(), application.getVersion(),
                                                scheduleId.getSchedule());
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Update schedule failed");
@@ -652,7 +652,7 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/versions/%s/schedules/%s", getNamespacePath(application.getNamespace()),
                                application.getApplication(), application.getVersion(), scheduleId.getSchedule());
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri);
-    programLifecycleHttpHandler.deleteSchedule(request, responder, application.getNamespace(),
+    programLifecycleHttpHandler.deleteScheduleVersioned(request, responder, application.getNamespace(),
                                                application.getApplication(), application.getVersion(),
                                                scheduleId.getSchedule());
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Delete schedule failed");

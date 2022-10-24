@@ -27,6 +27,7 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -59,7 +60,6 @@ import static org.junit.Assert.assertEquals;
 public class PreferencesClientTestRun extends ClientTestBase {
 
   private static final Gson GSON = new Gson();
-  private static final ApplicationId FAKE_APP_ID = NamespaceId.DEFAULT.app(FakeApp.NAME);
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private PreferencesClient client;
@@ -144,7 +144,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     } finally {
       programClient.stop(service);
       assertProgramStopped(programClient, service);
-      appClient.delete(app);
+      appClient.deleteApp(app);
     }
   }
 
@@ -162,7 +162,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     } while (iterations <= 100);
     return response;
   }
-
+  
   @Test
   public void testPreferences() throws Exception {
     NamespaceId invalidNamespace = new NamespaceId("invalid");
@@ -176,6 +176,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
     File jarFile = createAppJarFile(FakeApp.class);
     appClient.deploy(NamespaceId.DEFAULT, jarFile);
+    ApplicationDetail appDetail = appClient.get(NamespaceId.DEFAULT.app(FakeApp.NAME));
+    ApplicationId fakeAppId = NamespaceId.DEFAULT.app(FakeApp.NAME, appDetail.getAppVersion());
 
     try {
       propMap.put("k1", "namespace");
@@ -197,12 +199,12 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertEquals(propMap, client.getNamespacePreferences(NamespaceId.DEFAULT, false));
 
       propMap.put("k1", "application");
-      client.setApplicationPreferences(FAKE_APP_ID, propMap);
-      Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
-      Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
+      client.setApplicationPreferences(fakeAppId, propMap);
+      Assert.assertEquals(propMap, client.getApplicationPreferences(fakeAppId, true));
+      Assert.assertEquals(propMap, client.getApplicationPreferences(fakeAppId, false));
 
       propMap.put("k1", "program");
-      ServiceId service = FAKE_APP_ID.service(FakeApp.SERVICES.get(0));
+      ServiceId service = fakeAppId.service(FakeApp.SERVICES.get(0));
       client.setProgramPreferences(service, propMap);
       Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
       Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
@@ -212,18 +214,18 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertTrue(client.getProgramPreferences(service, false).isEmpty());
       Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
-      client.deleteApplicationPreferences(FAKE_APP_ID);
+      client.deleteApplicationPreferences(fakeAppId);
 
       propMap.put("k1", "namespace");
-      Assert.assertTrue(client.getApplicationPreferences(FAKE_APP_ID, false).isEmpty());
-      Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
+      Assert.assertTrue(client.getApplicationPreferences(fakeAppId, false).isEmpty());
+      Assert.assertEquals(propMap, client.getApplicationPreferences(fakeAppId, true));
       Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
       client.deleteNamespacePreferences(NamespaceId.DEFAULT);
       propMap.put("k1", "instance");
       Assert.assertTrue(client.getNamespacePreferences(NamespaceId.DEFAULT, false).isEmpty());
       Assert.assertEquals(propMap, client.getNamespacePreferences(NamespaceId.DEFAULT, true));
-      Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
+      Assert.assertEquals(propMap, client.getApplicationPreferences(fakeAppId, true));
       Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
       client.deleteInstancePreferences();
@@ -231,30 +233,32 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertEquals(propMap, client.getInstancePreferences());
       Assert.assertEquals(propMap, client.getNamespacePreferences(NamespaceId.DEFAULT, true));
       Assert.assertEquals(propMap, client.getNamespacePreferences(NamespaceId.DEFAULT, true));
-      Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
+      Assert.assertEquals(propMap, client.getApplicationPreferences(fakeAppId, true));
       Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
 
       //Test Deleting Application
       propMap.put("k1", "application");
-      client.setApplicationPreferences(FAKE_APP_ID, propMap);
-      Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
+      client.setApplicationPreferences(fakeAppId, propMap);
+      Assert.assertEquals(propMap, client.getApplicationPreferences(fakeAppId, false));
 
       propMap.put("k1", "program");
       client.setProgramPreferences(service, propMap);
       Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
 
-      appClient.delete(FAKE_APP_ID);
+      appClient.deleteApp(fakeAppId);
       // deleting the app should have deleted the preferences that were stored. so deploy the app and check
       // if the preferences are empty. we need to deploy the app again since getting preferences of non-existent apps
       // is not allowed by the API.
       appClient.deploy(NamespaceId.DEFAULT, jarFile);
+      appDetail = appClient.get(NamespaceId.DEFAULT.app(FakeApp.NAME));
+      fakeAppId = NamespaceId.DEFAULT.app(FakeApp.NAME, appDetail.getAppVersion());
       propMap.clear();
-      Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
+      Assert.assertEquals(propMap, client.getApplicationPreferences(fakeAppId, false));
       Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
     } finally {
       try {
-        appClient.delete(FAKE_APP_ID);
+        appClient.deleteApp(fakeAppId);
       } catch (ApplicationNotFoundException e) {
         // ok if this happens, means its already deleted.
       }
