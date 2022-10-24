@@ -52,7 +52,7 @@ public class TestBundleJarApp extends TestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
-  
+
   @Test
   public void testBundleJar() throws Exception {
     File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());

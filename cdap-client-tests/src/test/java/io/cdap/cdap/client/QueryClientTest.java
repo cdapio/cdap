@@ -142,7 +142,7 @@ public class QueryClientTest extends AbstractClientTest {
       assertProgramStopped(programClient, service);
 
       try {
-        appClient.delete(app);
+        appClient.deleteApp(app);
       } catch (Exception e) {
         LOG.error("Error deleting app {} during test cleanup.", e);
       }

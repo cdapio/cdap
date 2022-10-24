@@ -68,7 +68,7 @@ public class DynamicPartitioningTestRun extends TestFrameworkTestBase {
   public void setUp() throws Exception {
     getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
   }
-  
+
   @Test
   public void testDynamicPartitioningWithFailure() throws Exception {
     // deploy app

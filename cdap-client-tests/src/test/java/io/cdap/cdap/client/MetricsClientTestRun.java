@@ -64,7 +64,7 @@ public class MetricsClientTestRun extends ClientTestBase {
     serviceClient = new ServiceClient(clientConfig);
     metricsClient = new MetricsClient(clientConfig);
   }
-  
+
   @Test
   public void testAll() throws Exception {
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class));
@@ -112,7 +112,7 @@ public class MetricsClientTestRun extends ClientTestBase {
     } finally {
       programClient.stop(service);
       assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1, 10);
-      appClient.delete(app);
+      appClient.deleteApp(app);
     }
   }
 }

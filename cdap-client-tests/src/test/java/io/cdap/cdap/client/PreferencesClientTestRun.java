@@ -40,7 +40,6 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -145,7 +144,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     } finally {
       programClient.stop(service);
       assertProgramStopped(programClient, service);
-      appClient.delete(app);
+      appClient.deleteApp(app);
     }
   }
 
@@ -163,12 +162,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
     } while (iterations <= 100);
     return response;
   }
-
-  /*
-  * TODO: To be ignored until CDAP-19972 is fixed
-  * */
+  
   @Test
-  @Ignore
   public void testPreferences() throws Exception {
     NamespaceId invalidNamespace = new NamespaceId("invalid");
     namespaceClient.create(new NamespaceMeta.Builder().setName(invalidNamespace).build());
@@ -251,7 +246,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       client.setProgramPreferences(service, propMap);
       Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
 
-      appClient.delete(fakeAppId);
+      appClient.deleteApp(fakeAppId);
       // deleting the app should have deleted the preferences that were stored. so deploy the app and check
       // if the preferences are empty. we need to deploy the app again since getting preferences of non-existent apps
       // is not allowed by the API.
@@ -263,7 +258,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
     } finally {
       try {
-        appClient.delete(fakeAppId);
+        appClient.deleteApp(fakeAppId);
       } catch (ApplicationNotFoundException e) {
         // ok if this happens, means its already deleted.
       }

@@ -44,7 +44,7 @@ import java.util.concurrent.TimeoutException;
 public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkServiceIntegrationTestRun.class);
-  
+
   @Test
   public void testSparkWithService() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkServiceIntegrationApp.class);
