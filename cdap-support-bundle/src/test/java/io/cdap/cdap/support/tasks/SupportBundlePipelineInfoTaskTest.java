@@ -55,6 +55,8 @@ import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
 import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -131,11 +133,7 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
 
   //Contains two sub-task supportBundleRuntimeInfo and supportBundlePipelineRunLog
   //So we will test all three files together
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSupportBundlePipelineInfo() throws Exception {
     String runId = generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =
@@ -178,7 +176,7 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
     try (Reader reader = Files.newBufferedReader(pipelineInfoFile.toPath(), StandardCharsets.UTF_8)) {
       ApplicationDetail pipelineInfo = GSON.fromJson(reader, ApplicationDetail.class);
       Assert.assertEquals(AppWithWorkflow.NAME, pipelineInfo.getName());
-      Assert.assertEquals("-SNAPSHOT", pipelineInfo.getAppVersion());
+      Assert.assertNotEquals("-SNAPSHOT", pipelineInfo.getAppVersion());
       Assert.assertEquals("Sample application", pipelineInfo.getDescription());
     } catch (Exception e) {
       LOG.error("Can not read pipelineInfo file ", e);
@@ -202,8 +200,17 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAMESPACE.getNamespace());
     long startTime = System.currentTimeMillis();
 
-    ProgramId workflowProgram = new ProgramId(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
-                                              AppWithWorkflow.SampleWorkflow.NAME);
+    HttpResponse appsResponse =
+      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                NAMESPACE.getNamespace()));
+    Assert.assertEquals(200, appsResponse.getResponseCode());
+    JSONObject jsonResponse = (JSONObject) (new JSONArray(appsResponse.getResponseBodyAsString()).get(0));
+    String version = jsonResponse.getString("version");
+
+    // We need the exact version here because setStartAndRunning() writes to store directly
+    ProgramId workflowProgram = new ProgramId(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, version,
+                                              ProgramType.WORKFLOW, AppWithWorkflow.SampleWorkflow.NAME);
+
     RunId workflowRunId = RunIds.generate(startTime);
     ArtifactId artifactId = NAMESPACE.getNamespaceId()
       .artifact("testArtifact", "1.0").toApiArtifactId();
@@ -211,10 +218,6 @@ public class SupportBundlePipelineInfoTaskTest extends SupportBundleTestBase {
 
     List<RunRecord> runs = getProgramRuns(workflowProgram, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
-
-    HttpResponse appsResponse =
-      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, NAMESPACE.getNamespace()));
-    Assert.assertEquals(200, appsResponse.getResponseCode());
 
     // workflow ran for 1 minute
     long workflowStopTime = TimeUnit.MILLISECONDS.toSeconds(startTime) + 60;

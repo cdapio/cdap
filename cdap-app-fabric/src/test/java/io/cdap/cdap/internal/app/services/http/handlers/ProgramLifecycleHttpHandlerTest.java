@@ -1009,7 +1009,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Schedules triggered by SOME_WORKFLOW's completed or failed or killed status
     // we should only find these schedules in the latest version
     ProgramId someWorkflow = app2.workflow(AppWithMultipleSchedules.SOME_WORKFLOW);
-    // ProgramId someWorkflow =  testNamespace2.app(AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION);
     List<ScheduleDetail> triggeredSchedules1 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
                                                                              ProgramStatus.COMPLETED,
                                                                              ProgramStatus.FAILED,
