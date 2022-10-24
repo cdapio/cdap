@@ -61,12 +61,8 @@ public class TestAppWithCube extends TestBase {
 
   private static final Gson GSON = new Gson();
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
   @Category(SlowTests.class)
-  @Ignore
   public void testApp() throws Exception {
     // Deploy the application
     ApplicationManager appManager = deployApplication(AppWithCube.class);

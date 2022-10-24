@@ -55,7 +55,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -533,11 +532,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     capabilityManagementService.runTask();
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testProgramStart() throws Exception {
     String externalConfigPath = tmpFolder.newFolder("capability-config-program").getAbsolutePath();
     cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
@@ -572,8 +567,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
                                         CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
     // Capability management service might not yet have deployed application.
     // So wait till program exists and is in running state.
-
-    // TODO : to fix after CDAP-19775 is addressed
     waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
 
@@ -606,11 +599,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testProgramWithPluginStart() throws Exception {
     String externalConfigPath = tmpFolder.newFolder("capability-config-program-plugin").getAbsolutePath();
     cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
@@ -658,8 +647,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
                                         CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
     // Capability management service might not yet have deployed application.
     // So wait till program exists and is in running state.
-
-    // TODO : to fix after CDAP-19775 is addressed
     waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
 

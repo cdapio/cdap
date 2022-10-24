@@ -42,11 +42,7 @@ public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
   private static final DateFormat DATE_FORMAT =
     DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testPartitionCorrector() throws Exception {
 
     ApplicationManager appManager = deployApplication(PartitionExploreCorrectorTestApp.class);

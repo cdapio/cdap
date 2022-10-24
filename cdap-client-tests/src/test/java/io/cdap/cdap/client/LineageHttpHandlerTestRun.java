@@ -73,11 +73,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
     fetchFieldLineage(datasetId, 100, 200, null, BadRequestException.class);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testAllProgramsLineage() throws Exception {
     NamespaceId namespace = new NamespaceId("testAllProgramsLineage");
     ApplicationId app = namespace.app(AllProgramsApp.NAME);

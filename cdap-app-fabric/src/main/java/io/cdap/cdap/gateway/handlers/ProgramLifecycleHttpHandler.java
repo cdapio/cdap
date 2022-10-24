@@ -416,19 +416,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = getProgramType(type);
     ProgramId program = applicationId.program(programType, programId);
     Map<String, String> args = decodeArguments(request);
-    String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
       case "start":
-        if (!appVersion.equals(latestVersion)) {
-          throw new BadRequestException("start action is only allowed on the latest program version");
-        }
         lifecycleService.run(program, args, false);
         break;
       case "debug":
-        if (!appVersion.equals(latestVersion)) {
-          throw new BadRequestException("debug action is only allowed on the latest program version");
-        }
         if (!isDebugAllowed(programType)) {
           throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
                                                           programType));
@@ -617,10 +610,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-version") String appVersion,
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName) throws Exception {
-    String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
-    if (!appVersion.equals(latestVersion)) {
-      throw new BadRequestException("Runtime arguments can only be changed on the latest program version");
-    }
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     saveProgramIdRuntimeArgs(programId, request, responder);

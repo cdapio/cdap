@@ -75,11 +75,7 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
       });
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testGetNextRun() throws Exception {
     ApplicationId appId = NamespaceId.DEFAULT.app("test");
     deploy(appId, new AppRequest<>(new ArtifactSummary(ARTIFACT_ID.getName(), ARTIFACT_ID.getVersion().getVersion())));
@@ -108,11 +104,7 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
     Assert.assertTrue(nextTime >= now);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testBatchGetNextRun() throws Exception {
     // deploys 5 apps and create schedules for each of them
     long now = System.currentTimeMillis();

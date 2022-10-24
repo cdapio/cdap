@@ -66,11 +66,7 @@ public class MetricsClientTestRun extends ClientTestBase {
     metricsClient = new MetricsClient(clientConfig);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testAll() throws Exception {
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class));
 

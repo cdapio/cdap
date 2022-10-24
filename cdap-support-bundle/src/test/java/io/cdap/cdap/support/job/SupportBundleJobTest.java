@@ -109,11 +109,7 @@ public class SupportBundleJobTest extends SupportBundleTestBase {
     Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSupportBundleJobExecute() throws Exception {
     generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =

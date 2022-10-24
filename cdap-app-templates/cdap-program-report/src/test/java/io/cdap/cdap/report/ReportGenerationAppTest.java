@@ -129,8 +129,6 @@ public class ReportGenerationAppTest extends TestBase {
   private static final String TEST_ARTIFACT_NAME = "TestArtifact";
 
   @Test
-  @Ignore
-  // TODO: (CDAP-19775) ignoring this test until the latest version is used in api for default "-SNAPSHOT" version
   public void testGenerateReport() throws Exception {
     Map<String, String> runTimeArguments = new HashMap<>();
     // disable tms subscriber thread as the RunMetaFileSet avro files are written directly by the test case
@@ -319,8 +317,6 @@ public class ReportGenerationAppTest extends TestBase {
   }
 
   @Test
-  @Ignore
-  // TODO: (CDAP-19775) ignoring this test until the latest version is used in api for default "-SNAPSHOT" version
   public void testReportExpiration() throws Exception {
     NamespaceId testNamespace = new NamespaceId("reporting");
     NamespaceMeta reportingNamespace = new NamespaceMeta.Builder()

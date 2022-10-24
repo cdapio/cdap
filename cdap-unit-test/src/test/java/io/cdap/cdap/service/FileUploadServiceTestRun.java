@@ -54,9 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class FileUploadServiceTestRun extends TestFrameworkTestBase {
 
-  // TODO: CDAP-19775
   @Test
-  @Ignore
   public void testFileUploadService() throws Exception {
     ApplicationManager appManager = deployApplication(FileUploadApp.class);
 

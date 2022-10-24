@@ -46,11 +46,7 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkServiceIntegrationTestRun.class);
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSparkWithService() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkServiceIntegrationApp.class);
     startService(applicationManager);

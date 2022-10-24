@@ -31,11 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void test() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestMapReduceServiceIntegrationApp.class);
     ServiceManager serviceManager =

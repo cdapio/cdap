@@ -197,11 +197,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     deployApplication(appId, createRequest);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testWorkerThrowingException() throws Exception {
     ApplicationManager appManager = deployApplication(AppWithExceptionThrowingWorker.class);
     final WorkerManager workerManager = appManager.getWorkerManager(AppWithExceptionThrowingWorker.WORKER_NAME);
@@ -241,11 +237,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 1 + completedCountSoFar, 3, TimeUnit.SECONDS);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     final ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.SERVICE_NAME);
@@ -281,11 +273,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testNamespaceAvailableAtRuntime() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingNamespace.SERVICE_NAME);
@@ -299,20 +287,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testAppConfigWithNull() throws Exception {
     testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class), null);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testDataset");
     testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class, conf), conf);
@@ -464,12 +444,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("xyz", Bytes.toString(table.read(appName + ".xyz")));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testMapperDatasetAccess() throws Exception {
     addDatasetInstance("keyValueTable", "table1");
     addDatasetInstance("keyValueTable", "table2");
@@ -497,12 +473,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                            mrManager.getHistory().get(0).getPid(), "table1", false);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test(timeout = 60000L)
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testMapReduceTaskMetricsDisable() throws Exception {
     addDatasetInstance("keyValueTable", "table1");
     addDatasetInstance("keyValueTable", "table2");
@@ -554,12 +526,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(doesExist, metricNames.contains("user.test.metric"));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Category(SlowTests.class)
   @Test
-  @Ignore
   public void testCrossNSMapperDatasetAccess() throws Exception {
     NamespaceMeta inputNS = new NamespaceMeta.Builder().setName("inputNS").build();
     NamespaceMeta outputNS = new NamespaceMeta.Builder().setName("outputNS").build();
@@ -629,11 +597,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(Long.valueOf(1), aggs.get(writeCountName));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testWorkflowStatus() throws Exception {
     ApplicationManager appManager = deployApplication(WorkflowStatusTestApp.class);
 
@@ -669,13 +633,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowManager.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     Assert.assertTrue(workflowKilled.exists());
   }
-  
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test
+
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testCustomActionDatasetAccess() throws Exception {
     addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE);
     addDatasetInstance("fileSet", DatasetWithCustomActionApp.CUSTOM_FILESET);
@@ -702,12 +662,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Category(XSlowTests.class)
   @Test
-  @Ignore
   public void testWorkflowLocalDatasets() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, WorkflowAppWithLocalDatasets.class);
 
@@ -1006,11 +962,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(false, Boolean.parseBoolean(workflowToken.getTokenData().get("running").get(0).getValue()));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testWorkflowCondition() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, ConditionalWorkflowApp.class);
     final WorkflowManager wfmanager = applicationManager.getWorkflowManager("ConditionalWorkflow");
@@ -1050,12 +1002,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testGetServiceURL() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
     ServiceManager centralServiceManager =
@@ -1087,13 +1035,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     centralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
-
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testGetServiceURLDiffNamespace() throws Exception {
     ApplicationManager defaultApplicationManager = deployApplication(AppUsingGetServiceURL.class);
     ServiceManager defaultForwardingServiceManager = defaultApplicationManager
@@ -1182,13 +1125,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }, 15, TimeUnit.SECONDS);
   }
-  
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test
+
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testWorkerInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
     WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
@@ -1276,12 +1215,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     deployApplication(AppWithInvalidHandler.class);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testAppWithWorker() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithWorker.class);
     LOG.info("Deployed.");
@@ -1573,11 +1508,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                            String.valueOf(timeoutForScope));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testWorkerStop() throws Exception {
     // Test to make sure the worker program's status goes to stopped after the run method finishes
     ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
@@ -1588,12 +1519,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.waitForStopped(30, TimeUnit.SECONDS);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Test
   @Category(SlowTests.class)
-  @Ignore
+  @Test
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
@@ -1715,11 +1642,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP_2, decodedResult);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
@@ -1803,40 +1726,24 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test(timeout = 60000L)
-  @Ignore
   public void testAppWithAutoDeployDatasetModule() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
   }
-  
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
+
   @Test(timeout = 60000L)
-  @Ignore
   public void testAppWithAutoDeployDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     // we should be fine if module is already there. Deploy of module should not happen
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test(timeout = 60000L)
-  @Ignore
   public void testAppWithAutoCreateDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyService");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Ignore
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
@@ -1844,11 +1751,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyService");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test(timeout = 60000L)
-  @Ignore
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
@@ -1869,29 +1772,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("hello", dataSetManager.get().get("test"));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test(timeout = 60000L)
-  @Ignore
   public void testAppWithAutoDeployDatasetType() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyService");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test(timeout = 60000L)
-  @Ignore
   public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyService");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testClusterName() throws Exception {
     String clusterName = getConfiguration().get(Constants.CLUSTER_NAME);
 
@@ -1997,12 +1888,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Category(XSlowTests.class)
   @Test
-  @Ignore
   public void testByteCodeClassLoader() throws Exception {
     // This test verify bytecode generated classes ClassLoading
 
@@ -2034,11 +1921,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(count, Bytes.toLong(records.read("PUBLIC")));
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testConcurrentRuns() throws Exception {
     ApplicationManager appManager = deployApplication(ConcurrentRunTestApp.class);
     WorkerManager workerManager = appManager.getWorkerManager(ConcurrentRunTestApp.TestWorker.class.getSimpleName());
@@ -2074,12 +1957,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 10L, TimeUnit.SECONDS);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Category(SlowTests.class)
   @Test
-  @Ignore
   public void testMetadataAccessInService() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithMetadataPrograms.class);
     LOG.info("Deployed.");

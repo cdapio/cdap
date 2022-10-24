@@ -85,9 +85,7 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
     );
   }
 
-  // TODO: CDAP-19775
   @Test
-  @Ignore
   public void testListSchedules() {
     TransactionRunner transactionRunner = getTransactionRunner();
 

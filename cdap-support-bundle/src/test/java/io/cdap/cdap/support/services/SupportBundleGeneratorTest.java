@@ -107,11 +107,7 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
     Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSupportBundleService() throws Exception {
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAMESPACE.getNamespace());
     long startTime = System.currentTimeMillis();

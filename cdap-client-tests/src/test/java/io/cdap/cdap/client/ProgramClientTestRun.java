@@ -61,9 +61,7 @@ public class ProgramClientTestRun extends ClientTestBase {
     programClient = new ProgramClient(clientConfig);
   }
 
-  // TODO: Fix in CDAP-19775
   @Test
-  @Ignore
   public void testBatchProgramCalls() throws Exception {
     final NamespaceId namespace = NamespaceId.DEFAULT;
     final ApplicationId appId = namespace.app(FakeApp.NAME);

@@ -56,6 +56,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
@@ -527,6 +528,8 @@ public class ProgramLifecycleService {
     RunId runId = RunIds.generate();
     ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
+    // update version in programId with the latest version if it was "-SNAPSHOT"
+    programId = programDescriptor.getProgramId();
     String userId = SecurityRequestContext.getUserId();
     userId = userId == null ? "" : userId;
 
@@ -554,6 +557,23 @@ public class ProgramLifecycleService {
         LOG.info(msg);
 
         TooManyRequestsException e = new TooManyRequestsException(msg);
+        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
+        throw e;
+      }
+
+      ApplicationMeta appMeta = store.getLatest(new NamespaceId(programId.getNamespace()),
+                                                programId.getApplication());
+      if (appMeta == null) {
+        ProgramNotFoundException e = new ProgramNotFoundException(programId);
+        programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
+        throw e;
+      }
+      String latestVersion = appMeta.getSpec().getAppVersion();
+      if (!programRunId.getVersion().equals(latestVersion)) {
+        String msg = String.format("Program %s cannot start because the it is not the latest version ", programId);
+        LOG.info(msg);
+
+        BadRequestException e = new BadRequestException(msg);
         programStateWriter.reject(programRunId, programOptions, programDescriptor, userId, e);
         throw e;
       }

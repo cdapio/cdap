@@ -73,11 +73,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
     }
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testAll() throws Exception {
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(1, list.size());
@@ -136,9 +132,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
     }
   }
 
-  //TODO: CDAP-19775
   @Test
-  @Ignore
   public void testScheduleChanges() throws Exception {
     File appJar = createAppJarFile(FakeApp.class);
 

@@ -74,11 +74,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
     appClient.deleteApp(appId);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testWorkflowClient() throws Exception {
     String keyValueTableType = "io.cdap.cdap.api.dataset.lib.KeyValueTable";
     String filesetType = "io.cdap.cdap.api.dataset.lib.FileSet";

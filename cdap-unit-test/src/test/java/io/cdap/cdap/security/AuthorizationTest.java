@@ -128,8 +128,6 @@ import javax.annotation.Nullable;
 /**
  * Unit tests with authorization enabled.
  */
-// TODO: CDAP-19775
-@Ignore
 public class AuthorizationTest extends TestBase {
 
   @ClassRule

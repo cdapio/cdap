@@ -70,11 +70,7 @@ public class DynamicPartitioningTestRun extends TestFrameworkTestBase {
     getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testDynamicPartitioningWithFailure() throws Exception {
     // deploy app
     ApplicationManager appManager = deployApplication(testSpace, AppWithDynamicPartitioning.class);

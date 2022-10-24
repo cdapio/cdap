@@ -56,11 +56,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     }
   };
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
@@ -118,7 +114,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
                                    defaultAppId.getApplication(),
                                    defaultAppId.getVersion());
 
-    // workflow is deleted, so the schedules will be deleted now
-    Assert.assertEquals(0, actualSchSpecs.size());
+    // Deploy a new version of app does not remove schedule
+    Assert.assertEquals(2, actualSchSpecs.size());
   }
 }

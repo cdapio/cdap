@@ -92,11 +92,7 @@ public class QueryClientTest extends AbstractClientTest {
     namespaceClient = new NamespaceClient(clientConfig);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testAll() throws Exception {
     NamespaceId namespace = new NamespaceId("queryClientTestNamespace");
     NamespaceId otherNamespace = new NamespaceId("queryClientOtherNamespace");
@@ -147,7 +143,7 @@ public class QueryClientTest extends AbstractClientTest {
       assertProgramStopped(programClient, service);
 
       try {
-        appClient.delete(app);
+        appClient.deleteApp(app);
       } catch (Exception e) {
         LOG.error("Error deleting app {} during test cleanup.", e);
       }

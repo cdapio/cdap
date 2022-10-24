@@ -58,11 +58,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void test() throws Exception {
     File checkpointDir = TEMP_FOLDER.newFolder();
     KafkaPublisher publisher = KAFKA_TESTER.getKafkaClient().getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED,

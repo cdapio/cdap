@@ -75,11 +75,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
 
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSQLQuery() throws Exception {
     getTestManager().deployDatasetModule(NamespaceId.DEFAULT.datasetModule("my-kv"), AppUsingCustomModule.Module.class);
 
