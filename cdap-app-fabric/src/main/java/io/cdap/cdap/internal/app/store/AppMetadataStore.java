@@ -547,8 +547,6 @@ public class AppMetadataStore {
           .app(latestAppVersions.get(appRef))
           .program(programRef.getType(), programRef.getProgram());
         versionedProgramIds.add(actualProgramId);
-      } else {
-        versionedProgramIds.add(programRef.id(ApplicationId.DEFAULT_VERSION));
       }
     }
 
