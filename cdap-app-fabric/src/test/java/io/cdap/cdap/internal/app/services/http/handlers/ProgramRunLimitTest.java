@@ -32,7 +32,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.SlowTests;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

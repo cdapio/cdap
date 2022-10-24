@@ -23,7 +23,6 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.client.app.AllProgramsApp;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.client.config.ConnectionConfig;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -31,7 +30,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.XSlowTests;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

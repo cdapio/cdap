@@ -34,7 +34,6 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.KafkaPublisher;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 

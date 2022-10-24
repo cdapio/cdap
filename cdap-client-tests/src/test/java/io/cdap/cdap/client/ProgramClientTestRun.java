@@ -33,7 +33,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;

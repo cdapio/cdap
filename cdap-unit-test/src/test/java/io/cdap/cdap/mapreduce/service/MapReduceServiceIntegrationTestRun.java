@@ -24,7 +24,6 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.app.MyKeyValueTableDefinition;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;

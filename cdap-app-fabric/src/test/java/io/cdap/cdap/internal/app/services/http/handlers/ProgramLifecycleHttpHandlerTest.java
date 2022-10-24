@@ -1467,7 +1467,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(4, schedules.size());
 
     // test versionId should be ignored when listing schedules, so we should get same result
-    List<ScheduleDetail> schedules2 = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
+    List<ScheduleDetail> schedules2 = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME,
+                                                   AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(schedules, schedules2);
 
     // should have a schedule with the given name

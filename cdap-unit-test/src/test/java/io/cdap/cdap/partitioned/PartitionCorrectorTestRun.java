@@ -26,7 +26,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.PrintStream;

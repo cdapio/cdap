@@ -28,7 +28,6 @@ import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.commons.io.Charsets;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;

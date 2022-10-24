@@ -36,7 +36,6 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
