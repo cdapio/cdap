@@ -29,7 +29,6 @@ import com.google.cloud.spanner.Struct;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -245,7 +244,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
     LinkedHashSet<FieldType> fields = new LinkedHashSet<>();
     SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
-    Set<String> indexes = new LinkedHashSet<>();
+    Set<String> singleIndexes = new LinkedHashSet<>();
     List<String> uniqueIndex = new ArrayList<>();
 
     try (ReadOnlyTransaction tx = databaseClient.readOnlyTransaction()) {
@@ -258,17 +257,17 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
           // If a field is not a primary nor an index, the ordinal_position will be NULL in the index_columns table.
           boolean isIndex = !row.isNull("ordinal_position");
 
+          // We use LinkedHashSet to maintain the field order as well as field uniqueness
           fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type"))));
+
           if ("PRIMARY_KEY".equalsIgnoreCase(indexType)) {
             primaryKeysOrderMap.put(row.getLong("ordinal_position"), columnName);
-          } else if ("INDEX".equalsIgnoreCase(indexType) && isIndex) {
-            indexes.add(columnName);
-          }
-
-          if (!row.isNull("is_unique_index") &&
-            row.getBoolean("is_unique_index") &&
-            "INDEX".equalsIgnoreCase(indexType)) {
-            uniqueIndex.add(columnName);
+          } else if ("INDEX".equalsIgnoreCase(indexType)) {
+            if (!row.isNull("is_unique_index") && row.getBoolean("is_unique_index")) {
+              uniqueIndex.add(columnName);
+            } else {
+              singleIndexes.add(columnName);
+            }
           }
         }
       }
@@ -279,11 +278,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     }
 
     List<String> primaryKeys = new ArrayList<>(primaryKeysOrderMap.values());
-    // Primary Key fields can still be overly added when it's part of other index, exclude them
-    Set<String> nonPrimaryKeyIndexes = Sets.difference(indexes, new HashSet<>(primaryKeys));
-
-    return new StructuredTableSchema(tableId, new ArrayList<>(fields),
-                                     primaryKeys, nonPrimaryKeyIndexes, uniqueIndex);
+    return new StructuredTableSchema(tableId, new ArrayList<>(fields), primaryKeys, singleIndexes, uniqueIndex);
   }
 
   private String getCreateTableStatement(StructuredTableSpecification spec) {

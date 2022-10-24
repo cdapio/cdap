@@ -42,7 +42,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -395,7 +394,7 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
 
     LinkedHashSet<FieldType> fields = new LinkedHashSet<>();
     SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
-    Set<String> indexes = new LinkedHashSet<>();
+    Set<String> singleIndexes = new LinkedHashSet<>();
     List<String> uniqueIndex = new ArrayList<>();
 
     try (Connection connection = dataSource.getConnection()) {
@@ -403,8 +402,8 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
       ResultSet resultSet = statement.executeQuery(schemaStatement);
       while (resultSet.next()) {
         String columnName = resultSet.getString("column_name");
-        String indexType = resultSet.getString("is_primarykey_index");
-        String isIndexUnique = resultSet.getString("is_unique_index");
+        String isPrimaryKeyIndex = resultSet.getString("is_primarykey_index");
+        String isUniqueIndex = resultSet.getString("is_unique_index");
 
         // The query result can return duplicate fields for index and primary keys
         // We use LinkedHashSet to maintain the field order as well as field uniqueness
@@ -413,14 +412,15 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
         // "t" as true indicates primary key index
         // "f" as false indicates normal index, but it can still be a primary key field that is part of other index
         // null means it's just a column
-        if ("t".equalsIgnoreCase(indexType)) {
+        if ("t".equalsIgnoreCase(isPrimaryKeyIndex)) {
           primaryKeysOrderMap.put(resultSet.getLong("index_order"), columnName);
-        } else if ("f".equalsIgnoreCase(indexType)) {
-          indexes.add(columnName);
-        }
-
-        if ("t".equalsIgnoreCase(isIndexUnique) && "f".equalsIgnoreCase(indexType)) {
-          uniqueIndex.add(columnName);
+        } else if ("f".equalsIgnoreCase(isPrimaryKeyIndex)) {
+          // It can either be the single index case, or the composite unique index
+          if ("t".equalsIgnoreCase(isUniqueIndex)) {
+            uniqueIndex.add(columnName);
+          } else {
+            singleIndexes.add(columnName);
+          }
         }
       }
     } catch (SQLException e) {
@@ -437,7 +437,6 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
 
     // Primary Key fields can still be overly added when it's part of other index, exclude them
     List<String> primaryKeys = new ArrayList<>(primaryKeysOrderMap.values());
-    Set<String> nonPrimaryKeyIndexes = Sets.difference(indexes, new HashSet<>(primaryKeys));
-    return new StructuredTableSchema(tableId, new ArrayList<>(fields), primaryKeys, nonPrimaryKeyIndexes, uniqueIndex);
+    return new StructuredTableSchema(tableId, new ArrayList<>(fields), primaryKeys, singleIndexes, uniqueIndex);
   }
 }

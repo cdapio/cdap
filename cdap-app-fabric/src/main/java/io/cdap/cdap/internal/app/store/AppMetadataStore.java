@@ -540,6 +540,8 @@ public class AppMetadataStore {
     if (latest != null) {
       List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
                                                         latest.getSpec().getAppVersion());
+      // We have null-filtered unique index on (namespace, application, latest)
+      // latest = null indicates this version is no longer the latest version
       fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
       getApplicationSpecificationTable().upsert(fields);
     }
