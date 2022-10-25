@@ -482,11 +482,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit,
-                             @QueryParam("versionSelect") @DefaultValue("ALL") VersionSelect version)
+                             @QueryParam("versionSelect") @DefaultValue("LATEST") VersionSelect versionSelect)
     throws Exception {
     programHistory(request, responder, namespaceId, appName,
                    getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
-                   programName, status, startTs, endTs, resultLimit, version);
+                   programName, status, startTs, endTs, resultLimit, versionSelect);
   }
 
   /**
@@ -505,7 +505,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit,
-                             @QueryParam("versionSelect") @DefaultValue("ALL") VersionSelect version) throws Exception {
+                             @QueryParam("versionSelect") @DefaultValue("LATEST")
+                                 VersionSelect versionSelect) throws Exception {
     ProgramType programType = getProgramType(type);
 
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
@@ -515,7 +516,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
       ProgramRunStatus.valueOf(status.toUpperCase());
 
-    List<RunRecord> records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit, version)
+    List<RunRecord> records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit, versionSelect)
       .stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList());
 
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
@@ -1575,7 +1576,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/runcount")
   public void getRunCounts(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
-                           @QueryParam("versionSelect") @DefaultValue("ALL") VersionSelect version) throws Exception {
+                           @QueryParam("versionSelect") @DefaultValue("LATEST") VersionSelect versionSelect) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     if (programs.size() > 100) {
       throw new BadRequestException(String.format("%d programs found in the request, the maximum number " +
@@ -1583,7 +1584,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     List<ProgramId> programIds;
-    switch (version) {
+    switch (versionSelect) {
       case LATEST:
         programIds = programs.stream()
           .map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
@@ -1592,7 +1593,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         programIds = programs.stream()
           .map(batchProgram -> batchProgramToDefaultProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
     }
-    List<RunCountResult> runCountResults = lifecycleService.getProgramRunCounts(programIds, version);
+    List<RunCountResult> runCountResults = lifecycleService.getProgramRunCounts(programIds, versionSelect);
 
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
     for (RunCountResult runCountResult : runCountResults) {
