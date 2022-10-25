@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.profile;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
+import io.cdap.cdap.AppWithWorkflow;
+import io.cdap.cdap.AppWithWorkflow.SampleWorkflow;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
@@ -38,8 +41,11 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -343,7 +349,15 @@ public abstract class ProfileServiceTest {
 
     // add an active record to DefaultStore, deletion should still fail
     Store store = getDefaultStore();
-    ProgramId programId = NamespaceId.DEFAULT.app("myApp").workflow("myProgram");
+
+    ApplicationSpecification appSpec = Specifications.from(new AppWithWorkflow());
+    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
+    ApplicationMeta appMeta = new ApplicationMeta(appSpec.getName(), appSpec,
+                                                  new ChangeDetail(null, null, null,
+                                                                   System.currentTimeMillis()));
+    store.addApplication(appId, appMeta);
+
+    ProgramId programId = NamespaceId.DEFAULT.app(appSpec.getName()).workflow(SampleWorkflow.NAME);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     RunId runId = RunIds.generate(System.currentTimeMillis());
     ProgramRunId programRunId = programId.run(runId.getId());

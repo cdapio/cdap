@@ -1414,9 +1414,14 @@ public class AppMetadataStore {
    * @return map of run id to run record meta
    */
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId)
-    throws IOException, ApplicationNotFoundException {
+    throws IOException {
     if (ApplicationId.DEFAULT_VERSION.equals(applicationId.getVersion())) {
-      applicationId = getLatestApplicationId(applicationId);
+      try {
+        applicationId = getLatestApplicationId(applicationId);
+      } catch (ApplicationNotFoundException ignored) {
+        // Ignoring this for cases where program exists but app does not exist
+      }
+
     }
     List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId);
     return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
@@ -1430,9 +1435,13 @@ public class AppMetadataStore {
    * @return map of run id to run record meta
    */
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId)
-    throws IOException, ApplicationNotFoundException {
+    throws IOException {
     if (ApplicationId.DEFAULT_VERSION.equals(programId.getVersion())) {
-      programId = getLatestProgramId(programId);
+      try {
+        programId = getLatestProgramId(programId);
+      } catch (ApplicationNotFoundException ignored) {
+        // Ignoring this for cases where program exists but app does not exist
+      }
     }
     Map<ProgramRunId, RunRecordDetail> result = new LinkedHashMap<>();
     scanActiveRuns(programId, r -> result.put(r.getProgramRunId(), r));
@@ -1559,8 +1568,8 @@ public class AppMetadataStore {
   public RunRecordDetail getRun(ProgramRunId programRun) throws IOException {
     try {
       programRun = getLatestProgramRunId(programRun);
-    } catch (ApplicationNotFoundException e) {
-      return null;
+    } catch (ApplicationNotFoundException ignored) {
+      // Ignoring this for cases where program exists but app does not exist
     }
     // Query active run record first
     Map<ProgramRunId, RunRecordDetail> unfinishedRunsMap = getUnfinishedRuns(Collections.singleton(programRun));
@@ -1771,8 +1780,8 @@ public class AppMetadataStore {
     if (programId != null) {
       try {
         programId = getLatestProgramId(programId);
-      } catch (ApplicationNotFoundException applicationNotFoundException) {
-        return ImmutableMap.of();
+      } catch (ApplicationNotFoundException ignore) {
+        // Ignoring this for cases where program exists but app does not exist
       }
     }
 
