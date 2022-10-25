@@ -1342,14 +1342,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
-    Map<BatchProgram, ProgramId> programsMap = batchPrograms.stream()
-      .collect(Collectors.toMap(p -> p, p -> batchProgramToProgramId(namespaceId, p)));
+    List<ProgramId> programs = batchPrograms.stream()
+      .map(p -> batchProgramToProgramId(namespaceId, p))
+      .collect(Collectors.toList());
 
-    Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programsMap.values());
+    Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programs);
 
-    List<BatchProgramStatus> result = new ArrayList<>(programsMap.size());
+    List<BatchProgramStatus> result = new ArrayList<>(programs.size());
     for (BatchProgram program : batchPrograms) {
-      ProgramId programId = programsMap.get(program);
+      ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
+                                          program.getProgramId());
       ProgramStatus status = statuses.get(programId);
       if (status == null) {
         result.add(new BatchProgramStatus(program, HttpResponseStatus.NOT_FOUND.code(),
@@ -1557,9 +1559,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the run counts for all program runnables of all versions that are passed into the data. The data is an
-   * array of Json objects where each object must contain the following three elements: appId, programType,
-   * and programId. The max number of programs in the request is 100.
+   * Returns the run counts for all program runnables that are passed into the data. The data is an array of
+   * Json objects where each object must contain the following three elements: appId, programType, and programId.
+   * The max number of programs in the request is 100.
    * <p>
    * Example input:
    * <pre><code>
