@@ -276,20 +276,16 @@ public abstract class CLITestBase {
     cliConfig.setConnectionConfig(oldConnectionConfig);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testProgram() throws Exception {
     ProgramClient programClient = getProgramClient();
-    final ProgramId serviceId = FAKE_APP_ID_V_1.service(FakeApp.SERVICES.get(0));
+    // programId with default version will reference the latest version
+    final ProgramId serviceId = FAKE_APP_ID.service(FakeApp.SERVICES.get(0));
 
     String qualifiedServiceId = FakeApp.NAME + "." + serviceId.getProgram();
-    String versionedQualifiedSparkId = String.format("%s version %s", qualifiedServiceId, V1_SNAPSHOT);
-    testCommandOutputContains("start service " + versionedQualifiedSparkId, "Successfully started service");
+    testCommandOutputContains("start service " + qualifiedServiceId, "Successfully started service");
     assertProgramStatus(programClient, serviceId, "RUNNING");
-    testCommandOutputContains("stop service " + versionedQualifiedSparkId, "Successfully stopped service");
+    testCommandOutputContains("stop service " + qualifiedServiceId, "Successfully stopped service");
     assertProgramStatus(programClient, serviceId, "STOPPED");
     testCommandOutputContains("get service status " + qualifiedServiceId, "STOPPED");
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -301,8 +297,8 @@ public abstract class CLITestBase {
       }
     }, 5, TimeUnit.SECONDS);
     // this does not take a version
-    testCommandOutputContains("get service runs " + versionedQualifiedSparkId, "KILLED");
-    testCommandOutputContains("get service live " + versionedQualifiedSparkId, serviceId.getProgram());
+    testCommandOutputContains("get service runs " + qualifiedServiceId, "KILLED");
+    testCommandOutputContains("get service live " + qualifiedServiceId, serviceId.getProgram());
   }
 
   @Test
@@ -390,11 +386,7 @@ public abstract class CLITestBase {
     testCommandOutputContains("delete dataset instance " + datasetId, "Successfully deleted");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSchedule() throws Exception {
     String scheduleId = FakeApp.NAME + "." + FakeApp.TIME_SCHEDULE_NAME;
     String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
@@ -459,53 +451,43 @@ public abstract class CLITestBase {
     testCommandOutputContains("delete dataset instance " + ownedDatasetName, "Successfully deleted");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testService() throws Exception {
     ProgramClient programClient = getProgramClient();
     ServiceId service = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
-    ServiceId serviceV1 = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
     String serviceName = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     String serviceArgument = String.format("%s version %s", serviceName, ApplicationId.DEFAULT_VERSION);
-    String serviceV1Argument = String.format("%s version %s", serviceName, V1_SNAPSHOT);
     try {
       // Test service commands with no optional version argument
-      testCommandOutputContains("start service " + serviceName,
-                                "start action is only allowed on the latest program version");
-      assertProgramStatus(programClient, service, ProgramStatus.STOPPED.name());
+      testCommandOutputContains("start service " + serviceName, "Successfully started service");
+      assertProgramStatus(programClient, service, ProgramStatus.RUNNING.name());
       testCommandOutputContains("get endpoints service " + serviceName, "POST");
       testCommandOutputContains("get endpoints service " + serviceName, "/echo");
+      testCommandOutputContains("check service availability " + serviceName, "Service is available");
+      testCommandOutputContains("call service " + serviceName
+                                  + " POST /echo body \"testBody\"", ":testBody");
+      testCommandOutputContains("stop service " + serviceName, "Successfully stopped service");
       assertProgramStatus(programClient, service, ProgramStatus.STOPPED.name());
       // Test service commands with version argument when two versions of the service are running
-      testCommandOutputContains("start service " + serviceArgument,
-                                "start action is only allowed on the latest program version");
-      testCommandOutputContains("start service " + serviceV1Argument, "Successfully started service");
-      assertProgramStatus(programClient, service, ProgramStatus.STOPPED.name());
-      assertProgramStatus(programClient, serviceV1, ProgramStatus.RUNNING.name());
-      testCommandOutputContains("get endpoints service " + serviceV1Argument, "POST");
-      testCommandOutputContains("get endpoints service " + serviceV1Argument, "/echo");
-      testCommandOutputContains("check service availability " + serviceV1Argument, "Service is available");
-      testCommandOutputContains("call service " + serviceV1Argument
+      testCommandOutputContains("start service " + serviceArgument, "Successfully started service");
+      assertProgramStatus(programClient, service, ProgramStatus.RUNNING.name());
+      testCommandOutputContains("get endpoints service " + serviceArgument, "POST");
+      testCommandOutputContains("get endpoints service " + serviceArgument, "/echo");
+      testCommandOutputContains("check service availability " + serviceArgument, "Service is available");
+      testCommandOutputContains("call service " + serviceName
                                   + " POST /echo body \"testBody\"", ":testBody");
-      testCommandOutputContains("get service logs " + serviceName, "Starting HTTP server for Service " + serviceV1);
+      testCommandOutputContains("get service logs " + serviceName, "Starting HTTP server for Service");
     } finally {
       // Stop all running services
       programClient.stopAll(NamespaceId.DEFAULT);
     }
   }
 
-  /*
-  * TODO : to fix after CDAP-19775 is addressed
-  * */
   @Test
-  @Ignore
-  public void testVersionedRuntimeArgs() throws Exception {
-    String versionedServiceId = String.format("%s.%s version %s", FakeApp.NAME, PrefixedEchoHandler.NAME, V1_SNAPSHOT);
-    ServiceId service = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
-    testServiceRuntimeArgs(versionedServiceId, service);
+  public void testRuntimeArgs() throws Exception {
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
+    ServiceId service = NamespaceId.DEFAULT.app(FakeApp.NAME).service(PrefixedEchoHandler.NAME);
+    testServiceRuntimeArgs(qualifiedServiceId, service);
   }
 
   public void testServiceRuntimeArgs(String qualifiedServiceId, ServiceId service) throws Exception {
@@ -534,24 +516,20 @@ public abstract class CLITestBase {
     assertProgramStatus(programClient, service, "STOPPED");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSpark() throws Exception {
     ProgramClient programClient = getProgramClient();
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
-    String versionedQualifiedSparkId = String.format("%s version %s", qualifiedSparkId, V1_SNAPSHOT);
-    ProgramId spark = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT).spark(sparkId);
+    // programId with default version will reference the latest version
+    ProgramId spark = NamespaceId.DEFAULT.app(FakeApp.NAME).spark(sparkId);
 
     testCommandOutputContains("list spark", sparkId);
-    testCommandOutputContains("start spark " + versionedQualifiedSparkId, "Successfully started Spark");
+    testCommandOutputContains("start spark " + qualifiedSparkId, "Successfully started Spark");
     assertProgramStatus(programClient, spark, "RUNNING");
     assertProgramStatus(programClient, spark, "STOPPED");
-    testCommandOutputContains("get spark status " + versionedQualifiedSparkId, "STOPPED");
-    testCommandOutputContains("get spark runs " + versionedQualifiedSparkId, "COMPLETED");
+    testCommandOutputContains("get spark status " + qualifiedSparkId, "STOPPED");
+    testCommandOutputContains("get spark runs " + qualifiedSparkId, "COMPLETED");
     testCommandOutputContains("get spark logs " + qualifiedSparkId, "HelloFakeSpark");
   }
 
@@ -684,27 +662,22 @@ public abstract class CLITestBase {
     dropHiveDb(hiveDatabase);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testWorkflows() throws Exception {
     ProgramClient programClient = getProgramClient();
     String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
-    String versionedWorkflow = String.format("%s version %s", workflow, V1_SNAPSHOT);
     File doneFile = TMP_FOLDER.newFile("fake.done");
     Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
     String runtimeArgsKV = SPACE_EQUALS_JOINER.join(runtimeArgs);
-    testCommandOutputContains("start workflow " + versionedWorkflow + " '" + runtimeArgsKV + "'",
+    testCommandOutputContains("start workflow " + workflow + " '" + runtimeArgsKV + "'",
                               "Successfully started workflow");
 
     Tasks.waitFor(1, () ->
-      programClient.getProgramRuns(FAKE_WORKFLOW_ID_V_1, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
+      programClient.getProgramRuns(FAKE_WORKFLOW_ID, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
                                    Integer.MAX_VALUE).size(), 180, TimeUnit.SECONDS);
 
     testCommandOutputContains("cli render as csv", "Now rendering as CSV");
-    String commandOutput = getCommandOutput("get workflow runs " + versionedWorkflow);
+    String commandOutput = getCommandOutput("get workflow runs " + workflow);
     String[] lines = commandOutput.split("\\r?\\n");
     Assert.assertEquals(2, lines.length);
     String[] split = lines[1].split(",");

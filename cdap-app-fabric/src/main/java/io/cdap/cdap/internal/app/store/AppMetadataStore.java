@@ -1768,10 +1768,12 @@ public class AppMetadataStore {
                                                             long startTime, long endTime, int limit,
                                                             @Nullable Predicate<RunRecordDetail> filter,
                                                             String recordType) throws IOException {
-    try {
-      programId = getLatestProgramId(programId);
-    } catch (ApplicationNotFoundException applicationNotFoundException) {
-      return new LinkedHashMap<>();
+    if (programId != null) {
+      try {
+        programId = getLatestProgramId(programId);
+      } catch (ApplicationNotFoundException applicationNotFoundException) {
+        return ImmutableMap.of();
+      }
     }
 
     List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId);
