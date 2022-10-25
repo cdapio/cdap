@@ -1595,13 +1595,19 @@ public class AppMetadataStore {
   @Nullable
   public RunRecordDetail getRun(ProgramRunId programRun) throws IOException {
     // Query active run record first
-    RunRecordDetail running = getUnfinishedRuns(Collections.singleton(programRun)).get(programRun);
-    // If program is running, this will be non-null
-    if (running != null) {
-      return running;
+    Map<ProgramRunId, RunRecordDetail> unfinishedRunsMap = getUnfinishedRuns(Collections.singleton(programRun));
+    // If program is running, this will not be empty
+    if (unfinishedRunsMap.size() > 0) {
+      return unfinishedRunsMap.values().iterator().next();
     }
+
     // If program is not running, query completed run records
-    return getCompletedRuns(Collections.singleton(programRun)).get(programRun);
+    Map<ProgramRunId, RunRecordDetail> completedRunsMap = getCompletedRuns(Collections.singleton(programRun));
+    if (completedRunsMap.size() > 0) {
+      return completedRunsMap.values().iterator().next();
+    }
+
+    return null;
   }
 
   /**
