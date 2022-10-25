@@ -32,6 +32,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.app.program.VersionSelect;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.BadRequestException;
@@ -1513,7 +1514,7 @@ public class AppMetadataStore {
   }
 
   /**
-   * Get all versions runs for an optional {@link ProgramId} that fits the given set of criteria.
+   * Get runs of latest version or all versions for an optional {@link ProgramId} that fits the given set of criteria.
    * If the program id is not provided, it fetches all runs that match with the criteria.
    *
    * @param programId an optional program id to match
@@ -1524,17 +1525,17 @@ public class AppMetadataStore {
    * @param filter of RunRecordDetail to post filter by
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordDetail> getAllVersionsRuns(@Nullable ProgramId programId, ProgramRunStatus status,
+  public Map<ProgramRunId, RunRecordDetail> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
                                                     long startTime, long endTime, int limit,
-                                                    @Nullable Predicate<RunRecordDetail> filter)
+                                                    @Nullable Predicate<RunRecordDetail> filter, VersionSelect version)
     throws IOException {
     switch (status) {
       case ALL:
-        Map<ProgramRunId, RunRecordDetail> runRecords = getProgramAllVersionsRuns(programId, status, startTime, endTime,
-                                                                       limit, filter, TYPE_RUN_RECORD_ACTIVE);
+        Map<ProgramRunId, RunRecordDetail> runRecords = getProgramRuns(programId, status, startTime, endTime,
+                                                                       limit, filter, TYPE_RUN_RECORD_ACTIVE, version);
         if (runRecords.size() < limit) {
-          runRecords.putAll(getProgramAllVersionsRuns(programId, status, startTime, endTime,
-                                           limit - runRecords.size(), filter, TYPE_RUN_RECORD_COMPLETED));
+          runRecords.putAll(getProgramRuns(programId, status, startTime, endTime,
+                                           limit - runRecords.size(), filter, TYPE_RUN_RECORD_COMPLETED, version));
         }
         return runRecords;
       case PENDING:
@@ -1542,10 +1543,9 @@ public class AppMetadataStore {
       case RUNNING:
       case SUSPENDED:
       case STOPPING:
-        return getProgramAllVersionsRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_ACTIVE);
+        return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_ACTIVE, version);
       default:
-        return getProgramAllVersionsRuns(programId, status, startTime, endTime, limit, filter,
-                                         TYPE_RUN_RECORD_COMPLETED);
+        return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_COMPLETED, version);
     }
   }
 
@@ -1800,12 +1800,19 @@ public class AppMetadataStore {
     return getRuns(scanRange, status, limit, keyFilter, filter);
   }
 
-  private Map<ProgramRunId, RunRecordDetail> getProgramAllVersionsRuns(@Nullable ProgramId programId,
-                                                                       ProgramRunStatus status,
-                                                                       long startTime, long endTime, int limit,
-                                                                       @Nullable Predicate<RunRecordDetail> filter,
-                                                                       String recordType) throws IOException {
-    List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId, false);
+  private Map<ProgramRunId, RunRecordDetail> getProgramRuns(@Nullable ProgramId programId, ProgramRunStatus status,
+                                                            long startTime, long endTime, int limit,
+                                                            @Nullable Predicate<RunRecordDetail> filter,
+                                                            String recordType,
+                                                            VersionSelect version) throws IOException {
+    List<Field<?>> prefix;
+    switch (version) {
+      case LATEST:
+        prefix = getRunRecordProgramPrefix(recordType, programId);
+        break;
+      default:
+        prefix = getRunRecordProgramPrefix(recordType, programId, false);
+    }
     Range scanRange;
     Predicate<StructuredRow> keyFilter = null;
 

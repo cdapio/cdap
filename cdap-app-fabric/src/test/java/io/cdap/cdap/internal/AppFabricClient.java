@@ -379,7 +379,7 @@ public class AppFabricClient {
                                getNamespacePath(namespace), application, applicationVersion, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.programHistory(request, responder, namespace, application, applicationVersion,
-                                               categoryName, programName, status.name(), null, null, 100);
+                                               categoryName, programName, status.name(), null, null, 100, null);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(RUN_RECORDS_TYPE);

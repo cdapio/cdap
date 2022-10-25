@@ -36,6 +36,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.program.VersionSelect;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
@@ -349,10 +350,10 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordDetail> getAllVersionsRuns(ProgramId id, ProgramRunStatus status,
-                                                    long startTime, long endTime, int limit) {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
+                                                    long startTime, long endTime, int limit, VersionSelect version) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAllVersionsRuns(id, status, startTime, endTime, limit, null);
+      return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, null, version);
     });
   }
 
@@ -930,13 +931,19 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunCountResult> getProgramAllVersionsRunCounts(Collection<ProgramId> programIds) {
+  public List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds, VersionSelect version) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<RunCountResult> result = new ArrayList<>();
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
-
-      Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCountsMultiScan(programIds);
-
+      Map<ProgramId, Long> runCounts;
+      switch (version) {
+        case LATEST:
+          runCounts = appMetadataStore.getProgramRunCounts(
+            appMetadataStore.filterProgramsExistence(programIds));
+          break;
+        default:
+          runCounts = appMetadataStore.getProgramRunCountsMultiScan(programIds);
+      }
       for (ProgramId programId : programIds) {
         Long count = runCounts.get(programId);
         if (count == null) {

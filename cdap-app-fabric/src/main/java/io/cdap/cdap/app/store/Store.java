@@ -25,6 +25,7 @@ import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.program.VersionSelect;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
@@ -192,7 +193,7 @@ public interface Store {
                                              long startTime, long endTime, int limit);
 
   /**
-   * Fetches run records of all versions for particular program.
+   * Fetches run records for particular program.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
    * @param id        id of the program
@@ -202,8 +203,8 @@ public interface Store {
    * @param limit     max number of entries to fetch for this history call
    * @return          map of logged runs
    */
-  Map<ProgramRunId, RunRecordDetail> getAllVersionsRuns(ProgramId id, ProgramRunStatus status,
-                                             long startTime, long endTime, int limit);
+  Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
+                                             long startTime, long endTime, int limit, VersionSelect version);
 
   /**
    * Fetches the run records for the particular status. Same as calling
@@ -567,12 +568,12 @@ public interface Store {
   List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds);
 
   /**
-   * Get the run count of all versions of the given program collection
+   * Get the run count of whether latest or all based on param of the given program collection
    *
    * @param programIds collection of program ids to get the count
    * @return the run count result of each program in the collection
    */
-  List<RunCountResult> getProgramAllVersionsRunCounts(Collection<ProgramId> programIds);
+  List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds, VersionSelect version);
 
   /**
    * Fetches run records for multiple programs.
