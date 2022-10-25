@@ -922,6 +922,26 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public List<RunCountResult> getProgramAllVersionsRunCounts(Collection<ProgramId> programIds) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      List<RunCountResult> result = new ArrayList<>();
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+
+      Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCountsMultiScan(programIds);
+
+      for (ProgramId programId : programIds) {
+        Long count = runCounts.get(programId);
+        if (count == null) {
+          result.add(new RunCountResult(programId, null, new NotFoundException(programId)));
+        } else {
+          result.add(new RunCountResult(programId, count, null));
+        }
+      }
+      return result;
+    });
+  }
+
+  @Override
   public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
                                       long startTime, long endTime, int limitPerProgram) {
     return TransactionRunners.run(transactionRunner, context -> {

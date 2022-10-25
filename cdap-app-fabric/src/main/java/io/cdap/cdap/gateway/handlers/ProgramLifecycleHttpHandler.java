@@ -490,7 +490,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
       List<RunRecord> records = new ArrayList<>();
       Collection<ApplicationSpecification> allAppVersions = store.getAllAppVersions(
-        new ApplicationId(namespaceId, appName));
+        new NamespaceId(namespaceId), appName);
       for (ApplicationSpecification applicationSpecification : allAppVersions) {
         ProgramId program = new ApplicationId(namespaceId, appName, applicationSpecification.getAppVersion())
           .program(programType, programName);
@@ -1592,35 +1592,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/runcount")
   public void getRunCounts(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) throws Exception {
+                           @PathParam("namespace-id") String namespaceId,
+                           @QueryParam("allVersions") boolean allVersions) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     if (programs.size() > 100) {
       throw new BadRequestException(String.format("%d programs found in the request, the maximum number " +
                                                     "supported is 100", programs.size()));
     }
 
-    List<List<ProgramId>> versionedProgramIds = programs.stream()
-      .map(batchProgram -> batchProgramToProgramIds(namespaceId, batchProgram))
-      .collect(Collectors.toList());
+    List<ProgramId> programIds;
+    List<RunCountResult> runCountResults;
+    if (!allVersions) {
+      programIds = programs.stream()
+        .map(batchProgram -> batchProgramToProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
+      runCountResults = lifecycleService.getProgramRunCounts(programIds);
+    } else {
+      programIds = programs.stream()
+        .map(batchProgram -> batchProgramToDefaultProgramId(namespaceId, batchProgram)).collect(Collectors.toList());
+      runCountResults = lifecycleService.getProgramAllVersionsRunCounts(programIds);
+    }
 
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
-    for (List<ProgramId> programIds : versionedProgramIds) {
-      // same programIds with different versions
-      ProgramId programId = null;
-      Long runCount = null;
-      for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programIds)) {
-        programId = runCountResult.getProgramId();
-        Exception exception = runCountResult.getException();
-        if (exception == null) {
-          runCount = runCount == null ? runCountResult.getCount() : runCount + runCountResult.getCount();
-        }
-      }
-      if (runCount == null) {
-        // None of the versions are found
+    for (RunCountResult runCountResult : runCountResults) {
+      ProgramId programId = runCountResult.getProgramId();
+      Exception exception = runCountResult.getException();
+      if (exception == null) {
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.OK.code(), null, runCountResult.getCount()));
+      } else if (exception instanceof NotFoundException) {
         counts.add(new BatchProgramCount(programId, HttpResponseStatus.NOT_FOUND.code(),
-                                         programId + " all versions not found", null));
+                                         exception.getMessage(), null));
+      } else if (exception instanceof UnauthorizedException) {
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.FORBIDDEN.code(),
+                                         exception.getMessage(), null));
       } else {
-        counts.add(new BatchProgramCount(programId, HttpResponseStatus.OK.code(), null, runCount));
+        counts.add(new BatchProgramCount(programId, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                         exception.getMessage(), null));
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(counts));
@@ -2161,11 +2167,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Convert BatchProgram to ProgramId with the default App version.
+   */
+  private ProgramId batchProgramToDefaultProgramId(String namespace, BatchProgram batchProgram) {
+    ApplicationId applicationId = new ApplicationId(namespace, batchProgram.getAppId());
+    return new ProgramId(applicationId, batchProgram.getProgramType(), batchProgram.getProgramId());
+  }
+
+  /**
    * Convert BatchProgram to ProgramIds with all app versions
    */
   private List<ProgramId> batchProgramToProgramIds(String namespace, BatchProgram batchProgram) {
     Collection<ApplicationSpecification> allAppVersions = store.getAllAppVersions(
-      new ApplicationId(namespace, batchProgram.getAppId()));
+      new NamespaceId(namespace), batchProgram.getAppId());
     return allAppVersions.stream().map(applicationSpecification -> {
                                          ApplicationId applicationId = new ApplicationId(
                                            namespace, applicationSpecification.getName(),

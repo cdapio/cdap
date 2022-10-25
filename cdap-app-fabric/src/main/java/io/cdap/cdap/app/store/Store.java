@@ -553,6 +553,14 @@ public interface Store {
   List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds);
 
   /**
+   * Get the run count of all versions of the given program collection
+   *
+   * @param programIds collection of program ids to get the count
+   * @return the run count result of each program in the collection
+   */
+  List<RunCountResult> getProgramAllVersionsRunCounts(Collection<ProgramId> programIds);
+
+  /**
    * Fetches run records for multiple programs.
    *
    * @param programs  the programs to get run records for

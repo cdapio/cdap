@@ -1917,6 +1917,45 @@ public class AppMetadataStore {
   }
 
   /**
+   * Get the run counts of all versions of the given program collections.
+   *
+   * @param programIds the collection of program ids to get the program
+   * @return the map of the program id to its run count
+   */
+  public Map<ProgramId, Long> getProgramRunCountsMultiScan(Collection<ProgramId> programIds)
+    throws BadRequestException, IOException {
+    if (programIds.size() > 100) {
+      throw new BadRequestException(String.format("%d programs found, the maximum number supported is 100",
+                                                  programIds.size()));
+    }
+
+    Map<ProgramId, Long> result = programIds.stream()
+      .collect(Collectors.toMap(id -> id, id -> 0L, (v1, v2) -> 0L, LinkedHashMap::new));
+
+    List<Range> keyRanges = programIds.stream()
+      .map(id -> {
+        List<Field<?>> programCountPrimaryKeys = getProgramCountPrimaryKeys(TYPE_COUNT, id, false);
+        return Range.create(programCountPrimaryKeys, Range.Bound.INCLUSIVE,
+                            programCountPrimaryKeys, Range.Bound.INCLUSIVE);
+      }).collect(Collectors.toList());
+
+    for (CloseableIterator<StructuredRow> it =
+         getProgramCountsTable().multiScan(keyRanges, Integer.MAX_VALUE); it.hasNext(); ) {
+      StructuredRow row = it.next();
+      ProgramId programId = getDefaultApplicationIdFromRow(row)
+        .program(ProgramType.valueOf(row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD)),
+                 row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
+      if (result.containsKey(programId)) {
+        // increment the runcount
+        result.put(programId, result.get(programId) + row.getLong(StoreDefinition.AppMetadataStore.COUNTS));
+      } else {
+        result.put(programId, row.getLong(StoreDefinition.AppMetadataStore.COUNTS));
+      }
+    }
+    return result;
+  }
+
+  /**
    * Gets the id of the last fetched message that was set for a subscriber of the given TMS topic
    *
    * @param topic the topic to lookup the last message id
@@ -2215,6 +2254,12 @@ public class AppMetadataStore {
     return addProgramPrimaryKeys(programId, fields, true);
   }
 
+  private List<Field<?>> getProgramCountPrimaryKeys(String type, ProgramId programId, boolean includeVersion) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.COUNT_TYPE, type));
+    return addProgramPrimaryKeys(programId, fields, includeVersion);
+  }
+
   @Nullable
   private Predicate<StructuredRow> getKeyFilterByTimeRange(long startTime, long endTime) {
     if (startTime <= 0 && endTime == Long.MAX_VALUE) {
@@ -2232,6 +2277,11 @@ public class AppMetadataStore {
     return new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
       .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
            row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD));
+  }
+
+  private static ApplicationId getDefaultApplicationIdFromRow(StructuredRow row) {
+    return new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
+      .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD));
   }
 
   /**

@@ -250,6 +250,37 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the program run count of all versions of the given program id list.
+   *
+   * @param programIds the list of program ids to get the count
+   * @return the counts of given program ids
+   */
+  public List<RunCountResult> getProgramAllVersionsRunCounts(List<ProgramId> programIds) throws Exception {
+    // filter the result
+    Principal principal = authenticationContext.getPrincipal();
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programIds), principal);
+    Set<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toSet());
+
+    Map<ProgramId, RunCountResult> programCounts = store.getProgramAllVersionsRunCounts(filteredIds).stream()
+      .collect(Collectors.toMap(RunCountResult::getProgramId, c -> c));
+
+    List<RunCountResult> result = new ArrayList<>();
+    for (ProgramId programId : programIds) {
+      if (!visibleEntities.contains(programId)) {
+        result.add(new RunCountResult(programId, null, new UnauthorizedException(principal, programId)));
+      } else {
+        RunCountResult count = programCounts.get(programId);
+        if (count != null) {
+          result.add(count);
+        } else {
+          result.add(new RunCountResult(programId, 0L, null));
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
    * Returns the {@link RunRecordDetail} for the given program run.
    *
    * @param programRunId the program run to fetch
