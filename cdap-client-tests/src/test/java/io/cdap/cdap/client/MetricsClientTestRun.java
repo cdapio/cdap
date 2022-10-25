@@ -112,7 +112,7 @@ public class MetricsClientTestRun extends ClientTestBase {
     } finally {
       programClient.stop(service);
       assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1, 10);
-      appClient.delete(app);
+      appClient.deleteApp(app);
     }
   }
 }
