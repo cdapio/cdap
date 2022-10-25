@@ -2155,20 +2155,4 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespace, batchProgram.getAppId());
     return new ProgramId(applicationId, batchProgram.getProgramType(), batchProgram.getProgramId());
   }
-
-  /**
-   * Convert BatchProgram to ProgramIds with all app versions
-   */
-  private List<ProgramId> batchProgramToProgramIds(String namespace, BatchProgram batchProgram) {
-    Collection<ApplicationSpecification> allAppVersions = store.getAllAppVersions(
-      new NamespaceId(namespace), batchProgram.getAppId());
-    return allAppVersions.stream().map(applicationSpecification -> {
-                                         ApplicationId applicationId = new ApplicationId(
-                                           namespace, applicationSpecification.getName(),
-                                           applicationSpecification.getAppVersion());
-                                         return new ProgramId(applicationId, batchProgram.getProgramType(),
-                                                              batchProgram.getProgramId());
-                                       }
-    ).collect(Collectors.toList());
-  }
 }
