@@ -482,7 +482,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit,
-                             @QueryParam("versionSelect") @DefaultValue("LATEST") VersionSelect versionSelect)
+                             @QueryParam("version-select") @DefaultValue("LATEST") VersionSelect versionSelect)
     throws Exception {
     programHistory(request, responder, namespaceId, appName,
                    getLatestAppVersion(new NamespaceId(namespaceId), appName), type,
@@ -505,7 +505,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit,
-                             @QueryParam("versionSelect") @DefaultValue("LATEST")
+                             @QueryParam("version-select") @DefaultValue("LATEST")
                                  VersionSelect versionSelect) throws Exception {
     ProgramType programType = getProgramType(type);
 
@@ -1576,7 +1576,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/runcount")
   public void getRunCounts(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
-                           @QueryParam("versionSelect") @DefaultValue("LATEST")
+                           @QueryParam("version-select") @DefaultValue("LATEST")
                                VersionSelect versionSelect) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     if (programs.size() > 100) {
