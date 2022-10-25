@@ -25,6 +25,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.app.program.VersionSelect;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -379,7 +380,8 @@ public class AppFabricClient {
                                getNamespacePath(namespace), application, applicationVersion, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.programHistory(request, responder, namespace, application, applicationVersion,
-                                               categoryName, programName, status.name(), null, null, 100);
+                                               categoryName, programName, status.name(), null, null, 100,
+                                               VersionSelect.LATEST);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(RUN_RECORDS_TYPE);
