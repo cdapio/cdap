@@ -1436,15 +1436,17 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId)
     throws IOException {
+    Map<ProgramRunId, RunRecordDetail> result = new LinkedHashMap<>();
+    scanActiveRuns(programId, r -> result.put(r.getProgramRunId(), r));
+    // get runs from the latest program version if program has default version 
     if (ApplicationId.DEFAULT_VERSION.equals(programId.getVersion())) {
       try {
         programId = getLatestProgramId(programId);
       } catch (ApplicationNotFoundException ignored) {
         // Ignoring this for cases where program exists but app does not exist
       }
+      scanActiveRuns(programId, r -> result.put(r.getProgramRunId(), r));
     }
-    Map<ProgramRunId, RunRecordDetail> result = new LinkedHashMap<>();
-    scanActiveRuns(programId, r -> result.put(r.getProgramRunId(), r));
     return result;
   }
 
