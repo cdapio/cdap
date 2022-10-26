@@ -41,7 +41,6 @@ import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -109,22 +108,14 @@ public class ServiceClientTestRun extends ClientTestBase {
     }
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testGetServiceSpecification() throws Exception {
     ServiceSpecification serviceSpecification = serviceClient.get(service);
     assertEquals(serviceSpecification.getName(), PingService.NAME);
     assertEquals(serviceSpecification.getHandlers().size(), 1);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testGetEndpoints() throws Exception {
     List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(service);
     assertEquals(1, endpoints.size());
@@ -132,21 +123,13 @@ public class ServiceClientTestRun extends ClientTestBase {
     assertEquals("GET", endpoint.getMethod());
     assertEquals("/ping", endpoint.getPath());
   }
-
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
+  
   @Test
-  @Ignore
   public void testActiveStatus() throws Exception {
     serviceClient.checkAvailability(service);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testGetServiceURL() throws Exception {
     URL url = new URL(serviceClient.getServiceURL(service), "ping");
     HttpRequest request = HttpRequest.builder(HttpMethod.GET, url).build();

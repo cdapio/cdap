@@ -42,6 +42,7 @@ import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.Tasks;
@@ -83,6 +84,7 @@ import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -104,7 +106,6 @@ import javax.annotation.Nullable;
  * Tests for {@link ProgramLifecycleHttpHandler}
  */
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
-
   private static final Gson GSON = new GsonBuilder()
     .create();
   private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
@@ -118,6 +119,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String EMPTY_ARRAY_JSON = "[]";
   private static final String STOPPED = "STOPPED";
   private static final String RUNNING = "RUNNING";
+
+  private static CConfiguration cConf;
+
+  @BeforeClass
+  public static void beforeClass() throws Throwable {
+    cConf = createBasicCConf();
+    initializeAndStartServices(cConf);
+  }
 
   @Category(XSlowTests.class)
   @Test
@@ -281,20 +290,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationDetail appDetails = getAppDetails(appId1.getNamespace(), appId1.getApplication());
     String version = appDetails.getAppVersion();
     appId1 = new ApplicationId(appId1.getNamespace(), appId1.getApplication(), version);
+    ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
+    Id.Program nonVersionServiceIdDefault = Id.Program.fromEntityId(serviceId1);
+    // service is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
+    startProgram(serviceId1, 200);
 
     // deploy the second version of the app
     Assert.assertEquals(200, deploy(appId2, appRequest).getResponseCode());
     appDetails = getAppDetails(appId2.getNamespace(), appId2.getApplication());
     version = appDetails.getAppVersion();
     appId2 = new ApplicationId(appId2.getNamespace(), appId2.getApplication(), version);
-
-    ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     ProgramId serviceId2 = appId2.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    Id.Program nonVersionServiceIdDefault = Id.Program.fromEntityId(serviceId1);
-    // service is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
-    // cannot start an old version program
-    startProgram(serviceId1, 400);
 
     // wordFrequencyService2 is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(serviceId2));
@@ -307,8 +314,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // same service cannot be run concurrently in the same app version
     startProgram(serviceId2, 409);
 
-    // cannot stop program that's not running
-    stopProgram(serviceId1, null, 400, null);
+    stopProgram(serviceId1, null, 200, null);
     stopProgram(serviceId2, null, 200, null);
     waitState(serviceId2, STOPPED);
     // cleanup
@@ -932,7 +938,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore // TODO: CDAP-19775
+  @Ignore // TODO : To be fixed in CDAP 19777
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
     NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
@@ -1128,7 +1134,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore // TODO: CDAP-19775
   public void testSchedules() throws Exception {
     // deploy an app with schedule
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META1.getNamespaceId()),
@@ -1177,7 +1182,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore // TODO: CDAP-19775
+  @Ignore // TODO : To be fixed in CDAP 19777
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);

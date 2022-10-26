@@ -41,7 +41,6 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -85,9 +84,7 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
     );
   }
 
-  // TODO: CDAP-19775
   @Test
-  @Ignore
   public void testListSchedules() {
     TransactionRunner transactionRunner = getTransactionRunner();
 
