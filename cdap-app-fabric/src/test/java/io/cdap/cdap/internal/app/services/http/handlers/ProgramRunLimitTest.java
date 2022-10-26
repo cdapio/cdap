@@ -32,7 +32,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.SlowTests;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -59,12 +58,8 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     initializeAndStartServices(cConf);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Category(SlowTests.class)
   @Test
-  @Ignore
   public void testConcurrentServiceLaunchingAndRunningLimit() throws Exception {
     // Launching/running a new service should NOT be controlled by flow-control mechanism. 
     // deploy, check the status
@@ -101,12 +96,8 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     waitState(pingService, STOPPED);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Category(SlowTests.class)
   @Test
-  @Ignore
   public void testConcurrentWorkflowLaunchingAndRunningLimit() throws Exception {
     // Deploy, check the status
     deploy(AppWithWorkflow.class, 200);

@@ -73,10 +73,10 @@ public class UsageHandlerTestRun extends ClientTestBase {
     return new ProgramClient(getClientConfig());
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
+  /*
+   * TODO : to fix after CDAP-19973 is addressed
+   * */
   @Ignore
   public void testWorkerUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
@@ -104,7 +104,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   /*
-   * TODO : to fix after CDAP-19775 is addressed
+   * TODO : to fix after CDAP-19973 is addressed
    * */
   @Test
   @Ignore
@@ -141,7 +141,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   /*
-   * TODO : to fix after CDAP-19775 is addressed
+   * TODO : to fix after CDAP-19973 is addressed
    * */
   @Test
   @Ignore
@@ -182,7 +182,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   /*
-   * TODO : to fix after CDAP-19775 is addressed
+   * TODO : to fix after CDAP-19973 is addressed
    * */
   @Test
   @Ignore

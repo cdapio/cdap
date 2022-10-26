@@ -79,11 +79,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     namespaceClient = new NamespaceClient(clientConfig);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testProgramAPI() throws Exception {
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "instance");
@@ -169,8 +165,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
   }
 
   /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
+  * TODO: To be ignored until CDAP-19972 is fixed
+  * */
   @Test
   @Ignore
   public void testPreferences() throws Exception {

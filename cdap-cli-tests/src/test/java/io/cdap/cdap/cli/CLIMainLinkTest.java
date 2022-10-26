@@ -59,8 +59,6 @@ public class CLIMainLinkTest extends CLITestBase {
   public static void tearDownClass() throws Exception {
     programClient.stopAll(NamespaceId.DEFAULT);
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
-    testCommandOutputContains(cli, String.format("delete app %s version %s", FakeApp.NAME, V1_SNAPSHOT),
-                              "Successfully deleted app");
   }
 
   public static CLIConfig createCLIConfigWithURIPrefix(URI standaloneUri) throws Exception {

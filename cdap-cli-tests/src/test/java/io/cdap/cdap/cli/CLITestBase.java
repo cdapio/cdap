@@ -77,7 +77,6 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -244,12 +243,7 @@ public abstract class CLITestBase {
     testCommandOutputContains("connect " + STANDALONE.getBaseURI(), "Successfully connected");
   }
 
-
-  /*
-   * This test is ignored - since we do not have explicit user defined versions for apps anymore.
-   * */
   @Test
-  @Ignore
   public void testList() throws Exception {
     testCommandOutputContains("list app versions " + FakeApp.NAME, V1_SNAPSHOT);
     testCommandOutputContains("list app versions " + FakeApp.NAME, ApplicationId.DEFAULT_VERSION);
@@ -276,11 +270,7 @@ public abstract class CLITestBase {
     cliConfig.setConnectionConfig(oldConnectionConfig);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testProgram() throws Exception {
     ProgramClient programClient = getProgramClient();
     final ProgramId serviceId = FAKE_APP_ID_V_1.service(FakeApp.SERVICES.get(0));
@@ -390,11 +380,7 @@ public abstract class CLITestBase {
     testCommandOutputContains("delete dataset instance " + datasetId, "Successfully deleted");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSchedule() throws Exception {
     String scheduleId = FakeApp.NAME + "." + FakeApp.TIME_SCHEDULE_NAME;
     String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
@@ -459,11 +445,7 @@ public abstract class CLITestBase {
     testCommandOutputContains("delete dataset instance " + ownedDatasetName, "Successfully deleted");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testService() throws Exception {
     ProgramClient programClient = getProgramClient();
     ServiceId service = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
@@ -497,11 +479,7 @@ public abstract class CLITestBase {
     }
   }
 
-  /*
-  * TODO : to fix after CDAP-19775 is addressed
-  * */
   @Test
-  @Ignore
   public void testVersionedRuntimeArgs() throws Exception {
     String versionedServiceId = String.format("%s.%s version %s", FakeApp.NAME, PrefixedEchoHandler.NAME, V1_SNAPSHOT);
     ServiceId service = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
@@ -534,11 +512,7 @@ public abstract class CLITestBase {
     assertProgramStatus(programClient, service, "STOPPED");
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testSpark() throws Exception {
     ProgramClient programClient = getProgramClient();
     String sparkId = FakeApp.SPARK.get(0);
@@ -684,11 +658,7 @@ public abstract class CLITestBase {
     dropHiveDb(hiveDatabase);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testWorkflows() throws Exception {
     ProgramClient programClient = getProgramClient();
     String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
