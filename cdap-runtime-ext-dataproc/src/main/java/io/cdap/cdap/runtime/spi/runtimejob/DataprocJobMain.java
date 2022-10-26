@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
+import org.apache.spark.sql.SparkSession;
 import org.apache.twill.internal.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,11 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
+    // Create a spark session so that Dataproc doesn't mark the job as failed.
+     SparkSession spark = SparkSession.builder()
+                .appName("dataproc-java-demo")
+                .master("yarn")
+                .getOrCreate();
     Map<String, Collection<String>> arguments = fromPosixArray(args);
 
     if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {

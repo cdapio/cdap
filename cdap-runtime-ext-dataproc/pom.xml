@@ -165,6 +165,11 @@
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_2.12</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <dependencyManagement>
