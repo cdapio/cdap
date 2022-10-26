@@ -551,6 +551,24 @@
         },
         {
           "widget-type": "toggle",
+          "label": "Enable Cloud Profiler",
+          "name": "profilerEnabled",
+          "description": "Whether to enable Cloud Profiler for the program run. This should only be used when debugging performance issues.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
           "label": "Enable Stackdriver Logging Integration",
           "name": "stackdriverLoggingEnabled",
           "description": "Enable or disable Stackdriver logging integration.",

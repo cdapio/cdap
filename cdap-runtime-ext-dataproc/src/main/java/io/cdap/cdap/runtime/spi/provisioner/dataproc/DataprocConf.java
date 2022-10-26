@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
 /**
  * Configuration for Dataproc.
  */
-final class DataprocConf {
+public final class DataprocConf {
 
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
@@ -66,6 +66,7 @@ final class DataprocConf {
   // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
   static final String SERVICE_ACCOUNT = "serviceAccount";
   static final String ROOT_URL = "root.url";
+  public static final String PROFILER_ENABLED = "profilerEnabled";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
@@ -159,7 +160,8 @@ final class DataprocConf {
   private final int computeConnectionTimeout;
 
   private final boolean gcsCacheEnabled;
-  private  final String troubleshootingDocsUrl;
+  private final boolean profilerEnabled;
+  private final String troubleshootingDocsUrl;
 
   public String getTroubleshootingDocsUrl() {
     return troubleshootingDocsUrl;
@@ -186,7 +188,7 @@ final class DataprocConf {
                        long clusterReuseThresholdMinutes, @Nullable String clusterReuseKey,
                        boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
                        @Nullable String rootUrl, boolean gcsCacheEnabled, boolean disableLocalCaching,
-                       String troubleshootingDocsUrl) {
+                       String troubleshootingDocsUrl, boolean profilerEnabled) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -243,6 +245,7 @@ final class DataprocConf {
     this.gcsCacheEnabled = gcsCacheEnabled;
     this.disableLocalCaching = disableLocalCaching;
     this.troubleshootingDocsUrl = troubleshootingDocsUrl;
+    this.profilerEnabled = profilerEnabled;
   }
 
   String getRegion() {
@@ -380,6 +383,10 @@ final class DataprocConf {
 
   public boolean isSkipDelete() {
     return skipDelete;
+  }
+
+  public boolean isProfilerEnabled() {
+    return profilerEnabled;
   }
 
   Map<String, String> getClusterMetaData() {
@@ -695,6 +702,7 @@ final class DataprocConf {
     // If true, artifacts will not be cached locally.
     boolean disableLocalCaching =
       Boolean.parseBoolean(properties.getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED, "false"));
+    boolean profilerEnabled = Boolean.parseBoolean(properties.getOrDefault(PROFILER_ENABLED, "false"));
     String troubleshootingDocsURL =
       properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
                               DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
@@ -713,7 +721,7 @@ final class DataprocConf {
                             tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
                             clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseKey,
                             enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
-                            gcsCacheEnabled, disableLocalCaching, troubleshootingDocsURL);
+                            gcsCacheEnabled, disableLocalCaching, troubleshootingDocsURL, profilerEnabled);
   }
 
   // the UI never sends nulls, it only sends empty strings.

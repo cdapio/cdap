@@ -54,6 +54,7 @@ import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocConf;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -106,6 +107,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private static final String LABEL_CDAP_PROGRAM = "cdap-program";
   private static final String LABEL_CDAP_PROGRAM_TYPE = "cdap-program-type";
 
+  // Dataproc job properties related to cloud profiler
+  private static final String CLOUD_PROFILER_ENABLE = "cloud.profiler.enable";
+  private static final String CLOUD_PROFILER_NAME = "cloud.profiler.name";
+  private static final String CLOUD_PROFILER_SERVICE_VERSION = "cloud.profiler.service.version";
+
   // Dataproc specific error groups
   private static final String ERRGP_GCS = "gcs";
 
@@ -119,6 +125,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final Map<String, String> labels;
   private final Map<String, String> provisionerProperties;
   private final VersionInfo cdapVersionInfo;
+  private final boolean profilerEnabled;
 
   private volatile Storage storageClient;
   private volatile JobControllerClient jobControllerClient;
@@ -148,6 +155,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     // These properties are absent in provisionerContext.getProperties().
     this.provisionerProperties = provisionerProperties;
     this.cdapVersionInfo = cdapVersionInfo;
+    this.profilerEnabled = Boolean.parseBoolean(
+      provisionerContext.getProperties().getOrDefault(DataprocConf.PROFILER_ENABLED, "false"));
   }
 
   /**
@@ -600,6 +609,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
     properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
     properties.put(CDAP_RUNTIME_RUNID, runId);
+    if (profilerEnabled) {
+      properties.put(CLOUD_PROFILER_ENABLE, "true");
+      properties.put(CLOUD_PROFILER_NAME, getProfilerServiceName(runtimeJobInfo.getProgramRunInfo().getApplication()));
+      properties.put(CLOUD_PROFILER_SERVICE_VERSION, runtimeJobInfo.getProgramRunInfo().getRun());
+    }
 
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
       // set main class
@@ -636,6 +650,33 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                 .setHadoopJob(hadoopJobBuilder.build())
                 .build())
       .build();
+  }
+
+  /**
+   * Cloud profiler service name needs to match regex ^[a-z0-9]([-a-z0-9_.]{0,253}[a-z0-9])?$
+   * This method will generate a service name of the form "cdap-[sanitized app name]", where the
+   * sanitized app name is the original application name that has been lowercased, stripped of any invalid characters,
+   * with a '0' appended to the end if the last character is not alphanumeric, and trimmed to at most 255 characters.
+   *
+   * @param appName application name for the run
+   * @return service name compatible with Cloud Profiler
+   */
+  @VisibleForTesting
+  static String getProfilerServiceName(String appName) {
+    String sanitized = appName.toLowerCase();
+    sanitized = sanitized.replaceAll("[^-a-z0-9_.]", "");
+    char lastChar = sanitized.charAt(sanitized.length() - 1);
+    // at this point, every characters will be lowercase alphanumeric, dash, underscore, or period
+    // the last character just can't be dash, underscore, or period.
+    boolean isLastCharInvalid = lastChar == '.' || lastChar == '_' || lastChar == '-';
+
+    String prefix = "cdap-";
+    int maxSanitizedLength = 255 - prefix.length() - (isLastCharInvalid ? 1 : 0);
+    if (sanitized.length() > maxSanitizedLength) {
+      sanitized = sanitized.substring(0, maxSanitizedLength);
+    }
+
+    return prefix + sanitized + (isLastCharInvalid ? "0" : "");
   }
 
   private ProgramRunInfo getProgramRunInfo(Job job) {
