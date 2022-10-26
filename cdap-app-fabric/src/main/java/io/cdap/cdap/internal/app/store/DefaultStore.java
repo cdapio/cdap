@@ -151,11 +151,8 @@ public class DefaultStore implements Store {
       throw new ApplicationNotFoundException(id.getParent());
     }
 
-    String latestVersion = appMeta.getSpec().getAppVersion();
-    ProgramId latestProgramId = new ProgramId(id.getNamespace(), id.getApplication(), latestVersion,
-                                              id.getType(), id.getProgram());
-    Store.ensureProgramExists(latestProgramId, appMeta.getSpec());
-    return new ProgramDescriptor(latestProgramId, appMeta.getSpec());
+    Store.ensureProgramExists(id, appMeta.getSpec());
+    return new ProgramDescriptor(id, appMeta.getSpec());
   }
 
   @Override

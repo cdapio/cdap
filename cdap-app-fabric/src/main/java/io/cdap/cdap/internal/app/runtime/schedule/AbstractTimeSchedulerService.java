@@ -24,7 +24,6 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.proto.ScheduledRuntime;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,7 +135,7 @@ public abstract class AbstractTimeSchedulerService extends AbstractIdleService i
   }
 
   public static String programIdFor(ProgramId program, SchedulableProgramType programType) {
-    return String.format("%s:%s:%s:%s:%s", program.getNamespace(), program.getApplication(),
-                         ApplicationId.DEFAULT_VERSION, programType.name(), program.getProgram());
+    return String.format("%s:%s:%s:%s:%s", program.getNamespace(), program.getApplication(), program.getVersion(),
+                         programType.name(), program.getProgram());
   }
 }

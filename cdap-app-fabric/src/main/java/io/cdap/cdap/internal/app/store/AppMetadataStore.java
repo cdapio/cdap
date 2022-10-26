@@ -34,7 +34,6 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
-import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
@@ -1413,16 +1412,7 @@ public class AppMetadataStore {
    * @param applicationId given app
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId)
-    throws IOException {
-    if (ApplicationId.DEFAULT_VERSION.equals(applicationId.getVersion())) {
-      try {
-        applicationId = getLatestApplicationId(applicationId);
-      } catch (ApplicationNotFoundException ignored) {
-        // Ignoring this for cases where program exists but app does not exist
-      }
-
-    }
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId) throws IOException {
     List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId);
     return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
   }
@@ -1434,19 +1424,9 @@ public class AppMetadataStore {
    * @param programId given program
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId)
-    throws IOException {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) throws IOException {
     Map<ProgramRunId, RunRecordDetail> result = new LinkedHashMap<>();
     scanActiveRuns(programId, r -> result.put(r.getProgramRunId(), r));
-    // get runs from the latest program version if program has default version 
-    if (ApplicationId.DEFAULT_VERSION.equals(programId.getVersion())) {
-      try {
-        programId = getLatestProgramId(programId);
-      } catch (ApplicationNotFoundException ignored) {
-        // Ignoring this for cases where program exists but app does not exist
-      }
-      scanActiveRuns(programId, r -> result.put(r.getProgramRunId(), r));
-    }
     return result;
   }
 
@@ -1568,11 +1548,6 @@ public class AppMetadataStore {
   // JIRA https://issues.cask.co/browse/CDAP-2172
   @Nullable
   public RunRecordDetail getRun(ProgramRunId programRun) throws IOException {
-    try {
-      programRun = getLatestProgramRunId(programRun);
-    } catch (ApplicationNotFoundException ignored) {
-      // Ignoring this for cases where program exists but app does not exist
-    }
     // Query active run record first
     Map<ProgramRunId, RunRecordDetail> unfinishedRunsMap = getUnfinishedRuns(Collections.singleton(programRun));
     // If program is running, this will not be empty
@@ -1779,14 +1754,6 @@ public class AppMetadataStore {
                                                             long startTime, long endTime, int limit,
                                                             @Nullable Predicate<RunRecordDetail> filter,
                                                             String recordType) throws IOException {
-    if (programId != null) {
-      try {
-        programId = getLatestProgramId(programId);
-      } catch (ApplicationNotFoundException ignore) {
-        // Ignoring this for cases where program exists but app does not exist
-      }
-    }
-
     List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId);
     Range scanRange;
     Predicate<StructuredRow> keyFilter = null;
@@ -2350,41 +2317,5 @@ public class AppMetadataStore {
     public int hashCode() {
       return Objects.hash(appId, rawAppMeta, changeDetail);
     }
-  }
-
-  /**
-   *
-   * @param appId   application Id
-   * @return        latest version of an application
-   * @throws ApplicationNotFoundException if application is not found
-   */
-  public String getLatestAppVersion(ApplicationId appId)
-    throws ApplicationNotFoundException, IOException {
-    ApplicationMeta applicationMeta = getLatest(appId.getNamespaceId(),
-                                                appId.getApplication());
-    if (applicationMeta == null) {
-      throw new ApplicationNotFoundException(appId);
-    }
-    return applicationMeta.getSpec().getAppVersion();
-  }
-
-  private ApplicationId getLatestApplicationId(ApplicationId appId)
-    throws IOException, ApplicationNotFoundException {
-    if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
-       appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), getLatestAppVersion(appId));
-    }
-    return appId;
-  }
-
-  private ProgramId getLatestProgramId(ProgramId programId)
-    throws IOException, ApplicationNotFoundException {
-      ApplicationId applicationId = getLatestApplicationId(programId.getParent());
-      return applicationId.program(programId.getType(), programId.getProgram());
-  }
-
-  private ProgramRunId getLatestProgramRunId(ProgramRunId programRunId)
-    throws IOException, ApplicationNotFoundException {
-    ProgramId latestProgramId = getLatestProgramId(programRunId.getParent());
-    return latestProgramId.run(programRunId.getRun());
   }
 }
