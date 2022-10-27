@@ -425,6 +425,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(NamespaceId namespaceId, String appName) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getActiveRuns(namespaceId, appName);
+    });
+  }
+
+  @Override
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(programId);

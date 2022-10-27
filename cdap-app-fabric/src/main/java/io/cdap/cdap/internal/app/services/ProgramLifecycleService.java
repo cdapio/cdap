@@ -588,12 +588,14 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Stop all active programs for the given application
+   * Stop all active programs for the given application across all versions
    * @param applicationId
    * @throws Exception
+   * TODO replace param with ApplicationReference
    */
   public void stopAll(ApplicationId applicationId) throws Exception {
-    Map<ProgramRunId, RunRecordDetail> runMap = store.getActiveRuns(applicationId);
+    Map<ProgramRunId, RunRecordDetail> runMap = store.getActiveRuns(applicationId.getNamespaceId(),
+                                                                    applicationId.getApplication());
     for (ProgramRunId programRunId : runMap.keySet()) {
       stop(programRunId.getParent(), programRunId.getRun(), 0);
     }
