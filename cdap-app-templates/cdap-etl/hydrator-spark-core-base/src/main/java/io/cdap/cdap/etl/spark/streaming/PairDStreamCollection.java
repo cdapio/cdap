@@ -36,13 +36,16 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   private final JavaSparkExecutionContext sec;
   private final FunctionCache.Factory functionCacheFactory;
   private final JavaPairDStream<K, V> pairStream;
+  private final StreamingRetrySettings streamingRetrySettings;
 
   public PairDStreamCollection(JavaSparkExecutionContext sec,
                                FunctionCache.Factory functionCacheFactory,
-                               JavaPairDStream<K, V> pairStream) {
+                               JavaPairDStream<K, V> pairStream,
+                               StreamingRetrySettings streamingRetrySettings) {
     this.sec = sec;
     this.functionCacheFactory = functionCacheFactory;
     this.pairStream = pairStream;
+    this.streamingRetrySettings = streamingRetrySettings;
   }
 
   @SuppressWarnings("unchecked")
@@ -53,7 +56,7 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
 
   @Override
   public <T> SparkCollection<T> flatMap(FlatMapFunction<Tuple2<K, V>, T> function) {
-    return new DStreamCollection<>(sec, functionCacheFactory, pairStream.flatMap(function));
+    return new DStreamCollection<>(sec, functionCacheFactory, pairStream.flatMap(function), streamingRetrySettings);
   }
 
   @Override
@@ -102,6 +105,6 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   }
 
   private <T, U> PairDStreamCollection<T, U> wrap(JavaPairDStream<T, U> pairStream) {
-    return new PairDStreamCollection<>(sec, functionCacheFactory, pairStream);
+    return new PairDStreamCollection<>(sec, functionCacheFactory, pairStream, streamingRetrySettings);
   }
 }
