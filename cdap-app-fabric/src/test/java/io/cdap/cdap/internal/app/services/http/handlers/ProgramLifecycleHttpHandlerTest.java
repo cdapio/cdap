@@ -578,12 +578,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // deploy an app in namespace1
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    ApplicationDetail appDetails1 = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
-    String version1 = appDetails1.getAppVersion();
     // deploy another app in namespace2
     deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    ApplicationDetail appDetails2 = getAppDetails(TEST_NAMESPACE2, AppWithServices.NAME);
-    String version2 = appDetails2.getAppVersion();
 
     Gson gson = new Gson();
 
