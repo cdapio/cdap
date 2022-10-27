@@ -283,13 +283,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     ProgramType programType = getProgramType(type);
-    ProgramId program = applicationId.program(programType, programId);
-    ProgramStatus programStatus;
-    if (ApplicationId.DEFAULT_VERSION.equals(versionId)) {
-      programStatus = lifecycleService.getProgramStatus(new NamespaceId(namespaceId), appId, programType, programId);
-    } else {
-      programStatus = lifecycleService.getProgramStatus(program);
-    }
+    ProgramStatus programStatus = lifecycleService.getProgramStatus(new NamespaceId(namespaceId), appId, programType, programId);
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(status));
@@ -365,7 +359,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("program-type") String type,
                             @PathParam("program-id") String programId,
                             @PathParam("action") String action) throws Exception {
-    doPerformAction(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId, action);
+    doPerformAction(request, responder, namespaceId, appId,
+                    getLatestAppVersion(new NamespaceId(namespaceId), appId), type, programId, action);
   }
 
   /**
@@ -423,22 +418,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
       case "start":
-        if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-          lifecycleService.run(new NamespaceId(namespaceId), appId, programType, programId, args, false);
-        } else {
-          lifecycleService.run(program, args, false);
-        }
+        lifecycleService.run(new NamespaceId(namespaceId), appId, programType, programId, args, false);
         break;
       case "debug":
         if (!isDebugAllowed(programType)) {
           throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
                                                           programType));
         }
-        if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-          lifecycleService.run(new NamespaceId(namespaceId), appId, programType, programId, args, true);
-        } else {
-          lifecycleService.run(program, args, true);
-        }
+        lifecycleService.run(new NamespaceId(namespaceId), appId, programType, programId, args, true);
         break;
       case "stop":
         if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
@@ -473,11 +460,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-version") String appVersion,
                                      @QueryParam("start-time-seconds") long startTimeSeconds,
                                      @QueryParam("end-time-seconds") long endTimeSeconds) throws Exception {
-    if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-      lifecycleService.restart(new NamespaceId(namespaceId), appId, startTimeSeconds, endTimeSeconds);
-    } else {
-      lifecycleService.restart(new ApplicationId(namespaceId, appId, appVersion), startTimeSeconds, endTimeSeconds);
-    }
+    lifecycleService.restart(new NamespaceId(namespaceId), appId, startTimeSeconds, endTimeSeconds);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -525,15 +508,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
       ProgramRunStatus.valueOf(status.toUpperCase());
 
-    List<RunRecord> records;
-    if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-      records = lifecycleService.getRunRecords(new NamespaceId(namespaceId), appName, programType, programName,
-                                               runStatus, start, end, resultLimit);
-    } else {
-      ProgramId program = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-      records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit);
-    }
-    records = records.stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList());
+    List<RunRecord> records = lifecycleService.getRunRecords(new NamespaceId(namespaceId), appName, programType,
+                                                             programName, runStatus, start, end, resultLimit)
+      .stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList());
+
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
   }
 
@@ -637,11 +615,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName) throws Exception {
     String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
-    if (!appVersion.equals(latestVersion) && !ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-      throw new BadRequestException("Runtime arguments can only be changed on the latest program version");
-    }
     ProgramType programType = getProgramType(type);
-    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
+    ProgramId programId = new ApplicationId(namespaceId, appName, latestVersion).program(programType, programName);
     saveProgramIdRuntimeArgs(programId, request, responder);
   }
 
@@ -676,13 +651,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = getProgramType(type);
     ApplicationId application = new ApplicationId(namespaceId, appName, appVersion);
     ProgramId programId = application.program(programType, programName);
-    ProgramSpecification specification;
-    if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-      specification = lifecycleService.getProgramSpecification(new NamespaceId(namespaceId), appName,
-                                                               programType, programName);
-    } else {
-      specification = lifecycleService.getProgramSpecification(programId);
-    }
+    ProgramSpecification specification = lifecycleService.getProgramSpecification(new NamespaceId(namespaceId), appName,
+                                                                                  programType, programName);
     if (specification == null) {
       throw new NotFoundException(programId);
     }
@@ -1714,14 +1684,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("program-type") String type,
                                  @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
-    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    long runCount;
-    if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-      runCount = lifecycleService.getProgramRunCount(new NamespaceId(namespaceId), appName, programType, programName);
-    } else {
-      runCount = lifecycleService.getProgramRunCount(programId);
-    }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runCount));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(lifecycleService.getProgramRunCount(
+      new NamespaceId(namespaceId), appName, programType, programName)));
   }
 
   /*
@@ -1908,12 +1872,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     ProgramId programId = new ProgramId(new ApplicationId(namespaceId, appName, appVersion), programType, programName);
-    ProgramStatus status;
-    if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
-      status = lifecycleService.getProgramStatus(new NamespaceId(namespaceId), appName, programType, programName);
-    } else {
-      status = lifecycleService.getProgramStatus(programId);
-    }
+    ProgramStatus status = lifecycleService.getProgramStatus(new NamespaceId(namespaceId), appName,
+                                                             programType, programName);
     if (status == ProgramStatus.STOPPED) {
       throw new ServiceUnavailableException(programId.toString(), "Service is stopped. Please start it.");
     }
