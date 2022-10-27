@@ -44,6 +44,12 @@ public final class Constants {
   public static final String DEFAULT_CACHING_STORAGE_LEVEL = "DISK_ONLY";
   // Can be used as a runtime argument for streaming pipeline to disable at least once processing.
   public static final String CDAP_STREAMING_ATLEASTONCE_ENABLED = "cdap.streaming.atleastonce.enabled";
+  // Can be used as a runtime argument for streaming pipeline to set max retry time in minutes
+  public static final String CDAP_STREAMING_MAX_RETRY_TIME_IN_MINS = "cdap.streaming.maxRetryTimeInMins";
+  // Can be used as a runtime argument for streaming pipeline to set base retry delay in seconds
+  public static final String CDAP_STREAMING_BASE_RETRY_DELAY_IN_SECONDS = "cdap.streaming.baseRetryDelayInSeconds";
+  // Can be used as a runtime argument for streaming pipeline to set max retry delay in seconds
+  public static final String CDAP_STREAMING_MAX_RETRY_DELAY_IN_SECONDS = "cdap.streaming.maxRetryDelayInSeconds";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");

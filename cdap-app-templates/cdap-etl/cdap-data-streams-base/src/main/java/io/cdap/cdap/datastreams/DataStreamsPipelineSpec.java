@@ -21,6 +21,7 @@ import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
 
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +41,8 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
   @Deprecated
   private final String checkpointDirectory;
   private final String pipelineId;
+  private final StreamingRetrySettings streamingRetrySettings;
+
   private final DataStreamsStateSpec stateSpec;
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
@@ -49,7 +52,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
                                   boolean stopGracefully, Map<String, String> properties,
                                   boolean checkpointsDisabled, boolean isUnitTest, String checkpointDirectory,
                                   String pipelineId, Set<String> connectionsUsed, Engine engine,
-                                  DataStreamsStateSpec stateSpec) {
+                                  DataStreamsStateSpec stateSpec, StreamingRetrySettings streamingRetrySettings) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, properties, connectionsUsed, engine);
     this.batchIntervalMillis = batchIntervalMillis;
@@ -60,6 +63,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     this.checkpointDirectory = checkpointDirectory;
     this.pipelineId = pipelineId;
     this.stateSpec = stateSpec;
+    this.streamingRetrySettings = streamingRetrySettings;
   }
 
   public long getBatchIntervalMillis() {
@@ -92,6 +96,10 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
   public DataStreamsStateSpec getStateSpec() {
     return stateSpec;
+  }
+
+  public StreamingRetrySettings getStreamingRetrySettings() {
+    return streamingRetrySettings;
   }
 
   @Override
@@ -157,6 +165,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     private boolean isUnitTest;
     private String checkpointDirectory;
     private String pipelineId;
+    private StreamingRetrySettings streamingRetrySettings;
     private DataStreamsStateSpec stateSpec;
 
     public Builder(long batchIntervalMillis) {
@@ -203,13 +212,18 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setStreamingRetrySettings(StreamingRetrySettings streamingRetrySettings) {
+      this.streamingRetrySettings = streamingRetrySettings;
+      return this;
+    }
+
     @Override
     public DataStreamsPipelineSpec build() {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                          stageLoggingEnabled, processTimingEnabled, batchIntervalMillis, extraJavaOpts,
                                          numOfRecordsPreview, stopGracefully, properties,
                                          checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId,
-                                         connectionsUsed, Engine.SPARK, stateSpec);
+                                         connectionsUsed, Engine.SPARK, stateSpec, streamingRetrySettings);
     }
   }
 }
