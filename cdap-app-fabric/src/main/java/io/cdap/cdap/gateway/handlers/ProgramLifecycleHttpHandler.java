@@ -641,7 +641,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName) throws Exception {
     String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
-    if (!appVersion.equals(latestVersion)) {
+    if (!appVersion.equals(latestVersion) && !ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
       throw new BadRequestException("Runtime arguments can only be changed on the latest program version");
     }
     ProgramType programType = getProgramType(type);
