@@ -473,10 +473,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-version") String appVersion,
                                      @QueryParam("start-time-seconds") long startTimeSeconds,
                                      @QueryParam("end-time-seconds") long endTimeSeconds) throws Exception {
-    String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
-    if (!appVersion.equals(latestVersion)) {
-      throw new BadRequestException("start action is only allowed on the latest program version");
-    }
     if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
       lifecycleService.restart(new NamespaceId(namespaceId), appId, startTimeSeconds, endTimeSeconds);
     } else {
