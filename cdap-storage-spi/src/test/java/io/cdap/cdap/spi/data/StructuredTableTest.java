@@ -1087,33 +1087,70 @@ public abstract class StructuredTableTest {
     // Scan by range and index
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
+      // Scan single index
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
-                                     Collections.singleton(Fields.intField(KEY, num)), Range.Bound.EXCLUSIVE),
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
                         num * 10,
-                        Fields.stringField(STRING_COL, "abc"))) {
+                        Collections.singletonList(Fields.stringField(STRING_COL, "abc")))) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(expected.subList(0, num), rows);
+      }
+
+      // Scan multiple indexes
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Arrays.asList(Fields.stringField(STRING_COL, "abc"),
+                                      Fields.stringField(STRING_COL, "def")))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(0, num * 2), rows);
+      }
+
+      // Scan multiple indexes with null values
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Arrays.asList(Fields.stringField(STRING_COL, "abc"),
+                                      Fields.longField(IDX_COL, null)))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(0, num * 2), rows);
       }
 
       // Partial primary keys range
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)),
                                      Range.Bound.INCLUSIVE,
-                                     Arrays.asList(Fields.intField(KEY, num),
-                                                   Fields.longField(KEY2, num * 100L)),
+                                     Arrays.asList(Fields.intField(KEY, num * 2),
+                                                   Fields.longField(KEY2, num * 200L)),
                                      Range.Bound.EXCLUSIVE),
                         num * 10,
-                        Fields.stringField(STRING_COL, "abc"))) {
+                        Collections.singletonList(Fields.stringField(STRING_COL, "abc")))) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(expected.subList(0, num), rows);
+      }
+
+      // Partial primary keys range with multiple indexes
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)),
+                                     Range.Bound.INCLUSIVE,
+                                     Arrays.asList(Fields.intField(KEY, num * 2),
+                                                   Fields.longField(KEY2, num * 200L)),
+                                     Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Arrays.asList(Fields.stringField(STRING_COL, "abc"),
+                                      Fields.stringField(STRING_COL, "def")))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(0, num * 2), rows);
       }
 
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
                         num * 10,
-                        Fields.stringField(STRING_COL, "def"))) {
+                        Collections.singletonList(Fields.stringField(STRING_COL, "def")))) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(expected.subList(num, 2 * num), rows);
       }
@@ -1123,7 +1160,7 @@ public abstract class StructuredTableTest {
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num)), Range.Bound.EXCLUSIVE),
                         num * 10,
-                        Fields.stringField(STRING_COL, "def"))) {
+                        Collections.singletonList(Fields.stringField(STRING_COL, "def")))) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(Collections.emptyList(), rows);
       }
@@ -1133,7 +1170,7 @@ public abstract class StructuredTableTest {
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
                         num * 10,
-                        Fields.stringField(STRING_COL, "non"))) {
+                        Collections.singletonList(Fields.stringField(STRING_COL, "non")))) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(Collections.emptyList(), rows);
       }
@@ -1143,7 +1180,7 @@ public abstract class StructuredTableTest {
         table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                 Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
                    num * 10,
-                   Fields.longField(LONG_COL, 1L));
+                   Collections.singletonList(Fields.longField(LONG_COL, 1L)));
         Assert.fail("Expected InvalidFieldException for scanning a non-index column");
       } catch (InvalidFieldException e) {
         // Expected
@@ -1271,7 +1308,9 @@ public abstract class StructuredTableTest {
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 3)), Range.Bound.EXCLUSIVE),
-                        num * 10, Fields.longField(IDX_COL, (long) 100), SortOrder.ASC)) {
+                        num * 10,
+                        Collections.singletonList(Fields.longField(IDX_COL, (long) 100)),
+                        SortOrder.ASC)) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         List<Collection<Field<?>>> expectedSubList = expected.subList(num, num * 3);
 
@@ -1281,7 +1320,9 @@ public abstract class StructuredTableTest {
       try (CloseableIterator<StructuredRow> iterator =
              table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
                                      Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
-                        num * 10, Fields.longField(IDX_COL, (long) 100), SortOrder.DESC)) {
+                        num * 10,
+                        Collections.singletonList(Fields.longField(IDX_COL, (long) 100)),
+                        SortOrder.DESC)) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         List<Collection<Field<?>>> expectedSubList = expected.subList(0, num * 2);
         Collections.reverse(expectedSubList);

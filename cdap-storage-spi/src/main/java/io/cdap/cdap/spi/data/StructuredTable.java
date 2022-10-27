@@ -158,13 +158,13 @@ public interface StructuredTable extends Closeable {
    *
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
-   * @param filterIndex the index to filter upon
+   * @param filterIndexes the indexes to filter upon, OR logic will be applied
    * @return a {@link CloseableIterator} of rows
    * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
    *                               or the type does not match the schema
    * @throws IOException if there is an error scanning the table
    */
-  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Collection<Field<?>> filterIndexes)
     throws InvalidFieldException, IOException {
     throw new UnsupportedOperationException("No supported implementation.");
   }
@@ -175,18 +175,19 @@ public interface StructuredTable extends Closeable {
    *
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
-   * @param filterIndex the index to filter upon
+   * @param filterIndexes the index to filter upon
    * @param sortOrder defined primary key sort order. Note that the comparator used is specific to the underlying
-   *                  store and is not nessesarily lexographic.
+   *                  store and is not necessarily lexicographic.
    * @return a {@link CloseableIterator} of rows
    * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
    *                               or the type does not match the schema
    * @throws IOException if there is an error scanning the table
    */
-  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex, SortOrder sortOrder)
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+                                                Collection<Field<?>> filterIndexes, SortOrder sortOrder)
     throws InvalidFieldException, IOException {
     if (sortOrder == SortOrder.ASC) {
-      return scan(keyRange, limit, filterIndex);
+      return scan(keyRange, limit, filterIndexes);
     }
     throw new UnsupportedOperationException("No supported implementation.");
   }
