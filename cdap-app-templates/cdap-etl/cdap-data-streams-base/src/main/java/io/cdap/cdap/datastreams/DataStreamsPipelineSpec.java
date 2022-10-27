@@ -40,6 +40,10 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
   @Deprecated
   private final String checkpointDirectory;
   private final String pipelineId;
+  private final long maxRetryTimeInMins;
+  private final long baseRetryDelayInSeconds;
+  private final long maxRetryDelayInSeconds;
+
   private final DataStreamsStateSpec stateSpec;
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
@@ -49,7 +53,8 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
                                   boolean stopGracefully, Map<String, String> properties,
                                   boolean checkpointsDisabled, boolean isUnitTest, String checkpointDirectory,
                                   String pipelineId, Set<String> connectionsUsed, Engine engine,
-                                  DataStreamsStateSpec stateSpec) {
+                                  DataStreamsStateSpec stateSpec, long maxRetryTimeInMins,
+                                  long baseRetryDelayInSeconds, long maxRetryDelayInSeconds) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, properties, connectionsUsed, engine);
     this.batchIntervalMillis = batchIntervalMillis;
@@ -60,6 +65,9 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     this.checkpointDirectory = checkpointDirectory;
     this.pipelineId = pipelineId;
     this.stateSpec = stateSpec;
+    this.maxRetryTimeInMins = maxRetryTimeInMins;
+    this.baseRetryDelayInSeconds = baseRetryDelayInSeconds;
+    this.maxRetryDelayInSeconds = maxRetryDelayInSeconds;
   }
 
   public long getBatchIntervalMillis() {
@@ -92,6 +100,18 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
   public DataStreamsStateSpec getStateSpec() {
     return stateSpec;
+  }
+
+  public long getMaxRetryTimeInMins() {
+    return maxRetryTimeInMins;
+  }
+
+  public long getBaseRetryDelayInSeconds() {
+    return baseRetryDelayInSeconds;
+  }
+
+  public long getMaxRetryDelayInSeconds() {
+    return maxRetryDelayInSeconds;
   }
 
   @Override
@@ -157,6 +177,9 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     private boolean isUnitTest;
     private String checkpointDirectory;
     private String pipelineId;
+    private long maxRetryTimeInMins;
+    private long baseRetryDelayInSeconds;
+    private long maxRetryDelayInSeconds;
     private DataStreamsStateSpec stateSpec;
 
     public Builder(long batchIntervalMillis) {
@@ -203,13 +226,29 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return this;
     }
 
+    public Builder setMaxRetryTimeInMins(long maxRetryTimeInMins) {
+      this.maxRetryTimeInMins = maxRetryTimeInMins;
+      return this;
+    }
+
+    public Builder setBaseRetryDelayInSeconds(long baseRetryDelayInSeconds) {
+      this.baseRetryDelayInSeconds = baseRetryDelayInSeconds;
+      return this;
+    }
+
+    public Builder setMaxRetryDelayInSeconds(long maxRetryDelayInSeconds) {
+      this.maxRetryDelayInSeconds = maxRetryDelayInSeconds;
+      return this;
+    }
+
     @Override
     public DataStreamsPipelineSpec build() {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                          stageLoggingEnabled, processTimingEnabled, batchIntervalMillis, extraJavaOpts,
                                          numOfRecordsPreview, stopGracefully, properties,
                                          checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId,
-                                         connectionsUsed, Engine.SPARK, stateSpec);
+                                         connectionsUsed, Engine.SPARK, stateSpec, maxRetryTimeInMins,
+                                         baseRetryDelayInSeconds, maxRetryDelayInSeconds);
     }
   }
 }

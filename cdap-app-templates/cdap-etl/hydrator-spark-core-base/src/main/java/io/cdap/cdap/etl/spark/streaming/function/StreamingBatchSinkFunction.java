@@ -118,7 +118,10 @@ public class StreamingBatchSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
         }
       });
     } catch (Exception e) {
-      LOG.error("Error writing to sink {} for the batch for time {}.", stageName, logicalStartTime, e);
+      // Throw if there is an exception so the driver can retry
+      // Without this the failures are logged and ignored and processing continues for the next batch
+      // This can result in data loss
+      throw e;
     } finally {
       if (isPrepared && !isDone) {
         sec.execute(new TxRunnable() {

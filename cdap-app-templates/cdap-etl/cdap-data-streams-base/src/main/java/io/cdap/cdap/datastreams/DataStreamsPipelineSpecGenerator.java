@@ -54,6 +54,12 @@ public class DataStreamsPipelineSpecGenerator
   private static final Gson GSON = new GsonBuilder()
                                      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
                                      .create();
+  //Default high value for max retry - 6 hours
+  private static final String defaultMaxRetryTimeInMins = "360";
+  //Default retry delay - 1 second
+  private static final String defaultBaseRetryDelayInSeconds = "1";
+  //Default max retry delay - 60 second
+  private static final String defaultMaxRetryDelayInSeconds = "60";
   private final RuntimeConfigurer runtimeConfigurer;
   //Set of sources in this pipeline that supports @link{StreamingStateHandler}
   private Set<String> stateHandlingSources;
@@ -96,7 +102,26 @@ public class DataStreamsPipelineSpecGenerator
     configureStages(config, specBuilder);
     //Configure the at least once processing mode for this pipeline
     configureAtleastOnceMode(config, specBuilder);
+    //Configure retries
+    configureRetries(specBuilder);
     return specBuilder.build();
+  }
+
+  @VisibleForTesting
+  void configureRetries(DataStreamsPipelineSpec.Builder specBuilder) {
+    long maxRetryTimeInMins = Long.parseLong(
+      runtimeConfigurer.getRuntimeArguments().getOrDefault(Constants.CDAP_STREAMING_MAX_RETRY_TIME_IN_MINS,
+                                                           defaultMaxRetryTimeInMins));
+    long baseRetryDelayInSeconds = Long.parseLong(
+      runtimeConfigurer.getRuntimeArguments().getOrDefault(Constants.CDAP_STREAMING_BASE_RETRY_DELAY_IN_SECONDS,
+                                                           defaultBaseRetryDelayInSeconds));
+    long maxRetryDelayInSeconds = Long.parseLong(
+      runtimeConfigurer.getRuntimeArguments().getOrDefault(Constants.CDAP_STREAMING_MAX_RETRY_DELAY_IN_SECONDS,
+                                                           defaultMaxRetryDelayInSeconds));
+    specBuilder
+      .setMaxRetryTimeInMins(maxRetryTimeInMins)
+      .setBaseRetryDelayInSeconds(baseRetryDelayInSeconds)
+      .setMaxRetryDelayInSeconds(maxRetryDelayInSeconds);
   }
 
   @VisibleForTesting

@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.api.retry.RetryFailedException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.JoinElement;
@@ -79,6 +81,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Driver for running pipelines using Spark Streaming.
@@ -91,6 +94,9 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   private final JavaStreamingContext javaStreamingContext;
   private final DataStreamsPipelineSpec spec;
   private final boolean stateStoreEnabled;
+  private final long maxRetryTimeInMins;
+  private final long baseRetryDelayInSeconds;
+  private final long maxRetryDelayInSeconds;
 
   public SparkStreamingPipelineRunner(JavaSparkExecutionContext sec, JavaStreamingContext javaStreamingContext,
                                       DataStreamsPipelineSpec spec) {
@@ -99,6 +105,9 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     this.spec = spec;
     this.stateStoreEnabled = spec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.STATE_STORE
       && !spec.isPreviewEnabled(sec);
+    this.maxRetryTimeInMins = spec.getMaxRetryTimeInMins();
+    this.baseRetryDelayInSeconds = spec.getBaseRetryDelayInSeconds();
+    this.maxRetryDelayInSeconds = spec.getMaxRetryDelayInSeconds();
     LOG.debug("State handling mode is : {}", spec.getStateSpec().getMode());
   }
 
@@ -282,16 +291,17 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   protected Runnable getSparkSinkRunnable(StageSpec stageSpec, SparkCollection<Object> stageData,
                                           SparkSink<Object> sparkSink, long time) throws Exception {
     if (!stateStoreEnabled) {
-      return super.getSparkSinkRunnable(stageSpec, stageData, sparkSink, time);
+      return getRunnableWithRetries(super.getSparkSinkRunnable(stageSpec, stageData, sparkSink, time));
     }
 
-    return () -> {
+    Runnable runnable = () -> {
       try {
         new StreamingSparkSinkFunction<>(sec, stageSpec).call(stageData.getUnderlying(), Time.apply(time));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     };
+    return getRunnableWithRetries(runnable);
   }
 
   @Override
@@ -299,10 +309,11 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
                                           SparkCollection<Object> stageData,
                                           PluginFunctionContext pluginFunctionContext, long time) {
     if (!stateStoreEnabled) {
-      return super.getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData, pluginFunctionContext, time);
+      return getRunnableWithRetries(super.getBatchSinkRunnable(functionCacheFactory, stageSpec,
+                                                               stageData, pluginFunctionContext, time));
     }
 
-    return () -> {
+    Runnable runnable = () -> {
       try {
         new StreamingBatchSinkFunction<>(sec, stageSpec, functionCacheFactory.newCache()).call(
           stageData.getUnderlying(), Time.apply(time));
@@ -310,6 +321,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
         throw new RuntimeException(e);
       }
     };
+    return getRunnableWithRetries(runnable);
   }
 
   @Override
@@ -318,10 +330,11 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
                                           SparkCollection<RecordInfo<Object>> fullInput, Set<String> groupSinks,
                                           long time) {
     if (!stateStoreEnabled) {
-      return super.getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time);
+      return getRunnableWithRetries(super.getGroupSinkRunnable(phaseSpec, groupStages, collectors,
+                                                               fullInput, groupSinks, time));
     }
 
-    return () -> {
+    Runnable runnable = () -> {
       try {
         new StreamingMultiSinkFunction(sec, phaseSpec, groupStages, groupSinks, collectors).call(
           fullInput.getUnderlying(), Time.apply(time));
@@ -329,5 +342,52 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
         throw new RuntimeException(e);
       }
     };
+    return getRunnableWithRetries(runnable);
+  }
+
+  /**
+   * Introduce retries with exponential backoff and time limit
+   *
+   * @param runnable
+   * @return
+   */
+  @VisibleForTesting
+  Runnable getRunnableWithRetries(Runnable runnable) {
+    final long maxRetryTimeInMillis = TimeUnit.MILLISECONDS.convert(maxRetryTimeInMins, TimeUnit.MINUTES);
+    final long baseDelayInMillis = TimeUnit.SECONDS.convert(baseRetryDelayInSeconds, TimeUnit.MINUTES);
+    final long maxDelayInMillis = TimeUnit.SECONDS.convert(maxRetryDelayInSeconds, TimeUnit.MINUTES);
+    return () -> {
+      int attempt = 1;
+      long startTimeInMillis = System.currentTimeMillis();
+      while (true) {
+        try {
+          runnable.run();
+          return;
+        } catch (Exception e) {
+          long delay = getDelay(maxDelayInMillis, baseDelayInMillis, attempt);
+          if (System.currentTimeMillis() - startTimeInMillis > maxRetryTimeInMillis) {
+            LOG.info("Exceeded maximum retry time limit.");
+            throw e;
+          }
+          LOG.warn("Exception thrown while executing sink runnable on attempt {}. Retrying in {} ms.",
+                   attempt++, delay, e);
+          try {
+            TimeUnit.MILLISECONDS.sleep(delay);
+          } catch (InterruptedException ie) {
+            e.addSuppressed(ie);
+            Thread.currentThread().interrupt();
+            e.addSuppressed(new RetryFailedException("Retry failed. Thread got interrupted.", attempt));
+            throw e;
+          }
+        }
+      }
+    };
+  }
+
+  private long getDelay(long maxDelayInMillis, long baseDelayInMillis, int attempt) {
+    long power = attempt > Long.SIZE ? Long.MAX_VALUE : (1L << attempt - 1);
+    long delay = Math.min(baseDelayInMillis * power, maxDelayInMillis);
+    delay = delay < 0 ? maxDelayInMillis : delay;
+    return delay;
   }
 }

@@ -128,18 +128,21 @@ public class StreamingMultiSinkFunction implements VoidFunction2<JavaRDD<RecordI
         }
       });
     } catch (Exception e) {
-      LOG.error("Error writing to sinks {} for the batch for time {}.", sinkNames, logicalStartTime, e);
       ranSuccessfully = false;
-    }
-
-    // run onRunFinish() for each sink
-    for (String stageName : traversalOrder) {
-      SubmitterLifecycle<?> plugin = stages.get(stageName);
-      StageSpec stageSpec = phaseSpec.getPhase().getStage(stageName);
-      try {
-        onRunFinish(pipelineRuntime, sinkFactory, stageSpec, plugin, ranSuccessfully);
-      } catch (Exception e) {
-        LOG.warn("Unable to execute onRunFinish for sink {}", stageName, e);
+      // Throw if there is an exception so the driver can retry
+      // Without this the failures are logged and ignored and processing continues for the next batch
+      // This can result in data loss
+      throw e;
+    } finally {
+      // run onRunFinish() for each sink
+      for (String stageName : traversalOrder) {
+        SubmitterLifecycle<?> plugin = stages.get(stageName);
+        StageSpec stageSpec = phaseSpec.getPhase().getStage(stageName);
+        try {
+          onRunFinish(pipelineRuntime, sinkFactory, stageSpec, plugin, ranSuccessfully);
+        } catch (Exception e) {
+          LOG.warn("Unable to execute onRunFinish for sink {}", stageName, e);
+        }
       }
     }
   }

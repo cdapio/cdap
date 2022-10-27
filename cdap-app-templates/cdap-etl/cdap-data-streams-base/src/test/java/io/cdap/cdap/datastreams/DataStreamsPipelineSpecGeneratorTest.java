@@ -26,6 +26,7 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.mock.spark.streaming.MockSink;
 import io.cdap.cdap.etl.mock.spark.streaming.MockSource;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
@@ -87,11 +88,26 @@ public class DataStreamsPipelineSpecGeneratorTest {
         return true;
       }
     };
+    RuntimeConfigurer runtimeConfigurer = getTestRuntimeConfigurer(
+      Collections.singletonMap("cdap.streaming.atleastonce.enabled", "false"));
+    DataStreamsPipelineSpecGenerator specGenerator = new DataStreamsPipelineSpecGenerator("test", null,
+                                                                                          runtimeConfigurer,
+                                                                                          SOURCE_PLUGIN_TYPES,
+                                                                                          SINK_PLUGIN_TYPES,
+                                                                                          featureFlagsProvider);
+    specGenerator.configureSourcePlugin("source", new MockStateHandlerSource(new MockSource.Conf()), null, null);
+    specGenerator.configureAtleastOnceMode(etlConfig, builder);
+
+    DataStreamsPipelineSpec pipelineSpec = builder.build();
+    Assert.assertTrue(pipelineSpec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.NONE);
+  }
+
+  private RuntimeConfigurer getTestRuntimeConfigurer(Map<String, String> runTimeArgumentsMap) {
     RuntimeConfigurer runtimeConfigurer = new RuntimeConfigurer() {
 
       @Override
       public Map<String, String> getRuntimeArguments() {
-        return Collections.singletonMap("cdap.streaming.atleastonce.enabled", "false");
+        return runTimeArgumentsMap;
       }
 
       @Nullable
@@ -112,16 +128,7 @@ public class DataStreamsPipelineSpecGeneratorTest {
         return null;
       }
     };
-    DataStreamsPipelineSpecGenerator specGenerator = new DataStreamsPipelineSpecGenerator("test", null,
-                                                                                          runtimeConfigurer,
-                                                                                          SOURCE_PLUGIN_TYPES,
-                                                                                          SINK_PLUGIN_TYPES,
-                                                                                          featureFlagsProvider);
-    specGenerator.configureSourcePlugin("source", new MockStateHandlerSource(new MockSource.Conf()), null, null);
-    specGenerator.configureAtleastOnceMode(etlConfig, builder);
-
-    DataStreamsPipelineSpec pipelineSpec = builder.build();
-    Assert.assertTrue(pipelineSpec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.NONE);
+    return runtimeConfigurer;
   }
 
   @Test
@@ -199,5 +206,51 @@ public class DataStreamsPipelineSpecGeneratorTest {
     return DataStreamsConfig.builder().addStage(new ETLStage("source", plugin))
       .addStage(new ETLStage("sink", MockSink.getPlugin("${tablename}"))).addConnection("source", "sink")
       .setCheckpointDir(null).setBatchInterval("1s").build();
+  }
+
+  @Test
+  public void testConfigureRetriesDefault() throws IOException {
+    DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+      .addStage(new ETLStage("source", MockStateHandlerSource.getPlugin(schema, new ArrayList<>())))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("${tablename}")))
+      .addConnection("source", "sink")
+      .setBatchInterval("1s").build();
+    DataStreamsPipelineSpec.Builder builder = DataStreamsPipelineSpec.builder(System.currentTimeMillis(), "test-id");
+    RuntimeConfigurer mockRuntimeConfigurer = getTestRuntimeConfigurer(Collections.emptyMap());
+    DataStreamsPipelineSpecGenerator specGenerator = new DataStreamsPipelineSpecGenerator("test", null,
+                                                                                          mockRuntimeConfigurer,
+                                                                                          SOURCE_PLUGIN_TYPES,
+                                                                                          SINK_PLUGIN_TYPES,
+                                                                                          null);
+    specGenerator.configureRetries(builder);
+    DataStreamsPipelineSpec pipelineSpec = builder.build();
+    Assert.assertEquals(360L, pipelineSpec.getMaxRetryTimeInMins());
+    Assert.assertEquals(1L, pipelineSpec.getBaseRetryDelayInSeconds());
+    Assert.assertEquals(60L, pipelineSpec.getMaxRetryDelayInSeconds());
+  }
+
+  @Test
+  public void testConfigureRetries() throws IOException {
+    DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+      .addStage(new ETLStage("source", MockStateHandlerSource.getPlugin(schema, new ArrayList<>())))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("${tablename}")))
+      .addConnection("source", "sink")
+      .setBatchInterval("1s").build();
+    DataStreamsPipelineSpec.Builder builder = DataStreamsPipelineSpec.builder(System.currentTimeMillis(), "test-id");
+    Map<String, String> runtimeArgs = new HashMap<>();
+    runtimeArgs.put(Constants.CDAP_STREAMING_MAX_RETRY_TIME_IN_MINS, "60");
+    runtimeArgs.put(Constants.CDAP_STREAMING_BASE_RETRY_DELAY_IN_SECONDS, "10");
+    runtimeArgs.put(Constants.CDAP_STREAMING_MAX_RETRY_DELAY_IN_SECONDS, "100");
+    RuntimeConfigurer mockRuntimeConfigurer = getTestRuntimeConfigurer(runtimeArgs);
+    DataStreamsPipelineSpecGenerator specGenerator = new DataStreamsPipelineSpecGenerator("test", null,
+                                                                                          mockRuntimeConfigurer,
+                                                                                          SOURCE_PLUGIN_TYPES,
+                                                                                          SINK_PLUGIN_TYPES,
+                                                                                          null);
+    specGenerator.configureRetries(builder);
+    DataStreamsPipelineSpec pipelineSpec = builder.build();
+    Assert.assertEquals(60L, pipelineSpec.getMaxRetryTimeInMins());
+    Assert.assertEquals(10L, pipelineSpec.getBaseRetryDelayInSeconds());
+    Assert.assertEquals(100L, pipelineSpec.getMaxRetryDelayInSeconds());
   }
 }
