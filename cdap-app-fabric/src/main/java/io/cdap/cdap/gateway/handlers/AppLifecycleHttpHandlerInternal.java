@@ -30,6 +30,7 @@ import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.SortOrder;
@@ -161,7 +162,8 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
       throw new NamespaceNotFoundException(namespaceId);
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(namespaceId, application)));
+                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(
+                         new ApplicationReference(namespaceId, application))));
   }
 
   /**
@@ -184,6 +186,9 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
       throw new NamespaceNotFoundException(namespaceId);
     }
     ApplicationId appId = new ApplicationId(namespace, application, version);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(appId)));
+    ApplicationDetail appDetail = ApplicationId.DEFAULT_VERSION.equals(version)
+      ? applicationLifecycleService.getLatestAppDetail(appId.getAppReference())
+      : applicationLifecycleService.getAppDetail(appId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appDetail));
   }
 }

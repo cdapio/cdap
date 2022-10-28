@@ -29,6 +29,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -49,10 +50,10 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
 
   @Override
   public void execute(Arguments arguments) throws Exception {
-    ApplicationId appId = arguments.getId();
+    ApplicationReference appRef = arguments.getId();
     ArtifactSummary artifactSummary = arguments.getArtifact();
 
-    if (appExists(appId) && !arguments.overwrite) {
+    if (appExists(appRef) && !arguments.overwrite) {
       return;
     }
 
@@ -63,7 +64,7 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
     String configString = arguments.getConfig() == null ? null : GSON.toJson(arguments.getConfig());
 
     try {
-      appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
+      appLifecycleService.deployApp(appRef.getParent(), appRef.getApplication(), ApplicationId.DEFAULT_VERSION,
                                     artifactSummary, configString, arguments.getChange(), x -> { },
                                     ownerPrincipalId, arguments.canUpdateSchedules(), false,
                                     Collections.emptyMap());
@@ -82,9 +83,9 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
     }
   }
 
-  private boolean appExists(ApplicationId applicationId) throws Exception {
+  private boolean appExists(ApplicationReference appRef) throws Exception {
     try {
-      appLifecycleService.getAppDetail(applicationId);
+      appLifecycleService.getLatestAppDetail(appRef);
       return true;
     } catch (ApplicationNotFoundException e) {
       return false;
@@ -107,8 +108,8 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
       this.overwrite = overwrite;
     }
 
-    private ApplicationId getId() {
-      return new NamespaceId(namespace).app(name);
+    private ApplicationReference getId() {
+      return new NamespaceId(namespace).appReference(name);
     }
 
     @Override

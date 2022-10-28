@@ -30,15 +30,13 @@ public class SystemApplication {
 
   private final String namespace;
   private final String name;
-  private final String version;
   private final ArtifactSummary artifact;
   private final JsonObject config;
 
-  public SystemApplication(String namespace, String applicationName, @Nullable String version,
+  public SystemApplication(String namespace, String applicationName,
                            ArtifactSummary artifact, @Nullable JsonObject config) {
     this.namespace = namespace;
     this.name = applicationName;
-    this.version = version;
     this.artifact = artifact;
     this.config = config;
   }
@@ -55,14 +53,6 @@ public class SystemApplication {
    */
   public String getName() {
     return name;
-  }
-
-  /**
-   * @return version {@link String}, could be null
-   */
-  @Nullable
-  public String getVersion() {
-    return version;
   }
 
   /**
@@ -91,13 +81,12 @@ public class SystemApplication {
     SystemApplication otherApplication = (SystemApplication) other;
     return Objects.equals(namespace, otherApplication.namespace) &&
       Objects.equals(name, otherApplication.name) &&
-      Objects.equals(version, otherApplication.version) &&
       Objects.equals(artifact, otherApplication.artifact) &&
       Objects.equals(config, otherApplication.config);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespace, name, version, artifact, config);
+    return Objects.hash(namespace, name, artifact, config);
   }
 }

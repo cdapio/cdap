@@ -307,7 +307,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
    * @return latest app version
    */
   private String getLatestAppVersion(NamespaceId namespaceId, String appId) throws ApplicationNotFoundException {
-    ApplicationMeta latestApplicationMeta = store.getLatest(namespaceId, appId);
+    ApplicationMeta latestApplicationMeta = store.getLatest(namespaceId.appReference(appId));
     if (latestApplicationMeta == null) {
       throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
     }

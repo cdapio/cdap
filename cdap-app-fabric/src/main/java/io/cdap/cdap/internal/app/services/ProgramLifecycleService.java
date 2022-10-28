@@ -108,7 +108,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
@@ -279,7 +279,7 @@ public class ProgramLifecycleService {
       .collect(Collectors.toMap(RunCountResult::getProgramReference, c -> c));
 
     List<RunCountResult> result = new ArrayList<>();
-    for (ProgramReference programReference : programCounts.keySet()) {
+    for (ProgramReference programReference : programRefs) {
       if (!visibleEntities.contains(programReference)) {
         result.add(new RunCountResult(programReference, null, new UnauthorizedException(principal, programReference)));
       } else {
@@ -626,8 +626,7 @@ public class ProgramLifecycleService {
    * @throws Exception
    */
   public void stopAll(ApplicationReference applicationReference) throws Exception {
-    Map<ProgramRunId, RunRecordDetail> runMap = store.getAllActiveRuns(applicationReference.getNamespaceId(),
-                                                                       applicationReference.getApplication());
+    Map<ProgramRunId, RunRecordDetail> runMap = store.getAllActiveRuns(applicationReference);
     for (ProgramRunId programRunId : runMap.keySet()) {
       stop(programRunId.getParent(), programRunId.getRun(), 0);
     }
@@ -876,6 +875,65 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Stops the specified run of the specified program.
+   *
+   * @param programRef the {@link ProgramReference program} to stop
+   * @param runId the runId of the program run to stop. It should not be null.
+   * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
+   * @throws NotFoundException if the app, program or run was not found
+   * @throws BadRequestException if an attempt is made to stop a program that is either not running or
+   *                             was started by a workflow
+   * @throws InterruptedException if there was a problem while waiting for the stop call to complete
+   * @throws ExecutionException if there was a problem while waiting for the stop call to complete
+   */
+  public void stop(ProgramReference programRef, String runId, @Nullable Integer gracefulShutdownSecs)
+    throws Exception {
+    if (runId == null) {
+      throw new BadRequestException(
+        String.format("RunId should not be null when stopping a particular run: '%s'.", programRef));
+    }
+    issueStop(programRef, runId, gracefulShutdownSecs);
+  }
+
+  /**
+   * Issues a command to stop the specified {@link RunId} of the specified {@link ProgramReference} and returns a
+   * {@link ListenableFuture} with the {@link ProgramRunId} for the runs that were stopped.
+   * Clients can wait for completion of the {@link ListenableFuture}.
+   *
+   * @param programRef the {@link ProgramReference program} to issue a stop for
+   * @param runId the runId of the program run to stop. If null, all runs of the program are stopped.
+   * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
+   * @return a list of {@link ListenableFuture} with the {@link ProgramRunId} that clients can wait on for stop
+   *         to complete.
+   * @throws NotFoundException if the app, program or run was not found
+   * @throws BadRequestException if an attempt is made to stop a program that is either not running or
+   *                             was started by a workflow
+   * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
+   *                               program, a user requires {@link ApplicationPermission#EXECUTE} permission on
+   *                               the program.
+   */
+  public Collection<ProgramRunId> issueStop(ProgramReference programRef, @Nullable String runId,
+                                            @Nullable Integer gracefulShutdownSecs) throws Exception {
+    ProgramId defaultVersionedProgram = programRef.id(ApplicationId.DEFAULT_VERSION);
+    accessEnforcer.enforce(defaultVersionedProgram, authenticationContext.getPrincipal(),
+                           ApplicationPermission.EXECUTE);
+
+    if (gracefulShutdownSecs == null) {
+      gracefulShutdownSecs = this.defaultStopTimeoutSecs;
+    }
+    // TODO: getActiveRuns is ignoring versions, use ProgramRunReference in CDAP-20031
+    Map<ProgramRunId, RunRecordDetail> activeRunRecords = getActiveRuns(defaultVersionedProgram, runId);
+
+    if (activeRunRecords.isEmpty()) {
+      // Error out if no run information from run record
+      ensureLatestProgramExists(programRef);
+      throw new BadRequestException(String.format("Program '%s' is not running.", programRef));
+    }
+
+    return issueStopInternal(activeRunRecords, gracefulShutdownSecs);
+  }
+
+  /**
    * Issues a command to stop the specified {@link RunId} of the specified {@link ProgramId} and returns a
    * {@link ListenableFuture} with the {@link ProgramRunId} for the runs that were stopped.
    * Clients can wait for completion of the {@link ListenableFuture}.
@@ -907,6 +965,11 @@ public class ProgramLifecycleService {
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
 
+    return issueStopInternal(activeRunRecords, gracefulShutdownSecs);
+  }
+
+  private Collection<ProgramRunId> issueStopInternal(Map<ProgramRunId, RunRecordDetail> activeRunRecords,
+                                                     Integer gracefulShutdownSecs) throws BadRequestException {
     for (Map.Entry<ProgramRunId, RunRecordDetail> activeRunRecord : activeRunRecords.entrySet()) {
       ProgramRunId activeRunId = activeRunRecord.getKey();
       RunRecordDetail runRecord = activeRunRecord.getValue();
@@ -1015,22 +1078,29 @@ public class ProgramLifecycleService {
   public void ensureProgramExists(ProgramId programId) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
 
-    ProgramId pid = programId;
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
       throw new ProgramNotFoundException(programId);
     }
 
-    // The -SNAPSHOT version can be a reference to the actual latest version, hence the appSpec is the one
-    // containing the true version.
-    if (ApplicationId.DEFAULT_VERSION.equals(pid.getVersion())
-        && !Objects.equals(pid.getVersion(), appSpec.getAppVersion())) {
-      pid = pid.getNamespaceId()
-        .app(appSpec.getName(), appSpec.getAppVersion())
-        .program(programId.getType(), programId.getProgram());
+    Store.ensureProgramExists(programId, appSpec);
+  }
+
+  /**
+   * Ensures the caller is authorized to check if the latest version of given program exists.
+   */
+  public void ensureLatestProgramExists(ProgramReference programRef) throws Exception {
+    accessEnforcer.enforce(programRef.id(ApplicationId.DEFAULT_VERSION),
+                           authenticationContext.getPrincipal(), StandardPermission.GET);
+
+    ApplicationSpecification appSpec = Optional.ofNullable(store.getLatest(programRef.getParent()))
+      .map(ApplicationMeta::getSpec)
+      .orElse(null);
+    if (appSpec == null) {
+      throw new ProgramNotFoundException(programRef);
     }
 
-    Store.ensureProgramExists(pid, appSpec);
+    Store.ensureProgramExists(programRef.id(appSpec.getAppVersion()), appSpec);
   }
 
   private boolean isStopped(ProgramId programId) throws Exception {
@@ -1075,7 +1145,7 @@ public class ProgramLifecycleService {
    */
   private boolean isStoppedInSameProgram(ProgramId programId) throws Exception {
     // check that app exists
-    Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(programId.getParent());
+    Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(programId.getParent().getAppReference());
     if (appIds == null || appIds.isEmpty()) {
       throw new NotFoundException(Id.Application.from(programId.getNamespace(), programId.getApplication()));
     }
@@ -1310,7 +1380,7 @@ public class ProgramLifecycleService {
    */
   @Nullable
   private ProgramSpecification getLatestProgramSpecificationWithoutAuthz(ProgramReference programReference) {
-    ApplicationMeta appMeta = store.getLatest(programReference.getNamespaceId(), programReference.getApplication());
+    ApplicationMeta appMeta = store.getLatest(programReference.getParent());
     if (appMeta == null) {
       return null;
     }
@@ -1376,8 +1446,7 @@ public class ProgramLifecycleService {
 
   private ApplicationId getLatestApplicationId(ApplicationReference appReference)
     throws ApplicationNotFoundException {
-    ApplicationMeta applicationMeta = store.getLatest(appReference.getNamespaceId(),
-                                                      appReference.getApplication());
+    ApplicationMeta applicationMeta = store.getLatest(appReference);
     if (applicationMeta == null) {
       throw new ApplicationNotFoundException(appReference);
     }

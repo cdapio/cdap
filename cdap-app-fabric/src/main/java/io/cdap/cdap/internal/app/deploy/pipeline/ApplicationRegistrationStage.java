@@ -54,7 +54,8 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
     ApplicationSpecification applicationSpecification = input.getSpecification();
-    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
+    Collection<ApplicationId> allAppVersionsAppIds =
+      store.getAllAppVersionsAppIds(input.getApplicationId().getAppReference());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(), input.getSpecification(),
                                                   input.getChangeDetail());

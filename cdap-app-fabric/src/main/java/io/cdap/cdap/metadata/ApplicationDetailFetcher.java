@@ -19,7 +19,7 @@ package io.cdap.cdap.metadata;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
@@ -31,13 +31,13 @@ import java.util.function.Consumer;
 public interface ApplicationDetailFetcher {
 
   /**
-   * Get the application detail for the given application id
-   * @param appId the id of the application
+   * Get the application detail for the given application reference
+   * @param appRef the versionless ID of the application
    * @return the detail of the given application
    * @throws IOException if failed to get {@code ApplicationDetail}
    * @throws NotFoundException if the application or namespace identified by the supplied id doesn't exist
    */
-  ApplicationDetail get(ApplicationId appId) throws IOException, NotFoundException, UnauthorizedException;
+  ApplicationDetail get(ApplicationReference appRef) throws IOException, NotFoundException, UnauthorizedException;
 
   /**
    * Scans all application details in the given namespace

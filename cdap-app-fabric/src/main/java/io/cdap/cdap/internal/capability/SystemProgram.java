@@ -30,16 +30,14 @@ public class SystemProgram {
   private final String application;
   private final String type;
   private final String name;
-  private final String version;
   private final Map<String, String> args;
 
-  public SystemProgram(String namespace, String application, String type, String name, @Nullable String version,
+  public SystemProgram(String namespace, String application, String type, String name,
                        @Nullable Map<String, String> args) {
     this.namespace = namespace;
     this.application = application;
     this.type = type;
     this.name = name;
-    this.version = version;
     this.args = args == null ? Collections.emptyMap() : args;
   }
 
@@ -71,13 +69,6 @@ public class SystemProgram {
     return name;
   }
 
-  /**
-   * @return version {@link String}, could be nullable
-   */
-  @Nullable
-  public String getVersion() {
-    return version;
-  }
 
   /**
    * @return {@link Map<String, String>} of runtime arguments
@@ -102,12 +93,11 @@ public class SystemProgram {
       Objects.equals(application, program.application) &&
       Objects.equals(type, program.type) &&
       Objects.equals(name, program.name) &&
-      Objects.equals(version, program.version) &&
       Objects.equals(args, program.args);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespace, application, type, name, version, args);
+    return Objects.hash(namespace, application, type, name, args);
   }
 }

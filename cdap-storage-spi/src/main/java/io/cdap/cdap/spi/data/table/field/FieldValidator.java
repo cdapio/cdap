@@ -64,7 +64,7 @@ public final class FieldValidator {
    * its field is not present in the given schema,
    * its field type is different from the given schema,
    * if its field is a primary key but the given value is null,
-   * or it is not Rang.all() and does not start with a primary key.
+   * or it is not Rang.all() and does not start with the first primary key.
    *
    * @param range the range to validate
    * @throws InvalidFieldException if the field does not pass the validation
@@ -87,7 +87,7 @@ public final class FieldValidator {
     if (!firstField.getName().equals(tableSchema.getPrimaryKeys().get(0))) {
       throw new InvalidFieldException(
         tableSchema.getTableId(), fields,
-        String.format("Given Range fields %s do not start with a primary key", fields));
+        String.format("Given Range fields %s do not start with the first primary key", fields));
     }
   }
 
