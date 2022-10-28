@@ -52,7 +52,9 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -94,6 +96,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -354,7 +358,7 @@ public abstract class DefaultStoreTest {
                                                                          startTimeSecs - 20, startTimeSecs - 10,
                                                                          Integer.MAX_VALUE);
     Assert.assertEquals(failureHistorymap, store.getRuns(programId, ProgramRunStatus.FAILED,
-                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE));
+                                                         0, Long.MAX_VALUE, Integer.MAX_VALUE));
 
     Map<ProgramRunId, RunRecordDetail> suspendedHistorymap = store.getRuns(programId, ProgramRunStatus.SUSPENDED,
                                                                            startTimeSecs - 20, startTimeSecs,
@@ -497,13 +501,13 @@ public abstract class DefaultStoreTest {
   public void testUpdateChangedApplication() throws ConflictException {
     ApplicationId id = new ApplicationId("account1", "application1");
     ApplicationMeta appMeta = new ApplicationMeta("application1", Specifications.from(new FooApp()),
-                                               new ChangeDetail(null, null, null,
-                                                                System.currentTimeMillis()));
+                                                  new ChangeDetail(null, null, null,
+                                                                   System.currentTimeMillis()));
     store.addApplication(id, appMeta);
     // update
     ApplicationMeta appMetaUpdate = new ApplicationMeta("application1", Specifications.from(new ChangedFooApp()),
-                                                     new ChangeDetail(null, null, null,
-                                                                      System.currentTimeMillis()));
+                                                        new ChangeDetail(null, null, null,
+                                                                         System.currentTimeMillis()));
     store.addApplication(id, appMetaUpdate);
 
     ApplicationSpecification spec = store.getApplication(id);
@@ -964,7 +968,7 @@ public abstract class DefaultStoreTest {
     ScanApplicationsRequest request = ScanApplicationsRequest.builder()
       .setNamespaceId(NamespaceId.CDAP).build();
 
-    Assert.assertFalse(store.scanApplications(request, 20, (appId, spec) ->  {
+    Assert.assertFalse(store.scanApplications(request, 20, (appId, spec) -> {
       apps.add(appId);
     }));
 
@@ -1204,6 +1208,78 @@ public abstract class DefaultStoreTest {
     store.removeAll(namespaceId);
 
     Assert.assertNull(store.getApplication(appId));
+  }
+
+  private ApplicationSpecification createDummyAppSpec(String appName, String appVersion, ArtifactId artifactId) {
+    return new DefaultApplicationSpecification(
+      appName, appVersion, ProjectInfo.getVersion().toString(), "desc", null, artifactId,
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+      Collections.emptyMap());
+  }
+
+  @Test
+  public void testListRunsWithLegacyRows() throws ConflictException {
+    String appName = "application1";
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    ApplicationSpecification spec = createDummyAppSpec(appId.getApplication(), appId.getVersion(), artifactId);
+    ApplicationMeta appMeta = new ApplicationMeta(appId.getApplication(), spec, null);
+    List<ApplicationId> expectedApps = new ArrayList<>();
+    long currentTime = System.currentTimeMillis();
+
+    // Insert a row that is null for changeDetail
+    store.addApplication(appId, appMeta);
+    expectedApps.add(appId);
+
+    ApplicationId newVersionAppId = appId.getAppReference().app("new_version");
+    spec = createDummyAppSpec(newVersionAppId.getApplication(), newVersionAppId.getVersion(), artifactId);
+    ApplicationMeta newAppMeta = new ApplicationMeta(newVersionAppId.getApplication(), spec,
+                                                     new ChangeDetail(null, null,
+                                                                      null, currentTime));
+    // Insert a second version
+    store.addApplication(newVersionAppId, newAppMeta);
+    expectedApps.add(newVersionAppId);
+
+    // Insert a third version
+    ApplicationId anotherVersionAppId = appId.getAppReference().app("another_version");
+    spec = createDummyAppSpec(anotherVersionAppId.getApplication(), anotherVersionAppId.getVersion(), artifactId);
+    ApplicationMeta anotherAppMeta = new ApplicationMeta(anotherVersionAppId.getApplication(), spec,
+                                                         new ChangeDetail(null, null,
+                                                                          null, currentTime + 1000));
+    store.addApplication(anotherVersionAppId, anotherAppMeta);
+    expectedApps.add(anotherVersionAppId);
+
+    // Reverse it because we want DESC order
+    Collections.reverse(expectedApps);
+
+    List<ApplicationId> actualApps = new ArrayList<>();
+    List<Long> creationTimes = new ArrayList<>();
+    AtomicInteger latestVersionCount = new AtomicInteger();
+    AtomicReference<ApplicationId> latestAppId = new AtomicReference<>();
+
+    ScanApplicationsRequest request = ScanApplicationsRequest.builder()
+      .setNamespaceId(NamespaceId.DEFAULT)
+      .setSortOrder(SortOrder.DESC)
+      .setSortCreationTime(true)
+      .setLimit(10)
+      .build();
+
+    Assert.assertFalse(store.scanApplications(request, 20, (id, appSpec) -> {
+      actualApps.add(id);
+      creationTimes.add(appSpec.getChange().getCreationTimeMillis());
+      // TODO: change to boolean after CDAP-19981
+      if ("true".equals(appSpec.getChange().getLatest())) {
+        latestVersionCount.getAndIncrement();
+        latestAppId.set(id);
+      }
+    }));
+
+    Assert.assertEquals(expectedApps, actualApps);
+    Assert.assertEquals(creationTimes.size(), 3);
+    Assert.assertEquals(creationTimes.get(1) - 1000, (long) creationTimes.get(2));
+    Assert.assertEquals(latestVersionCount.get(), 1);
+    Assert.assertEquals(latestAppId.get(), actualApps.get(0));
   }
 
   private void writeStartRecord(ProgramRunId run, ArtifactId artifactId) {
