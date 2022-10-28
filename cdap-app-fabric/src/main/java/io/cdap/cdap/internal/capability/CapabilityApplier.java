@@ -52,6 +52,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
@@ -234,8 +235,7 @@ class CapabilityApplier {
         .addOrUpdateCapability(capabilityConfig.getCapability(), CapabilityStatus.DISABLED, capabilityConfig);
       //stop all the programs having capability metadata. Services will be stopped by SystemProgramManagementService
       doForAllAppsWithCapability(capability,
-                                 applicationId -> doWithRetry(applicationId.getAppReference(),
-                                                              programLifecycleService::stopAll));
+                                 appReference -> doWithRetry(appReference, programLifecycleService::stopAll));
       capabilityStatusStore.deleteCapabilityOperation(capability);
     }
   }
@@ -254,35 +254,33 @@ class CapabilityApplier {
       disableCapabilities(deleteSet);
       //remove all applications having capability metadata.
       doForAllAppsWithCapability(capability,
-                                 applicationId -> doWithRetry(applicationId,
-                                                              this::removeApplication));
+                                 appReference -> doWithRetry(appReference, this::removeApplication));
       //remove deployments of system applications
       for (SystemApplication application : capabilityConfig.getApplications()) {
-        ApplicationId applicationId = getApplicationId(application);
-        doWithRetry(applicationId, this::removeApplication);
+        ApplicationReference applicationReference = getAppReference(application);
+        doWithRetry(applicationReference, this::removeApplication);
       }
       capabilityStatusStore.deleteCapability(capability);
       capabilityStatusStore.deleteCapabilityOperation(capability);
     }
   }
 
-  private void removeApplication(ApplicationId applicationId) throws Exception {
+  private void removeApplication(ApplicationReference applicationReference) throws Exception {
     try {
-      applicationLifecycleService.removeApplication(applicationId);
+      applicationLifecycleService.removeApplication(applicationReference);
     } catch (NotFoundException ex) {
       //ignore, could have been removed with REST api or was not deployed
       LOG.debug("Application is already removed. ", ex);
     }
   }
 
-  private ApplicationId getApplicationId(SystemApplication application) {
-    String version = application.getVersion() == null ? ApplicationId.DEFAULT_VERSION : application.getVersion();
-    return new ApplicationId(application.getNamespace(), application.getName(), version);
+  private ApplicationReference getAppReference(SystemApplication application) {
+    return new ApplicationReference(application.getNamespace(), application.getName());
   }
 
   private ProgramId getProgramId(SystemProgram program) {
     ApplicationId applicationId = new ApplicationId(program.getNamespace(), program.getApplication(),
-                                                    program.getVersion());
+                                                    ApplicationId.DEFAULT_VERSION);
     return new ProgramId(applicationId, ProgramType.valueOf(program.getType().toUpperCase()), program.getName());
   }
 
@@ -301,15 +299,15 @@ class CapabilityApplier {
   }
 
   private void deployApp(SystemApplication application) throws Exception {
-    ApplicationId applicationId = getApplicationId(application);
-    if (!shouldDeployApp(applicationId, application)) {
+    ApplicationReference applicationReference = getAppReference(application);
+    if (!shouldDeployApp(applicationReference, application)) {
       //skip logging here to prevent flooding the logs
       return;
     }
-    LOG.debug("Application {} is being deployed", applicationId);
+    LOG.debug("Application {} is being deployed", applicationReference);
     String configString = application.getConfig() == null ? null : GSON.toJson(application.getConfig());
     applicationLifecycleService
-      .deployApp(applicationId.getParent(), applicationId.getApplication(), applicationId.getVersion(),
+      .deployApp(applicationReference.getParent(), applicationReference.getApplication(), ApplicationId.DEFAULT_VERSION,
                  application.getArtifact(), configString, null, NOOP_PROGRAM_TERMINATOR,
                  null, null, false, Collections.emptyMap());
   }
@@ -375,10 +373,10 @@ class CapabilityApplier {
   // 1. Either the application is not deployed before.
   // 2. If application is deployed before then the app artifact of the deployed application is not the latest one
   //    available.
-  private boolean shouldDeployApp(ApplicationId applicationId, SystemApplication application) throws Exception {
+  private boolean shouldDeployApp(ApplicationReference appRef, SystemApplication application) throws Exception {
     ApplicationDetail currAppDetail;
     try {
-      currAppDetail = applicationLifecycleService.getAppDetail(applicationId);
+      currAppDetail = applicationLifecycleService.getLatestAppDetail(appRef);
     } catch (ApplicationNotFoundException exception) {
       return true;
     }
@@ -386,7 +384,7 @@ class CapabilityApplier {
     // available. If it's not same, capability applier should redeploy application.
     ArtifactSummary summary = application.getArtifact();
     NamespaceId artifactNamespace =
-      ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : applicationId.getParent();
+      ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : appRef.getNamespaceId();
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
       ArtifactVersionRange.parse(summary.getVersion()));
     // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
@@ -403,16 +401,17 @@ class CapabilityApplier {
   }
 
   //Find all applications for capability and call consumer for each
-  private void doForAllAppsWithCapability(String capability, CheckedConsumer<ApplicationId> consumer) throws Exception {
+  private void doForAllAppsWithCapability(String capability,
+                                          CheckedConsumer<ApplicationReference> consumer) throws Exception {
     for (NamespaceMeta namespaceMeta : namespaceAdmin.list()) {
       int offset = 0;
       int limit = 100;
       NamespaceId namespaceId = namespaceMeta.getNamespaceId();
-      EntityResult<ApplicationId> results = getApplications(namespaceId, capability, null,
+      EntityResult<ApplicationReference> results = getApplications(namespaceId, capability, null,
                                                             offset, limit);
       while (!results.getEntities().isEmpty()) {
         //call consumer for each entity
-        for (ApplicationId entity : results.getEntities()) {
+        for (ApplicationReference entity : results.getEntities()) {
           consumer.accept(entity);
         }
         offset += limit;
@@ -444,8 +443,10 @@ class CapabilityApplier {
   }
 
   @VisibleForTesting
-  EntityResult<ApplicationId> getApplications(NamespaceId namespace, String capability, @Nullable String cursor,
-                                              int offset, int limit) throws IOException, UnauthorizedException {
+  EntityResult<ApplicationReference> getApplications(NamespaceId namespace, String capability,
+                                                     @Nullable String cursor, int offset, int limit)
+    throws IOException, UnauthorizedException {
+    
     String capabilityTag = String.format(CAPABILITY, capability);
     SearchRequest searchRequest = SearchRequest.of(capabilityTag)
       .addNamespace(namespace.getNamespace())
@@ -456,9 +457,9 @@ class CapabilityApplier {
       .setLimit(limit)
       .build();
     MetadataSearchResponse searchResponse = metadataSearchClient.search(searchRequest);
-    Set<ApplicationId> applicationIds = searchResponse.getResults().stream()
+    Set<ApplicationReference> applicationIds = searchResponse.getResults().stream()
       .map(MetadataSearchResultRecord::getMetadataEntity)
-      .map(this::getApplicationId)
+      .map(this::getAppReference)
       .collect(Collectors.toSet());
     return new EntityResult<>(applicationIds, getCursorResponse(searchResponse),
                               searchResponse.getOffset(), searchResponse.getLimit(),
@@ -474,8 +475,8 @@ class CapabilityApplier {
     return cursors.get(0);
   }
 
-  private ApplicationId getApplicationId(MetadataEntity metadataEntity) {
-    return new ApplicationId(metadataEntity.getValue(MetadataEntity.NAMESPACE),
+  private ApplicationReference getAppReference(MetadataEntity metadataEntity) {
+    return new ApplicationReference(metadataEntity.getValue(MetadataEntity.NAMESPACE),
                              metadataEntity.getValue(MetadataEntity.APPLICATION));
   }
 }

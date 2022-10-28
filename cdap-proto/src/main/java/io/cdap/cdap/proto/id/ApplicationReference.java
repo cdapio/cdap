@@ -17,6 +17,7 @@
 package io.cdap.cdap.proto.id;
 
 import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -50,6 +51,10 @@ public class ApplicationReference extends NamespacedEntityId implements Parented
 
   public ApplicationId app(String version) {
     return new ApplicationId(namespace, application, version);
+  }
+
+  public ProgramReference program(ProgramType type, String program) {
+    return new ProgramReference(this, type, program);
   }
 
   @Override

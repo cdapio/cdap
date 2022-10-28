@@ -75,6 +75,7 @@ import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ChangeSummary;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -367,8 +368,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(new NamespaceId(namespaceId),
-                                                                                  appName)));
+                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(
+                         new ApplicationReference(namespaceId, appName))));
   }
 
   /**
@@ -380,8 +381,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("namespace-id") final String namespaceId,
                               @PathParam("app-id") final String appName) throws Exception {
     validateApplicationId(namespaceId, appName);
-    Collection<String> versions = applicationLifecycleService.getAppVersions(new NamespaceId(namespaceId),
-                                                                             appName);
+    Collection<String> versions = applicationLifecycleService
+      .getAppVersions(new ApplicationReference(namespaceId, appName));
     if (versions.isEmpty()) {
       throw new ApplicationNotFoundException(new ApplicationId(namespaceId, appName));
     }
@@ -400,7 +401,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
+    ApplicationDetail appDetail = ApplicationId.DEFAULT_VERSION.equals(versionId)
+      ? applicationLifecycleService.getLatestAppDetail(applicationId.getAppReference())
+      : applicationLifecycleService.getAppDetail(applicationId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appDetail));
   }
 
   /**
@@ -414,8 +418,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getPlugins(new NamespaceId(namespaceId),
-                                                                          appName)));
+                       GSON.toJson(applicationLifecycleService.getPlugins(
+                         new ApplicationReference(namespaceId, appName))));
   }
 
   /**
@@ -427,7 +431,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") final String appName) throws Exception {
     validateApplicationId(namespaceId, appName);
-    applicationLifecycleService.removeApplication(new ApplicationId(namespaceId, appName));
+    applicationLifecycleService.removeApplication(new ApplicationReference(namespaceId, appName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -535,8 +539,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @QueryParam("allowSnapshot") boolean allowSnapshot) throws Exception {
     validateApplicationId(namespaceId, appName);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
-    ApplicationId appId = new ApplicationId(namespaceId, appName);
-    appId = applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
+    // Always upgrade the latest version
+    ApplicationId appId = applicationLifecycleService.upgradeLatestApplication(
+      new ApplicationReference(namespaceId, appName), allowedArtifactScopes, allowSnapshot);
     ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
   }
@@ -576,8 +581,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         for (ApplicationId appId : appIds) {
           ApplicationUpdateDetail updateDetail;
           try {
-            ApplicationId newAppId = applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes,
-                                                                                    allowSnapshot);
+            ApplicationId newAppId = ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())
+              ? applicationLifecycleService.upgradeLatestApplication(appId.getAppReference(),
+                                                                     allowedArtifactScopes, allowSnapshot)
+              : applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
             updateDetail = new ApplicationUpdateDetail(newAppId);
           } catch (UnsupportedOperationException e) {
             String errorMessage = String.format("Application %s does not support upgrade.", appId);

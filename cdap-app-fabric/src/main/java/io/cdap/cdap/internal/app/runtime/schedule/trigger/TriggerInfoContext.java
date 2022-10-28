@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -26,7 +25,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
@@ -66,10 +64,6 @@ public class TriggerInfoContext {
    */
   public List<Notification> getNotifications() {
     return job.getNotifications();
-  }
-
-  public ApplicationSpecification getApplicationSpecification(ApplicationId applicationId) {
-    return store.getApplication(applicationId);
   }
 
   /**

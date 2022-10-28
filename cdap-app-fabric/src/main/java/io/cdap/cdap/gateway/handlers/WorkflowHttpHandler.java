@@ -142,7 +142,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private ProgramController getProgramController(String namespace, String appName,
                                                  String workflowName, String runId) throws NotFoundException {
     NamespaceId namespaceId = Ids.namespace(namespace);
-    ApplicationMeta appMeta = store.getLatest(namespaceId, appName);
+    ApplicationMeta appMeta = store.getLatest(namespaceId.appReference(appName));
     if (appMeta == null || appMeta.getSpec() == null) {
       throw new NotFoundException(namespaceId.app(appName));
     }
@@ -212,7 +212,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private WorkflowToken getWorkflowToken(String namespace, String appName, String workflow,
                                          String runId) throws NotFoundException {
     NamespaceId namespaceId = Ids.namespace(namespace);
-    ApplicationMeta appMeta = store.getLatest(namespaceId, appName);
+    ApplicationMeta appMeta = store.getLatest(namespaceId.appReference(appName));
     if (appMeta == null || appMeta.getSpec() == null) {
       throw new NotFoundException(namespaceId.app(appName));
     }
@@ -236,7 +236,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("run-id") String runId)
     throws NotFoundException {
     NamespaceId namespace = Ids.namespace(namespaceId);
-    ApplicationMeta appMeta = store.getLatest(namespace, applicationId);
+    ApplicationMeta appMeta = store.getLatest(namespace.appReference(applicationId));
     if (appMeta == null || appMeta.getSpec() == null) {
       throw new NotFoundException(namespace.app(applicationId));
     }
@@ -328,7 +328,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private WorkflowSpecification getWorkflowSpecForValidRun(String namespaceId, String applicationId,
                                                            String workflowId, String runId) throws NotFoundException {
     NamespaceId namespace = Ids.namespace(namespaceId);
-    ApplicationMeta appMeta = store.getLatest(namespace, applicationId);
+    ApplicationMeta appMeta = store.getLatest(namespace.appReference(applicationId));
     if (appMeta == null || appMeta.getSpec() == null) {
       throw new NotFoundException(namespace.app(applicationId));
     }
