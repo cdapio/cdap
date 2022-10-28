@@ -116,6 +116,7 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -196,6 +197,7 @@ public abstract class AppFabricTestBase {
 
   protected static final String VERSION1 = "1.0.0";
   protected static final String VERSION2 = "2.0.0";
+  protected static TransactionRunner transactionRunner;
 
   private static Injector injector;
 
@@ -287,6 +289,7 @@ public abstract class AppFabricTestBase {
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
     metadataServiceClient = new DefaultMetadataServiceClient(remoteClientFactory);
     metricStore = injector.getInstance(MetricStore.class);
+    transactionRunner = injector.getInstance(TransactionRunner.class);
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.

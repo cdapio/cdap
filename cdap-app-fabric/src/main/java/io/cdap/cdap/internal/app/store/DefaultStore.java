@@ -157,6 +157,22 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public ProgramDescriptor loadProgram(ProgramReference ref) throws NotFoundException {
+    ApplicationMeta appMeta = TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getLatest(ref.getParent());
+    });
+
+    if (appMeta == null) {
+      throw new ApplicationNotFoundException(ref.getParent().app(ApplicationId.DEFAULT_VERSION));
+    }
+
+    ProgramId id = ref.id(appMeta.getSpec().getAppVersion());
+
+    Store.ensureProgramExists(id, appMeta.getSpec());
+    return new ProgramDescriptor(id, appMeta.getSpec());
+  }
+
+  @Override
   public void setProvisioning(ProgramRunId id, Map<String, String> runtimeArgs,
                               Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId) {
     TransactionRunners.run(transactionRunner, context -> {
@@ -294,7 +310,7 @@ public class DefaultStore implements Store {
   public WorkflowStatistics getWorkflowStatistics(NamespaceId namespaceId, String appName, String workflowName,
                                                   long startTime, long endTime, List<Double> percentiles) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
       if (latestAppMeta == null) {
         // if app is not found then there is no workflow stats
         return null;
@@ -316,7 +332,7 @@ public class DefaultStore implements Store {
   public WorkflowTable.WorkflowRunRecord getWorkflowRun(NamespaceId namespaceId, String appName, String workflowName,
                                                         String runId) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
       if (latestAppMeta == null) {
         throw new ApplicationNotFoundException(namespaceId.app(appName));
       }
@@ -331,7 +347,7 @@ public class DefaultStore implements Store {
                                                                            String program, String runId, int limit,
                                                                            long timeInterval) {
     return  TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId, appName);
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
       if (latestAppMeta == null) {
         throw new ApplicationNotFoundException(namespaceId.app(appName));
       }
@@ -538,7 +554,6 @@ public class DefaultStore implements Store {
                                                                      instances, workerSpec.getPlugins());
       ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
       metaStore.updateAppSpec(id.getParent(), newAppSpec);
-
     });
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, worker: {}, new instances count: {}",
@@ -771,7 +786,7 @@ public class DefaultStore implements Store {
   @Nullable
   public ApplicationMeta getLatest(NamespaceId namespace, String appName) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getLatest(namespace, appName);
+      return getAppMetadataStore(context).getLatest(namespace.appReference(appName));
     });
   }
 
@@ -813,7 +828,9 @@ public class DefaultStore implements Store {
   @Nullable
   private ApplicationMeta getApplicationMeta(AppMetadataStore mds,
                                              ApplicationId id) throws IOException, TableNotFoundException {
-    return mds.getApplication(id);
+    // TODO: more refactor the mapping of "-SNAPSHOT" to latest in CDAP-20033
+    return ApplicationId.DEFAULT_VERSION.equals(id.getVersion())
+      ? mds.getLatest(id.getAppReference()) : mds.getApplication(id);
   }
 
   private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,
@@ -1035,7 +1052,7 @@ public class DefaultStore implements Store {
                                        NamespaceId namespaceId,
                                        String appName) throws ApplicationNotFoundException, IOException {
     // Check if app exists
-    ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespaceId, appName);
+    ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
     if (latest == null || latest.getSpec() == null) {
       throw new ApplicationNotFoundException(namespaceId.app(appName));
     }
