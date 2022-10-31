@@ -44,6 +44,7 @@ import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import org.apache.twill.api.RunId;
@@ -284,13 +285,13 @@ public interface Store {
   Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId);
 
   /**
-   * Fetches active runs for a set of programs.
+   * Fetches the latest active runs for a set of programs.
    *
-   * @param programIds collection of program ids for fetching active run records.
+   * @param programRefs collection of program ids for fetching active run records.
    * @return a {@link Map} from the {@link ProgramId} to the list of run records; there will be no entry for programs
    * that do not exist.
    */
-  Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramId> programIds);
+  Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramReference> programRefs);
 
   /**
    * Fetches the run record for particular run of a program.
@@ -547,10 +548,10 @@ public interface Store {
   /**
    * Get the run count of the given program collection
    *
-   * @param programIds collection of program ids to get the count
+   * @param programRefs collection of program ids to get the count
    * @return the run count result of each program in the collection
    */
-  List<RunCountResult> getProgramRunCounts(Collection<ProgramId> programIds);
+  List<RunCountResult> getProgramRunCounts(Collection<ProgramReference> programRefs);
 
   /**
    * Fetches run records for multiple programs.
@@ -562,7 +563,7 @@ public interface Store {
    * @param limitPerProgram     max number of runs to fetch for each program
    * @return          runs for each program
    */
-  List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
+  List<ProgramHistory> getRuns(Collection<ProgramReference> programs, ProgramRunStatus status,
                                long startTime, long endTime, int limitPerProgram);
 
 
