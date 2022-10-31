@@ -290,7 +290,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     }
 
     private Asset getAssetForEndpoint(EndPoint endPoint) {
-      return new Asset(endPoint.getProperties().get("fqn"), endPoint.getProperties().get("location"));
+      return new Asset(endPoint.getProperties().get("fqn"));
     }
 
     private Map<Asset, Set<Asset>> getAssetsMapFromEndpointFieldsMap(Map<EndPointField, Set<EndPointField>>
