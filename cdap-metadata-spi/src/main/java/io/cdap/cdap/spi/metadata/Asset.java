@@ -21,50 +21,22 @@ import io.cdap.cdap.api.annotation.Beta;
 import java.util.Objects;
 
 /**
- * Represents an Asset with a FQN which is a fully-qualified identifier and the location.
+ * Represents an Asset with a FQN which is a fully-qualified identifier.
  * It refers to the data source that is being read from or written into - e.g. BigQuery Dataset, DB Table, etc.
  * FQN is formed by using the plugin properties that together identifies an asset. For e.g. in case of DB plugins,
- * the plugin can be of the form {dbType}.{host}: {port}.{database}.{schema}.
- * If location is not known for an asset, it is set to "unknown" by default.
- * If project ID is not known for an asset, it is set to "" by default.
+ * the plugin can be of the form {dbType}.{host}:{port}.{database}.{schema}.
  */
 @Beta
 public class Asset {
 
-  private static final String DEFAULT_LOCATION = "global";
-  private static final String DEFAULT_PROJECT = "";
-
   private final String fqn;
-  private final String location;
-  private final String projectId;
 
   /**
-   * Creates an instance of Asset. Location will be "unknown" if not set.
+   * Creates an instance of Asset.
    * @param fqn fully-qualified name of the Asset.
    */
   public Asset(String fqn) {
-    this(fqn, DEFAULT_LOCATION, DEFAULT_PROJECT);
-  }
-
-  /**
-   * Creates an instance of Asset.
-   * @param fqn fully-qualified name of the Asset.
-   * @param location location of the Asset.
-   */
-  public Asset(String fqn, String location) {
-    this(fqn, location, DEFAULT_PROJECT);
-  }
-
-  /**
-   * Creates an instance of Asset.
-   * @param fqn fully-qualified name of the Asset.
-   * @param location location of the Asset.
-   * @param projectId project for the Asset.
-   */
-  public Asset(String fqn, String location, String projectId) {
     this.fqn = fqn;
-    this.location = location;
-    this.projectId = projectId;
   }
 
   /**
@@ -72,20 +44,6 @@ public class Asset {
    */
   public String getFQN() {
     return fqn;
-  }
-
-  /**
-   * @return the location of the {@link Asset}.
-   */
-  public String getLocation() {
-    return location;
-  }
-
-  /**
-   * @return the project ID of the {@link Asset}, if applicable.
-   */
-  public String getProjectId() {
-    return projectId;
   }
 
   @Override
@@ -97,20 +55,18 @@ public class Asset {
       return false;
     }
     Asset asset = (Asset) o;
-    return fqn.equals(asset.fqn) && location.equals(asset.location) && projectId.equals(asset.projectId);
+    return fqn.equals(asset.fqn);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(fqn, location, projectId);
+    return Objects.hash(fqn);
   }
 
   @Override
   public String toString() {
     return "Dataset{" +
       "fqn='" + fqn + '\'' +
-      ", location='" + location + '\'' +
-      ", projectId='" + projectId + '\'' +
       '}';
   }
 }
