@@ -41,7 +41,6 @@ import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import io.cdap.cdap.test.SlowTests;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -73,11 +72,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
     fetchFieldLineage(datasetId, 100, 200, null, BadRequestException.class);
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testAllProgramsLineage() throws Exception {
     NamespaceId namespace = new NamespaceId("testAllProgramsLineage");
     ApplicationId app = namespace.app(AllProgramsApp.NAME);

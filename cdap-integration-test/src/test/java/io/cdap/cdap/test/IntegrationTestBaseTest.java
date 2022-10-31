@@ -32,7 +32,6 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -74,12 +73,8 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     Assert.assertTrue(new ApplicationClient(clientConfig).list(namespace).isEmpty());
 
   }
-
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
+  
   @Test
-  @Ignore
   public void testSQLQuery() throws Exception {
     getTestManager().deployDatasetModule(NamespaceId.DEFAULT.datasetModule("my-kv"), AppUsingCustomModule.Module.class);
 

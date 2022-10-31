@@ -100,7 +100,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExternalResource;
@@ -128,8 +127,6 @@ import javax.annotation.Nullable;
 /**
  * Unit tests with authorization enabled.
  */
-// TODO: CDAP-19775
-@Ignore
 public class AuthorizationTest extends TestBase {
 
   @ClassRule
@@ -1241,7 +1238,6 @@ public class AuthorizationTest extends TestBase {
    * Note that the impersonation is not actually happening since we do not have keytab files for unit test,
    * all impersonation doAs will be no-op, but we can still simulate the namespace deploy and app creation in the test
    */
-  // TODO: CDAP-19784
   @Test
   public void testCreationWithOwner() throws Exception {
     // this test will test deploy app without app owner specified. Like namespace impersonation

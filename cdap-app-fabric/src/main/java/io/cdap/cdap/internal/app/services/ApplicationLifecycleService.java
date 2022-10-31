@@ -40,6 +40,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
@@ -61,12 +62,14 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.utils.BatchingConsumer;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -168,6 +171,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final CapabilityReader capabilityReader;
   private final int batchSize;
   private final MetricsCollectionService metricsCollectionService;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice injection.
@@ -202,6 +206,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.capabilityReader = capabilityReader;
     this.adminEventPublisher = new AdminEventPublisher(cConf, new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   @Override
@@ -498,7 +503,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
     Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
-    return deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(), artifactId, requestedConfigStr,
+    String versionId = currentSpec.getAppVersion();
+    // If LCM flow is enabled - we generate specific versions of the app.
+    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
+      versionId = RunIds.generate().getId();
+    }
+    return deployApp(appId.getParent(), appId.getApplication(), versionId, artifactId, requestedConfigStr,
                      appRequest.getChange(), programTerminator, ownerAdmin.getOwner(appId),
                      appRequest.canUpdateSchedules());
   }
@@ -662,6 +672,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     Principal requestingUser = authenticationContext.getPrincipal();
 
+    String versionId = appId.getVersion();
+    // If LCM flow is enabled - we generate specific versions of the app.
+    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
+      versionId = RunIds.generate().getId();
+    }
+    
     // Deploy application with with potentially new app config and new artifact.
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(artifactId)
@@ -669,7 +685,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setApplicationClass(appClass)
       .setNamespaceId(appId.getNamespaceId())
       .setAppName(appId.getApplication())
-      .setAppVersion(RunIds.generate().getId())
+      .setAppVersion(versionId)
       .setConfigString(updatedAppConfig)
       .setOwnerPrincipal(ownerPrincipal)
       .setUpdateSchedules(false)
@@ -717,7 +733,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      String appVersion = RunIds.generate().getId();
+      String appVersion = ApplicationId.DEFAULT_VERSION;
+      // If LCM flow is enabled - we generate specific versions of the app.
+      if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
+        appVersion = RunIds.generate().getId();
+      }
       return deployApp(namespace, appName, appVersion, configStr, null, programTerminator, artifactDetail,
                        ownerPrincipal, updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
@@ -757,7 +777,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
-    String appVersion = RunIds.generate().getId();
+    String appVersion = Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)
+      ? RunIds.generate().getId()
+      : ApplicationId.DEFAULT_VERSION;
     return deployApp(namespace, appName, appVersion, artifactId, configStr, null, programTerminator,
                      null, true);
   }

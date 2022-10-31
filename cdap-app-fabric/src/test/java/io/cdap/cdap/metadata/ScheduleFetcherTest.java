@@ -28,7 +28,6 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -98,10 +97,6 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
   }
 
   @Test
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
-  @Ignore
   public void testGetSchedule() throws Exception {
     ScheduleFetcher fetcher = getScheduleFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
@@ -124,11 +119,7 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
                                    Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testListSchedules() throws Exception {
     ScheduleFetcher fetcher = getScheduleFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;

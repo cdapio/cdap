@@ -3273,15 +3273,11 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
-  // TODO: (CDAP-19775) ignoring this test until the latest version is used in api for default "-SNAPSHOT" version
   public void testServiceUrlMR() throws Exception {
     testServiceUrl(Engine.MAPREDUCE);
   }
 
   @Test
-  @Ignore
-  // TODO: (CDAP-19775) ignoring this test until the latest version is used in api for default "-SNAPSHOT" version
   public void testServiceUrlSpark() throws Exception {
     testServiceUrl(Engine.SPARK);
   }

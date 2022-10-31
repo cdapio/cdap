@@ -28,7 +28,6 @@ import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.commons.io.Charsets;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -45,12 +44,8 @@ import java.util.concurrent.TimeoutException;
 public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkServiceIntegrationTestRun.class);
-
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
+  
   @Test
-  @Ignore
   public void testSparkWithService() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkServiceIntegrationApp.class);
     startService(applicationManager);

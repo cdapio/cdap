@@ -35,7 +35,6 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -216,11 +215,7 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
    * For all these cases, we validate that existing files and partitions are preserved, and newly
    * added files and partitions are rolled back.
    */
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testPFSRollback() throws Exception {
     ApplicationManager appManager = deployApplication(AppWritingToPartitioned.class);
     MapReduceManager mrManager = appManager.getMapReduceManager(MAPREDUCE);

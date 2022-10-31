@@ -50,7 +50,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -108,12 +107,8 @@ public class SupportBundleJobTest extends SupportBundleTestBase {
   public void cleanup() throws IOException {
     Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
-
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
+  
   @Test
-  @Ignore
   public void testSupportBundleJobExecute() throws Exception {
     generateWorkflowLog();
     SupportBundleConfiguration supportBundleConfiguration =

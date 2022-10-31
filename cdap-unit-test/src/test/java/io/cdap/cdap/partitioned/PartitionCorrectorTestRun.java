@@ -26,7 +26,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.PrintStream;
@@ -42,11 +41,7 @@ public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
   private static final DateFormat DATE_FORMAT =
     DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
 
-  /*
-   * TODO : to fix after CDAP-19775 is addressed
-   * */
   @Test
-  @Ignore
   public void testPartitionCorrector() throws Exception {
 
     ApplicationManager appManager = deployApplication(PartitionExploreCorrectorTestApp.class);
