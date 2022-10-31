@@ -133,6 +133,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -1250,7 +1251,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public Optional<byte[]> getState(AppStateKey request) throws ApplicationNotFoundException {
     emitMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
                 Constants.Metrics.AppStateStore.STATE_STORE_GET_COUNT);
-    return store.getState(request);
+    long startTime = System.nanoTime();
+    Optional<byte[]> state = store.getState(request);
+    emitTimeMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
+                 Constants.Metrics.AppStateStore.STATE_STORE_GET_LATENCY_MS, startTime);
+    return state;
   }
 
   /**
@@ -1262,7 +1267,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
     emitMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
                 Constants.Metrics.AppStateStore.STATE_STORE_SAVE_COUNT);
+    long startTime = System.nanoTime();
     store.saveState(request);
+    emitTimeMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
+                Constants.Metrics.AppStateStore.STATE_STORE_SAVE_LATENCY_MS, startTime);
   }
 
   /**
@@ -1290,5 +1298,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
                                                Constants.Metrics.Tag.APP, appName);
     metricsCollectionService.getContext(tags).increment(metricName, 1);
+  }
+
+  private void emitTimeMetrics(String namespace, String appName, String metricName, long startTime) {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                                               Constants.Metrics.Tag.APP, appName);
+    long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+    metricsCollectionService.getContext(tags).gauge(metricName, timeTaken);
   }
 }
