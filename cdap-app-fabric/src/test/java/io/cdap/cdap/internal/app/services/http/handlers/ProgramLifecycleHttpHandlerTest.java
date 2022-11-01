@@ -85,7 +85,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -935,7 +934,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore // TODO : To be fixed in CDAP 19777
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
     NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
@@ -1052,8 +1050,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     assertProgramInSchedules(AppWithMultipleSchedules.ANOTHER_WORKFLOW, anotherSchedules2);
 
     deleteApp(appDefault, 200);
-    deleteApp(app1, 200);
-    deleteApp(app2, 200);
   }
 
   private void assertProgramInSchedules(String programName, List<ScheduleDetail> schedules) {
@@ -1179,7 +1175,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore // TODO : To be fixed in CDAP 19777
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
@@ -1234,7 +1229,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication(),
                                     appDetails.getAppVersion());
-    Assert.assertEquals(2, actualSchedules.size());
+    Assert.assertEquals(0, actualSchedules.size());
 
     // with workflow and  one schedule, schedule should be added
     config = new AppWithSchedule.AppConfig(true, true, false);

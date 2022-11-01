@@ -127,7 +127,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
       }
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       ProgramId triggeringProgramId = programRunId.getParent();
-      if (this.programId.equals(triggeringProgramId) && programStatuses.contains(programStatus)) {
+      if (this.programId.isSameProgramExceptVersion(triggeringProgramId) && programStatuses.contains(programStatus)) {
         return function.apply(new ProgramRunInfo(programStatus, programRunId));
       }
     }

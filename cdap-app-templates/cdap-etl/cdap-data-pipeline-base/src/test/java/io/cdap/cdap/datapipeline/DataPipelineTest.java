@@ -143,7 +143,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -544,8 +543,6 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  @Ignore
-  // TODO: (CDAP-19777) ignoring this test until the schedule bug is fixed
   public void testScheduledPipelines() throws Exception {
     // Deploy middle pipeline scheduled to be triggered by the completion of head pipeline
     String expectedValue1 = "headArgValue";
