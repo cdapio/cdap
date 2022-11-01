@@ -31,7 +31,7 @@ public final class LoggingConfiguration {
   public static final String KAFKA_PRODUCER_BUFFER_MS = "kafka.producer.buffer.ms";
 
   public static final String DEFAULT_LOG_PATTERN =
-    "%d{ISO8601} - %-5p [%t:%c{1}@%L] - category_tags: %mdc{error.tags} %m%n";
+    "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "sync";
 
   public static final long DEFAULT_KAFKA_PRODUCER_BUFFER_MS = 1000;
