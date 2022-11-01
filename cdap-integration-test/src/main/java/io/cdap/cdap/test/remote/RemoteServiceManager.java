@@ -95,7 +95,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
           }
         }
       }, timeout, timeoutUnit);
-      return serviceClient.getVersionedServiceURL(serviceId);
+      return serviceClient.getServiceURL(serviceId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

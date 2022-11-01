@@ -443,7 +443,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("abcd", Bytes.toString(table.read(appName + ".abcd")));
     Assert.assertEquals("xyz", Bytes.toString(table.read(appName + ".xyz")));
   }
-
+  
   @Test
   @Category(SlowTests.class)
   public void testMapperDatasetAccess() throws Exception {
@@ -661,7 +661,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(42, in.read());
     }
   }
-  
+
   @Category(XSlowTests.class)
   @Test
   public void testWorkflowLocalDatasets() throws Exception {
@@ -1004,7 +1004,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
-
+  
   @Test
   @Category(SlowTests.class)
   public void testGetServiceURL() throws Exception {
@@ -1037,7 +1037,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     centralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
-
+  
   @Test
   @Category(SlowTests.class)
   public void testGetServiceURLDiffNamespace() throws Exception {
@@ -1733,7 +1733,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testAppWithAutoDeployDatasetModule() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
   }
-  
+
   @Test(timeout = 60000L)
   public void testAppWithAutoDeployDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);

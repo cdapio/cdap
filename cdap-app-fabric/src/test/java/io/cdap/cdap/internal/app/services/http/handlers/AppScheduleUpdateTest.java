@@ -54,7 +54,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
       }
     }
   };
-  
+
   @Test
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule

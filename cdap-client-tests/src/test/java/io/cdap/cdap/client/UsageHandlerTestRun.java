@@ -23,7 +23,6 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.client.app.AllProgramsApp;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.client.config.ConnectionConfig;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -31,7 +30,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.XSlowTests;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -59,10 +57,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   private void deleteApp(ApplicationId appId) throws Exception {
-    ApplicationClient appClient = new ApplicationClient(getClientConfig());
-    ApplicationDetail appDetail = appClient.get(appId);
-    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
-    appClient.delete(appId);
+    new ApplicationClient(getClientConfig()).deleteApp(appId);
   }
 
   private void startProgram(ProgramId programId) throws Exception {
@@ -74,10 +69,6 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   @Test
-  /*
-   * TODO : to fix after CDAP-19973 is addressed
-   * */
-  @Ignore
   public void testWorkerUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     final ProgramId program = app.worker(AllProgramsApp.NoOpWorker.NAME);
@@ -103,11 +94,8 @@ public class UsageHandlerTestRun extends ClientTestBase {
     }
   }
 
-  /*
-   * TODO : to fix after CDAP-19973 is addressed
-   * */
+
   @Test
-  @Ignore
   public void testMapReduceUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     final ProgramId program = app.mr(AllProgramsApp.NoOpMR.NAME);
@@ -140,11 +128,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     }
   }
 
-  /*
-   * TODO : to fix after CDAP-19973 is addressed
-   * */
   @Test
-  @Ignore
   public void testSparkUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     final ProgramId program = app.spark(AllProgramsApp.NoOpSpark.NAME);
@@ -181,11 +165,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     }
   }
 
-  /*
-   * TODO : to fix after CDAP-19973 is addressed
-   * */
   @Test
-  @Ignore
   public void testServiceUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     final ProgramId program = app.service(AllProgramsApp.NoOpService.NAME);

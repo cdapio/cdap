@@ -40,6 +40,8 @@ import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -71,6 +73,7 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     remoteMonitorServicesFetcher = injector.getInstance(RemoteMonitorServicesFetcher.class);
   }
   
+
   @Test
   public void testSupportBundleSystemLogTask() throws Exception {
     generateWorkflowLog();
@@ -102,19 +105,22 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAMESPACE.getNamespace());
     long startTime = System.currentTimeMillis();
 
-    ProgramId workflowProgram = new ProgramId(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, ProgramType.WORKFLOW,
-                                              AppWithWorkflow.SampleWorkflow.NAME);
+    HttpResponse appsResponse =
+      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                NAMESPACE.getNamespace()));
+    Assert.assertEquals(200, appsResponse.getResponseCode());
+    JSONObject jsonResponse = (JSONObject) (new JSONArray(appsResponse.getResponseBodyAsString()).get(0));
+    String version = jsonResponse.getString("version");
+
+    // We need the exact version here because setStartAndRunning() writes to store directly
+    ProgramId workflowProgram = new ProgramId(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, version,
+                                              ProgramType.WORKFLOW, AppWithWorkflow.SampleWorkflow.NAME);
     RunId workflowRunId = RunIds.generate(startTime);
     ArtifactId artifactId = NAMESPACE.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
     setStartAndRunning(workflowProgram, workflowRunId.getId(), artifactId);
 
     List<RunRecord> runs = getProgramRuns(workflowProgram, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
-
-    HttpResponse appsResponse =
-      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                NAMESPACE.getNamespace()));
-    Assert.assertEquals(200, appsResponse.getResponseCode());
 
     // workflow ran for 1 minute
     long workflowStopTime = TimeUnit.MILLISECONDS.toSeconds(startTime) + 60;
