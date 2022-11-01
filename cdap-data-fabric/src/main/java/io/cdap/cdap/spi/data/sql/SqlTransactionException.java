@@ -32,6 +32,11 @@ class SqlTransactionException extends TransactionException {
     this.sqlException = sqlException;
   }
 
+  SqlTransactionException(String message, SQLException sqlException) {
+    super(String.format("%s Transaction failed with sql state: %s", message, sqlException.getSQLState()), sqlException);
+    this.sqlException = sqlException;
+  }
+
   SQLException getSqlException() {
     return sqlException;
   }
