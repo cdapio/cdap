@@ -184,6 +184,7 @@ public abstract class AbstractArtifactLocalizer {
    */
   @Nullable
   private Long getCurrentLastModifiedTimestamp(File artifactDir) {
+    LOG.debug("Files in directory {}: {}", artifactDir, DirUtils.listFiles(artifactDir, File::isFile));
     // Check if we have cached jars in the artifact directory, if so return the latest modified timestamp.
     return DirUtils.listFiles(artifactDir, File::isFile).stream()
       .map(File::getName)
