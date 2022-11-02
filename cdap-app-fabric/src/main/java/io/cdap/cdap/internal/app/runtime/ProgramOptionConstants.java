@@ -98,6 +98,8 @@ public final class ProgramOptionConstants {
 
   public static final String TRIGGERING_SCHEDULE_INFO = "triggeringScheduleInfo";
 
+  public static final String TRIGGERING_SCHEDULE_INFO_TYPE = "triggeringScheduleInfoType";
+
   public static final String PROGRAM_ERROR = "programError";
 
   /**
