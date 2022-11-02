@@ -92,6 +92,8 @@ public final class ScheduleTaskRunner {
 
     TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
     systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
+    systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO_TYPE,
+                   GSON.toJson(job.getSchedule().getTrigger().getType()));
 
     try {
       execute(programId, systemArgs, userArgs);
