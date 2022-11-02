@@ -43,6 +43,8 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -61,6 +63,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactRepositoryReader.class);
   private static final Type ARTIFACT_DETAIL_TYPE = new TypeToken<ArtifactDetail>() { }.getType();
   private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
 
@@ -98,10 +101,13 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     httpResponse = execute(requestBuilder.build());
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_TYPE);
-    
+
+    long start = System.currentTimeMillis();
+    Location location = getArtifactLocation(detail.getDescriptor());
+    LOG.error(">>>>> getArtifactLocation took {}", System.currentTimeMillis() - start);
     return new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getNamespace(),
                                                      detail.getDescriptor().getArtifactId(),
-                                                     getArtifactLocation(detail.getDescriptor())),
+                                                     location),
                               detail.getMeta());
   }
 
