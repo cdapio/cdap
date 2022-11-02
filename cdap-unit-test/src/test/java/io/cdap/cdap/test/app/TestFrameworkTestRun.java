@@ -443,9 +443,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("abcd", Bytes.toString(table.read(appName + ".abcd")));
     Assert.assertEquals("xyz", Bytes.toString(table.read(appName + ".xyz")));
   }
-
-  @Category(SlowTests.class)
+  
   @Test
+  @Category(SlowTests.class)
   public void testMapperDatasetAccess() throws Exception {
     addDatasetInstance("keyValueTable", "table1");
     addDatasetInstance("keyValueTable", "table2");
@@ -473,8 +473,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                            mrManager.getHistory().get(0).getPid(), "table1", false);
   }
 
+  @Test(timeout = 60000L)
   @Category(SlowTests.class)
-  @Test
   public void testMapReduceTaskMetricsDisable() throws Exception {
     addDatasetInstance("keyValueTable", "table1");
     addDatasetInstance("keyValueTable", "table2");
@@ -634,8 +634,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertTrue(workflowKilled.exists());
   }
 
-  @Category(SlowTests.class)
   @Test
+  @Category(SlowTests.class)
   public void testCustomActionDatasetAccess() throws Exception {
     addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE);
     addDatasetInstance("fileSet", DatasetWithCustomActionApp.CUSTOM_FILESET);
@@ -1001,9 +1001,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
-
-  @Category(SlowTests.class)
+  
   @Test
+  @Category(SlowTests.class)
   public void testGetServiceURL() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
     ServiceManager centralServiceManager =
@@ -1034,9 +1034,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     centralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
-
-  @Category(SlowTests.class)
+  
   @Test
+  @Category(SlowTests.class)
   public void testGetServiceURLDiffNamespace() throws Exception {
     ApplicationManager defaultApplicationManager = deployApplication(AppUsingGetServiceURL.class);
     ServiceManager defaultForwardingServiceManager = defaultApplicationManager
@@ -1126,8 +1126,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 15, TimeUnit.SECONDS);
   }
 
-  @Category(SlowTests.class)
   @Test
+  @Category(SlowTests.class)
   public void testWorkerInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
     WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
@@ -1215,8 +1215,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     deployApplication(AppWithInvalidHandler.class);
   }
 
-  @Category(SlowTests.class)
   @Test
+  @Category(SlowTests.class)
   public void testAppWithWorker() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithWorker.class);
     LOG.info("Deployed.");
@@ -1519,8 +1519,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.waitForStopped(30, TimeUnit.SECONDS);
   }
 
-  @Category(SlowTests.class)
   @Test
+  @Category(SlowTests.class)
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");

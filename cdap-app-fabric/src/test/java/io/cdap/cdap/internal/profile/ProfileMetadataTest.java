@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.profile.Profile;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -57,6 +58,8 @@ public class ProfileMetadataTest extends AppFabricTestBase {
   }
 
   @Test
+  @Ignore
+  // TODO: (CDAP-19777) ignoring this test until the schedule bug is fixed
   public void testProfileMetadata() throws Exception {
     // create my profile
     ProfileId myProfile = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");

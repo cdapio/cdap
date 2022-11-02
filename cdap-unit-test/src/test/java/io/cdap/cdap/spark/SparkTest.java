@@ -244,7 +244,6 @@ public class SparkTest extends TestFrameworkTestBase {
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
-
   @Test
   public void testSparkProgramStatusSchedule() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);

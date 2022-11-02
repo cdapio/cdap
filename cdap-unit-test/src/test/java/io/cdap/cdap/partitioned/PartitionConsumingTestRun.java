@@ -70,7 +70,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(9, totalIn);
     Assert.assertEquals(10, totalOut);
   }
-
+  
   @Test
   public void testWorkerConsumer() throws Exception {
     testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {

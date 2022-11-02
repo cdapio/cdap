@@ -70,7 +70,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
   @After
   public void tearDown() throws Exception {
-    appClient.delete(appId);
+    appClient.deleteApp(appId);
   }
 
   @Test

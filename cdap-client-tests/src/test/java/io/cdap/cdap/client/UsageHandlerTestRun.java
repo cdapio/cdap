@@ -57,7 +57,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   private void deleteApp(ApplicationId appId) throws Exception {
-    new ApplicationClient(getClientConfig()).delete(appId);
+    new ApplicationClient(getClientConfig()).deleteApp(appId);
   }
 
   private void startProgram(ProgramId programId) throws Exception {
@@ -89,11 +89,11 @@ public class UsageHandlerTestRun extends ClientTestBase {
       Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
     } finally {
       deleteApp(app);
-
       Assert.assertEquals(0, getAppDatasetUsage(app).size());
       Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
     }
   }
+
 
   @Test
   public void testMapReduceUsage() throws Exception {

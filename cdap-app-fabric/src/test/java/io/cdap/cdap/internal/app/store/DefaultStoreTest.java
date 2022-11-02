@@ -681,9 +681,11 @@ public abstract class DefaultStoreTest {
       setStart(serviceId.run(RunIds.generate()), Collections.emptyMap(), Collections.emptyMap(), testArtifact);
     }
 
-    List<RunCountResult> result = store.getProgramRunCounts(ImmutableList.of(workflowId, serviceId,
-                                                                             nonExistingAppProgramId,
-                                                                             nonExistingProgramId));
+    List<RunCountResult> result =
+      store.getProgramRunCounts(ImmutableList.of(workflowId.getProgramReference(),
+                                                 serviceId.getProgramReference(),
+                                                 nonExistingAppProgramId.getProgramReference(),
+                                                 nonExistingProgramId.getProgramReference()));
 
     // compare the result
     Assert.assertEquals(4, result.size());
@@ -701,7 +703,8 @@ public abstract class DefaultStoreTest {
 
     // remove the app should remove all run count
     store.removeApplication(appId);
-    for (RunCountResult runCountResult : store.getProgramRunCounts(ImmutableList.of(workflowId, serviceId))) {
+    for (RunCountResult runCountResult : store.getProgramRunCounts(ImmutableList.of(workflowId.getProgramReference(),
+                                                                                    serviceId.getProgramReference()))) {
       Assert.assertNull(runCountResult.getCount());
       Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
     }

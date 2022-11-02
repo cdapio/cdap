@@ -214,8 +214,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     throws InvalidFieldException, IOException {
     LOG.trace("Table {}: Scan range {} with limit {}, sort field {} and sort order {}", schema.getTableId(),
               keyRange, limit, orderByField, sortOrder);
-    if (!schema.isIndexColumn(orderByField)) {
-      throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column");
+    if (!schema.isIndexColumn(orderByField) && !schema.isPrimaryKeyColumn(orderByField)) {
+      throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column or primary key");
     }
     Comparator<StructuredRow> comparator = sortOrder.equals(SortOrder.ASC) ? getComparator(orderByField) :
       getComparator(orderByField).reversed();

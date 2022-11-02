@@ -22,6 +22,7 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -79,9 +80,11 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
     String appName = AllProgramsApp.NAME;
     // Deploy the application.
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    ApplicationDetail appDetails = getAppDetails(namespace, appName);
 
     // Get and validate the schedule
-    ScheduleId scheduleId = new ScheduleId(namespace, appName, "InvalidSchedule");
+    ScheduleId scheduleId = new ScheduleId(namespace, appName, appDetails.getAppVersion(),
+                                           "InvalidSchedule");
     try {
       ScheduleDetail scheduleDetail = fetcher.get(scheduleId);
     } finally {
@@ -125,10 +128,12 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
     // Deploy the application with 2 schedules on the workflow
     Config appConfig = new AppWithSchedule.AppConfig(true, true, true);
     deploy(AppWithSchedule.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace, appConfig);
+    ApplicationDetail appDetails = getAppDetails(namespace, appName);
 
     // Get and validate the schedule
     ProgramId programId = new ProgramId(namespace,
                                         appName,
+                                        appDetails.getAppVersion(),
                                         ProgramType.WORKFLOW,
                                         AppWithSchedule.WORKFLOW_NAME);
     List<ScheduleDetail> scheduleList = fetcher.list(programId);

@@ -49,18 +49,6 @@ public class ApplicationDetail {
   public ApplicationDetail(String name,
                            String appVersion,
                            String description,
-                           String configuration,
-                           List<DatasetDetail> datasets,
-                           List<ProgramRecord> programs,
-                           List<PluginDetail> plugins,
-                           ArtifactSummary artifact,
-                           @Nullable String ownerPrincipal) {
-    this(name, appVersion, description, null, configuration, datasets, programs, plugins, artifact, ownerPrincipal);
-  }
-
-  public ApplicationDetail(String name,
-                           String appVersion,
-                           String description,
                            @Nullable ChangeDetail change,
                            String configuration,
                            List<DatasetDetail> datasets,

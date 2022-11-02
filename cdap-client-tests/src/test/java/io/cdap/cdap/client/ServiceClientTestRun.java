@@ -102,7 +102,7 @@ public class ServiceClientTestRun extends ClientTestBase {
     programClient.stop(service);
     assertProgramStopped(programClient, service);
     try {
-      appClient.delete(app);
+      appClient.deleteApp(app);
     } catch (Exception e) {
       LOG.error("Error deleting app {} during test cleanup.", e);
     }
@@ -123,7 +123,7 @@ public class ServiceClientTestRun extends ClientTestBase {
     assertEquals("GET", endpoint.getMethod());
     assertEquals("/ping", endpoint.getPath());
   }
-
+  
   @Test
   public void testActiveStatus() throws Exception {
     serviceClient.checkAvailability(service);

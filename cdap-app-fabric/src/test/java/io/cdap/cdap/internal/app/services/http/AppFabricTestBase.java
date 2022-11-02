@@ -83,6 +83,7 @@ import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramHistory;
@@ -612,29 +613,27 @@ public abstract class AppFabricTestBase {
 
   protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
                                                  String filter) throws Exception {
-    String uri = "apps/?pageSize=" + pageSize;
-
-    if (token != null) {
-      uri += ("&pageToken=" + token);
-    }
-
-    if (!Strings.isNullOrEmpty(filter)) {
-      uri += ("&nameFilter=" + filter);
-    }
-
-    HttpResponse response = doGet(getVersionedAPIPath(uri,
-                                  Constants.Gateway.API_VERSION_3_TOKEN, namespace));
-    assertResponseCode(200, response);
-    return readResponse(response, JsonObject.class);
+    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, null, null, null);
   }
 
   protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
                                                  String filter, String nameFilterType,
-                                                 Boolean latestOnly) throws Exception {
+                                                 Boolean latestOnly, Boolean sortCreationTime) throws Exception {
+    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, nameFilterType, latestOnly,
+                                     sortCreationTime);
+  }
+
+  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
+                                                 String orderBy, String filter, String nameFilterType,
+                                                 Boolean latestOnly, Boolean sortCreationTime) throws Exception {
     String uri = "apps/?pageSize=" + pageSize;
 
     if (token != null) {
       uri += ("&pageToken=" + token);
+    }
+
+    if (orderBy != null) {
+      uri += ("&orderBy=" + orderBy);
     }
 
     if (!Strings.isNullOrEmpty(filter)) {
@@ -647,6 +646,10 @@ public abstract class AppFabricTestBase {
 
     if (latestOnly != null) {
       uri += ("&latestOnly=" + latestOnly);
+    }
+
+    if (sortCreationTime != null) {
+      uri += ("&sortCreationTime=" + sortCreationTime);
     }
 
     HttpResponse response = doGet(getVersionedAPIPath(uri,
@@ -676,11 +679,11 @@ public abstract class AppFabricTestBase {
     return readResponse(response, new TypeToken<List<BatchApplicationDetail>>() { }.getType());
   }
 
-  protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
+  protected ApplicationDetail getAppDetails(String namespace, String appName) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName);
     assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
-    return readResponse(response, JsonObject.class);
+    return readResponse(response, ApplicationDetail.class);
   }
 
   protected HttpResponse getAppResponse(String namespace, String appName) throws Exception {
@@ -701,11 +704,11 @@ public abstract class AppFabricTestBase {
     return readResponse(response, SET_STRING_TYPE);
   }
 
-  protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
+  protected ApplicationDetail getAppDetails(String namespace, String appName, String appVersion) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName, appVersion);
     assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
-    return readResponse(response, JsonObject.class);
+    return readResponse(response, ApplicationDetail.class);
   }
 
   /**

@@ -16,6 +16,7 @@
 package io.cdap.cdap.proto.id;
 
 import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
 import org.apache.twill.api.RunId;
@@ -37,6 +38,10 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
 
   public ProgramId(String namespace, String application, ProgramType type, String program) {
     this(new ApplicationId(namespace, application), type, program);
+  }
+
+  public ProgramId(String namespace, String application, String version, ProgramType type, String program) {
+    this(new ApplicationId(namespace, application, version), type, program);
   }
 
   public ProgramId(ApplicationId appId, ProgramType type, String program) {
@@ -93,6 +98,18 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
     return new ApplicationId(namespace, application, version);
   }
 
+  public ApplicationReference getAppReference() {
+    return new ApplicationReference(namespace, application);
+  }
+
+  public ProgramReference getProgramReference() {
+    return new ProgramReference(getAppReference(), getType(), getProgram());
+  }
+
+  public BatchProgram getBatchProgram() {
+    return new BatchProgram(application, type, program);
+  }
+
   /**
    * Creates a {@link ProgramRunId} of this program id with the given run id.
    */
@@ -123,10 +140,7 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
    */
   public boolean isSameProgramExceptVersion(Object o) {
     ProgramId programId = (ProgramId) o;
-    return Objects.equals(namespace, programId.namespace) &&
-      Objects.equals(application, programId.application) &&
-      Objects.equals(type, programId.type) &&
-      Objects.equals(program, programId.program);
+    return Objects.equals(getProgramReference(), programId.getProgramReference());
   }
 
   @Override

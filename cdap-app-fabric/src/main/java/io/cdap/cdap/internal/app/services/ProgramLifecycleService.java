@@ -36,10 +36,12 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.ProgramRunForbiddenException;
 import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
@@ -55,6 +57,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
@@ -75,6 +78,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
@@ -103,6 +107,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -184,20 +189,37 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the status of the latest version program.
+   * @param namespaceId the namespaceId of the program
+   * @param appName the application name of the program
+   * @param programType the program type of the program
+   * @param program the name of the program to stop
+   * @return the status of the program
+   * @throws NotFoundException if the application to which this program belongs was not found
+   * TODO replace params with ProgramReference
+   */
+  public ProgramStatus getProgramStatus(NamespaceId namespaceId, String appName,
+                                        ProgramType programType, String program) throws Exception {
+    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    return getProgramStatus(programId);
+  }
+
+  /**
    * Gets the {@link ProgramStatus} for the given set of programs.
    *
-   * @param programIds collection of program ids for retrieving status
+   * @param programRefs collection of versionless program ids for retrieving status
    * @return a {@link Map} from the {@link ProgramId} to the corresponding status; there will be no entry for programs
    * that do not exist.
    */
-  public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramId> programIds) throws Exception {
+  public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramReference> programRefs) throws Exception {
     // filter the result
-    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new LinkedHashSet<>(programIds),
-                                                                              authenticationContext.getPrincipal());
-    List<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toList());
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new LinkedHashSet<>(programRefs),
+                                                                       authenticationContext.getPrincipal());
+    List<ProgramReference> filteredRefs = programRefs.stream()
+      .filter(visibleEntities::contains).collect(Collectors.toList());
 
     Map<ProgramId, ProgramStatus> result = new HashMap<>();
-    for (Map.Entry<ProgramId, Collection<RunRecordDetail>> entry : store.getActiveRuns(filteredIds).entrySet()) {
+    for (Map.Entry<ProgramId, Collection<RunRecordDetail>> entry : store.getActiveRuns(filteredRefs).entrySet()) {
       result.put(entry.getKey(), getProgramStatus(entry.getValue()));
     }
     return result;
@@ -217,23 +239,42 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the program run count of the latest version program.
+   *
+   * @param namespaceId the namespaceId of the program
+   * @param appName the application name of the program
+   * @param programType the program type of the program
+   * @param program the name of the program
+   * @return the run count of the latest version program
+   * @throws NotFoundException if the application to which this program belongs was not found or the program is not
+   *                           found in the app
+   * TODO replace params with ProgramReference
+   */
+  public long getProgramRunCount(NamespaceId namespaceId, String appName, ProgramType programType, String program)
+    throws Exception {
+    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    return store.getProgramRunCount(programId);
+  }
+
+  /**
    * Returns the program run count of the given program id list.
    *
-   * @param programIds the list of program ids to get the count
+   * @param programRefs the list of program ids to get the count
    * @return the counts of given program ids
    */
-  public List<RunCountResult> getProgramRunCounts(List<ProgramId> programIds) throws Exception {
+  public List<RunCountResult> getProgramRunCounts(List<ProgramReference> programRefs) throws Exception {
     // filter the result
     Principal principal = authenticationContext.getPrincipal();
-    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programIds), principal);
-    Set<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toSet());
+    Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programRefs), principal);
+    Set<ProgramReference> filteredRefs = programRefs.stream()
+      .filter(visibleEntities::contains).collect(Collectors.toSet());
 
-    Map<ProgramId, RunCountResult> programCounts = store.getProgramRunCounts(filteredIds).stream()
+    Map<ProgramId, RunCountResult> programCounts = store.getProgramRunCounts(filteredRefs).stream()
       .collect(Collectors.toMap(RunCountResult::getProgramId, c -> c));
 
     List<RunCountResult> result = new ArrayList<>();
-    for (ProgramId programId : programIds) {
-      if (!visibleEntities.contains(programId)) {
+    for (ProgramId programId : programCounts.keySet()) {
+      if (!visibleEntities.contains(programId.getProgramReference())) {
         result.add(new RunCountResult(programId, null, new UnauthorizedException(principal, programId)));
       } else {
         RunCountResult count = programCounts.get(programId);
@@ -290,13 +331,21 @@ public class ProgramLifecycleService {
     if (programSpec == null) {
       throw new NotFoundException(programId);
     }
-    return store.getRuns(programId, programRunStatus, start, end, limit).values().stream().collect(Collectors.toList());
+    return new ArrayList<>(store.getRuns(programId, programRunStatus, start, end, limit).values());
   }
 
   public List<RunRecord> getRunRecords(ProgramId programId, ProgramRunStatus programRunStatus,
                                        long start, long end, int limit) throws Exception {
     return getRunRecordMetas(programId, programRunStatus, start, end, limit).stream()
       .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
+  }
+
+  // TODO replace params with ProgramReference
+  public List<RunRecord> getRunRecords(NamespaceId namespaceId, String appName, ProgramType programType,
+                                       String program, ProgramRunStatus programRunStatus,
+                                       long start, long end, int limit) throws Exception {
+    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    return getRunRecords(programId, programRunStatus, start, end, limit);
   }
 
   /**
@@ -313,14 +362,14 @@ public class ProgramLifecycleService {
    * @throws UnauthorizedException if the principal does not have access to the program
    * @throws Exception if there was some other exception performing authorization checks
    */
-  public List<ProgramHistory> getRunRecords(Collection<ProgramId> programs, ProgramRunStatus programRunStatus,
+  public List<ProgramHistory> getRunRecords(Collection<ProgramReference> programs, ProgramRunStatus programRunStatus,
                                             long start, long end, int limit) throws Exception {
     List<ProgramHistory> result = new ArrayList<>();
 
     // do this in batches to avoid transaction timeouts.
-    List<ProgramId> batch = new ArrayList<>(20);
+    List<ProgramReference> batch = new ArrayList<>(20);
 
-    for (ProgramId program : programs) {
+    for (ProgramReference program : programs) {
       batch.add(program);
 
       if (batch.size() >= 20) {
@@ -334,17 +383,19 @@ public class ProgramLifecycleService {
     return result;
   }
 
-  private void addProgramHistory(List<ProgramHistory> histories, List<ProgramId> programs,
+  private void addProgramHistory(List<ProgramHistory> histories, List<ProgramReference> programs,
                                  ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
     Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programs),
-                                                                              authenticationContext.getPrincipal());
+                                                                       authenticationContext.getPrincipal());
+
     for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit)) {
-      ProgramId programId = programHistory.getProgramId();
+      ProgramReference programId = programHistory.getProgramId().getProgramReference();
       if (visibleEntities.contains(programId)) {
         histories.add(programHistory);
       } else {
-        histories.add(new ProgramHistory(programId, Collections.emptyList(),
-                                      new UnauthorizedException(authenticationContext.getPrincipal(), programId)));
+        histories.add(new ProgramHistory(programHistory.getProgramId(), Collections.emptyList(),
+                                         new UnauthorizedException(authenticationContext.getPrincipal(),
+                                                                   programHistory.getProgramId())));
       }
     }
   }
@@ -405,6 +456,24 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the {@link ProgramSpecification} for the latest version program.
+   *
+   * @param namespaceId the namespaceId of the program
+   * @param appName the application name of the program
+   * @param programType the program type of the program
+   * @param program the name of the program
+   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}, or {@code null} if it does
+   *         not exist
+   *  TODO replace params with ProgramReference
+   */
+  @Nullable
+  public ProgramSpecification getProgramSpecification(NamespaceId namespaceId, String appName,
+                                                      ProgramType programType, String program) throws Exception {
+    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    return getProgramSpecification(programId);
+  }
+
+  /**
    * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
    * @param appSpec the {@link ApplicationSpecification} of the existing application
    * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
@@ -447,8 +516,10 @@ public class ProgramLifecycleService {
    *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
+  @Deprecated
   public RunId run(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
+    checkLatestVersionExeceution(programId);
     checkConcurrentExecution(programId);
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
@@ -460,6 +531,30 @@ public class ProgramLifecycleService {
     authorizePipelineRuntimeImpersonation(userArgs);
 
     return runInternal(programId, userArgs, sysArgs, debug);
+  }
+
+  /**
+   * Starts the latest version of a Program with the specified argument overrides.
+   *
+   * @param namespaceId the namespaceId of the program to run
+   * @param appName the application name of the program to run
+   * @param programType the program type of the program to run
+   * @param program the name of the program to run
+   * @param overrides the arguments to override in the program's configured user arguments before starting
+   * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
+   * @return {@link RunId}
+   * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
+   * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
+   * @throws IOException if there is an error starting the program
+   * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
+   *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
+   * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
+   */
+  //TODO replace params with ProgramReference
+  public RunId run(NamespaceId namespaceId, String appName, ProgramType programType, String program,
+                   Map<String, String> overrides, boolean debug) throws Exception {
+    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    return run(programId, overrides, debug);
   }
 
   /**
@@ -492,13 +587,21 @@ public class ProgramLifecycleService {
     return runs;
   }
 
+  public Set<RunId> restart(NamespaceId namespaceId, String appName, long startTimeSeconds, long endTimeSeconds)
+    throws Exception {
+    ApplicationId applicationId = getLatestApplicationId(namespaceId, appName);
+    return restart(applicationId, startTimeSeconds, endTimeSeconds);
+  }
+
   /**
-   * Stop all active programs for the given application
+   * Stop all active programs for the given application across all versions
    * @param applicationId
    * @throws Exception
+   * TODO replace param with ApplicationReference
    */
   public void stopAll(ApplicationId applicationId) throws Exception {
-    Map<ProgramRunId, RunRecordDetail> runMap = store.getActiveRuns(applicationId);
+    Map<ProgramRunId, RunRecordDetail> runMap = store.getAllActiveRuns(applicationId.getNamespaceId(),
+                                                                       applicationId.getApplication());
     for (ProgramRunId programRunId : runMap.keySet()) {
       stop(programRunId.getParent(), programRunId.getRun(), 0);
     }
@@ -713,6 +816,26 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Stops the latest version of a program. The first run of the latest version program as found by
+   * {@link ProgramRuntimeService} is stopped.
+   *
+   * @param namespaceId the namespaceId of the program to stop
+   * @param appName the application name of the program to stop
+   * @param programType the program type of the program to stop
+   * @param program the name of the program to stop
+   * @throws NotFoundException if the app, program or run was not found
+   * @throws BadRequestException if an attempt is made to stop a program that is either not running or
+   *                             was started by a workflow
+   * @throws InterruptedException if there was a problem while waiting for the stop call to complete
+   * @throws ExecutionException if there was a problem while waiting for the stop call to complete
+   * TODO replace params with ProgramReference
+   */
+  public void stop(NamespaceId namespaceId, String appName, ProgramType programType, String program) throws Exception {
+    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    stop(programId, null, 0);
+  }
+
+  /**
    * Stops the specified run of the specified program.
    *
    * @param programId the {@link ProgramId program} to stop
@@ -758,7 +881,7 @@ public class ProgramLifecycleService {
 
     if (activeRunRecords.isEmpty()) {
       // Error out if no run information from run record
-      Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+      ensureProgramExists(programId);
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
 
@@ -796,7 +919,7 @@ public class ProgramLifecycleService {
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+    ensureProgramExists(programId);
     preferencesService.setProperties(programId, runtimeArgs);
   }
 
@@ -812,7 +935,7 @@ public class ProgramLifecycleService {
    */
   public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+    ensureProgramExists(programId);
     return preferencesService.getProperties(programId);
   }
 
@@ -869,7 +992,23 @@ public class ProgramLifecycleService {
    */
   public void ensureProgramExists(ProgramId programId) throws Exception {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+
+    ProgramId pid = programId;
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
+    if (appSpec == null) {
+      throw new ProgramNotFoundException(programId);
+    }
+
+    // The -SNAPSHOT version can be a reference to the actual latest version, hence the appSpec is the one
+    // containing the true version.
+    if (ApplicationId.DEFAULT_VERSION.equals(pid.getVersion())
+        && !Objects.equals(pid.getVersion(), appSpec.getAppVersion())) {
+      pid = pid.getNamespaceId()
+        .app(appSpec.getName(), appSpec.getAppVersion())
+        .program(programId.getType(), programId.getProgram());
+    }
+
+    Store.ensureProgramExists(pid, appSpec);
   }
 
   private boolean isStopped(ProgramId programId) throws Exception {
@@ -1182,5 +1321,30 @@ public class ProgramLifecycleService {
       LOG.debug("Failed to decode userId {} with exception {}", encodedUserId, e);
     }
     return decodedUserId;
+  }
+
+  private void checkLatestVersionExeceution(ProgramId programId)
+    throws BadRequestException, ApplicationNotFoundException {
+    String latestVersion = getLatestApplicationId(programId.getNamespaceId(), programId.getApplication()).getVersion();
+    if (!latestVersion.equals(programId.getVersion())) {
+      throw new BadRequestException(String.format("Start action is only allowed on the latest version %s. " +
+                                                    "Please use the versionless start API instead.", latestVersion));
+    }
+  }
+
+  private ApplicationId getLatestApplicationId(NamespaceId namespaceId, String appName)
+    throws ApplicationNotFoundException {
+    ApplicationMeta applicationMeta = store.getLatest(namespaceId, appName);
+    if (applicationMeta == null) {
+      throw new ApplicationNotFoundException(namespaceId.app(appName));
+    }
+    String latestVersion = applicationMeta.getSpec().getAppVersion();
+    return namespaceId.app(appName, latestVersion);
+  }
+
+  private ProgramId getLatestProgramId(NamespaceId namespaceId, String appName, ProgramType programType, String program)
+    throws ApplicationNotFoundException {
+    ApplicationId applicationId = getLatestApplicationId(namespaceId, appName);
+    return applicationId.program(programType, program);
   }
 }

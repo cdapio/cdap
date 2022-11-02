@@ -30,7 +30,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.SlowTests;
-import io.cdap.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -97,7 +96,7 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     waitState(pingService, STOPPED);
   }
 
-  @Category(XSlowTests.class)
+  @Category(SlowTests.class)
   @Test
   public void testConcurrentWorkflowLaunchingAndRunningLimit() throws Exception {
     // Deploy, check the status

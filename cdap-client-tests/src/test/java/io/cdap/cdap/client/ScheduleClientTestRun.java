@@ -66,7 +66,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws Throwable {
     try {
-      appClient.delete(app);
+      appClient.deleteApp(app);
     } catch (Exception e) {
       LOG.error("Error deleting app {} during test cleanup.", e);
     }

@@ -51,7 +51,7 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
     programRunRecordFetcher = new RemoteProgramRunRecordFetcher(
       getInjector().getInstance(RemoteClientFactory.class));
   }
-
+  
   @Test
   public void testGetRunRecordMeta() throws Exception {
     String namespace = TEST_NAMESPACE1;

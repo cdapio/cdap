@@ -60,8 +60,8 @@ public class TestAppWithCube extends TestBase {
 
   private static final Gson GSON = new Gson();
 
-  @Category(SlowTests.class)
   @Test
+  @Category(SlowTests.class)
   public void testApp() throws Exception {
     // Deploy the application
     ApplicationManager appManager = deployApplication(AppWithCube.class);
