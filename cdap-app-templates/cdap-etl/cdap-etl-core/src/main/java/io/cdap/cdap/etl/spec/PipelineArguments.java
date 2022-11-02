@@ -44,6 +44,7 @@ public final class PipelineArguments {
   public static final String TRANSFORMATION_PUSHDOWN_ARTIFACT_PREFIX = TRANSFORMATION_PUSHDOWN_PREFIX + "artifact.";
   public static final String TRANSFORMATION_PUSHDOWN_PROPERTIES_PREFIX = TRANSFORMATION_PUSHDOWN_PREFIX + "properties.";
   public static final String PIPELINE_CONFIG_OVERWRITE = "app.pipeline.overwriteConfig";
+  public static final String PIPELINE_DYNAMIC_CONFIG = "app.pipeline.dynamic.config";
 
   /**
    *

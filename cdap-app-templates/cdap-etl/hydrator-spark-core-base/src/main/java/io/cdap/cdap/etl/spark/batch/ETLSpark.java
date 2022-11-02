@@ -71,8 +71,21 @@ public class ETLSpark extends AbstractSpark {
     this.deployedNamespace = deployedNamespace;
   }
 
+  public ETLSpark(String deployedNamespace) {
+    this(null, null, deployedNamespace);
+  }
+
   @Override
   protected void configure() {
+    if (phaseSpec == null) {
+      // this is null if the pipeline is fully dynamic.
+      // For fully dynamic pipelines, the phaseSpec will be null when the pipeline is deployed
+      // It will be non-null at the start of the run, when configure() is called again.
+      setName("phase-1");
+      setDescription("Phase 1 of the pipeline.");
+      return;
+    }
+
     setName(phaseSpec.getPhaseName());
     setDescription(phaseSpec.getDescription());
 

@@ -79,6 +79,7 @@ import io.cdap.cdap.etl.mock.batch.FilterTransform;
 import io.cdap.cdap.etl.mock.batch.IncapableSink;
 import io.cdap.cdap.etl.mock.batch.IncapableSource;
 import io.cdap.cdap.etl.mock.batch.LookupTransform;
+import io.cdap.cdap.etl.mock.batch.MockConfigProvider;
 import io.cdap.cdap.etl.mock.batch.MockExternalSink;
 import io.cdap.cdap.etl.mock.batch.MockExternalSource;
 import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSink;
@@ -110,6 +111,7 @@ import io.cdap.cdap.etl.proto.v2.PluginPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.TriggeringPipelineId;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.etl.spec.PipelineArguments;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.metadata.DatasetFieldLineageSummary;
@@ -125,6 +127,7 @@ import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
@@ -2633,7 +2636,16 @@ public class DataPipelineTest extends HydratorTestBase {
     testMultipleJoiner(Engine.SPARK);
   }
 
+  @Test
+  public void testDynamicMultipleJoinerSpark() throws Exception {
+    testMultipleJoiner(Engine.SPARK, true);
+  }
+
   private void testMultipleJoiner(Engine engine) throws Exception {
+    testMultipleJoiner(engine, false);
+  }
+
+  private void testMultipleJoiner(Engine engine, boolean isDynamic) throws Exception {
     /*
      * source1 ----> t1 ------
      *                        | --> innerjoin ----> t4 ------
@@ -2708,7 +2720,14 @@ public class DataPipelineTest extends HydratorTestBase {
       .setEngine(engine)
       .build();
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ETLBatchConfig deployConfig = etlConfig;
+    if (isDynamic) {
+      deployConfig = ETLBatchConfig.builder()
+        .setConfigProvider(new ETLStage("c", MockConfigProvider.getPlugin(etlConfig)))
+        .build();
+    }
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, deployConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp-" + engine);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
@@ -2732,15 +2751,28 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("i_id", "33").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1MulitJoinInput));
+    DatasetId datasetId1 = NamespaceId.DEFAULT.dataset(source1MulitJoinInput);
+    DatasetId datasetId2 = NamespaceId.DEFAULT.dataset(source2MultiJoinInput);
+    DatasetId datasetId3 = NamespaceId.DEFAULT.dataset(source3MultiJoinInput);
+    if (isDynamic) {
+      addDatasetInstance(datasetId1, Table.TYPE);
+      addDatasetInstance(datasetId2, Table.TYPE);
+      addDatasetInstance(datasetId3, Table.TYPE);
+    }
+    DataSetManager<Table> inputManager = getDataset(datasetId1);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
-    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2MultiJoinInput));
+    inputManager = getDataset(datasetId2);
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source3MultiJoinInput));
+    inputManager = getDataset(datasetId3);
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike, recordTrasPlane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
+    Map<String, String> runtimeArgs = new HashMap<>();
+    if (isDynamic) {
+      runtimeArgs.put(PipelineArguments.PIPELINE_CONFIG_OVERWRITE, "true");
+      runtimeArgs.put(PipelineArguments.PIPELINE_DYNAMIC_CONFIG, GSON.toJson(etlConfig));
+    }
+    workflowManager.start(runtimeArgs);
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema2)

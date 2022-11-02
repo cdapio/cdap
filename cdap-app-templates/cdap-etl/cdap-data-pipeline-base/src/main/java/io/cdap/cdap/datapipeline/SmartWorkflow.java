@@ -33,6 +33,7 @@ import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
@@ -57,6 +58,7 @@ import io.cdap.cdap.etl.api.batch.PostAction;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.dynamic.BatchConfigProvider;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.ActionSpec;
@@ -71,6 +73,7 @@ import io.cdap.cdap.etl.batch.connector.ConnectorSource;
 import io.cdap.cdap.etl.batch.connector.MultiConnectorSource;
 import io.cdap.cdap.etl.batch.customaction.PipelineAction;
 import io.cdap.cdap.etl.batch.mapreduce.ETLMapReduce;
+import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAlertPublisherContext;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
@@ -90,6 +93,7 @@ import io.cdap.cdap.etl.planner.PipelinePlan;
 import io.cdap.cdap.etl.planner.PipelinePlanner;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.ETLTransformationPushdown;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -167,6 +171,28 @@ public class SmartWorkflow extends AbstractWorkflow {
   protected void configure() {
     setName(NAME);
     setDescription("Data Pipeline Workflow");
+
+    ETLStage configProvider = config.getConfigProvider();
+    if (configProvider != null) {
+      // this means configure() is being called during application deployment. Register the config provider plugin.
+      PluginSelector pluginSelector = new ArtifactSelectorProvider()
+        .getPluginSelector(configProvider.getPlugin().getArtifactConfig());
+
+      BatchConfigProvider provider = applicationConfigurer.usePlugin(
+        BatchConfigProvider.PLUGIN_TYPE, configProvider.getPlugin().getName(),
+        configProvider.getName(), configProvider.getPlugin().getPluginProperties(), pluginSelector);
+      // TODO: add a method for BatchConfigProvider to validate its config properties and call it here
+
+      if (applicationConfigurer.getRuntimeConfigurer() == null) {
+        // this means configure() is being called during application deployment
+        // Have already verified that the config provider plugin exists and is valid, can just return.
+        return;
+      } else {
+        // this means configure() is being called at the start of a run. Need to replace the config with
+        // one from the provider.
+        config = GSON.fromJson(provider.get(), ETLBatchConfig.class);
+      }
+    }
 
     // This will also register all the plugin in the workflow so that CDAP knows what plugins the
     // workflow needs to run. If a plugin has a requirement that will not be available during that run, CDAP can fail
@@ -784,13 +810,19 @@ public class SmartWorkflow extends AbstractWorkflow {
     if (!runtimeArguments.containsKey(PipelineArguments.PIPELINE_CONFIG_OVERWRITE)) {
       return originalConfig;
     }
+
+    String dynamicConfigStr = runtimeArguments.get(PipelineArguments.PIPELINE_DYNAMIC_CONFIG);
+    if (dynamicConfigStr != null) {
+      return GSON.fromJson(dynamicConfigStr, ETLBatchConfig.class);
+    }
+
     boolean processTimingEnabled = PipelineArguments.isProcessTimingEnabled(runtimeArguments,
-                                                  originalConfig.isProcessTimingEnabled());
+                                                                            originalConfig.isProcessTimingEnabled());
     Map<String, String> properties = PipelineArguments.getEngineProperties(runtimeArguments,
-                                                                          originalConfig.getProperties());
+                                                                           originalConfig.getProperties());
     boolean pushdownEnabled = PipelineArguments.isPushdownEnabled(runtimeArguments, originalConfig.isPushdownEnabled());
-    ETLTransformationPushdown transformationPushdown = PipelineArguments.getTransformationPushdown(runtimeArguments,
-                                                                 originalConfig.getTransformationPushdown());
+    ETLTransformationPushdown transformationPushdown =
+      PipelineArguments.getTransformationPushdown(runtimeArguments, originalConfig.getTransformationPushdown());
     // overwrite config using runtimeargs
     ETLBatchConfig.Builder builder = new ETLBatchConfig.Builder(originalConfig);
     if (!processTimingEnabled) {
