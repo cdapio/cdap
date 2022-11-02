@@ -1254,7 +1254,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     long startTime = System.nanoTime();
     Optional<byte[]> state = store.getState(request);
     emitTimeMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
-                 Constants.Metrics.AppStateStore.STATE_STORE_GET_LATENCY_MS, startTime);
+                    Constants.Metrics.AppStateStore.STATE_STORE_GET_LATENCY_MS, startTime);
     return state;
   }
 
@@ -1270,7 +1270,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     long startTime = System.nanoTime();
     store.saveState(request);
     emitTimeMetrics(request.getNamespaceId().getNamespace(), request.getAppName(),
-                Constants.Metrics.AppStateStore.STATE_STORE_SAVE_LATENCY_MS, startTime);
+                    Constants.Metrics.AppStateStore.STATE_STORE_SAVE_LATENCY_MS, startTime);
   }
 
   /**
