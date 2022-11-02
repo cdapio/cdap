@@ -353,8 +353,12 @@ public class AppMetadataStore {
     if (latestOnly) {
       // if only return latest version of the app, whether the range uses version field or creationTime field
       // doesn't matter, since records will be sort on appName
-      return table.scan(range, Integer.MAX_VALUE,
-                        Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"), sortOrder);
+      // Also we treat latest=["true",null] as latest for backward compatibility.
+      // Prior to 6.8, all versions of an application were returned in the list apps api, not just the latest version.
+      Collection<Field<?>> filterIndexes =
+        ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"),
+                         Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
+      return table.scan(range, Integer.MAX_VALUE, filterIndexes, sortOrder);
     }
     if (sortCreationTime) {
       // sort on Creation Time
@@ -392,7 +396,8 @@ public class AppMetadataStore {
     Field<?> indexField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
     StructuredTable appSpecTable = getApplicationSpecificationTable();
 
-    try (CloseableIterator<StructuredRow> iterator = appSpecTable.scan(range, 1, indexField)) {
+    try (CloseableIterator<StructuredRow> iterator =
+           appSpecTable.scan(range, 1, Collections.singletonList(indexField))) {
       if (iterator.hasNext()) {
         // There must be only one entry corresponding to latest = true
         return decodeRow(iterator.next());

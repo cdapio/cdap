@@ -754,7 +754,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     isLastPage = false;
     currentResultSize = 0;
     while (!isLastPage) {
-      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, AllProgramsApp.NAME, null, null, null);
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, AllProgramsApp.NAME, null, false, null);
       currentResultSize = result.get("applications").getAsJsonArray().size();
       count += currentResultSize;
       token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();

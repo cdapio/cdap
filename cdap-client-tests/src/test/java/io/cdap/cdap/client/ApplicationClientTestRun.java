@@ -284,7 +284,6 @@ public class ApplicationClientTestRun extends ClientTestBase {
       ApplicationDetail fakeAppDetail2 = appClient.get(new ApplicationId(NamespaceId.DEFAULT.getNamespace(),
                                                                          FakeApp.NAME, version));
 
-
       // app2 should use fake-0.1.0-SNAPSHOT
       appClient.deploy(appId2, new AppRequest<Config>(new ArtifactSummary("fake", "0.1.0-SNAPSHOT")));
       version = appClient.listAppVersions(NamespaceId.DEFAULT, "fake2").get(0);

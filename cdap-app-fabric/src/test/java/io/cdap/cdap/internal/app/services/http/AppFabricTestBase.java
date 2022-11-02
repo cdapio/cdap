@@ -606,7 +606,8 @@ public abstract class AppFabricTestBase {
   }
 
   protected List<JsonObject> getAppList(String namespace) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    HttpResponse response = doGet(getVersionedAPIPath("apps/?latestOnly=false",
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     assertResponseCode(200, response);
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
   }
