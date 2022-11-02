@@ -26,6 +26,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfos;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.messaging.MessagingService;
@@ -39,6 +40,7 @@ import io.cdap.cdap.spi.events.EventWriter;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
 import io.cdap.cdap.spi.events.ProgramStatusEvent;
 import io.cdap.cdap.spi.events.ProgramStatusEventDetails;
+import io.cdap.cdap.spi.events.StartMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,18 +157,20 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
       if (!shouldPublish(programRunId)) {
         return;
       }
+      String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
+      String sysArgsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+      Type argsMapType = new TypeToken<Map<String, String>>() {
+      }.getType();
       ProgramStatusEventDetails.Builder builder = ProgramStatusEventDetails
         .getBuilder(programRunId.getRun(), programRunId.getApplication(), programRunId.getProgram(),
                     programRunId.getNamespace(),
                     programStatus,
                     RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
-      String userArgsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
-      String sysArgsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-      Type argsMapType = new TypeToken<Map<String, String>>() {
-      }.getType();
+      StartMetadata startMetadata = TriggerInfos.getStartMetadata(GSON.fromJson(sysArgsString, argsMapType));
       builder = builder
         .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
-        .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType));
+        .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType))
+        .withStartMetadata(startMetadata);
       if (programRunStatus.isEndState()) {
         populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId);
       } else {
