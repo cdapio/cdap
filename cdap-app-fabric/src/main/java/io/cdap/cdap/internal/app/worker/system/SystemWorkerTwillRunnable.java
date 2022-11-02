@@ -34,6 +34,7 @@ import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
+import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -161,16 +162,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
           @Override
           protected void configure() {
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-            bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
-            bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class)
-              .in(Scopes.SINGLETON);
-            bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
-            OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);
-            install(new FactoryModuleBuilder()
-                      .implement(ArtifactManager.class, RemoteArtifactManager.class)
-                      .build(ArtifactManagerFactory.class));
           }
-        }),
+        }, getArtifactManagerModules(cConf)),
       Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
         .with(new AbstractModule() {
           @Override
@@ -236,6 +229,25 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     return Guice.createInjector(modules);
   }
 
+  private static Module getArtifactManagerModules(CConfiguration cConf) {
+    if (cConf.getBoolean(Constants.SystemWorker.ARTIFACT_LOCALIZER_ENABLED)) {
+      return new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
+          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class)
+            .in(Scopes.SINGLETON);
+          bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
+          OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);
+          install(new FactoryModuleBuilder().implement(ArtifactManager.class, RemoteArtifactManager.class)
+                    .build(ArtifactManagerFactory.class));
+        }
+      };
+    } else {
+      return new DistributedArtifactManagerModule();
+    }
+  }
+
   @Override
   public void initialize(TwillContext context) {
     super.initialize(context);
@@ -266,7 +278,9 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
     LOG.debug("Starting system worker");
     systemWorker.start();
-    artifactLocalizerService.start();
+    if (artifactLocalizerService != null) {
+      artifactLocalizerService.start();
+    }
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -326,6 +340,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
                                                               SystemWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     systemWorker = injector.getInstance(SystemWorkerService.class);
-    artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    if (cConf.getBoolean(Constants.SystemWorker.ARTIFACT_LOCALIZER_ENABLED)) {
+      artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    }
   }
 }
