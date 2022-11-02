@@ -5482,6 +5482,14 @@
   </property>
 
   <property>
+    <name>feature.pushdown.transformation.windowaggregation.enabled</name>
+    <value>true</value>
+    <description>
+      Enables Window aggregation transformation in pushdown execution.
+    </description>
+  </property>
+
+  <property>
     <name>feature.streaming.pipeline.checkpoint.deletion.enabled</name>
     <value>false</value>
     <description>
