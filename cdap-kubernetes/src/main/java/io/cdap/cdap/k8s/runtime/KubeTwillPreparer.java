@@ -585,7 +585,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       try {
         saveSpecification(twillSpec, runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC));
         saveArguments(arguments, runnableArgs, runtimeConfigDir.resolve(Constants.Files.ARGUMENTS));
+        long start = System.currentTimeMillis();
         runtimeConfigLocation = createRuntimeConfigJar(runtimeConfigDir);
+        LOG.error(">>>>> createRuntimeConfigJar took {}", System.currentTimeMillis() - start);
       } finally {
         Paths.deleteRecursively(runtimeConfigDir);
       }
@@ -938,6 +940,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         Location location;
 
         URI uri = localFile.getURI();
+        long start = System.currentTimeMillis();
         if (locationScheme.equals(uri.getScheme())) {
           // If the source file location is having the same scheme as the target location, no need to copy
           location = appLocation.getLocationFactory().create(uri);
@@ -949,6 +952,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           LOG.debug("Done {} : {}", runnableName, url);
         }
 
+        LOG.error(">>>> Create and copy took {}", System.currentTimeMillis() - start);
         runnableFiles.add(new DefaultLocalFile(localFile.getName(), location.toURI(), location.lastModified(),
                                                location.length(), localFile.isArchive(), localFile.getPattern()));
       }
