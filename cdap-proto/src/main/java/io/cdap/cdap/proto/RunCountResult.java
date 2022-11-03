@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.proto;
 
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -26,18 +26,18 @@ import javax.annotation.Nullable;
  * is contained
  */
 public class RunCountResult {
-  private final ProgramId programId;
+  private final ProgramReference programReference;
   private final Long count;
   private final Exception exception;
 
-  public RunCountResult(ProgramId programId, @Nullable Long count, @Nullable Exception exception) {
-    this.programId = programId;
+  public RunCountResult(ProgramReference programReference, @Nullable Long count, @Nullable Exception exception) {
+    this.programReference = programReference;
     this.count = count;
     this.exception = exception;
   }
 
-  public ProgramId getProgramId() {
-    return programId;
+  public ProgramReference getProgramReference() {
+    return programReference;
   }
 
   @Nullable
@@ -60,13 +60,13 @@ public class RunCountResult {
     }
 
     RunCountResult that = (RunCountResult) o;
-    return Objects.equals(programId, that.programId) &&
+    return Objects.equals(programReference, that.programReference) &&
       Objects.equals(count, that.count) &&
       Objects.equals(exception, that.exception);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(programId, count, exception);
+    return Objects.hash(programReference, count, exception);
   }
 }

@@ -336,7 +336,7 @@ public class DefaultStore implements Store {
         throw new ApplicationNotFoundException(namespaceId.app(appName));
       }
       WorkflowId workflow = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
-                                     program);
+                                           program);
       return getWorkflowTable(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
     });
   }
@@ -346,6 +346,16 @@ public class DefaultStore implements Store {
                                                     long startTime, long endTime, int limit) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, null);
+    });
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordDetail> getAllRuns(ProgramReference programReference, ProgramRunStatus status,
+                                                       long startTime, long endTime, int limit,
+                                                       Predicate<RunRecordDetail> filter) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getAllProgramRuns(programReference, status, startTime, endTime, limit,
+                                                            filter);
     });
   }
 
@@ -907,7 +917,7 @@ public class DefaultStore implements Store {
       if (appSpec == null) {
         throw new NotFoundException(programId.getParent());
       }
-      ProgramSpecification programSpec = getExistingAppProgramSpecification(appSpec, programId);
+      ProgramSpecification programSpec = getExistingAppProgramSpecification(appSpec, programId.getProgramReference());
       // program not found
       if (programSpec == null) {
         throw new NotFoundException(programId);
@@ -917,24 +927,37 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunCountResult> getProgramRunCounts(Collection<ProgramReference> programRefs) {
+  public long getProgramTotalRunCount(ProgramReference programReference) throws NotFoundException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+      ApplicationMeta appMeta = getLatest(programReference.getNamespaceId(), programReference.getApplication());
+      // app not found
+      if (appMeta == null) {
+        throw new NotFoundException(programReference.getParent());
+      }
+      ProgramSpecification programSpec = getExistingAppProgramSpecification(appMeta.getSpec(), programReference);
+      // program not found
+      if (programSpec == null) {
+        throw new NotFoundException(programReference);
+      }
+      return appMetadataStore.getProgramTotalRunCount(programReference);
+    }, NotFoundException.class);
+  }
+
+  @Override
+  public List<RunCountResult> getProgramTotalRunCounts(Collection<ProgramReference> programRefs) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<RunCountResult> result = new ArrayList<>();
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
 
-      Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCounts(
-        appMetadataStore.filterProgramsExistence(programRefs));
-
-      Map<ProgramReference, ProgramId> programRefsMap =
-        runCounts.keySet().stream().collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
-
+      Set<ProgramReference> existingPrograms = appMetadataStore.filterProgramsExistence(programRefs).stream().map(
+        ProgramId::getProgramReference).collect(Collectors.toSet());
+      Map<ProgramReference, Long> runCounts = appMetadataStore.getProgramTotalRunCounts(existingPrograms);
       for (ProgramReference programRef : programRefs) {
-        ProgramId program = programRefsMap.get(programRef);
-        if (program == null) {
-          result.add(new RunCountResult(programRef.id(ApplicationId.DEFAULT_VERSION),
-                                        null, new NotFoundException(programRef)));
+        if (!existingPrograms.contains(programRef)) {
+          result.add(new RunCountResult(programRef, null, new NotFoundException(programRef)));
         } else {
-          result.add(new RunCountResult(program, runCounts.get(program), null));
+          result.add(new RunCountResult(programRef, runCounts.get(programRef), null));
         }
       }
       return result;
@@ -1021,14 +1044,14 @@ public class DefaultStore implements Store {
   /**
    * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
    * @param appSpec the {@link ApplicationSpecification} of the existing application
-   * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
+   * @param programReference the {@link ProgramReference} for which the {@link ProgramSpecification} is requested
    * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
    */
   @Nullable
   private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec,
-                                                                  ProgramId programId) {
-    String programName = programId.getProgram();
-    ProgramType type = programId.getType();
+                                                                  ProgramReference programReference) {
+    String programName = programReference.getProgram();
+    ProgramType type = programReference.getType();
     switch (type) {
       case MAPREDUCE:
         return appSpec.getMapReduce().get(programName);
