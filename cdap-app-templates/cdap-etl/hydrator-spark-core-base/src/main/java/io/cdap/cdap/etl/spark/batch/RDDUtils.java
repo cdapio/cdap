@@ -78,4 +78,8 @@ public class RDDUtils {
     }
   }
 
+  public static void logExecutionPlan(JavaPairRDD<?, ?> rdd) {
+    LOG.debug("Execution plan:");
+    LOG.debug(rdd.toDebugString());
+  }
 }
