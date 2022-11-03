@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillController;
 import io.kubernetes.client.openapi.ApiCallback;
 import io.kubernetes.client.openapi.ApiClient;
@@ -75,6 +76,8 @@ class KubeTwillController implements ExtendedTwillController {
   private final Type resourceType;
   private final V1ObjectMeta meta;
   private final CompletableFuture<Void> startupTaskFuture;
+  private final boolean isUserProgram;
+  private CoreV1Api coreV1Api;
 
   private volatile boolean isStopped;
   private volatile V1JobStatus jobStatus;
@@ -82,16 +85,23 @@ class KubeTwillController implements ExtendedTwillController {
 
   KubeTwillController(String kubeNamespace, RunId runId, DiscoveryServiceClient discoveryServiceClient,
                       ApiClient apiClient, Type resourceType, V1ObjectMeta meta,
-                      CompletableFuture<Void> startupTaskCompletion) {
+                      CompletableFuture<Void> startupTaskCompletion, boolean isUserProgram) {
     this.kubeNamespace = kubeNamespace;
     this.runId = runId;
     this.completion = new CompletableFuture<>();
     this.discoveryServiceClient = discoveryServiceClient;
     this.apiClient = apiClient;
     this.batchV1Api = new BatchV1Api(apiClient);
+    this.coreV1Api = new CoreV1Api(apiClient);
     this.resourceType = resourceType;
     this.meta = meta;
     this.startupTaskFuture = startupTaskCompletion;
+    this.isUserProgram = isUserProgram;
+  }
+
+  @VisibleForTesting
+  void setCoreV1Api(CoreV1Api api) {
+    this.coreV1Api = api;
   }
 
   @Override
@@ -375,7 +385,6 @@ class KubeTwillController implements ExtendedTwillController {
    */
   private CompletableFuture<String> doRestartInstances(String runnable, Set<Integer> instanceIds) {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
-    CoreV1Api api = new CoreV1Api(apiClient);
 
     // Only support for stateful set for now
     if (!V1StatefulSet.class.equals(resourceType)) {
@@ -391,9 +400,9 @@ class KubeTwillController implements ExtendedTwillController {
         .collect(Collectors.joining(",", "(", ")"));
 
     try {
-      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null,
-                                             labelSelector, null, null, null, null, null, null,
-                                             null, createCallbackFutureAdapter(resultFuture, r -> runnable));
+      coreV1Api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null,
+                                                   labelSelector, null, null, null, null, null, null,
+                                                   null, createCallbackFutureAdapter(resultFuture, r -> runnable));
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
     }
@@ -426,6 +435,26 @@ class KubeTwillController implements ExtendedTwillController {
    * @return a {@link CompletionStage} that will complete when the delete operation completed
    */
   private CompletionStage<String> deleteResource(int gracePeriodSeconds) {
+    if (isUserProgram) {
+      // Delete per-run configmap
+      String configMapName = KubeTwillPreparer.CONFIGMAP_NAME_PREFIX + runId.getId();
+      try {
+        coreV1Api.deleteNamespacedConfigMap(configMapName, kubeNamespace, null, null, null, null,
+                                            null, null);
+      } catch (ApiException e) {
+        if (e.getCode() == 404) {
+          LOG.trace("Configmap {} doesn't exist for resource {} of type {}",
+                    configMapName, meta.getName(), resourceType);
+        } else {
+          LOG.warn("Failed to delete configmap {} for resource {} of type {}. Error code: {}, body: {}",
+                   configMapName, meta.getName(), resourceType, e.getCode(), e.getResponseBody());
+          CompletableFuture<String> resultFuture = new CompletableFuture<>();
+          completeExceptionally(resultFuture, e);
+          return resultFuture;
+        }
+      }
+    }
+
     if (V1Deployment.class.equals(resourceType)) {
       return deleteDeployment(gracePeriodSeconds);
     }
@@ -485,7 +514,6 @@ class KubeTwillController implements ExtendedTwillController {
     LOG.debug("Deleting StatefulSet {}", meta.getName());
 
     AppsV1Api appsApi = new AppsV1Api(apiClient);
-    CoreV1Api coreApi = new CoreV1Api(apiClient);
 
     // callback for the delete sts call
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
@@ -512,7 +540,7 @@ class KubeTwillController implements ExtendedTwillController {
           private void deletePVCs() {
             LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
             try {
-              coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
+              coreV1Api.deleteCollectionNamespacedPersistentVolumeClaimAsync(
                 kubeNamespace, null, null, null, null, null, getLabelSelector(),
                 null, null, null, null, null, null, null,
                 createCallbackFutureAdapter(resultFuture, r -> name));
