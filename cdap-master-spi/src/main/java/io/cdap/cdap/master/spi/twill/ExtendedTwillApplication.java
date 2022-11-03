@@ -25,4 +25,11 @@ public interface ExtendedTwillApplication extends TwillApplication {
 
   String getRunId();
 
+  /**
+   * Returns if the application is a system application.
+   *
+   * @return true if the application is a system application, false otherwise.
+   */
+  boolean isSystemApplication();
+
 }
