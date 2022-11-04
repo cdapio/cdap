@@ -1120,6 +1120,8 @@ public final class Constants {
     public static final class AppStateStore {
       public static final String STATE_STORE_GET_COUNT = "state.store.get.count";
       public static final String STATE_STORE_SAVE_COUNT = "state.store.save.count";
+      public static final String STATE_STORE_GET_LATENCY_MS = "state.store.get.latency.millis";
+      public static final String STATE_STORE_SAVE_LATENCY_MS = "state.store.save.latency.millis";
     }
   }
 
