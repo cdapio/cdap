@@ -73,6 +73,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -190,17 +191,12 @@ public class ProgramLifecycleService {
 
   /**
    * Returns the status of the latest version program.
-   * @param namespaceId the namespaceId of the program
-   * @param appName the application name of the program
-   * @param programType the program type of the program
-   * @param program the name of the program to stop
+   * @param programReference the program to get status
    * @return the status of the program
    * @throws NotFoundException if the application to which this program belongs was not found
-   * TODO replace params with ProgramReference
    */
-  public ProgramStatus getProgramStatus(NamespaceId namespaceId, String appName,
-                                        ProgramType programType, String program) throws Exception {
-    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+  public ProgramStatus getProgramStatus(ProgramReference programReference) throws Exception {
+    ProgramId programId = getLatestProgramId(programReference);
     return getProgramStatus(programId);
   }
 
@@ -241,18 +237,14 @@ public class ProgramLifecycleService {
   /**
    * Returns the program run count of the latest version program.
    *
-   * @param namespaceId the namespaceId of the program
-   * @param appName the application name of the program
-   * @param programType the program type of the program
-   * @param program the name of the program
+   * @param programReference the program reference of the program to get run count
    * @return the run count of the latest version program
    * @throws NotFoundException if the application to which this program belongs was not found or the program is not
    *                           found in the app
-   * TODO replace params with ProgramReference
    */
-  public long getProgramRunCount(NamespaceId namespaceId, String appName, ProgramType programType, String program)
+  public long getProgramRunCount(ProgramReference programReference)
     throws Exception {
-    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    ProgramId programId = getLatestProgramId(programReference);
     return store.getProgramRunCount(programId);
   }
 
@@ -340,11 +332,9 @@ public class ProgramLifecycleService {
       .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
   }
 
-  // TODO replace params with ProgramReference
-  public List<RunRecord> getRunRecords(NamespaceId namespaceId, String appName, ProgramType programType,
-                                       String program, ProgramRunStatus programRunStatus,
+  public List<RunRecord> getRunRecords(ProgramReference programReference, ProgramRunStatus programRunStatus,
                                        long start, long end, int limit) throws Exception {
-    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+    ProgramId programId = getLatestProgramId(programReference);
     return getRunRecords(programId, programRunStatus, start, end, limit);
   }
 
@@ -458,18 +448,13 @@ public class ProgramLifecycleService {
   /**
    * Returns the {@link ProgramSpecification} for the latest version program.
    *
-   * @param namespaceId the namespaceId of the program
-   * @param appName the application name of the program
-   * @param programType the program type of the program
-   * @param program the name of the program
+   * @param programReference the program to get specification
    * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}, or {@code null} if it does
    *         not exist
-   *  TODO replace params with ProgramReference
    */
   @Nullable
-  public ProgramSpecification getProgramSpecification(NamespaceId namespaceId, String appName,
-                                                      ProgramType programType, String program) throws Exception {
-    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+  public ProgramSpecification getProgramSpecification(ProgramReference programReference) throws Exception {
+    ProgramId programId = getLatestProgramId(programReference);
     return getProgramSpecification(programId);
   }
 
@@ -536,10 +521,7 @@ public class ProgramLifecycleService {
   /**
    * Starts the latest version of a Program with the specified argument overrides.
    *
-   * @param namespaceId the namespaceId of the program to run
-   * @param appName the application name of the program to run
-   * @param programType the program type of the program to run
-   * @param program the name of the program to run
+   * @param programReference the program to run
    * @param overrides the arguments to override in the program's configured user arguments before starting
    * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
    * @return {@link RunId}
@@ -550,10 +532,8 @@ public class ProgramLifecycleService {
    *                               a user requires {@link ApplicationPermission#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  //TODO replace params with ProgramReference
-  public RunId run(NamespaceId namespaceId, String appName, ProgramType programType, String program,
-                   Map<String, String> overrides, boolean debug) throws Exception {
-    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+  public RunId run(ProgramReference programReference, Map<String, String> overrides, boolean debug) throws Exception {
+    ProgramId programId = getLatestProgramId(programReference);
     return run(programId, overrides, debug);
   }
 
@@ -587,21 +567,20 @@ public class ProgramLifecycleService {
     return runs;
   }
 
-  public Set<RunId> restart(NamespaceId namespaceId, String appName, long startTimeSeconds, long endTimeSeconds)
+  public Set<RunId> restart(ApplicationReference appReference, long startTimeSeconds, long endTimeSeconds)
     throws Exception {
-    ApplicationId applicationId = getLatestApplicationId(namespaceId, appName);
+    ApplicationId applicationId = getLatestApplicationId(appReference);
     return restart(applicationId, startTimeSeconds, endTimeSeconds);
   }
 
   /**
    * Stop all active programs for the given application across all versions
-   * @param applicationId
+   * @param applicationReference application reference of the app to stop all active programs
    * @throws Exception
-   * TODO replace param with ApplicationReference
    */
-  public void stopAll(ApplicationId applicationId) throws Exception {
-    Map<ProgramRunId, RunRecordDetail> runMap = store.getAllActiveRuns(applicationId.getNamespaceId(),
-                                                                       applicationId.getApplication());
+  public void stopAll(ApplicationReference applicationReference) throws Exception {
+    Map<ProgramRunId, RunRecordDetail> runMap = store.getAllActiveRuns(applicationReference.getNamespaceId(),
+                                                                       applicationReference.getApplication());
     for (ProgramRunId programRunId : runMap.keySet()) {
       stop(programRunId.getParent(), programRunId.getRun(), 0);
     }
@@ -819,19 +798,15 @@ public class ProgramLifecycleService {
    * Stops the latest version of a program. The first run of the latest version program as found by
    * {@link ProgramRuntimeService} is stopped.
    *
-   * @param namespaceId the namespaceId of the program to stop
-   * @param appName the application name of the program to stop
-   * @param programType the program type of the program to stop
-   * @param program the name of the program to stop
+   * @param programReference the programReference of the program to stop
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
    * @throws InterruptedException if there was a problem while waiting for the stop call to complete
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
-   * TODO replace params with ProgramReference
    */
-  public void stop(NamespaceId namespaceId, String appName, ProgramType programType, String program) throws Exception {
-    ProgramId programId = getLatestProgramId(namespaceId, appName, programType, program);
+  public void stop(ProgramReference programReference) throws Exception {
+    ProgramId programId = getLatestProgramId(programReference);
     stop(programId, null, 0);
   }
 
@@ -1325,26 +1300,27 @@ public class ProgramLifecycleService {
 
   private void checkLatestVersionExeceution(ProgramId programId)
     throws BadRequestException, ApplicationNotFoundException {
-    String latestVersion = getLatestApplicationId(programId.getNamespaceId(), programId.getApplication()).getVersion();
+    String latestVersion = getLatestApplicationId(programId.getAppReference()).getVersion();
     if (!latestVersion.equals(programId.getVersion())) {
       throw new BadRequestException(String.format("Start action is only allowed on the latest version %s. " +
                                                     "Please use the versionless start API instead.", latestVersion));
     }
   }
 
-  private ApplicationId getLatestApplicationId(NamespaceId namespaceId, String appName)
+  private ApplicationId getLatestApplicationId(ApplicationReference appReference)
     throws ApplicationNotFoundException {
-    ApplicationMeta applicationMeta = store.getLatest(namespaceId, appName);
+    ApplicationMeta applicationMeta = store.getLatest(appReference.getNamespaceId(),
+                                                      appReference.getApplication());
     if (applicationMeta == null) {
-      throw new ApplicationNotFoundException(namespaceId.app(appName));
+      throw new ApplicationNotFoundException(appReference);
     }
     String latestVersion = applicationMeta.getSpec().getAppVersion();
-    return namespaceId.app(appName, latestVersion);
+    return appReference.app(latestVersion);
   }
 
-  private ProgramId getLatestProgramId(NamespaceId namespaceId, String appName, ProgramType programType, String program)
+  private ProgramId getLatestProgramId(ProgramReference programReference)
     throws ApplicationNotFoundException {
-    ApplicationId applicationId = getLatestApplicationId(namespaceId, appName);
-    return applicationId.program(programType, program);
+    ApplicationId applicationId = getLatestApplicationId(programReference.getParent());
+    return applicationId.program(programReference.getType(), programReference.getProgram());
   }
 }
