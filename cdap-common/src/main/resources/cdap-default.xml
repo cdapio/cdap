@@ -5124,6 +5124,14 @@
   </property>
 
   <property>
+    <name>system.worker.artifact.localizer.enabled</name>
+    <value>false</value>
+    <description>
+      If true, artifact localization will be enabled in system pods
+    </description>
+  </property>
+
+  <property>
     <name>artifact.localizer.container.num.cores</name>
     <value>1</value>
     <description>

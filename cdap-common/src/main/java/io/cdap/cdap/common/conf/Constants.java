@@ -486,6 +486,7 @@ public final class Constants {
     public static final String HTTP_CLIENT_READ_TIMEOUT_MS = "system.worker.http.client.read.timeout.ms";
     public static final String HTTP_CLIENT_CONNECTION_TIMEOUT_MS = "system.worker.http.client.connection.timeout.ms";
     public static final String TWILL_CONTROLLER_START_SECONDS = "system.worker.program.twill.controller.start.seconds";
+    public static final String ARTIFACT_LOCALIZER_ENABLED = "system.worker.artifact.localizer.enabled";
 
     /**
      * System worker http handler configuration
