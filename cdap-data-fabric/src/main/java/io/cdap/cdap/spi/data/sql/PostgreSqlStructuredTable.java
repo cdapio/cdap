@@ -718,6 +718,13 @@ public class PostgreSqlStructuredTable implements StructuredTable {
           statement.setBytes(parameterIndex, (byte[]) value);
         }
         break;
+      case BOOLEAN:
+        if (value == null) {
+          statement.setNull(parameterIndex, Types.BOOLEAN);
+        } else {
+          statement.setBoolean(parameterIndex, (boolean) value);
+        }
+        break;
       default:
         // this should not happen since we validate the field before setting
         throw new InvalidFieldException(tableSchema.getTableId(), field.getName());
@@ -973,6 +980,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
         return Fields.floatField(name, (Float) value);
       case STRING:
         return Fields.stringField(name, (String) value);
+      case BOOLEAN:
+        return Fields.booleanField(name, (Boolean) value);
       default:
         throw new IllegalStateException("Unknown field type " + type);
     }

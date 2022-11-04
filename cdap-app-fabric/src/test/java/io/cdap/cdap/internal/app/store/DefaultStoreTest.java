@@ -1272,7 +1272,7 @@ public abstract class DefaultStoreTest {
       actualApps.add(id);
       creationTimes.add(appSpec.getChange().getCreationTimeMillis());
       // TODO: change to boolean after CDAP-19981
-      if ("true".equals(appSpec.getChange().getLatest())) {
+      if (appSpec.getChange().getLatest() == true) {
         latestVersionCount.getAndIncrement();
         latestAppId.set(id);
       }

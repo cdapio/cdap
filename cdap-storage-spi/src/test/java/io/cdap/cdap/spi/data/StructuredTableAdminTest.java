@@ -32,6 +32,7 @@ public abstract class StructuredTableAdminTest {
   private static final FieldType KEY_FIELD = Fields.intType("i");
   private static final FieldType STR_FIELD = Fields.stringType("s");
   private static final FieldType LONG_FIELD = Fields.longType("l");
+  private static final FieldType BOOL_FIELD = Fields.booleanType("b");
   private static final FieldType IDX_FIELD = Fields.stringType("idx");
   protected static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simple_table");
   protected static final StructuredTableId INCONSISTENT_PRIMARY_KEY_TABLE =
@@ -40,9 +41,9 @@ public abstract class StructuredTableAdminTest {
   protected static final StructuredTableSpecification SIMPLE_TABLE_SPEC =
     new StructuredTableSpecification.Builder()
       .withId(SIMPLE_TABLE)
-      .withFields(KEY_FIELD, STR_FIELD, LONG_FIELD)
+      .withFields(KEY_FIELD, STR_FIELD, LONG_FIELD, BOOL_FIELD)
       .withPrimaryKeys(KEY_FIELD.getName())
-      .withIndexes(STR_FIELD.getName())
+      .withIndexes(BOOL_FIELD.getName())
       .build();
 
   protected static final StructuredTableSpecification UPDATED_SIMPLE_TABLE_SPEC =
@@ -52,10 +53,11 @@ public abstract class StructuredTableAdminTest {
         KEY_FIELD,
         STR_FIELD,
         LONG_FIELD,
+        BOOL_FIELD,
         Fields.floatType("updated_field1"),
         Fields.longType("updated_field2"))
       .withPrimaryKeys(KEY_FIELD.getName())
-      .withIndexes(STR_FIELD.getName(), LONG_FIELD.getName())
+      .withIndexes(STR_FIELD.getName(), LONG_FIELD.getName(), BOOL_FIELD.getName())
       .build();
 
   protected static final StructuredTableSpecification INCOMPATIBLE_TABLE_SPEC =
@@ -68,9 +70,9 @@ public abstract class StructuredTableAdminTest {
   protected static final StructuredTableSpecification INCONSISTENT_PRIMARY_KEY_TABLE_SPEC =
     new StructuredTableSpecification.Builder()
       .withId(INCONSISTENT_PRIMARY_KEY_TABLE)
-      .withFields(KEY_FIELD, STR_FIELD, LONG_FIELD, IDX_FIELD)
+      .withFields(KEY_FIELD, STR_FIELD, LONG_FIELD, IDX_FIELD, BOOL_FIELD)
       .withPrimaryKeys(KEY_FIELD.getName(), LONG_FIELD.getName(), STR_FIELD.getName())
-      .withIndexes(IDX_FIELD.getName())
+      .withIndexes(IDX_FIELD.getName(), BOOL_FIELD.getName())
       .build();
 
   /**

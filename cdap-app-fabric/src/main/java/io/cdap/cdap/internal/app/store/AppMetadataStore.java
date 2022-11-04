@@ -349,8 +349,8 @@ public class AppMetadataStore {
       // Also we treat latest=["true",null] as latest for backward compatibility.
       // Prior to 6.8, all versions of an application were returned in the list apps api, not just the latest version.
       Collection<Field<?>> filterIndexes =
-        ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"),
-                         Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
+        ImmutableList.of(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true),
+                         Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
       return table.scan(range, Integer.MAX_VALUE, filterIndexes, sortOrder);
     }
     if (sortCreationTime) {
@@ -386,7 +386,7 @@ public class AppMetadataStore {
   public ApplicationMeta getLatest(ApplicationReference appReference) throws IOException {
     Range range = getNamespaceAndApplicationRange(appReference.getNamespace(), appReference.getApplication());
     // scan based on: latest field set to true
-    Field<?> indexField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
+    Field<?> indexField = Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true);
     StructuredTable appSpecTable = getApplicationSpecificationTable();
 
     try (CloseableIterator<StructuredRow> iterator =
@@ -510,9 +510,9 @@ public class AppMetadataStore {
         }
         
         ApplicationReference appRef = appId.getAppReference();
-        String isLatest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
+        Boolean isLatest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
         // Get either the latest versioned or "-SNAPSHOT" programs.
-        if (!Objects.equals(isLatest, "true") && latestProgramIdsMap.containsKey(appRef)) {
+        if (!Objects.equals(isLatest, true) && latestProgramIdsMap.containsKey(appRef)) {
           // Only proceed when it's latest, or we didn't add this AppReference
           // Otherwise skip current application
           continue;
@@ -588,7 +588,7 @@ public class AppMetadataStore {
         fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD,
                                     appMeta.getChange().getCreationTimeMillis() - 1000));
       }
-      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "false"));
+      fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, false));
       getApplicationSpecificationTable().upsert(fields);
     }
     // Add a new version of the app
@@ -2129,7 +2129,7 @@ public class AppMetadataStore {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appName));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"));
+    fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
     return fields;
   }
 
@@ -2175,7 +2175,7 @@ public class AppMetadataStore {
                                   change.getCreationTimeMillis()));
       fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD, change.getDescription()));
     }
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"));
+    fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
     getApplicationSpecificationTable().upsert(fields);
   }
 
@@ -2223,7 +2223,7 @@ public class AppMetadataStore {
     String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
     String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
     Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
-    String latest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
+    Boolean latest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
     ApplicationMeta meta = GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
                                          ApplicationMeta.class);
     ApplicationSpecification spec = meta.getSpec();
@@ -2427,7 +2427,7 @@ public class AppMetadataStore {
       String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
       String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
       Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
-      String latest = row.getString(StoreDefinition.AppMetadataStore.LATEST_FIELD);
+      Boolean latest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
       if (creationTimeMillis == null) {
         this.changeDetail = null;
       } else {

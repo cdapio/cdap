@@ -89,12 +89,24 @@ public final class MDSKey implements Comparable<MDSKey> {
       return bytes;
     }
 
+
     /**
      * @throws BufferUnderflowException if there is no String as expected
      * @return the next String part in the splitter
      */
     public String getString() {
       return Bytes.toString(getBytes());
+    }
+
+    /**
+     * @throws BufferUnderflowException if there is no boolean as expected
+     * @return the next boolean part in the splitter
+     */
+    public boolean getBoolean() {
+      if (byteBuffer.remaining() < 1) {
+        throw new BufferUnderflowException();
+      }
+      return Bytes.toBoolean(new byte[] { byteBuffer.get() });
     }
 
     /**
@@ -111,6 +123,15 @@ public final class MDSKey implements Comparable<MDSKey> {
      */
     public void skipLong() {
       forward(Longs.BYTES);
+    }
+
+    /**
+     * skips the next Boolean part in the splitter
+     * @throws BufferUnderflowException if there is no Boolean as expected
+     */
+    public void skipBoolean() {
+      // skip a single byte
+      forward(1);
     }
 
     /**
@@ -199,6 +220,11 @@ public final class MDSKey implements Comparable<MDSKey> {
     }
 
     public Builder add(long part) {
+      key = Bytes.add(key, Bytes.toBytes(part));
+      return this;
+    }
+
+    public Builder add(boolean part) {
       key = Bytes.add(key, Bytes.toBytes(part));
       return this;
     }
