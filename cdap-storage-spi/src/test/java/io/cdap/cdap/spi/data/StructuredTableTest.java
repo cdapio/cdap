@@ -158,17 +158,33 @@ public abstract class StructuredTableTest {
 
   @Test
   public void testMultiRead() throws Exception {
-    int max = 10;
+    int max = 100;
 
     // Write multiple rows with sequential keys
     writeSimpleStructuredRows(max, "");
+
+    // Write other rows that share partial primary keys
+    for (int i = max - 1; i >= 0; i--) {
+      List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i),
+                                            Fields.longField(KEY2, (long) i),
+                                            Fields.stringField(KEY3, "new key3"),
+                                            Fields.stringField(STRING_COL, VAL + i),
+                                            Fields.doubleField(DOUBLE_COL, (double) i),
+                                            Fields.floatField(FLOAT_COL, (float) i),
+                                            Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-" + i)));
+      getTransactionRunner().run(context -> {
+        StructuredTable table = context.getTable(SIMPLE_TABLE);
+        table.upsert(fields);
+      });
+    }
 
     // Read all of them back using multiRead
     Collection<Collection<Field<?>>> keys = new ArrayList<>();
     for (int i = 0; i < max; i++) {
       keys.add(Arrays.asList(Fields.intField(KEY, i),
                              Fields.longField(KEY2, (long) i),
-                             Fields.stringField(KEY3, "key3")));
+                             // Mix the shared partial keys to verify that we get rows that exactly match each key set
+                             Fields.stringField(KEY3, i % 2 == 0 ? "key3" : "new key3")));
     }
     // There is no particular ordering of the result, hence use a set to compare
     Set<Collection<Field<?>>> result = TransactionRunners.run(getTransactionRunner(), context -> {
@@ -176,7 +192,7 @@ public abstract class StructuredTableTest {
       return new HashSet<>(convertRowsToFields(table.multiRead(keys).iterator(), Arrays.asList(KEY, KEY2, KEY3)));
     });
 
-    Assert.assertEquals(10, result.size());
+    Assert.assertEquals(100, result.size());
     Assert.assertEquals(new HashSet<>(keys), result);
   }
 
