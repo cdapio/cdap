@@ -57,6 +57,12 @@ public class SpannerStructuredRow implements StructuredRow {
 
   @Nullable
   @Override
+  public Boolean getBoolean(String fieldName) throws InvalidFieldException {
+    return isNull(fieldName) ? null : struct.getBoolean(fieldName);
+  }
+
+  @Nullable
+  @Override
   public String getString(String fieldName) throws InvalidFieldException {
     return isNull(fieldName) ? null : struct.getString(fieldName);
   }

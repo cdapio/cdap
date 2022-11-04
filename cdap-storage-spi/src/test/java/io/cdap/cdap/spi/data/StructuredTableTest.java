@@ -73,6 +73,7 @@ public abstract class StructuredTableTest {
   private static final String BYTES_COL = "col4";
   private static final String LONG_COL = "col5";
   private static final String IDX_COL = "col6";
+  private static final String BOOL_COL = "col7";
   private static final String VAL = "val";
   private static final StructuredTableSchema SIMPLE_SCHEMA;
 
@@ -82,9 +83,9 @@ public abstract class StructuredTableTest {
         .withId(SIMPLE_TABLE)
         .withFields(Fields.intType(KEY), Fields.longType(KEY2), Fields.stringType(KEY3), Fields.stringType(STRING_COL),
                     Fields.doubleType(DOUBLE_COL), Fields.floatType(FLOAT_COL), Fields.bytesType(BYTES_COL),
-                    Fields.longType(LONG_COL), Fields.longType(IDX_COL))
+                    Fields.longType(LONG_COL), Fields.longType(IDX_COL), Fields.booleanType(BOOL_COL))
         .withPrimaryKeys(KEY, KEY2, KEY3)
-        .withIndexes(STRING_COL, IDX_COL)
+        .withIndexes(STRING_COL, IDX_COL, BOOL_COL)
         .build();
       SIMPLE_SCHEMA = new StructuredTableSchema(SIMPLE_SPEC);
     } catch (InvalidFieldException e) {
@@ -991,7 +992,7 @@ public abstract class StructuredTableTest {
   }
 
   @Test
-  public void testIndexScan() throws Exception {
+  public void testIndexScanIndexStringFieldType() throws Exception {
     int num = 5;
     // Write a few records
     List<Collection<Field<?>>> expected = new ArrayList<>();
@@ -1053,7 +1054,58 @@ public abstract class StructuredTableTest {
   }
 
   @Test
-  public void testIndexScanWithRange() throws Exception {
+  public void testIndexScanBooleanFieldType() throws Exception {
+    int num = 5;
+    // Write a few records
+    List<Collection<Field<?>>> expected = new ArrayList<>();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      int counter = 0;
+      for (Boolean value : Arrays.asList(false, true, false)) {
+        for (int i = 0; i < num; ++i) {
+          Collection<Field<?>> keys = Arrays.asList(Fields.intField(KEY, counter),
+                                                    Fields.longField(KEY2, counter * 100L),
+                                                    Fields.stringField(KEY3, "key3"));
+          Collection<Field<?>> fields = new ArrayList<>(keys);
+          fields.add(Fields.booleanField(BOOL_COL, value));
+          table.upsert(fields);
+          expected.add(fields);
+          ++counter;
+        }
+      }
+    });
+
+    List<String> columns = Arrays.asList(KEY, KEY2, KEY3, BOOL_COL);
+
+    // Verify write
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), 1000)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected, rows);
+      }
+    });
+
+    // Scan by index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.booleanField(BOOL_COL, true))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(num, 2 * num), rows);
+      }
+
+      // non-index column
+      try {
+        table.scan(Fields.longField(LONG_COL, 1L));
+        Assert.fail("Expected InvalidFieldException for scanning a non-index column");
+      } catch (InvalidFieldException e) {
+        // Expected
+      }
+    });
+  }
+
+  @Test
+  public void testIndexScanWithRangeStringFieldType() throws Exception {
     int num = 100;
     // Write a few records
     List<Collection<Field<?>>> expected = new ArrayList<>();
@@ -1171,6 +1223,131 @@ public abstract class StructuredTableTest {
                                      Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
                         num * 10,
                         Collections.singletonList(Fields.stringField(STRING_COL, "non")))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(Collections.emptyList(), rows);
+      }
+
+      // non-index column
+      try {
+        table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                   num * 10,
+                   Collections.singletonList(Fields.longField(LONG_COL, 1L)));
+        Assert.fail("Expected InvalidFieldException for scanning a non-index column");
+      } catch (InvalidFieldException e) {
+        // Expected
+      }
+    });
+  }
+
+  @Test
+  public void testIndexScanWithRangeBooleanFieldType() throws Exception {
+    int num = 100;
+    // Write a few records
+    List<Collection<Field<?>>> expected = new ArrayList<>();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      int counter = 0;
+      for (Boolean value : Arrays.asList(false, true, false)) {
+        for (int i = 0; i < num; ++i) {
+          Collection<Field<?>> fields = Arrays.asList(Fields.intField(KEY, counter),
+                                                      Fields.longField(KEY2, counter * 100L),
+                                                      Fields.stringField(KEY3, "key3"),
+                                                      Fields.booleanField(BOOL_COL, value));
+          table.upsert(fields);
+          expected.add(fields);
+          ++counter;
+        }
+      }
+    });
+
+    List<String> columns = Arrays.asList(KEY, KEY2, KEY3, BOOL_COL);
+
+    // Verify write
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), 1000)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected, rows);
+      }
+    });
+
+    // Scan by range and index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      // Scan single index
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Collections.singletonList(Fields.booleanField(BOOL_COL, true)))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(num, 2 * num), rows);
+      }
+
+      // Scan multiple indexes
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Arrays.asList(Fields.booleanField(BOOL_COL, true),
+                                      Fields.booleanField(BOOL_COL, false)))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(0, 2 * num), rows);
+      }
+
+      // non-existent index value
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Arrays.asList(Fields.booleanField(BOOL_COL, null)))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(0, rows.size());
+      }
+
+      // Partial primary keys range
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)),
+                                     Range.Bound.INCLUSIVE,
+                                     Arrays.asList(Fields.intField(KEY, num * 2),
+                                                   Fields.longField(KEY2, num * 200L)),
+                                     Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Collections.singletonList(Fields.booleanField(BOOL_COL, true)))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(num, 2 * num), rows);
+      }
+
+      // Partial primary keys range with multiple indexes
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)),
+                                     Range.Bound.INCLUSIVE,
+                                     Arrays.asList(Fields.intField(KEY, num * 2),
+                                                   Fields.longField(KEY2, num * 200L)),
+                                     Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Arrays.asList(Fields.booleanField(BOOL_COL, true),
+                                      Fields.booleanField(BOOL_COL, false)))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(0, num * 2), rows);
+      }
+
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, num)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num * 2)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Collections.singletonList(Fields.booleanField(BOOL_COL, true)))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
+        Assert.assertEquals(expected.subList(num, 2 * num), rows);
+      }
+
+      // index value not within range
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                                     Collections.singleton(Fields.intField(KEY, num)), Range.Bound.EXCLUSIVE),
+                        num * 10,
+                        Collections.singletonList(Fields.booleanField(BOOL_COL, true)))) {
         List<Collection<Field<?>>> rows = convertRowsToFields(iterator, columns);
         Assert.assertEquals(Collections.emptyList(), rows);
       }
@@ -1612,6 +1789,9 @@ public abstract class StructuredTableTest {
           break;
         case LONG:
           fields.add(Fields.longField(name, row.getLong(name)));
+          break;
+        case BOOLEAN:
+          fields.add(Fields.booleanField(name, row.getBoolean(name)));
           break;
       }
     }

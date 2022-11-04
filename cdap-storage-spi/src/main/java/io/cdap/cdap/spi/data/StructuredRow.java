@@ -43,6 +43,13 @@ public interface StructuredRow {
   Long getLong(String fieldName) throws InvalidFieldException;
 
   /**
+   * @return the value of the field named fieldName as boolean, or null if the field value is not defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type.
+   */
+  @Nullable
+  Boolean getBoolean(String fieldName) throws InvalidFieldException;
+
+  /**
    * @return the value of the field named fieldName as string, or null if the field value is not defined
    * @throws InvalidFieldException if the fieldName is not part of the table schema,
    * or is of incompatible type. Numeric to string conversion will not be done.

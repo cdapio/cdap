@@ -288,6 +288,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
         return "STRING(MAX)";
       case BYTES:
         return "BYTES(MAX)";
+      case BOOLEAN:
+        return "BOOL";
       default:
         // This should never happen
         throw new IllegalArgumentException("Unsupported field type " + fieldType);
@@ -304,6 +306,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
         return FieldType.Type.STRING;
       case "bytes(max)":
         return FieldType.Type.BYTES;
+      case "bool":
+        return FieldType.Type.BOOLEAN;
       default:
         throw new IllegalArgumentException("Unsupported spanner type " + spannerType);
     }
