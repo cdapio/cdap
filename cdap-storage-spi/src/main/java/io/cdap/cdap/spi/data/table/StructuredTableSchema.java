@@ -87,6 +87,16 @@ public class StructuredTableSchema {
   }
 
   /**
+   * Check if the given field names are index columns.
+   *
+   * @param fieldNames the field names to be checked
+   * @return true if this field name is an index column, false otherwise
+   */
+  public boolean isIndexColumns(Collection<String> fieldNames) {
+    return indexes.containsAll(fieldNames);
+  }
+
+  /**
    * Get the field type of the given field name.
    *
    * @param fieldName the field name

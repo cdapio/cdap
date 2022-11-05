@@ -273,15 +273,16 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * Filtering post table scan.
    * */
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Collection<Field<?>> filterIndexes)
     throws InvalidFieldException, IOException {
-    LOG.trace("Table {}: Scan range {} with limit {} and index {}", schema.getTableId(), keyRange, limit, filterIndex);
-    fieldValidator.validateField(filterIndex);
-    if (!schema.isIndexColumn(filterIndex.getName())) {
-      throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
+    LOG.trace("Table {}: Scan range {} with limit {} and index {}", schema.getTableId(),
+              keyRange, limit, filterIndexes);
+    filterIndexes.forEach(fieldValidator::validateField);
+    if (!schema.isIndexColumns(filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
+      throw new InvalidFieldException(schema.getTableId(), filterIndexes, "are not all indexed columns");
     }
     FilterByFieldIterator filterByIndexIterator =
-      new FilterByFieldIterator(getFilterByRangeIterator(keyRange), filterIndex, schema);
+      new FilterByFieldIterator(getFilterByRangeIterator(keyRange), filterIndexes, schema);
     return new LimitIterator(Collections.singleton(filterByIndexIterator).iterator(), limit);
   }
 
@@ -685,31 +686,30 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @VisibleForTesting
   static final class FilterByFieldIterator extends AbstractCloseableIterator<StructuredRow> {
     private final CloseableIterator<StructuredRow> scannerIterator;
-    private final Predicate<StructuredRow> predicate;
+    private final StructuredTableSchema schema;
+    private final Collection<Predicate<StructuredRow>> predicates;
 
-    FilterByFieldIterator(CloseableIterator<StructuredRow> scannerIterator, Field<?> filterField,
+    FilterByFieldIterator(CloseableIterator<StructuredRow> scannerIterator, Collection<Field<?>> filterFields,
                           StructuredTableSchema schema) {
       this.scannerIterator = scannerIterator;
+      this.predicates = filterFields.stream().map(this::buildPredicate).collect(Collectors.toList());
+      this.schema = schema;
+    }
 
+    private Predicate<StructuredRow> buildPredicate(Field<?> filterField) {
       switch (filterField.getFieldType()) {
         case INTEGER:
-          predicate = row -> Objects.equals(row.getInteger(filterField.getName()), filterField.getValue());
-          break;
+          return row -> Objects.equals(row.getInteger(filterField.getName()), filterField.getValue());
         case LONG:
-          predicate = row -> Objects.equals(row.getLong(filterField.getName()), filterField.getValue());
-          break;
+          return row -> Objects.equals(row.getLong(filterField.getName()), filterField.getValue());
         case FLOAT:
-          predicate = row -> Objects.equals(row.getFloat(filterField.getName()), filterField.getValue());
-          break;
+          return row -> Objects.equals(row.getFloat(filterField.getName()), filterField.getValue());
         case DOUBLE:
-          predicate = row -> Objects.equals(row.getDouble(filterField.getName()), filterField.getValue());
-          break;
+          return row -> Objects.equals(row.getDouble(filterField.getName()), filterField.getValue());
         case STRING:
-          predicate = row -> Objects.equals(row.getString(filterField.getName()), filterField.getValue());
-          break;
+          return row -> Objects.equals(row.getString(filterField.getName()), filterField.getValue());
         case BYTES:
-          predicate = row -> Arrays.equals(row.getBytes(filterField.getName()), (byte[]) filterField.getValue());
-          break;
+          return row -> Arrays.equals(row.getBytes(filterField.getName()), (byte[]) filterField.getValue());
         default:
           throw new InvalidFieldException(schema.getTableId(), filterField.getName());
       }
@@ -720,8 +720,10 @@ public final class NoSqlStructuredTable implements StructuredTable {
       // Post filtering on scanned rows by specified field
       while (scannerIterator.hasNext()) {
         StructuredRow row = scannerIterator.next();
-        if (predicate.test(row)) {
-          return row;
+        for (Predicate<StructuredRow> predicate : predicates) {
+          if (predicate.test(row)) {
+            return row;
+          }
         }
       }
       return endOfData();

@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -101,7 +102,7 @@ public class ApplicationClient {
   public List<ApplicationRecord> list(NamespaceId namespace)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET,
-                                               config.resolveNamespacedURLV3(namespace, "apps"),
+                                               config.resolveNamespacedURLV3(namespace, "apps?latestOnly=false"),
                                                config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
@@ -145,15 +146,16 @@ public class ApplicationClient {
       return list(namespace);
     }
 
-    String path;
-    if (!artifactNames.isEmpty() && artifactVersion != null) {
-      path = String.format("apps?artifactName=%s&artifactVersion=%s",
-                           Joiner.on(',').join(artifactNames), artifactVersion);
-    } else if (!artifactNames.isEmpty()) {
-      path = "apps?artifactName=" + Joiner.on(',').join(artifactNames);
-    } else {
-      path = "apps?artifactVersion=" + artifactVersion;
+    List<String> params = new ArrayList<>();
+    params.add("latestOnly=false");
+    if (!artifactNames.isEmpty()) {
+      params.add("artifactName=" + Joiner.on(',').join(artifactNames));
     }
+    if (artifactVersion != null) {
+      params.add("artifactVersion=" + artifactVersion);
+    }
+    
+    String path = String.format("apps?%s", String.join("&", params));
 
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(namespace, path),
@@ -197,7 +199,23 @@ public class ApplicationClient {
   public ApplicationDetail get(ApplicationId appId)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
-    String path = String.format("apps/%s", appId.getApplication());
+    return get(appId, false);
+  }
+
+  /**
+   * Get details about the specified application, specify if return latestOnly apps.
+   *
+   * @param appId the id of the application to get
+   * @param latestOnly the boolean indicator whether we return latest versions only
+   * @return details about the specified application
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public ApplicationDetail get(ApplicationId appId, boolean latestOnly)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+
+    String path = String.format("apps/%s?latestOnly=%s", appId.getApplication(), latestOnly);
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(appId.getParent(), path),
                                                config.getAccessToken(),

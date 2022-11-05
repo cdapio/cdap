@@ -209,17 +209,17 @@ public class SpannerStructuredTable implements StructuredTable {
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Field<?> filterIndex)
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Collection<Field<?>> filterIndexes)
     throws InvalidFieldException {
     fieldValidator.validateScanRange(keyRange);
-    fieldValidator.validateField(filterIndex);
-    if (!schema.isIndexColumn(filterIndex.getName())) {
-      throw new InvalidFieldException(schema.getTableId(), filterIndex.getName(), "is not an indexed column");
+    filterIndexes.forEach(fieldValidator::validateField);
+    if (!schema.isIndexColumns(filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
+      throw new InvalidFieldException(schema.getTableId(), filterIndexes, "are not all indexed columns");
     }
 
     Map<String, Value> parameters = new HashMap<>();
     String rangeClause = getRangeWhereClause(keyRange, parameters);
-    String indexClause = getIndexWhereClause(filterIndex, parameters);
+    String indexClause = getIndexesFilterClause(filterIndexes, parameters);
 
     Statement.Builder builder = Statement.newBuilder(
       "SELECT * FROM " + escapeName(schema.getTableId().getName())
@@ -444,10 +444,21 @@ public class SpannerStructuredTable implements StructuredTable {
     return String.join(" AND ", conditions);
   }
 
-  private String getIndexWhereClause(Field<?> filterIndex, Map<String, Value> parameters) {
+  private String getIndexesFilterClause(Collection<Field<?>> filterIndexes, Map<String, Value> parameters) {
+    List<String> conditions = new ArrayList<>();
     int paramIndex = parameters.size();
-    parameters.put("p_" + paramIndex, getValue(filterIndex));
-    return escapeName(filterIndex.getName()) + " = " + "@p_" + paramIndex;
+
+    for (Field<?> field : filterIndexes) {
+      if (field.getValue() == null) {
+        conditions.add(escapeName(field.getName()) + " is NULL");
+      } else {
+        conditions.add(escapeName(field.getName()) + " = @p_" + paramIndex);
+        parameters.put("p_" + paramIndex, getValue(field));
+        paramIndex++;
+      }
+    }
+
+    return conditions.stream().collect(Collectors.joining(" OR ", "(", ")"));
   }
 
   /**

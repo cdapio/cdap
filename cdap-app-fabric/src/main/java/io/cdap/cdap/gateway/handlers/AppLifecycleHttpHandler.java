@@ -272,10 +272,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          @QueryParam("orderBy") SortOrder orderBy,
                          @QueryParam("nameFilter") String nameFilter,
                          @QueryParam("nameFilterType") NameFilterType nameFilterType,
-                         @QueryParam("latestOnly") Boolean latestOnly,
-                         @QueryParam("sortCreationTime") Boolean sortCreationTime
-      )
-      throws Exception {
+                         @QueryParam("latestOnly") @DefaultValue("true") Boolean latestOnly,
+                         @QueryParam("sortCreationTime") Boolean sortCreationTime)
+    throws Exception {
+
     validateNamespace(namespaceId);
 
     Set<String> names = new HashSet<>();
