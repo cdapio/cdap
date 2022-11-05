@@ -45,15 +45,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
 /**
@@ -130,13 +127,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       fieldValidator.validatePrimaryKeys(keys, false);
     }
 
-    // Collapse values of each key
-    Map<String, Set<Field<?>>> keyFields = new LinkedHashMap<>();
-    multiKeys.stream()
-      .flatMap(Collection::stream)
-      .forEach(field -> keyFields.computeIfAbsent(field.getName(), k -> new LinkedHashSet<>()).add(field));
-
-    try (PreparedStatement statement = prepareMultiReadQuery(keyFields)) {
+    try (PreparedStatement statement = prepareMultiReadQuery(multiKeys)) {
       LOG.trace("SQL statement: {}", statement);
       Collection<StructuredRow> result = new ArrayList<>();
       try (ResultSet resultSet = statement.executeQuery()) {
@@ -153,25 +144,23 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
   /**
    * Creates a SELECT query that fetches rows from a given set of keys.
+   * This has OR with nested AND logic.
+   * E.g.
+   * SELECT * FROM table WHERE (key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?)
+   * OR ... LIMIT limit
    *
-   * @param keyFields a map from field name to set of field values to query
+   * @param multiKeys a map from field name to set of field values to query
    * @return a SELECT query ready to be used for creating prepared statement
    */
-  private PreparedStatement prepareMultiReadQuery(Map<String, Set<Field<?>>> keyFields) throws SQLException {
+  private PreparedStatement prepareMultiReadQuery(Collection<? extends Collection<Field<?>>> multiKeys)
+    throws SQLException {
     StringBuilder queryString =
-      new StringBuilder("SELECT ")
-        .append("*")
-        .append(" FROM ")
+      new StringBuilder("SELECT * FROM ")
         .append(tableSchema.getTableId().getName())
         .append(" WHERE ");
 
-    Joiner.on(" AND ").appendTo(
-      queryString, keyFields.entrySet().stream()
-        .map(e -> {
-          StringBuilder fieldBuilder = new StringBuilder(e.getKey()).append(" IN (");
-          Joiner.on(',').appendTo(fieldBuilder, IntStream.range(0, e.getValue().size()).mapToObj(i -> "?").iterator());
-          return fieldBuilder.append(")").toString();
-        }).iterator()
+    Joiner.on(" OR ").appendTo(
+      queryString, multiKeys.stream().map(keys -> "(" + getEqualsClause(keys) + ")").iterator()
     );
     queryString.append(";");
 
@@ -179,7 +168,11 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     preparedStatement.setFetchSize(fetchSize);
 
     // Set fields to the statement
-    setFields(preparedStatement, keyFields.values().stream().flatMap(Collection::stream)::iterator, 1);
+    int beginIndex = 1;
+    for (Collection<Field<?>> keys : multiKeys) {
+      beginIndex = setFields(preparedStatement, keys, beginIndex);
+    }
+    
     return preparedStatement;
   }
 
@@ -299,7 +292,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       query
         .append(separator)
         .append(singleton.getBegin().stream().map(field -> field.getName() + " = ?")
-          .collect(Collectors.joining(" AND ", "(", ")")));
+                  .collect(Collectors.joining(" AND ", "(", ")")));
       separator = " OR ";
       singletonFields.addAll(singleton.getBegin());
     }
