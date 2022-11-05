@@ -1137,8 +1137,9 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(),
                                           podInfo.getImagePullPolicy(), workDir, initContainerResourceRequirements,
                                           initContainerVolumeMounts, initContainerEnvirons, FileLocalizer.class,
-                                          runtimeConfigLocation.toURI().toString(),
-                                          mainRuntimeSpec.getName()))
+                                          Stream.concat(Stream.of(runtimeConfigLocation.toURI().toString(),
+                                                                  mainRuntimeSpec.getName()), containerArgs.stream())
+                                            .toArray(String[]::new)))
       .withContainers(createContainers(resourceType, runtimeSpecs, workDir, containerVolumeMounts, containerArgs))
       .withSecurityContext(podInfo.getSecurityContext())
       .withRestartPolicy(restartPolicy)
