@@ -39,6 +39,7 @@ import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -398,7 +399,11 @@ public abstract class IntegrationTestBase {
 
     // delete all apps in the namespace
     for (ApplicationRecord app : getApplicationClient().list(namespace)) {
-      getApplicationClient().delete(namespace.app(app.getName(), app.getAppVersion()));
+      try {
+        getApplicationClient().deleteApp(namespace.app(app.getName(), ApplicationId.DEFAULT_VERSION));
+      } catch (ApplicationNotFoundException e) {
+        // it's ok application is not found in clean up, do nothing
+      }
     }
     // delete all dataset instances
     for (DatasetSpecificationSummary datasetSpecSummary : getDatasetClient().list(namespace)) {
