@@ -1095,17 +1095,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     ApplicationDetail appDetails1 = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
-    ApplicationId appv1 = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME,
-                                            appDetails1.getAppVersion());
 
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    ApplicationDetail appDetails2 = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
-    ApplicationId appv2 = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME,
-                                            appDetails2.getAppVersion());
-    deleteApp(appv1, 200);
-
-    // the versioned delete endpoint must delete both an older and the latest version  in case of LCM
-    deleteApp(appv2, 200);
+    deleteApp(Id.Application.from(TEST_NAMESPACE1, AllProgramsApp.NAME), 200);
 
     // Start a service from the App
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
@@ -1145,8 +1137,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getResponseCode());
 
     // Delete an non-existing app with version
-    response = doDelete(getVersionedAPIPath("apps/XYZ/versions/" + VERSION1,
-                                            Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    response = doDelete(getVersionedAPIPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
     // Deploy an app with version
@@ -1165,28 +1156,30 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program1, "RUNNING");
     // Try to delete an App while its service is running
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      String.format("apps/%s", appId.getApplication()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + program1.getParent() + "' could not be deleted. Reason: The following programs" +
-                          " are still running: " + program1.getProgram(), response.getResponseBodyAsString());
+    ProgramId programIdDefault = new ApplicationId(appId.getNamespace(), appId.getApplication())
+      .program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
+    Assert.assertEquals("'" + programIdDefault.getParent() + "' could not be deleted. Reason: The app " +
+                          "has programs that are still running.", response.getResponseBodyAsString());
 
     stopProgram(program1, null, 200, null);
     waitState(program1, "STOPPED");
 
     // Delete the app with version in the wrong namespace
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      String.format("apps/%s", appId.getApplication()),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the app with version after stopping the service
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      String.format("apps/%s", appId.getApplication()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(200, response.getResponseCode());
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      String.format("apps/%s", appId.getApplication()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(404, response.getResponseCode());
 
@@ -1209,6 +1202,26 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // cleanup
     deleteNamespace(NamespaceId.DEFAULT.getNamespace());
+    setLCMFlag(false);
+  }
+
+  /**
+   * Tests deleting with versioned API when LCM feature flag is enabled.
+   */
+  @Test
+  public void testDeleteVersionedAppLCMEnabled() throws Exception {
+    setLCMFlag(true);
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationDetail appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+
+    HttpResponse response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s",  AllProgramsApp.NAME, appDetails.getAppVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(403, response.getResponseCode());
+    Assert.assertEquals("Forbidden", response.getResponseMessage());
+    Assert.assertEquals("Deletion of specific app version is not allowed.", response.getResponseBodyAsString());
+    Id.Application appIdDelete = Id.Application.from(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    deleteApp(appIdDelete, 200);
     setLCMFlag(false);
   }
 
