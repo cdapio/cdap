@@ -40,9 +40,6 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
-import io.kubernetes.client.openapi.models.V1ConfigMapVolumeSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1Deployment;
@@ -69,7 +66,6 @@ import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1StatefulSetBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
-import io.kubernetes.client.openapi.models.V1VolumeMountBuilder;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -140,7 +136,7 @@ import java.util.stream.Stream;
  * main container, and the rest will be treated as sidecar containers.
  * TODO (CDAP-18058): This assumption needs to be changed by using {@link TwillSpecification.PlacementPolicy}.
  */
-public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer, SecureTwillPreparer {
+class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer, SecureTwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
   @VisibleForTesting
@@ -159,14 +155,10 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
   @VisibleForTesting
   static final String PROGRAM_MEMORY_MULTIPLIER = "program.k8s.container.memory.multiplier";
   private static final String DEFAULT_PROGRAM_MEMORY_MULTIPLIER = "0.5";
-  // Configmap that stores localized config files
-  private static final String CONFIGMAP_MOUNTPATH = "/config";
-  public static final String CONFIGMAP_NAME_PREFIX = "cdap-config-";
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
   private final BatchV1Api batchV1Api;
-  private final CoreV1Api coreV1Api;
   private final String kubeNamespace;
   private final PodInfo podInfo;
   private final List<String> arguments;
@@ -207,7 +199,6 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
     this.masterEnvContext = masterEnvContext;
     this.apiClient = apiClient;
     this.batchV1Api = new BatchV1Api(apiClient);
-    this.coreV1Api = new CoreV1Api(apiClient);
     this.kubeNamespace = kubeNamespace;
     this.programRuntimeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -222,8 +213,7 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
     this.appLocation = appLocation;
     this.twillSpec = spec;
     this.resourcePrefix = resourcePrefix;
-    this.extraLabels = extraLabels == null ? Collections.emptyMap() :
-      extraLabels.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> asLabel(e.getValue())));
+    this.extraLabels = extraLabels;
     this.dependentRunnableNames = new HashSet<>();
     this.serviceAccountName = null;
     this.secretDiskRunnables = new HashMap<>();
@@ -615,11 +605,6 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
         }
       }
 
-      if (!isSystemNamespace(cdapRuntimeNamespace)) {
-        // We only create a per-run configmap for user programs
-        createConfigMap();
-      }
-
       V1ObjectMeta metadata = createResourceMetadata(resourceType, mainRuntimeSpec.getName(),
                                                      timeoutUnit.toMillis(timeout), runtimeCleanupDisabled);
       if (V1Job.class.equals(resourceType)) {
@@ -637,14 +622,6 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
       } catch (IOException ex) {
         e.addSuppressed(ex);
       }
-      try {
-        coreV1Api.deleteNamespacedConfigMap(CONFIGMAP_NAME_PREFIX + twillRunId.getId(), programRuntimeNamespace,
-                                            null, null, null, null, null, null);
-      } catch (ApiException ex) {
-        if (ex.getCode() != 404) {
-          e.addSuppressed(ex);
-        }
-      }
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
   }
@@ -655,6 +632,9 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
   private V1ObjectMeta createResourceMetadata(Type resourceType, String runnableName, long startTimeoutMillis,
                                               boolean runtimeCleanupDisabled) {
     String resourceName = getResourceName(twillSpec.getName(), twillRunId, getMaxLength(resourceType));
+
+    Map<String, String> extraLabels = this.extraLabels.entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> asLabel(e.getValue())));
 
     // labels have more strict requirements around valid character sets,
     // so use annotations to store the app name.
@@ -725,25 +705,6 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
   private String cleanse(String val, int maxLength) {
     String cleansed = val.replaceAll("[^A-Za-z0-9\\-]", "-").toLowerCase();
     return cleansed.length() > maxLength ? cleansed.substring(0, maxLength) : cleansed;
-  }
-
-  /**
-   * Creates per-run configmap containing config files.
-   */
-  private void createConfigMap() throws ApiException, IOException {
-    String configMapName = CONFIGMAP_NAME_PREFIX + twillRunId.getId();
-    V1ConfigMapBuilder builder = new V1ConfigMapBuilder()
-      .withMetadata(new V1ObjectMeta().name(configMapName).labels(extraLabels));
-    String runnableName = getMainRuntimeSpecification(twillSpec.getRunnables()).getName();
-    for (LocalFile localFile : twillSpec.getRunnables().get(runnableName).getLocalFiles()) {
-      // Only add xml config files to the configmap. We skip over jars as they are too large store in a
-      // configmap (max size = 1 MB. See https://kubernetes.io/docs/concepts/configuration/configmap).
-      if (!localFile.getName().endsWith(".xml")) {
-        continue;
-      }
-      builder.addToBinaryData(localFile.getName(), Files.readAllBytes(java.nio.file.Paths.get(localFile.getURI())));
-    }
-    coreV1Api.createNamespacedConfigMap(programRuntimeNamespace, builder.build(), null, null, null);
   }
 
   /**
@@ -974,10 +935,6 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
       Collection<LocalFile> runnableFiles = localFiles.computeIfAbsent(runnableName, k -> new ArrayList<>());
 
       for (LocalFile localFile : entry.getValue().getLocalFiles()) {
-        if (localFile.getName().endsWith(".xml") && !isSystemNamespace(cdapRuntimeNamespace)) {
-          // Skip over xml config files as they are stored on the per-run configmap for user programs
-          continue;
-        }
         Location location;
 
         URI uri = localFile.getURI();
@@ -1047,19 +1004,9 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
 
     String workDir = "/workDir-" + twillRunId.getId();
 
-    List<V1Volume> volumes = new ArrayList<>();
-    volumes.add(podInfoVolume);
-    volumes.add(workDirVolume);
-    String configMapName = CONFIGMAP_NAME_PREFIX + twillRunId.getId();
-    if (isSystemNamespace(cdapRuntimeNamespace)) {
-      // Add cconf, hconf volumes from the current pod
-      volumes.addAll(podInfo.getVolumes());
-    } else {
-      // Add configmap volume containing localized config files for user program runs
-      V1Volume configMapVolume = new V1Volume().name(configMapName)
-        .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build());
-      volumes.add(configMapVolume);
-    }
+    List<V1Volume> additionalVolumes = new ArrayList<>();
+    additionalVolumes.add(podInfoVolume);
+    additionalVolumes.add(workDirVolume);
 
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
@@ -1078,17 +1025,8 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
     initContainerEnvirons.put(JAVA_OPTS_KEY, masterEnvContext.getConfigurations()
       .getOrDefault(FILE_LOCALIZER_JVM_OPTS, FILE_LOCALIZER_DEFAULT_JVM_OPTS));
 
-    List<V1VolumeMount> volumeMounts = new ArrayList<>();
-    if (isSystemNamespace(cdapRuntimeNamespace)) {
-      // Add volume mounts to the container. Add those from the current pod to mount cdap and hadoop conf.
-      volumeMounts.addAll(podInfo.getContainerVolumeMounts());
-    } else {
-      // For user programs, add volume mount containing localized per-run config files
-      volumeMounts.add(new V1VolumeMountBuilder()
-                         .withName(configMapName)
-                         .withMountPath(CONFIGMAP_MOUNTPATH)
-                         .build());
-    }
+    // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
+    List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
     volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
                        .mountPath(podInfo.getPodInfoDir()).readOnly(true));
     // Add the working directory the file localization by the init container
@@ -1100,7 +1038,7 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
     if (workloadIdentityEnabled && WorkloadIdentityUtil.shouldMountWorkloadIdentity(cdapInstallNamespace,
                                                                                     programRuntimeNamespace,
                                                                                     workloadIdentityServiceAccount)) {
-      volumes.add(WorkloadIdentityUtil.generateWorkloadIdentityVolume(workloadIdentityKSATTL,
+      additionalVolumes.add(WorkloadIdentityUtil.generateWorkloadIdentityVolume(workloadIdentityKSATTL,
                                                                                 workloadIdentityPool));
       volumeMounts.add(WorkloadIdentityUtil.generateWorkloadIdentityVolumeMount());
 
@@ -1124,22 +1062,17 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
       serviceAccountName = podInfo.getServiceAccountName();
     }
 
-    List<String> containerArgs = new ArrayList<>(args);
-    if (!isSystemNamespace(cdapRuntimeNamespace)) {
-      // Pass the per-run configmap mount path to MasterEnvironmentMain as extraConfPath arg
-      containerArgs.add(String.format("--conf=%s", CONFIGMAP_MOUNTPATH));
-    }
-
     return podSpecBuilder
       .withServiceAccountName(serviceAccountName)
       .withRuntimeClassName(podInfo.getRuntimeClassName())
-      .addAllToVolumes(volumes)
+      .addAllToVolumes(podInfo.getVolumes())
+      .addAllToVolumes(additionalVolumes)
       .withInitContainers(createContainer("file-localizer", podInfo.getContainerImage(),
                                           podInfo.getImagePullPolicy(), workDir, initContainerResourceRequirements,
                                           initContainerVolumeMounts, initContainerEnvirons, FileLocalizer.class,
                                           runtimeConfigLocation.toURI().toString(),
                                           mainRuntimeSpec.getName()))
-      .withContainers(createContainers(resourceType, runtimeSpecs, workDir, containerVolumeMounts, containerArgs))
+      .withContainers(createContainers(resourceType, runtimeSpecs, workDir, containerVolumeMounts, args))
       .withSecurityContext(podInfo.getSecurityContext())
       .withRestartPolicy(restartPolicy)
       .build();
@@ -1266,7 +1199,7 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
 
     // Use separate multiplier for user pods
     // System pods have the 'system' namespace
-    if (!isSystemNamespace(cdapRuntimeNamespace)) {
+    if (cdapRuntimeNamespace != null && !isSystemNamespace(cdapRuntimeNamespace)) {
       // For job type use program multipliers.
       cpuMultiplier = Float.parseFloat(cConf.getOrDefault(PROGRAM_CPU_MULTIPLIER, DEFAULT_PROGRAM_CPU_MULTIPLIER));
       memoryMultiplier = Float.parseFloat(
@@ -1304,7 +1237,7 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
    * @param namespace a namespace ID
    * @return whether the given namespace is the system namespace
    */
-  private boolean isSystemNamespace(String namespace) {
+  public static boolean isSystemNamespace(String namespace) {
     return "system".equals(namespace);
   }
 
@@ -1360,7 +1293,7 @@ public class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillP
   private List<V1VolumeMount> addSecreteVolMountIfNeeded(RuntimeSpecification runtimeSpec, List<V1VolumeMount> mounts) {
     List<V1VolumeMount> updatedMounts = new ArrayList<>(mounts);
     // Add secret disks as secret volume mounts
-    if (secretDiskRunnables.containsKey(runtimeSpec.getName()) && isSystemNamespace(cdapRuntimeNamespace)) {
+    if (secretDiskRunnables.containsKey(runtimeSpec.getName())) {
       for (SecretDisk secretDisk : secretDiskRunnables.get(runtimeSpec.getName()).getSecretDisks()) {
         String secretName = secretDisk.getName();
         String mountPath = secretDisk.getPath();
