@@ -208,7 +208,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     // Caching is disabled if it's been explicitly disabled or delete lifecycle is not set on the bucket.
     boolean gcsCacheEnabled = Boolean.parseBoolean(
       provisionerContext.getProperties().getOrDefault(DataprocUtils.GCS_CACHE_ENABLED, "true"))
-      || !isDeleteLifecycleEnabled(bucket);
+      || !validateDeleteLifecycle(bucket, runInfo.getRun());
 
     LOG.debug("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
               runInfo.getRun(), clusterName, projectId, region, bucket);
@@ -406,9 +406,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Check whether delete lifecycle with days since custom time has been enabled on the bucket or not.
    * @param bucketName
+   * @param run
    * @return true if delete lifecycle with days since custom time is set on the bucket.
    */
-  private boolean isDeleteLifecycleEnabled(String bucketName) {
+  private boolean validateDeleteLifecycle(String bucketName, String run) {
     Storage storage = getStorageClient();
     Bucket bucket = storage.get(bucketName);
     for (BucketInfo.LifecycleRule rule : bucket.getLifecycleRules()) {
@@ -418,7 +419,23 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
       if (rule.getAction() instanceof BucketInfo.LifecycleRule.DeleteLifecycleAction &&
         rule.getCondition().getDaysSinceCustomTime() > 0) {
-        return true;
+        if (!provisionerContext.getProperties().containsKey(DataprocUtils.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS)) {
+          LOG.warn("ArtifactsHashTimeBucket property not set for {}, ignoring check for it's value being less than " +
+                     "Bucket DeleteLifecycleAction for {}", run, bucketName);
+          return true;
+        }
+        try {
+          int timeBucketDays = Integer.parseInt(
+            provisionerContext.getProperties().get(DataprocUtils.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS));
+          boolean isValid = rule.getCondition().getDaysSinceCustomTime() > timeBucketDays;
+          if (!isValid) {
+            LOG.warn("Days since custom time rule of delete lifecycle for bucket {} should be strictly greater than " +
+                       "{} days", bucketName, timeBucketDays);
+          }
+          return isValid;
+        } catch (NumberFormatException e) {
+          return false;
+        }
       }
     }
     return false;
