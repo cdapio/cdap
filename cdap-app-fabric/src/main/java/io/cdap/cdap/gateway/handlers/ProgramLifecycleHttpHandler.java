@@ -1038,32 +1038,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private List<BatchProgramSchedule> batchRunTimes(String namespace, Collection<? extends BatchProgram> programs,
                                                    boolean previous) throws Exception {
-    List<ProgramId> programIds = programs.stream()
-      .map(p -> new ProgramId(namespace, p.getAppId(), p.getProgramType(), p.getProgramId()))
+    List<ProgramReference> programReferences = programs.stream()
+      .map(p -> new ProgramReference(namespace, p.getAppId(), p.getProgramType(), p.getProgramId()))
       .collect(Collectors.toList());
-
-    Set<ApplicationId> appIds = programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet());
-    Map<ApplicationId, ApplicationSpecification> appSpecs = store.getApplications(appIds);
+    Map<ProgramReference, ProgramId> programMap = store.getPrograms(programReferences);
 
     List<BatchProgramSchedule> result = new ArrayList<>();
-    for (ProgramId programId : programIds) {
-      ApplicationSpecification spec = appSpecs.get(programId.getParent());
-      if (spec == null) {
-        result.add(new BatchProgramSchedule(programId, HttpResponseStatus.NOT_FOUND.code(),
-                                            new NotFoundException(programId.getParent()).getMessage(), null));
-        continue;
-      }
-      try {
-        Store.ensureProgramExists(programId, spec);
+    for (ProgramReference programReference : programReferences) {
+      if (programMap.containsKey(programReference)) {
+        ProgramId programId = programMap.get(programReference);
         result.add(new BatchProgramSchedule(programId, HttpResponseStatus.OK.code(), null,
                                             getScheduledRunTimes(programId, previous)));
-      } catch (NotFoundException e) {
-        result.add(new BatchProgramSchedule(programId, HttpResponseStatus.NOT_FOUND.code(), e.getMessage(), null));
-      } catch (BadRequestException e) {
-        result.add(new BatchProgramSchedule(programId, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage(), null));
+      } else {
+        result.add(new BatchProgramSchedule(programReference, HttpResponseStatus.NOT_FOUND.code(),
+                                            new NotFoundException(programReference).getMessage(), null));
       }
     }
-
     return result;
   }
 

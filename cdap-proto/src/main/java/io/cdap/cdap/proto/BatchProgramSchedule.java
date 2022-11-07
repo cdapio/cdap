@@ -17,6 +17,7 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,6 +33,12 @@ public class BatchProgramSchedule extends BatchProgramResult {
   public BatchProgramSchedule(ProgramId programId, int statusCode, @Nullable String error,
                               @Nullable List<ScheduledRuntime> schedules) {
     super(programId.getApplication(), programId.getType(), programId.getProgram(), statusCode, error, null);
+    this.schedules = schedules;
+  }
+
+  public BatchProgramSchedule(ProgramReference ref, int statusCode, @Nullable String error,
+                              @Nullable List<ScheduledRuntime> schedules) {
+    super(ref.getApplication(), ref.getType(), ref.getProgram(), statusCode, error, null);
     this.schedules = schedules;
   }
 
