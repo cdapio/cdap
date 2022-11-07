@@ -44,7 +44,6 @@ import io.cdap.cdap.security.auth.context.WorkerAuthenticationContext;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,28 +101,16 @@ public class MasterEnvironmentMain {
         throw new IllegalArgumentException("Missing runnable class name");
       }
 
-      if (options.getExtraConfPath() != null) {
-        // Copy config files from per-run configmap to the working directory
-        FileUtils.copyDirectory(new File(options.getExtraConfPath()), new File("."));
-      }
       CConfiguration cConf = CConfiguration.create();
-      File cConfFile = new File("cConf.xml");
-      if (cConfFile.exists()) {
-        cConf.addResource(cConfFile.toURI().toURL());
-      }
       SConfiguration sConf = SConfiguration.create();
-      File sConfFile = new File("sConf.xml");
-      if (sConfFile.exists()) {
-        sConf.addResource(sConfFile.toURI().toURL());
+      if (options.getExtraConfPath() != null) {
+        cConf.addResource(new File(options.getExtraConfPath(), "cdap-site.xml").toURI().toURL());
+        sConf.addResource(new File(options.getExtraConfPath(), "cdap-security.xml").toURI().toURL());
       }
 
       SecurityUtil.loginForMasterService(cConf);
 
       Configuration hConf = new Configuration();
-      File hConfFile = new File("hConf.xml");
-      if (hConfFile.exists()) {
-        hConf.addResource(hConfFile.toURI().toURL());
-      }
 
       // Creates the master environment and load the MasterEnvironmentRunnable class from it.
       MasterEnvironment masterEnv = MasterEnvironments.setMasterEnvironment(
