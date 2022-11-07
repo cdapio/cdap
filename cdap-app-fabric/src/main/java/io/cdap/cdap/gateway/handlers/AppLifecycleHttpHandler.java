@@ -440,6 +440,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") final String namespaceId,
                                @PathParam("app-id") final String appId,
                                @PathParam("version-id") final String versionId) throws Exception {
+    // If LCM flow is enabled - we do not want to delete specific versions of the app.
+    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Deletion of specific app version is not allowed.");
+      return;
+    }
     ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
     applicationLifecycleService.removeApplicationVersion(id);
     responder.sendStatus(HttpResponseStatus.OK);
