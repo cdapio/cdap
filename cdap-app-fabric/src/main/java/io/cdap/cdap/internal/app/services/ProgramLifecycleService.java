@@ -1287,7 +1287,10 @@ public class ProgramLifecycleService {
     }
   }
 
-  private  String decodeUserId(String encodedUserId) {
+  private String decodeUserId(@Nullable String encodedUserId) {
+    if (encodedUserId == null) {
+      return "";
+    }
     String decodedUserId = "emptyUserId";
     try {
       byte[] decodedBytes = Base64.getDecoder().decode(encodedUserId);
