@@ -38,6 +38,7 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBindingBuilder;
+import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobStatus;
@@ -51,9 +52,11 @@ import io.kubernetes.client.openapi.models.V1ResourceQuotaSpec;
 import io.kubernetes.client.openapi.models.V1RoleBinding;
 import io.kubernetes.client.openapi.models.V1RoleBindingBuilder;
 import io.kubernetes.client.openapi.models.V1RoleRefBuilder;
+import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1SubjectBuilder;
+import io.kubernetes.client.openapi.models.V1Volume;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStoreUpdater;
@@ -123,6 +126,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
   private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
+  private static final String RUN_ID_LABEL = "cdap.twill.run.id";
   private static final String RUNNER_LABEL = "cdap.twill.runner";
   private static final String RUNNER_LABEL_VAL = "k8s";
   private static final String WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME
@@ -132,7 +136,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final String RBAC_V1_API_GROUP = "rbac.authorization.k8s.io";
   private static final String CLUSTER_ROLE_KIND = "ClusterRole";
   private static final String SERVICE_ACCOUNT_KIND = "ServiceAccount";
-  public static final String RUN_ID_LABEL = "cdap.twill.run.id";
   public static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   public static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY =
     "workload.identity.gcp.service.account.email";
@@ -160,7 +163,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private String workloadIdentityPool;
   private String workloadIdentityProvider;
   private RbacAuthorizationV1Api rbacV1Api;
-  private boolean isUserProgram;
 
   public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext, ApiClientFactory apiClientFactory,
                                 String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
@@ -191,7 +193,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.workloadLauncherRoleNameForCluster = workloadLauncherRoleNameForCluster;
     this.workloadIdentityPool = workloadIdentityPool;
     this.workloadIdentityProvider = workloadIdentityProvider;
-    this.isUserProgram = false;
   }
 
   @Override
@@ -209,9 +210,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     TwillSpecification spec = application.configure();
     RunId runId;
     if (application instanceof ExtendedTwillApplication) {
-      ExtendedTwillApplication extendedApp = (ExtendedTwillApplication) application;
-      runId = RunIds.fromString(extendedApp.getRunId());
-      isUserProgram = !extendedApp.isSystemApplication();
+      runId = RunIds.fromString(((ExtendedTwillApplication) application).getRunId());
     } else {
       runId = RunIds.generate();
     }
@@ -317,6 +316,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     KubeUtil.validateRFC1123LabelName(namespace);
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
+    copyVolumes(namespace, cdapNamespace);
     createWorkloadServiceAccount(namespace, cdapNamespace);
     if (workloadIdentityEnabled) {
       String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
@@ -441,6 +441,57 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       LOG.debug("Created resource quota for Kubernetes namespace {}", namespace);
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating Kubernetes resource quota. Error code = "
+                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+    }
+  }
+
+  /**
+   * Copy volumes into the new namespace for deployments created via the KubeTwillRunnerService
+   * TODO: (CDAP-18956) improve this logic to be for each pipeline run
+   */
+  private void copyVolumes(String namespace, String cdapNamespace) throws IOException {
+    try {
+      for (V1Volume volume : podInfo.getVolumes()) {
+        if (volume.getConfigMap() != null) {
+          String configMapName = volume.getConfigMap().getName();
+          V1ConfigMap existingMap = coreV1Api.readNamespacedConfigMap(configMapName, podInfo.getNamespace(),
+                                                                      null, null, null);
+          V1ConfigMap configMap = new V1ConfigMap().data(existingMap.getData())
+            .metadata(new V1ObjectMeta().name(configMapName).putLabelsItem(CDAP_NAMESPACE_LABEL,
+                                                                           cdapNamespace));
+          try {
+            coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
+          } catch (ApiException e) {
+            if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+              throw e;
+            }
+            LOG.warn("The configmap already exists '{}:{}' : {}. Ignoring creation of the configmap.", namespace,
+                     configMapName, e.getResponseBody());
+          }
+          LOG.debug("Created configMap {} in Kubernetes namespace {}", configMapName, namespace);
+        }
+
+        if (volume.getSecret() != null) {
+          String secretName = volume.getSecret().getSecretName();
+          V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName, podInfo.getNamespace(),
+                                                                   null, null, null);
+          V1Secret secret = new V1Secret().data(existingSecret.getData()).type(existingSecret.getType())
+            .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL,
+                                                                        cdapNamespace));
+          try {
+            coreV1Api.createNamespacedSecret(namespace, secret, null, null, null);
+          } catch (ApiException e) {
+            if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
+              throw e;
+            }
+            LOG.warn("The secret '{}:{}' already exists : {}. Ignoring creation of the secret.", namespace,
+                     secret.getMetadata().getName(), e.getResponseBody());
+          }
+          LOG.debug("Created secret {} in Kubernetes namespace {}", secretName, namespace);
+        }
+      }
+    } catch (ApiException e) {
+      throw new IOException("Error occurred while copying volumes. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
     }
   }
@@ -897,8 +948,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
                                                         Type resourceType, V1ObjectMeta meta) {
     CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
     KubeTwillController controller = new KubeTwillController(meta.getNamespace(), runId, discoveryServiceClient,
-                                                             apiClient, resourceType, meta, startupTaskCompletion,
-                                                             isUserProgram);
+                                                             apiClient, resourceType, meta, startupTaskCompletion);
 
     Location appLocation = getApplicationLocation(appName, runId);
     controller.onTerminated(() -> {
