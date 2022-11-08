@@ -73,7 +73,7 @@ public class RunRecordDetail extends RunRecord {
                             @Nullable String peerName, byte[] sourceId, @Nullable ArtifactId artifactId,
                             @Nullable String principal) {
     super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
-          status, properties, cluster, profileId, peerName);
+          status, properties, cluster, profileId, peerName, programRunId.getVersion());
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
