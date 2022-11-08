@@ -308,48 +308,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("program-type") String type,
                                   @PathParam("program-id") String programId,
-                                  @PathParam("run-id") String runId,
-                                  @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
+                                  @PathParam("run-id") String runId) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId program = new ApplicationId(namespaceId, appId).program(programType, programId);
 
-    Integer gracefulShutdownSecsInt;
-    try {
-      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
-    } catch (IllegalArgumentException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return;
-    }
     try {
       RunIds.fromString(runId);
     } catch (Exception e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
-    lifecycleService.stop(program, runId, gracefulShutdownSecsInt);
+    lifecycleService.stop(program, runId, null);
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  @Nullable
-  private Integer validateAndGetGracefulShutdownSecsInt(@Nullable String gracefulShutdownSecs) {
-    try {
-      if (gracefulShutdownSecs == null) {
-        return null;
-      }
-      if (gracefulShutdownSecs.isEmpty()) {
-        return Integer.MAX_VALUE;
-      }
-      int gracefulShutdownSecsInt = Integer.parseInt(gracefulShutdownSecs);
-      if (gracefulShutdownSecsInt < 0) {
-        throw new IllegalArgumentException(String.format("Invalid graceful shutdown period %s passed. " +
-                                                           "Please specify a value greater than or equal to 0.",
-                                                         gracefulShutdownSecs));
-      }
-      return gracefulShutdownSecsInt;
-    } catch (NumberFormatException e) {
-      LOG.error("Invalid graceful shutdown period %s passed.");
-      throw new IllegalArgumentException(String.format("Invalid graceful shutdown period %s passed. " +
-                                                         "Please specify a valid number", gracefulShutdownSecs));
-    }
   }
 
   /**
@@ -1375,15 +1344,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/stop")
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void stopPrograms(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId,
-                           @QueryParam("graceful") String gracefulShutdownSecs) throws Exception {
-    Integer gracefulShutdownSecsInt;
-    try {
-      gracefulShutdownSecsInt = validateAndGetGracefulShutdownSecsInt(gracefulShutdownSecs);
-    } catch (IllegalArgumentException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return;
-    }
+                           @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
     List<BatchProgramResult> issuedStops = new ArrayList<>(programs.size());
@@ -1394,7 +1355,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId = new ProgramId(applicationId, program.getProgramType(),
                                           program.getProgramId());
       try {
-        Collection<ProgramRunId> stoppedRuns = lifecycleService.issueStop(programId, null, gracefulShutdownSecsInt);
+        Collection<ProgramRunId> stoppedRuns = lifecycleService.issueStop(programId, null, null);
         for (ProgramRunId stoppedRun : stoppedRuns) {
           issuedStops.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, stoppedRun.getRun()));
         }
