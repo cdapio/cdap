@@ -182,12 +182,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Deploy an application with the specified name from an artifact.
+   * Creates an application with the specified name from an artifact.
    */
   @PUT
   @Path("/apps/{app-id}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
+  public BodyConsumer create(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
     throws BadRequestException, NamespaceNotFoundException, AccessException {
@@ -245,7 +245,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     // If LCM flow is enabled - Ignore the version provided by the user. Treating it the same as deploy without version
     if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
-      return deploy(request, responder, namespaceId, appId);
+      return create(request, responder, namespaceId, appId);
     }
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
