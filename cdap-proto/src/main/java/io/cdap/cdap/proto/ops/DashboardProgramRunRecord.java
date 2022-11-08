@@ -20,6 +20,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Objects;
@@ -173,6 +174,10 @@ public class DashboardProgramRunRecord {
     public ApplicationNameVersion(String name, String version) {
       this.name = name;
       this.version = version;
+    }
+
+    public ApplicationNameVersion(String name) {
+      this(name, ApplicationId.DEFAULT_VERSION);
     }
 
     /**

@@ -23,7 +23,7 @@ import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProtoTrigger;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,9 +117,9 @@ public abstract class AbstractSatisfiableCompositeTrigger
    * Create a new trigger where all sub-triggers related to the given program have been removed.
    * Returns null if removing relevant sub-triggers results in a trigger that can never be satisfied.
    *
-   * @param programId the program id of the deleted program
+   * @param programReference the program id of the deleted program
    * @return the new trigger, or {@code null} if result trigger will never be satisfied
    */
   @Nullable
-  public abstract SatisfiableTrigger getTriggerWithDeletedProgram(ProgramId programId);
+  public abstract SatisfiableTrigger getTriggerWithDeletedProgram(ProgramReference programReference);
 }

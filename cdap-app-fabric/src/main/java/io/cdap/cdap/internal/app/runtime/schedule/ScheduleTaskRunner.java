@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -78,11 +79,12 @@ public final class ScheduleTaskRunner {
 
   public void launch(Job job) throws Exception {
     ProgramSchedule schedule = job.getSchedule();
-    ProgramId programId = getLatestAppProgramId(schedule.getProgramId());
+    ProgramReference programRef = schedule.getProgramReference();
+    ProgramId programId = getLatestAppProgramId(programRef);
 
     Map<String, String> userArgs = getUserArgs(schedule, propertiesResolver);
 
-    Map<String, String> systemArgs = new HashMap<>(propertiesResolver.getSystemProperties(programId));
+    Map<String, String> systemArgs = new HashMap<>(propertiesResolver.getSystemProperties(programRef));
 
     // Let the triggers update the arguments first before setting the triggering schedule info
     ((SatisfiableTrigger) job.getSchedule().getTrigger()).updateLaunchArguments(job.getSchedule(),
@@ -107,7 +109,7 @@ public final class ScheduleTaskRunner {
                                          PropertiesResolver propertiesResolver)
     throws IOException, NotFoundException, UnauthorizedException {
     Map<String, String> userArgs = new HashMap<>();
-    userArgs.putAll(propertiesResolver.getUserProperties(schedule.getProgramId()));
+    userArgs.putAll(propertiesResolver.getUserProperties(schedule.getProgramReference()));
     userArgs.putAll(schedule.getProperties());
     return userArgs;
   }
@@ -146,14 +148,14 @@ public final class ScheduleTaskRunner {
   /**
    * Get the ProgramId of the latest version.
    */
-  private ProgramId getLatestAppProgramId(ProgramId programId) throws ProgramNotFoundException {
-    ApplicationMeta applicationMeta = store.getLatest(programId.getAppReference());
+  private ProgramId getLatestAppProgramId(ProgramReference programReference) throws ProgramNotFoundException {
+    ApplicationMeta applicationMeta = store.getLatest(programReference.getParent());
     if (applicationMeta == null) {
-      throw new ProgramNotFoundException(programId);
+      throw new ProgramNotFoundException(programReference);
     }
-    ApplicationId appId = new ApplicationId(programId.getNamespace(),
-                                            programId.getApplication(),
+    ApplicationId appId = new ApplicationId(programReference.getNamespace(),
+                                            programReference.getApplication(),
                                             applicationMeta.getSpec().getAppVersion());
-    return new ProgramId(appId, programId.getType(), programId.getProgram());
+    return new ProgramId(appId, programReference.getType(), programReference.getProgram());
   }
 }

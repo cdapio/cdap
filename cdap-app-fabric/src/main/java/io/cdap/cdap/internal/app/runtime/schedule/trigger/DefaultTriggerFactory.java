@@ -20,10 +20,9 @@ import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.schedule.TriggerFactory;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 /**
  * The default implementation of {@link TriggerFactory}
@@ -62,26 +61,20 @@ public class DefaultTriggerFactory implements TriggerFactory {
   }
 
   @Override
-  public Trigger onProgramStatus(String namespace, String application, String appVersion,
-                                 ProgramType programType, String program, ProgramStatus... programStatuses) {
-    return new ProgramStatusTrigger(new ApplicationId(namespace, application, appVersion)
-                                      .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
-                                    programStatuses);
-  }
-
-  @Override
   public Trigger onProgramStatus(String programNamespace, String application, ProgramType programType,
                                  String program, ProgramStatus... programStatuses) {
-    return new ProgramStatusTrigger(new ApplicationId(programNamespace, application)
-                                      .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
+    return new ProgramStatusTrigger(new ProgramReference(programNamespace, application,
+                                                         io.cdap.cdap.proto.ProgramType.valueOf(programType.name()),
+                                                         program),
                                     programStatuses);
   }
 
   @Override
   public Trigger onProgramStatus(String application, ProgramType programType, String program,
                                  ProgramStatus... programStatuses) {
-    return new ProgramStatusTrigger(new ProgramId(namespaceId.getNamespace(), application,
-                                                  io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
+    return new ProgramStatusTrigger(new ProgramReference(namespaceId.getNamespace(), application,
+                                                  io.cdap.cdap.proto.ProgramType.valueOf(programType.name()),
+                                                         program),
                                     programStatuses);
   }
 

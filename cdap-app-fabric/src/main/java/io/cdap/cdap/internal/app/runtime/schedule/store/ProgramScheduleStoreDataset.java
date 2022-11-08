@@ -39,8 +39,9 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.InvalidFieldException;
@@ -260,13 +261,14 @@ public class ProgramScheduleStoreDataset {
   /**
    * Removes all schedules for a specific application from the store.
    *
-   * @param appId the application id for which to delete the schedules
+   * @param applicationReference the application id for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
   // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
-  public List<ScheduleId> deleteSchedules(ApplicationId appId, long deleteTime) throws IOException {
+  public List<ScheduleId> deleteSchedules(ApplicationReference applicationReference, long deleteTime)
+    throws IOException {
     List<ScheduleId> deleted = new ArrayList<>();
-    Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(appId);
+    Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(applicationReference);
     Range range = Range.singleton(scanKeys);
     // First collect all the schedules that are going to be deleted
     try (CloseableIterator<StructuredRow> iterator = scheduleStore.scan(range, Integer.MAX_VALUE)) {
@@ -286,13 +288,13 @@ public class ProgramScheduleStoreDataset {
   /**
    * Removes all schedules for a specific program from the store.
    *
-   * @param programId the program id for which to delete the schedules
+   * @param programReference the program reference for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
   // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
-  public List<ScheduleId> deleteSchedules(ProgramId programId, long deleteTime) throws IOException {
+  public List<ScheduleId> deleteSchedules(ProgramReference programReference, long deleteTime) throws IOException {
     List<ScheduleId> deleted = new ArrayList<>();
-    Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(programId.getParent());
+    Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(programReference.getParent());
     Range range = Range.singleton(scanKeys);
     // First collect all the schedules that are going to be deleted
     try (CloseableIterator<StructuredRow> iterator = scheduleStore.scan(range, Integer.MAX_VALUE)) {
@@ -301,7 +303,7 @@ public class ProgramScheduleStoreDataset {
         String serializedSchedule = row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE);
         if (serializedSchedule != null) {
           ProgramSchedule schedule = GSON.fromJson(serializedSchedule, ProgramSchedule.class);
-          if (programId.isSameProgramExceptVersion(schedule.getProgramId())) {
+          if (programReference.equals(schedule.getProgramReference())) {
             markScheduleAsDeleted(row, deleteTime);
             Collection<Field<?>> deleteKeys = getScheduleKeys(row);
             triggerStore.deleteAll(Range.singleton(deleteKeys));
@@ -319,15 +321,16 @@ public class ProgramScheduleStoreDataset {
    * will be updated if the composite trigger can still be satisfied after the program is deleted, otherwise the
    * schedules will be deleted.
    *
-   * @param programId the program id for which to delete the schedules
+   * @param programRef the program id for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
-  public List<ProgramSchedule> modifySchedulesTriggeredByDeletedProgram(ProgramId programId) throws IOException {
+  public List<ProgramSchedule> modifySchedulesTriggeredByDeletedProgram(ProgramReference programRef)
+    throws IOException {
     long deleteTime = System.currentTimeMillis();
     List<ProgramSchedule> deleted = new ArrayList<>();
     Set<ProgramScheduleRecord> scheduleRecords = new HashSet<>();
     for (ProgramStatus status : ProgramStatus.values()) {
-      scheduleRecords.addAll(findSchedules(Schedulers.triggerKeyForProgramStatus(programId, status)));
+      scheduleRecords.addAll(findSchedules(Schedulers.triggerKeyForProgramStatus(programRef, status)));
     }
     for (ProgramScheduleRecord scheduleRecord : scheduleRecords) {
       ProgramSchedule schedule = scheduleRecord.getSchedule();
@@ -337,7 +340,7 @@ public class ProgramScheduleStoreDataset {
       if (schedule.getTrigger() instanceof AbstractSatisfiableCompositeTrigger) {
         // get the updated composite trigger by removing the program status trigger of the given program
         Trigger updatedTrigger =
-          ((AbstractSatisfiableCompositeTrigger) schedule.getTrigger()).getTriggerWithDeletedProgram(programId);
+          ((AbstractSatisfiableCompositeTrigger) schedule.getTrigger()).getTriggerWithDeletedProgram(programRef);
         if (updatedTrigger == null) {
           deleted.add(schedule);
           continue;
@@ -345,13 +348,14 @@ public class ProgramScheduleStoreDataset {
         // if the updated composite trigger is not null, add the schedule back with updated composite trigger
         try {
           addScheduleWithStatus(new ProgramSchedule(schedule.getName(), schedule.getDescription(),
-                                                    schedule.getProgramId(), schedule.getProperties(), updatedTrigger,
-                                                    schedule.getConstraints(), schedule.getTimeoutMillis()),
+                                                    schedule.getProgramReference(), schedule.getProperties(),
+                                                    updatedTrigger, schedule.getConstraints(),
+                                                    schedule.getTimeoutMillis()),
                                 scheduleRecord.getMeta().getStatus(), System.currentTimeMillis());
         } catch (AlreadyExistsException e) {
           // this should never happen
           LOG.warn("Failed to add the schedule '{}' triggered by '{}' with updated trigger '{}', " +
-                     "skip adding this schedule.", schedule.getScheduleId(), programId, updatedTrigger, e);
+                     "skip adding this schedule.", schedule.getScheduleId(), programRef, updatedTrigger, e);
         }
       } else {
         deleted.add(schedule);
@@ -427,43 +431,43 @@ public class ProgramScheduleStoreDataset {
   /**
    * Retrieve all schedules for a given application.
    *
-   * @param appId the application for which to list the schedules.
+   * @param applicationReference the application for which to list the schedules.
    * @return a list of schedules for the application; never null
    */
-  public List<ProgramSchedule> listSchedules(ApplicationId appId) throws IOException {
-    return listSchedulesWithPrefix(getScheduleKeysForApplicationScan(appId), schedule -> true);
+  public List<ProgramSchedule> listSchedules(ApplicationReference applicationReference) throws IOException {
+    return listSchedulesWithPrefix(getScheduleKeysForApplicationScan(applicationReference), schedule -> true);
   }
 
   /**
    * Retrieve all schedules for a given program.
    *
-   * @param programId the program for which to list the schedules.
+   * @param programReference the program for which to list the schedules.
    * @return a list of schedules for the program; never null
    */
-  public List<ProgramSchedule> listSchedules(ProgramId programId) throws IOException {
-    return listSchedulesWithPrefix(getScheduleKeysForApplicationScan(programId.getParent()),
-                                   schedule -> programId.isSameProgramExceptVersion(schedule.getProgramId()));
+  public List<ProgramSchedule> listSchedules(ProgramReference programReference) throws IOException {
+    return listSchedulesWithPrefix(getScheduleKeysForApplicationScan(programReference.getParent()),
+                                   schedule -> programReference.equals(schedule.getProgramReference()));
   }
 
   /**
    * Retrieve all schedule records for a given application.
    *
-   * @param appId the application for which to list the schedule records.
+   * @param applicationReference the application for which to list the schedule records.
    * @return a list of schedule records for the application; never null
    */
-  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws IOException {
-    return listSchedulesRecordsWithPrefix(getScheduleKeysForApplicationScan(appId), schedule -> true);
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationReference applicationReference) throws IOException {
+    return listSchedulesRecordsWithPrefix(getScheduleKeysForApplicationScan(applicationReference), schedule -> true);
   }
 
   /**
    * Retrieve all schedule records for a given program.
    *
-   * @param programId the program for which to list the schedule records.
+   * @param programReference the program for which to list the schedule records.
    * @return a list of schedule records for the program; never null
    */
-  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws IOException {
-    return listSchedulesRecordsWithPrefix(getScheduleKeysForApplicationScan(programId.getParent()),
-                                          schedule -> programId.isSameProgramExceptVersion(schedule.getProgramId()));
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramReference programReference) throws IOException {
+    return listSchedulesRecordsWithPrefix(getScheduleKeysForApplicationScan(programReference.getParent()),
+                                          schedule -> programReference.equals(schedule.getProgramReference()));
   }
 
   /**
@@ -683,11 +687,14 @@ public class ProgramScheduleStoreDataset {
     return keys;
   }
 
-  private static Collection<Field<?>> getScheduleKeysForApplicationScan(ApplicationId appId) {
+  private static Collection<Field<?>> getScheduleKeysForApplicationScan(ApplicationReference applicationReference) {
     List<Field<?>> keys = new ArrayList<>();
-    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.NAMESPACE_FIELD, appId.getNamespace()));
-    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.APPLICATION_FIELD, appId.getApplication()));
-    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.VERSION_FIELD, ApplicationId.DEFAULT_VERSION));
+    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.NAMESPACE_FIELD,
+                                applicationReference.getNamespace()));
+    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.APPLICATION_FIELD,
+                                applicationReference.getApplication()));
+    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.VERSION_FIELD,
+                                ApplicationId.DEFAULT_VERSION));
     return keys;
   }
 

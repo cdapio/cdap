@@ -135,14 +135,6 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
       Objects.equals(program, programId.program);
   }
 
-  /**
-   * Check whether two programs are the same except version
-   */
-  public boolean isSameProgramExceptVersion(Object o) {
-    ProgramId programId = (ProgramId) o;
-    return Objects.equals(getProgramReference(), programId.getProgramReference());
-  }
-
   @Override
   public int hashCode() {
     Integer hashCode = this.hashCode;

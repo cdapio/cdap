@@ -26,7 +26,7 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.store.StoreDefinition;
@@ -58,17 +58,18 @@ public class Schedulers {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
   }
 
-  public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
-    return String.format("programStatus:program:%s.%s.%s.%s.%s.%s", programId.getNamespace(),
-                         programId.getApplication(), ApplicationId.DEFAULT_VERSION,
-                         programId.getType().getPrettyName().toLowerCase(),
-                         programId.getProgram(), programStatus.toString().toLowerCase());
+  public static String triggerKeyForProgramStatus(ProgramReference programRef, ProgramStatus programStatus) {
+    return String.format("programStatus:program:%s.%s.%s.%s.%s.%s", programRef.getNamespace(),
+                         programRef.getApplication(), ApplicationId.DEFAULT_VERSION,
+                         programRef.getType().getPrettyName().toLowerCase(),
+                         programRef.getProgram(), programStatus.toString().toLowerCase());
   }
 
-  public static Set<String> triggerKeysForProgramStatuses(ProgramId programId, Set<ProgramStatus> programStatuses) {
+  public static Set<String> triggerKeysForProgramStatuses(ProgramReference programReference,
+                                                          Set<ProgramStatus> programStatuses) {
     ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
     for (ProgramStatus status : programStatuses) {
-      triggerKeysBuilder.add(triggerKeyForProgramStatus(programId, status));
+      triggerKeysBuilder.add(triggerKeyForProgramStatus(programReference, status));
     }
     return triggerKeysBuilder.build();
   }

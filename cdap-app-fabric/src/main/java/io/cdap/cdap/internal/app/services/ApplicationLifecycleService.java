@@ -1170,9 +1170,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteApp(ApplicationId appId, ApplicationSpecification spec) throws IOException {
     //Delete the schedules
-    scheduler.deleteSchedules(appId);
+    scheduler.deleteSchedules(appId.getAppReference());
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName())
+                                                           .getProgramReference());
     }
 
     deleteMetrics(appId, spec);
@@ -1207,9 +1208,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteAppVersion(ApplicationId appId, ApplicationSpecification spec) {
     //Delete the schedules
-    scheduler.deleteSchedules(appId);
+    scheduler.deleteSchedules(appId.getAppReference());
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName())
+                                                           .getProgramReference());
     }
     store.removeApplication(appId);
   }

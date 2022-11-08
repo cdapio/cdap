@@ -26,7 +26,7 @@ import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.id.DatasetId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +48,7 @@ public class ProtoTriggerCodecTest {
 
     ProtoTrigger.ProgramStatusTrigger programStatusTrigger =
       new ProtoTrigger.ProgramStatusTrigger(
-        new ProgramId("test", "myapp", ProgramType.WORKER, "myprog"),
+        new ProgramReference("test", "myapp", ProgramType.WORKER, "myprog"),
         ImmutableSet.of(io.cdap.cdap.api.ProgramStatus.FAILED));
     testTriggerCodec(ProtoTrigger.or(ProtoTrigger.and(partitionTrigger,
                                                       programStatusTrigger.or(timeTrigger, programStatusTrigger)),

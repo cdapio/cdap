@@ -219,7 +219,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         // make sure the schedule exists before updating
         try {
           ProgramSchedule schedule = scheduleDataset.getSchedule(scheduleId);
-          collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()), updates);
+          collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramReference()), updates);
         } catch (NotFoundException e) {
           LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
                       "Ignoring the message {}", scheduleId, message);
@@ -295,7 +295,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       : getProfileId(programId).orElse(appProfile);
     addProfileMetadataUpdate(programId, programProfile, updates);
 
-    for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
+    for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId.getProgramReference())) {
       collectScheduleProfileMetadata(schedule, programProfile, updates);
     }
   }

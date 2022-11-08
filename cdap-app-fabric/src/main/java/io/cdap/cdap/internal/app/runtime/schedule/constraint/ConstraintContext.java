@@ -20,7 +20,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Map;
@@ -43,13 +43,13 @@ public final class ConstraintContext {
     return checkTimeMillis;
   }
 
-  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) {
-    return store.getActiveRuns(programId);
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramReference programRef) {
+    return store.getAllActiveRuns(programRef);
   }
 
-  public Map<ProgramRunId, RunRecordDetail> getProgramRuns(ProgramId programId, ProgramRunStatus status,
+  public Map<ProgramRunId, RunRecordDetail> getProgramRuns(ProgramReference programRef, ProgramRunStatus status,
                                                            long startTime, long endTime, int limit) {
-    return store.getRuns(programId, status, startTime, endTime, limit);
+    return store.getAllRuns(programRef, status, startTime, endTime, limit, null);
   }
 
   public Job getJob() {

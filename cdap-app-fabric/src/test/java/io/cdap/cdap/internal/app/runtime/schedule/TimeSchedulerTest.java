@@ -23,6 +23,7 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.WorkflowId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -40,6 +41,7 @@ public class TimeSchedulerTest extends AppFabricTestBase {
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
   private static final ApplicationId APP1_ID = NS_ID.app("app1");
   private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
+  private static final ProgramReference PROG1_REFERENCE = PROG1_ID.getProgramReference();
 
   private static TimeScheduler timeScheduler;
 
@@ -54,9 +56,10 @@ public class TimeSchedulerTest extends AppFabricTestBase {
   @Test
   public void testNextSchedule() throws Exception {
     // a schedule to be triggered every 5 minutes
-    ProgramSchedule sched = new ProgramSchedule("tsched11", "two times schedule", PROG1_ID,
-      ImmutableMap.of("prop2", "xx"),
-      new TimeTrigger("*/5 * * * *"), Collections.emptyList());
+    ProgramSchedule sched = new ProgramSchedule("tsched11", "two times schedule",
+                                                PROG1_REFERENCE, ImmutableMap.of("prop2", "xx"),
+                                                new TimeTrigger("*/5 * * * *"),
+                                                Collections.emptyList());
     timeScheduler.addProgramSchedule(sched);
     // schedule is by default SUSPENDED after being added, resume it to enable the schedule
     timeScheduler.resumeProgramSchedule(sched);
@@ -64,7 +67,7 @@ public class TimeSchedulerTest extends AppFabricTestBase {
     long startTimeInSeconds = currentTimeInSeconds + TimeUnit.HOURS.toSeconds(1);
     long endTimeInSeconds = currentTimeInSeconds + TimeUnit.HOURS.toSeconds(3);
     List<ScheduledRuntime> nextRuntimes =
-      timeScheduler.getAllScheduledRunTimes(PROG1_ID, SchedulableProgramType.WORKFLOW,
+      timeScheduler.getAllScheduledRunTimes(PROG1_ID.getProgramReference(), SchedulableProgramType.WORKFLOW,
                                             startTimeInSeconds, endTimeInSeconds);
     // for a scan range of 1pm to 3pm. since start time is inclusive, from 1pm tp 2pm we will have 13 schedules
     // and from 2:05 pm to 2:55pm will have 11 schedules as end time is exclusive. in total we expect 24 schedules.
@@ -73,7 +76,7 @@ public class TimeSchedulerTest extends AppFabricTestBase {
 
   @Test
   public void testDeleteNonExisting() throws Exception {
-    ProgramSchedule sched = new ProgramSchedule("name", "description", PROG1_ID,
+    ProgramSchedule sched = new ProgramSchedule("name", "description", PROG1_REFERENCE,
                                                 Collections.emptyMap(),
                                                 new TimeTrigger("*/5 * * * *"), Collections.emptyList());
     timeScheduler.addProgramSchedule(sched);

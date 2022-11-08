@@ -29,10 +29,12 @@ import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.SimpleJob;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import org.junit.Assert;
@@ -50,6 +52,8 @@ public class ConcurrencyConstraintTest {
   private static final ApplicationId APP_ID = TEST_NS.app("app1");
   private static final ArtifactId ARTIFACT_ID = TEST_NS.artifact("test", "1.0").toApiArtifactId();
   private static final WorkflowId WORKFLOW_ID = APP_ID.workflow("wf1");
+  private static final ProgramReference WORKFLOW_REF = APP_ID.getAppReference().program(ProgramType.WORKFLOW,
+                                                                                        "wf1");
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
   private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
@@ -88,7 +92,7 @@ public class ConcurrencyConstraintTest {
     Store store = AppFabricTestHelper.getInjector().getInstance(Store.class);
     try {
       long now = System.currentTimeMillis();
-      ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
+      ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_REF,
                                                      ImmutableMap.of("prop3", "abc"),
                                                      new PartitionTrigger(DATASET_ID, 1),
                                                      ImmutableList.of());

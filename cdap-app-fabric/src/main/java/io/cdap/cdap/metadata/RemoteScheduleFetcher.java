@@ -31,7 +31,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.proto.ScheduleDetail;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -87,16 +87,16 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
    * Get the list of schedules for the given program id
    */
   @Override
-  public List<ScheduleDetail> list(ProgramId programId)
+  public List<ScheduleDetail> list(ProgramReference programRef)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
-    String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules",
-                               programId.getNamespace(), programId.getApplication(), programId.getVersion());
+    String url = String.format("namespaces/%s/apps/%s/schedules",
+                               programRef.getNamespace(), programRef.getApplication());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse = null;
     try {
       httpResponse = execute(requestBuilder.build());
     } catch (NotFoundException e) {
-      throw new ProgramNotFoundException(programId);
+      throw new ProgramNotFoundException(programRef);
     }
     ObjectResponse<List<ScheduleDetail>> objectResponse =
       ObjectResponse.fromJsonBody(httpResponse, SCHEDULE_DETAIL_LIST_TYPE, GSON);

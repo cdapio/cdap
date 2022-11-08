@@ -22,9 +22,9 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.Collection;
@@ -72,17 +72,17 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public void deleteSchedules(ApplicationId appId) {
+  public void deleteSchedules(ApplicationReference appReference) {
 
   }
 
   @Override
-  public void deleteSchedules(ProgramId programId) {
+  public void deleteSchedules(ProgramReference programRef) {
 
   }
 
   @Override
-  public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
+  public void modifySchedulesTriggeredByDeletedProgram(ProgramReference programRef) {
 
   }
 
@@ -102,12 +102,12 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public List<ProgramSchedule> listSchedules(ApplicationId appId) {
+  public List<ProgramSchedule> listSchedules(ApplicationReference appRef) {
     return Collections.EMPTY_LIST;
   }
 
   @Override
-  public List<ProgramSchedule> listSchedules(ProgramId programId) {
+  public List<ProgramSchedule> listSchedules(ProgramReference programRef) {
     return Collections.EMPTY_LIST;
   }
 
@@ -118,12 +118,12 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) {
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationReference appRef) {
     return Collections.EMPTY_LIST;
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) {
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramReference programReference) {
     return Collections.EMPTY_LIST;
   }
 

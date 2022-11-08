@@ -24,9 +24,9 @@ import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.Collection;
@@ -108,16 +108,16 @@ public interface Scheduler {
   /**
    * Removes all schedules for a specific application from the store.
    *
-   * @param appId the application id for which to delete the schedules
+   * @param applicationReference the application id for which to delete the schedules
    */
-  void deleteSchedules(ApplicationId appId);
+  void deleteSchedules(ApplicationReference applicationReference);
 
   /**
    * Removes all schedules for a specific program from the store.
    *
-   * @param programId the program id for which to delete the schedules
+   * @param programReference the program id for which to delete the schedules
    */
-  void deleteSchedules(ProgramId programId);
+  void deleteSchedules(ProgramReference programReference);
 
   /**
    * Update all schedules that can be triggered by the given deleted program. Schedules will be removed if they
@@ -125,9 +125,9 @@ public interface Scheduler {
    * composite triggers will be updated if the composite trigger can still be satisfied after the program is deleted,
    * otherwise the schedules will be deleted.
    *
-   * @param programId id of the deleted program
+   * @param programRef programreference of the deleted program
    */
-  void modifySchedulesTriggeredByDeletedProgram(ProgramId programId);
+  void modifySchedulesTriggeredByDeletedProgram(ProgramReference programRef);
 
   /**
    * Read a schedule from the store.
@@ -160,18 +160,18 @@ public interface Scheduler {
   /**
    * Retrieve all schedules for a given application.
    *
-   * @param appId the application for which to list the schedules.
+   * @param appReference the application for which to list the schedules.
    * @return a list of schedules for the application; never null
    */
-  List<ProgramSchedule> listSchedules(ApplicationId appId) throws NotFoundException;
+  List<ProgramSchedule> listSchedules(ApplicationReference appReference) throws NotFoundException;
 
   /**
    * Retrieve all schedules for a given program.
    *
-   * @param programId the program for which to list the schedules.
+   * @param programReference the program for which to list the schedules.
    * @return a list of schedules for the program; never null
    */
-  List<ProgramSchedule> listSchedules(ProgramId programId) throws NotFoundException;
+  List<ProgramSchedule> listSchedules(ProgramReference programReference) throws NotFoundException;
 
   /**
    * Retrieve all schedules for a given namespace
@@ -185,18 +185,18 @@ public interface Scheduler {
   /**
    * Retrieve all schedule records for a given application.
    *
-   * @param appId the application for which to list the schedule records.
+   * @param appReference the application for which to list the schedule records.
    * @return a list of schedule records for the application; never null
    */
-  List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId);
+  List<ProgramScheduleRecord> listScheduleRecords(ApplicationReference appReference);
 
   /**
    * Retrieve all schedule records for a given program.
    *
-   * @param programId the program for which to list the schedule records.
+   * @param programReference the program for which to list the schedule records.
    * @return a list of schedule records for the program; never null
    */
-  List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId);
+  List<ProgramScheduleRecord> listScheduleRecords(ProgramReference programReference);
 
   /**
    * Find all schedules for a given trigger key

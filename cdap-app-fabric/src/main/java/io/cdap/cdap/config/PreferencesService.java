@@ -31,12 +31,14 @@ import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -208,6 +210,10 @@ public class PreferencesService {
     return get(applicationId);
   }
 
+  public PreferencesDetail getPreferences(ApplicationReference applicationRef) {
+    return get(applicationRef);
+  }
+
   /**
    * Get program level preferences
    */
@@ -218,6 +224,10 @@ public class PreferencesService {
 
   public PreferencesDetail getPreferences(ProgramId programId) {
     return get(programId);
+  }
+
+  public PreferencesDetail getPreferences(ProgramReference programRef) {
+    return get(programRef);
   }
 
   /**
@@ -255,6 +265,11 @@ public class PreferencesService {
     return getResolved(appId);
   }
 
+  public PreferencesDetail getResolvedPreferences(ApplicationReference applicationRef) {
+    return getResolved(applicationRef);
+  }
+
+
   /**
    * Get program level resolved preferences
    */
@@ -264,6 +279,10 @@ public class PreferencesService {
   }
   public PreferencesDetail getResolvedPreferences(ProgramId programId) {
     return getResolved(programId);
+  }
+
+  public PreferencesDetail getResolvedPreferences(ProgramReference programRef) {
+    return getResolved(programRef);
   }
 
   /**

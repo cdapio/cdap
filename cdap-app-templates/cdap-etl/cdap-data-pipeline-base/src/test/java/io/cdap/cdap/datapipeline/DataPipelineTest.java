@@ -119,6 +119,7 @@ import io.cdap.cdap.metadata.LineageAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
@@ -127,8 +128,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
@@ -640,7 +641,8 @@ public class DataPipelineTest extends HydratorTestBase {
     TriggeringPropertyMapping propertyMapping =
       new TriggeringPropertyMapping(ImmutableList.of(key1MappingWithId), ImmutableList.of(key2MappingWithId));
     ProgramStatusTrigger completeTrigger =
-      new ProgramStatusTrigger(new WorkflowId(defaultNamespace, triggeringPipelineName, SmartWorkflow.NAME),
+      new ProgramStatusTrigger(new ProgramReference(defaultNamespace, triggeringPipelineName,
+                                                    ProgramType.WORKFLOW, SmartWorkflow.NAME),
                                ImmutableSet.of(ProgramStatus.COMPLETED));
     ScheduleId scheduleId = appId.schedule("completeSchedule");
     appManager.addSchedule(

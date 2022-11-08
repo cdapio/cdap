@@ -303,6 +303,14 @@ public interface Store {
   Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(ApplicationReference applicationReference);
 
   /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records for the
+   * given program.
+   * @param programReference versionless reference of the program
+   * @return map of logged runs. If no active run exists, return an empty map.
+   */
+  Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(ProgramReference programReference);
+
+  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ProgramId.
    * @param programId the program id to match against
    * @return map of logged runs

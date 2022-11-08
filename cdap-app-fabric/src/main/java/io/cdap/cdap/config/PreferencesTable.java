@@ -22,11 +22,13 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ParentedId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -79,9 +81,15 @@ public class PreferencesTable {
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         return get(appId.getNamespace(), APPLICATION_PREFERENCE, appId.getApplication());
+      case APPLICATIONREFERENCE:
+        ApplicationReference appReference = (ApplicationReference) entityId;
+        return get(appReference.getNamespace(), APPLICATION_PREFERENCE, appReference.getApplication());
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
-        return get(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
+        return get(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId.getProgramReference()));
+      case PROGRAMREFERENCE:
+        ProgramReference programReference = (ProgramReference) entityId;
+        return get(programReference.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programReference));
       default:
         throw new UnsupportedOperationException(
           String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
@@ -111,7 +119,8 @@ public class PreferencesTable {
         return;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
-        checkSeqId(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId), afterId);
+        checkSeqId(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId.getProgramReference()),
+                   afterId);
         return;
       default:
         throw new UnsupportedOperationException(
@@ -199,7 +208,8 @@ public class PreferencesTable {
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         return upsert(
-          programId.getNamespace(), PROGRAM_PREFERENCE, new Config(getProgramName(programId), propMap));
+          programId.getNamespace(), PROGRAM_PREFERENCE, new Config(getProgramName(programId.getProgramReference()),
+                                                                   propMap));
       default:
         throw new UnsupportedOperationException(
           String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
@@ -224,7 +234,7 @@ public class PreferencesTable {
         return delete(appId.getNamespace(), APPLICATION_PREFERENCE, appId.getApplication());
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
-        return delete(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
+        return delete(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId.getProgramReference()));
       default:
         throw new UnsupportedOperationException(
           String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
@@ -234,9 +244,9 @@ public class PreferencesTable {
   /**
    * Used to dedup programs in different applications or types.
    */
-  private String getProgramName(ProgramId programId) {
-    return String.join(",", programId.getApplication(), programId.getType().getCategoryName(),
-                       programId.getProgram());
+  private String getProgramName(ProgramReference programRef) {
+    return String.join(",", programRef.getApplication(), programRef.getType().getCategoryName(),
+                       programRef.getProgram());
   }
 
   private long upsert(String namespace, String type, Config config) throws IOException {

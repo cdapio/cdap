@@ -553,8 +553,8 @@ public class ProgramLifecycleService {
     checkLatestVersionExeceution(programId);
     checkConcurrentExecution(programId);
 
-    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
-    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
+    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId.getProgramReference());
+    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId.getProgramReference());
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
@@ -761,12 +761,12 @@ public class ProgramLifecycleService {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     checkConcurrentExecution(programId);
 
-    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
+    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId.getProgramReference());
     addAppCDAPVersion(programId, sysArgs);
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     sysArgs.put(ProgramOptionConstants.IS_PREVIEW, Boolean.toString(isPreview));
-    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
+    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId.getProgramReference());
     if (overrides != null) {
       userArgs.putAll(overrides);
     }

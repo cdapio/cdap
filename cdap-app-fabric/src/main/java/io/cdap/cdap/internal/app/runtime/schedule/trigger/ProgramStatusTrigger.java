@@ -31,7 +31,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoTrigger;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Arrays;
@@ -47,13 +47,13 @@ import java.util.Set;
 public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements SatisfiableTrigger {
   private static final Gson GSON = new Gson();
 
-  public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
-    super(programId, programStatuses);
+  public ProgramStatusTrigger(ProgramReference programReference, Set<ProgramStatus> programStatuses) {
+    super(programReference, programStatuses);
   }
 
   @VisibleForTesting
-  public ProgramStatusTrigger(ProgramId programId, ProgramStatus... programStatuses) {
-    super(programId, new HashSet<>(Arrays.asList(programStatuses)));
+  public ProgramStatusTrigger(ProgramReference programReference, ProgramStatus... programStatuses) {
+    super(programReference, new HashSet<>(Arrays.asList(programStatuses)));
   }
 
   @Override
@@ -68,7 +68,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
 
   @Override
   public Set<String> getTriggerKeys() {
-    return Schedulers.triggerKeysForProgramStatuses(programId, programStatuses);
+    return Schedulers.triggerKeysForProgramStatuses(programReference, programStatuses);
   }
 
   @Override
@@ -78,9 +78,10 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
       public List<TriggerInfo> apply(ProgramRunInfo runInfo) {
         Map<String, String> runtimeArgs = context.getProgramRuntimeArguments(runInfo.getProgramRunId());
         TriggerInfo triggerInfo =
-          new DefaultProgramStatusTriggerInfo(programId.getNamespace(),
-                                              programId.getParent().getApplication(),
-                                              ProgramType.valueOf(programId.getType().name()), programId.getProgram(),
+          new DefaultProgramStatusTriggerInfo(programReference.getNamespace(),
+                                              programReference.getParent().getApplication(),
+                                              ProgramType.valueOf(programReference.getType().name()),
+                                              programReference.getProgram(),
                                               RunIds.fromString(runInfo.getProgramRunId().getRun()),
                                               runInfo.getProgramStatus(),
                                               context.getWorkflowToken(runInfo.getProgramRunId()), runtimeArgs);
@@ -126,8 +127,8 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
         continue;
       }
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
-      ProgramId triggeringProgramId = programRunId.getParent();
-      if (this.programId.isSameProgramExceptVersion(triggeringProgramId) && programStatuses.contains(programStatus)) {
+      ProgramReference triggeringProgramReference = programRunId.getParent().getProgramReference();
+      if (this.programReference.equals(triggeringProgramReference) && programStatuses.contains(programStatus)) {
         return function.apply(new ProgramRunInfo(programStatus, programRunId));
       }
     }

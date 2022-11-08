@@ -78,7 +78,19 @@ public class Authorizable {
         String.format("Cannot extract the entity type from %s", entityString));
     }
     String typeString = typeAndId[0];
-    EntityType type = EntityType.valueOf(typeString.toUpperCase());
+    EntityType type;
+    // since Authorizable is versionless, applicationRef and programRef should be the same type as
+    // application and program
+    switch (typeString) {
+      case "applicationreference":
+        type = EntityType.valueOf("APPLICATION");
+        break;
+      case "programreference":
+        type = EntityType.valueOf("PROGRAM");
+        break;
+      default:
+        type = EntityType.valueOf(typeString.toUpperCase());
+    }
     String idString = typeAndId[1];
     EntityType childType = typeAndId.length == 3 ? EntityType.valueOf(typeAndId[2].toUpperCase()) : null;
 
@@ -260,6 +272,7 @@ public class Authorizable {
         checkParts(EntityType.NAMESPACE, parts, index - 1, entityParts);
         entityParts.put(entityType, parts.get(index));
         break;
+      case PROGRAMREFERENCE:
       case PROGRAM:
         // application have version part to it. We don't support version for authorization purpose.
         // also throw exception only when the actual entity type in question is program not when we

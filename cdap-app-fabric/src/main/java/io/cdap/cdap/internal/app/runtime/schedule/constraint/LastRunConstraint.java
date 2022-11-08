@@ -42,7 +42,7 @@ public class LastRunConstraint extends ProtoConstraint.LastRunConstraint impleme
     // is for the start time of the program. It may start before `millisSinceLastRun`, but complete after it.
     // Note: this will miss out on active workflow runs that started more than ~1day ago (suspended/lengthy workflows)
     Iterable<RunRecordDetail> runRecords =
-      context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.ALL,
+      context.getProgramRuns(schedule.getProgramReference(), ProgramRunStatus.ALL,
                              startTime - TimeUnit.DAYS.toSeconds(1), Long.MAX_VALUE, 100).values();
     // We can limit to 100, since just 1 program in the recent history is enough to make the constraint fail.
     // We want use 100 as the limit instead of 1, because we want to attempt to get the latest completed run,

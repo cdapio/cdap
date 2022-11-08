@@ -24,10 +24,11 @@ import io.cdap.cdap.internal.app.runtime.schedule.queue.SimpleJob;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,13 +42,14 @@ public class DelayConstraintTest {
 
   private static final NamespaceId TEST_NS = new NamespaceId("DelayConstraintTest");
   private static final ApplicationId APP_ID = TEST_NS.app("app1");
-  private static final WorkflowId WORKFLOW_ID = APP_ID.workflow("wf1");
+  private static final ProgramReference WORKFLOW_REF = APP_ID.getAppReference().program(ProgramType.WORKFLOW,
+                                                                                        "wf1");
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
   @Test
   public void testDelayConstraint() {
     long now = System.currentTimeMillis();
-    ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
+    ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_REF,
                                                    ImmutableMap.of("prop3", "abc"),
                                                    new PartitionTrigger(DATASET_ID, 1),
                                                    ImmutableList.<Constraint>of());

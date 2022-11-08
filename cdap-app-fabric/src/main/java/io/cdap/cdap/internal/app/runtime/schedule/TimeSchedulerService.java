@@ -22,6 +22,7 @@ import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.List;
 
@@ -77,12 +78,12 @@ public interface TimeSchedulerService extends Service {
    + into account schedules based on time. For schedules based on data, an empty list will
    + be returned.
    *
-   * @param program program to fetch the previous runtime.
+   * @param programReference program to fetch the previous runtime.
    * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> previousScheduledRuntime(ProgramId program) throws SchedulerException;
+  List<ScheduledRuntime> previousScheduledRuntime(ProgramReference programReference) throws SchedulerException;
 
   /**
    * Get the next scheduled run time of the program. A program may contain multiple schedules.
@@ -90,12 +91,12 @@ public interface TimeSchedulerService extends Service {
    + into account schedules based on time. For schedules based on data, an empty list will
    + be returned.
    *
-   * @param program program to fetch the next runtime.
+   * @param programReference program to fetch the next runtime.
    * @return list of scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> nextScheduledRuntime(ProgramId program) throws SchedulerException;
+  List<ScheduledRuntime> nextScheduledRuntime(ProgramReference programReference) throws SchedulerException;
 
   /**
    * Get all the scheduled run time of the program within the given time range in the future.
@@ -104,7 +105,7 @@ public interface TimeSchedulerService extends Service {
    + into account schedules based on time. For schedules based on data, an empty list will
    + be returned.
    *
-   * @param program program to fetch the next runtime.
+   * @param programReference program to fetch the next runtime.
    * @param programType type of program.
    * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
    *                      equal to the start will be returned)
@@ -114,6 +115,6 @@ public interface TimeSchedulerService extends Service {
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
+  List<ScheduledRuntime> getAllScheduledRunTimes(ProgramReference programReference, SchedulableProgramType programType,
                                                  long startTimeSecs, long endTimeSecs) throws SchedulerException;
 }

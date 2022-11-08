@@ -23,7 +23,7 @@ import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.proto.ScheduleDetail;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.scheduler.ProgramScheduleService;
 
@@ -60,11 +60,11 @@ public class LocalScheduleFetcher implements ScheduleFetcher {
   }
 
     @Override
-    public List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException {
+    public List<ScheduleDetail> list(ProgramReference programRef) throws IOException, ProgramNotFoundException {
       Predicate<ProgramScheduleRecord> predicate  = (record) -> true;
       Collection<ProgramScheduleRecord> schedules = null;
       try {
-        schedules = programScheduleService.list(programId, predicate);
+        schedules = programScheduleService.list(programRef, predicate);
       } catch (Exception e) {
         Throwables.propagateIfPossible(e.getCause(), IOException.class, ProgramNotFoundException.class);
         throw new IOException(e);

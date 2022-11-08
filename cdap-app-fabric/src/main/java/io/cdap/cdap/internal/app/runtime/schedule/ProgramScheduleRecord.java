@@ -71,8 +71,8 @@ public class ProgramScheduleRecord {
 
   public ScheduleDetail toScheduleDetail() {
     ScheduleProgramInfo programInfo =
-      new ScheduleProgramInfo(schedule.getProgramId().getType().getSchedulableType(),
-                              schedule.getProgramId().getProgram());
+      new ScheduleProgramInfo(schedule.getProgramReference().getType().getSchedulableType(),
+                              schedule.getProgramReference().getProgram());
     ScheduleId scheduleId = schedule.getScheduleId();
     return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(),
                               scheduleId.getSchedule(), schedule.getDescription(), programInfo,

@@ -19,7 +19,7 @@ package io.cdap.cdap.proto;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.proto.id.DatasetId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -237,19 +237,19 @@ public abstract class ProtoTrigger implements Trigger {
    * Represents a program status trigger for REST requests/responses
    */
   public static class ProgramStatusTrigger extends ProtoTrigger {
-    protected final ProgramId programId;
+    protected final ProgramReference programReference;
     protected final Set<ProgramStatus> programStatuses;
 
-    public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
+    public ProgramStatusTrigger(ProgramReference programReference, Set<ProgramStatus> programStatuses) {
       super(Type.PROGRAM_STATUS);
 
-      this.programId = programId;
+      this.programReference = programReference;
       this.programStatuses = programStatuses;
       validate();
     }
 
-    public ProgramId getProgramId() {
-      return programId;
+    public ProgramReference getProgramReference() {
+      return programReference;
     }
 
     public Set<ProgramStatus> getProgramStatuses() {
@@ -262,16 +262,16 @@ public abstract class ProtoTrigger implements Trigger {
           getProgramStatuses().contains(ProgramStatus.RUNNING)) {
         throw new IllegalArgumentException(String.format(
                 "Cannot allow triggering program %s with statuses %s: %s statuses are supported",
-                programId.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
+                programReference.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
       }
 
-      ProtoTrigger.validateNotNull(getProgramId(), "program id");
+      ProtoTrigger.validateNotNull(getProgramReference(), "program reference");
       ProtoTrigger.validateNotNull(getProgramStatuses(), "program statuses");
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(getProgramId(), getProgramStatuses());
+      return Objects.hash(getProgramReference(), getProgramStatuses());
     }
 
     @Override
@@ -280,12 +280,12 @@ public abstract class ProtoTrigger implements Trigger {
         o != null &&
           getClass().equals(o.getClass()) &&
           Objects.equals(getProgramStatuses(), ((ProgramStatusTrigger) o).getProgramStatuses()) &&
-          Objects.equals(getProgramId(), ((ProgramStatusTrigger) o).getProgramId());
+          Objects.equals(getProgramReference(), ((ProgramStatusTrigger) o).getProgramReference());
     }
 
     @Override
     public String toString() {
-      return String.format("ProgramStatusTrigger(%s, %s)", getProgramId().getProgram(),
+      return String.format("ProgramStatusTrigger(%s, %s)", getProgramReference().getProgram(),
                                                            getProgramStatuses().toString());
     }
   }

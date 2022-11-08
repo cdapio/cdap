@@ -245,14 +245,15 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                           TimeUnit.SECONDS.toMinutes(endTime), sched1Mins, startTime);
 
     List<DashboardProgramRunRecord> expectedRunRecords = new ArrayList<>();
-    String userId = impersonator.getUGI(sched1.getProgramId()).getUserName();
+    String userId = impersonator.getUGI(sched1.getProgramReference()).getUserName();
     for (long runTime : runTimesSchedule1) {
       expectedRunRecords.add(
-        new DashboardProgramRunRecord(sched1.getProgramId().getNamespace(),
+        new DashboardProgramRunRecord(sched1.getProgramReference().getNamespace(),
                                       ArtifactSummary.from(ARTIFACT_ID1.toApiArtifactId()),
                                       new DashboardProgramRunRecord.ApplicationNameVersion(
-                                        sched1.getProgramId().getApplication(), sched1.getProgramId().getVersion()),
-                                      sched1.getProgramId().getType().name(), sched1.getProgramId().getProgram(),
+                                        sched1.getProgramReference().getApplication()),
+                                      sched1.getProgramReference().getType().name(),
+                                      sched1.getProgramReference().getProgram(),
                                       null, userId, "SCHEDULED", runTime, null, null, null, null, null));
     }
     // assert the number of scheduled runs are expected for both programs
@@ -332,9 +333,9 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   private ProgramSchedule initializeSchedules(int scheduleMins, WorkflowId workflowId)
     throws ConflictException, BadRequestException, NotFoundException {
     ProgramSchedule schedule =
-      new ProgramSchedule(String.format("%dMinSchedule", scheduleMins), "time schedule", workflowId,
-                          Collections.emptyMap(), new TimeTrigger(String.format("*/%d * * * *", scheduleMins)),
-                          Collections.emptyList());
+      new ProgramSchedule(String.format("%dMinSchedule", scheduleMins), "time schedule",
+                          workflowId.getProgramReference(), Collections.emptyMap(),
+                          new TimeTrigger(String.format("*/%d * * * *", scheduleMins)), Collections.emptyList());
     scheduler.addSchedule(schedule);
     scheduler.enableSchedule(schedule.getScheduleId());
     return schedule;

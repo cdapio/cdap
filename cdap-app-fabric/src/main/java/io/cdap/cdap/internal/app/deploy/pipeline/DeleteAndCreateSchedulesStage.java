@@ -22,8 +22,9 @@ import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.pipeline.AbstractStage;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.scheduler.Scheduler;
 
 import java.util.HashSet;
@@ -50,10 +51,10 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
       return;
     }
 
-    ApplicationId appId = input.getApplicationId();
+    ApplicationReference applicationRef = input.getApplicationId().getAppReference();
     // Get a set of new schedules from the app spec
-    Set<ProgramSchedule> newSchedules = getProgramScheduleSet(appId, input.getSpecification());
-    for (ProgramSchedule schedule : programScheduler.listSchedules(appId)) {
+    Set<ProgramSchedule> newSchedules = getProgramScheduleSet(applicationRef, input.getSpecification());
+    for (ProgramSchedule schedule : programScheduler.listSchedules(applicationRef)) {
       if (newSchedules.contains(schedule)) {
         newSchedules.remove(schedule); // Remove the existing schedule from the newSchedules
         continue;
@@ -69,18 +70,21 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     emit(input);
   }
 
-  private Set<ProgramSchedule> getProgramScheduleSet(ApplicationId appId, ApplicationSpecification appSpec) {
+  private Set<ProgramSchedule> getProgramScheduleSet(ApplicationReference applicationRef,
+                                                     ApplicationSpecification appSpec) {
     Set<ProgramSchedule> schedules = new HashSet<>();
     for (ScheduleCreationSpec scheduleCreationSpec : appSpec.getProgramSchedules().values()) {
-      schedules.add(toProgramSchedule(appId, scheduleCreationSpec));
+      schedules.add(toProgramSchedule(applicationRef, scheduleCreationSpec));
     }
     return schedules;
   }
 
-  private ProgramSchedule toProgramSchedule(ApplicationId appId, ScheduleCreationSpec scheduleCreationSpec) {
-    ProgramId programId = appId.workflow(scheduleCreationSpec.getProgramName());
+  private ProgramSchedule toProgramSchedule(ApplicationReference applicationRef,
+                                            ScheduleCreationSpec scheduleCreationSpec) {
+    ProgramReference programReference = applicationRef.program(ProgramType.WORKFLOW,
+                                                               scheduleCreationSpec.getProgramName());
     Trigger trigger = scheduleCreationSpec.getTrigger();
-    return new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programId,
+    return new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programReference,
                                scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints(),
                                scheduleCreationSpec.getTimeoutMillis());
   }

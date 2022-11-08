@@ -41,7 +41,7 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -285,8 +285,8 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       }
 
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
-      ProgramId programId = programRunId.getParent();
-      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
+      ProgramReference programReference = programRunId.getParent().getProgramReference();
+      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programReference, programStatus);
 
       for (ProgramScheduleRecord schedule : scheduleStore.findSchedules(triggerKeyForProgramStatus)) {
         jobQueue.addNotification(schedule, notification);

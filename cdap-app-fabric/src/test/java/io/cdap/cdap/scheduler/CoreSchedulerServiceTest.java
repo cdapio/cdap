@@ -79,14 +79,15 @@ import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.codec.WorkflowTokenDetailCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.TopicId;
-import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -115,9 +116,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
   private static final ApplicationId APP1_ID = NS_ID.app("app1");
   private static final ApplicationId APP2_ID = NS_ID.app("app2");
-  private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
-  private static final WorkflowId PROG2_ID = APP2_ID.workflow("wf2");
-  private static final WorkflowId PROG11_ID = APP1_ID.workflow("wf11");
+  private static final ApplicationReference APP1_REF = APP1_ID.getAppReference();
+  private static final ApplicationReference APP2_REF = APP2_ID.getAppReference();
+  private static final ProgramReference PROG1_REF = APP1_REF.program(ProgramType.WORKFLOW, "wf1");
+  private static final ProgramReference PROG2_REF = APP2_REF.program(ProgramType.WORKFLOW, "wf2");
+  private static final ProgramReference PROG11_REF = APP1_REF.program(ProgramType.WORKFLOW, "wf11");
   private static final ScheduleId PSCHED1_ID = APP1_ID.schedule("psched1");
   private static final ScheduleId PSCHED2_ID = APP2_ID.schedule("psched2");
   private static final ScheduleId TSCHED1_ID = APP1_ID.schedule("tsched1");
@@ -165,26 +168,26 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @Test
   public void addListDeleteSchedules() throws Exception {
     // verify that list returns nothing
-    Assert.assertTrue(scheduler.listSchedules(APP1_ID).isEmpty());
-    Assert.assertTrue(scheduler.listSchedules(PROG1_ID).isEmpty());
+    Assert.assertTrue(scheduler.listSchedules(APP1_REF).isEmpty());
+    Assert.assertTrue(scheduler.listSchedules(PROG1_REF).isEmpty());
 
     // add a schedule for app1
-    ProgramSchedule tsched1 = new ProgramSchedule("tsched1", "one time schedule", PROG1_ID,
+    ProgramSchedule tsched1 = new ProgramSchedule("tsched1", "one time schedule", PROG1_REF,
                                                   ImmutableMap.of("prop1", "nn"),
                                                   new TimeTrigger("* * ? * 1"), ImmutableList.<Constraint>of());
     scheduler.addSchedule(tsched1);
     Assert.assertEquals(tsched1, scheduler.getSchedule(TSCHED1_ID));
-    Assert.assertEquals(ImmutableList.of(tsched1), scheduler.listSchedules(APP1_ID));
-    Assert.assertEquals(ImmutableList.of(tsched1), scheduler.listSchedules(PROG1_ID));
+    Assert.assertEquals(ImmutableList.of(tsched1), scheduler.listSchedules(APP1_REF));
+    Assert.assertEquals(ImmutableList.of(tsched1), scheduler.listSchedules(PROG1_REF));
 
     // add three more schedules, one for the same program, one for the same app, one for another app
-    ProgramSchedule psched1 = new ProgramSchedule("psched1", "one partition schedule", PROG1_ID,
+    ProgramSchedule psched1 = new ProgramSchedule("psched1", "one partition schedule", PROG1_REF,
                                                   ImmutableMap.of("prop3", "abc"),
                                                   new PartitionTrigger(DS1_ID, 1), Collections.emptyList());
-    ProgramSchedule tsched11 = new ProgramSchedule("tsched11", "two times schedule", PROG11_ID,
+    ProgramSchedule tsched11 = new ProgramSchedule("tsched11", "two times schedule", PROG11_REF,
                                                    ImmutableMap.of("prop2", "xx"),
                                                    new TimeTrigger("* * ? * 1,2"), Collections.emptyList());
-    ProgramSchedule psched2 = new ProgramSchedule("psched2", "two partition schedule", PROG2_ID,
+    ProgramSchedule psched2 = new ProgramSchedule("psched2", "two partition schedule", PROG2_REF,
                                                   ImmutableMap.of("propper", "popper"),
                                                   new PartitionTrigger(DS2_ID, 2), Collections.emptyList());
     scheduler.addSchedules(ImmutableList.of(psched1, tsched11, psched2));
@@ -193,20 +196,20 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Assert.assertEquals(psched2, scheduler.getSchedule(PSCHED2_ID));
 
     // list by app and program
-    Assert.assertEquals(ImmutableList.of(psched1, tsched1), scheduler.listSchedules(PROG1_ID));
-    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched1, tsched11), scheduler.listSchedules(APP1_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
+    Assert.assertEquals(ImmutableList.of(psched1, tsched1), scheduler.listSchedules(PROG1_REF));
+    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_REF));
+    Assert.assertEquals(ImmutableList.of(psched1, tsched1, tsched11), scheduler.listSchedules(APP1_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_REF));
 
     // delete one schedule
     scheduler.deleteSchedule(TSCHED1_ID);
     verifyNotFound(scheduler, TSCHED1_ID);
-    Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_ID));
-    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
+    Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_REF));
+    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_REF));
+    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_REF));
 
     // attempt to delete it again along with another one that exists
     try {
@@ -215,11 +218,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     } catch (NotFoundException e) {
       // expected
     }
-    Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_ID));
-    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
+    Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_REF));
+    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_REF));
+    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_REF));
 
 
     // attempt to add it back together with a schedule that exists
@@ -229,23 +232,23 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     } catch (AlreadyExistsException e) {
       // expected
     }
-    Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_ID));
-    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
+    Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_REF));
+    Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_REF));
+    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_REF));
 
     // add it back, delete all schedules for one app
     scheduler.addSchedule(tsched1);
-    scheduler.deleteSchedules(APP1_ID);
+    scheduler.deleteSchedules(APP1_REF);
     verifyNotFound(scheduler, TSCHED1_ID);
     verifyNotFound(scheduler, PSCHED1_ID);
     verifyNotFound(scheduler, TSCHED11_ID);
-    Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(PROG1_ID));
-    Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(PROG11_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(APP1_ID));
-    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
+    Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(PROG1_REF));
+    Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(PROG11_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_REF));
+    Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(APP1_REF));
+    Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_REF));
   }
 
   private static void verifyNotFound(Scheduler scheduler, ScheduleId scheduleId) {
@@ -445,18 +448,18 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // add a schedule, it should succeed since the profile is enabled.
     ProgramSchedule tsched1 =
-      new ProgramSchedule("tsched1", "one time schedule", PROG1_ID,
+      new ProgramSchedule("tsched1", "one time schedule", PROG1_REF,
                           ImmutableMap.of("prop1", "nn", SystemArguments.PROFILE_NAME, "USER:MyProfile"),
                           new TimeTrigger("* * ? * 1"), ImmutableList.<Constraint>of());
     scheduler.addSchedule(tsched1);
-    Assert.assertEquals(Collections.singletonList(tsched1), scheduler.listSchedules(PROG1_ID));
+    Assert.assertEquals(Collections.singletonList(tsched1), scheduler.listSchedules(PROG1_REF));
 
     // now disable the profile
     disableProfile(profileId, 200);
 
     // delete it
     scheduler.deleteSchedule(TSCHED1_ID);
-    Assert.assertEquals(Collections.emptyList(), scheduler.listSchedules(PROG1_ID));
+    Assert.assertEquals(Collections.emptyList(), scheduler.listSchedules(PROG1_REF));
 
     // add it again should also fail since the profile is disabled
     try {
@@ -478,7 +481,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // add a schedule, it should succeed since the profile is enabled.
     ProgramSchedule tsched1 =
-      new ProgramSchedule("tsched1", "one time schedule", PROG1_ID,
+      new ProgramSchedule("tsched1", "one time schedule", PROG1_REF,
                           ImmutableMap.of("prop1", "nn", SystemArguments.PROFILE_NAME, profileId.getScopedName()),
                           new TimeTrigger("* * ? * 1"), ImmutableList.<Constraint>of());
     scheduler.addSchedule(tsched1);
@@ -548,7 +551,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       Map<String, String> updatedProperties = ImmutableMap.<String, String>builder()
         .putAll(schedule.getProperties()).put(howToUpdate, howToUpdate).build();
       ProgramSchedule updatedSchedule = new ProgramSchedule(schedule.getName(), schedule.getDescription(),
-                                                            schedule.getProgramId(), updatedProperties,
+                                                            schedule.getProgramReference(), updatedProperties,
                                                             schedule.getTrigger(), schedule.getConstraints());
       if ("update".equals(howToUpdate)) {
         scheduler.updateSchedule(updatedSchedule);

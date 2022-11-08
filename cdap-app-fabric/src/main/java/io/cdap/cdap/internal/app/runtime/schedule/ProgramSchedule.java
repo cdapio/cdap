@@ -23,7 +23,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.Map;
 public class ProgramSchedule {
 
   private final String description;
-  private final ProgramId programId;
+  private final ProgramReference programRef;
   private final ScheduleId scheduleId;
   private final Map<String, String> properties;
   private final Trigger trigger;
@@ -43,17 +43,17 @@ public class ProgramSchedule {
   private final long timeoutMillis;
 
   public ProgramSchedule(String name, String description,
-                         ProgramId programId, Map<String, String> properties,
+                         ProgramReference programReference, Map<String, String> properties,
                          Trigger trigger, List<? extends Constraint> constraints) {
-    this(name, description, programId, properties, trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+    this(name, description, programReference, properties, trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
   }
 
-  public ProgramSchedule(String name, String description,
-                         ProgramId programId, Map<String, String> properties,
-                         Trigger trigger, List<? extends Constraint> constraints, long timeoutMillis) {
+  public ProgramSchedule(String name, String description, ProgramReference programReference,
+                         Map<String, String> properties, Trigger trigger, List<? extends Constraint> constraints,
+                         long timeoutMillis) {
     this.description = description;
-    this.programId = programId;
-    this.scheduleId = programId.getParent().schedule(name);
+    this.programRef = programReference;
+    this.scheduleId = new ScheduleId(programRef.getNamespace(), programRef.getApplication(), name);
     this.properties = properties;
     this.trigger = trigger;
     this.constraints = constraints;
@@ -68,8 +68,8 @@ public class ProgramSchedule {
     return description;
   }
 
-  public ProgramId getProgramId() {
-    return programId;
+  public ProgramReference getProgramReference() {
+    return programRef;
   }
 
   public Map<String, String> getProperties() {
@@ -103,7 +103,7 @@ public class ProgramSchedule {
     ProgramSchedule that = (ProgramSchedule) o;
 
     return Objects.equal(this.scheduleId, that.scheduleId) &&
-      Objects.equal(this.programId, that.programId) &&
+      Objects.equal(this.programRef, that.programRef) &&
       Objects.equal(this.description, that.description) &&
       Objects.equal(this.properties, that.properties) &&
       Objects.equal(this.trigger, that.trigger) &&
@@ -113,14 +113,14 @@ public class ProgramSchedule {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(scheduleId, programId, description, properties, trigger, constraints, timeoutMillis);
+    return Objects.hashCode(scheduleId, programRef, description, properties, trigger, constraints, timeoutMillis);
   }
 
   @Override
   public String toString() {
     return "ProgramSchedule{" +
       "scheduleId=" + scheduleId +
-      ", programId=" + programId +
+      ", programRef=" + programRef +
       ", description='" + description + '\'' +
       ", properties=" + properties +
       ", trigger=" + trigger +
@@ -131,7 +131,7 @@ public class ProgramSchedule {
 
   public ScheduleDetail toScheduleDetail() {
     ScheduleProgramInfo programInfo =
-      new ScheduleProgramInfo(programId.getType().getSchedulableType(), programId.getProgram());
+      new ScheduleProgramInfo(programRef.getType().getSchedulableType(), programRef.getProgram());
     return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getSchedule(),
                               description, programInfo, properties, trigger, constraints, timeoutMillis,
                               null, null);
@@ -139,10 +139,10 @@ public class ProgramSchedule {
 
   public static ProgramSchedule fromScheduleDetail(ScheduleDetail schedule) throws IllegalArgumentException {
     ProgramType programType = ProgramType.valueOfSchedulableType(schedule.getProgram().getProgramType());
-    ProgramId programId = new ProgramId(
+    ProgramReference programReference = new ProgramReference(
       schedule.getNamespace(), schedule.getApplication(), programType, schedule.getProgram().getProgramName());
     ProgramSchedule programSchedule = new ProgramSchedule(
-      schedule.getName(), schedule.getDescription(), programId, schedule.getProperties(),
+      schedule.getName(), schedule.getDescription(), programReference, schedule.getProperties(),
       schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
     return programSchedule;
   }

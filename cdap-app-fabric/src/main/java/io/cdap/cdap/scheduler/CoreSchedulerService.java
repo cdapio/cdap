@@ -51,10 +51,10 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -218,10 +218,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException {
     checkStarted();
     for (ProgramSchedule schedule: schedules) {
-      if (!schedule.getProgramId().getType().equals(ProgramType.WORKFLOW)) {
+      if (!schedule.getProgramReference().getType().equals(ProgramType.WORKFLOW)) {
         throw new BadRequestException(String.format(
           "Cannot schedule program %s of type %s: Only workflows can be scheduled",
-          schedule.getProgramId().getProgram(), schedule.getProgramId().getType()));
+          schedule.getProgramReference().getProgram(), schedule.getProgramReference().getType()));
       }
     }
     try {
@@ -230,7 +230,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         for (ProgramSchedule schedule : schedules) {
           if (schedule.getProperties() != null) {
             Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(
-              schedule.getProgramId().getNamespaceId(), schedule.getProperties());
+              schedule.getProgramReference().getNamespaceId(), schedule.getProperties());
             if (profile.isPresent()) {
               ProfileId profileId = profile.get();
               if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
@@ -403,13 +403,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void deleteSchedules(ApplicationId appId) {
+  public void deleteSchedules(ApplicationReference appReference) {
     checkStarted();
     execute((StoreQueueAndProfileTxRunnable<Void, Exception>) (store, queue, profileDataset) -> {
       long deleteTime = System.currentTimeMillis();
-      List<ProgramSchedule> schedules = store.listSchedules(appId);
+      List<ProgramSchedule> schedules = store.listSchedules(appReference);
       deleteSchedulesInScheduler(schedules);
-      List<ScheduleId> deleted = store.deleteSchedules(appId, deleteTime);
+      List<ScheduleId> deleted = store.deleteSchedules(appReference, deleteTime);
       for (ScheduleId scheduleId : deleted) {
         queue.markJobsForDeletion(scheduleId, deleteTime);
       }
@@ -434,13 +434,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void deleteSchedules(ProgramId programId) {
+  public void deleteSchedules(ProgramReference programReference) {
     checkStarted();
     execute((StoreQueueAndProfileTxRunnable<Void, Exception>) (store, queue, profileDataset) -> {
       long deleteTime = System.currentTimeMillis();
-      List<ProgramSchedule> schedules = store.listSchedules(programId);
+      List<ProgramSchedule> schedules = store.listSchedules(programReference);
       deleteSchedulesInScheduler(schedules);
-      List<ScheduleId> deleted = store.deleteSchedules(programId, deleteTime);
+      List<ScheduleId> deleted = store.deleteSchedules(programReference, deleteTime);
       for (ScheduleId scheduleId : deleted) {
         queue.markJobsForDeletion(scheduleId, deleteTime);
       }
@@ -465,10 +465,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
+  public void modifySchedulesTriggeredByDeletedProgram(ProgramReference programRef) {
     checkStarted();
     execute((StoreAndQueueTxRunnable<Void, Exception>) (store, queue) -> {
-      List<ProgramSchedule> deletedSchedules = store.modifySchedulesTriggeredByDeletedProgram(programId);
+      List<ProgramSchedule> deletedSchedules = store.modifySchedulesTriggeredByDeletedProgram(programRef);
       deletedSchedules.forEach(adminEventPublisher::publishScheduleDeletion);
       return null;
     }, RuntimeException.class);
@@ -493,15 +493,15 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public List<ProgramSchedule> listSchedules(ApplicationId appId) {
+  public List<ProgramSchedule> listSchedules(ApplicationReference appReference) {
     checkStarted();
-    return execute(store -> store.listSchedules(appId), RuntimeException.class);
+    return execute(store -> store.listSchedules(appReference), RuntimeException.class);
   }
 
   @Override
-  public List<ProgramSchedule> listSchedules(ProgramId programId) {
+  public List<ProgramSchedule> listSchedules(ProgramReference programReference) {
     checkStarted();
-    return execute(store -> store.listSchedules(programId), RuntimeException.class);
+    return execute(store -> store.listSchedules(programReference), RuntimeException.class);
   }
 
   @Override
@@ -514,15 +514,15 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) {
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationReference applicationReference) {
     checkStarted();
-    return execute(store -> store.listScheduleRecords(appId), RuntimeException.class);
+    return execute(store -> store.listScheduleRecords(applicationReference), RuntimeException.class);
   }
 
   @Override
-  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) {
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramReference programReference) {
     checkStarted();
-    return execute(store -> store.listScheduleRecords(programId), RuntimeException.class);
+    return execute(store -> store.listScheduleRecords(programReference), RuntimeException.class);
   }
 
   @Override
@@ -566,24 +566,26 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     try {
       // Since schedule is versionless (always has "-SNAPSHOT" version)
       // We call with ProgramReference
-      programDescriptor = appMetaStore.loadProgram(schedule.getProgramId().getProgramReference());
+      programDescriptor = appMetaStore.loadProgram(schedule.getProgramReference());
     } catch (Exception e) {
       LOG.error("Exception occurs when looking up program descriptor for program {} in schedule {}",
-                schedule.getProgramId(), schedule, e);
+                schedule.getProgramReference(), schedule, e);
       throw new RuntimeException(String.format("Exception occurs when looking up program descriptor for" +
-                                                 " program %s in schedule %s", schedule.getProgramId(), schedule), e);
+                                                 " program %s in schedule %s", schedule.getProgramReference(),
+                                               schedule), e);
     }
     additionalProperties.put(ProgramOptionConstants.ARTIFACT_ID,
                              GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()));
 
     String userId;
     try {
-      userId = impersonator.getUGI(schedule.getProgramId()).getUserName();
+      userId = impersonator.getUGI(schedule.getProgramReference()).getUserName();
     } catch (AccessException e) {
       LOG.error("Exception occurs when looking up user group information for program {} in schedule {}",
-                schedule.getProgramId(), schedule, e);
+                schedule.getProgramReference(), schedule, e);
       throw new RuntimeException(String.format("Exception occurs when looking up user group information for" +
-                                                 " program %s in schedule %s", schedule.getProgramId(), schedule), e);
+                                                 " program %s in schedule %s", schedule.getProgramReference(),
+                                               schedule), e);
     }
     // add the user name to the schedule property
     additionalProperties.put(ProgramOptionConstants.USER_ID, userId);
@@ -591,8 +593,9 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     Map<String, String> newProperties = new HashMap<>(schedule.getProperties());
     newProperties.putAll(additionalProperties);
     // construct a copy of the schedule with the additional properties added
-    return new ProgramSchedule(schedule.getName(), schedule.getDescription(), schedule.getProgramId(), newProperties,
-                               schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
+    return new ProgramSchedule(schedule.getName(), schedule.getDescription(), schedule.getProgramReference(),
+                               newProperties, schedule.getTrigger(), schedule.getConstraints(),
+                               schedule.getTimeoutMillis());
   }
 
   private void enableScheduleInternal(ProgramScheduleStoreDataset store, ScheduleId scheduleId)
