@@ -491,8 +491,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit)
     throws Exception {
-    programHistoryVersioned(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type,
-                            programName, status, startTs, endTs, resultLimit);
+    ProgramType programType = getProgramType(type);
+
+    long start = parseAndValidate(startTs, 0L, "start");
+    long end = parseAndValidate(endTs, Long.MAX_VALUE, "end");
+    if (end < start) {
+      throw new BadRequestException(String.format("Invalid end time %d. It must be greater than the start time %d",
+                                                  end, start));
+    }
+    ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+      ProgramRunStatus.valueOf(status.toUpperCase());
+
+    ProgramReference programReference = new ProgramReference(namespaceId, appName, programType, programName);
+    List<RunRecord> records = lifecycleService.getAllRunRecords(programReference, runStatus, start, end, resultLimit,
+                                                                record -> !isTetheredRunRecord(record));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
   }
 
   /**
@@ -513,8 +526,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit) throws Exception {
     ProgramType programType = getProgramType(type);
 
-    long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
-    long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
+    long start = parseAndValidate(startTs, 0L, "start");
+    long end = parseAndValidate(endTs, Long.MAX_VALUE, "end");
+    if (end < start) {
+      throw new BadRequestException(String.format("Invalid end time %d. It must be greater than the start time %d",
+                                                  end, start));
+    }
     ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
       ProgramRunStatus.valueOf(status.toUpperCase());
 
@@ -528,6 +545,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     records = records.stream().filter(record -> !isTetheredRunRecord(record)).collect(Collectors.toList());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
+  }
+
+  private long parseAndValidate(String strVal, long defaultVal, String paramName) throws BadRequestException {
+    if (strVal == null || strVal.isEmpty()) {
+      return defaultVal;
+    }
+    try {
+      return Long.parseLong(strVal);
+    } catch (NumberFormatException e) {
+      throw new BadRequestException(String.format("Invalid vaule %s for %s", strVal, paramName), e);
+    }
   }
 
   /**
@@ -1589,19 +1617,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       .collect(Collectors.toList());
 
     List<BatchProgramCount> counts = new ArrayList<>(programs.size());
-    for (RunCountResult runCountResult : lifecycleService.getProgramRunCounts(programRefs)) {
-      ProgramId programId = runCountResult.getProgramId();
+    for (RunCountResult runCountResult : lifecycleService.getProgramTotalRunCounts(programRefs)) {
+      ProgramReference programReference = runCountResult.getProgramReference();
       Exception exception = runCountResult.getException();
       if (exception == null) {
-        counts.add(new BatchProgramCount(programId, HttpResponseStatus.OK.code(), null, runCountResult.getCount()));
+        counts.add(new BatchProgramCount(programReference, HttpResponseStatus.OK.code(), null,
+                                         runCountResult.getCount()));
       } else if (exception instanceof NotFoundException) {
-        counts.add(new BatchProgramCount(programId, HttpResponseStatus.NOT_FOUND.code(),
+        counts.add(new BatchProgramCount(programReference, HttpResponseStatus.NOT_FOUND.code(),
                                          exception.getMessage(), null));
       } else if (exception instanceof UnauthorizedException) {
-        counts.add(new BatchProgramCount(programId, HttpResponseStatus.FORBIDDEN.code(),
+        counts.add(new BatchProgramCount(programReference, HttpResponseStatus.FORBIDDEN.code(),
                                          exception.getMessage(), null));
       } else {
-        counts.add(new BatchProgramCount(programId, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+        counts.add(new BatchProgramCount(programReference, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
                                          exception.getMessage(), null));
       }
     }
@@ -1684,8 +1713,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-name") String appName,
                                  @PathParam("program-type") String type,
                                  @PathParam("program-name") String programName) throws Exception {
-    getProgramRunCountVersioned(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type,
-                                programName);
+    ProgramType programType = getProgramType(type);
+    ProgramReference programReference = new ProgramReference(namespaceId, appName, programType, programName);
+    long runCount = lifecycleService.getProgramTotalRunCount(programReference);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runCount));
   }
 
   /**

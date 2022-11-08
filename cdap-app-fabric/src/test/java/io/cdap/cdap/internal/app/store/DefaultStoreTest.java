@@ -72,6 +72,7 @@ import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.store.DefaultNamespaceStore;
@@ -682,7 +683,7 @@ public abstract class DefaultStoreTest {
     }
 
     List<RunCountResult> result =
-      store.getProgramRunCounts(ImmutableList.of(workflowId.getProgramReference(),
+      store.getProgramTotalRunCounts(ImmutableList.of(workflowId.getProgramReference(),
                                                  serviceId.getProgramReference(),
                                                  nonExistingAppProgramId.getProgramReference(),
                                                  nonExistingProgramId.getProgramReference()));
@@ -690,9 +691,10 @@ public abstract class DefaultStoreTest {
     // compare the result
     Assert.assertEquals(4, result.size());
     for (RunCountResult runCountResult : result) {
-      ProgramId programId = runCountResult.getProgramId();
+      ProgramReference programReference = runCountResult.getProgramReference();
       Long count = runCountResult.getCount();
-      if (programId.equals(nonExistingAppProgramId) || programId.equals(nonExistingProgramId)) {
+      if (programReference.equals(nonExistingAppProgramId.getProgramReference()) ||
+        programReference.equals(nonExistingProgramId.getProgramReference())) {
         Assert.assertNull(count);
         Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
       } else {
@@ -703,8 +705,9 @@ public abstract class DefaultStoreTest {
 
     // remove the app should remove all run count
     store.removeApplication(appId);
-    for (RunCountResult runCountResult : store.getProgramRunCounts(ImmutableList.of(workflowId.getProgramReference(),
-                                                                                    serviceId.getProgramReference()))) {
+    for (RunCountResult runCountResult :
+      store.getProgramTotalRunCounts(ImmutableList.of(workflowId.getProgramReference(),
+                                                      serviceId.getProgramReference()))) {
       Assert.assertNull(runCountResult.getCount());
       Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
     }
