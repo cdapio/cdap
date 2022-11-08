@@ -388,6 +388,14 @@ public interface Store {
   Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids);
 
   /**
+   * Returns a map of latest programIds given programReferences
+   *
+   * @param references the list of programReferences to get the latest programIds
+   * @return collection of programIds. For applications that don't exist, there will be no entry in the result.
+   */
+  Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references);
+
+  /**
    * Returns a collection of all application specs of all the versions of an app
    *
    * @param namespaceId the namespace id

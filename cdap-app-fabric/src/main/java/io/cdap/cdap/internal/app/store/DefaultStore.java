@@ -742,6 +742,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).filterProgramsExistence(references).stream()
+        .collect(Collectors.toMap(e -> e.getProgramReference(), e -> e));
+    });
+  }
+
+  @Override
   public Collection<ApplicationSpecification> getAllAppVersions(NamespaceId namespaceId, String appName) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersions(namespaceId.getNamespace(), appName).stream()
