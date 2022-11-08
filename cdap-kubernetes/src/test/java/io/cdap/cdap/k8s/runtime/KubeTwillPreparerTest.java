@@ -152,6 +152,9 @@ public class KubeTwillPreparerTest {
                                                        createPodInfo(), createTwillSpecification(), null, null,
                                                        null, null, null);
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "system");
+    preparer.withConfiguration(config);
     V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
     Assert.assertEquals("1", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
     Assert.assertEquals("100Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
@@ -180,6 +183,9 @@ public class KubeTwillPreparerTest {
     KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
                                                        createPodInfo(), createTwillSpecification(), null, null,
                                                        null, null, null);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "system");
+    preparer.withConfiguration(config);
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
     V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
     Assert.assertEquals("500m", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
