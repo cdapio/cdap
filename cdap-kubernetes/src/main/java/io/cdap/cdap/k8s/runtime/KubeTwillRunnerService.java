@@ -38,7 +38,6 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBindingBuilder;
-import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobStatus;
@@ -126,7 +125,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
   private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
-  private static final String RUN_ID_LABEL = "cdap.twill.run.id";
+  public static final String RUN_ID_LABEL = "cdap.twill.run.id";
   private static final String RUNNER_LABEL = "cdap.twill.runner";
   private static final String RUNNER_LABEL_VAL = "k8s";
   private static final String WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME
@@ -316,7 +315,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     KubeUtil.validateRFC1123LabelName(namespace);
     findOrCreateKubeNamespace(namespace, cdapNamespace);
     updateOrCreateResourceQuota(namespace, cdapNamespace, properties);
-    copyVolumes(namespace, cdapNamespace);
+    copySecrets(namespace, cdapNamespace);
     createWorkloadServiceAccount(namespace, cdapNamespace);
     if (workloadIdentityEnabled) {
       String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
@@ -446,31 +445,12 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   }
 
   /**
-   * Copy volumes into the new namespace for deployments created via the KubeTwillRunnerService
-   * TODO: (CDAP-18956) improve this logic to be for each pipeline run
+   * Copy secrets into the new namespace for deployments created via the KubeTwillRunnerService
+   * TODO: (CDAP-20087) avoid copying secrets
    */
-  private void copyVolumes(String namespace, String cdapNamespace) throws IOException {
+  private void copySecrets(String namespace, String cdapNamespace) throws IOException {
     try {
       for (V1Volume volume : podInfo.getVolumes()) {
-        if (volume.getConfigMap() != null) {
-          String configMapName = volume.getConfigMap().getName();
-          V1ConfigMap existingMap = coreV1Api.readNamespacedConfigMap(configMapName, podInfo.getNamespace(),
-                                                                      null, null, null);
-          V1ConfigMap configMap = new V1ConfigMap().data(existingMap.getData())
-            .metadata(new V1ObjectMeta().name(configMapName).putLabelsItem(CDAP_NAMESPACE_LABEL,
-                                                                           cdapNamespace));
-          try {
-            coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
-          } catch (ApiException e) {
-            if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
-              throw e;
-            }
-            LOG.warn("The configmap already exists '{}:{}' : {}. Ignoring creation of the configmap.", namespace,
-                     configMapName, e.getResponseBody());
-          }
-          LOG.debug("Created configMap {} in Kubernetes namespace {}", configMapName, namespace);
-        }
-
         if (volume.getSecret() != null) {
           String secretName = volume.getSecret().getSecretName();
           V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName, podInfo.getNamespace(),
