@@ -45,6 +45,7 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -108,7 +109,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
         d -> {
           try {
             programLifecycleService.stopAll(
-                new ApplicationId(NamespaceId.SYSTEM.getNamespace(), d.getName(), d.getAppVersion()));
+                new ApplicationReference(NamespaceId.SYSTEM.getNamespace(), d.getName()));
           } catch (Exception e) {
             Throwables.propagate(e);
           }
@@ -118,7 +119,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
         d -> {
           try {
             programLifecycleService.stopAll(
-                new ApplicationId(NamespaceId.DEFAULT.getNamespace(), d.getName(), d.getAppVersion()));
+                new ApplicationReference(NamespaceId.DEFAULT.getNamespace(), d.getName()));
           } catch (Exception e) {
             Throwables.propagate(e);
           }

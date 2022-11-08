@@ -17,20 +17,26 @@
 package io.cdap.cdap.common;
 
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 
 /**
  * Thrown when an application is not found.
  */
 public class ApplicationNotFoundException extends NotFoundException {
 
-  private final ApplicationId id;
+  private final ApplicationReference applicationReference;
 
-  public ApplicationNotFoundException(ApplicationId id) {
-    super(id);
-    this.id = id;
+  public ApplicationNotFoundException(ApplicationId appId) {
+    super(appId);
+    this.applicationReference = appId.getAppReference();
   }
 
-  public ApplicationId getId() {
-    return id;
+  public ApplicationNotFoundException(ApplicationReference appReference) {
+    super(appReference);
+    this.applicationReference = appReference;
+  }
+
+  public ApplicationReference getApplicationReference() {
+    return applicationReference;
   }
 }

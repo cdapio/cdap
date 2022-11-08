@@ -234,7 +234,8 @@ class CapabilityApplier {
         .addOrUpdateCapability(capabilityConfig.getCapability(), CapabilityStatus.DISABLED, capabilityConfig);
       //stop all the programs having capability metadata. Services will be stopped by SystemProgramManagementService
       doForAllAppsWithCapability(capability,
-                                 applicationId -> doWithRetry(applicationId, programLifecycleService::stopAll));
+                                 applicationId -> doWithRetry(applicationId.getAppReference(),
+                                                              programLifecycleService::stopAll));
       capabilityStatusStore.deleteCapabilityOperation(capability);
     }
   }
