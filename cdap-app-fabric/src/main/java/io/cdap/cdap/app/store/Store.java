@@ -179,6 +179,15 @@ public interface Store {
   ProgramDescriptor loadProgram(ProgramId program) throws IOException, NotFoundException;
 
   /**
+   * Loads a given versionless program.
+   *
+   * @param programReference reference of the program
+   * @return An instance of {@link ProgramDescriptor} if found.
+   * @throws IOException
+   */
+  ProgramDescriptor loadProgram(ProgramReference programReference) throws IOException, NotFoundException;
+
+  /**
    * Fetches run records for particular program.
    * Returned ProgramRunRecords are sorted by their startTime.
    *

@@ -773,6 +773,69 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testListAndGetLCMFlagEnabledForVersionHistory() throws Exception {
+    setLCMFlag(true);
+    Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+    Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(), "1.0.0-SNAPSHOT");
+    Id.Application appId = Id.Application.from(ns1, AllProgramsApp.NAME);
+
+    // deploy 4 versions of the same app
+    for (int i = 0; i < 4; i++) {
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      response = deploy(appId, new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+    
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    int currentResultSize = 0;
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token, AllProgramsApp.NAME, null, true, null);
+      currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+    }
+    Assert.assertEquals(1, count);
+    Assert.assertEquals(1, currentResultSize);
+
+    count = 0;
+    token = null;
+    isLastPage = false;
+    currentResultSize = 0;
+    List<Long> creationTimeList = new ArrayList<>();
+    while (!isLastPage) {
+      JsonObject result = getAppListForPaginatedApi(TEST_NAMESPACE1, 3, token,
+                                                    "DESC", AllProgramsApp.NAME, "EQUALS", false, true);
+      currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      token = result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+      result.get("applications").getAsJsonArray()
+        .forEach(appJson ->
+                   creationTimeList.add(appJson.getAsJsonObject().get("change")
+                                          .getAsJsonObject().get("creationTimeMillis").getAsLong()));
+    }
+    Assert.assertEquals(4, count);
+    Assert.assertEquals(1, currentResultSize);
+    List<Long> creationTimeDescSorted = new ArrayList<>(creationTimeList);
+    creationTimeDescSorted.sort(Collections.reverseOrder());
+
+    // version history should be DESC sorted
+    Assert.assertEquals(creationTimeDescSorted, creationTimeList);
+
+    //delete app in testnamespace1
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                            Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+    setLCMFlag(false);
+  }
+
+  @Test
   public void testListAndGet() throws Exception {
     //deploy without name to testnamespace1
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);

@@ -56,6 +56,10 @@ public class NamespaceId extends NamespacedEntityId {
     return new ApplicationId(namespace, application);
   }
 
+  public ApplicationReference appReference(String application) {
+    return new ApplicationReference(namespace, application);
+  }
+
   public ApplicationId app(String application, String version) {
     return new ApplicationId(namespace, application, version);
   }
