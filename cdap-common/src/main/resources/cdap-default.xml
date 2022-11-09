@@ -5499,7 +5499,7 @@
 
   <property>
     <name>feature.streaming.pipeline.native.state.tracking.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Enable native state tracking for streaming pipelines for Atleast Once guarantee
     </description>

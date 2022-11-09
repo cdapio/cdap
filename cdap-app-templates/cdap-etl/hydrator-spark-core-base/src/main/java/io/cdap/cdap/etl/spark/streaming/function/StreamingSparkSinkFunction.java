@@ -33,30 +33,35 @@ import io.cdap.cdap.etl.spark.batch.BasicSparkPluginContext;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import io.cdap.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
+import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Function used to write a batch of data to a {@link SparkSink} for use with a JavaDStream.
  *
  * @param <T> type of object in the rdd
  */
-public class StreamingSparkSinkFunction<T> implements VoidFunction2<JavaRDD<T>, Time> {
+public class StreamingSparkSinkFunction<T> extends AbstractStreamingSinkFunction<JavaRDD<T>> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamingSparkSinkFunction.class);
   private final JavaSparkExecutionContext sec;
   private final StageSpec stageSpec;
 
-  public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec) {
+  public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
+                                    StreamingRetrySettings retrySettings) {
+    super(retrySettings);
     this.sec = sec;
     this.stageSpec = stageSpec;
   }
 
   @Override
-  public void call(JavaRDD<T> data, Time batchTime) throws Exception {
+  public void retryableCall(JavaRDD<T> data, Time batchTime) throws Exception {
     if (data.isEmpty()) {
       return;
     }
@@ -110,7 +115,10 @@ public class StreamingSparkSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
         }
       });
     } catch (Exception e) {
-      LOG.error("Error while executing sink {} for the batch for time {}.", stageName, logicalStartTime, e);
+      // Throw if there is an exception so the driver can retry
+      // Without this the failures are logged and ignored and processing continues for the next batch
+      // This can result in data loss
+      throw e;
     } finally {
       if (isPrepared && !isDone) {
         sec.execute(new TxRunnable() {
@@ -123,5 +131,10 @@ public class StreamingSparkSinkFunction<T> implements VoidFunction2<JavaRDD<T>, 
         });
       }
     }
+  }
+
+  @Override
+  protected Set<String> getSinkNames() {
+    return Collections.singleton(stageSpec.getName());
   }
 }

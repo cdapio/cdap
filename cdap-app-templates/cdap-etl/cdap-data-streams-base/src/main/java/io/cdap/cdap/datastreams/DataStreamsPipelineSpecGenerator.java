@@ -36,6 +36,7 @@ import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.common.macro.TimeParser;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -54,6 +55,12 @@ public class DataStreamsPipelineSpecGenerator
   private static final Gson GSON = new GsonBuilder()
                                      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
                                      .create();
+  //Default high value for max retry - 6 hours
+  private static final long defaultMaxRetryTimeInMins = 360L;
+  //Default retry delay - 1 second
+  private static final long defaultBaseRetryDelayInSeconds = 1L;
+  //Default max retry delay - 60 second
+  private static final long defaultMaxRetryDelayInSeconds = 60L;
   private final RuntimeConfigurer runtimeConfigurer;
   //Set of sources in this pipeline that supports @link{StreamingStateHandler}
   private Set<String> stateHandlingSources;
@@ -96,7 +103,40 @@ public class DataStreamsPipelineSpecGenerator
     configureStages(config, specBuilder);
     //Configure the at least once processing mode for this pipeline
     configureAtleastOnceMode(config, specBuilder);
+    //Configure retries
+    configureRetries(specBuilder);
     return specBuilder.build();
+  }
+
+  @VisibleForTesting
+  void configureRetries(DataStreamsPipelineSpec.Builder specBuilder) {
+    long maxRetryTimeInMins = getFromRuntimeArgs(Constants.CDAP_STREAMING_MAX_RETRY_TIME_IN_MINS,
+                                                 defaultMaxRetryTimeInMins);
+    long baseRetryDelayInSeconds = getFromRuntimeArgs(Constants.CDAP_STREAMING_BASE_RETRY_DELAY_IN_SECONDS,
+                                                      defaultBaseRetryDelayInSeconds);
+    long maxRetryDelayInSeconds = getFromRuntimeArgs(Constants.CDAP_STREAMING_MAX_RETRY_DELAY_IN_SECONDS,
+                                                     defaultMaxRetryDelayInSeconds);
+    StreamingRetrySettings streamingRetrySettings = new StreamingRetrySettings(maxRetryTimeInMins,
+                                                                               baseRetryDelayInSeconds,
+                                                                               maxRetryDelayInSeconds);
+    specBuilder.setStreamingRetrySettings(streamingRetrySettings);
+  }
+
+  private long getFromRuntimeArgs(String arg, long defaultValue) {
+    if (runtimeConfigurer == null) {
+      return defaultValue;
+    }
+
+    if (runtimeConfigurer.getRuntimeArguments() == null) {
+      return defaultValue;
+    }
+
+    String value = runtimeConfigurer.getRuntimeArguments().get(arg);
+    if (value == null || value.isEmpty()) {
+      return defaultValue;
+    }
+
+    return Long.parseLong(value);
   }
 
   @VisibleForTesting
