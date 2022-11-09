@@ -56,6 +56,7 @@ import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.mock.transform.IntValueFilterTransform;
 import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
+import io.cdap.cdap.etl.mock.transform.RecoveringTransform;
 import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
@@ -1435,5 +1436,120 @@ public class DataStreamsTest extends HydratorTestBase {
                                                Constants.Metrics.Tag.APP, appId.getEntityName(),
                                                Constants.Metrics.Tag.SPARK, DataStreamsSparkLauncher.NAME);
     return getMetricsManager().getTotalMetric(tags, "user." + metric);
+  }
+
+  /**
+   * Uses {@link RecoveringTransform} plugin to test retry. Default retry settings are used.
+   */
+  @Test
+  public void testRetryOnException() throws Exception {
+    SparkManager sparkManager = null;
+    DataSetManager<Table> outputManager = null;
+    try {
+      Schema schema = Schema.recordOf(
+        "retry_test",
+        Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+      );
+      List<StructuredRecord> input = new ArrayList<>();
+      StructuredRecord samuelRecord = StructuredRecord.builder(schema).set("id", "123").set("name", "samuel").build();
+      StructuredRecord jacksonRecord = StructuredRecord.builder(schema).set("id", "456").set("name", "jackson").build();
+      input.add(samuelRecord);
+      input.add(jacksonRecord);
+
+      DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+        .addStage(new ETLStage("retry_source", MockSource.getPlugin(schema, input)))
+        .addStage(new ETLStage("retry_sink", MockSink.getPlugin("${retry_output_macro}")))
+        .addStage(new ETLStage("retry_transform", RecoveringTransform.getPlugin()))
+        .addConnection("retry_source", "retry_transform")
+        .addConnection("retry_transform", "retry_sink")
+        .setBatchInterval("1s")
+        .build();
+
+      ApplicationId appId = NamespaceId.DEFAULT.app("simpleRetryApp");
+      AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+      ApplicationManager appManager = deployApplication(appId, appRequest);
+
+      Set<StructuredRecord> expected = new HashSet<>();
+      expected.add(samuelRecord);
+      expected.add(jacksonRecord);
+
+      sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+      String outputName = "retry_output";
+      sparkManager.start(ImmutableMap.of("retry_output_macro", outputName));
+      sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+      // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
+      Tasks.waitFor(true, () -> getDataset(outputName).get() != null, 3, TimeUnit.MINUTES);
+
+      outputManager = getDataset(outputName);
+      final DataSetManager<Table> outputManagerRef = outputManager;
+      Tasks.waitFor(
+        true,
+        () -> {
+          outputManagerRef.flush();
+          Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(outputManagerRef));
+          return expected.equals(outputRecords);
+        },
+        3,
+        TimeUnit.MINUTES);
+    } finally {
+      RecoveringTransform.reset();
+      if (outputManager != null) {
+        MockSink.clear(outputManager);
+      }
+      if (sparkManager != null) {
+        sparkManager.stop();
+        sparkManager.waitForStopped(10, TimeUnit.SECONDS);
+      }
+    }
+  }
+
+  /**
+   * Uses {@link RecoveringTransform} plugin and custom retry settings to test retry timeout.
+   */
+  @Test
+  public void testRetryTimeout() throws Exception {
+    SparkManager sparkManager = null;
+    try {
+      Schema schema = Schema.recordOf(
+        "retry_timeout_test",
+        Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+      );
+      List<StructuredRecord> input = new ArrayList<>();
+      StructuredRecord samuelRecord = StructuredRecord.builder(schema).set("id", "123").set("name", "samuel").build();
+      StructuredRecord jacksonRecord = StructuredRecord.builder(schema).set("id", "456").set("name", "jackson").build();
+      input.add(samuelRecord);
+      input.add(jacksonRecord);
+
+      DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+        .addStage(new ETLStage("retry_timeout_source", MockSource.getPlugin(schema, input)))
+        .addStage(new ETLStage("retry_timeout_sink", MockSink.getPlugin("${retry_timeout_output_macro}")))
+        .addStage(new ETLStage("retry_timeout_transform", RecoveringTransform.getPlugin()))
+        .addConnection("retry_timeout_source", "retry_timeout_transform")
+        .addConnection("retry_timeout_transform", "retry_timeout_sink")
+        .setBatchInterval("1s")
+        .build();
+
+      ApplicationId appId = NamespaceId.DEFAULT.app("simpleRetryTimeoutApp");
+      AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+      ApplicationManager appManager = deployApplication(appId, appRequest);
+
+      sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+      // Timeout retry in 1 min and set the base delay to 60s.
+      sparkManager.start(ImmutableMap.of("retry_timeout_output_macro", "retry_timeout_output",
+                                         "cdap.streaming.maxRetryTimeInMins", "1",
+                                         "cdap.streaming.baseRetryDelayInSeconds", "60"));
+      sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+      // Should fail after retry times out
+      sparkManager.waitForRun(ProgramRunStatus.FAILED, 2, TimeUnit.MINUTES);
+    } finally {
+      RecoveringTransform.reset();
+      if (sparkManager != null && sparkManager.isRunning()) {
+        sparkManager.stop();
+        sparkManager.waitForStopped(10, TimeUnit.SECONDS);
+      }
+    }
   }
 }
