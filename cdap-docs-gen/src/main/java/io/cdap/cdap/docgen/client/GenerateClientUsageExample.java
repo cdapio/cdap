@@ -64,7 +64,7 @@ public class GenerateClientUsageExample {
     appClient.deploy(NamespaceId.DEFAULT, appJarFile);
 
     // Delete an application
-    appClient.delete(NamespaceId.DEFAULT.app("Purchase"));
+    appClient.deleteApp(NamespaceId.DEFAULT.app("Purchase"));
 
     // List programs belonging to an application
     appClient.listPrograms(NamespaceId.DEFAULT.app("Purchase"));
