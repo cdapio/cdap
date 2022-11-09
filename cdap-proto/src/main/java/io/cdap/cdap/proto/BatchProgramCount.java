@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.proto;
 
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -32,8 +32,9 @@ public class BatchProgramCount extends BatchProgramResult {
     this.runCount = runCount;
   }
 
-  public BatchProgramCount(ProgramId programId, int statusCode, @Nullable String error, @Nullable Long runCount) {
-    this(new BatchProgram(programId.getApplication(), programId.getType(), programId.getProgram()),
+  public BatchProgramCount(ProgramReference programReference, int statusCode, @Nullable String error,
+                           @Nullable Long runCount) {
+    this(new BatchProgram(programReference.getApplication(), programReference.getType(), programReference.getProgram()),
          statusCode, error, runCount);
   }
 

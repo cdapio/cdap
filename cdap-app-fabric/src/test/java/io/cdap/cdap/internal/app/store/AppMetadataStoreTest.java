@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -1318,10 +1319,13 @@ public abstract class AppMetadataStoreTest {
 
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      Map<ProgramId, Long> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
-      Assert.assertEquals(5, (long) counts.get(programId1));
-      Assert.assertEquals(3, (long) counts.get(programId2));
-      Assert.assertEquals(0, (long) counts.get(programId3));
+      Map<ProgramReference, Long> counts =
+        store.getProgramTotalRunCounts(ImmutableList.of(programId1.getProgramReference(),
+                                                        programId2.getProgramReference(),
+                                                        programId3.getProgramReference()));
+      Assert.assertEquals(5, (long) counts.get(programId1.getProgramReference()));
+      Assert.assertEquals(3, (long) counts.get(programId2.getProgramReference()));
+      Assert.assertEquals(0, (long) counts.get(programId3.getProgramReference()));
     });
 
     // after cleanup we should only have 0 runs for all programs
@@ -1334,10 +1338,13 @@ public abstract class AppMetadataStoreTest {
 
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      Map<ProgramId, Long> counts = store.getProgramRunCounts(ImmutableList.of(programId1, programId2, programId3));
-      Assert.assertEquals(0, (long) counts.get(programId1));
-      Assert.assertEquals(0, (long) counts.get(programId2));
-      Assert.assertEquals(0, (long) counts.get(programId3));
+      Map<ProgramReference, Long> counts =
+        store.getProgramTotalRunCounts(ImmutableList.of(programId1.getProgramReference(),
+                                                        programId2.getProgramReference(),
+                                                        programId3.getProgramReference()));
+      Assert.assertEquals(0, (long) counts.get(programId1.getProgramReference()));
+      Assert.assertEquals(0, (long) counts.get(programId2.getProgramReference()));
+      Assert.assertEquals(0, (long) counts.get(programId3.getProgramReference()));
     });
   }
 
