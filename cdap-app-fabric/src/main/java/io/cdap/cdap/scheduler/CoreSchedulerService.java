@@ -564,7 +564,9 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     // add artifact id to the schedule property
     ProgramDescriptor programDescriptor;
     try {
-      programDescriptor = appMetaStore.loadProgram(schedule.getProgramId());
+      // Since schedule is versionless (always has "-SNAPSHOT" version)
+      // We call with ProgramReference
+      programDescriptor = appMetaStore.loadProgram(schedule.getProgramId().getProgramReference());
     } catch (Exception e) {
       LOG.error("Exception occurs when looking up program descriptor for program {} in schedule {}",
                 schedule.getProgramId(), schedule, e);

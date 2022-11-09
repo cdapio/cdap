@@ -234,10 +234,7 @@ public class AppMetadataStore {
   }
 
   /**
-   * Gets the {@link ApplicationMeta} of the given application. If the application version is
-   * {@link ApplicationId#DEFAULT_VERSION}, the latest version of the application will be returned.
-   * If no latest version was found due to legacy app deployment, the one with version equals to
-   * {@link ApplicationId#DEFAULT_VERSION} will be returned.
+   * Gets the {@link ApplicationMeta} of the given application.
    *
    * @param appId the application ID to get the metadata
    * @return the {@link ApplicationMeta} of the given application id, or {@code null} if no such application was found.
@@ -245,10 +242,6 @@ public class AppMetadataStore {
    */
   @Nullable
   public ApplicationMeta getApplication(ApplicationId appId) throws IOException {
-    if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
-      return getLatest(appId.getNamespaceId(), appId.getApplication());
-    }
-
     List<Field<?>> fields = getApplicationPrimaryKeys(appId);
     return getApplicationSpecificationTable().read(fields)
       .map(this::decodeRow)
@@ -390,8 +383,8 @@ public class AppMetadataStore {
   }
 
   @Nullable
-  public ApplicationMeta getLatest(NamespaceId namespaceId, String appName) throws IOException {
-    Range range = getNamespaceAndApplicationRange(namespaceId.getNamespace(), appName);
+  public ApplicationMeta getLatest(ApplicationReference appReference) throws IOException {
+    Range range = getNamespaceAndApplicationRange(appReference.getNamespace(), appReference.getApplication());
     // scan based on: latest field set to true
     Field<?> indexField = Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true");
     StructuredTable appSpecTable = getApplicationSpecificationTable();
@@ -406,7 +399,7 @@ public class AppMetadataStore {
 
     // To handle apps added prior to 6.8.0, which have latest = null in the table, we treat
     // the -SNAPSHOT version as the latest.
-    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId.app(appName));
+    List<Field<?>> fields = getApplicationPrimaryKeys(appReference.app(ApplicationId.DEFAULT_VERSION));
     ApplicationMeta appMeta = appSpecTable.read(fields).map(this::decodeRow).orElse(null);
     if (appMeta != null) {
       return appMeta;
@@ -577,18 +570,24 @@ public class AppMetadataStore {
     String parentVersion = Optional.ofNullable(appMeta.getChange()).map(ChangeDetail::getParentVersion).orElse(null);
 
     // Fetch the latest version
-    ApplicationMeta latest = getLatest(id.getNamespaceId(), id.getApplication());
+    ApplicationMeta latest = getLatest(id.getAppReference());
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
     if (!deployAppAllowed(parentVersion, latest)) {
       throw new ConflictException(String.format("Cannot deploy the application because parent version '%s' does not " +
-                                                  "match the latest version '%s'.",
-                                                parentVersion,
-                                                latestVersion));
+                                                  "match the latest version '%s'.", parentVersion, latestVersion));
     }
     // When the app does not exist, it is not an edit
     if (latest != null) {
       List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
                                                         latest.getSpec().getAppVersion());
+      // Assign a creation time if it's null for the previous latest app version
+      // It is for the pre-6.8 application, we mark it as past version (like created 1s ago)
+      // So it's sortable on creation time, especially when UI displays the version history for a pipeline
+      if (latest.getChange() == null) {
+        // appMeta.getChange() should never be null in edit case
+        fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD,
+                                    appMeta.getChange().getCreationTimeMillis() - 1000));
+      }
       fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "false"));
       getApplicationSpecificationTable().upsert(fields);
     }
@@ -598,9 +597,9 @@ public class AppMetadataStore {
 
   @VisibleForTesting
   void writeApplication(String namespaceId, String appId, String versionId,
-                        ApplicationSpecification spec, ChangeDetail change) throws IOException {
-    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec, null)),
-                               change.getCreationTimeMillis(), change.getAuthor(), change.getDescription());
+                               ApplicationSpecification spec, @Nullable ChangeDetail change) throws IOException {
+    writeApplicationSerialized(namespaceId, appId, versionId,
+                               GSON.toJson(new ApplicationMeta(appId, spec, null)), change);
   }
 
   /**
@@ -2147,9 +2146,8 @@ public class AppMetadataStore {
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, appId.getNamespace()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId.getApplication()));
     ApplicationMeta applicationMeta = getApplication(appId);
-    Long creationTime = applicationMeta.getChange() != null ?
-      applicationMeta.getChange().getCreationTimeMillis() :
-      null;
+    Long creationTime = (applicationMeta == null || applicationMeta.getChange() == null)
+      ? null : applicationMeta.getChange().getCreationTimeMillis();
     fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, creationTime));
     return fields;
   }
@@ -2166,16 +2164,18 @@ public class AppMetadataStore {
         Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, applicationId)));
   }
 
-  private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized,
-                                          long creationTimeMillis, @Nullable String author,
-                                          @Nullable String changeSummary)
+  private void writeApplicationSerialized(String namespaceId, String appId, String versionId,
+                                          String serialized, @Nullable ChangeDetail change)
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.AUTHOR_FIELD, author));
-    fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, creationTimeMillis));
+    if (change != null) {
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.AUTHOR_FIELD, change.getAuthor()));
+      fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD,
+                                  change.getCreationTimeMillis()));
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD, change.getDescription()));
+    }
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.LATEST_FIELD, "true"));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD, changeSummary));
     getApplicationSpecificationTable().upsert(fields);
   }
 

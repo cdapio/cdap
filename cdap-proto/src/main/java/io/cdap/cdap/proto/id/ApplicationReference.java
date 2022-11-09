@@ -40,6 +40,10 @@ public class ApplicationReference extends NamespacedEntityId implements Parented
     this.application = application;
   }
 
+  public ApplicationReference(NamespaceId namespace, String application) {
+    this(namespace.getNamespace(), application);
+  }
+
   public String getApplication() {
     return application;
   }
