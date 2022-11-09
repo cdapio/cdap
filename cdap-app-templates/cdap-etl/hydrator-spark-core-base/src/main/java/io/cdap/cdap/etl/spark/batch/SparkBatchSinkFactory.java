@@ -190,6 +190,8 @@ public final class SparkBatchSinkFactory {
       }
     }
 
+    RDDUtils.logExecutionPlan(rdd);
+
     if (outputFormats.isEmpty()) {
       return lineageNames;
     }
