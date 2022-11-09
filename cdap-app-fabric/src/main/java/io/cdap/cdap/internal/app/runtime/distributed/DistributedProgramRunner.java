@@ -663,6 +663,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     if (localizeResources.containsKey(pluginArchiveFileName)) {
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, pluginArchiveFileName);
     }
+    newSystemArgs.put(SystemArguments.PROFILE_PROPERTIES_PREFIX +
+                        Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS,
+                      String.valueOf(cConf.getInt(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS)));
 
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),
                                     options.getUserArguments(), options.isDebug());
