@@ -433,7 +433,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return a collection of verion strings
    */
   public Collection<String> getAppVersions(NamespaceId namespaceId, String application) {
-    return store.getAllAppVersionsAppIds(namespaceId.app(application)).stream()
+    Collection<ApplicationId> ids = store.getAllAppVersionsAppIds(namespaceId.app(application));
+    // Hide -SNAPSHOT when more than one version of the app exists
+    if (ids.size() > 1) {
+      return ids.stream()
+        .filter(id -> !ApplicationId.DEFAULT_VERSION.equals(id.getVersion()))
+        .map(ApplicationId::getVersion)
+        .collect(Collectors.toList());
+    }
+    return ids.stream()
       .map(ApplicationId::getVersion)
       .collect(Collectors.toList());
   }

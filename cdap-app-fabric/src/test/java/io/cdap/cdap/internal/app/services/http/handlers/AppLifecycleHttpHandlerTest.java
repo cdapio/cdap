@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
@@ -346,24 +345,35 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployVersionedAndNonVersionedApp() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "configapp", "1.0.0");
     addAppArtifact(artifactId, ConfigTestApp.class);
-    Set<String> versions = ImmutableSet.of("-SNAPSHOT", "2.0.0", "1.0.0");
+    Set<String> versions = new HashSet<>();
     ApplicationId appId = new ApplicationId(Id.Namespace.DEFAULT.getId(), "cfgAppWithVersion", "1.0.0");
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
     AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
-    Assert.assertEquals(200, deploy(appId, request).getResponseCode());
-    // Can update the app created by versioned API with versionId not ending with "-SNAPSHOT"
-    Assert.assertEquals(200, deploy(appId, request).getResponseCode());
-    Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
-                                            "non_existing_version").getResponseCode());
-    Assert.assertEquals(200, getAppResponse(Id.Namespace.DEFAULT.getId(),
-                                            appId.getApplication()).getResponseCode());
+
     // Deploy app with default versionId by non-versioned API
     Id.Application appIdDefault = Id.Application.from(Id.Namespace.DEFAULT, appId.getApplication());
     ConfigTestApp.ConfigClass configDefault = new ConfigTestApp.ConfigClass("uvw", "xyz");
     AppRequest<ConfigTestApp.ConfigClass> requestDefault = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault);
     Assert.assertEquals(200, deploy(appIdDefault, requestDefault).getResponseCode());
+    // When there is only one app, -SNAPSHOT is returned in the response
+    versions.add("-SNAPSHOT");
+    Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
+
+    Assert.assertEquals(200, deploy(appId, request).getResponseCode());
+    // When there is more than one app, -SNAPSHOT is hidden in the response
+    versions.remove("-SNAPSHOT");
+    versions.add("1.0.0");
+    Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
+
+    // Can update the app created by versioned API with versionId not ending with "-SNAPSHOT"
+    Assert.assertEquals(200, deploy(appId, request).getResponseCode());
+    Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
+                                            "non_existing_version").getResponseCode());
+    Assert.assertEquals(200, getAppResponse(Id.Namespace.DEFAULT.getId(),
+                                            appId.getApplication()).getResponseCode());
+
     // Deploy app with versionId "version_2" by versioned API
     ApplicationId appIdV2 = new ApplicationId(appId.getNamespace(), appId.getApplication(), "2.0.0");
     ConfigTestApp.ConfigClass configV2 = new ConfigTestApp.ConfigClass("ghi", "jkl");
@@ -371,13 +381,17 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configV2);
     Assert.assertEquals(200, deploy(appIdV2, requestV2).getResponseCode());
 
-
+    versions.add("2.0.0");
     Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
-
+    
     List<JsonObject> appList = getAppList(appId.getNamespace());
     Set<String> receivedVersions = new HashSet<>();
     for (JsonObject appRecord : appList) {
-      receivedVersions.add(appRecord.getAsJsonPrimitive("version").getAsString());
+      String version = appRecord.getAsJsonPrimitive("version").getAsString();
+      if (version.equals("-SNAPSHOT")) {
+        continue;
+      }
+      receivedVersions.add(version);
     }
     Assert.assertEquals(versions, receivedVersions);
 
