@@ -264,6 +264,9 @@ public final class NoSqlStructuredTable implements StructuredTable {
       case BYTES:
         return (row1, row2) -> new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField),
                                                                        row2.getBytes(orderByField));
+      case BOOLEAN:
+        return (row1, row2) -> Objects.compare(row1.getBoolean(orderByField), row2.getBoolean(orderByField),
+                                               Boolean::compareTo);
       default:
         throw new InvalidFieldException(schema.getTableId(), orderByField);
     }
@@ -572,6 +575,9 @@ public final class NoSqlStructuredTable implements StructuredTable {
       case BYTES:
         key.add((byte[]) field.getValue());
         return;
+      case BOOLEAN:
+        key.add((Boolean) field.getValue());
+        return;
       default:
         throw new InvalidFieldException(schema.getTableId(), field.getName());
     }
@@ -595,6 +601,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
         return Bytes.toBytes((String) field.getValue());
       case BYTES:
         return (byte[]) field.getValue();
+      case BOOLEAN:
+        return Bytes.toBytes((Boolean) field.getValue());
       default:
         throw new InvalidFieldException(schema.getTableId(), field.getName());
     }
@@ -708,6 +716,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
           return row -> Objects.equals(row.getString(filterField.getName()), filterField.getValue());
         case BYTES:
           return row -> Arrays.equals(row.getBytes(filterField.getName()), (byte[]) filterField.getValue());
+        case BOOLEAN:
+          return row -> Objects.equals(row.getBoolean(filterField.getName()), filterField.getValue());
         default:
           throw new InvalidFieldException(schema.getTableId(), filterField.getName());
       }
@@ -808,6 +818,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
           return Objects.compare(row.getString(fieldName), (String) (field.getValue()), String::compareTo);
         case BYTES:
           return new Bytes.ByteArrayComparator().compare(row.getBytes(fieldName), (byte[]) field.getValue());
+        case BOOLEAN:
+          return Objects.compare(row.getBoolean(fieldName), (Boolean) (field.getValue()), Boolean::compareTo);
         default:
           throw new RuntimeException(String.format("Exception while comparing row: %s and field: %s", row, field));
       }

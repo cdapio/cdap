@@ -27,10 +27,10 @@ public class ChangeDetail extends ChangeSummary {
   private final String author;
   private final long creationTimeMillis;
   @Nullable
-  private final String latest;
+  private final Boolean latest;
 
   public ChangeDetail(@Nullable String description, @Nullable String parentVersion, @Nullable String author,
-                      long creationTimeMillis, @Nullable String latest) {
+                      long creationTimeMillis, @Nullable Boolean latest) {
     super(description, parentVersion);
     this.author = author;
     this.creationTimeMillis = creationTimeMillis;
@@ -61,7 +61,7 @@ public class ChangeDetail extends ChangeSummary {
    * @return the latest value (true/false) for the app.
    */
   @Nullable
-  public String getLatest() {
+  public Boolean getLatest() {
     return latest;
   }
 
@@ -89,7 +89,8 @@ public class ChangeDetail extends ChangeSummary {
   public String toString() {
     return "ChangeDetail{" +
       "author='" + author + '\'' +
-      ", creationTimeMillis=" + creationTimeMillis +
+      ", creationTimeMillis=" + creationTimeMillis + '\'' +
+      ", latest=" + latest +
       '}';
   }
 }

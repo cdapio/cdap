@@ -52,6 +52,13 @@ public final class Fields {
   }
 
   /**
+   * @return the FieldType of BOOLEAN with the given name
+   */
+  public static FieldType booleanType(String name) {
+    return new FieldType(name, FieldType.Type.BOOLEAN);
+  }
+
+  /**
    * @return the FieldType of FLOAT with the given name
    */
   public static FieldType floatType(String name) {
@@ -114,6 +121,17 @@ public final class Fields {
    */
   public static Field<Float> floatField(String name, @Nullable Float value) {
     return new Field<>(new FieldType(name, FieldType.Type.FLOAT), value);
+  }
+
+  /**
+   * Create a field with boolean value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @return a field with type boolean
+   */
+  public static Field<Boolean> booleanField(String name, @Nullable Boolean value) {
+    return new Field<>(new FieldType(name, FieldType.Type.BOOLEAN), value);
   }
 
   /**

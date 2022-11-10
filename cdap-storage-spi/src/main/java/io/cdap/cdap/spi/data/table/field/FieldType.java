@@ -38,7 +38,8 @@ public final class FieldType {
     FLOAT(Collections.emptySet()),
     DOUBLE(Collections.singleton(FLOAT)),
     STRING(Collections.emptySet()),
-    BYTES(Collections.emptySet());
+    BYTES(Collections.emptySet()),
+    BOOLEAN(Collections.emptySet());
 
     private final Set<Type> compatibleTypes;
 
@@ -55,13 +56,13 @@ public final class FieldType {
    * Valid field types that can be part of a primary key.
    */
   public static final Set<Type> PRIMARY_KEY_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
-                                                                                           Type.STRING));
+                                                                                           Type.STRING, Type.BOOLEAN));
 
   /**
    * Valid field types that can be defined as an index.
    */
   public static final Set<Type> INDEX_COLUMN_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
-                                                                                            Type.STRING));
+                                                                                            Type.STRING, Type.BOOLEAN));
   private final String name;
   private final Type type;
 

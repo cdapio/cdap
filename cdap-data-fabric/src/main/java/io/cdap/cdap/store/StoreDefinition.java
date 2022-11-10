@@ -401,7 +401,7 @@ public final class StoreDefinition {
                     Fields.longType(CREATION_TIME_FIELD),
                     Fields.stringType(AUTHOR_FIELD),
                     Fields.stringType(CHANGE_SUMMARY_FIELD),
-                    Fields.stringType(LATEST_FIELD))
+                    Fields.booleanType(LATEST_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
         .withIndexes(LATEST_FIELD, CREATION_TIME_FIELD)
         .build();

@@ -289,6 +289,8 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
         return "real";
       case BYTES:
         return "bytea";
+      case BOOLEAN:
+        return "boolean";
       default:
         // this should never happen since all the fields are from the specification and validated there
         throw new IllegalStateException(
@@ -311,6 +313,8 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
         return FieldType.Type.FLOAT;
       case "bytea":
         return FieldType.Type.BYTES;
+      case "boolean":
+        return FieldType.Type.BOOLEAN;
       default:
         throw new IllegalArgumentException("Unsupported type " + sqlType);
     }

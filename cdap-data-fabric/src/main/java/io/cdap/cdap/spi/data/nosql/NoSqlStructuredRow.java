@@ -62,6 +62,12 @@ public final class NoSqlStructuredRow implements StructuredRow {
 
   @Nullable
   @Override
+  public Boolean getBoolean(String fieldName) throws InvalidFieldException {
+    return get(fieldName);
+  }
+
+  @Nullable
+  @Override
   public String getString(String fieldName) throws InvalidFieldException {
     return get(fieldName);
   }
@@ -136,6 +142,11 @@ public final class NoSqlStructuredRow implements StructuredRow {
           keys.add(Fields.bytesField(key, bytesVal));
           builder.put(key, bytesVal);
           break;
+        case BOOLEAN:
+          boolean booleanVal = splitter.getBoolean();
+          keys.add(Fields.booleanField(key, booleanVal));
+          builder.put(key, booleanVal);
+          break;
         default:
           // this should never happen since all the keys are from the table schema and should never contain other types
           throw new IllegalStateException(
@@ -160,6 +171,8 @@ public final class NoSqlStructuredRow implements StructuredRow {
         return (T) row.getString(fieldName);
       case BYTES:
         return (T) row.get(fieldName);
+      case BOOLEAN:
+        return (T) row.getBoolean(fieldName);
       default:
         throw new InvalidFieldException(tableSchema.getTableId(), fieldName);
     }

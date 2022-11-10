@@ -566,6 +566,8 @@ public class SpannerStructuredTable implements StructuredTable {
         return Value.string((String) value);
       case BYTES:
         return Value.bytes(ByteArray.copyFrom((byte[]) value));
+      case BOOLEAN:
+        return Value.bool((boolean) value);
     }
 
     // This shouldn't happen
@@ -603,6 +605,9 @@ public class SpannerStructuredTable implements StructuredTable {
         case BYTES:
           builder.append(ByteArray.copyFrom((byte[]) value)).build();
           break;
+        case BOOLEAN:
+          builder.append((Boolean) value).build();
+          break;
         default:
           throw new IllegalArgumentException("Unsupported field type " + field.getFieldType());
       }
@@ -634,6 +639,8 @@ public class SpannerStructuredTable implements StructuredTable {
         return Objects.equals(fieldValue, row.getString(field.getName()));
       case BYTES:
         return Objects.deepEquals(fieldValue, row.getBytes(field.getName()));
+      case BOOLEAN:
+        return Objects.equals(fieldValue, row.getBoolean(field.getName()));
     }
     return false;
   }
