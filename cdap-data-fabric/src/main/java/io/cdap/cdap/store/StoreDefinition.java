@@ -360,6 +360,7 @@ public final class StoreDefinition {
   public static final class AppMetadataStore {
 
     public static final StructuredTableId APPLICATION_SPECIFICATIONS = new StructuredTableId("application_specs");
+    public static final StructuredTableId APPLICATION_EDIT = new StructuredTableId("application_edit");
     public static final StructuredTableId WORKFLOW_NODE_STATES = new StructuredTableId("workflow_node_states");
     public static final StructuredTableId RUN_RECORDS = new StructuredTableId("run_records");
     public static final StructuredTableId WORKFLOWS = new StructuredTableId("workflows");
@@ -370,6 +371,7 @@ public final class StoreDefinition {
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String APPLICATION_FIELD = "application";
     public static final String VERSION_FIELD = "version";
+    public static final String EDIT_NUM_FIELD = "edit_num";
     public static final String APPLICATION_DATA_FIELD = "application_data";
     public static final String CREATION_TIME_FIELD = "created";
     public static final String CHANGE_SUMMARY_FIELD = "change_summary";
@@ -404,6 +406,18 @@ public final class StoreDefinition {
                     Fields.booleanType(LATEST_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
         .withIndexes(LATEST_FIELD, CREATION_TIME_FIELD)
+        .build();
+
+    // The table that stores the edit# of an application. It provides:
+    // 1. Keys on namespace + application name to prevent the race of multiple first application versions
+    // 2. Store the number of edits for an application
+    public static final StructuredTableSpecification APPLICATION_EDIT_TABLE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(APPLICATION_EDIT)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.intType(EDIT_NUM_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD)
         .build();
 
     public static final StructuredTableSpecification WORKFLOW_NODE_STATES_SPEC =
@@ -476,6 +490,7 @@ public final class StoreDefinition {
 
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, APPLICATION_SPECIFICATIONS_TABLE_SPEC);
+      createIfNotExists(tableAdmin, APPLICATION_EDIT_TABLE_SPEC);
       createIfNotExists(tableAdmin, WORKFLOW_NODE_STATES_SPEC);
       createIfNotExists(tableAdmin, RUN_RECORDS_SPEC);
       createIfNotExists(tableAdmin, WORKFLOWS_SPEC);

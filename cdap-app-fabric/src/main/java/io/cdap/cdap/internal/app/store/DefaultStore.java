@@ -601,6 +601,7 @@ public class DefaultStore implements Store {
       getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplication(id.getNamespace(), id.getApplication(), id.getVersion());
+      metaStore.deleteApplicationEditRecord(id.getAppReference());
       metaStore.deleteProgramHistory(id.getNamespace(), id.getApplication(), id.getVersion());
     });
   }
