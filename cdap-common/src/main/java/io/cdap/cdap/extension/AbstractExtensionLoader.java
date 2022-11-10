@@ -213,12 +213,12 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   private LoadingCache<EXTENSION_TYPE, AtomicReference<EXTENSION>> createExtensionsCache() {
     return CacheBuilder.newBuilder().build(new CacheLoader<EXTENSION_TYPE, AtomicReference<EXTENSION>>() {
       @Override
-      public AtomicReference<EXTENSION> load(EXTENSION_TYPE extensionType) throws Exception {
+      public AtomicReference<EXTENSION> load(EXTENSION_TYPE extensionType) {
         EXTENSION extension = null;
         try {
           extension = findExtension(extensionType);
         } catch (Throwable t) {
-          LOG.warn("Failed to load extension for type {}.", extensionType);
+          LOG.warn("Failed to load extension for type {}.", extensionType, t);
         }
         return new AtomicReference<>(extension);
       }
