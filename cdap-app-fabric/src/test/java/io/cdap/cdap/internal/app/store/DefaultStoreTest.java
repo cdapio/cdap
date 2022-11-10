@@ -1271,8 +1271,7 @@ public abstract class DefaultStoreTest {
     Assert.assertFalse(store.scanApplications(request, 20, (id, appSpec) -> {
       actualApps.add(id);
       creationTimes.add(appSpec.getChange().getCreationTimeMillis());
-      // TODO: change to boolean after CDAP-19981
-      if (appSpec.getChange().getLatest() == true) {
+      if (Boolean.TRUE.equals(appSpec.getChange().getLatest())) {
         latestVersionCount.getAndIncrement();
         latestAppId.set(id);
       }
