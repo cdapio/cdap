@@ -78,6 +78,10 @@ public class RunRecord {
   @SerializedName("peerName")
   private final String peerName;
 
+  // the version of the pipeline the run associated with
+  @SerializedName("version")
+  private final String version;
+
   /**
    * @deprecated use {@link #builder()} instead.
    */
@@ -85,7 +89,7 @@ public class RunRecord {
   public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, @Nullable Long suspendTs,
                    @Nullable Long resumeTs, @Nullable Long stoppingTs, @Nullable Long terminateTs,
                    ProgramRunStatus status, @Nullable Map<String, String> properties, ProgramRunCluster cluster,
-                   ProfileId profileId, @Nullable String peerName) {
+                   ProfileId profileId, @Nullable String peerName, @Nullable String version) {
     this.pid = pid;
     this.startTs = startTs;
     this.runTs = runTs;
@@ -100,6 +104,7 @@ public class RunRecord {
     this.cluster = cluster;
     this.profileId = profileId;
     this.peerName = peerName;
+    this.version = version;
   }
 
   /**
@@ -109,7 +114,8 @@ public class RunRecord {
     this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(), otherRunRecord.getStopTs(),
          otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(), otherRunRecord.getStoppingTs(),
          otherRunRecord.getTerminateTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
-         otherRunRecord.getCluster(), otherRunRecord.getProfileId(), otherRunRecord.getPeerName());
+         otherRunRecord.getCluster(), otherRunRecord.getProfileId(), otherRunRecord.getPeerName(),
+         otherRunRecord.getVersion());
   }
 
   public String getPid() {
@@ -173,6 +179,11 @@ public class RunRecord {
     return peerName;
   }
 
+  @Nullable
+  public String getVersion() {
+    return version;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -196,13 +207,14 @@ public class RunRecord {
       Objects.equals(this.properties, that.properties) &&
       Objects.equals(this.cluster, that.cluster) &&
       Objects.equals(this.profileId, that.profileId) &&
-      Objects.equals(this.peerName, that.peerName);
+      Objects.equals(this.peerName, that.peerName) &&
+      Objects.equals(this.version, that.version);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs, status,
-                        properties, cluster, profileId, peerName);
+                        properties, cluster, profileId, peerName, version);
   }
 
   @Override
@@ -221,6 +233,7 @@ public class RunRecord {
       ", cluster=" + cluster +
       ", profile=" + profileId +
       ", peerName=" + peerName +
+      ", version=" + version +
       '}';
   }
 
@@ -259,6 +272,7 @@ public class RunRecord {
     protected ProgramRunCluster cluster;
     protected ProfileId profileId;
     protected String peerName;
+    protected String version;
 
     protected Builder() {
       properties = new HashMap<>();
@@ -278,6 +292,7 @@ public class RunRecord {
       cluster = other.getCluster();
       profileId = other.getProfileId();
       peerName = other.getPeerName();
+      version = other.getVersion();
     }
 
     public T setStatus(ProgramRunStatus status) {
@@ -346,6 +361,11 @@ public class RunRecord {
       return (T) this;
     }
 
+    public T setVersion(String version) {
+      this.version = version;
+      return (T) this;
+    }
+
     public RunRecord build() {
       if (pid == null) {
         throw new IllegalArgumentException("Run record run id must be specified.");
@@ -360,7 +380,7 @@ public class RunRecord {
         throw new IllegalArgumentException("Run record status must be specified.");
       }
       return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
-                           status, properties, cluster, profileId, peerName);
+                           status, properties, cluster, profileId, peerName, version);
     }
   }
 }
