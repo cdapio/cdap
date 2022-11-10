@@ -84,8 +84,7 @@ public class AccessTokenIdentityExtractor implements UserIdentityExtractor {
       AccessToken accessTokenObj = accessTokenCodec.decode(decodedAccessToken);
       UserIdentity userIdentityObj = accessTokenObj.getIdentifier();
       byte[] encodedAccessTokenIdentifier = userIdentityCodec.encode(userIdentityObj);
-      UserIdentityPair pair = new UserIdentityPair(Base64.getEncoder().encodeToString(encodedAccessTokenIdentifier),
-                                                   userIdentityObj);
+      UserIdentityPair pair = new UserIdentityPair(accessToken, userIdentityObj);
       return new UserIdentityExtractionResponse(pair);
     } catch (IOException e) {
       // This shouldn't happen in normal case, since the token is already validated
