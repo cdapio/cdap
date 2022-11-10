@@ -65,6 +65,13 @@ public class SqlStructuredRow implements StructuredRow {
 
   @Nullable
   @Override
+  public Boolean getBoolean(String fieldName) throws InvalidFieldException {
+    validateField(fieldName, EnumSet.of(FieldType.Type.BOOLEAN));
+    return (Boolean) columns.get(fieldName);
+  }
+
+  @Nullable
+  @Override
   public String getString(String fieldName) throws InvalidFieldException {
     validateField(fieldName, EnumSet.of(FieldType.Type.STRING));
     return (String) columns.get(fieldName);
