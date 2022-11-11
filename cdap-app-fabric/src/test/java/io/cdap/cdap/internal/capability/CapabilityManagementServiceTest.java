@@ -35,6 +35,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -84,6 +85,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   private static ProgramLifecycleService programLifecycleService;
   private static CapabilityStatusStore capabilityStatusStore;
   private static final Gson GSON = new Gson();
+  private static final String FEATURE_FLAG_PREFIX = "feature.";
 
   @BeforeClass
   public static void setup() {
@@ -129,6 +131,10 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     applicationLifecycleService.removeAll(NamespaceId.DEFAULT);
     artifactRepository.clear(NamespaceId.SYSTEM);
     artifactRepository.clear(NamespaceId.DEFAULT);
+  }
+
+  private void setLCMFlag(boolean lcmFlag) {
+    cConfiguration.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), lcmFlag);
   }
 
   @Test
@@ -534,7 +540,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testProgramStart() throws Exception {
+  public void testProgramStartLCMFlagDisabled() throws Exception {
     String externalConfigPath = tmpFolder.newFolder("capability-config-program").getAbsolutePath();
     cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
     String appName = CapabilitySleepingWorkflowApp.NAME;
@@ -601,7 +607,82 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testProgramWithPluginStart() throws Exception {
+  public void testProgramStartLCMFlagEnabled() throws Exception {
+    setLCMFlag(true);
+    String externalConfigPath = tmpFolder.newFolder("capability-config-program-lcm-enabled").getAbsolutePath();
+    cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
+    String appName = CapabilitySleepingWorkflowApp.NAME;
+    Class<CapabilitySleepingWorkflowApp> appClass = CapabilitySleepingWorkflowApp.class;
+    String version = "1.0.0";
+    String namespace = "default";
+    //deploy the artifact
+    deployTestArtifact(namespace, appName, version, appClass);
+
+    //enable a capability with no system apps and programs
+    CapabilityConfig enabledConfig = new CapabilityConfig("Enable healthcare", CapabilityStatus.ENABLED,
+                                                          "healthcare", Collections.emptyList(),
+                                                          Collections.emptyList(), Collections.emptyList());
+    writeConfigAsFile(externalConfigPath, enabledConfig.getCapability(), enabledConfig);
+    capabilityManagementService.runTask();
+    String capability = enabledConfig.getCapability();
+    capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
+
+    //deploy an app with this capability and start a workflow
+    ApplicationId applicationId = new ApplicationId(namespace, appName);
+    Id.Artifact artifactId = Id.Artifact
+      .from(new Id.Namespace(namespace), appName, version);
+    ApplicationWithPrograms applicationWithPrograms = applicationLifecycleService
+      .deployApp(new NamespaceId(namespace), appName, artifactId, null, op -> {
+      });
+    Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
+    int programsSize = 0;
+    for (ProgramDescriptor program : programs) {
+      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+      programsSize++;
+      applicationId = program.getProgramId().getParent();
+    }
+
+    Assert.assertEquals(programsSize, 1);
+    ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
+                                        CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
+    // Capability management service might not yet have deployed application.
+    // So wait till program exists and is in running state.
+
+    waitState(programId, "RUNNING");
+    assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
+
+    //disable the capability -  the program that was started should stop
+    CapabilityConfig disabledConfig = new CapabilityConfig("Disable healthcare", CapabilityStatus.DISABLED,
+                                                           "healthcare", Collections.emptyList(),
+                                                           Collections.emptyList(), Collections.emptyList());
+    writeConfigAsFile(externalConfigPath, capability, disabledConfig);
+    capabilityManagementService.runTask();
+    assertProgramRuns(programId, ProgramRunStatus.KILLED, 1);
+    assertProgramRuns(programId, ProgramRunStatus.RUNNING, 0);
+    try {
+      capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
+      Assert.fail("expecting exception");
+    } catch (CapabilityNotAvailableException ex) {
+      // expected
+    }
+
+    //try starting programs
+    for (ProgramDescriptor program : programs) {
+      try {
+        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+        Assert.fail("expecting exception");
+      } catch (CapabilityNotAvailableException ex) {
+        //expecting exception
+      }
+    }
+    new File(externalConfigPath, capability).delete();
+    capabilityManagementService.runTask();
+    Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
+    setLCMFlag(false);
+  }
+
+  @Test
+  public void testProgramWithPluginStartLCMFlagDisabled() throws Exception {
     String externalConfigPath = tmpFolder.newFolder("capability-config-program-plugin").getAbsolutePath();
     cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
     String appName = CapabilitySleepingWorkflowPluginApp.NAME;
@@ -678,6 +759,96 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     new File(externalConfigPath, capability).delete();
     capabilityManagementService.runTask();
     Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
+  }
+
+  @Test
+  public void testProgramWithPluginStartLCMFlagEnabled() throws Exception {
+    setLCMFlag(true);
+    String externalConfigPath = tmpFolder.newFolder("capability-config-program-plugin-lcm-enabled").getAbsolutePath();
+    cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
+    String appName = CapabilitySleepingWorkflowPluginApp.NAME;
+    Class<CapabilitySleepingWorkflowPluginApp> appClass = CapabilitySleepingWorkflowPluginApp.class;
+    String version = "1.0.0";
+    String namespace = "default";
+    //deploy the artifact
+    deployTestArtifact(namespace, appName, version, appClass);
+
+    //deploy the plugin artifact
+    Manifest manifest = new Manifest();
+    String pluginName = CapabilitySleepingWorkflowPluginApp.SimplePlugin.class.getPackage().getName();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, pluginName);
+    Location pluginJar = PluginJarHelper
+      .createPluginJar(locationFactory, manifest, CapabilitySleepingWorkflowPluginApp.SimplePlugin.class);
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.from(namespace), pluginName, version);
+    File pluginJarFile = new File(tmpFolder.newFolder(),
+                                  String.format("%s-%s.jar", pluginArtifactId.getName(), version));
+    Locations.linkOrCopyOverwrite(pluginJar, pluginJarFile);
+    pluginJar.delete();
+    artifactRepository.addArtifact(pluginArtifactId, pluginJarFile);
+
+    //enable a capability with no system apps and programs
+    CapabilityConfig enabledConfig = new CapabilityConfig("Enable healthcare", CapabilityStatus.ENABLED,
+                                                          "healthcare", Collections.emptyList(),
+                                                          Collections.emptyList(), Collections.emptyList());
+    writeConfigAsFile(externalConfigPath, enabledConfig.getCapability(), enabledConfig);
+    capabilityManagementService.runTask();
+    String capability = enabledConfig.getCapability();
+    capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
+
+    //deploy an app with this capability and start a workflow
+    ApplicationId applicationId = new ApplicationId(namespace, appName);
+    Id.Artifact artifactId = Id.Artifact
+      .from(new Id.Namespace(namespace), appName, version);
+    ApplicationWithPrograms applicationWithPrograms = applicationLifecycleService
+      .deployApp(new NamespaceId(namespace), appName, artifactId, null, op -> {
+      });
+    Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
+
+    int programsSize = 0;
+    for (ProgramDescriptor program : programs) {
+      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+      programsSize++;
+      applicationId = program.getProgramId().getParent();
+    }
+
+    Assert.assertEquals(programsSize, 1);
+    ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
+                                        CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
+    // Capability management service might not yet have deployed application.
+    // So wait till program exists and is in running state.
+
+    // TODO : to fix after CDAP-19775 is addressed
+    waitState(programId, "RUNNING");
+    assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
+
+    //disable the capability -  the program that was started should stop
+    CapabilityConfig disabledConfig = new CapabilityConfig("Disable healthcare", CapabilityStatus.DISABLED,
+                                                           "healthcare", Collections.emptyList(),
+                                                           Collections.emptyList(), Collections.emptyList());
+    writeConfigAsFile(externalConfigPath, capability, disabledConfig);
+    capabilityManagementService.runTask();
+    assertProgramRuns(programId, ProgramRunStatus.KILLED, 1);
+    assertProgramRuns(programId, ProgramRunStatus.RUNNING, 0);
+    try {
+      capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
+      Assert.fail("expecting exception");
+    } catch (CapabilityNotAvailableException ex) {
+      // expected
+    }
+
+    //try starting programs
+    for (ProgramDescriptor program : programs) {
+      try {
+        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+        Assert.fail("expecting exception");
+      } catch (CapabilityNotAvailableException ex) {
+        //expecting exception
+      }
+    }
+    new File(externalConfigPath, capability).delete();
+    capabilityManagementService.runTask();
+    Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
+    setLCMFlag(false);
   }
 
   @Test

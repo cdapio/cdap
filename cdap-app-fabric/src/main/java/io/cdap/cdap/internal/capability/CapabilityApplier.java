@@ -457,7 +457,6 @@ class CapabilityApplier {
       .build();
     MetadataSearchResponse searchResponse = metadataSearchClient.search(searchRequest);
     Set<ApplicationId> applicationIds = searchResponse.getResults().stream()
-      .map(MetadataSearchResultRecord::getMetadataEntity)
       .map(this::getApplicationId)
       .collect(Collectors.toSet());
     return new EntityResult<>(applicationIds, getCursorResponse(searchResponse),
@@ -474,8 +473,25 @@ class CapabilityApplier {
     return cursors.get(0);
   }
 
-  private ApplicationId getApplicationId(MetadataEntity metadataEntity) {
-    return new ApplicationId(metadataEntity.getValue(MetadataEntity.NAMESPACE),
-                             metadataEntity.getValue(MetadataEntity.APPLICATION));
+  private ApplicationId getApplicationId(MetadataSearchResultRecord metadataRecord) {
+    MetadataEntity entity = metadataRecord.getMetadataEntity();
+
+    // Currently, metadata entity is versionless, when we search for an application entity, version is not returned
+    // This is a workaround to get actual application version from MetadataSearchResultRecord
+    Set<String> versions = metadataRecord.getMetadata().values().stream()
+      .map(metadata -> metadata.getProperties().get("version")).collect(Collectors.toSet());
+
+    String appVersion = entity.getValue(MetadataEntity.VERSION);
+    if (appVersion == null) {
+      if (versions.isEmpty()) {
+        appVersion = ApplicationId.DEFAULT_VERSION;
+      } else {
+        appVersion = versions.iterator().next();
+      }
+    }
+
+    return new ApplicationId(entity.getValue(MetadataEntity.NAMESPACE),
+                             entity.getValue(MetadataEntity.APPLICATION),
+                             appVersion);
   }
 }
