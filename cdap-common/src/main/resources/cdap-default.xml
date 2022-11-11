@@ -5514,6 +5514,14 @@
   </property>
 
   <property>
+    <name>feature.wrangler.fail.pipeline.for.error.enabled</name>
+    <value>true</value>
+    <description>
+      Enables pipeline failures when Wrangler transformations fail in 'Fail Pipeline' mode
+    </description>
+  </property>
+  
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
