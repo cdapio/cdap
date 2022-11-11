@@ -27,6 +27,7 @@ import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.metadata.MetadataValidator;
 import io.cdap.cdap.pipeline.AbstractStage;
@@ -37,6 +38,7 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.twill.filesystem.Location;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -113,8 +115,11 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
         metadataValidator.validateTags(appEntity, metadata.getTags());
       }
     }
+    ApplicationSpecification appSpec = Optional.ofNullable(store.getLatest(applicationId.getAppReference()))
+      .map(ApplicationMeta::getSpec)
+      .orElse(null);
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
-                                   applicationId, specification, store.getApplication(applicationId),
+                                   applicationId, specification, appSpec,
                                    ApplicationDeployScope.USER, deploymentInfo.getApplicationClass(),
                                    deploymentInfo.getOwnerPrincipal(), deploymentInfo.canUpdateSchedules(),
                                    appSpecInfo.getSystemTables(), metadatas, deploymentInfo.getChangeDetail()));

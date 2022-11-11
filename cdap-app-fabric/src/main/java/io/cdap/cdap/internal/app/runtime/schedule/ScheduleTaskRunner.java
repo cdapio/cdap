@@ -38,7 +38,6 @@ import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -148,8 +147,7 @@ public final class ScheduleTaskRunner {
    * Get the ProgramId of the latest version.
    */
   private ProgramId getLatestAppProgramId(ProgramId programId) throws ProgramNotFoundException {
-    ApplicationMeta applicationMeta = store.getLatest(new NamespaceId(programId.getNamespace()),
-                                                      programId.getApplication());
+    ApplicationMeta applicationMeta = store.getLatest(programId.getAppReference());
     if (applicationMeta == null) {
       throw new ProgramNotFoundException(programId);
     }

@@ -141,7 +141,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //deploy the artifact
     deployTestArtifact(namespace, appName, version, appClass);
 
-    ApplicationId applicationId = new ApplicationId(namespace, appName, version);
+    ApplicationId applicationId = new ApplicationId(namespace, appName);
     ProgramId programId = new ProgramId(applicationId, ProgramType.SERVICE, programName);
     String externalConfigPath = tmpFolder.newFolder("capability-config-test").getAbsolutePath();
     cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
@@ -230,7 +230,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //deploy the artifact
     deployTestArtifact(namespace, appName, version, appClass);
 
-    ApplicationId applicationId = new ApplicationId(namespace, appName, version);
+    ApplicationId applicationId = new ApplicationId(namespace, appName);
     ProgramId programId = new ProgramId(applicationId, ProgramType.SERVICE, programName);
     //check that app is not available
     List<JsonObject> appList = getAppList(namespace);
@@ -281,13 +281,12 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     String appName = AllProgramsApp.NAME;
     String programName = AllProgramsApp.NoOpService.NAME;
     Class<AllProgramsApp> appClass = AllProgramsApp.class;
-    String appVersion = "1.0.0";
     String namespace = NamespaceId.SYSTEM.getNamespace();
     //deploy the artifact with older version.
     String oldArtifactVersion = "1.0.0";
     deployTestArtifact(namespace, appName, oldArtifactVersion, appClass);
 
-    ApplicationId applicationId = new ApplicationId(namespace, appName, appVersion);
+    ApplicationId applicationId = new ApplicationId(namespace, appName);
     ProgramId programId = new ProgramId(applicationId, ProgramType.SERVICE, programName);
     //check that app is not available
     List<JsonObject> appList = getAppList(namespace);
@@ -373,13 +372,12 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     String appName = AllProgramsApp.NAME;
     String programName = AllProgramsApp.NoOpService.NAME;
     Class<AllProgramsApp> appClass = AllProgramsApp.class;
-    String appVersion = "1.0.0";
     String namespace = NamespaceId.SYSTEM.getNamespace();
     //deploy the artifact with older version.
     String artifactVersion = "1.0.0";
     deployTestArtifact(namespace, appName, artifactVersion, appClass);
 
-    ApplicationId applicationId = new ApplicationId(namespace, appName, appVersion);
+    ApplicationId applicationId = new ApplicationId(namespace, appName);
     ProgramId programId = new ProgramId(applicationId, ProgramType.SERVICE, programName);
     //check that app is not available
     List<JsonObject> appList = getAppList(namespace);
@@ -493,7 +491,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     String appNameWithOutCapability = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();
     deployArtifactAndApp(appNoCapabilityClass, appNameWithOutCapability, testVersion);
     ApplicationDetail appWithOutCapabilityDetail =
-      applicationLifecycleService.getLatestAppDetail(NamespaceId.DEFAULT, appNameWithOutCapability);
+      applicationLifecycleService.getLatestAppDetail(
+        new ApplicationReference(NamespaceId.DEFAULT, appNameWithOutCapability));
 
     //enable the capabilities
     List<CapabilityConfig> capabilityConfigs = Arrays.stream(declaredAnnotation.capabilities())
@@ -514,12 +513,13 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
                  null, programId -> {
         });
     ApplicationDetail appWithCapabilityDetail =
-      applicationLifecycleService.getLatestAppDetail(NamespaceId.DEFAULT, appNameWithCapability);
+      applicationLifecycleService.getLatestAppDetail(
+        new ApplicationReference(NamespaceId.DEFAULT, appNameWithCapability));
 
     applicationLifecycleService.removeApplication(
-      NamespaceId.DEFAULT.app(appNameWithCapability, appWithCapabilityDetail.getAppVersion()));
+      NamespaceId.DEFAULT.appReference(appNameWithCapability));
     applicationLifecycleService.removeApplication(
-      NamespaceId.DEFAULT.app(appNameWithOutCapability, appWithOutCapabilityDetail.getAppVersion()));
+      NamespaceId.DEFAULT.appReference(appNameWithOutCapability));
     artifactRepository.deleteArtifact(Id.Artifact
                                         .from(new Id.Namespace(NamespaceId.DEFAULT.getNamespace()),
                                               appNameWithCapability, testVersion));
@@ -785,14 +785,12 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   private CapabilityConfig getTestConfig(String artifactVersion) {
     String appName = AllProgramsApp.NAME;
     String programName = AllProgramsApp.NoOpService.NAME;
-    String appVersion = "1.0.0";
     String namespace = NamespaceId.SYSTEM.getNamespace();
     String label = "Enable capability";
     String capability = "test";
     ArtifactSummary artifactSummary = new ArtifactSummary(appName, artifactVersion, ArtifactScope.SYSTEM);
-    SystemApplication application = new SystemApplication(namespace, appName, appVersion, artifactSummary, null);
-    SystemProgram program = new SystemProgram(namespace, appName, ProgramType.SERVICE.name(),
-                                              programName, appVersion, null);
+    SystemApplication application = new SystemApplication(namespace, appName, artifactSummary, null);
+    SystemProgram program = new SystemProgram(namespace, appName, ProgramType.SERVICE.name(), programName, null);
     return new CapabilityConfig(label, CapabilityStatus.ENABLED, capability,
                                 Collections.singletonList(application), Collections.singletonList(program),
                                 Collections.emptyList());

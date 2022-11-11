@@ -29,7 +29,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -65,12 +65,12 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   }
 
   /**
-   * Get the application detail for the given application id
+   * Get the application detail for the given application reference
    */
-  public ApplicationDetail get(ApplicationId appId)
+  public ApplicationDetail get(ApplicationReference appRef)
     throws IOException, NotFoundException, UnauthorizedException {
-    String url = String.format("namespaces/%s/app/%s/versions/%s",
-                               appId.getNamespace(), appId.getApplication(), appId.getVersion());
+    String url = String.format("namespaces/%s/app/%s",
+                               appRef.getNamespace(), appRef.getApplication());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());

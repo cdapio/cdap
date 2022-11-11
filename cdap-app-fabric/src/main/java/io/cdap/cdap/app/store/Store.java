@@ -42,6 +42,7 @@ import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
@@ -272,14 +273,6 @@ public interface Store {
   void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer);
 
   /**
-   * Checks if there are active (i.e STARTING or RUNNING or SUSPENDED) run records for a given app.
-   * @param namespaceId the namespace id to match against
-   * @param appName the app name to match against
-   * @return if the application has active run records (true) else false
-   */
-  boolean hasActiveRuns(NamespaceId namespaceId, String appName);
-
-  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
    * @param namespaceId the namespace id to match against
    * @return map of logged runs
@@ -302,14 +295,12 @@ public interface Store {
   Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId);
 
   /**
-   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records for the latest version of the
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records for the
    * given application.
-   * @param namespaceId namespace of the application
-   * @param appName aplicaiton name
+   * @param applicationReference versionless reference of the application
    * @return map of logged runs. If no active run exists, return an empty map.
-   * TODO replace params with ApplicationReference
    */
-  Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(NamespaceId namespaceId, String appName);
+  Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(ApplicationReference applicationReference);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ProgramId.
@@ -375,6 +366,15 @@ public interface Store {
   ApplicationMeta getApplicationMetadata(ApplicationId id);
 
   /**
+   * Returns the latest version of an application in a namespace
+   *
+   * @param appRef application reference
+   * @return The metadata information of the latest application version.
+   */
+  @Nullable
+  ApplicationMeta getLatest(ApplicationReference appRef);
+
+  /**
    * Returns a collection of all application specs in the specified namespace
    *
    * @param id the namespace to get application specs from
@@ -401,7 +401,7 @@ public interface Store {
    * @return if limit was reached (true) or all items were scanned before reaching the limit (false)
    */
   boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
-                        BiConsumer<ApplicationId, ApplicationMeta> consumer);
+                           BiConsumer<ApplicationId, ApplicationMeta> consumer);
 
   /**
    * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.
@@ -412,6 +412,14 @@ public interface Store {
   Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids);
 
   /**
+   * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationReference}.
+   *
+   * @param appRef the application reference
+   * @return collection of application specs. For applications that don't exist, there will be no entry in the result.
+   */
+  Map<ApplicationId, ApplicationSpecification> getApplications(ApplicationReference appRef);
+
+  /**
    * Returns a map of latest programIds given programReferences
    *
    * @param references the list of programReferences to get the latest programIds
@@ -420,31 +428,12 @@ public interface Store {
   Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references);
 
   /**
-   * Returns a collection of all application specs of all the versions of an app
+   * Returns a list of all versions' ApplicationId's of the application by reference
    *
-   * @param namespaceId the namespace id
-   * @param appName the name of the application
-   * @return collection of all application specs of all the application versions
-   */
-  Collection<ApplicationSpecification> getAllAppVersions(NamespaceId namespaceId, String appName);
-
-  /**
-   * Returns the latest version of an application in a namespace
-   *
-   * @param namespace namespace
-   * @param appName application id
-   * @return The metadata information of the latest application version.
-   */
-  @Nullable
-  ApplicationMeta getLatest(NamespaceId namespace, String appName);
-
-  /**
-   * Returns a list of all versions' ApplicationId's of the application by id
-   *
-   * @param id application id
+   * @param appRef application reference
    * @return collection of versionIds of the application's versions
    */
-  Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationId id);
+  Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationReference appRef);
 
   /**
    * Sets the number of instances of a service.

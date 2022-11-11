@@ -63,10 +63,12 @@ import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
@@ -839,7 +841,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // version history should be DESC sorted
     Assert.assertEquals(creationTimeDescSorted, creationTimeList);
-
+    
     //delete app in testnamespace1
     HttpResponse response = doDelete(getVersionedAPIPath("apps/",
                                             Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -1057,7 +1059,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Start a service from the App
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    ApplicationId applicationId = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    ApplicationReference appReference = new ApplicationReference(TEST_NAMESPACE1, AllProgramsApp.NAME);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, AllProgramsApp.NAME,
                                          ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     startProgram(program);
@@ -1066,8 +1068,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + applicationId +
-                          "' could not be deleted. Reason: The app has programs that are still running.",
+    Assert.assertEquals("'" + appReference
+                          + "' could not be deleted. Reason: The following programs are still running: "
+                          + AllProgramsApp.NoOpService.NAME,
                         response.getResponseBodyAsString());
 
     stopProgram(program);
@@ -1178,7 +1181,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Start a service from the App
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    ApplicationId applicationId = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    ApplicationReference applicationId = new ApplicationReference(TEST_NAMESPACE1, AllProgramsApp.NAME);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, AllProgramsApp.NAME,
                                          ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     startProgram(program);
@@ -1187,8 +1190,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + applicationId +
-                          "' could not be deleted. Reason: The app has programs that are still running.",
+    Assert.assertEquals("'" + applicationId
+                          + "' could not be deleted. Reason: The following programs are still running: "
+                          + AllProgramsApp.NoOpService.NAME,
                         response.getResponseBodyAsString());
 
     stopProgram(program);
@@ -1236,10 +1240,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       String.format("apps/%s", appId.getApplication()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(409, response.getResponseCode());
-    ProgramId programIdDefault = new ApplicationId(appId.getNamespace(), appId.getApplication())
+    ProgramReference programIdDefault = new ApplicationReference(appId.getNamespace(), appId.getApplication())
       .program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    Assert.assertEquals("'" + programIdDefault.getParent() + "' could not be deleted. Reason: The app " +
-                          "has programs that are still running.", response.getResponseBodyAsString());
+    Assert.assertEquals("'" + programIdDefault.getParent() + "' could not be deleted. Reason: " +
+                          "The following programs are still running: " + AllProgramsApp.NoOpService.NAME,
+                        response.getResponseBodyAsString());
 
     stopProgram(program1, null, 200, null);
     waitState(program1, "STOPPED");

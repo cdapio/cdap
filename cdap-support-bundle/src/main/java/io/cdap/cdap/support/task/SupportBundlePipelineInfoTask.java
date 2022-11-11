@@ -107,7 +107,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
       } else {
         try {
           processApplicationDetail(namespaceId, remoteApplicationDetailFetcher.get(
-            new ApplicationId(namespaceId.getNamespace(), requestApplication)));
+            namespaceId.appReference(requestApplication)));
         } catch (NotFoundException e) {
           LOG.debug("Failed to find application {} ", requestApplication, e);
           continue;

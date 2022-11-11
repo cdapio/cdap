@@ -96,6 +96,7 @@ import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.artifact.ChangeSummary;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -340,19 +341,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Get details about the latest version of the specified application
    *
-   * @param namespaceId the namespace of the application
-   * @param appName the name of the application to fetch for details
+   * @param appRef the application reference
    * @return detail about the latest version of the specified application
    */
-  public ApplicationDetail getLatestAppDetail(NamespaceId namespaceId,
-                                              String appName) throws IOException, NotFoundException {
-    ApplicationMeta appMeta = store.getLatest(namespaceId, appName);
+  public ApplicationDetail getLatestAppDetail(ApplicationReference appRef) throws IOException, NotFoundException {
+    ApplicationMeta appMeta = store.getLatest(appRef);
     if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(String.format("Application '%s' not found in namespace '%s'",
-                                                appName, namespaceId.getNamespace()));
+      throw new ApplicationNotFoundException(appRef);
     }
 
-    ApplicationId appId = namespaceId.app(appMeta.getSpec().getName(), appMeta.getSpec().getAppVersion());
+    ApplicationId appId = appRef.app(appMeta.getSpec().getAppVersion());
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
                                                                             appMeta.getChange()));
@@ -428,17 +426,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Returns all the application versions for the given application name.
    *
-   * @param namespaceId namespace of the application
-   * @param application the application name to look for versions
-   * @return a collection of verion strings
+   * @param appRef the application reference
+   * @return a collection of version strings
    */
-  public Collection<String> getAppVersions(NamespaceId namespaceId, String application) {
-    Collection<ApplicationId> ids = store.getAllAppVersionsAppIds(namespaceId.app(application));
+  public Collection<String> getAppVersions(ApplicationReference appRef) {
+    Collection<ApplicationId> ids = store.getAllAppVersionsAppIds(appRef);
     // Hide -SNAPSHOT when more than one version of the app exists
     if (ids.size() > 1) {
       return ids.stream()
-        .filter(id -> !ApplicationId.DEFAULT_VERSION.equals(id.getVersion()))
         .map(ApplicationId::getVersion)
+        .filter(version -> !ApplicationId.DEFAULT_VERSION.equals(version))
         .collect(Collectors.toList());
     }
     return ids.stream()
@@ -466,7 +463,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Check if the current user has admin privileges on it before updating.
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
-    ApplicationMeta currentApp = store.getLatest(appId.getNamespaceId(), appId.getApplication());
+    ApplicationMeta currentApp = store.getLatest(appId.getAppReference());
     ApplicationSpecification currentSpec = Optional.ofNullable(currentApp)
       .map(ApplicationMeta::getSpec)
       .orElse(null);
@@ -590,6 +587,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
    *                   the actual exception
    */
+  @Deprecated
   public ApplicationId upgradeApplication(ApplicationId appId,
                                           Set<ArtifactScope> allowedArtifactScopes,
                                           boolean allowSnapshot) throws Exception {
@@ -602,13 +600,52 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
 
-    ApplicationId currentAppId = appId.getNamespaceId().app(currentSpec.getName(), currentSpec.getAppVersion());
+    return updateApplicationByArtifact(appId, currentSpec, allowedArtifactScopes, allowSnapshot);
+  }
 
+  /**
+   * Upgrades the latest version of an existing application
+   * by upgrading application artifact versions and plugin artifact versions.
+   *
+   * @param appRef the application reference of the application to upgrade.
+   * @param allowedArtifactScopes artifact scopes allowed while looking for latest artifacts for upgrade.
+   * @param allowSnapshot whether to consider snapshot version of artifacts or not for upgrade.
+   * @return the {@link ApplicationId} of the application version being updated.
+   * @throws IllegalStateException if something unexpected happened during upgrade.
+   * @throws IOException if there was an IO error during initializing application class from artifact.
+   * @throws JsonIOException if there was an error in serializing or deserializing app config.
+   * @throws UnsupportedOperationException if application does not support upgrade operation.
+   * @throws InvalidArtifactException if candidate application artifact is invalid for upgrade purpose.
+   * @throws NotFoundException if any object related to upgrade is not found like application/artifact.
+   * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
+   *                   the actual exception
+   */
+  public ApplicationId upgradeLatestApplication(ApplicationReference appRef,
+                                                Set<ArtifactScope> allowedArtifactScopes,
+                                                boolean allowSnapshot) throws Exception {
+
+    ApplicationMeta appMeta = store.getLatest(appRef);
+    ApplicationSpecification currentSpec = Optional.ofNullable(appMeta).map(ApplicationMeta::getSpec).orElse(null);
+
+    if (currentSpec == null) {
+      LOG.debug("Application {} not found for upgrade.", appRef);
+      throw new ApplicationNotFoundException(appRef);
+    }
+
+    ApplicationId currentAppId = appRef.app(currentSpec.getAppVersion());
+
+    return updateApplicationByArtifact(currentAppId, currentSpec, allowedArtifactScopes, allowSnapshot);
+  }
+
+  private ApplicationId updateApplicationByArtifact(ApplicationId appId,
+                                                    ApplicationSpecification appSpec,
+                                                    Set<ArtifactScope> allowedArtifactScopes,
+                                                    boolean allowSnapshot) throws Exception {
     // Check if the current user has admin privileges on it before updating.
-    accessEnforcer.enforce(currentAppId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
-    ArtifactId currentArtifact = currentSpec.getArtifactId();
-    ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(currentAppId, currentArtifact,
+    ArtifactId currentArtifact = appSpec.getArtifactId();
+    ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(appId, currentArtifact,
                                                                        allowedArtifactScopes,
                                                                        allowSnapshot);
     ArtifactVersion candidateArtifactVersion = new ArtifactVersion(candidateArtifact.getVersion());
@@ -623,13 +660,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactId newArtifactId =
       new ArtifactId(candidateArtifact.getName(), candidateArtifactVersion, candidateArtifact.getScope());
 
-    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(currentAppId.getParent(),
+    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(),
                                                                                    newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
 
-    return updateApplicationInternal(currentAppId, currentSpec.getConfiguration(), programId -> { }, newArtifactDetail,
+    return updateApplicationInternal(appId, appSpec.getConfiguration(), programId -> { }, newArtifactDetail,
                                      Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
-                                     allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(currentAppId));
+                                     allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId));
   }
 
   /**
@@ -915,40 +952,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Delete an application specified by appId.
+   * Delete an application specified by appRef.
    *
-   * @param appId the {@link ApplicationId} of the application to be removed
+   * @param appRef the {@link ApplicationReference} of the application to be removed
    * @throws Exception
    */
-  public void removeApplication(ApplicationId appId) throws Exception {
+  public void removeApplication(ApplicationReference appRef) throws Exception {
     // enforce DELETE privileges on the app
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+    accessEnforcer.enforce(appRef.app(ApplicationId.DEFAULT_VERSION),
+                           authenticationContext.getPrincipal(), StandardPermission.DELETE);
     // The latest app is retrieved here and passed to deleteApp -
     // that deletes the schedules, triggers and other metadata info.
 
-    ApplicationMeta appMeta = store.getLatest(appId.getNamespaceId(), appId.getApplication());
+    ApplicationMeta appMeta = store.getLatest(appRef);
     if (appMeta == null || appMeta.getSpec() == null) {
-      throw new ApplicationNotFoundException(appId);
+      throw new ApplicationNotFoundException(appRef);
     }
 
     // since already checked DELETE privileges above, no need to check again for appDetail
-    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appMeta.getSpec().getAppVersion());
     // ensure no running programs across all versions of the application
-    ensureNoRunningPrograms(appId.getNamespaceId(), appId.getApplication());
-    deleteApp(appId, appMeta.getSpec());
-  }
+    ensureNoRunningPrograms(appRef);
 
-  /**
-   * Find if the given application has running programs
-   *
-   * @param namespaceId the namespaceId find running programs for
-   * @param appName the name of the application to find running programs for
-   * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
-   */
-  private void ensureNoRunningPrograms(NamespaceId namespaceId, String appName) throws CannotBeDeletedException {
-    //Check if all are stopped.
-    if (store.hasActiveRuns(namespaceId, appName)) {
-      throw new CannotBeDeletedException(namespaceId.app(appName), "The app has programs that are still running.");
+    Map<ApplicationId, ApplicationSpecification> allVersions = store.getApplications(appRef);
+    for (ApplicationId versionAppId : allVersions.keySet()) {
+      deleteApp(versionAppId, allVersions.get(versionAppId));
     }
   }
 
@@ -977,52 +1004,45 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void ensureNoRunningPrograms(ApplicationId appId) throws CannotBeDeletedException {
     //Check if all are stopped.
-    Map<ProgramRunId, RunRecordDetail> runningPrograms = store.getActiveRuns(appId);
+    assertNoRunningPrograms(store.getActiveRuns(appId), appId);
+  }
 
+  /**
+   * Find if the given application has running programs
+   *
+   * @param appRef the reference for a versionless application
+   * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
+   */
+  private void ensureNoRunningPrograms(ApplicationReference appRef) throws CannotBeDeletedException {
+    //Check if all are stopped.
+    assertNoRunningPrograms(store.getAllActiveRuns(appRef), appRef);
+  }
+
+  private void assertNoRunningPrograms(Map<ProgramRunId, RunRecordDetail> runningPrograms, EntityId id)
+    throws CannotBeDeletedException {
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
       for (Map.Entry<ProgramRunId, RunRecordDetail> runningProgram : runningPrograms.entrySet()) {
         activePrograms.add(runningProgram.getKey().getProgram());
       }
 
-      String appAllRunningPrograms = Joiner.on(',')
-        .join(activePrograms);
-      throw new CannotBeDeletedException(appId,
-                                         "The following programs are still running: " + appAllRunningPrograms);
+      String appAllRunningPrograms = Joiner.on(',').join(activePrograms);
+      throw new CannotBeDeletedException(id, "The following programs are still running: " + appAllRunningPrograms);
     }
-  }
-
-  /**
-   * Get detail about the plugin in the specified application
-   *
-   * @param appId the id of the application
-   * @return list of plugins in the application
-   * @throws ApplicationNotFoundException if the specified application does not exist
-   */
-  public List<PluginInstanceDetail> getPlugins(ApplicationId appId)
-    throws ApplicationNotFoundException {
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId);
-    }
-    return getPluginInstanceDetails(appSpec);
   }
 
   /**
    * Get plugin details for the latest version of the given application
    *
-   * @param namespaceId namespace of the application
-   * @param appName name of the application
+   * @param appRef application reference
    * @return a list of {@link PluginInstanceDetail} for the latest version of the given application
    * @throws ApplicationNotFoundException if the given application does not exist
    * @throws IOException if failed to fetch plugin details
    */
-  public List<PluginInstanceDetail> getPlugins(NamespaceId namespaceId,
-                                               String appName) throws NotFoundException, IOException {
-    ApplicationMeta appMeta = store.getLatest(namespaceId, appName);
+  public List<PluginInstanceDetail> getPlugins(ApplicationReference appRef) throws NotFoundException, IOException {
+    ApplicationMeta appMeta = store.getLatest(appRef);
     if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(String.format("Application '%s' not found in namespace '%s'",
-                                                appName, namespaceId.getNamespace()));
+      throw new ApplicationNotFoundException(appRef);
     }
     return getPluginInstanceDetails(appMeta.getSpec());
   }
@@ -1159,11 +1179,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
     deletePreferences(appId, spec);
-
-    // version specific deletion
-    for (ApplicationId versionAppId : store.getAllAppVersionsAppIds(appId)) {
-      store.removeApplication(versionAppId);
-    }
+    store.removeApplication(appId);
+    
     try {
       // delete the owner as it has already been determined that this is the only version of the app
       ownerAdmin.delete(appId);
