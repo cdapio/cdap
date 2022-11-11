@@ -21,9 +21,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import org.apache.twill.api.RunId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +76,14 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
   @Override
   public List<ProgramRunOperations> getOutgoingOperations(EndPointField endPointField, long start, long end) {
     return computeFieldOperations(false, endPointField, start, end);
+  }
+
+  @Override
+  public List<EndPoint> getEndpoints(String namespaceId, ProgramReference programReference, RunId runId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
+      return fieldLineageTable.getEndpoints(namespaceId, programReference, runId);
+    });
   }
 
   private List<ProgramRunOperations> computeFieldOperations(boolean incoming, EndPointField endPointField,

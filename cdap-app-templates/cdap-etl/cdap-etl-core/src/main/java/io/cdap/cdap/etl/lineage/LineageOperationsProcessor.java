@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.lineage;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.lineage.field.ReadOperation;
@@ -121,8 +122,12 @@ public class LineageOperationsProcessor {
         switch (fieldOperation.getType()) {
           case READ:
             FieldReadOperation read = (FieldReadOperation) fieldOperation;
+            Map<String, String> sourceProperties = new HashMap<>(read.getSource().getProperties());
+            sourceProperties.put("stageName", stageName);
+            EndPoint sourceEndpoint = EndPoint.of(read.getSource().getNamespace(),
+                                                  read.getSource().getName(), sourceProperties);
             newOperation = new ReadOperation(newOperationName, read.getDescription(),
-                                              read.getSource(), read.getOutputFields());
+                                             sourceEndpoint, read.getOutputFields());
             currentOperationOutputs.addAll(read.getOutputFields());
             break;
           case TRANSFORM:
@@ -136,7 +141,11 @@ public class LineageOperationsProcessor {
           case WRITE:
             FieldWriteOperation write = (FieldWriteOperation) fieldOperation;
             inputFields = createInputFields(write.getInputFields(), stageName, processedOperations);
-            newOperation = new WriteOperation(newOperationName, write.getDescription(), write.getSink(), inputFields);
+            Map<String, String> sinkProperties = new HashMap<>(write.getSink().getProperties());
+            sinkProperties.put("stageName", stageName);
+            EndPoint sinkEndpoint = EndPoint.of(write.getSink().getNamespace(),
+                                                write.getSink().getName(), sinkProperties);
+            newOperation = new WriteOperation(newOperationName, write.getDescription(), sinkEndpoint, inputFields);
             break;
         }
         for (String currentOperationOutput : currentOperationOutputs) {

@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.lineage;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -87,8 +88,11 @@ public class LineageOperationProcessorTest {
                                                                           Collections.emptySet());
 
     Set<Operation> expectedOperations = new HashSet<>();
-    expectedOperations.add(new ReadOperation("n1.read1", "read description", src1, "id", "name"));
-    expectedOperations.add(new ReadOperation("n2.read2", "read description", src2, "body", "offset"));
+    EndPoint expectedSrc1 = EndPoint.of("default", "n1", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedSrc2 = EndPoint.of("default", "n2", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedDest = EndPoint.of("default", "n5", ImmutableMap.of("stageName", "n5"));
+    expectedOperations.add(new ReadOperation("n1.read1", "read description", expectedSrc1, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.read2", "read description", expectedSrc2, "body", "offset"));
     expectedOperations.add(new TransformOperation("n3.identity1", "identity",
                                                   Collections.singletonList(InputField.of("n1.read1", "id")),
                                                   "id"));
@@ -110,7 +114,7 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(new TransformOperation("n3,n4.merge.offset", "Merged stages: n3,n4",
                                                   Collections.singletonList(InputField.of("n2.read2", "offset")),
                                                   "offset"));
-    expectedOperations.add(new WriteOperation("n5.write", "write", dest,
+    expectedOperations.add(new WriteOperation("n5.write", "write", expectedDest,
                                               Arrays.asList(InputField.of("n3,n4.merge.id", "id"),
                                                             InputField.of("n3,n4.merge.name", "name"))));
     Set<Operation> process = processor.process();
@@ -164,8 +168,11 @@ public class LineageOperationProcessorTest {
                                                                           Collections.singleton("n3"));
 
     Set<Operation> expectedOperations = new HashSet<>();
-    expectedOperations.add(new ReadOperation("n1.readSrc1", "read description", src1, "id", "swap1", "n1same"));
-    expectedOperations.add(new ReadOperation("n2.readSrc2", "read description", src2, "id", "swap2", "n2same"));
+    EndPoint expectedSrc1 = EndPoint.of("default", "n1", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedSrc2 = EndPoint.of("default", "n2", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedDest = EndPoint.of("default", "n4", ImmutableMap.of("stageName", "n4"));
+    expectedOperations.add(new ReadOperation("n1.readSrc1", "read description", expectedSrc1, "id", "swap1", "n1same"));
+    expectedOperations.add(new ReadOperation("n2.readSrc2", "read description", expectedSrc2, "id", "swap2", "n2same"));
     expectedOperations.add(new TransformOperation("n3.JoinKey", "Join Key",
                                                   Arrays.asList(InputField.of("n1.readSrc1", "id"),
                                                                 InputField.of("n2.readSrc2", "id")), "id"));
@@ -184,7 +191,7 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(new TransformOperation("n3.unchange2", "unchange",
                                                   Collections.singletonList(InputField.of("n2.readSrc2", "n2same")),
                                                   "n2same"));
-    expectedOperations.add(new WriteOperation("n4.Write", "write description", dest,
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", expectedDest,
                                               Arrays.asList(InputField.of("n3.JoinKey", "id"),
                                                             InputField.of("n3.RenameN2", "new_id"),
                                                             InputField.of("n3.swap2", "swap1"),
@@ -220,13 +227,15 @@ public class LineageOperationProcessorTest {
     Set<Operation> processedOperations = processor.process();
     Set<Operation> expected = new HashSet<>();
     expected.add(new ReadOperation("n1.read", "reading data",
-                                   EndPoint.of("default", "file"), "offset", "body"));
+                                   EndPoint.of("default", "file", ImmutableMap.of("stageName", "n1")),
+                                   "offset", "body"));
     expected.add(new TransformOperation("n2.parse", "parsing data",
                                         Collections.singletonList(InputField.of("n1.read", "body")), "name", "address",
                                         "zip"));
     expected.add(new WriteOperation("n3.write", "writing data",
-                                    EndPoint.of("default", "file2"), InputField.of("n2.parse", "name"),
-                                    InputField.of("n2.parse", "address"), InputField.of("n2.parse", "zip")));
+                                    EndPoint.of("default", "file2", ImmutableMap.of("stageName", "n3")),
+                                    InputField.of("n2.parse", "name"), InputField.of("n2.parse", "address"),
+                                    InputField.of("n2.parse", "zip")));
 
     Assert.assertEquals(new FieldLineageInfo(expected), new FieldLineageInfo(processedOperations));
   }
@@ -271,7 +280,9 @@ public class LineageOperationProcessorTest {
                                                                           Collections.emptySet());
     Set<Operation> processedOperations = processor.process();
 
-    ReadOperation read = new ReadOperation("n1.read", "some read", EndPoint.of("ns", "file1"), "offset", "body");
+    ReadOperation read = new ReadOperation("n1.read", "some read",
+                                           EndPoint.of("ns", "file1", ImmutableMap.of("stageName", "n1")),
+                                           "offset", "body");
 
     TransformOperation parse = new TransformOperation("n2.parse", "parsing body",
                                                       Collections.singletonList(InputField.of("n1.read", "body")),
@@ -283,7 +294,7 @@ public class LineageOperationProcessorTest {
                                                        "name");
 
     WriteOperation write = new WriteOperation("n4.write_op", "writing data to file",
-                                              EndPoint.of("myns", "another_file"),
+                                              EndPoint.of("myns", "another_file", ImmutableMap.of("stageName", "n4")),
                                               Arrays.asList(InputField.of("n1.read", "offset"),
                                                             InputField.of("n3.concat", "name")));
 
@@ -339,8 +350,8 @@ public class LineageOperationProcessorTest {
     Set<Operation> processedOperations = processor.process();
 
     Set<Operation> expectedOperations = new HashSet<>();
-
-    ReadOperation read = new ReadOperation("n1.read", "reading from file", source, "offset", "body");
+    EndPoint expectedSource = EndPoint.of("ns", "file", ImmutableMap.of("stageName", "n1"));
+    ReadOperation read = new ReadOperation("n1.read", "reading from file", expectedSource, "offset", "body");
 
     expectedOperations.add(read);
 
@@ -349,13 +360,14 @@ public class LineageOperationProcessorTest {
                                                       "id", "name", "address", "zip");
 
     expectedOperations.add(parse);
-
-    WriteOperation infoWrite = new WriteOperation("n3.infoWrite", "writing info", info, InputField.of("n2.parse", "id"),
+    EndPoint expectedInfo = EndPoint.of("ns", "info", ImmutableMap.of("stageName", "n3"));
+    WriteOperation infoWrite = new WriteOperation("n3.infoWrite", "writing info", expectedInfo,
+                                                  InputField.of("n2.parse", "id"),
                                                   InputField.of("n2.parse", "name"));
 
     expectedOperations.add(infoWrite);
-
-    WriteOperation locationWrite = new WriteOperation("n4.locationWrite", "writing location", location,
+    EndPoint expectedLocation = EndPoint.of("ns", "location", ImmutableMap.of("stageName", "n4"));
+    WriteOperation locationWrite = new WriteOperation("n4.locationWrite", "writing location", expectedLocation,
                                                       InputField.of("n2.parse", "address"),
                                                       InputField.of("n2.parse", "zip"));
 
@@ -411,10 +423,15 @@ public class LineageOperationProcessorTest {
     Set<Operation> processedOperations = processor.process();
 
     Set<Operation> expectedOperations = new HashSet<>();
-    ReadOperation pRead = new ReadOperation("n1.pRead", "Reading from person file", pEndPoint, "offset", "body");
+    EndPoint expectedPEndPoint = EndPoint.of("ns", "personFile", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedHEndPoint = EndPoint.of("ns", "hrFile", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedTestEndPoint = EndPoint.of("ns", "testStore", ImmutableMap.of("stageName", "n3"));
+    EndPoint expectedProdEndPoint = EndPoint.of("ns", "prodStore", ImmutableMap.of("stageName", "n4"));
+    ReadOperation pRead = new ReadOperation("n1.pRead", "Reading from person file", expectedPEndPoint, "offset",
+                                            "body");
     expectedOperations.add(pRead);
 
-    ReadOperation hRead = new ReadOperation("n2.hRead", "Reading from hr file", hEndPoint, "offset", "body");
+    ReadOperation hRead = new ReadOperation("n2.hRead", "Reading from hr file", expectedHEndPoint, "offset", "body");
     expectedOperations.add(hRead);
 
     // implicit merge should be added by app
@@ -429,12 +446,12 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(merge1);
     expectedOperations.add(merge2);
 
-    WriteOperation write1 = new WriteOperation("n3.write1", "Writing to test store", testEndPoint,
+    WriteOperation write1 = new WriteOperation("n3.write1", "Writing to test store", expectedTestEndPoint,
                                                Arrays.asList(InputField.of("n1,n2.merge.offset", "offset"),
                                                              InputField.of("n1,n2.merge.body", "body")));
     expectedOperations.add(write1);
 
-    WriteOperation write2 = new WriteOperation("n4.write2", "Writing to prod store", prodEndPoint,
+    WriteOperation write2 = new WriteOperation("n4.write2", "Writing to prod store", expectedProdEndPoint,
                                                Arrays.asList(InputField.of("n1,n2.merge.offset", "offset"),
                                                              InputField.of("n1,n2.merge.body", "body")));
     expectedOperations.add(write2);
@@ -520,8 +537,11 @@ public class LineageOperationProcessorTest {
                                                                           Collections.emptySet());
     Set<Operation> processedOperations = processor.process();
     Set<Operation> expectedOperations = new HashSet<>();
-
-    ReadOperation read = new ReadOperation("n1.read", "reading file 1", n1EndPoint, "offset", "body");
+    EndPoint expectedN1EndPoint = EndPoint.of("ns", "file1", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedN3EndPoint = EndPoint.of("ns", "file2", ImmutableMap.of("stageName", "n3"));
+    EndPoint expectedN6EndPoint = EndPoint.of("ns", "file3", ImmutableMap.of("stageName", "n6"));
+    EndPoint expectedN8EndPoint = EndPoint.of("ns", "file4", ImmutableMap.of("stageName", "n8"));
+    ReadOperation read = new ReadOperation("n1.read", "reading file 1", expectedN1EndPoint, "offset", "body");
     expectedOperations.add(read);
 
     TransformOperation parse = new TransformOperation("n2.parse", "parsing file 1",
@@ -529,7 +549,7 @@ public class LineageOperationProcessorTest {
                                                       "name", "address", "zip");
     expectedOperations.add(parse);
 
-    read = new ReadOperation("n3.read", "reading file 2", n3EndPoint, "offset", "body");
+    read = new ReadOperation("n3.read", "reading file 2", expectedN3EndPoint, "offset", "body");
     expectedOperations.add(read);
 
     parse = new TransformOperation("n4.parse", "parsing file 2",
@@ -572,7 +592,7 @@ public class LineageOperationProcessorTest {
                                                        "state_address");
     expectedOperations.add(rename);
 
-    WriteOperation write = new WriteOperation("n6.write", "writing file 3", n6EndPoint,
+    WriteOperation write = new WriteOperation("n6.write", "writing file 3", expectedN6EndPoint,
                                               InputField.of("n2,n4.merge.offset", "offset"),
                                               InputField.of("n2,n4.merge.name", "name"),
                                               InputField.of("n5.normalize", "address"));
@@ -583,9 +603,9 @@ public class LineageOperationProcessorTest {
                                     "file_offset");
     expectedOperations.add(rename);
 
-    write = new WriteOperation("n8.write", "writing file 4", n8EndPoint, InputField.of("n7.rename", "file_offset"),
-                               InputField.of("n2,n4.merge.name", "name"), InputField.of("n5.normalize", "address"),
-                               InputField.of("n2,n4.merge.zip", "zip"));
+    write = new WriteOperation("n8.write", "writing file 4", expectedN8EndPoint,
+                               InputField.of("n7.rename", "file_offset"), InputField.of("n2,n4.merge.name", "name"),
+                               InputField.of("n5.normalize", "address"), InputField.of("n2,n4.merge.zip", "zip"));
     expectedOperations.add(write);
 
     Assert.assertEquals(expectedOperations, processedOperations);
@@ -624,13 +644,16 @@ public class LineageOperationProcessorTest {
     LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
                                                                           Collections.singleton("n3"));
     Set<Operation> expectedOperations = new HashSet<>();
-    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id"));
-    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id"));
+    EndPoint expectedCEndPoint = EndPoint.of("default", "customer", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedPEndPoint = EndPoint.of("default", "purchase", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedCPEndPoint = EndPoint.of("default", "customer_purchase", ImmutableMap.of("stageName", "n4"));
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", expectedCEndPoint, "id"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", expectedPEndPoint, "customer_id"));
     expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
                                                   Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
                                                                 InputField.of("n2.ReadPurchase", "customer_id")),
                                                   "id", "customer_id"));
-    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", expectedCPEndPoint,
                                               Arrays.asList(InputField.of("n3.Join", "id"),
                                                             InputField.of("n3.Join", "customer_id"))));
     Assert.assertEquals(expectedOperations, processor.process());
@@ -680,8 +703,12 @@ public class LineageOperationProcessorTest {
                                                                           Collections.singleton("n3"));
 
     Set<Operation> expectedOperations = new HashSet<>();
-    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
-    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
+    EndPoint expectedCEndPoint = EndPoint.of("default", "customer", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedPEndPoint = EndPoint.of("default", "purchase", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedCPEndPoint = EndPoint.of("default", "customer_purchase", ImmutableMap.of("stageName", "n4"));
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", expectedCEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", expectedPEndPoint, "customer_id",
+                                             "item"));
     expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
                                                   Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
                                                                 InputField.of("n2.ReadPurchase", "customer_id")),
@@ -693,7 +720,7 @@ public class LineageOperationProcessorTest {
                                                   Collections.singletonList(InputField.of("n2.ReadPurchase", "item")),
                                                   "item"));
 
-    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", expectedCPEndPoint,
                                               Arrays.asList(InputField.of("n3.Join", "id"),
                                                             InputField.of("n3.Identity name", "name"),
                                                             InputField.of("n3.Join", "customer_id"),
@@ -752,8 +779,12 @@ public class LineageOperationProcessorTest {
     Set<Operation> processedOperations = processor.process();
 
     Set<Operation> expectedOperations = new HashSet<>();
-    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
-    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
+    EndPoint expectedCEndPoint = EndPoint.of("default", "customer", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedPEndPoint = EndPoint.of("default", "purchase", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedCPEndPoint = EndPoint.of("default", "customer_purchase", ImmutableMap.of("stageName", "n4"));
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", expectedCEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", expectedPEndPoint, "customer_id",
+                                             "item"));
     expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
                                                   Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
                                                                 InputField.of("n2.ReadPurchase", "customer_id")),
@@ -771,7 +802,7 @@ public class LineageOperationProcessorTest {
                                                   Collections.singletonList(InputField.of("n2.ReadPurchase", "item")),
                                                   "item"));
 
-    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", expectedCPEndPoint,
                                               Arrays.asList(InputField.of("n3.Rename id", "id_from_customer"),
                                                             InputField.of("n3.Rename customer_id", "id_from_purchase"),
                                                             InputField.of("n3.Identity name", "name"),
@@ -825,8 +856,12 @@ public class LineageOperationProcessorTest {
     Set<Operation> processedOperations = processor.process();
 
     Set<Operation> expectedOperations = new HashSet<>();
-    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
-    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
+    EndPoint expectedCEndPoint = EndPoint.of("default", "customer", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedPEndPoint = EndPoint.of("default", "purchase", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedCPEndPoint = EndPoint.of("default", "customer_purchase", ImmutableMap.of("stageName", "n4"));
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", expectedCEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", expectedPEndPoint, "customer_id",
+                                             "item"));
     expectedOperations.add(new TransformOperation("n3.Join", "Join Operation",
                                                   Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
                                                                 InputField.of("n2.ReadPurchase", "customer_id")),
@@ -843,7 +878,7 @@ public class LineageOperationProcessorTest {
                                                                                           "item")),
                                                   "item_from_purchase"));
 
-    expectedOperations.add(new WriteOperation("n4.Write", "write description", cpEndPoint,
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", expectedCPEndPoint,
                                               Arrays.asList(InputField.of("n3.Rename id", "id_from_customer"),
                                                             InputField.of("n3.Join", "customer_id"),
                                                             InputField.of("n3.Rename name", "name_from_customer"),
@@ -911,9 +946,16 @@ public class LineageOperationProcessorTest {
     Set<Operation> processedOperations = processor.process();
 
     Set<Operation> expectedOperations = new HashSet<>();
-    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", cEndPoint, "id", "name"));
-    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", pEndPoint, "customer_id", "item"));
-    expectedOperations.add(new ReadOperation("n3.ReadAddress", "read description", aEndPoint, "address_id", "address"));
+    EndPoint expectedCEndPoint = EndPoint.of("default", "customer", ImmutableMap.of("stageName", "n1"));
+    EndPoint expectedPEndPoint = EndPoint.of("default", "purchase", ImmutableMap.of("stageName", "n2"));
+    EndPoint expectedAEndPoint = EndPoint.of("default", "address", ImmutableMap.of("stageName", "n3"));
+    EndPoint expectedACPEndPoint = EndPoint.of("default", "customer_purchase_address",
+                                               ImmutableMap.of("stageName", "n5"));
+    expectedOperations.add(new ReadOperation("n1.ReadCustomer", "read description", expectedCEndPoint, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.ReadPurchase", "read description", expectedPEndPoint, "customer_id",
+                                             "item"));
+    expectedOperations.add(new ReadOperation("n3.ReadAddress", "read description", expectedAEndPoint, "address_id",
+                                             "address"));
 
     expectedOperations.add(new TransformOperation("n4.Join", "Join Operation",
                                                   Arrays.asList(InputField.of("n1.ReadCustomer", "id"),
@@ -935,7 +977,7 @@ public class LineageOperationProcessorTest {
                                                                                           "address")),
                                                   "address"));
 
-    expectedOperations.add(new WriteOperation("n5.Write", "Write Operation", acpEndPoint,
+    expectedOperations.add(new WriteOperation("n5.Write", "Write Operation", expectedACPEndPoint,
                                               Arrays.asList(InputField.of("n4.Rename id", "id_from_customer"),
                                                             InputField.of("n4.Join", "customer_id"),
                                                             InputField.of("n4.Join", "address_id"),
