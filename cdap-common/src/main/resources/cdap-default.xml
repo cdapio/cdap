@@ -5124,14 +5124,6 @@
   </property>
 
   <property>
-    <name>system.worker.artifact.localizer.enabled</name>
-    <value>false</value>
-    <description>
-      If true, artifact localization will be enabled in system pods
-    </description>
-  </property>
-
-  <property>
     <name>artifact.localizer.container.num.cores</name>
     <value>1</value>
     <description>
@@ -5507,9 +5499,17 @@
 
   <property>
     <name>feature.streaming.pipeline.native.state.tracking.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Enable native state tracking for streaming pipelines for Atleast Once guarantee
+    </description>
+  </property>
+
+  <property>
+    <name>feature.wrangler.fail.pipeline.for.error.enabled</name>
+    <value>false</value>
+    <description>
+      Enables pipeline failures when Wrangler transformations fail in 'Fail Pipeline' mode
     </description>
   </property>
 
