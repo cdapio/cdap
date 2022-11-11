@@ -195,8 +195,9 @@ public class CachingLocationTest {
     Assert.assertEquals(1, cachingPathProvider.getCacheEntries().size());
 
     // Modify the file, last modified should change, adding a new entry in the cache map.
-    // Sleep for a while to ensure at least 1 millis has passed.
-    Thread.sleep(1);
+    // Sleep for a while to ensure at least 1 second has passed.
+    // Because 1 second is the minimum resolution of the last modified time in MacOS.
+    Thread.sleep(1000);
     try (OutputStream os = location.getOutputStream()) {
       os.write((message + message).getBytes(StandardCharsets.UTF_8));
     }
