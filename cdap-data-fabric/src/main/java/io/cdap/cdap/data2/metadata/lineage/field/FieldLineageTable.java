@@ -17,6 +17,7 @@
 package io.cdap.cdap.data2.metadata.lineage.field;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,6 +29,7 @@ import io.cdap.cdap.api.lineage.field.ReadOperation;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.proto.codec.OperationTypeAdapter;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -37,12 +39,14 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -69,6 +73,7 @@ public class FieldLineageTable {
   private static final Type SET_FIELD_TYPE = new TypeToken<HashSet<String>>() { }.getType();
   private static final Type SET_ENDPOINT_FIELD_TYPE = new TypeToken<HashSet<EndPointField>>() { }.getType();
   private static final Type SET_OPERATION_TYPE = new TypeToken<HashSet<Operation>>() { }.getType();
+  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final StructuredTableContext structuredTableContext;
   private StructuredTable endpointChecksumTable;
@@ -204,6 +209,8 @@ public class FieldLineageTable {
     List<Field<?>> fields = getOperationReferenceRowKey(direction, endPoint, programRunId);
     fields.add(Fields.longField(StoreDefinition.FieldLineageStore.CHECKSUM_FIELD, checksum));
     fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD, GSON.toJson(programRunId)));
+    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_PROPERTIES_FIELD,
+                                  GSON.toJson(endPoint.getProperties())));
     getEndpointChecksumTable().upsert(fields);
   }
 
@@ -480,5 +487,52 @@ public class FieldLineageTable {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.longField(StoreDefinition.FieldLineageStore.CHECKSUM_FIELD, checksum));
     return fields;
+  }
+
+  public List<EndPoint> getEndpoints(String namespaceId, ProgramReference programReference, RunId runId)
+    throws IOException {
+    List<Range> multiRanges = new ArrayList<>();
+    multiRanges.add(getNamespaceIncomingRange(namespaceId));
+    multiRanges.add(getNamespaceOutgoingRange(namespaceId));
+    List<EndPoint> result = new ArrayList<>();
+    try (CloseableIterator<StructuredRow> iterator = getEndpointChecksumTable().multiScan(multiRanges,
+                                                                                          Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        ProgramRunId retrievedProgramRunId = GSON.fromJson(row.getString(
+          StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD), ProgramRunId.class);
+        if (!programRunMatches(retrievedProgramRunId, programReference, runId)) {
+          continue;
+        }
+        String namespace = row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD);
+        String name = row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_NAME_FIELD);
+        Map<String, String> existingProperties = GSON.fromJson(
+          row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_PROPERTIES_FIELD), MAP_STRING_TYPE);
+        EndPoint matchingEndPoint = EndPoint.of(namespace, name, existingProperties != null ?
+          existingProperties : Collections.emptyMap());
+        result.add(matchingEndPoint);
+      }
+    }
+    return result;
+  }
+
+  private boolean programRunMatches(ProgramRunId programRunId,
+                                    ProgramReference programReference, RunId runId) {
+    return programRunId.getParent().getProgramReference().equals(programReference) &&
+      RunIds.fromString(programRunId.getRun()).equals(runId);
+  }
+
+  private Range getNamespaceIncomingRange(String namespaceId) {
+    return Range.singleton(
+      ImmutableList.of(
+        Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD, INCOMING_DIRECTION_MARKER),
+        Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD, namespaceId)));
+  }
+
+  private Range getNamespaceOutgoingRange(String namespaceId) {
+    return Range.singleton(
+      ImmutableList.of(
+        Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD, OUTGOING_DIRECTION_MARKER),
+        Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD, namespaceId)));
   }
 }

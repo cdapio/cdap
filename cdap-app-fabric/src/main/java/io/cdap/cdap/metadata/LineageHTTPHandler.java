@@ -20,17 +20,22 @@ import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.TimeMathParser;
 import io.cdap.cdap.data2.metadata.lineage.Lineage;
 import io.cdap.cdap.data2.metadata.lineage.LineageSerializer;
 import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.proto.metadata.lineage.EndpointsSummary;
 import io.cdap.cdap.proto.metadata.lineage.Field;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageDetails;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
@@ -113,6 +118,39 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                          TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
                          TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
                          lineage, getCollapseTypes(collapse)), LineageRecord.class));
+  }
+
+  /**
+   * Get the summary for all endpoints in a program run.
+   *
+   * @param namespaceId the namespace in which the pipeline was created
+   * @param appName the appID
+   * @param programType the name of the workflow
+   * @param programName the name of the workflow
+   * @param runId the program run ID
+   * @throws BadRequestException if the input runId is invalid
+   */
+  @Beta
+  @GET
+  @Path("/namespaces/{namespace-id}/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/endpoints")
+  public void getEndpointSummary(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-name") String appName,
+                                 @PathParam("program-type") String programType,
+                                 @PathParam("program-name") String programName,
+                                 @PathParam("run-id") String runId) throws Exception {
+    ProgramReference programReference = null;
+    try {
+      RunIds.fromString(runId);
+      programReference = new ProgramReference(namespaceId, appName,
+                                                               ProgramType.valueOfCategoryName(programType),
+                                                               programName);
+    } catch (Exception e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
+    EndpointsSummary endpointSummary = fieldLineageAdmin.getEndpoints(namespaceId, programReference,
+                                                                      RunIds.fromString(runId));
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(endpointSummary));
   }
 
   /**
