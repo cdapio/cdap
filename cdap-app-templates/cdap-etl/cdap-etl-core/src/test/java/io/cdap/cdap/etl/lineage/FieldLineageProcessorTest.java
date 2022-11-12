@@ -88,22 +88,24 @@ public class FieldLineageProcessorTest {
 
     Map<String, List<FieldOperation>> fieldOperations =
       ImmutableMap.of("src", Collections.singletonList(
-        new FieldReadOperation("Read", "1st operation", EndPoint.of("file"), ImmutableList.of("body", "offset"))),
+        new FieldReadOperation("Read", "1st operation", EndPoint.of("ns", "file"), ImmutableList.of("body", "offset"))),
                       "transform1", Collections.emptyList(),
                       "transform2", Collections.emptyList(),
                       "sink", Collections.singletonList(
-          new FieldWriteOperation("Write", "4th operation", EndPoint.of("sink"), ImmutableList.of("id", "name"))));
+          new FieldWriteOperation("Write", "4th operation", EndPoint.of("ns", "sink"),
+                                  ImmutableList.of("id", "name"))));
     Set<Operation> operations = processor.validateAndConvert(fieldOperations);
 
     Set<Operation> expected = ImmutableSet.of(
-      new ReadOperation("src.Read", "1st operation", EndPoint.of("file"), ImmutableList.of("body", "offset")),
+      new ReadOperation("src.Read", "1st operation", EndPoint.of("ns", "file", ImmutableMap.of("stageName", "src")),
+                        ImmutableList.of("body", "offset")),
       new TransformOperation("transform1.Transform", "",
                              ImmutableList.of(InputField.of("src.Read", "body"),
                                               InputField.of("src.Read", "offset")), "body"),
       new TransformOperation("transform2.Transform", "",
                              ImmutableList.of(InputField.of("transform1.Transform", "body")),
                              ImmutableList.of("id", "name")),
-      new WriteOperation("sink.Write", "4th operation", EndPoint.of("sink"),
+      new WriteOperation("sink.Write", "4th operation", EndPoint.of("ns", "sink", ImmutableMap.of("stageName", "sink")),
                          ImmutableList.of(InputField.of("transform2.Transform", "id"),
                                           InputField.of("transform2.Transform", "name"))));
     Assert.assertEquals(expected, operations);

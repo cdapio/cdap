@@ -36,8 +36,10 @@ import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageReader;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.metadata.lineage.DatasetField;
+import io.cdap.cdap.proto.metadata.lineage.EndpointsSummary;
 import io.cdap.cdap.proto.metadata.lineage.Field;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageDetails;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
@@ -48,6 +50,7 @@ import io.cdap.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -383,5 +386,17 @@ public class FieldLineageAdmin {
     return fields.stream().filter(field ->
                                     field.getName().toLowerCase().startsWith(prefix.toLowerCase()))
       .collect(Collectors.toSet());
+  }
+
+  /**
+   * Retrieves a summary of all endpoints in a given program run.
+   *
+   * @param namespaceId program namespace
+   * @param programReference start time of the run in millis corresponding to the id of a program run
+   * @param runId run ID which is a UUID
+   * @return Summary of all Endpoints in the particular run of the pipeline.
+   */
+  public EndpointsSummary getEndpoints(String namespaceId, ProgramReference programReference, RunId runId) {
+    return new EndpointsSummary(fieldLineageReader.getEndpoints(namespaceId, programReference, runId));
   }
 }
