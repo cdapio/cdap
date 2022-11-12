@@ -263,7 +263,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     Runnable pullTask = () -> {
       try {
-        getDatasetForStage(job.getDatasetName());
+        getDatasetForStageOrThrowException(job.getDatasetName());
         LOG.debug("Starting pull for dataset '{}'", job.getDatasetName());
         // Wait for previous job to complete
         waitForJobAndThrowException(job);
@@ -347,13 +347,11 @@ public class BatchSQLEngineAdapter implements Closeable {
    * <p>
    * Otherwise, we delegate to the SQL engine.
    *
-   * @param datasetName the name of the dataset to verify
-   * @return boolean detailing if the collection exists or not.
+   * @param stageName the name of the stage to verify.
+   * @return boolean specifying if the collection exists or not.
    */
-  public boolean exists(String datasetName) {
-    SQLDataset dataset = getDatasetForStage(datasetName);
-
-    return dataset != null;
+  public boolean exists(String stageName) {
+    return getDatasetForStage(stageName) != null;
   }
 
   /**
@@ -486,18 +484,39 @@ public class BatchSQLEngineAdapter implements Closeable {
     List<SQLDataset> datasets = new ArrayList<>(joinDefinition.getStages().size());
 
     for (JoinStage stage : joinDefinition.getStages()) {
-      datasets.add(getDatasetForStage(stage.getStageName()));
+      datasets.add(getDatasetForStageOrThrowException(stage.getStageName()));
     }
 
     return datasets;
   }
 
   /**
-   * Function used to fetch the dataset for an input stage.
+   * Get the {@link SQLDataset} for a given stage name. If this stage doesn't exist, an
+   * {@link IllegalArgumentException} is thrown.
    *
-   * @param stageName
-   * @return
+   * @param stageName the stage name corresponding to the desired {@link SQLDataset}.
+   * @return {@link SQLDataset} for the provided stage name.
+   * @throws IllegalArgumentException if the {@link SQLDataset} for this stage doesn't exist.
    */
+  private SQLDataset getDatasetForStageOrThrowException(String stageName) throws IllegalArgumentException {
+    SQLDataset dataset = getDatasetForStage(stageName);
+
+    // Throw an exception if the dataset for this stage doesn't exist.
+    if (stageName == null) {
+      throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
+    }
+
+    return dataset;
+  }
+
+  /**
+   * Get the {@link SQLDataset} for a given stage name. The returning value will be null if the stage doesn't exist
+   * in the engine.
+   *
+   * @param stageName the stage name corresponding to the desired {@link SQLDataset}.
+   * @return {@link SQLDataset} for the provided stage name, of null if it doesn't exist.
+   */
+  @Nullable
   private SQLDataset getDatasetForStage(String stageName) {
     // Wait for the previous read, push or execute job to complete.
     List<SQLEngineJobKey> jobKeys = Arrays.asList(new SQLEngineJobKey(stageName, SQLEngineJobType.READ),
@@ -512,7 +531,8 @@ public class BatchSQLEngineAdapter implements Closeable {
       }
     }
 
-    throw new IllegalArgumentException("No SQL Engine job exists for stage " + stageName);
+    // If no dataset is found, return null;
+    return null;
   }
 
   /**
@@ -803,7 +823,7 @@ public class BatchSQLEngineAdapter implements Closeable {
       // Collect input datasets and execute transformation
       Map<String, SQLDataset> inputDatasets = input.keySet().stream().collect(Collectors.toMap(
         Function.identity(),
-        this::getDatasetForStage
+        this::getDatasetForStageOrThrowException
       ));
 
       // Count input records
@@ -871,7 +891,7 @@ public class BatchSQLEngineAdapter implements Closeable {
     SQLEngineWriteJobKey writeJobKey = new SQLEngineWriteJobKey(datasetName, outputStageName, SQLEngineJobType.WRITE);
     // Run write job
     return runJob(writeJobKey, () -> {
-      getDatasetForStage(datasetName);
+      getDatasetForStageOrThrowException(datasetName);
       LOG.debug("Attempting write for dataset {} into {}", datasetName, sqlEngineOutput);
       SQLWriteResult writeResult = sqlEngine.write(new SQLWriteRequest(datasetName, sqlEngineOutput));
       LOG.debug("Write dataset {} into {} was {}",
