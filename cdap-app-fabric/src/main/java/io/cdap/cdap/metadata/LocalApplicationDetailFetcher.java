@@ -25,6 +25,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
@@ -47,21 +48,19 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
   /**
    * Get {@link ApplicationDetail} for the given {@link ApplicationId}
    *
-   * @param appId the id of the application
+   * @param appRef the versionless id of the application
    * @return {@link ApplicationDetail} for the given application
    * @throws IOException if failed to get {@link ApplicationDetail} for the given {@link ApplicationId}
    * @throws NotFoundException if the given the given application doesn't exist
    */
   @Override
-  public ApplicationDetail get(ApplicationId appId) throws IOException, NotFoundException {
-    ApplicationDetail detail = null;
+  public ApplicationDetail get(ApplicationReference appRef) throws IOException, NotFoundException {
     try {
-      detail = applicationLifecycleService.getAppDetail(appId);
+      return applicationLifecycleService.getLatestAppDetail(appRef);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, NotFoundException.class, IOException.class);
       throw new IOException(e);
     }
-    return detail;
   }
 
   /**

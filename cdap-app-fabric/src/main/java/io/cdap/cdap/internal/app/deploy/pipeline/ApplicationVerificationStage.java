@@ -104,7 +104,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       SecurityUtil.validateKerberosPrincipal(input.getOwnerPrincipal());
     }
 
-    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(appId);
+    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(appId.getAppReference());
     // if allAppVersionsAppIds.isEmpty() is false that means some version of this app already exists so we should
     // verify that the owner is same
     if (!allAppVersionsAppIds.isEmpty()) {

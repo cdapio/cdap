@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2022 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,20 +17,26 @@
 package io.cdap.cdap.common;
 
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 /**
  * Thrown when a program is not found
  */
 public class ProgramNotFoundException extends NotFoundException {
 
-  private final ProgramId id;
+  private final ProgramReference ref;
 
   public ProgramNotFoundException(ProgramId programId) {
     super(programId);
-    this.id = programId;
+    this.ref = programId.getProgramReference();
   }
 
-  public ProgramId getId() {
-    return id;
+  public ProgramNotFoundException(ProgramReference programRef) {
+    super(programRef);
+    this.ref = programRef;
+  }
+
+  public ProgramReference getId() {
+    return ref;
   }
 }

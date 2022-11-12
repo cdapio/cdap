@@ -74,7 +74,6 @@ public enum EntityType {
   SUPPORT_BUNDLE(SupportBundleEntityId.class),
   SYSTEM_SERVICE(SystemServiceId.class),
   SYSTEM_APP_ENTITY(SystemAppEntityId.class);
-  ;
 
   private final Class<? extends EntityId> idClass;
   @Nullable

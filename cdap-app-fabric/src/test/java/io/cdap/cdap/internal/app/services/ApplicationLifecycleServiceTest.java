@@ -216,7 +216,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                                                         appWithWorkflowClass.getSimpleName());
     appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appWithWorkflowClass.getSimpleName(),
                               applicationDetail.getAppVersion());
-    applicationLifecycleService.removeApplication(appId);
+    applicationLifecycleService.removeApplication(appId.getAppReference());
   }
 
   @Test
@@ -242,7 +242,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     });
     // check the tags contain all the tags emitted by the app
     Assert.assertTrue(systemMetadata.getTags(MetadataScope.SYSTEM).containsAll(MetadataEmitApp.SYS_METADATA.getTags()));
-    applicationLifecycleService.removeApplication(appId);
+    applicationLifecycleService.removeApplication(appId.getAppReference());
   }
 
   /**

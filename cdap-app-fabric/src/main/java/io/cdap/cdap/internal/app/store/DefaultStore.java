@@ -56,6 +56,7 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -163,7 +164,7 @@ public class DefaultStore implements Store {
     });
 
     if (appMeta == null) {
-      throw new ApplicationNotFoundException(ref.getParent().app(ApplicationId.DEFAULT_VERSION));
+      throw new ApplicationNotFoundException(ref.getParent());
     }
 
     ProgramId id = ref.id(appMeta.getSpec().getAppVersion());
@@ -452,9 +453,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(NamespaceId namespaceId, String appName) {
+  public Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(ApplicationReference applicationReference) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getActiveRuns(namespaceId, appName);
+      return getAppMetadataStore(context).getActiveRuns(applicationReference);
     });
   }
 
@@ -471,13 +472,6 @@ public class DefaultStore implements Store {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       // Get the active runs for programs that exist
       return appMetadataStore.getActiveRuns(appMetadataStore.filterProgramsExistence(programRefs));
-    });
-  }
-
-  @Override
-  public boolean hasActiveRuns(NamespaceId namespaceId, String appName) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).hasActiveRuns(namespaceId, appName);
     });
   }
 
@@ -667,7 +661,7 @@ public class DefaultStore implements Store {
 
   @Override
   public boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
-                               BiConsumer<ApplicationId, ApplicationMeta> consumer) {
+                                  BiConsumer<ApplicationId, ApplicationMeta> consumer) {
 
     AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(request);
     AtomicReference<ApplicationId> lastKey = new AtomicReference<>();
@@ -767,33 +761,33 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references) {
+  public Map<ApplicationId, ApplicationSpecification> getApplications(ApplicationReference appRef) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).filterProgramsExistence(references).stream()
-        .collect(Collectors.toMap(e -> e.getProgramReference(), e -> e));
+      return getAppMetadataStore(context).getAllAppVersions(appRef).stream()
+        .collect(Collectors.toMap(e -> appRef.app(e.getSpec().getAppVersion()), ApplicationMeta::getSpec));
     });
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllAppVersions(NamespaceId namespaceId, String appName) {
+  public Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAllAppVersions(namespaceId.getNamespace(), appName).stream()
-        .map(ApplicationMeta::getSpec).collect(Collectors.toList());
+      return getAppMetadataStore(context).filterProgramsExistence(references).stream()
+        .collect(Collectors.toMap(ProgramId::getProgramReference, e -> e));
     });
   }
 
   @Override
   @Nullable
-  public ApplicationMeta getLatest(NamespaceId namespace, String appName) {
+  public ApplicationMeta getLatest(ApplicationReference appRef) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getLatest(namespace.appReference(appName));
+      return getAppMetadataStore(context).getLatest(appRef);
     });
   }
 
   @Override
-  public Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationId id) {
+  public Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationReference appRef) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
+      return getAppMetadataStore(context).getAllAppVersionsAppIds(appRef);
     });
   }
 
@@ -828,9 +822,7 @@ public class DefaultStore implements Store {
   @Nullable
   private ApplicationMeta getApplicationMeta(AppMetadataStore mds,
                                              ApplicationId id) throws IOException, TableNotFoundException {
-    // TODO: more refactor the mapping of "-SNAPSHOT" to latest in CDAP-20033
-    return ApplicationId.DEFAULT_VERSION.equals(id.getVersion())
-      ? mds.getLatest(id.getAppReference()) : mds.getApplication(id);
+    return mds.getApplication(id);
   }
 
   private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,
@@ -947,7 +939,7 @@ public class DefaultStore implements Store {
   public long getProgramTotalRunCount(ProgramReference programReference) throws NotFoundException {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
-      ApplicationMeta appMeta = getLatest(programReference.getNamespaceId(), programReference.getApplication());
+      ApplicationMeta appMeta = getLatest(programReference.getParent());
       // app not found
       if (appMeta == null) {
         throw new NotFoundException(programReference.getParent());

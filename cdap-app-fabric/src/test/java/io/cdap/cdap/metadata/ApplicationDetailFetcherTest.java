@@ -25,7 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandlerInternal;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,10 +78,7 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
   @Test(expected = NotFoundException.class)
   public void testGetApplicationNotFound() throws Exception {
     ApplicationDetailFetcher fetcher = getApplicationDetailFetcher(fetcherType);
-    String namespace = TEST_NAMESPACE1;
-    String appName = AllProgramsApp.NAME;
-    ApplicationId appId = new ApplicationId(namespace, appName);
-    fetcher.get(appId);
+    fetcher.get(new ApplicationReference(TEST_NAMESPACE1, AllProgramsApp.NAME));
   }
 
   /**
@@ -117,10 +114,8 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
 
     // Deploy the application
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    ApplicationDetail appDetails = getAppDetails(namespace, appName);
     // Get and validate the application
-    ApplicationId appId = new ApplicationId(namespace, appName, appDetails.getAppVersion());
-    ApplicationDetail appDetail = fetcher.get(appId);
+    ApplicationDetail appDetail = fetcher.get(new ApplicationReference(namespace, appName));
     assertAllProgramAppDetail(appDetail);
 
     // Delete the application
