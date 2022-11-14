@@ -29,8 +29,10 @@ import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithMultipleSchedules;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.AppWithServices;
+import io.cdap.cdap.AppWithServicesAndWorker;
 import io.cdap.cdap.AppWithWorker;
 import io.cdap.cdap.AppWithWorkflow;
+import io.cdap.cdap.AppWithWorkflow.SampleWorkflow;
 import io.cdap.cdap.DummyAppWithTrackingTable;
 import io.cdap.cdap.SleepingWorkflowApp;
 import io.cdap.cdap.api.Config;
@@ -46,6 +48,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.internal.app.ServiceSpecificationCodec;
 import io.cdap.cdap.internal.app.deploy.Specifications;
@@ -75,6 +78,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.test.SlowTests;
@@ -82,6 +86,8 @@ import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -120,6 +126,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String RUNNING = "RUNNING";
 
   private static CConfiguration cConf;
+  private static final String FEATURE_FLAG_PREFIX = "feature.";
+  private static final String NONEXISTENT_RUN_ID = "00000000-0000-0000-0000-000000000000";
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
@@ -362,6 +370,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName),
                 "norunid", 400);
 
+    // perform a nonexisting program action
+    performInvalidProgramAction(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName), 404);
+
     // start program twice
     startProgram(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName));
     verifyProgramRuns(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName),
@@ -370,11 +381,21 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName),
                  409); // conflict
 
+    debugProgram(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName),
+                 409); // conflict
+
     // get run records for later use
     List<RunRecord> runs = getProgramRuns(
       Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName), ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
     String runId = runs.get(0).getPid();
+
+    // test get existing runId
+    Assert.assertEquals(getProgramRunRecord(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName),
+                                            runId), HttpResponseStatus.OK.code());
+    // test get a nonexisting runid
+    Assert.assertEquals(getProgramRunRecord(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName),
+                                            NONEXISTENT_RUN_ID), HttpResponseStatus.NOT_FOUND.code());
 
     // stop program
     stopProgram(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.SERVICE, serviceName), 200);
@@ -455,6 +476,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // workflow stops by itself after actions are done
     waitState(sleepWorkflow1, STOPPED);
     verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped);
+
+    // verify error handling for start > end time
+    String path = String.format("apps/%s/%s/%s/runs?status=%s&start=%s&end=%s&limit=%s",
+                                sleepWorkflow1.getApplicationId(), sleepWorkflow1.getType().getCategoryName(),
+                                sleepWorkflow1.getId(), ProgramRunStatus.COMPLETED, 1, 0, Integer.MAX_VALUE);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
+                        doGet(getVersionedAPIPath(path, sleepWorkflow1.getNamespaceId())).getResponseCode());
+
 
     // second run
     Map<String, String> args = new HashMap<>();
@@ -584,11 +613,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // deploy an app in namespace1
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     ApplicationDetail appDetails1 = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
-    String version1 = appDetails1.getAppVersion();
     // deploy another app in namespace2
     deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     ApplicationDetail appDetails2 = getAppDetails(TEST_NAMESPACE2, AppWithServices.NAME);
-    String version2 = appDetails2.getAppVersion();
 
     Gson gson = new Gson();
 
@@ -1153,8 +1180,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationDetail appDetails = getAppDetails(appV2Id.getNamespace(), appV2Id.getApplication());
 
     // there should be two schedules now
-    List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME,
-                                                         appDetails.getAppVersion());
+    List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME);
     Assert.assertEquals(1, schedulesForApp.size());
     Assert.assertEquals(schedules, schedulesForApp);
 
@@ -1190,8 +1216,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationDetail appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     List<ScheduleDetail> actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                                         defaultAppId.getApplication(),
-                                                         appDetails.getAppVersion());
+                                                         defaultAppId.getApplication());
 
     // none of the schedules will be added as we have set update schedules to be false
     Assert.assertEquals(0, actualSchedules.size());
@@ -1203,7 +1228,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                    defaultAppId.getApplication(), appDetails.getAppVersion());
+                                    defaultAppId.getApplication());
     Assert.assertEquals(2, actualSchedules.size());
 
     // with workflow, without schedule
@@ -1215,8 +1240,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // schedule should not be updated
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                    defaultAppId.getApplication(),
-                                    appDetails.getAppVersion());
+                                    defaultAppId.getApplication());
     Assert.assertEquals(2, actualSchedules.size());
 
     // without workflow and schedule, schedule should be deleted
@@ -1227,8 +1251,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                    defaultAppId.getApplication(),
-                                    appDetails.getAppVersion());
+                                    defaultAppId.getApplication());
     Assert.assertEquals(0, actualSchedules.size());
 
     // with workflow and  one schedule, schedule should be added
@@ -1239,8 +1262,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                    defaultAppId.getApplication(),
-                                    appDetails.getAppVersion());
+                                    defaultAppId.getApplication());
     Assert.assertEquals(1, actualSchedules.size());
     Assert.assertEquals("SampleSchedule", actualSchedules.get(0).getName());
 
@@ -1252,8 +1274,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                    defaultAppId.getApplication(),
-                                    appDetails.getAppVersion());
+                                    defaultAppId.getApplication());
     Assert.assertEquals(1, actualSchedules.size());
     Assert.assertEquals("SampleSchedule", actualSchedules.get(0).getName());
 
@@ -1264,8 +1285,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                    defaultAppId.getApplication(),
-                                    appDetails.getAppVersion());
+                                    defaultAppId.getApplication());
     Assert.assertEquals(2, actualSchedules.size());
   }
 
@@ -1314,8 +1334,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                    scheduleName, description, programInfo, properties,
                                                    timeTrigger, Collections.emptyList(),
                                                    Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
-    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
+    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+
+    // test wrong schedule action
+    performInvalidScheduleAction(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName,
+                                 HttpResponseStatus.BAD_REQUEST.code());
 
     // start schedule
     Assert.assertEquals(HttpResponseStatus.OK.code(),
@@ -1376,11 +1400,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                          Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
-    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "differentName", timeDetail);
+    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, "differentName", timeDetail);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
     // adding a schedule to a non-existing app should fail
-    response = addSchedule(TEST_NAMESPACE1, "nonExistingApp", null, scheduleName, timeDetail);
+    response = addSchedule(TEST_NAMESPACE1, "nonExistingApp", scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
     // adding a schedule to invalid type of program type should fail
@@ -1388,7 +1412,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       scheduleName, "Something", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, AppWithSchedule.MAPREDUCE),
       properties, protoTime, Collections.emptyList(), TimeUnit.MINUTES.toMillis(1));
     // Ignoring the test fow now because it calls versioned schedule api
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, invalidScheduleDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, invalidScheduleDetail);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
 
     // adding a schedule for a program that does not exist
@@ -1397,17 +1421,17 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                          scheduleName, description, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"),
                          properties, timeTrigger, Collections.emptyList(),
                          Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, nonExistingDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, nonExistingDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
     // test adding a schedule
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, partitionScheduleName, requestPartitionDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, partitionScheduleName, requestPartitionDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, orScheduleName, requestOrDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, orScheduleName, requestOrDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
     List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
@@ -1416,15 +1440,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expectedOrDetail, schedules.get(2));
     Assert.assertEquals(expectedPartitionDetail, schedules.get(3));
 
-    List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
+    List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME);
     Assert.assertEquals(schedules, schedulesForApp);
 
     // trying to add ScheduleDetail of the same schedule again should fail with AlreadyExistsException
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.CONFLICT.code(), response.getResponseCode());
 
     // Since schedule is versionless, this is conflicting with the existing schedule
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, version, scheduleName, timeDetail);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.CONFLICT.code(), response.getResponseCode());
 
     // this should not have affected the schedules of the default version
@@ -1437,7 +1461,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(4, schedules2.size());
     Assert.assertEquals(timeDetail, schedules2.get(1));
 
-    List<ScheduleDetail> schedulesForApp2 = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, version);
+    List<ScheduleDetail> schedulesForApp2 = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME);
     Assert.assertEquals(schedules2, schedulesForApp2);
 
     // Add a schedule with no schedule name in spec
@@ -1445,7 +1469,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                 null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
                                                 Collections.emptyList(), TimeUnit.HOURS.toMillis(6), null, null);
-    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, version, "schedule-100", detail2);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, version, "schedule-100");
     Assert.assertEquals("schedule-100", detail100.getName());
@@ -1454,15 +1478,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private void testDeleteSchedule(ApplicationId appV2Id, String scheduleName) throws Exception {
     // trying to delete a schedule from a non-existing app should fail
-    HttpResponse response = deleteSchedule(TEST_NAMESPACE1, "nonExistingApp", null, scheduleName);
+    HttpResponse response = deleteSchedule(TEST_NAMESPACE1, "nonExistingApp", scheduleName);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
     // trying to delete a non-existing schedule should fail
-    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "nonExistingSchedule");
+    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, "nonExistingSchedule");
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
     // trying to delete a valid existing schedule should pass
-    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName);
+    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
     List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(4, schedules.size());
@@ -1482,7 +1506,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertFalse(String.format("A schedule named %s should be removed already", scheduleName), foundSchedule);
 
     // Schedule should be deleted already
-    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(), scheduleName);
+    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
     schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                              AppWithSchedule.WORKFLOW_NAME);
@@ -1496,7 +1520,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                      ImmutableList.of(new ConcurrencyConstraint(5)), null);
 
     // trying to update schedule for a non-existing app should fail
-    HttpResponse response = updateSchedule(TEST_NAMESPACE1, "nonExistingApp", null, AppWithSchedule.SCHEDULE,
+    HttpResponse response = updateSchedule(TEST_NAMESPACE1, "nonExistingApp", AppWithSchedule.SCHEDULE,
                                            updateDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
@@ -1505,17 +1529,17 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                             ImmutableMap.of("twoKey", "twoValue"),
                                                             new TimeTrigger("0 4 * * *"),
                                                             ImmutableList.of(new ConcurrencyConstraint(5)), null);
-    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null,
+    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME,
                               "NonExistingSchedule", nonExistingSchedule);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
     // should be able to update an existing schedule with a valid new time schedule
-    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
+    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.SCHEDULE,
                               updateDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
     // verify that the schedule information for updated
-    ScheduleDetail schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE);
+    ScheduleDetail schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.SCHEDULE);
     Assert.assertEquals("updatedDescription", schedule.getDescription());
     Assert.assertEquals("0 4 * * *", ((TimeTrigger) schedule.getTrigger()).getCronExpression());
     Assert.assertEquals(new ProtoConstraint.ConcurrencyConstraint(5), schedule.getConstraints().get(0));
@@ -1534,19 +1558,174 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // try to update the schedule again but this time with property as null. It should retain the old properties
     ScheduleDetail scheduleDetail = new ScheduleDetail(AppWithSchedule.SCHEDULE, "updatedDescription", null, null,
                                                        new ProtoTrigger.TimeTrigger("0 4 * * *"), null, null);
-    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE, scheduleDetail);
+    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.SCHEDULE, scheduleDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE);
+    schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.SCHEDULE);
     Assert.assertEquals(2, schedule.getProperties().size());
     Assert.assertEquals("newValue", schedule.getProperties().get("someKey"));
     Assert.assertEquals("twoValue", schedule.getProperties().get("twoKey"));
     Assert.assertEquals(new ProtoConstraint.ConcurrencyConstraint(5), schedule.getConstraints().get(0));
   }
 
+  @Test
+  public void testBatchStartStop() throws Exception {
+    final String batchStartUrl = getVersionedAPIPath("start", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                     TEST_NAMESPACE1);
+    final String batchStopUrl = getVersionedAPIPath("stop", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                     TEST_NAMESPACE1);
+
+    // invalid json must return 400
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), doPost(batchStartUrl, "").getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), doPost(batchStopUrl, "").getResponseCode());
+
+    // deploy, check the status
+    deploy(AppWithServices.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ProgramId programId1 = new NamespaceId(TEST_NAMESPACE1).app(AppWithServices.NAME)
+      .service(AppWithServices.SERVICE_NAME);
+
+    deploy(AppWithServicesAndWorker.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           TEST_NAMESPACE1);
+
+    ProgramId programId2 =
+      new NamespaceId(TEST_NAMESPACE1).app(AppWithServicesAndWorker.NAME)
+        .service(AppWithServicesAndWorker.PING_SERVICE);
+
+    List<Map<String, String>> request = Arrays.asList(
+      ImmutableMap.of("appId", programId1.getApplication(),
+                      "programType", "Service",
+                      "programId", "nonexistingProgram1"));
+
+    Gson gson = new Gson();
+    // test starting nonexistent program
+    HttpResponse response = doPost(batchStartUrl, gson.toJson(request));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    JSONObject jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), jsonResponse.getInt("statusCode"));
+
+    // test stopping nonexistent program
+    response = doPost(batchStopUrl, gson.toJson(request));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), jsonResponse.getInt("statusCode"));
+
+    request = Arrays.asList(
+      ImmutableMap.of("appId", programId1.getApplication(),
+                      "programType", "Service",
+                      "programId", programId1.getProgram()),
+      ImmutableMap.of("appId", programId2.getApplication(),
+                      "programType", "Service",
+                      "programId", programId2.getProgram()));
+
+
+    // starting valid programs
+    Assert.assertEquals(HttpResponseStatus.OK.code(), doPost(batchStartUrl, gson.toJson(request)).getResponseCode());
+    waitState(programId1, RUNNING);
+    waitState(programId2, RUNNING);
+
+    // start running service should throw conflict exception
+    response = doPost(batchStartUrl, gson.toJson(request));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.CONFLICT.code(),
+                        ((JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0))).getInt("statusCode"));
+    Assert.assertEquals(HttpResponseStatus.CONFLICT.code(),
+                        ((JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(1))).getInt("statusCode"));
+
+    // stopping running services
+    Assert.assertEquals(HttpResponseStatus.OK.code(), doPost(batchStopUrl, gson.toJson(request)).getResponseCode());
+    waitState(programId1, STOPPED);
+    waitState(programId2, STOPPED);
+  }
+
+  @Test
+  public void testGetRunCount() throws Exception {
+    final String batchRunCount = getVersionedAPIPath("runcount", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                     TEST_NAMESPACE1);
+
+    // deploy, check the status
+    deploy(AppWithWorkflow.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ProgramId programId = new NamespaceId(TEST_NAMESPACE1).app(AppWithWorkflow.NAME)
+      .workflow(SampleWorkflow.NAME);
+
+    // test nonexistent program
+    validateProgramRunCountResponse(new ProgramReference(TEST_NAMESPACE1, AppWithWorkflow.NAME, ProgramType.WORKFLOW,
+                                                         "nonexistent"),
+                                    HttpResponseStatus.NOT_FOUND.code());
+
+    Assert.assertEquals(0L, getProgramRunCount(programId));
+    startProgram(programId);
+    waitState(programId, "STARTING");
+    waitState(programId, "STOPPED");
+    Assert.assertEquals(1L, getProgramRunCount(programId));
+
+    startProgram(programId);
+    waitState(programId, "STARTING");
+    waitState(programId, "STOPPED");
+    Assert.assertEquals(2L, getProgramRunCount(programId));
+
+    // test batch runcount api
+    // test nonexistent program
+    List<Map<String, String>> request = Arrays.asList(
+      ImmutableMap.of("appId", programId.getApplication(),
+                      "programType", programId.getType().toString(),
+                      "programId", "nonexistentProgram"));
+
+    Gson gson = new Gson();
+    HttpResponse response = doPost(batchRunCount, gson.toJson(request));
+    JSONObject jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), jsonResponse.getInt("statusCode"));
+
+    // test valid program
+    request = Arrays.asList(
+      ImmutableMap.of("appId", programId.getApplication(),
+                      "programType", programId.getType().toString(),
+                      "programId", programId.getProgram()));
+    response = doPost(batchRunCount, gson.toJson(request));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
+    Assert.assertEquals(2L, jsonResponse.getLong("runCount"));
+  }
+
+  @Test
+  public void testVersionedGetRunCount() throws Exception {
+    setLCMFlag(true);
+    // deploy, check the status
+    deploy(AppWithWorkflow.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationDetail appDetail = getAppDetails(TEST_NAMESPACE1, AppWithWorkflow.NAME);
+    ProgramId programIdV1 = new NamespaceId(TEST_NAMESPACE1).app(AppWithWorkflow.NAME, appDetail.getAppVersion())
+      .workflow(SampleWorkflow.NAME);
+
+    startProgram(programIdV1);
+    waitState(programIdV1, "STARTING");
+    waitState(programIdV1, "STOPPED");
+    Assert.assertEquals(1L, getProgramRunCount(programIdV1));
+
+    // deploy the app again for a new version
+    deploy(AppWithWorkflow.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    appDetail = getAppDetails(TEST_NAMESPACE1, AppWithWorkflow.NAME);
+    ProgramId programIdV2 = new NamespaceId(TEST_NAMESPACE1).app(AppWithWorkflow.NAME, appDetail.getAppVersion())
+      .workflow(SampleWorkflow.NAME);
+    Assert.assertEquals(0L, getProgramRunCount(programIdV2));
+
+    startProgram(programIdV2);
+    waitState(programIdV2, "STARTING");
+    waitState(programIdV2, "STOPPED");
+    // check runcount for latest version
+    Assert.assertEquals(1L, getProgramRunCount(programIdV2));
+
+    // get total runcount using unversioned api
+    Assert.assertEquals(2L, getProgramRunCount(programIdV2.getProgramReference()));
+
+    setLCMFlag(false);
+  }
+
   @After
   public void cleanup() throws Exception {
     doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+  }
+
+  private void setLCMFlag(boolean lcmFlag) {
+    cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), lcmFlag);
   }
 
   private HttpResponse getServiceAvailability(Id.Service serviceId) throws Exception {
