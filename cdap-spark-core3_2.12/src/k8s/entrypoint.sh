@@ -79,6 +79,9 @@ fi
 # /etc/cdap/localizefiles will contain the logback jar and must come first in the classpath
 CDAP_SPARK_CORE_LIBS=`find /opt/cdap/cdap-spark-core/lib | sort | tr '\n' ':'`
 export CDAP_SPARK_CLASSPATH="/etc/cdap/localizefiles/logback.xml.jar:/opt/cdap/cdap-spark-core/cdap-spark-core.jar:$CDAP_SPARK_CORE_LIBS:/etc/cdap/conf"
+# for the same reasons, spark.driver.extraJavaOptions gets ignored
+# so grab it from the properties and add it to the driver java command manually.
+export DRIVER_EXTRA_OPTS=`grep spark.driver.extraJavaOptions /opt/spark/conf/spark.properties | awk '{ print substr($0, 31) }' | sed 's/\\\=/=/g'`
 
 case "$1" in
   driver)
@@ -87,6 +90,7 @@ case "$1" in
       # launch SparkSubmit with the CDAP launcher, which will
       # setup CDAP classloading and class rewrite
       ${JAVA_HOME}/bin/java
+      ${DRIVER_EXTRA_OPTS}
       # CDAP classpath must come before spark classpath, otherwise
       # recursive logging and task deserialization errors occur
       -cp "$CDAP_SPARK_CLASSPATH:$SPARK_CLASSPATH"
