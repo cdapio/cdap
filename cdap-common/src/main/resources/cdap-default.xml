@@ -5507,7 +5507,7 @@
 
   <property>
     <name>feature.wrangler.fail.pipeline.for.error.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Enables pipeline failures when Wrangler transformations fail in 'Fail Pipeline' mode
     </description>
