@@ -1774,7 +1774,8 @@ public class AppMetadataStore {
                                                               @Nullable Predicate<RunRecordDetail> predicate,
                                                               int limit) throws IOException {
     CloseableIterator<StructuredRow> iterator = getRunRecordsTable()
-      .scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE);
+      .scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE,
+            StoreDefinition.AppMetadataStore.RUN_START_TIME, SortOrder.ASC);
 
     return new AbstractCloseableIterator<RunRecordDetail>() {
 
