@@ -68,14 +68,14 @@ public class ProtoTriggerCodecTest {
   public void testObjectContainingTrigger() {
     ScheduleDetail sched1 =
       new ScheduleDetail(
-        "default", "app1", "1.0.0", "sched1", "one partition schedule",
+        "default", "app1", "sched1", "one partition schedule",
         new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
         ImmutableMap.of("prop3", "abc"),
         new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
         ImmutableList.<Constraint>of(), null, "SUSPENDED", null);
     ScheduleDetail sched2 =
       new ScheduleDetail(
-        "default", "app1", "1.0.0", "schedone", "one time schedule",
+        "default", "app1", "schedone", "one time schedule",
         new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
         ImmutableMap.of("prop", "all"),
         new ProtoTrigger.TimeTrigger("* * * 1 1"),

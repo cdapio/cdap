@@ -71,8 +71,8 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
   public ScheduleDetail get(ScheduleId scheduleId)
     throws IOException, ScheduleNotFoundException, UnauthorizedException {
     String url = String.format(
-      "namespaces/%s/apps/%s/versions/%s/schedules/%s",
-      scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
+      "namespaces/%s/apps/%s/schedules/%s",
+      scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getSchedule());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     try {

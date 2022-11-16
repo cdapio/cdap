@@ -945,10 +945,9 @@ public class AuthorizationTest extends TestBase {
     scheduleManager.suspend();
     Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
-    ScheduleId scheduleId = new ScheduleId(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
-                                           "testSchedule");
+    ScheduleId scheduleId = new ScheduleId(appId.getNamespace(), appId.getApplication(), "testSchedule");
     ScheduleDetail scheduleDetail =
-      new ScheduleDetail(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(), "1.0-SNAPSHOT",
+      new ScheduleDetail(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(),
                          "testSchedule", "Something 2",
                          new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, workflowName),
                          Collections.<String, String>emptyMap(), new TimeTrigger("*/1 * * * *"),

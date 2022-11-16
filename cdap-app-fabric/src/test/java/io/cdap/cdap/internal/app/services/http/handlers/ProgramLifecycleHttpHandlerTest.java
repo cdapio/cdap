@@ -1330,10 +1330,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                               AppWithSchedule.WORKFLOW_NAME);
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     TimeTrigger timeTrigger = new TimeTrigger("0 * * * ?");
-    ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                                                   scheduleName, description, programInfo, properties,
-                                                   timeTrigger, Collections.emptyList(),
-                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
+    ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName,
+                                                   description, programInfo, properties, timeTrigger,
+                                                   Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS,
+                                                   null, null);
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
@@ -1372,32 +1372,31 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                               AppWithSchedule.WORKFLOW_NAME);
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     TimeTrigger timeTrigger = new TimeTrigger("0 * * * ?");
-    ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, version, scheduleName,
+    ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName,
                                                    description, programInfo, properties,
                                                    timeTrigger, Collections.emptyList(),
                                                    Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
     PartitionTrigger partitionTrigger =
       new PartitionTrigger(protoPartition.getDataset(), protoPartition.getNumPartitions());
     ScheduleDetail expectedPartitionDetail =
-      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         partitionScheduleName, description, programInfo, properties, partitionTrigger,
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, partitionScheduleName, description,
+                         programInfo, properties, partitionTrigger, Collections.emptyList(),
+                         Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     ScheduleDetail requestPartitionDetail =
-      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         partitionScheduleName, description, programInfo, properties, protoPartition,
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, partitionScheduleName, description,
+                         programInfo, properties, protoPartition, Collections.emptyList(),
+                         Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     ScheduleDetail expectedOrDetail =
-      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         orScheduleName, description, programInfo, properties,
-                         new OrTrigger(timeTrigger, partitionTrigger),
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, orScheduleName, description, programInfo,
+                         properties, new OrTrigger(timeTrigger, partitionTrigger), Collections.emptyList(),
+                         Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     ScheduleDetail requestOrDetail =
-      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         orScheduleName, description, programInfo, properties, protoOr,
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, orScheduleName, description, programInfo,
+                         properties, protoOr, Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS,
+                         null, null);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, "differentName", timeDetail);
@@ -1417,8 +1416,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // adding a schedule for a program that does not exist
     ScheduleDetail nonExistingDetail =
-      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
-                         scheduleName, description, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, description,
+                         new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"),
                          properties, timeTrigger, Collections.emptyList(),
                          Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName, nonExistingDetail);
@@ -1465,9 +1464,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(schedules2, schedulesForApp2);
 
     // Add a schedule with no schedule name in spec
-    ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, version,
-                                                null, "Something 2", programInfo, properties,
-                                                new TimeTrigger("0 * * * ?"),
+    ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "Something 2",
+                                                programInfo, properties, new TimeTrigger("0 * * * ?"),
                                                 Collections.emptyList(), TimeUnit.HOURS.toMillis(6), null, null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());

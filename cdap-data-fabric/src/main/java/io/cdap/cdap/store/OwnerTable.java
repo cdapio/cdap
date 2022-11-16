@@ -247,7 +247,9 @@ public class OwnerTable {
         builder.append(ROW_KEY_SEPARATOR);
         builder.append(ARTIFACT_VERSION_ROW_KEY_PREFIX);
         builder.append(ROW_KEY_SEPARATOR);
-        builder.append(scheduleId.getVersion());
+        // version is removed from ScheduleId in CDAP-20043, installing default value here because version
+        // is still part of the key in the table
+        builder.append(ApplicationId.DEFAULT_VERSION);
 
         builder.append(ROW_KEY_SEPARATOR);
         builder.append(SCHEDULE_NAME_ROW_KEY_PREFIX);
