@@ -304,10 +304,9 @@ public class ProgramLifecycleService {
    */
   public RunRecordDetail getRunRecordMeta(ProgramRunId programRunId) throws Exception {
     accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
-
-    ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programRunId.getParent());
-    if (programSpec == null) {
-      throw new NotFoundException(programRunId.getParent());
+    ApplicationMeta appMeta = store.getLatest(programRunId.getParent().getAppReference());
+    if (appMeta == null) {
+      throw new ApplicationNotFoundException(programRunId.getParent().getAppReference());
     }
     RunRecordDetail meta = store.getRun(programRunId);
     if (meta == null) {
