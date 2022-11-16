@@ -627,14 +627,6 @@ public abstract class MetadataStorageTest {
       .append(MetadataEntity.TYPE, "Service").appendAsType(MetadataEntity.PROGRAM, "pingService").build();
     testVersionLessEntities(programWithoutVersion, programWithVersion, programWithDefaultVersion);
 
-    MetadataEntity scheduleWithoutVersion = MetadataEntity.builder(appWithoutVersion)
-      .appendAsType(MetadataEntity.SCHEDULE, "pingSchedule").build();
-    MetadataEntity scheduleWithVersion = MetadataEntity.builder(appWithVersion)
-      .appendAsType(MetadataEntity.SCHEDULE, "pingSchedule").build();
-    MetadataEntity scheduleWithDefaultVersion = MetadataEntity.builder(appWithDefaultVersion)
-      .appendAsType(MetadataEntity.SCHEDULE, "pingSchedule").build();
-    testVersionLessEntities(scheduleWithoutVersion, scheduleWithVersion, scheduleWithDefaultVersion);
-
     // artifacts have version but it is not ignored
     MetadataEntity artifactWithVersion = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "nn")
       .append(MetadataEntity.ARTIFACT, "artifact").append(MetadataEntity.VERSION, "42").build();

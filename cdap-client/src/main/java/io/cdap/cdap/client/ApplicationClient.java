@@ -679,9 +679,8 @@ public class ApplicationClient {
   public void enableSchedule(ScheduleId scheduleId)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException,
     UnauthorizedException, BadRequestException {
-    String path = String.format("apps/%s/versions/%s/program-type/schedules/program-id/%s/action/enable",
-                                scheduleId.getApplication(), scheduleId.getVersion(),
-                                scheduleId.getSchedule());
+    String path = String.format("apps/%s/program-type/schedules/program-id/%s/action/enable",
+                                scheduleId.getApplication(), scheduleId.getSchedule());
     HttpResponse response = restClient.execute(HttpMethod.PUT,
                                                config.resolveNamespacedURLV3(scheduleId.getParent().getParent(), path),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,

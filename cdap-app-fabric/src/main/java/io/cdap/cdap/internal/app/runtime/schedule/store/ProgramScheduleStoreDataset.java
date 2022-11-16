@@ -648,7 +648,7 @@ public class ProgramScheduleStoreDataset {
     List<Field<?>> keys = new ArrayList<>();
     keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.NAMESPACE_FIELD, scheduleId.getNamespace()));
     keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.APPLICATION_FIELD, scheduleId.getApplication()));
-    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.VERSION_FIELD, scheduleId.getVersion()));
+    keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.VERSION_FIELD, ApplicationId.DEFAULT_VERSION));
     keys.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.SCHEDULE_NAME, scheduleId.getSchedule()));
     return keys;
   }
@@ -674,7 +674,6 @@ public class ProgramScheduleStoreDataset {
   private static ScheduleId rowToScheduleId(StructuredRow row) {
     return new ScheduleId(row.getString(StoreDefinition.ProgramScheduleStore.NAMESPACE_FIELD),
                           row.getString(StoreDefinition.ProgramScheduleStore.APPLICATION_FIELD),
-                          row.getString(StoreDefinition.ProgramScheduleStore.VERSION_FIELD),
                           row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE_NAME));
   }
 
