@@ -81,6 +81,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import javax.annotation.Nullable;
@@ -168,9 +169,16 @@ public class SparkContainerDriverLauncher {
                                  injector.getInstance(CommonNettyHttpServiceFactory.class));
     artifactFetcherService.startAndWait();
 
+    LOG.error("ashau -- In SparkContainerDriverLauncher, before running delegate.");
+    logSystemProperties();
     SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]), false, "k8s");
   }
 
+  public static void logSystemProperties() {
+    for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+      LOG.error("ashau - '{}' = '{}'", entry.getKey(), entry.getValue());
+    }
+  }
 
   /**
    * Retrieves injector to retrieve services.
