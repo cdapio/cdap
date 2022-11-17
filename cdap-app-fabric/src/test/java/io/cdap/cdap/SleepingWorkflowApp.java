@@ -42,10 +42,11 @@ public class SleepingWorkflowApp extends AbstractApplication {
    *
    */
   public static class SleepWorkflow extends AbstractWorkflow {
+    public static final String NAME = "SleepWorkflow";
 
     @Override
     public void configure() {
-      setName("SleepWorkflow");
+      setName(NAME);
       setDescription("FunWorkflow description");
       addAction(new CustomAction("verify"));
     }
