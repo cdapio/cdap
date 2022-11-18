@@ -83,8 +83,7 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
     ApplicationDetail appDetails = getAppDetails(namespace, appName);
 
     // Get and validate the schedule
-    ScheduleId scheduleId = new ScheduleId(namespace, appName, appDetails.getAppVersion(),
-                                           "InvalidSchedule");
+    ScheduleId scheduleId = new ScheduleId(namespace, appName, "InvalidSchedule");
     try {
       ScheduleDetail scheduleDetail = fetcher.get(scheduleId);
     } finally {

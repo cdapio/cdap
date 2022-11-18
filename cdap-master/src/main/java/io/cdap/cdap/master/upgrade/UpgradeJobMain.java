@@ -127,7 +127,7 @@ public class UpgradeJobMain {
             scheduleClient.listSchedules(workflowId).stream()
               .map(scheduleDetail ->
                      new ScheduleId(namespaceId.getNamespace(), record.getName(),
-                                    record.getAppVersion(), scheduleDetail.getName()))
+                                    scheduleDetail.getName()))
               .collect(Collectors.toList());
           for (ScheduleId scheduleId : scheduleIds) {
             if (scheduleClient.getStatus(scheduleId).equals(SCHEDULED)) {

@@ -36,7 +36,6 @@ public class ScheduleDetail {
 
   private final String namespace;
   private final String application;
-  private final transient String applicationVersion;
   private final String name;
   private final String description;
   private final ScheduleProgramInfo program;
@@ -54,12 +53,11 @@ public class ScheduleDetail {
                         @Nullable Trigger trigger,
                         @Nullable List<? extends Constraint> constraints,
                         @Nullable Long timeoutMillis) {
-    this(null, null, null, name, description, program, properties, trigger, constraints, timeoutMillis, null, null);
+    this(null, null, name, description, program, properties, trigger, constraints, timeoutMillis, null, null);
   }
 
   public ScheduleDetail(@Nullable String namespace,
                         @Nullable String application,
-                        @Nullable String applicationVersion,
                         @Nullable String name,
                         @Nullable String description,
                         @Nullable ScheduleProgramInfo program,
@@ -71,7 +69,6 @@ public class ScheduleDetail {
                         @Nullable Long lastUpdateTime) {
     this.namespace = namespace;
     this.application = application;
-    this.applicationVersion = applicationVersion;
     this.name = name;
     this.description = description;
     this.program = program;
@@ -91,11 +88,6 @@ public class ScheduleDetail {
   @Nullable
   public String getApplication() {
     return application;
-  }
-
-  @Nullable
-  public String getApplicationVersion() {
-    return applicationVersion;
   }
 
   @Nullable

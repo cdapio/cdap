@@ -29,7 +29,6 @@ public final class MetadataUtil {
 
   private static final Set<String> VERSIONED_ENTITY_TYPES = ImmutableSet.of(
     MetadataEntity.APPLICATION,
-    MetadataEntity.SCHEDULE,
     MetadataEntity.PROGRAM,
     MetadataEntity.PROGRAM_RUN);
 
