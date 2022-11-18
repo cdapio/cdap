@@ -138,7 +138,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     ProgramRunId programRunId = programId.run(runId.getId());
     RunRecordDetail record;
     synchronized (this) {
-      record = store.getRun(programRunId);
+      record = store.getRun(programRunId.getReference());
     }
     if (record == null) {
       return null;

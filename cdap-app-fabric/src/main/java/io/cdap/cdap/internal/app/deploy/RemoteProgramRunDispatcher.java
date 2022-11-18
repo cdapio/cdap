@@ -205,7 +205,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   private TwillController getRemoteTwillController(ProgramRunId programRunId) {
-    RunRecordDetail runRecordDetail = store.getRun(programRunId);
+    RunRecordDetail runRecordDetail = store.getRun(programRunId.getReference());
     if (runRecordDetail == null) {
       String msg = String.format("Could not find run record for Program %s with runid %s", programRunId.getProgram(),
                                  programRunId.getRun());

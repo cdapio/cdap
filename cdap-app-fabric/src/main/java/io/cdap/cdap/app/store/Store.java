@@ -47,6 +47,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.proto.id.WorkflowId;
 import org.apache.twill.api.RunId;
 
@@ -250,10 +251,10 @@ public interface Store {
 
   /**
    * Fetches the run records for given ProgramRunIds.
-   * @param programRunIds  list of program RunIds to match against
+   * @param programRunRefs  list of program RunIds to match against
    * @return        map of logged runs
    */
-  Map<ProgramRunId, RunRecordDetail> getRuns(Set<ProgramRunId> programRunIds);
+  Map<ProgramRunReference, RunRecordDetail> getRuns(Set<ProgramRunReference> programRunRefs);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records across all namespaces.
@@ -319,13 +320,13 @@ public interface Store {
   Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramReference> programRefs);
 
   /**
-   * Fetches the run record for particular run of a program.
+   * Fetches the run record for particular run of a program ignoring the version.
    *
-   * @param id        run id of the program
-   * @return          run record for the specified program and runid, null if not found
+   * @param ref       versionless run id of the program
+   * @return          run record for the specified program and run reference, null if not found
    */
   @Nullable
-  RunRecordDetail getRun(ProgramRunId id);
+  RunRecordDetail getRun(ProgramRunReference ref);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.

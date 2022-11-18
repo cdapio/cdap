@@ -350,7 +350,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appRef);
     }
 
-    ApplicationId appId = appRef.app(appMeta.getSpec().getAppVersion());
+    ApplicationId appId = appRef.version(appMeta.getSpec().getAppVersion());
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
                                                                             appMeta.getChange()));
@@ -632,7 +632,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appRef);
     }
 
-    ApplicationId currentAppId = appRef.app(currentSpec.getAppVersion());
+    ApplicationId currentAppId = appRef.version(currentSpec.getAppVersion());
 
     return updateApplicationByArtifact(currentAppId, currentSpec, allowedArtifactScopes, allowSnapshot);
   }
@@ -959,7 +959,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public void removeApplication(ApplicationReference appRef) throws Exception {
     // enforce DELETE privileges on the app
-    accessEnforcer.enforce(appRef.app(ApplicationId.DEFAULT_VERSION),
+    accessEnforcer.enforce(appRef.version(ApplicationId.DEFAULT_VERSION),
                            authenticationContext.getPrincipal(), StandardPermission.DELETE);
     // The latest app is retrieved here and passed to deleteApp -
     // that deletes the schedules, triggers and other metadata info.

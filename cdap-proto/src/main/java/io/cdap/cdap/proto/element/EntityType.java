@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.proto.id.QueryId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.SecureKeyId;
@@ -58,6 +59,7 @@ public enum EntityType {
   PROGRAMREFERENCE(ProgramReference.class),
   PROGRAM(ProgramId.class),
   PROGRAM_RUN(ProgramRunId.class),
+  PROGRAMRUNREFERENCE(ProgramRunReference.class),
 
   DATASET_TYPE(DatasetTypeId.class),
   DATASET_MODULE(DatasetModuleId.class),

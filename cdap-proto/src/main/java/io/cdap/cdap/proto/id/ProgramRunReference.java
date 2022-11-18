@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.id;
 
 import io.cdap.cdap.api.metadata.MetadataEntity;
-import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
 
@@ -27,29 +26,34 @@ import java.util.Iterator;
 import java.util.Objects;
 
 /**
- * Identifies a versionless program.
+ * Uniquely identifies a program run without version
  */
-public class ProgramReference extends NamespacedEntityId implements ParentedId<ApplicationReference> {
+public class ProgramRunReference extends NamespacedEntityId implements ParentedId<ProgramReference> {
   private final String application;
   private final ProgramType type;
   private final String program;
+  private final String run;
   private transient Integer hashCode;
 
-  public ProgramReference(ApplicationReference appRef, ProgramType type, String program) {
-    super(appRef.getNamespace(), EntityType.PROGRAMREFERENCE);
+  public ProgramRunReference(ApplicationReference appRef, ProgramType type, String program, String run) {
+    super(appRef.getNamespace(), EntityType.PROGRAMRUNREFERENCE);
     if (type == null) {
       throw new NullPointerException("Program type cannot be null.");
     }
     if (program == null) {
       throw new NullPointerException("Program ID cannot be null.");
     }
+    if (run == null) {
+      throw new NullPointerException("Run ID cannot be null.");
+    }
     this.application = appRef.getApplication();
     this.type = type;
     this.program = program;
+    this.run = run;
   }
 
-  public ProgramReference(String namespace, String application, ProgramType type, String program) {
-    this(new ApplicationReference(namespace, application), type, program);
+  public ProgramRunReference(String namespace, String application, ProgramType type, String program, String run) {
+    this(new ApplicationReference(namespace, application), type, program, run);
   }
 
   public String getApplication() {
@@ -64,50 +68,47 @@ public class ProgramReference extends NamespacedEntityId implements ParentedId<A
     return program;
   }
 
-  public BatchProgram getBatchProgram() {
-    return new BatchProgram(application, type, program);
+  public String getRun() {
+    return run;
   }
 
-  public ProgramId version(String version) {
-    return new ProgramId(new ApplicationId(namespace, application, version), type, program);
+  public ProgramRunId version(String version) {
+    return new ProgramRunId(new ApplicationId(namespace, application, version), type, program, run);
   }
 
-  public ProgramRunReference run(String run) {
-    return new ProgramRunReference(getParent(), type, program, run);
+  @Override
+  public String getEntityName() {
+    return run;
+  }
+
+  @Override
+  public ProgramReference getParent() {
+    return new ProgramReference(getNamespace(), getApplication(), getType(), getProgram());
+  }
+
+  public static ProgramRunReference fromIdParts(Iterable<String> idString) {
+    Iterator<String> iterator = idString.iterator();
+    return new ProgramRunReference(
+      new ApplicationReference(next(iterator, "namespace"), next(iterator, "application")),
+      ProgramType.valueOfPrettyName(next(iterator, "type")),
+      next(iterator, "program"), nextAndEnd(iterator, "run"));
   }
 
   @Override
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(
-      Arrays.asList(namespace, application, type.getPrettyName().toLowerCase(), program));
-  }
-
-  @SuppressWarnings("unused")
-  public static ProgramReference fromIdParts(Iterable<String> idString) {
-    Iterator<String> iterator = idString.iterator();
-    return new ProgramReference(
-      next(iterator, "namespace"), next(iterator, "application"),
-      ProgramType.valueOfPrettyName(next(iterator, "type")),
-      nextAndEnd(iterator, "program"));
-  }
-
-  @Override
-  public String getEntityName() {
-    return getProgram();
+      Arrays.asList(namespace, application, type.getPrettyName().toLowerCase(), program, run));
   }
 
   @Override
   public MetadataEntity toMetadataEntity() {
-    return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
+    return MetadataEntity.builder()
+      .append(MetadataEntity.NAMESPACE, namespace)
       .append(MetadataEntity.APPLICATION, application)
       .append(MetadataEntity.TYPE, type.getPrettyName())
-      .appendAsType(MetadataEntity.PROGRAM, program)
+      .append(MetadataEntity.PROGRAM, program)
+      .appendAsType(MetadataEntity.PROGRAM_RUN, run)
       .build();
-  }
-
-  @Override
-  public ApplicationReference getParent() {
-    return new ApplicationReference(namespace, application);
   }
 
   @Override
@@ -115,17 +116,15 @@ public class ProgramReference extends NamespacedEntityId implements ParentedId<A
     if (!super.equals(o)) {
       return false;
     }
-    ProgramReference programRef = (ProgramReference) o;
-    return Objects.equals(getParent(), programRef.getParent()) &&
-      Objects.equals(type, programRef.type) &&
-      Objects.equals(program, programRef.program);
+    ProgramRunReference programRunRef = (ProgramRunReference) o;
+    return Objects.equals(getParent(), programRunRef.getParent()) && Objects.equals(run, programRunRef.run);
   }
 
   @Override
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), getNamespace(), getApplication(), type, program);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), getNamespace(), getApplication(), type, program, run);
     }
     return hashCode;
   }

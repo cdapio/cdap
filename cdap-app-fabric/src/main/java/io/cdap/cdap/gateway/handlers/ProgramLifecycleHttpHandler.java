@@ -226,9 +226,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(programId);
     }
     // runId is uuid, can be retrieved ignoring version
-    RunRecordDetail runRecordMeta = store.getRun(run);
+    RunRecordDetail runRecordMeta = store.getRun(run.getReference());
     if (runRecordMeta == null || isTetheredRunRecord(runRecordMeta)) {
-      throw new NotFoundException(run);
+      throw new NotFoundException(run.getReference());
     }
 
     MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(Id.Run.fromEntityId(run));
@@ -276,10 +276,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (SCHEDULES.equals(type)) {
       JsonObject json = new JsonObject();
       // ScheduleId is versionless (always "-SNAPSHOT")
-      ScheduleId scheduleId = appReference.app(ApplicationId.DEFAULT_VERSION).schedule(programId);
+      ScheduleId scheduleId = appReference.version(ApplicationId.DEFAULT_VERSION).schedule(programId);
       ApplicationSpecification appSpec = ApplicationId.DEFAULT_VERSION.equals(versionId)
         ? Optional.ofNullable(store.getLatest(appReference)).map(ApplicationMeta::getSpec).orElse(null)
-        : store.getApplication(appReference.app(versionId));
+        : store.getApplication(appReference.version(versionId));
       if (appSpec == null) {
         throw new NotFoundException(appReference);
       }
@@ -293,7 +293,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (ApplicationId.DEFAULT_VERSION.equals(versionId)) {
       programStatus = lifecycleService.getProgramStatus(appReference.program(programType, programId));
     } else {
-      programStatus = lifecycleService.getProgramStatus(appReference.app(versionId).program(programType, programId));
+      programStatus = lifecycleService.getProgramStatus(appReference.version(versionId)
+                                                          .program(programType, programId));
     }
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
@@ -312,14 +313,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("program-id") String programId,
                                   @PathParam("run-id") String runId) throws Exception {
     ProgramType programType = getProgramType(type);
-    ProgramReference program = new ApplicationReference(namespaceId, appId).program(programType, programId);
+    ProgramReference programRef = new ApplicationReference(namespaceId, appId).program(programType, programId);
 
     try {
       RunIds.fromString(runId);
     } catch (Exception e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
-    lifecycleService.stop(program, runId, null);
+    lifecycleService.stop(programRef.run(runId), null);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -561,7 +562,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws NotFoundException, BadRequestException {
     ProgramType programType = getProgramType(type);
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    RunRecordDetail runRecordMeta = store.getRun(progId.run(runid));
+    RunRecordDetail runRecordMeta = store.getRun(progId.run(runid).getReference());
     if (runRecordMeta != null && !isTetheredRunRecord(runRecordMeta)) {
       RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));

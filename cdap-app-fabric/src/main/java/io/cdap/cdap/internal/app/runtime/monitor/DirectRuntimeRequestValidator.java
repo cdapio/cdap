@@ -107,7 +107,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     throws IOException, UnauthorizedException {
     try {
       RunRecordDetail runRecord = TransactionRunners.run(txRunner, context -> {
-        return AppMetadataStore.create(context).getRun(programRunId);
+        return AppMetadataStore.create(context).getRun(programRunId.getReference());
       }, IOException.class);
 
       if (runRecord != null) {
@@ -115,7 +115,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
       }
       // If it is not found in the local store, which should be very rare, try to fetch the run record remotely.
       LOG.info("Remotely fetching program run details for {}", programRunId);
-      runRecord = runRecordFetcher.getRunRecordMeta(programRunId);
+      runRecord = runRecordFetcher.getRunRecordMeta(programRunId.getReference());
       // Try to update the local store
       insertRunRecord(programRunId, runRecord);
       return runRecord.getStatus().isEndState() ? Optional.empty() : getValidRunRecordStatus(runRecord);

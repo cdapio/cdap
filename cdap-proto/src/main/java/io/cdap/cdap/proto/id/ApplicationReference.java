@@ -49,7 +49,7 @@ public class ApplicationReference extends NamespacedEntityId implements Parented
     return application;
   }
 
-  public ApplicationId app(String version) {
+  public ApplicationId version(String version) {
     return new ApplicationId(namespace, application, version);
   }
 

@@ -161,7 +161,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     fixer.fixRunRecords();
 
     // check the record is fixed for spark program
-    Assert.assertEquals(ProgramRunStatus.FAILED, store.getRun(spId).getStatus());
+    Assert.assertEquals(ProgramRunStatus.FAILED, store.getRun(spId.getReference()).getStatus());
   }
 
   @Test
@@ -311,7 +311,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
   private void validateExpectedState(ProgramRunId programRunId, ProgramRunStatus expectedStatus) throws Exception {
     Tasks.waitFor(ImmutablePair.of(programRunId, expectedStatus), () -> {
-      RunRecordDetail runRecord = store.getRun(programRunId);
+      RunRecordDetail runRecord = store.getRun(programRunId.getReference());
       return ImmutablePair.of(programRunId, runRecord == null ? null : runRecord.getStatus());
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }

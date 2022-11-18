@@ -19,7 +19,7 @@ package io.cdap.cdap.internal.app.store;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 
@@ -39,9 +39,9 @@ public class StoreProgramRunRecordFetcher implements ProgramRunRecordFetcher {
   }
 
   @Override
-  public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws IOException, NotFoundException {
+  public RunRecordDetail getRunRecordMeta(ProgramRunReference runRef) throws IOException, NotFoundException {
     return Optional.ofNullable(TransactionRunners.run(txRunner, context -> {
-      return AppMetadataStore.create(context).getRun(runId);
-    }, IOException.class)).orElseThrow(() -> new NotFoundException(runId));
+      return AppMetadataStore.create(context).getRun(runRef);
+    }, IOException.class)).orElseThrow(() -> new NotFoundException(runRef));
   }
 }

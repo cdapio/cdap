@@ -20,7 +20,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.store.ProgramStore;
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 
 /**
  * Fetch {@link RunRecordDetail} directly from local {@link ProgramStore}
@@ -34,17 +34,17 @@ public class LocalProgramRunRecordFetcher implements ProgramRunRecordFetcher {
   }
 
   /**
-   * Get {@link RunRecordDetail} for the given {@link ProgramRunId}
+   * Get {@link RunRecordDetail} for the given {@link ProgramRunReference}
    *
-   * @param runId identifies the program run to get {@link RunRecordDetail}
+   * @param runRef identifies the program run to get {@link RunRecordDetail}
    * @return {@link RunRecordDetail}
-   * @throws NotFoundException if the given {@link ProgramRunId} is not found
+   * @throws NotFoundException if the given {@link ProgramRunReference} is not found
    */
   @Override
-  public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws NotFoundException {
-    RunRecordDetail runRecord = programStore.getRun(runId);
+  public RunRecordDetail getRunRecordMeta(ProgramRunReference runRef) throws NotFoundException {
+    RunRecordDetail runRecord = programStore.getRun(runRef);
     if (runRecord == null) {
-      throw new NotFoundException(runId);
+      throw new NotFoundException(runRef);
     }
     return runRecord;
   }

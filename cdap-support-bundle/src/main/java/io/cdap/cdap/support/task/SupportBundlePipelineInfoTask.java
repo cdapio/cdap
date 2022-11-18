@@ -32,7 +32,7 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,9 +129,9 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     ProgramId programId = new ProgramId(namespaceId.getNamespace(), appDetail.getName(), programType, programName);
     Iterable<RunRecord> runRecordList;
     if (runId != null) {
-      ProgramRunId programRunId =
-        new ProgramRunId(namespaceId.getNamespace(), appDetail.getName(), programType, programName, runId);
-      RunRecordDetail runRecordDetail = remoteProgramRunRecordFetcher.getRunRecordMeta(programRunId);
+      ProgramRunReference programRunRef =
+        new ProgramRunReference(namespaceId.getNamespace(), appDetail.getName(), programType, programName, runId);
+      RunRecordDetail runRecordDetail = remoteProgramRunRecordFetcher.getRunRecordMeta(programRunRef);
       runRecordList = Collections.singletonList(runRecordDetail);
     } else {
       runRecordList = getRunRecords(programId);

@@ -169,7 +169,7 @@ public class MockLogReader implements LogReader {
     long currentTime = TimeUnit.SECONDS.toMillis(10);
     RunId workflowRunId = RunIds.generate(currentTime);
     setStartAndRunning(workflowId.run(workflowRunId.getId()));
-    runRecordMap.put(workflowId, store.getRun(workflowId.run(workflowRunId.getId())));
+    runRecordMap.put(workflowId, store.getRun(workflowId.run(workflowRunId.getId()).getReference()));
     WorkflowLoggingContext wfLoggingContext = new WorkflowLoggingContext(workflowId.getNamespace(),
                                                                          workflowId.getApplication(),
                                                                          workflowId.getProgram(),
@@ -186,7 +186,7 @@ public class MockLogReader implements LogReader {
 
     setStartAndRunning(mapReduceId.run(mapReduceRunId.getId()), new HashMap<>(), systemArgs);
 
-    runRecordMap.put(mapReduceId, store.getRun(mapReduceId.run(mapReduceRunId.getId())));
+    runRecordMap.put(mapReduceId, store.getRun(mapReduceId.run(mapReduceRunId.getId()).getReference()));
     WorkflowProgramLoggingContext context = new WorkflowProgramLoggingContext(workflowId.getNamespace(),
                                                                               workflowId.getApplication(),
                                                                               workflowId.getProgram(),
@@ -204,7 +204,7 @@ public class MockLogReader implements LogReader {
                                  ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
 
     setStartAndRunning(sparkId.run(sparkRunId.getId()), new HashMap<>(), systemArgs);
-    runRecordMap.put(sparkId, store.getRun(sparkId.run(sparkRunId.getId())));
+    runRecordMap.put(sparkId, store.getRun(sparkId.run(sparkRunId.getId()).getReference()));
     context = new WorkflowProgramLoggingContext(workflowId.getNamespace(), workflowId.getApplication(),
                                                 workflowId.getProgram(), workflowRunId.getId(), ProgramType.SPARK,
                                                 SOME_SPARK, sparkRunId.getId());

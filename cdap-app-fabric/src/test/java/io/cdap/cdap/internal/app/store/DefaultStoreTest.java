@@ -174,7 +174,7 @@ public abstract class DefaultStoreTest {
     String pid = RunIds.generate().getId();
     store.setStop(programId.run(pid), now, ProgramController.State.ERROR.getRunStatus(),
                   ByteBuffer.allocate(0).array());
-    Assert.assertNull(store.getRun(programId.run(pid)));
+    Assert.assertNull(store.getRun(programId.run(pid).getReference()));
   }
 
   @Test
@@ -336,7 +336,7 @@ public abstract class DefaultStoreTest {
     setStartAndRunning(programId.run(run3.getId()), artifactId);
 
     // For a RunRecordDetail that has not yet been completed, getStopTs should return null
-    RunRecordDetail runRecord = store.getRun(programId.run(run3.getId()));
+    RunRecordDetail runRecord = store.getRun(programId.run(run3.getId()).getReference());
     Assert.assertNotNull(runRecord);
     Assert.assertNull(runRecord.getStopTs());
 
@@ -401,19 +401,19 @@ public abstract class DefaultStoreTest {
     // Get a run record for running program
     RunRecordDetail expectedRunning = runningHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedRunning);
-    RunRecordDetail actualRunning = store.getRun(programId.run(expectedRunning.getPid()));
+    RunRecordDetail actualRunning = store.getRun(programId.run(expectedRunning.getPid()).getReference());
     Assert.assertEquals(expectedRunning, actualRunning);
 
     // Get a run record for completed run
     RunRecordDetail expectedCompleted = successHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedCompleted);
-    RunRecordDetail actualCompleted = store.getRun(programId.run(expectedCompleted.getPid()));
+    RunRecordDetail actualCompleted = store.getRun(programId.run(expectedCompleted.getPid()).getReference());
     Assert.assertEquals(expectedCompleted, actualCompleted);
 
     // Get a run record for suspended run
     RunRecordDetail expectedSuspended = suspendedHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedSuspended);
-    RunRecordDetail actualSuspended = store.getRun(programId.run(expectedSuspended.getPid()));
+    RunRecordDetail actualSuspended = store.getRun(programId.run(expectedSuspended.getPid()).getReference());
     Assert.assertEquals(expectedSuspended, actualSuspended);
 
     ProgramRunCluster emptyCluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, 0);
@@ -432,7 +432,7 @@ public abstract class DefaultStoreTest {
       .setCluster(emptyCluster)
       .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
-    RunRecordDetail actualRecord7 = store.getRun(programId.run(run7.getId()));
+    RunRecordDetail actualRecord7 = store.getRun(programId.run(run7.getId()).getReference());
     Assert.assertEquals(expectedRunRecord7, actualRecord7);
 
     // Record workflow that starts and suspends before it runs
@@ -447,7 +447,7 @@ public abstract class DefaultStoreTest {
       .setCluster(emptyCluster)
       .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
-    RunRecordDetail actualRecord8 = store.getRun(programId.run(run8.getId()));
+    RunRecordDetail actualRecord8 = store.getRun(programId.run(run8.getId()).getReference());
     Assert.assertEquals(expectedRunRecord8, actualRecord8);
 
     // Record workflow that is killed while suspended
@@ -467,11 +467,11 @@ public abstract class DefaultStoreTest {
       .setCluster(emptyCluster)
       .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
-    RunRecordDetail actualRecord9 = store.getRun(programId.run(run9.getId()));
+    RunRecordDetail actualRecord9 = store.getRun(programId.run(run9.getId()).getReference());
     Assert.assertEquals(expectedRunRecord9, actualRecord9);
 
     // Non-existent run record should give null
-    Assert.assertNull(store.getRun(programId.run(UUID.randomUUID().toString())));
+    Assert.assertNull(store.getRun(programId.run(UUID.randomUUID().toString()).getReference()));
 
     // Searching for history in wrong time range should give us no results
     Assert.assertTrue(
@@ -1235,7 +1235,7 @@ public abstract class DefaultStoreTest {
     store.addApplication(appId, appMeta);
     expectedApps.add(appId);
 
-    ApplicationId newVersionAppId = appId.getAppReference().app("new_version");
+    ApplicationId newVersionAppId = appId.getAppReference().version("new_version");
     spec = createDummyAppSpec(newVersionAppId.getApplication(), newVersionAppId.getVersion(), artifactId);
     ApplicationMeta newAppMeta = new ApplicationMeta(newVersionAppId.getApplication(), spec,
                                                      new ChangeDetail(null, null,
@@ -1245,7 +1245,7 @@ public abstract class DefaultStoreTest {
     expectedApps.add(newVersionAppId);
 
     // Insert a third version
-    ApplicationId anotherVersionAppId = appId.getAppReference().app("another_version");
+    ApplicationId anotherVersionAppId = appId.getAppReference().version("another_version");
     spec = createDummyAppSpec(anotherVersionAppId.getApplication(), anotherVersionAppId.getVersion(), artifactId);
     ApplicationMeta anotherAppMeta = new ApplicationMeta(anotherVersionAppId.getApplication(), spec,
                                                          new ChangeDetail(null, null,
@@ -1287,18 +1287,18 @@ public abstract class DefaultStoreTest {
 
   private void writeStartRecord(ProgramRunId run, ArtifactId artifactId) {
     setStartAndRunning(run, artifactId);
-    Assert.assertNotNull(store.getRun(run));
+    Assert.assertNotNull(store.getRun(run.getReference()));
   }
 
   private void writeStopRecord(ProgramRunId run, long stopTimeInMillis) {
     store.setStop(run, TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
                   ProgramRunStatus.COMPLETED, AppFabricTestHelper.createSourceId(++sourceId));
-    Assert.assertNotNull(store.getRun(run));
+    Assert.assertNotNull(store.getRun(run.getReference()));
   }
 
   private void writeSuspendedRecord(ProgramRunId run) {
     store.setSuspend(run, AppFabricTestHelper.createSourceId(++sourceId), -1);
-    Assert.assertNotNull(store.getRun(run));
+    Assert.assertNotNull(store.getRun(run.getReference()));
   }
 
   private Set<Long> runsToTime(ProgramRunId... runIds) {

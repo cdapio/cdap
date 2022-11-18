@@ -85,7 +85,7 @@ public class TriggerInfoContext {
    * @return run time arguments as a map for the specified program and runId, null if not found
    */
   public Map<String, String> getProgramRuntimeArguments(ProgramRunId programRunId) {
-    RunRecordDetail runRecordMeta = store.getRun(programRunId);
+    RunRecordDetail runRecordMeta = store.getRun(programRunId.getReference());
     if (runRecordMeta == null) {
       return Collections.emptyMap();
     }

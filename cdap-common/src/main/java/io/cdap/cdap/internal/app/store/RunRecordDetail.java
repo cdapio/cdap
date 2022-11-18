@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -117,6 +118,10 @@ public class RunRecordDetail extends RunRecord {
 
   public ProgramRunId getProgramRunId() {
     return programRunId;
+  }
+
+  public ProgramRunReference getProgramRunReference() {
+    return programRunId.getReference();
   }
 
   /**

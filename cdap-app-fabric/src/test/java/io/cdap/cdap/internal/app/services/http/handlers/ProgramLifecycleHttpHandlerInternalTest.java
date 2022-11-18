@@ -29,7 +29,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -58,7 +58,7 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
     String application = SleepingWorkflowApp.NAME;
     String program = "SleepWorkflow";
     ProgramId programId = new ProgramId(namespace, application, ProgramType.WORKFLOW, program);
-    ProgramRunId programRunId = null;
+    ProgramRunReference programRunRef = null;
     String runId = null;
 
     // Deploy an app containing a workflow
@@ -75,8 +75,8 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
     runId = runRecordList.get(0).getPid();
 
     // Get the RunRecordDetail via internal REST API and verify
-    programRunId = new ProgramRunId(namespace, application, ProgramType.WORKFLOW, program, runId);
-    RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRunId);
+    programRunRef = new ProgramRunReference(namespace, application, ProgramType.WORKFLOW, program, runId);
+    RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRunRef);
     Assert.assertTrue(runRecordMeta.getProperties().size() > 0);
     Assert.assertNotNull(runRecordMeta.getCluster());
     Assert.assertEquals(ProfileId.NATIVE, runRecordMeta.getProfileId());

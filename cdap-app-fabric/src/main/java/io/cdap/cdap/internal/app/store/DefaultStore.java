@@ -62,6 +62,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.SortOrder;
@@ -167,7 +168,7 @@ public class DefaultStore implements Store {
       throw new ApplicationNotFoundException(ref.getParent());
     }
 
-    ProgramId id = ref.id(appMeta.getSpec().getAppVersion());
+    ProgramId id = ref.version(appMeta.getSpec().getAppVersion());
 
     Store.ensureProgramExists(id, appMeta.getSpec());
     return new ProgramDescriptor(id, appMeta.getSpec());
@@ -400,9 +401,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordDetail> getRuns(Set<ProgramRunId> programRunIds) {
+  public Map<ProgramRunReference, RunRecordDetail> getRuns(Set<ProgramRunReference> programRunRefs) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getRuns(programRunIds);
+      return getAppMetadataStore(context).getRuns(programRunRefs);
     });
   }
 
@@ -475,16 +476,10 @@ public class DefaultStore implements Store {
     });
   }
 
-  /**
-   * Returns run record for a given run.
-   *
-   * @param id program run id
-   * @return run record for runid
-   */
   @Override
-  public RunRecordDetail getRun(ProgramRunId id) {
+  public RunRecordDetail getRun(ProgramRunReference ref) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getRun(id);
+      return getAppMetadataStore(context).getRun(ref);
     });
   }
 
@@ -764,7 +759,7 @@ public class DefaultStore implements Store {
   public Map<ApplicationId, ApplicationSpecification> getApplications(ApplicationReference appRef) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersions(appRef).stream()
-        .collect(Collectors.toMap(e -> appRef.app(e.getSpec().getAppVersion()), ApplicationMeta::getSpec));
+        .collect(Collectors.toMap(e -> appRef.version(e.getSpec().getAppVersion()), ApplicationMeta::getSpec));
     });
   }
 
@@ -987,7 +982,7 @@ public class DefaultStore implements Store {
       for (ProgramReference programRef : programs) {
         ProgramId latestProgramId = programRefsMap.get(programRef);
         if (latestProgramId == null) {
-          ProgramId defaultVersion = programRef.id(ApplicationId.DEFAULT_VERSION);
+          ProgramId defaultVersion = programRef.version(ApplicationId.DEFAULT_VERSION);
           result.add(new ProgramHistory(defaultVersion, Collections.emptyList(),
                                         new ProgramNotFoundException(defaultVersion)));
           continue;

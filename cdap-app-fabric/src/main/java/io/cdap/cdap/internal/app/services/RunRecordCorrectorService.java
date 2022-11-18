@@ -227,7 +227,7 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
         }
 
         // Verify the store, if the workflow status is already in end state, correct the underlying program
-        RunRecordDetail workflowRun = store.getRun(workflowProgramId.run(workflowRunId));
+        RunRecordDetail workflowRun = store.getRun(workflowProgramId.run(workflowRunId).getReference());
         // the null check if just to avoid the NPE warning, it should never be null
         if (timeSinceStart > startTimeoutSecs && (workflowRun == null || workflowRun.getStatus().isEndState())) {
           return true;

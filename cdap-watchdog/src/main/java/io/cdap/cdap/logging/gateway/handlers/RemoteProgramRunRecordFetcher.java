@@ -24,7 +24,8 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -50,26 +51,26 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
   }
 
   /**
-   * Return {@link RunRecordDetail} for the given {@link ProgramRunId}
-   * @param runId for which to fetch {@link RunRecordDetail}
+   * Return {@link RunRecordDetail} for the given {@link ProgramRunReference}
+   * @param runRef for which to fetch {@link RunRecordDetail}
    * @return {@link RunRecordDetail}
    * @throws IOException if failed to fetch {@link RunRecordDetail}
    * @throws NotFoundException if the program or runid is not found
    */
-  public RunRecordDetail getRunRecordMeta(ProgramRunId runId)
+  public RunRecordDetail getRunRecordMeta(ProgramRunReference runRef)
     throws IOException, NotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s",
-                               runId.getNamespace(),
-                               runId.getApplication(),
-                               runId.getVersion(),
-                               runId.getType().getCategoryName(),
-                               runId.getProgram(),
-                               runId.getRun());
+                               runRef.getNamespace(),
+                               runRef.getApplication(),
+                               ApplicationId.DEFAULT_VERSION,
+                               runRef.getType().getCategoryName(),
+                               runRef.getProgram(),
+                               runRef.getRun());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());
     return RunRecordDetail.builder(GSON.fromJson(httpResponse.getResponseBodyAsString(), RunRecordDetail.class))
-      .setProgramRunId(runId)
+      .setProgramRunId(runRef.version(ApplicationId.DEFAULT_VERSION))
       .build();
   }
 

@@ -36,6 +36,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -480,8 +481,8 @@ public abstract class AppMetadataStoreTest {
     // Add some run records
     final Set<String> expected = new TreeSet<>();
     final Set<String> expectedHalf = new TreeSet<>();
-    final Set<ProgramRunId> programRunIdSet = new HashSet<>();
-    final Set<ProgramRunId> programRunIdSetHalf = new HashSet<>();
+    final Set<ProgramRunReference> programRunRefSet = new HashSet<>();
+    final Set<ProgramRunReference> programRunRefSetHalf = new HashSet<>();
     for (int i = 0; i < 100; ++i) {
       ApplicationId application = NamespaceId.DEFAULT.app("app");
       final ProgramId program = application.program(ProgramType.SERVICE, "program");
@@ -495,11 +496,11 @@ public abstract class AppMetadataStoreTest {
       }
 
       ProgramRunId programRunId = program.run(runId);
-      programRunIdSet.add(programRunId);
+      programRunRefSet.add(programRunId.getReference());
 
       //Add every other programRunId
       if ((i % 2) == 0) {
-        programRunIdSetHalf.add(programRunId);
+        programRunRefSetHalf.add(programRunId.getReference());
       }
 
       // A sourceId to keep incrementing for each call of app meta data store persisting
@@ -519,17 +520,17 @@ public abstract class AppMetadataStoreTest {
 
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-      Map<ProgramRunId, RunRecordDetail> runMap = metadataStoreDataset.getRuns(programRunIdSet);
+      Map<ProgramRunReference, RunRecordDetail> runMap = metadataStoreDataset.getRuns(programRunRefSet);
       Set<String> actual = new TreeSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordDetail> entry : runMap.entrySet()) {
+      for (Map.Entry<ProgramRunReference, RunRecordDetail> entry : runMap.entrySet()) {
         actual.add(entry.getValue().getPid());
       }
       Assert.assertEquals(expected, actual);
 
 
-      Map<ProgramRunId, RunRecordDetail> runMapHalf = metadataStoreDataset.getRuns(programRunIdSetHalf);
+      Map<ProgramRunReference, RunRecordDetail> runMapHalf = metadataStoreDataset.getRuns(programRunRefSetHalf);
       Set<String> actualHalf = new TreeSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordDetail> entry : runMapHalf.entrySet()) {
+      for (Map.Entry<ProgramRunReference, RunRecordDetail> entry : runMapHalf.entrySet()) {
         actualHalf.add(entry.getValue().getPid());
       }
       Assert.assertEquals(expectedHalf, actualHalf);

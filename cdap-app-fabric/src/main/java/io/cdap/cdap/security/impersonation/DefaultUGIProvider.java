@@ -224,7 +224,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
     try {
       RunRecordDetail runRecord = Retries.callWithRetries(() -> {
-        RunRecordDetail rec = store.getRun(runId);
+        RunRecordDetail rec = store.getRun(runId.getReference());
         if (rec != null) {
           return rec;
         }

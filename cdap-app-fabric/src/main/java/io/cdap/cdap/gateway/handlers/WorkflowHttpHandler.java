@@ -221,7 +221,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
     if (!appMeta.getSpec().getWorkflows().containsKey(workflow)) {
       throw new NotFoundException(workflowId);
     }
-    if (store.getRun(workflowId.run(runId)) == null) {
+    if (store.getRun(workflowId.run(runId).getReference()) == null) {
       throw new NotFoundException(workflowId.run(runId));
     }
     return store.getWorkflowToken(workflowId, runId);
@@ -238,7 +238,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceId namespace = Ids.namespace(namespaceId);
     ApplicationMeta appMeta = store.getLatest(namespace.appReference(applicationId));
     if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(namespace.app(applicationId));
+      throw new NotFoundException(namespace.appReference(applicationId));
     }
     ApplicationId appId =  namespace.app(applicationId, appMeta.getSpec().getAppVersion());
     ProgramId workflowProgramId = appId.workflow(workflowId);
@@ -249,7 +249,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     ProgramRunId workflowRunId = workflowProgramId.run(runId);
-    if (store.getRun(workflowRunId) == null) {
+    if (store.getRun(workflowRunId.getReference()) == null) {
       throw new NotFoundException(workflowRunId);
     }
 
@@ -330,7 +330,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceId namespace = Ids.namespace(namespaceId);
     ApplicationMeta appMeta = store.getLatest(namespace.appReference(applicationId));
     if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(namespace.app(applicationId));
+      throw new NotFoundException(namespace.appReference(applicationId));
     }
     ApplicationId appId =  namespace.app(applicationId, appMeta.getSpec().getAppVersion());
     WorkflowSpecification workflowSpec = appMeta.getSpec().getWorkflows().get(workflowId);
@@ -340,7 +340,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     ProgramRunId programRunId = programId.run(runId);
-    if (store.getRun(programRunId) == null) {
+    if (store.getRun(programRunId.getReference()) == null) {
       throw new NotFoundException(programRunId);
     }
     return workflowSpec;

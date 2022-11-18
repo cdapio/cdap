@@ -41,6 +41,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.proto.id.WorkflowId;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -225,41 +226,41 @@ public class LineageAdmin {
     // could be in the workflow, and get the appSpec for the program, to determine what other programs
     // are in the workflow
     Map<ApplicationId, ApplicationSpecification> appSpecs = new HashMap<>();
-    Set<ProgramRunId> possibleInnerPrograms = new HashSet<>();
+    Set<ProgramRunReference> possibleInnerPrograms = new HashSet<>();
     programRelations.forEach(relation -> {
       ProgramType type = relation.getProgram().getType();
       if (type.equals(ProgramType.MAPREDUCE) || type.equals(ProgramType.SPARK)) {
-        possibleInnerPrograms.add(relation.getProgramRunId());
+        possibleInnerPrograms.add(relation.getProgramRunId().getReference());
         appSpecs.computeIfAbsent(relation.getProgram().getParent(), store::getApplication);
       }
     });
 
     // Step 2, get the run record for all the possible inner programs, the run record contains the
     // workflow information, fetch the workflow id and add them to the map
-    Map<ProgramRunId, RunRecordDetail> runRecords = store.getRuns(possibleInnerPrograms);
-    Set<ProgramRunId> workflowRunIds = new HashSet<>();
+    Map<ProgramRunReference, RunRecordDetail> runRecords = store.getRuns(possibleInnerPrograms);
+    Set<ProgramRunReference> workflowRunRefs = new HashSet<>();
     runRecords.entrySet().stream()
       .filter(e -> e.getValue() != null)
       .forEach(entry -> {
-        ProgramRunId programRunId = entry.getKey();
         RunRecordDetail runRecord = entry.getValue();
+        ProgramRunId programRunId = runRecord.getProgramRunId();
 
         if (runRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_RUN_ID)) {
           ProgramRunId wfRunId = extractWorkflowRunId(programRunId, runRecord);
           programWorkflowMap.put(programRunId, wfRunId);
-          workflowRunIds.add(wfRunId);
+          workflowRunRefs.add(wfRunId.getReference());
         }
       }
     );
 
     // Step 3, fetch run records of the workflow, the properties of the workflow run record has all
     // the inner program run ids, compare them with the app spec to get the type of the program
-    runRecords = store.getRuns(workflowRunIds);
+    runRecords = store.getRuns(workflowRunRefs);
     runRecords.entrySet().stream()
       .filter(e -> e.getValue() != null)
       .forEach(entry -> {
-        ProgramRunId programRunId = entry.getKey();
         RunRecordDetail runRecord = entry.getValue();
+        ProgramRunId programRunId = runRecord.getProgramRunId();
         extractAndAddInnerPrograms(toVisitPrograms, programWorkflowMap, appSpecs, programRunId, runRecord);
       });
   }

@@ -48,6 +48,7 @@ import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -289,12 +290,12 @@ public class DirectRuntimeRequestValidatorTest {
     }
 
     @Override
-    public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws NotFoundException {
+    public RunRecordDetail getRunRecordMeta(ProgramRunReference runRef) throws NotFoundException {
       if (runRecord == null) {
-        throw new NotFoundException(runId);
+        throw new NotFoundException(runRef);
       }
-      if (!runId.equals(runRecord.getProgramRunId())) {
-        throw new NotFoundException(runId);
+      if (!runRef.equals(runRecord.getProgramRunId().getReference())) {
+        throw new NotFoundException(runRef);
       }
       return runRecord;
     }
