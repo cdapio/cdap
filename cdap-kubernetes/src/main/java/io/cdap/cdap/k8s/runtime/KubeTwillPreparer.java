@@ -749,7 +749,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       }
       builder.addToBinaryData(localFile.getName(), Files.readAllBytes(java.nio.file.Paths.get(localFile.getURI())));
     }
-    coreV1Api.createNamespacedConfigMap(programRuntimeNamespace, builder.build(), null, null, null);
+    coreV1Api.createNamespacedConfigMap(programRuntimeNamespace, builder.build(), null, null, null, null);
   }
 
   /**
@@ -777,7 +777,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       .endSpec()
       .build();
     try {
-      job = batchV1Api.createNamespacedJob(programRuntimeNamespace, job, "true", null, null);
+      job = batchV1Api.createNamespacedJob(programRuntimeNamespace, job, "true", null, null, null);
       LOG.debug("Created Job {} in Kubernetes.", metadata.getName());
       return job;
     } catch (ApiException e) {
@@ -804,7 +804,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     V1Deployment deployment = buildDeployment(metadata, runtimeSpecs, runtimeConfigLocation);
 
     try {
-      deployment = appsApi.createNamespacedDeployment(programRuntimeNamespace, deployment, "true", null, null);
+      deployment = appsApi.createNamespacedDeployment(programRuntimeNamespace, deployment, "true", null, null, null);
       LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
       return deployment;
     } catch (ApiException e) {
@@ -834,7 +834,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpecs, runtimeConfigLocation, statefulRunnable);
 
     try {
-      statefulSet = appsApi.createNamespacedStatefulSet(programRuntimeNamespace, statefulSet, "true", null, null);
+      statefulSet = appsApi.createNamespacedStatefulSet(programRuntimeNamespace, statefulSet, "true", null, null, null);
       LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
       return statefulSet;
     } catch (ApiException e) {

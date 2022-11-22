@@ -264,7 +264,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     service.setSpec(spec);
 
     try {
-      api.createNamespacedService(namespace, service, null, null, null);
+      api.createNamespacedService(namespace, service, null, null, null, null);
       LOG.info("Service created in kubernetes with name {} and port {}", serviceName, port.getPort());
     } catch (ApiException e) {
       // It means the service already exists. In this case we update the port if it is not the same.
@@ -328,7 +328,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     service.getSpec().setSelector(podLabels);
 
     try {
-      api.replaceNamespacedService(meta.getName(), namespace, service, null, null, null);
+      api.replaceNamespacedService(meta.getName(), namespace, service, null, null, null, null);
       LOG.info("Service updated in kubernetes with name {} and port {}",
                currentService.getMetadata().getName(), port.getPort());
     } catch (ApiException e) {
