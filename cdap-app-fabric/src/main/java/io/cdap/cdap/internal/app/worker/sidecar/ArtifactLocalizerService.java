@@ -54,7 +54,7 @@ public class ArtifactLocalizerService extends AbstractIdleService {
                            CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
-    this.httpService = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER)
+    this.httpService = commonNettyHttpServiceFactory.builder(Constants.Service.ARTIFACT_LOCALIZER)
       .setHost(InetAddress.getLoopbackAddress().getHostName())
       .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
       .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
