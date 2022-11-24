@@ -366,21 +366,24 @@ public abstract class IntegrationTestBase {
 
   protected ApplicationManager deployApplication(NamespaceId namespace,
                                                  Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) throws IOException, AccessException {
+                                                 File...bundleEmbeddedJars) throws Exception {
+    checkSystemServices();
     return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz)
-    throws IOException, AccessException {
+    throws Exception {
     return deployApplication(getConfiguredNamespace(), applicationClz);
   }
 
 
   protected ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+    checkSystemServices();
     return getTestManager().deployApplication(appId, appRequest);
   }
 
   protected ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
+    checkSystemServices();
     return getTestManager().addAppArtifact(artifactId, appClass);
   }
 
