@@ -39,6 +39,7 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.DatasetNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -409,7 +410,11 @@ public abstract class IntegrationTestBase {
     }
     // delete all dataset instances
     for (DatasetSpecificationSummary datasetSpecSummary : getDatasetClient().list(namespace)) {
-      getDatasetClient().delete(namespace.dataset(datasetSpecSummary.getName()));
+      try {
+        getDatasetClient().delete(namespace.dataset(datasetSpecSummary.getName()));
+      } catch (DatasetNotFoundException e) {
+        // No action needed. 
+      }
     }
     ArtifactClient artifactClient = new ArtifactClient(getClientConfig(), getRestClient());
     for (ArtifactSummary artifactSummary : artifactClient.list(namespace, ArtifactScope.USER)) {
