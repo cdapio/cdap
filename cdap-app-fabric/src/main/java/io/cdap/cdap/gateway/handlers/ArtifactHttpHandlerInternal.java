@@ -137,6 +137,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_MODIFIED, headers);
       return;
     }
+
+    LOG.warn("Artifact name {}, artifactVersion {}, location {}", artifactName, artifactVersion, location);
     responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location), headers);
   }
 

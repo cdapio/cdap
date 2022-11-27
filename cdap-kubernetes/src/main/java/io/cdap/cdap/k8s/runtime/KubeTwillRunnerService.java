@@ -704,12 +704,15 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
           if (isJobComplete((V1Job) resource)) {
             // Cancel the watch
             try {
+              LOG.debug("run {} trying to cancel the watch", runId);
               Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
             } catch (ExecutionException e) {
               // This will never happen
+              LOG.debug("run {} exception in trying to cancel the watch {}", runId, e);
             }
-
             controller.setJobStatus(((V1Job) resource).getStatus());
+            LOG.debug("Setting JobStatus in controller as {}", ((V1Job) resource).getStatus());
+
             // terminate the job controller
             controller.terminate();
           }
@@ -735,6 +738,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
         // If the run is deleted, terminate the controller right away and cancel the scheduled termination
         if (runId.equals(metadata.getLabels().get(RUN_ID_LABEL))) {
           // Cancel the scheduled termination
+          LOG.debug("run {} terminationFuture.cancel()", runId);
           terminationFuture.cancel(false);
           // Cancel the watch
           try {

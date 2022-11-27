@@ -46,6 +46,8 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +64,8 @@ import javax.ws.rs.core.MediaType;
 
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactCacheHttpHandlerInternal.class);
+
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -94,7 +98,9 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
       RemoteClient remoteClient = getRemoteClient(peer);
       File artifactPath = cache.getArtifact(artifactId, peer, remoteClient);
       Location artifactLocation = Locations.toLocation(artifactPath);
-        responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(artifactLocation),
+      LOG.warn("Artifact name {}, artifactVersion {}, location {}", artifactName, artifactVersion, artifactLocation);
+
+      responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(artifactLocation),
                             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
     } catch (Exception ex) {
       if (ex instanceof HttpErrorStatusProvider) {
