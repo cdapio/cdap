@@ -173,9 +173,9 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
     // Find out the default resources requirements based on the programs inside the workflow
     // At least gives the Workflow driver 768 mb of container memory
     Map<String, Resources> runnablesResources = Maps.transformValues(launchConfig.getRunnables(), this::getResources);
-    Resources defaultResources = maxResources(new Resources(768),
+    Resources defaultResources = maxResources(new Resources(2048),
                                               findDriverResources(spec.getNodes(), runnablesResources));
-
+    LOG.info(">>>>>> Using defaultResources: {}", defaultResources);
     // Clear and set the runnable for the workflow driver.
     launchConfig.clearRunnables();
     // Extract scoped runtime arguments that only meant for the workflow but not for child nodes
