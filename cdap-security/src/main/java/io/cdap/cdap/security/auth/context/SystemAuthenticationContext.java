@@ -81,14 +81,16 @@ public class SystemAuthenticationContext implements AuthenticationContext {
       throw Throwables.propagate(e);
     }
     long currentTimestamp = System.currentTimeMillis();
+    long expiration = currentTimestamp + DEFAULT_EXPIRATION;
     UserIdentity identity = new UserIdentity(userId, UserIdentity.IdentifierType.INTERNAL,
-                                             Collections.emptyList(), currentTimestamp,
-                                             currentTimestamp + DEFAULT_EXPIRATION);
+                                             Collections.emptyList(), currentTimestamp, expiration);
     AccessToken accessToken = tokenManager.signIdentifier(identity);
     String encodedAccessToken;
     try {
       encodedAccessToken = Base64.getEncoder().encodeToString(accessTokenCodec.encode(accessToken));
       Credential credential = new Credential(encodedAccessToken, Credential.CredentialType.INTERNAL);
+      LOG.info("lidennis: Minted access token '{}' with issue timestamp {} and expiration {}", encodedAccessToken,
+               currentTimestamp, expiration);
       return new Principal(userId, Principal.PrincipalType.USER, credential);
     } catch (IOException e) {
       throw new RuntimeException("Unexpected failure while creating internal system identity", e);

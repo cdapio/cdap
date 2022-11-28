@@ -89,6 +89,7 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
     try {
       tokenManager.validateSecret(accessToken);
     } catch (InvalidTokenException e) {
+      LOG.info("lidennis: Failed to validate access token '{}': {}", credential.getValue(), e);
       throw new AccessException("Failed to validate access token", e);
     }
     UserIdentity userIdentity = accessToken.getIdentifier();
