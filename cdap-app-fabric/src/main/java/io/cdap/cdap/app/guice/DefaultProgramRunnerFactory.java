@@ -21,6 +21,7 @@ import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.runtime.LaunchConfigSetter;
 import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramControllerCreator;
@@ -29,16 +30,21 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.ProgramLaunchConfig;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -110,7 +116,8 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
   /**
    * A {@link ProgramRunner} that wraps around another {@link ProgramRunner} and publish events on program state change.
    */
-  private static class StatePublishProgramRunner implements ProgramRunner, ProgramClassLoaderProvider, Closeable {
+  public static class StatePublishProgramRunner implements
+    ProgramRunner, ProgramClassLoaderProvider, Closeable, LaunchConfigSetter {
 
     private final ProgramRunner runner;
     private final ProgramStateWriter programStateWriter;
@@ -143,6 +150,15 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
     public void close() throws IOException {
       if (runner instanceof Closeable) {
         ((Closeable) runner).close();
+      }
+    }
+
+    @Override
+    public void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program,
+                                  ProgramOptions options, CConfiguration cConf,
+                                  Configuration hConf, File tempDir) throws IOException {
+      if (runner instanceof DistributedProgramRunner) {
+        ((DistributedProgramRunner) runner).setupLaunchConfig(launchConfig, program, options, cConf, hConf, tempDir);
       }
     }
   }

@@ -65,7 +65,6 @@ public class LocationBodyProducer extends BodyProducer {
   public void handleError(@Nullable Throwable throwable) {
     if (throwable != null) {
       LOG.warn("Error in sending location {}", location, throwable);
-      //LOG.warn("Inputstream that led to error in location {}",inputStream);
     }
     Closeables.closeQuietly(inputStream);
   }

@@ -214,8 +214,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting ApplicationLifecycleService");
-    boolean isArtifactLocalizationEnabled = cConf.getBoolean(Constants.SystemWorker.ARTIFACT_LOCALIZER_ENABLED);
-    LOG.info("ArtifactLocalizationEnabled is {}", isArtifactLocalizationEnabled);
   }
 
   @Override

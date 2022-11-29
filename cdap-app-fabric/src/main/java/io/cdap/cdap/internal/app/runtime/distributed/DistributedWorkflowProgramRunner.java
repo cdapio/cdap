@@ -34,6 +34,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowNodeType;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.Programs;
 import io.cdap.cdap.app.runtime.ProgramController;
@@ -122,7 +123,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   }
 
   @Override
-  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
+  public void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
     WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
@@ -145,7 +146,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
       ProgramType programType = ProgramType.valueOfSchedulableType(programInfo.getProgramType());
       ProgramRunner runner = programRunnerFactory.create(programType);
       try {
-        if (runner instanceof DistributedProgramRunner) {
+        if (runner instanceof DistributedProgramRunner ||
+          runner instanceof DefaultProgramRunnerFactory.StatePublishProgramRunner) {
           // Call setupLaunchConfig with the corresponding program.
           // Need to constructs a new ProgramOptions with the scope extracted for the given program
           ProgramId programId = program.getId().getParent().program(programType, programInfo.getProgramName());
@@ -155,9 +157,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
           ProgramOptions programOptions = new SimpleProgramOptions(programId, options.getArguments(),
                                                                    new BasicArguments(programUserArgs));
 
-          ((DistributedProgramRunner) runner).setupLaunchConfig(launchConfig,
-                                                                Programs.create(cConf, program, programId, runner),
-                                                                programOptions, cConf, hConf, tempDir);
+          setupLaunchConfig(launchConfig, Programs.create(cConf, program, programId, runner),
+                            programOptions, cConf, hConf, tempDir);
           acceptors.add(launchConfig.getClassAcceptor());
         }
       } finally {

@@ -120,7 +120,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   }
 
   @Override
-  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
+  public void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
     // Update the container hConf

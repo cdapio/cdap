@@ -77,7 +77,7 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
   }
 
   @Override
-  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
+  public void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());

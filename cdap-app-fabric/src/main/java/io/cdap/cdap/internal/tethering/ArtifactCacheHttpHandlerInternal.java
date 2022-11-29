@@ -98,7 +98,7 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
       RemoteClient remoteClient = getRemoteClient(peer);
       File artifactPath = cache.getArtifact(artifactId, peer, remoteClient);
       Location artifactLocation = Locations.toLocation(artifactPath);
-      LOG.warn("Artifact name {}, artifactVersion {}, location {}", artifactName, artifactVersion, artifactLocation);
+      LOG.warn(">> Artifact name {}, artifactVersion {}, location {}", artifactName, artifactVersion, artifactLocation);
 
       responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(artifactLocation),
                             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));

@@ -342,8 +342,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     systemWorker = injector.getInstance(SystemWorkerService.class);
     if (cConf.getBoolean(Constants.SystemWorker.ARTIFACT_LOCALIZER_ENABLED)) {
       artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
-    } else {
-      LOG.info("TEST LOG AMEYA - artifact localizer is disabled");
     }
   }
 }

@@ -31,6 +31,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.LaunchConfigSetter;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramControllerCreator;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -120,7 +121,7 @@ import javax.annotation.Nullable;
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
  */
-public abstract class DistributedProgramRunner implements ProgramRunner, ProgramControllerCreator {
+public abstract class DistributedProgramRunner implements ProgramRunner, ProgramControllerCreator, LaunchConfigSetter {
 
   public static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   public static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
@@ -177,7 +178,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * @param tempDir a temporary directory for creating temp file. The content will be cleanup automatically
    *                once the program is launch.
    */
-  protected abstract void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
+  public abstract void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                             CConfiguration cConf, Configuration hConf, File tempDir) throws IOException;
 
   @Override

@@ -138,7 +138,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
 
-    LOG.warn("Artifact name {}, artifactVersion {}, location {}", artifactName, artifactVersion, location);
+    LOG.warn(">>>> Artifact name {}, artifactVersion {}, location {}", artifactName, artifactVersion, location);
     responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location), headers);
   }
 
