@@ -18,7 +18,9 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.ArrayList;
@@ -237,19 +239,20 @@ public abstract class ProtoTrigger implements Trigger {
    * Represents a program status trigger for REST requests/responses
    */
   public static class ProgramStatusTrigger extends ProtoTrigger {
-    protected final ProgramReference programReference;
+    protected final ProgramId programId;
     protected final Set<ProgramStatus> programStatuses;
 
     public ProgramStatusTrigger(ProgramReference programReference, Set<ProgramStatus> programStatuses) {
       super(Type.PROGRAM_STATUS);
-
-      this.programReference = programReference;
+      // CDAP-19989: this attribute should be programRef instead of programId, keep it as is by adding the
+      // default version to maintain backward compatibility when loading existing ProgramStatusTrigger
+      this.programId = programReference.id(ApplicationId.DEFAULT_VERSION);
       this.programStatuses = programStatuses;
       validate();
     }
 
     public ProgramReference getProgramReference() {
-      return programReference;
+      return programId.getProgramReference();
     }
 
     public Set<ProgramStatus> getProgramStatuses() {
@@ -261,8 +264,8 @@ public abstract class ProtoTrigger implements Trigger {
       if (getProgramStatuses().contains(ProgramStatus.INITIALIZING) ||
           getProgramStatuses().contains(ProgramStatus.RUNNING)) {
         throw new IllegalArgumentException(String.format(
-                "Cannot allow triggering program %s with statuses %s: %s statuses are supported",
-                programReference.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
+          "Cannot allow triggering program %s with statuses %s: %s statuses are supported",
+          programId.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
       }
 
       ProtoTrigger.validateNotNull(getProgramReference(), "program reference");

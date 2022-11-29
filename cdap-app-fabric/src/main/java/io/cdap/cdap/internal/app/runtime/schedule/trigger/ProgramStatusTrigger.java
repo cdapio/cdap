@@ -68,7 +68,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
 
   @Override
   public Set<String> getTriggerKeys() {
-    return Schedulers.triggerKeysForProgramStatuses(programReference, programStatuses);
+    return Schedulers.triggerKeysForProgramStatuses(getProgramReference(), programStatuses);
   }
 
   @Override
@@ -78,10 +78,10 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
       public List<TriggerInfo> apply(ProgramRunInfo runInfo) {
         Map<String, String> runtimeArgs = context.getProgramRuntimeArguments(runInfo.getProgramRunId());
         TriggerInfo triggerInfo =
-          new DefaultProgramStatusTriggerInfo(programReference.getNamespace(),
-                                              programReference.getParent().getApplication(),
-                                              ProgramType.valueOf(programReference.getType().name()),
-                                              programReference.getProgram(),
+          new DefaultProgramStatusTriggerInfo(programId.getNamespace(),
+                                              programId.getParent().getApplication(),
+                                              ProgramType.valueOf(programId.getType().name()),
+                                              programId.getProgram(),
                                               RunIds.fromString(runInfo.getProgramRunId().getRun()),
                                               runInfo.getProgramStatus(),
                                               context.getWorkflowToken(runInfo.getProgramRunId()), runtimeArgs);
@@ -128,7 +128,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
       }
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       ProgramReference triggeringProgramReference = programRunId.getParent().getProgramReference();
-      if (this.programReference.equals(triggeringProgramReference) && programStatuses.contains(programStatus)) {
+      if (getProgramReference().equals(triggeringProgramReference) && programStatuses.contains(programStatus)) {
         return function.apply(new ProgramRunInfo(programStatus, programRunId));
       }
     }
