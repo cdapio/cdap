@@ -24,9 +24,16 @@ import javax.annotation.Nullable;
  * RequestContext that maintains a ThreadLocal {@link #userId} and {@link #userIP} of the authenticated user.
  */
 public final class SecurityRequestContext {
-  private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
-  private static final ThreadLocal<Credential> userCredential = new InheritableThreadLocal<>();
-  private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();
+  /**
+   * IMPORTANT NOTE: Currently, SecurityRequestContext variables are only set in AuthenticationChannelHandler.
+   *                 All variables here explicitly use ThreadLocal instead of InheritableThreadLocal to prevent the
+   *                 Netty HTTP handler threads from passing credentials or other sensitive user contexts to executor
+   *                 pools which may cause the SecurityRequestContext to be reused between tasks. See CDAP-20146 for
+   *                 details.
+   */
+  private static final ThreadLocal<String> userId = new ThreadLocal<>();
+  private static final ThreadLocal<Credential> userCredential = new ThreadLocal<>();
+  private static final ThreadLocal<String> userIP = new ThreadLocal<>();
 
   private SecurityRequestContext() {
   }
