@@ -157,8 +157,15 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
           ProgramOptions programOptions = new SimpleProgramOptions(programId, options.getArguments(),
                                                                    new BasicArguments(programUserArgs));
 
-          setupLaunchConfig(launchConfig, Programs.create(cConf, program, programId, runner),
-                            programOptions, cConf, hConf, tempDir);
+          if (runner instanceof DistributedProgramRunner) {
+            ((DistributedProgramRunner) runner).setupLaunchConfig(launchConfig,
+                                                                  Programs.create(cConf, program, programId, runner),
+                                                                      programOptions, cConf, hConf, tempDir);
+          } else {
+            ((DefaultProgramRunnerFactory.StatePublishProgramRunner) runner)
+              .setupLaunchConfig(launchConfig, Programs.create(cConf, program, programId, runner),
+                                                                  programOptions, cConf, hConf, tempDir);
+          }
           acceptors.add(launchConfig.getClassAcceptor());
         }
       } finally {
