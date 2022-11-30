@@ -1,0 +1,11 @@
+Apache Velocity
+
+Copyright (C) 2000-2007 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+The files
+ - velocity-engine-scripting/src/main/java/org/apache/velocity/script/VelocityScriptEngine.java
+ - velocity-engine-scripting/src/main/java/org/apache/velocity/script/VelocityScriptEngineFactory.java
+are Copyright 2006 Sun Microsystems, Inc., and licenced under a BSD-like licence.
