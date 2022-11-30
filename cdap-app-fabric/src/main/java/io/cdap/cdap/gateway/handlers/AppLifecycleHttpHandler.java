@@ -50,7 +50,6 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceException;
-import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
@@ -192,15 +191,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
     throws BadRequestException, NamespaceNotFoundException, AccessException {
-    String versionId = ApplicationId.DEFAULT_VERSION;
-    // If LCM flow is enabled - we generate specific versions of the app.
-    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
-      versionId = RunIds.generate().getId();
-    }
-    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
+    validateApplicationId(namespaceId, appId);
 
     try {
-      return deployAppFromArtifact(applicationId);
+      return deployAppFromArtifact(new ApplicationReference(namespaceId, appId));
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -248,11 +242,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
       return create(request, responder, namespaceId, appId);
     }
-
-    ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
+    validateApplicationId(namespaceId, appId);
 
     try {
-      return deployAppFromArtifact(applicationId);
+      return deployAppFromArtifact(new ApplicationReference(namespaceId, appId));
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -712,15 +705,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   // since it wont be big. But the deploy app API has one path with different behavior based on content type
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
-  private BodyConsumer deployAppFromArtifact(final ApplicationId appId) throws IOException {
+  private BodyConsumer deployAppFromArtifact(final ApplicationReference appRef) throws IOException {
     // Perform auth checks outside BodyConsumer as only the first http request containing auth header
     // to populate SecurityRequestContext while http chunk doesn't. BodyConsumer runs in the thread
     // that processes the last http chunk.
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
-    LOG.info("Start to deploy app {} in namespace {} by user {}", appId.getApplication(), appId.getParent(),
+    accessEnforcer.enforce(appRef, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+    LOG.info("Start to deploy app {} in namespace {} by user {}", appRef.getApplication(), appRef.getParent(),
              applicationLifecycleService.decodeUserId(authenticationContext));
     // createTempFile() needs a prefix of at least 3 characters
-    return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
+    return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appRef, ".json", tmpDir)) {
 
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
@@ -740,7 +733,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           try {
             ApplicationWithPrograms app = applicationLifecycleService.deployApp(
-              appId.getParent(), appId.getApplication(), appId.getVersion(), artifactSummary, configString,
+              appRef.getParent(), appRef.getApplication(), artifactSummary, configString,
               changeSummary, createProgramTerminator(), ownerPrincipalId, appRequest.canUpdateSchedules(),
               false, Collections.emptyMap());
 
@@ -766,9 +759,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
-          LOG.error("Error reading request body for creating app {}.", appId);
+          LOG.error("Error reading request body for creating app {}.", appRef);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
-            "Error while reading json request body for app %s.", appId));
+            "Error while reading json request body for app %s.", appRef));
         } catch (Exception e) {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

@@ -870,6 +870,50 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
    * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
    * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
+   * {@link Store}. This method can create a new application as well as update an existing one. If LCM flag is
+   * turned on, a uuid will be generated as version otherwise -SNAPSHOT will be used as default version.
+   *
+   * @param namespace the namespace to deploy the app to
+   * @param appName the name of the app. If null, the name will be set based on the application spec
+   * @param summary the artifact summary of the app
+   * @param configStr the configuration to send to the application when generating the application specification
+   * @param changeSummary the change summary entered by the user - includes the description and parent-version
+   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
+   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @param ownerPrincipal the kerberos principal of the application owner
+   * @param updateSchedules specifies if schedules of the workflow have to be updated,
+   *                        if null value specified by the property "app.deploy.update.schedules" will be used.
+   * @param isPreview whether the app deployment is for preview
+   * @param userProps the user properties for the app deployment, this is basically used for preview deployment
+   * @return information about the deployed application
+   * @throws InvalidArtifactException if the artifact does not contain any application classes
+   * @throws IOException if there was an IO error reading artifact detail from the meta store
+   * @throws ArtifactNotFoundException if the specified artifact does not exist
+   * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
+   *                   the actual exception
+   */
+  public ApplicationWithPrograms deployApp(NamespaceId namespace, String appName,
+                                           ArtifactSummary summary,
+                                           @Nullable String configStr,
+                                           @Nullable ChangeSummary changeSummary,
+                                           ProgramTerminator programTerminator,
+                                           @Nullable KerberosPrincipalId ownerPrincipal,
+                                           @Nullable Boolean updateSchedules, boolean isPreview,
+                                           Map<String, String> userProps)
+    throws Exception {
+    String appVersion = ApplicationId.DEFAULT_VERSION;
+    // If LCM flow is enabled - we generate specific versions of the app.
+    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
+      appVersion = RunIds.generate().getId();
+    }
+    return deployApp(namespace, appName, appVersion, summary, configStr, changeSummary, programTerminator,
+                     ownerPrincipal, updateSchedules, isPreview, userProps);
+  }
+
+  /**
+   * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
+   * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
+   * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
    * {@link Store}. This method can create a new application as well as update an existing one.
    *
    * @param namespace the namespace to deploy the app to
@@ -900,7 +944,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable Boolean updateSchedules, boolean isPreview,
                                            Map<String, String> userProps)
     throws Exception {
-    // TODO CDAP-19828 - remove appVersion parameter from method signature
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
