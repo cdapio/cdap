@@ -29,12 +29,8 @@ import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
-import io.cdap.cdap.app.runtime.LogLevelUpdater;
-import io.cdap.cdap.app.runtime.ProgramController;
-import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.runtime.*;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
-import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
@@ -49,6 +45,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -1329,6 +1326,9 @@ public class ProgramLifecycleService {
    */
   private LogLevelUpdater getLogLevelUpdater(RuntimeInfo runtimeInfo) throws Exception {
     ProgramController programController = runtimeInfo.getController();
+    if (programController instanceof Delegator) {
+      programController = ((Delegator<ProgramController>) programController).getDelegate();
+    }
     if (!(programController instanceof LogLevelUpdater)) {
       throw new BadRequestException("Update log levels at runtime is only supported in distributed mode");
     }
