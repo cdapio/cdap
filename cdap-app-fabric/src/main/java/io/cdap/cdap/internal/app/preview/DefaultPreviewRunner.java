@@ -181,7 +181,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
     PreferencesDetail preferences = preferencesFetcher.get(programId, true);
     Map<String, String> userProps = new HashMap<>(preferences.getProperties());
-    if (previewConfig != null) {
+    if (previewConfig != null && previewConfig.getRuntimeArgs() != null) {
       userProps.putAll(previewConfig.getRuntimeArgs());
     }
 
