@@ -73,17 +73,14 @@ public class RemoteIsolatedPluginFinder extends RemotePluginFinder {
     try {
       int responseCode = urlConn.getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {
-        switch (responseCode) {
-         // throw retryable error if app fabric is not available, might be due to restarting
-         case HttpURLConnection.HTTP_BAD_GATEWAY:
-         case HttpURLConnection.HTTP_UNAVAILABLE:
-         case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
-           throw new ServiceUnavailableException(
-             Constants.Service.APP_FABRIC_HTTP,
-             Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
-          case HttpURLConnection.HTTP_NOT_FOUND:
-           throw new ArtifactNotFoundException(artifactId);
-       }
+        if (io.cdap.cdap.api.common.Constants.RETRYABLE_HTTP_CODES.contains(responseCode)) {
+          throw new ServiceUnavailableException(
+            Constants.Service.APP_FABRIC_HTTP, Constants.Service.APP_FABRIC_HTTP +
+            " service is not available with status " + responseCode);
+        }
+        if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+          throw new ArtifactNotFoundException(artifactId);
+        }
        throw new IOException(String.format("Exception while downloading artifact for artifact %s with reason: %s",
                                            artifactId, urlConn.getResponseMessage()));
       }
