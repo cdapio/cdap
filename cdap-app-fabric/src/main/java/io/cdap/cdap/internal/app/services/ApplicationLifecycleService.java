@@ -299,7 +299,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appIds);
 
       for (Map.Entry<ApplicationId, ApplicationMeta> entry : list) {
-        // TODO : change-summary to be fetched from ApplicationMeta for CDAP-19528
         ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue().getSpec(),
                                                                          owners.get(entry.getKey()),
                                                                          entry.getValue().getChange());
@@ -920,44 +919,45 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Remove all the applications inside the given {@link Id.Namespace}
    *
    * @param namespaceId the {@link NamespaceId} under which all application should be deleted
-   * @throws Exception
+   * @throws CannotBeDeletedException if there are active programs running
    */
   public void removeAll(NamespaceId namespaceId) throws Exception {
+    // Scan active running programs, throw early if found any
     Map<ProgramRunId, RunRecordDetail> runningPrograms = store.getActiveRuns(namespaceId);
-    List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
-    Map<ApplicationId, ApplicationSpecification> apps = new HashMap<>();
-    for (ApplicationSpecification appSpec : allSpecs) {
-      ApplicationId applicationId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
-      accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
-      apps.put(applicationId, appSpec);
-    }
-
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
       for (Map.Entry<ProgramRunId, RunRecordDetail> runningProgram : runningPrograms.entrySet()) {
-        activePrograms.add(runningProgram.getKey().getApplication() +
-                            ": " + runningProgram.getKey().getProgram());
+        activePrograms.add(runningProgram.getKey().getApplication() + ": " + runningProgram.getKey().getProgram());
       }
 
-      String appAllRunningPrograms = Joiner.on(',')
-        .join(activePrograms);
+      String appAllRunningPrograms = Joiner.on(',').join(activePrograms);
       throw new CannotBeDeletedException(namespaceId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
 
-    // All Apps are STOPPED, delete them
-    for (ApplicationId appId : apps.keySet()) {
-      deleteApp(appId, apps.get(appId));
-    }
+    // All Apps are STOPPED, delete them in a streaming fashion
+    store.scanApplications(
+      ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
+      batchSize,
+      (appId, appMeta) -> {
+        accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+        try {
+          deleteApp(appId, appMeta.getSpec());
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
   }
 
   /**
    * Delete an application specified by appRef.
    *
    * @param appRef the {@link ApplicationReference} of the application to be removed
-   * @throws Exception
+   * @throws ApplicationNotFoundException if the application to remove does not exist
+   * @throws CannotBeDeletedException if there are active programs running
    */
-  public void removeApplication(ApplicationReference appRef) throws Exception {
+  public void removeApplication(ApplicationReference appRef)
+    throws ApplicationNotFoundException, CannotBeDeletedException {
     // enforce DELETE privileges on the app
     accessEnforcer.enforce(appRef.app(ApplicationId.DEFAULT_VERSION),
                            authenticationContext.getPrincipal(), StandardPermission.DELETE);
@@ -973,19 +973,26 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // ensure no running programs across all versions of the application
     ensureNoRunningPrograms(appRef);
 
-    Map<ApplicationId, ApplicationSpecification> allVersions = store.getApplications(appRef);
-    for (ApplicationId versionAppId : allVersions.keySet()) {
-      deleteApp(versionAppId, allVersions.get(versionAppId));
-    }
+    store.scanApplications(
+      ScanApplicationsRequest.builder().setApplicationReference(appRef).build(),
+      batchSize,
+      (appId, app) -> {
+        try {
+          deleteApp(appId, app.getSpec());
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
   }
 
   /**
    * Delete a specific application version specified by appId.
    *
    * @param appId the {@link ApplicationId} of the application to be removed
-   * @throws Exception
+   * @throws NotFoundException if application is not found
+   * @throws CannotBeDeletedException the application cannot be deleted because of running programs
    */
-  public void removeApplicationVersion(ApplicationId appId) throws Exception {
+  public void removeApplicationVersion(ApplicationId appId) throws NotFoundException, CannotBeDeletedException {
     // enforce DELETE privileges on the app
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     ensureNoRunningPrograms(appId);

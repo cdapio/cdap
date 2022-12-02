@@ -375,14 +375,6 @@ public interface Store {
   ApplicationMeta getLatest(ApplicationReference appRef);
 
   /**
-   * Returns a collection of all application specs in the specified namespace
-   *
-   * @param id the namespace to get application specs from
-   * @return collection of all application specs in the namespace
-   */
-  Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
-
-  /**
    * Scans for applications across all namespaces.
    *
    * @param txBatchSize maximum number of applications to scan in one transaction to
@@ -410,14 +402,6 @@ public interface Store {
    * @return collection of application specs. For applications that don't exist, there will be no entry in the result.
    */
   Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids);
-
-  /**
-   * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationReference}.
-   *
-   * @param appRef the application reference
-   * @return collection of application specs. For applications that don't exist, there will be no entry in the result.
-   */
-  Map<ApplicationId, ApplicationSpecification> getApplications(ApplicationReference appRef);
 
   /**
    * Returns a map of latest programIds given programReferences

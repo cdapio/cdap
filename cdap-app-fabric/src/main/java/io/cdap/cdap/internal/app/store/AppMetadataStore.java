@@ -277,33 +277,27 @@ public class AppMetadataStore {
     throws IOException {
 
     Range.Bound startBound = Range.Bound.INCLUSIVE;
-    Collection<Field<?>> startFields = request.getNamespaceId() == null ? Collections.emptyList() :
-      Collections.singletonList(Fields.stringField(
-        StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
-        request.getNamespaceId().getNamespace()));
     Range.Bound endBound = Range.Bound.INCLUSIVE;
+    Collection<Field<?>> startFields = Collections.emptyList();
+
+    if (request.getApplication() != null) {
+      ApplicationReference appRefToScan = new ApplicationReference(request.getNamespaceId(), request.getApplication());
+      startFields = getNamespaceApplicationKeys(appRefToScan);
+    } else if (request.getNamespaceId() != null) {
+      startFields = Collections.singletonList(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
+                                                                 request.getNamespaceId().getNamespace()));
+    }
+
     Collection<Field<?>> endFields = startFields;
     boolean sortCreationTime = request.getSortCreationTime();
 
     if (request.getScanFrom() != null) {
-      if (request.getNamespaceId() != null &&
-        !request.getNamespaceId().equals(request.getScanFrom().getNamespaceId())) {
-        throw new IllegalArgumentException("Requested to start scan from application " + request.getScanFrom() +
-          " that is outside of scan namespace " + request.getNamespaceId()
-        );
-      }
       startBound = Range.Bound.EXCLUSIVE;
       startFields = sortCreationTime ?
         getApplicationNamespaceAppCreationKeys(request.getScanFrom()) :
         getApplicationPrimaryKeys(request.getScanFrom());
     }
     if (request.getScanTo() != null) {
-      if (request.getNamespaceId() != null &&
-        !request.getNamespaceId().equals(request.getScanTo().getNamespaceId())) {
-        throw new IllegalArgumentException("Requested to finish scan at application " + request.getScanTo() +
-                                             " that is outside of scan namespace " + request.getNamespaceId()
-        );
-      }
       endBound = Range.Bound.EXCLUSIVE;
       endFields = sortCreationTime ?
         getApplicationNamespaceAppCreationKeys(request.getScanTo()) :
@@ -373,15 +367,6 @@ public class AppMetadataStore {
     return table.scan(range, Integer.MAX_VALUE, sortOrder);
   }
 
-  public List<ApplicationMeta> getAllApplications(String namespaceId) throws IOException {
-    return
-      scanWithRange(
-        getNamespaceRange(namespaceId),
-        ApplicationMeta.class,
-        getApplicationSpecificationTable(),
-        StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
-  }
-
   public long getApplicationCount() throws IOException {
     // Get number of applications where namespace != SYSTEM (exclude system applications)
     Collection<Field<?>> fields = ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
@@ -427,18 +412,6 @@ public class AppMetadataStore {
     }
     // This is the case when the app currently doesn't exist
     return null;
-  }
-
-  public List<ApplicationMeta> getAllAppVersions(ApplicationReference appRef) throws IOException {
-    List<ApplicationMeta> result = new ArrayList<>();
-    Range range = getNamespaceAndApplicationRange(appRef);
-    StructuredTable table = getApplicationSpecificationTable();
-    try (CloseableIterator<StructuredRow> iterator = table.scan(range, Integer.MAX_VALUE)) {
-      while (iterator.hasNext()) {
-        result.add(decodeRow(iterator.next()));
-      }
-    }
-    return result;
   }
 
   public List<ApplicationId> getAllAppVersionsAppIds(ApplicationReference appRef) throws IOException {
