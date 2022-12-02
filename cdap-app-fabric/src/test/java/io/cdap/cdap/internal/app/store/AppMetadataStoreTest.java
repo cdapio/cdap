@@ -1386,7 +1386,14 @@ public abstract class AppMetadataStoreTest {
     AtomicInteger appEditNumber = new AtomicInteger();
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = AppMetadataStore.create(context);
-      List<ApplicationMeta> allVersions = metaStore.getAllAppVersions(appRef);
+      List<ApplicationMeta> allVersions = new ArrayList<>();
+      metaStore.scanApplications(
+        ScanApplicationsRequest.builder().setApplicationReference(appRef).build(),
+        entry -> {
+          allVersions.add(entry.getValue());
+          return true;
+        });
+
       List<String> latestVersions = allVersions
         .stream()
         .filter(version -> {
@@ -1447,7 +1454,13 @@ public abstract class AppMetadataStoreTest {
     AtomicInteger appEditNumber = new AtomicInteger();
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = AppMetadataStore.create(context);
-      List<ApplicationMeta> allVersions = metaStore.getAllAppVersions(appRef);
+      List<ApplicationMeta> allVersions = new ArrayList<>();
+      metaStore.scanApplications(
+        ScanApplicationsRequest.builder().setApplicationReference(appRef).build(),
+        entry -> {
+          allVersions.add(entry.getValue());
+          return true;
+        });
       List<String> latestVersions = allVersions
         .stream()
         .filter(version -> {

@@ -27,6 +27,7 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -46,7 +47,6 @@ import io.cdap.cdap.data2.registry.DatasetUsage;
 import io.cdap.cdap.data2.registry.UsageTable;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
@@ -88,6 +88,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -209,14 +210,23 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     LOG.debug("Back-filling plugin metadata for {} namespaces", namespaces.size());
     for (String namespace : namespaces) {
-      List<ApplicationMeta> apps = TransactionRunners.run(this.transactionRunner, context -> {
-        AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-        return appMetadataStore.getAllApplications(namespace);
+      AtomicInteger appCount = new AtomicInteger();
+      List<MetadataMutation> updates = TransactionRunners.run(this.transactionRunner, context -> {
+        List<MetadataMutation> mutateUpdates = new ArrayList<>();
+        AppMetadataStore.create(context).scanApplications(
+          ScanApplicationsRequest.builder().setNamespaceId(new NamespaceId(namespace)).build(),
+          entry -> {
+            collectPluginMetadata(namespace, entry.getValue().getSpec(), mutateUpdates);
+            appCount.getAndIncrement();
+            return true;
+          }
+        );
+        return mutateUpdates;
       });
 
-      LOG.debug("Back-filling plugin metadata for namespace '{}' with {} applications", namespace, apps.size());
+      LOG.debug("Back-filling plugin metadata for namespace '{}' with {} applications", namespace, appCount.get());
       try {
-        this.getPluginCounts(namespace, apps);
+        metadataStorage.batch(updates, MutationOptions.DEFAULT);
       } catch (IOException e) {
         updateFailed = true;
         LOG.warn("Failed to write plugin metadata updates for namespace '{}': {}", namespace, e);
@@ -245,14 +255,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       LOG.debug("Plugin metadata back-fill was completed during a previous startup, skipping back-fill this time.");
       didBackfill = true;
     }
-  }
-
-  private void getPluginCounts(String namespace, List<ApplicationMeta> apps) throws IOException {
-    List<MetadataMutation> updates = new ArrayList<>();
-    for (ApplicationMeta app : apps) {
-      this.collectPluginMetadata(namespace, app.getSpec(), updates);
-    }
-    metadataStorage.batch(updates, MutationOptions.DEFAULT);
   }
 
   /**

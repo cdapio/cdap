@@ -648,14 +648,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<ApplicationSpecification> getAllApplications(NamespaceId id) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAllApplications(id.getNamespace()).stream()
-        .map(ApplicationMeta::getSpec).collect(Collectors.toList());
-    });
-  }
-
-  @Override
   public void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationMeta> consumer) {
     scanApplications(ScanApplicationsRequest.builder().build(), txBatchSize, consumer);
   }
@@ -684,7 +676,7 @@ public class DefaultStore implements Store {
         if (requestRef.get().getSortOrder() != SortOrder.DESC || count.get() != 0) {
           throw e;
         }
-        return scanApplicationwWithReorder(requestRef.get(), txBatchSize, consumer);
+        return scanApplicationsWithReorder(requestRef.get(), txBatchSize, consumer);
       }
 
       if (lastKey.get() == null) {
@@ -706,7 +698,7 @@ public class DefaultStore implements Store {
    * We scan keys in large batches and serve backwards
    * @return if we read records up to request limit
    */
-  private boolean scanApplicationwWithReorder(ScanApplicationsRequest request,
+  private boolean scanApplicationsWithReorder(ScanApplicationsRequest request,
                                               int txBatchSize,
                                               BiConsumer<ApplicationId, ApplicationMeta> consumer) {
     AtomicReference<ScanApplicationsRequest> forwardRequest =
@@ -758,14 +750,6 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getApplicationsForAppIds(ids).entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getSpec()));
-    });
-  }
-
-  @Override
-  public Map<ApplicationId, ApplicationSpecification> getApplications(ApplicationReference appRef) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAllAppVersions(appRef).stream()
-        .collect(Collectors.toMap(e -> appRef.app(e.getSpec().getAppVersion()), ApplicationMeta::getSpec));
     });
   }
 
