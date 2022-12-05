@@ -24,6 +24,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -184,10 +185,17 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
           return;
         }
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
-        List<ApplicationMeta> applicationMetas = appMetadataStore.getAllApplications(namespaceId.getNamespace());
-        for (ApplicationMeta meta : applicationMetas) {
-          collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
-        }
+        appMetadataStore.scanApplications(
+          ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
+          entry -> {
+            ApplicationMeta meta = entry.getValue();
+            try {
+              collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+            return true;
+          });
         break;
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;

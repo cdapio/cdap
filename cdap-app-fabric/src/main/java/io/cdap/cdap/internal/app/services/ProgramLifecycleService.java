@@ -35,6 +35,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
@@ -111,6 +112,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -140,6 +142,7 @@ public class ProgramLifecycleService {
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final int defaultStopTimeoutSecs;
+  private final int batchSize;
   private final ArtifactRepository artifactRepository;
   private final RunRecordMonitorService runRecordMonitorService;
   private final boolean userProgramLaunchDisabled;
@@ -158,6 +161,7 @@ public class ProgramLifecycleService {
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
     this.userProgramLaunchDisabled = cConf.getBoolean(Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
+    this.batchSize = cConf.getInt(Constants.AppFabric.STREAMING_BATCH_SIZE);
     this.store = store;
     this.profileService = profileService;
     this.runtimeService = runtimeService;
@@ -1228,35 +1232,42 @@ public class ProgramLifecycleService {
    * @return the programs in the provided namespace
    */
   public List<ProgramRecord> list(NamespaceId namespaceId, ProgramType type) throws Exception {
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
-    List<ProgramRecord> programRecords = new ArrayList<>();
-    for (ApplicationSpecification appSpec : appSpecs) {
-      switch (type) {
-        case MAPREDUCE:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
-          break;
-        case SPARK:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getSpark().values(), programRecords);
-          break;
-        case SERVICE:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getServices().values(), programRecords);
-          break;
-        case WORKER:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkers().values(), programRecords);
-          break;
-        case WORKFLOW:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
-          break;
-        default:
-          throw new Exception("Unknown program type: " + type.name());
-      }
+    Function<ApplicationSpecification, Map<String, ? extends ProgramSpecification>> func;
+    switch (type) {
+      case MAPREDUCE:
+        func = ApplicationSpecification::getMapReduce;
+        break;
+      case SPARK:
+        func = ApplicationSpecification::getSpark;
+        break;
+      case SERVICE:
+        func = ApplicationSpecification::getServices;
+        break;
+      case WORKER:
+        func = ApplicationSpecification::getWorkers;
+        break;
+      case WORKFLOW:
+        func = ApplicationSpecification::getWorkflows;
+        break;
+      default:
+        throw new RuntimeException("Unknown program type: " + type.name());
     }
+
+    List<ProgramRecord> programRecords = new ArrayList<>();
+    store.scanApplications(
+      ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
+      batchSize,
+      (appId, appMeta) -> {
+        ApplicationSpecification appSpec = appMeta.getSpec();
+        createProgramRecords(namespaceId, appSpec.getName(), type, func.apply(appSpec).values(), programRecords);
+      });
+
     return programRecords;
   }
 
   private void createProgramRecords(NamespaceId namespaceId, String appId, ProgramType type,
                                     Iterable<? extends ProgramSpecification> programSpecs,
-                                    List<ProgramRecord> programRecords) throws Exception {
+                                    List<ProgramRecord> programRecords) {
     for (ProgramSpecification programSpec : programSpecs) {
       if (hasAccess(namespaceId.app(appId).program(type, programSpec.getName()))) {
         programRecords.add(new ProgramRecord(type, appId, programSpec.getName(), programSpec.getDescription()));
@@ -1264,7 +1275,7 @@ public class ProgramLifecycleService {
     }
   }
 
-  private boolean hasAccess(ProgramId programId) throws Exception {
+  private boolean hasAccess(ProgramId programId) {
     Principal principal = authenticationContext.getPrincipal();
     return !accessEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
   }
