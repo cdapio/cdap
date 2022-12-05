@@ -57,6 +57,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -86,8 +87,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -96,7 +95,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -508,7 +506,7 @@ public class AppMetadataStore {
         if (appMeta == null) {
           throw new IOException("Missing application metadata for application " + appId);
         }
-        
+
         ApplicationReference appRef = appId.getAppReference();
         Boolean isLatest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
         // Get either the latest versioned or "-SNAPSHOT" programs.
@@ -684,26 +682,18 @@ public class AppMetadataStore {
 
     // Get the run record of the Workflow which started this program
     List<Field<?>> runRecordFields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, workflowRunId,
-                                                                  RunIds.getTime(workflowRun, TimeUnit.SECONDS),
-                                                                  false);
-    RunRecordDetail record;
+                                                                  RunIds.getTime(workflowRun, TimeUnit.SECONDS));
 
-    try (CloseableIterator<StructuredRow> iterator =
-           getRunRecordsTable().scan(Range.singleton(runRecordFields), 1)) {
-      record =  iterator.hasNext() ? deserializeRunRecordMeta(iterator.next()) : null;
-    }
+    RunRecordDetail record = getRunRecordsTable().read(runRecordFields)
+      .map(AppMetadataStore::deserializeRunRecordMeta)
+      .orElse(null);
 
     // If the workflow is gone, just ignore the update
     if (record == null) {
       return;
     }
 
-    // Use the actual ProgramRunId from DB
-    ProgramRunId actualProgramRunId = record.getProgramRunId();
-    List<Field<?>> actualRunRecordFields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, actualProgramRunId,
-                                                                        RunIds.getTime(workflowRun, TimeUnit.SECONDS));
-
-    List<Field<?>> primaryKeys = getWorkflowPrimaryKeys(actualProgramRunId, workflowNodeId);
+    List<Field<?>> primaryKeys = getWorkflowPrimaryKeys(workflowRunId, workflowNodeId);
     WorkflowNodeStateDetail nodeState = getWorkflowNodeStateTable().read(primaryKeys)
       .map(r -> r.getString(StoreDefinition.AppMetadataStore.NODE_STATE_DATA))
       .map(f -> GSON.fromJson(f, WorkflowNodeStateDetail.class))
@@ -727,7 +717,7 @@ public class AppMetadataStore {
       Map<String, String> properties = new HashMap<>(record.getProperties());
       properties.put(workflowNodeId, programRunId.getRun());
       writeToStructuredTableWithPrimaryKeys(
-        actualRunRecordFields, RunRecordDetail.builder(record).setProperties(properties).setSourceId(sourceId).build(),
+        runRecordFields, RunRecordDetail.builder(record).setProperties(properties).setSourceId(sourceId).build(),
         getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     }
   }
@@ -1638,16 +1628,43 @@ public class AppMetadataStore {
     Map<ProgramRunId, RunRecordDetail> unfinishedRunsMap = getUnfinishedRuns(Collections.singleton(programRun));
     // If program is running, this will not be empty
     if (unfinishedRunsMap.size() > 0) {
-      return unfinishedRunsMap.values().iterator().next();
+      return unfinishedRunsMap.get(programRun);
     }
 
     // If program is not running, query completed run records
     Map<ProgramRunId, RunRecordDetail> completedRunsMap = getCompletedRuns(Collections.singleton(programRun));
     if (completedRunsMap.size() > 0) {
-      return completedRunsMap.values().iterator().next();
+      return completedRunsMap.get(programRun);
     }
 
     return null;
+  }
+
+  @Nullable
+  public RunRecordDetail getRun(ProgramRunReference programRunRef) throws IOException {
+    // Query active run record first
+    List<Field<?>> unFinishedKeys = getProgramRunInvertedTimeKey(
+      TYPE_RUN_RECORD_ACTIVE, programRunRef, RunIds.getTime(programRunRef.getRun(), TimeUnit.SECONDS));
+    RunRecordDetail unfinishedRun = scanRunByReference(unFinishedKeys);
+    // If program is running, this will not be empty
+    if (unfinishedRun != null) {
+      return unfinishedRun;
+    }
+
+    // If program is not running, query completed run records
+    List<Field<?>> finishedKeys = getProgramRunInvertedTimeKey(
+      TYPE_RUN_RECORD_COMPLETED, programRunRef, RunIds.getTime(programRunRef.getRun(), TimeUnit.SECONDS));
+    return scanRunByReference(finishedKeys);
+  }
+
+  private RunRecordDetail scanRunByReference(Collection<Field<?>> keys)
+    throws IOException {
+    try (CloseableIterator<StructuredRow> iterator = getRunRecordsTable().scan(Range.singleton(keys), 1)) {
+      if (iterator.hasNext()) {
+        return deserializeRunRecordMeta(iterator.next());
+      }
+      return null;
+    }
   }
 
   /**
@@ -1682,48 +1699,32 @@ public class AppMetadataStore {
     getRunRecordsTable().delete(key);
   }
 
-  /**
-   * @return run records for unfinished run ignoring version
-   */
   private Map<ProgramRunId, RunRecordDetail> getUnfinishedRuns(Set<ProgramRunId> programRunIds) throws IOException {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
       allKeys.add(getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId,
-                                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
-                                               false));
+                                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS)));
     }
-    
-    return getRunsByKeys(allKeys);
+
+    return getRunsByFullKeys(allKeys);
   }
 
   private Map<ProgramRunId, RunRecordDetail> getCompletedRuns(Set<ProgramRunId> programRunIds) throws IOException {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
-      // Get all keys without version
-      List<Field<?>> keysWithoutVersion = getRunRecordProgramRefPrefix(TYPE_RUN_RECORD_COMPLETED,
-                                                                       programRunId.getParent().getProgramReference());
-      // Get start time from RunId
-      long programStartSecs = RunIds.getTime(RunIds.fromString(programRunId.getRun()), TimeUnit.SECONDS);
-      keysWithoutVersion.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME,
-                                              getInvertedTsKeyPart(programStartSecs)));
-      keysWithoutVersion.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, programRunId.getRun()));
-      allKeys.add(keysWithoutVersion);
+      allKeys.add(getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId,
+                                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS)));
     }
 
-    return getRunsByKeys(allKeys);
+    return getRunsByFullKeys(allKeys);
   }
 
-  private Map<ProgramRunId, RunRecordDetail> getRunsByKeys(List<List<Field<?>>> allKeys) throws IOException {
-    Collection<Range> ranges = allKeys.stream().map(Range::singleton).collect(Collectors.toList());
-
-    try (CloseableIterator<StructuredRow> iterator =
-           getRunRecordsTable().multiScan(ranges, Integer.MAX_VALUE)) {
-      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
-          .map(AppMetadataStore::deserializeRunRecordMeta)
-          .collect(Collectors.toMap(RunRecordDetail::getProgramRunId, r -> r, (r1, r2) -> {
-            throw new IllegalStateException("Duplicate run record for " + r1.getProgramRunId());
-          }, LinkedHashMap::new));
-    }
+  private Map<ProgramRunId, RunRecordDetail> getRunsByFullKeys(List<List<Field<?>>> keys) throws IOException {
+    return getRunRecordsTable().multiRead(keys).stream()
+      .map(AppMetadataStore::deserializeRunRecordMeta)
+      .collect(Collectors.toMap(RunRecordDetail::getProgramRunId, r -> r, (r1, r2) -> {
+        throw new IllegalStateException("Duplicate run record for " + r1.getProgramRunId());
+      }, LinkedHashMap::new));
   }
 
   /**
@@ -2331,22 +2332,20 @@ public class AppMetadataStore {
   }
 
   private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId, long startTs) {
-    return getProgramRunInvertedTimeKey(recordType, runId, startTs, true);
-  }
-
-  // TODO: CDAP-20031 use ProgramRunReference whenever version should be excluded from keys
-  private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId,
-                                                      long startTs, boolean includeVersion) {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, recordType));
-    if (includeVersion) {
-      addProgramPrimaryKeys(runId.getParent(), fields);
-    } else {
-      addProgramReferenceKeys(runId.getParent().getProgramReference(), fields);
-    }
-
+    addProgramPrimaryKeys(runId.getParent(), fields);
     fields.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsKeyPart(startTs)));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, runId.getRun()));
+    return fields;
+  }
+
+  private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunReference runRef, long startTs) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, recordType));
+    addProgramReferenceKeys(runRef.getParent(), fields);
+    fields.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsKeyPart(startTs)));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, runRef.getRun()));
     return fields;
   }
 

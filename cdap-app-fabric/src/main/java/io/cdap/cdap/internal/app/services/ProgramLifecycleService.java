@@ -308,7 +308,7 @@ public class ProgramLifecycleService {
     if (appMeta == null) {
       throw new ApplicationNotFoundException(programRunId.getParent().getAppReference());
     }
-    RunRecordDetail meta = store.getRun(programRunId);
+    RunRecordDetail meta = store.getRun(programRunId.getReference());
     if (meta == null) {
       throw new NotFoundException(programRunId);
     }

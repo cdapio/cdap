@@ -119,18 +119,17 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private void processApplicationDetail(NamespaceId namespaceId, ApplicationDetail appDetail)
     throws IOException, NotFoundException {
     String application = appDetail.getName();
-    ApplicationId applicationId = new ApplicationId(namespaceId.getNamespace(), application);
+    ApplicationId applicationId = new ApplicationId(namespaceId.getNamespace(), application, appDetail.getAppVersion());
 
     File appFolderPath = new File(basePath, appDetail.getName());
     DirUtils.mkdirs(appFolderPath);
     try (FileWriter file = new FileWriter(new File(appFolderPath, appDetail.getName() + ".json"))) {
       GSON.toJson(appDetail, file);
     }
-    ProgramId programId = new ProgramId(namespaceId.getNamespace(), appDetail.getName(), programType, programName);
+    ProgramId programId = applicationId.program(programType, programName);
     Iterable<RunRecord> runRecordList;
     if (runId != null) {
-      ProgramRunId programRunId =
-        new ProgramRunId(namespaceId.getNamespace(), appDetail.getName(), programType, programName, runId);
+      ProgramRunId programRunId = programId.run(runId);
       RunRecordDetail runRecordDetail = remoteProgramRunRecordFetcher.getRunRecordMeta(programRunId);
       runRecordList = Collections.singletonList(runRecordDetail);
     } else {

@@ -87,6 +87,10 @@ public class ProgramRunId extends NamespacedEntityId implements ParentedId<Progr
     return new ProgramId(new ApplicationId(getNamespace(), getApplication(), getVersion()), getType(), getProgram());
   }
 
+  public ProgramRunReference getReference() {
+    return new ProgramRunReference(namespace, application, type, program, run);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) {

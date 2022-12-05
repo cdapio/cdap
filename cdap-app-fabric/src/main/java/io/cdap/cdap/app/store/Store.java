@@ -47,6 +47,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.proto.id.WorkflowId;
 import org.apache.twill.api.RunId;
 
@@ -326,6 +327,15 @@ public interface Store {
    */
   @Nullable
   RunRecordDetail getRun(ProgramRunId id);
+
+  /**
+   * Fetches the run record for particular run of a program without version.
+   *
+   * @param runRef    versionless run id of the program
+   * @return          run record for the specified program and runRef, null if not found
+   */
+  @Nullable
+  RunRecordDetail getRun(ProgramRunReference runRef);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.

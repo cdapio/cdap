@@ -62,6 +62,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunReference;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.SortOrder;
@@ -485,6 +486,19 @@ public class DefaultStore implements Store {
   public RunRecordDetail getRun(ProgramRunId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRun(id);
+    });
+  }
+
+  /**
+   * Returns run record for a given run.
+   *
+   * @param runRef program run reference
+   * @return run record for run reference
+   */
+  @Override
+  public RunRecordDetail getRun(ProgramRunReference runRef) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getRun(runRef);
     });
   }
 
