@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.support.status;
 
-import org.jboss.netty.util.internal.ConcurrentHashMap;
+import org.jboss.netty.util.internal.ConcurrentIdentityHashMap;
 
 import java.util.Collections;
 import java.util.Set;
@@ -90,7 +90,7 @@ public class SupportBundleStatus {
     private Long finishTimestamp;
 
     private Builder() {
-      this.tasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+      this.tasks = Collections.newSetFromMap(new ConcurrentIdentityHashMap<>());
     }
 
     private Builder(SupportBundleStatus previousStatus) {
