@@ -47,7 +47,10 @@ RUN tar -zcvf /tmp/cdap-build-sources.tar.gz --exclude='.git*' --exclude='node_m
   mkdir /tmp/LICENSES/hadoop-aws-3.2.0 && jar xvf /tmp/connectors/hadoop-aws-3.2.0.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/hadoop-aws-3.2.0 && rm -r ./META-INF && \
   mkdir /tmp/LICENSES/aws-java-sdk-bundle-1.11.199 && jar xvf /tmp/connectors/aws-java-sdk-bundle-1.11.199.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/aws-java-sdk-bundle-1.11.199 && rm -r ./META-INF && \
   mkdir /tmp/LICENSES/jets3t-0.9.4 && curl -L -o /tmp/LICENSES/jets3t-0.9.4/LICENSE https://raw.githubusercontent.com/mondain/jets3t/master/LICENSE && \
-  mkdir /tmp/LICENSES/commons-lang-2.6 && jar xvf /tmp/connectors/commons-lang-2.6.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/commons-lang-2.6 && rm -r ./META-INF
+  mkdir /tmp/LICENSES/commons-lang-2.6 && jar xvf /tmp/connectors/commons-lang-2.6.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/commons-lang-2.6 && rm -r ./META-INF && \
+  curl -L -o /tmp/profiler_java_agent.tar.gz https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent.tar.gz && \
+  mkdir /tmp/cprof && tar xzv -C /tmp/cprof -f /tmp/profiler_java_agent.tar.gz
+
 
 FROM ${base_image} AS build
 
@@ -65,6 +68,9 @@ COPY cdap-distributions/src/COPYRIGHT /opt/cdap/LICENSES
 COPY --from=sources /tmp/cdap-build-sources.tar.gz /opt/cdap/cdap-build-sources.tar.gz
 COPY --from=sources /tmp/connectors /opt/cdap/cdap-spark-core/lib/
 COPY --from=sources /tmp/LICENSES /opt/cdap/LICENSES/
+# Copy profiler
+COPY --from=sources /tmp/cprof /opt/cprof
+
 
 USER ${spark_uid}
 
@@ -75,5 +81,7 @@ COPY cdap-authenticator-ext-gcp/target/libexec /opt/cdap/master/ext/authenticato
 
 # modified version of the Spark entrypoint that calls the CDAP SparkContainerLauncher
 COPY cdap-spark-core3_2.12/src/k8s/entrypoint.sh /opt/cdap/cdap-spark-core/entrypoint.sh
+
+EXPOSE 9010
 ENTRYPOINT [ "/opt/cdap/cdap-spark-core/entrypoint.sh" ]
 
