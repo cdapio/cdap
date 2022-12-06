@@ -24,8 +24,7 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -73,8 +72,8 @@ public class ProgramLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHa
                                       @PathParam("program-name") String programName,
                                       @PathParam("run-id") String runid) throws Exception {
     ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
-    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    RunRecordDetail runRecordMeta = programLifecycleService.getRunRecordMeta(programId.run(runid));
+    ProgramReference programRef = new ProgramReference(namespaceId, appName, programType, programName);
+    RunRecordDetail runRecordMeta = programLifecycleService.getRunRecordMeta(programRef, runid);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecordMeta));
   }
 }

@@ -47,6 +47,7 @@ import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -77,6 +78,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -295,6 +297,20 @@ public class DirectRuntimeRequestValidatorTest {
       }
       if (!runId.equals(runRecord.getProgramRunId())) {
         throw new NotFoundException(runId);
+      }
+      return runRecord;
+    }
+
+    @Override
+    public RunRecordDetail getRunRecordMeta(ProgramReference programRef, String runId) throws NotFoundException {
+      if (runRecord == null) {
+        throw new NotFoundException(String.format("No run record found for program %s and runID: %s",
+                                                  programRef, runId));
+      }
+      if (!Objects.equals(programRef, runRecord.getProgramRunId().getParent().getProgramReference())
+        || !Objects.equals(runId, runRecord.getProgramRunId().getRun())) {
+        throw new NotFoundException(String.format("No run record found for program %s and runID: %s",
+                                                  programRef, runId));
       }
       return runRecord;
     }

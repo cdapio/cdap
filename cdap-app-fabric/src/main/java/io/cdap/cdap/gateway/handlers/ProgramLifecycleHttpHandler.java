@@ -215,23 +215,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
-    ProgramId programId = new ApplicationId(namespaceId, appId, appVersion).program(ProgramType.MAPREDUCE, mapreduceId);
-    ProgramRunId run = programId.run(runId);
-    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
-    if (appSpec == null) {
-      throw new NotFoundException(programId.getApplication());
-    }
-    if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
-      throw new NotFoundException(programId);
-    }
+    ApplicationReference appRef = new ApplicationReference(namespaceId, appId);
+    ProgramReference programRef = appRef.program(ProgramType.MAPREDUCE, mapreduceId);
+    
     // runId is uuid, can be retrieved ignoring version
-    RunRecordDetail runRecordMeta = store.getRun(run);
+    RunRecordDetail runRecordMeta = store.getRun(programRef, runId);
     if (runRecordMeta == null || isTetheredRunRecord(runRecordMeta)) {
-      throw new NotFoundException(run);
+      throw new NotFoundException(String.format("No run record found for program %s and runID: %s", programRef, runId));
     }
 
-    MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(Id.Run.fromEntityId(run));
+    ApplicationId applicationId = appRef.app(runRecordMeta.getVersion());
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new NotFoundException(applicationId);
+    }
+    if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
+      throw new NotFoundException(programRef);
+    }
+
+    MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(Id.Run.fromEntityId(runRecordMeta.getProgramRunId()));
 
     mrJobInfo.setState(runRecordMeta.getStatus().name());
     // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
