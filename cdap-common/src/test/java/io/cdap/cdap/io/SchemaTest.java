@@ -28,7 +28,7 @@ import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.avro.LogicalType;
 import org.apache.avro.LogicalTypes;
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.codehaus.jackson.node.IntNode;
 import org.codehaus.jackson.node.TextNode;
 import org.junit.Assert;
