@@ -33,6 +33,7 @@ import io.cdap.cdap.logging.filter.MdcExpression;
 import io.cdap.cdap.logging.filter.OrFilter;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Collection;
@@ -174,8 +175,13 @@ public final class LoggingContextHelper {
 
   public static LoggingContext getLoggingContextWithRunId(ProgramRunId programRun,
                                                           @Nullable Map<String, String> systemArgs) {
-    return getLoggingContext(programRun.getNamespace(), programRun.getApplication(), programRun.getProgram(),
-                             programRun.getType(), programRun.getRun(), systemArgs);
+    return getLoggingContextWithRunId(programRun.getParent().getProgramReference(), programRun.getRun(), systemArgs);
+  }
+
+  public static LoggingContext getLoggingContextWithRunId(ProgramReference programRef, String runId,
+                                                          @Nullable Map<String, String> systemArgs) {
+    return getLoggingContext(programRef.getNamespace(), programRef.getApplication(), programRef.getProgram(),
+                             programRef.getType(), runId, systemArgs);
   }
 
   public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
