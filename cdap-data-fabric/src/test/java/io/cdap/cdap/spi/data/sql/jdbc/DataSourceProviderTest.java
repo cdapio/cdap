@@ -76,7 +76,7 @@ public class DataSourceProviderTest {
       }
       count++;
     }
-    Assert.assertEquals(2, count);
+    Assert.assertEquals(3, count);
     Assert.assertNotNull(loadedDriver);
   }
 
