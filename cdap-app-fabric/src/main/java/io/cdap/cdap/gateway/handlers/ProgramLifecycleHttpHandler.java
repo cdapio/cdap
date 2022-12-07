@@ -543,8 +543,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("program-type") String type,
                                @PathParam("program-name") String programName,
                                @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
-    programRunRecordVersioned(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type,
-                              programName, runid);
+    RunRecordDetail runRecordMeta = getRunRecordDetailFromId(namespaceId, appName, type, programName, runid);
+    if (!isTetheredRunRecord(runRecordMeta)) {
+      RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
+      return;
+    }
+    throw new NotFoundException(runRecordMeta.getProgramRunId());
   }
 
   /**
@@ -1244,8 +1249,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName,
                                      @PathParam("run-id") String runId) throws Exception {
-    updateLogLevels(request, responder, namespace, appName,
-                    getLatestAppVersion(new NamespaceId(namespace), appName), type, programName, runId);
+    RunRecordDetail run = getRunRecordDetailFromId(namespace, appName, type, programName, runId);
+    updateLogLevels(request, responder, namespace, appName, run.getVersion(), type, programName, runId);
   }
 
   /**
@@ -1279,8 +1284,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName,
                                     @PathParam("run-id") String runId) throws Exception {
-    resetLogLevels(request, responder, namespace, appName,
-                   getLatestAppVersion(new NamespaceId(namespace), appName), type, programName, runId);
+    RunRecordDetail run = getRunRecordDetailFromId(namespace, appName, type, programName, runId);
+    resetLogLevels(request, responder, namespace, appName, run.getVersion(), type, programName, runId);
   }
 
   /**
@@ -1297,6 +1302,28 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                              @PathParam("program-name") String programName,
                                              @PathParam("run-id") String runId) throws Exception {
     resetLogLevels(request, responder, namespace, appName, appVersion, type, programName, runId);
+  }
+
+  /**
+   * Fetches the run record for particular run of a program without version.
+   *
+   * @param namespace    namespace id
+   * @param appName      application name
+   * @param type         program type
+   * @param programName  program name
+   * @param runId        the run id
+   * @return          run record for the specified program and runRef, null if not found
+   */
+  private RunRecordDetail getRunRecordDetailFromId(String namespace, String appName,
+                                                   String type, String programName, String runId)
+    throws BadRequestException, NotFoundException {
+    ProgramType programType = getProgramType(type);
+    ProgramReference programRef = new ApplicationReference(namespace, appName).program(programType, programName);
+    RunRecordDetail runRecordMeta = store.getRun(programRef, runId);
+    if (runRecordMeta == null) {
+      throw new NotFoundException(String.format("No run record found for program %s and runID: %s", programRef, runId));
+    }
+    return runRecordMeta;
   }
 
   /**
