@@ -61,7 +61,7 @@ public class TetheringClientHandler extends AbstractHttpHandler {
     this.store = store;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.tetheringClient = new TetheringClient(remoteAuthenticator, cConf.get(Constants.INSTANCE_NAME));
+    this.tetheringClient = new TetheringClient(remoteAuthenticator, cConf);
   }
 
   /**
