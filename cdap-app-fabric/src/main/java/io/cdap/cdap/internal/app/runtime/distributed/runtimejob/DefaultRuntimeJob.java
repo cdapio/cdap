@@ -40,7 +40,9 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.DistributedProgramContainerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionDiscoveryModule;
+import io.cdap.cdap.app.guice.UnsupportedPluginFinder;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.program.Programs;
@@ -86,6 +88,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteIsolatedPluginFinder;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
@@ -96,6 +99,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
@@ -142,8 +146,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -184,11 +188,27 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramOptions programOpts = readJsonFile(
         new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
         ProgramOptions.class);
+
+    boolean isLocalWorkflow = Boolean.parseBoolean(
+      programOpts.getUserArguments().getOption("workflow.local", Boolean.FALSE.toString()));
+    boolean useLocalSpark = Boolean.parseBoolean(
+      programOpts.getUserArguments().getOption("spark.local", Boolean.FALSE.toString()));
+    Map<String, String> systemArgsMap = new HashMap<>(programOpts.getArguments().asMap());
+    if (useLocalSpark) {
+      systemArgsMap.put("spark.local", Boolean.TRUE.toString());
+      systemArgsMap.put("cdap.spark.distributed.mode", Boolean.FALSE.toString());
+    }
+    /*if (isLocalWorkflow) {
+      systemArgsMap.put("program.spark.distributed", Boolean.FALSE.toString());
+    }*/
+    Arguments systemArgs = new BasicArguments(systemArgsMap);
+
+    programOpts = new SimpleProgramOptions(programOpts.getProgramId(), systemArgs,
+                                           programOpts.getUserArguments(), programOpts.isDebug());
+
     ProgramRunId programRunId = programOpts.getProgramId()
         .run(ProgramRunners.getRunId(programOpts));
     ProgramId programId = programRunId.getParent();
-
-    Arguments systemArgs = programOpts.getArguments();
 
     // Setup logging context for the program
     LoggingContextAccessor.setLoggingContext(
@@ -223,14 +243,15 @@ public class DefaultRuntimeJob implements RuntimeJob {
     startCoreServices(coreServices);
 
     // regenerate app spec
-    ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
+    /*ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
 
     try {
       Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
       File pluginDir = new File(
           programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
               DistributedProgramRunner.PLUGIN_DIR));
-      // create a directory to store plugin artifacts for the regeneration of app spec to fetch plugin artifacts
+      // create a directory to store plugin artifacts for the regeneration of app spec
+      // to fetch plugin artifacts
       DirUtils.mkdirs(pluginDir);
 
       if (!programOpts.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
@@ -257,7 +278,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
         systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
       }
 
-      // if different, we will need to remove the plugin artifact archive argument from options and let program runner
+      // if different, we will need to remove the plugin artifact archive argument
+      // from options and let program runner
       // recreate it from the folders
       if (!pluginFiles.equals(pluginFilesAfter)) {
         systemArguments.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
@@ -270,7 +292,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     } catch (Exception e) {
       LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
           programId, e);
-    }
+    }*/
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
@@ -483,22 +505,79 @@ public class DefaultRuntimeJob implements RuntimeJob {
    */
   @VisibleForTesting
   List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf,
-      ProgramRunId programRunId,
-      ProgramOptions programOpts) {
+        ProgramRunId programRunId,
+        ProgramOptions programOpts) {
+
     List<Module> modules = new ArrayList<>();
+
+    boolean isLocalWorkflow =
+      Boolean.parseBoolean(programOpts.getUserArguments().getOption("workflow.local", "false"));
+    LOG.info("ashau - creating guice modules -- isDistributed = {}", isLocalWorkflow);
+
+    ProgramRuntimeProvider.Mode runtimeMode = ProgramRuntimeProvider.Mode.valueOf(
+      programOpts.getUserArguments().getOption("program.runtime.mode", ProgramRuntimeProvider.Mode.DISTRIBUTED.name()));
+
+    // hack for workflow
+    if (isLocalWorkflow) {
+      Configuration hConf = new Configuration();
+
+      modules.add(new DistributedProgramContainerModule(cConf, hConf, programRunId, programOpts, null));
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+        }
+      });
+
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
+          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+          // Bindings from the environment
+          bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+            .toInstance(runtimeJobEnv.getTwillRunner());
+
+          // Bind ProgramRunner for MR, which is used by Workflow.
+          // The ProgramRunner for Spark is provided by the DefaultProgramRunnerFactory through the extension mechanism
+          MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
+            MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+          runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
+          runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
+
+          // It uses local mode factory because for Workflow we launch the job from the Workflow container directly.
+          // The actual execution mode of the job is governed by the framework configuration
+          // For mapreduce, it's in the mapred-site.xml
+          // for spark, it's in the hConf we shipped from DistributedWorkflowProgramRunner
+          bind(ProgramRuntimeProvider.Mode.class).toInstance(runtimeMode);
+          bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+            .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+          bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+
+          install(
+            new FactoryModuleBuilder()
+              .implement(Configurator.class, InMemoryConfigurator.class)
+              .build(ConfiguratorFactory.class)
+          );
+
+          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+          bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
+        }
+      });
+
+      return modules;
+    }
+
     modules.add(new ConfigModule(cConf));
-
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
-        programOpts);
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
     modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
-
+    modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
     modules.add(new IOModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new RemoteExecutionDiscoveryModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-    modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
 
     modules.add(new AbstractModule() {
       @Override
@@ -514,19 +593,15 @@ public class DefaultRuntimeJob implements RuntimeJob {
         MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
             binder(), ProgramType.class, ProgramRunner.class);
 
-        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
-        bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-            .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-        bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class)
-            .in(Scopes.SINGLETON);
-        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(runtimeMode);
 
-        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE)
-            .to(DistributedMapReduceProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW)
-            .to(DistributedWorkflowProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER)
-            .to(DistributedWorkerProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+
+        bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+          .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);

@@ -193,6 +193,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     try {
       LOG.debug("Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
+      LOG.info("ashau - Calling SparkSubmit for {} {}: {}",
+                runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args), new Exception());
       // Explicitly set the SPARK_SUBMIT property as it is no longer set on the System properties by the SparkSubmit
       // after the class rewrite. This property only control logging of a warning when submitting the Spark job,
       // hence it's harmless to just leave it there.

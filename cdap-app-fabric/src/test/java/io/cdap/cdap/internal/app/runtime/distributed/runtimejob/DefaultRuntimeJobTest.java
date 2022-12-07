@@ -19,14 +19,18 @@ package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
+import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -62,11 +66,13 @@ public class DefaultRuntimeJobTest {
     Node node = new Node("test", Node.Type.MASTER, "127.0.0.1", System.currentTimeMillis(), Collections.emptyMap());
     Cluster cluster = new Cluster("test", ClusterStatus.RUNNING, Collections.singleton(node), Collections.emptyMap());
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    SimpleProgramOptions programOpts = new SimpleProgramOptions(programRunId.getParent(), systemArgs,
-                                                                new BasicArguments());
+    Arguments userArgs = new BasicArguments(Collections.singletonMap("workflow.local", "true"));
+    Arguments sysArgs = new BasicArguments(Collections.singletonMap("program.spark.distributed", "false"));
+    //Arguments userArgs = new BasicArguments();
+    SimpleProgramOptions programOpts = new SimpleProgramOptions(programRunId.getParent(), sysArgs,
+                                                                userArgs);
 
-    Injector injector = Guice.createInjector(defaultRuntimeJob.createModules(new RuntimeJobEnvironment() {
-
+    RuntimeJobEnvironment runtimeJobEnvironment = new RuntimeJobEnvironment() {
       @Override
       public LocationFactory getLocationFactory() {
         return locationFactory;
@@ -81,9 +87,15 @@ public class DefaultRuntimeJobTest {
       public Map<String, String> getProperties() {
         return Collections.emptyMap();
       }
-    }, cConf, programRunId, programOpts));
+    };
+    Injector injector = Guice.createInjector(
+      defaultRuntimeJob.createModules(runtimeJobEnvironment, cConf, programRunId, programOpts));
 
     injector.getInstance(LogAppenderInitializer.class);
     defaultRuntimeJob.createCoreServices(injector, systemArgs, cluster);
+    injector.getInstance(ConfiguratorFactory.class);
+    ProgramRunnerFactory programRunnerFactory = injector.getInstance(ProgramRunnerFactory.class);
+    ProgramRunner programRunner = programRunnerFactory.create(ProgramType.SPARK);
+    int x = 0;
   }
 }

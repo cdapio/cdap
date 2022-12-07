@@ -184,6 +184,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   @Override
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
+    LOG.info("ashau - running distributed program", new Exception());
+    LOG.info("ashau - program = {}", program);
+    LOG.info("ashau - options = {}", oldOptions);
     validateOptions(program, oldOptions);
 
     CConfiguration cConf = CConfiguration.copy(this.cConf);
@@ -435,6 +438,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
             DistributedProgramRunner.this.getClass().getClassLoader(),
             extraDependencies.stream().map(Class::getClassLoader)::iterator));
         try {
+          LOG.info("ashau - starting twill application with TwillPreparer.start()", new Exception());
+          LOG.info("ashau - launch config = {}", launchConfig);
           twillController = twillPreparer.start(
               cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
               TimeUnit.SECONDS);

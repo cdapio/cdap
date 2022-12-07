@@ -132,6 +132,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {
       try {
+        LOG.info("ashau - dispatching run", new Exception());
         controller.setProgramController(
             programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
                 .dispatchProgram(dispatcherContext));

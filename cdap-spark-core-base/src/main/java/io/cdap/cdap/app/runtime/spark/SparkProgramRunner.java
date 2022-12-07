@@ -72,6 +72,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -80,6 +81,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
@@ -121,7 +123,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      MetricsCollectionService metricsCollectionService,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
-                     MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
+                     MessagingService messagingService, //ServiceAnnouncer serviceAnnouncer,
                      PluginFinder pluginFinder, MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                      FieldLineageWriter fieldLineageWriter, NamespaceQueryAdmin namespaceQueryAdmin,
                      RemoteClientFactory remoteClientFactory,
@@ -139,7 +141,27 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
-    this.serviceAnnouncer = serviceAnnouncer;
+    this.serviceAnnouncer = new ServiceAnnouncer() {
+      @Override
+      public Cancellable announce(String s, int i) {
+        return new Cancellable() {
+          @Override
+          public void cancel() {
+
+          }
+        };
+      }
+
+      @Override
+      public Cancellable announce(String s, int i, byte[] bytes) {
+        return new Cancellable() {
+          @Override
+          public void cancel() {
+
+          }
+        };
+      }
+    };
     this.pluginFinder = pluginFinder;
     this.metadataReader = metadataReader;
     this.fieldLineageWriter = fieldLineageWriter;
@@ -152,6 +174,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
+    LOG.info("ashau - Starting Spark program {} with SparkProgramRunner of ClassLoader {}",
+              program.getId(), getClass().getClassLoader(), new Exception());
     LOG.trace("Starting Spark program {} with SparkProgramRunner of ClassLoader {}",
               program.getId(), getClass().getClassLoader());
 
@@ -174,6 +198,9 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getName());
 
       String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
+      if (host == null) {
+        host = InetAddress.getLocalHost().getCanonicalHostName();
+      }
       Preconditions.checkArgument(host != null, "No hostname is provided");
 
       // Get the WorkflowProgramInfo if it is started by Workflow
@@ -213,7 +240,14 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         throw Throwables.propagate(e);
       }
 
-      boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
+      boolean isLocal;
+      String isLocalStr = options.getUserArguments().getOption("spark.local");
+      if (isLocalStr != null) {
+        isLocal = Boolean.parseBoolean(isLocalStr);
+      } else {
+        isLocal = SparkRuntimeContextConfig.isLocal(options);
+      }
+      LOG.error("ashau - isLocal = {}", isLocal);
       SparkSubmitter submitter;
       // If MasterEnvironment is not available, use non-master env spark submitters
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();

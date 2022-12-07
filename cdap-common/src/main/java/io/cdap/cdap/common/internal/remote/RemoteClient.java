@@ -46,12 +46,16 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Discovers a remote service and resolves URLs to that service.
@@ -59,6 +63,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
 
   private final InternalAuthenticator internalAuthenticator;
   private final EndpointStrategy endpointStrategy;
@@ -210,6 +215,7 @@ public class RemoteClient {
    * Opens a {@link HttpURLConnection} for the given resource path.
    */
   public HttpURLConnection openConnection(String resource) throws IOException {
+    boolean logHeaders = resource.contains("namespaces/system/apps/pipeline");
     URL url = resolve(resource);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
@@ -228,7 +234,14 @@ public class RemoteClient {
     }
 
     internalAuthenticator.applyInternalAuthenticationHeaders(urlConn::setRequestProperty);
-
+    if (logHeaders) {
+      LOG.error("ashau - opening connection to {}", url);
+      for (Map.Entry<String, List<String>> headerEntry : urlConn.getRequestProperties().entrySet()) {
+        for (String header : headerEntry.getValue()) {
+          LOG.error("ashau - header {} = {}", headerEntry.getKey(), header);
+        }
+      }
+    }
     return urlConn;
   }
 

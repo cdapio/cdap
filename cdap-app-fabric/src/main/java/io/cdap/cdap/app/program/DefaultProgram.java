@@ -95,4 +95,13 @@ public class DefaultProgram implements Program {
       ((Closeable) classLoader).close();
     }
   }
+
+  @Override
+  public String toString() {
+    return "DefaultProgram{" +
+      "programDescriptor=" + programDescriptor +
+      ", jarLocation=" + jarLocation +
+      ", classLoader=" + classLoader +
+      '}';
+  }
 }

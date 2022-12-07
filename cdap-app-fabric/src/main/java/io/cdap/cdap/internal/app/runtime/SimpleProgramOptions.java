@@ -65,4 +65,14 @@ public final class SimpleProgramOptions implements ProgramOptions {
   public boolean isDebug() {
     return debug;
   }
+
+  @Override
+  public String toString() {
+    return "SimpleProgramOptions{" +
+      "programId=" + programId +
+      ", arguments=" + arguments +
+      ", userArguments=" + userArguments +
+      ", debug=" + debug +
+      '}';
+  }
 }

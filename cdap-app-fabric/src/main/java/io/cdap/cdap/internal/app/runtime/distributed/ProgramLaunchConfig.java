@@ -170,4 +170,18 @@ public final class ProgramLaunchConfig {
         .setInstances(instances)
         .build();
   }
+
+  @Override
+  public String toString() {
+    return "ProgramLaunchConfig{" +
+      "extraResources=" + extraResources +
+      ", extraClasspath=" + extraClasspath +
+      ", extraEnv=" + extraEnv +
+      ", runnables=" + runnables +
+      ", launchOrder=" + launchOrder +
+      ", extraDependencies=" + extraDependencies +
+      ", extraSystemArguments=" + extraSystemArguments +
+      ", classAcceptor=" + classAcceptor +
+      '}';
+  }
 }

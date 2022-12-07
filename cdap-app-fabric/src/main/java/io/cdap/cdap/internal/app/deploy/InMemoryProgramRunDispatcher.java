@@ -186,6 +186,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext)
       throws Exception {
     RunId runId = dispatcherContext.getRunId();
+    LOG.info("ashau - dispatching run with InMemoryProgramRunDispatcher", new Exception());
     LOG.debug("Preparing to dispatch program run: {}", runId);
     ProgramDescriptor programDescriptor = dispatcherContext.getProgramDescriptor();
     ProgramOptions options = dispatcherContext.getProgramOptions();

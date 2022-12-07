@@ -85,10 +85,10 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
   @VisibleForTesting
   public DistributedSparkProgramRunner(SparkCompat sparkComat, CConfiguration cConf, YarnConfiguration hConf,
                                        Impersonator impersonator, LocationFactory locationFactory,
-                                       ClusterMode clusterMode,
+                                       //ClusterMode clusterMode,
                                        @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
                                        Injector injector) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner, locationFactory);
+    super(cConf, hConf, impersonator, ClusterMode.ISOLATED, twillRunner, locationFactory);
     this.sparkCompat = sparkComat;
     this.locationFactory = locationFactory;
     if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
@@ -158,9 +158,17 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
     // We only need to setup localization to (yarn) container when this program runner
     // is running in the remote runtime process
     // Add extra resources, classpath, dependencies, env and setup ClassAcceptor
-    if (clusterMode == ClusterMode.ON_PREMISE || cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+    LOG.error("ashau - remove runner = {}", cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false));
+    String distributedStr = options.getArguments().getOption("program.spark.distributed", Boolean.TRUE.toString());
+    boolean isDistributed = Boolean.parseBoolean(distributedStr);
+    if (clusterMode == ClusterMode.ON_PREMISE || !isDistributed ||
+      cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      LOG.error("ashau - preparing spark resources");
       SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
+      for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
+        LOG.error("ashau - localize resource {} = {}", entry.getKey(), entry.getValue());
+      }
 
       // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
       MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
@@ -173,7 +181,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
     launchConfig
       .addExtraEnv(extraEnv)
       .addExtraDependencies(SparkProgramRuntimeProvider.class)
-      .addExtraSystemArgument(SparkRuntimeContextConfig.DISTRIBUTED_MODE, Boolean.TRUE.toString())
+      .addExtraSystemArgument(SparkRuntimeContextConfig.DISTRIBUTED_MODE, distributedStr)
       .setClassAcceptor(createBundlerClassAcceptor());
   }
 

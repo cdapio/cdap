@@ -61,4 +61,11 @@ public final class BasicArguments implements Arguments {
   public Iterator<Map.Entry<String, String>> iterator() {
     return options.entrySet().iterator();
   }
+
+  @Override
+  public String toString() {
+    return "BasicArguments{" +
+      "options=" + options +
+      '}';
+  }
 }
