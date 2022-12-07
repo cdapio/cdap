@@ -7,8 +7,7 @@ Here are instructions to get you started if you want to contribute to CDAP.
 Security Reports
 ================
 
-Please *DO NOT* file an issue for security related problems. 
-Please send your reports to `security@cask.co <mailto:security@cask.co>`__.
+Please see SECURITY.md for reporting security vulnerabilities.
 
 Creating Issues
 ===============
