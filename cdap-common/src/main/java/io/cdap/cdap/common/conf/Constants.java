@@ -2016,10 +2016,19 @@ public final class Constants {
     public static final String CONNECTION_INTERVAL = "tethering.agent.connection.interval.secs";
 
     /**
-     * Tethering connection timeout.
+     * Tethering connection is deemed down if we haven't heard from the peer within this timeout.
      */
     public static final String CONNECTION_TIMEOUT_SECONDS = "tethering.connection.timeout.seconds";
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
+
+    /**
+     * Specifies the timeout for establishing a connection with the tethering server.
+     */
+    public static final String CLIENT_CONNECTION_TIMEOUT_MS = "tethering.client.connection.timeout.ms";
+    /**
+     * Specifies the timeout for reading data from the tethering server after the connection is established.
+     */
+    public static final String CLIENT_READ_TIMEOUT_MS = "tethering.client.read.timeout.ms";
 
     /**
      * Maximum number of control messages sent by tethering server on poll.
