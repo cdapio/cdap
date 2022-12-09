@@ -22,6 +22,8 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
@@ -46,8 +48,6 @@ import javax.annotation.Nullable;
  * Tethering client.
  */
 public final class TetheringClient {
-  // Connection timeout = 5 seconds.
-  private static final int TIMEOUT_MS = 5000;
   private static final String CONNECT_CONTROL_CHANNEL = "v3/tethering/channels/";
   private static final String CREATE_TETHER = "v3/tethering/connections/";
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -57,10 +57,21 @@ public final class TetheringClient {
 
   private final RemoteAuthenticator remoteAuthenticator;
   private final String instanceName;
+  private final int connectionTimeout;
+  private final int readTimeout;
 
-  public TetheringClient(RemoteAuthenticator remoteAuthenticator, String instanceName) {
+  public TetheringClient(RemoteAuthenticator remoteAuthenticator, CConfiguration cConf) {
+    this(remoteAuthenticator, cConf.get(Constants.INSTANCE_NAME),
+         cConf.getInt(Constants.Tethering.CLIENT_CONNECTION_TIMEOUT_MS),
+         cConf.getInt(Constants.Tethering.CLIENT_READ_TIMEOUT_MS));
+  }
+
+  public TetheringClient(RemoteAuthenticator remoteAuthenticator, String instanceName,
+                         int connectionTimeout, int readTimeout) {
     this.remoteAuthenticator = remoteAuthenticator;
     this.instanceName = instanceName;
+    this.connectionTimeout = connectionTimeout;
+    this.readTimeout = readTimeout;
   }
 
   /**
@@ -158,7 +169,7 @@ public final class TetheringClient {
                           String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
       }
     }
-    return HttpRequests.execute(builder.build(), new HttpRequestConfig(TIMEOUT_MS, TIMEOUT_MS));
+    return HttpRequests.execute(builder.build(), new HttpRequestConfig(connectionTimeout, readTimeout));
   }
 
   private String appendPath(String base, String path) {
