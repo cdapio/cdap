@@ -65,7 +65,7 @@ public class RemoteIsolatedPluginFinder extends RemotePluginFinder {
                                artifactId.getNamespace(),
                                artifactId.getArtifact(),
                                artifactId.getVersion(),
-                               artifactId.getNamespace().equals(NamespaceId.SYSTEM) ?
+                               artifactId.getNamespace().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace()) ?
                                  ArtifactScope.SYSTEM.name().toLowerCase() : ArtifactScope.USER.name().toLowerCase());
 
     HttpURLConnection urlConn = remoteClientInternal.openConnection(HttpMethod.GET, url);

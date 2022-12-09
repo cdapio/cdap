@@ -519,6 +519,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
       collector.addFailure(errorMessage, correctiveAction)
         .withPluginNotFound(stageName, pluginName, type, requestedArtifactId, suggestedArtifactId);
+      LOG.info("Requested artifact {} cannot be found, suggest to use {}", requestedArtifactId, suggestedArtifactId);
 
       // throw validation exception if the plugin is not initialized
       collector.getOrThrowException();
