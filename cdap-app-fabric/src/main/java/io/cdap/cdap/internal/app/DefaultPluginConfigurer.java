@@ -37,6 +37,8 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,7 +52,7 @@ import javax.annotation.Nullable;
  * Abstract base implementation of {@link PluginConfigurer}.
  */
 public class DefaultPluginConfigurer implements PluginConfigurer {
-
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPluginConfigurer.class);
   protected final PluginInstantiator pluginInstantiator;
   protected final Map<String, PluginWithLocation> plugins;
   protected final NamespaceId pluginNamespaceId;
@@ -81,7 +83,10 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     try {
       Plugin plugin = addPlugin(pluginType, pluginName, pluginId, properties, selector);
       return pluginInstantiator.newInstance(plugin);
-    } catch (PluginNotExistsException | IOException e) {
+    } catch (PluginNotExistsException e) {
+      return null;
+    } catch (IOException e) {
+      LOG.error("Unexpected error while instantiating {} plugin {}", pluginType, pluginName, e);
       return null;
     } catch (ClassNotFoundException e) {
       // Shouldn't happen
@@ -96,7 +101,10 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     try {
       Plugin plugin = addPlugin(pluginType, pluginName, pluginId, properties, selector);
       return pluginInstantiator.loadClass(plugin);
-    } catch (PluginNotExistsException | IOException e) {
+    } catch (PluginNotExistsException e) {
+      return null;
+    } catch (IOException e) {
+      LOG.error("Unexpected error while instantiating {} plugin {}", pluginType, pluginName, e);
       return null;
     } catch (ClassNotFoundException e) {
       // Shouldn't happen
