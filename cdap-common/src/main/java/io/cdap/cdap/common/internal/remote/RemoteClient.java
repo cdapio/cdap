@@ -20,6 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
+import io.cdap.cdap.api.common.Constants;
 import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -114,16 +115,14 @@ public class RemoteClient {
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
-      switch (response.getResponseCode()) {
-        case HttpURLConnection.HTTP_BAD_GATEWAY:
-        case HttpURLConnection.HTTP_UNAVAILABLE:
-        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
-          throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
-        case HttpURLConnection.HTTP_FORBIDDEN:
-          throw new UnauthorizedException(response.getResponseBodyAsString());
-        default:
-          return response;
+      int responseCode = response.getResponseCode();
+      if (Constants.RETRYABLE_HTTP_CODES.contains(responseCode)) {
+        throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
       }
+      if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
+        throw new UnauthorizedException(response.getResponseBodyAsString());
+      }
+      return response;
     } catch (ConnectException e) {
       throw new ServiceUnavailableException(discoverableServiceName, e);
     }
