@@ -150,6 +150,7 @@ public class AppMetadataStore {
 
   private final StructuredTableContext context;
   private StructuredTable applicationSpecificationTable;
+  private StructuredTable applicationEditTable;
   private StructuredTable workflowNodeStateTable;
   private StructuredTable runRecordsTable;
   private StructuredTable workflowsTable;
@@ -176,6 +177,17 @@ public class AppMetadataStore {
       throw new RuntimeException(e);
     }
     return applicationSpecificationTable;
+  }
+
+  private StructuredTable getApplicationEditTable() {
+    try {
+      if (applicationEditTable == null) {
+        applicationEditTable = context.getTable(StoreDefinition.AppMetadataStore.APPLICATION_EDIT);
+      }
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+    return applicationEditTable;
   }
 
   private StructuredTable getWorkflowNodeStateTable() {
@@ -265,33 +277,27 @@ public class AppMetadataStore {
     throws IOException {
 
     Range.Bound startBound = Range.Bound.INCLUSIVE;
-    Collection<Field<?>> startFields = request.getNamespaceId() == null ? Collections.emptyList() :
-      Collections.singletonList(Fields.stringField(
-        StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
-        request.getNamespaceId().getNamespace()));
     Range.Bound endBound = Range.Bound.INCLUSIVE;
+    Collection<Field<?>> startFields = Collections.emptyList();
+
+    if (request.getApplication() != null) {
+      ApplicationReference appRefToScan = new ApplicationReference(request.getNamespaceId(), request.getApplication());
+      startFields = getNamespaceApplicationKeys(appRefToScan);
+    } else if (request.getNamespaceId() != null) {
+      startFields = Collections.singletonList(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
+                                                                 request.getNamespaceId().getNamespace()));
+    }
+
     Collection<Field<?>> endFields = startFields;
     boolean sortCreationTime = request.getSortCreationTime();
 
     if (request.getScanFrom() != null) {
-      if (request.getNamespaceId() != null &&
-        !request.getNamespaceId().equals(request.getScanFrom().getNamespaceId())) {
-        throw new IllegalArgumentException("Requested to start scan from application " + request.getScanFrom() +
-          " that is outside of scan namespace " + request.getNamespaceId()
-        );
-      }
       startBound = Range.Bound.EXCLUSIVE;
       startFields = sortCreationTime ?
         getApplicationNamespaceAppCreationKeys(request.getScanFrom()) :
         getApplicationPrimaryKeys(request.getScanFrom());
     }
     if (request.getScanTo() != null) {
-      if (request.getNamespaceId() != null &&
-        !request.getNamespaceId().equals(request.getScanTo().getNamespaceId())) {
-        throw new IllegalArgumentException("Requested to finish scan at application " + request.getScanTo() +
-                                             " that is outside of scan namespace " + request.getNamespaceId()
-        );
-      }
       endBound = Range.Bound.EXCLUSIVE;
       endFields = sortCreationTime ?
         getApplicationNamespaceAppCreationKeys(request.getScanTo()) :
@@ -361,15 +367,6 @@ public class AppMetadataStore {
     return table.scan(range, Integer.MAX_VALUE, sortOrder);
   }
 
-  public List<ApplicationMeta> getAllApplications(String namespaceId) throws IOException {
-    return
-      scanWithRange(
-        getNamespaceRange(namespaceId),
-        ApplicationMeta.class,
-        getApplicationSpecificationTable(),
-        StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
-  }
-
   public long getApplicationCount() throws IOException {
     // Get number of applications where namespace != SYSTEM (exclude system applications)
     Collection<Field<?>> fields = ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
@@ -384,13 +381,12 @@ public class AppMetadataStore {
 
   @Nullable
   public ApplicationMeta getLatest(ApplicationReference appReference) throws IOException {
-    Range range = getNamespaceAndApplicationRange(appReference);
-    // scan based on: latest field set to true
-    Field<?> indexField = Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true);
+    Range range = getLatestApplicationRange(appReference);
     StructuredTable appSpecTable = getApplicationSpecificationTable();
 
+    // Get the most recently created latest version
     try (CloseableIterator<StructuredRow> iterator =
-           appSpecTable.scan(range, 1, Collections.singletonList(indexField))) {
+           appSpecTable.scan(range, 1, StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD, SortOrder.DESC)) {
       if (iterator.hasNext()) {
         // There must be only one entry corresponding to latest = true
         return decodeRow(iterator.next());
@@ -416,14 +412,6 @@ public class AppMetadataStore {
     }
     // This is the case when the app currently doesn't exist
     return null;
-  }
-
-  public List<ApplicationMeta> getAllAppVersions(ApplicationReference appRef) throws IOException {
-    return scanWithRange(
-      getNamespaceAndApplicationRange(appRef),
-      ApplicationMeta.class,
-      getApplicationSpecificationTable(),
-      StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
   }
 
   public List<ApplicationId> getAllAppVersionsAppIds(ApplicationReference appRef) throws IOException {
@@ -597,9 +585,24 @@ public class AppMetadataStore {
 
   @VisibleForTesting
   void writeApplication(String namespaceId, String appId, String versionId,
-                               ApplicationSpecification spec, @Nullable ChangeDetail change) throws IOException {
+                        ApplicationSpecification spec, @Nullable ChangeDetail change) throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId,
                                GSON.toJson(new ApplicationMeta(appId, spec, null)), change);
+    updateApplicationEdit(namespaceId, appId);
+  }
+
+  /**
+   * Get the edit number of an application.
+   *
+   * @param appRef the application reference to fetch edit for
+   * @throws IOException if failed to fetch edit number
+   */
+  public int getApplicationEditNumber(ApplicationReference appRef) throws IOException {
+    List<Field<?>> fields = getNamespaceApplicationKeys(appRef);
+    return getApplicationEditTable()
+      .read(fields)
+      .map(row -> row.getInteger(StoreDefinition.AppMetadataStore.EDIT_NUM_FIELD))
+      .orElse(0);
   }
 
   /**
@@ -623,6 +626,11 @@ public class AppMetadataStore {
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     getApplicationSpecificationTable().delete(fields);
+  }
+
+  public void deleteApplicationEditRecord(ApplicationReference appRef) throws IOException {
+    List<Field<?>> fields = getNamespaceApplicationKeys(appRef);
+    getApplicationEditTable().delete(fields);
   }
 
   public void deleteApplications(String namespaceId)
@@ -1774,7 +1782,8 @@ public class AppMetadataStore {
                                                               @Nullable Predicate<RunRecordDetail> predicate,
                                                               int limit) throws IOException {
     CloseableIterator<StructuredRow> iterator = getRunRecordsTable()
-      .scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE);
+      .scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE,
+            StoreDefinition.AppMetadataStore.RUN_START_TIME, SortOrder.ASC);
 
     return new AbstractCloseableIterator<RunRecordDetail>() {
 
@@ -2086,6 +2095,7 @@ public class AppMetadataStore {
     deleteTable(getWorkflowsTable(), StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
     deleteTable(getProgramCountsTable(), StoreDefinition.AppMetadataStore.COUNT_TYPE);
     deleteTable(getSubscriberStateTable(), StoreDefinition.AppMetadataStore.SUBSCRIBER_TOPIC);
+    deleteTable(getApplicationEditTable(), StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
   }
 
   private void deleteTable(StructuredTable table, String firstKey) throws IOException {
@@ -2114,6 +2124,13 @@ public class AppMetadataStore {
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appName));
     fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+    return fields;
+  }
+
+  private List<Field<?>> getNamespaceApplicationKeys(ApplicationReference appRef) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, appRef.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appRef.getApplication()));
     return fields;
   }
 
@@ -2148,6 +2165,14 @@ public class AppMetadataStore {
         Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appRef.getApplication())));
   }
 
+  private Range getLatestApplicationRange(ApplicationReference appReference) {
+    return Range.singleton(
+      ImmutableList.of(
+        Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, appReference.getNamespace()),
+        Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appReference.getApplication()),
+        Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true)));
+  }
+
   private void writeApplicationSerialized(String namespaceId, String appId, String versionId,
                                           String serialized, @Nullable ChangeDetail change)
     throws IOException {
@@ -2161,6 +2186,16 @@ public class AppMetadataStore {
     }
     fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
     getApplicationSpecificationTable().upsert(fields);
+  }
+
+  private void updateApplicationEdit(String namespaceId, String appId)
+    throws IOException {
+    int existingEdit = getApplicationEditNumber(new ApplicationReference(namespaceId, appId));
+    int editNum = 1 + existingEdit;
+    List<Field<?>> fields = getNamespaceApplicationKeys(new ApplicationReference(namespaceId, appId));
+    fields.add(Fields.intField(StoreDefinition.AppMetadataStore.EDIT_NUM_FIELD, editNum));
+    // Upsert the edit number
+    getApplicationEditTable().upsert(fields);
   }
 
   private void updateApplicationSerialized(String namespaceId, String appId, String versionId, String serialized)
