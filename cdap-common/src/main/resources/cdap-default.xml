@@ -5937,4 +5937,15 @@
     </description>
   </property>
 
+  <!-- Configurations for SQL dialect conversion SPI -->
+  <property>
+    <name>sqldialect.extensions.dir</name>
+    <value>/opt/cdap/master/ext/sqldialectconverters</value>
+  </property>
+
+  <property>
+    <name>sqldialect.implementation</name>
+    <value>calcite</value>
+  </property>
+
 </configuration>
