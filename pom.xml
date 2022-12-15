@@ -1294,6 +1294,10 @@
         <version>${hive.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>org.apache.ivy</groupId>
+            <artifactId>ivy</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -1500,6 +1504,10 @@
         <version>${spark3.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>org.apache.ivy</groupId>
+            <artifactId>ivy</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -1551,6 +1559,10 @@
         <artifactId>spark-core_2.11</artifactId>
         <version>${spark2.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>org.apache.ivy</groupId>
+            <artifactId>ivy</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
