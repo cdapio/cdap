@@ -623,14 +623,14 @@ public class AppFabricClient {
 
   public void enableSchedule(ScheduleId scheduleId) throws Exception {
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/versions/%s/program-type/schedules/program-id/%s/action/enable",
-                               getNamespacePath(scheduleId.getNamespace()), scheduleId.getVersion(),
-                               scheduleId.getApplication(), scheduleId.getSchedule());
+    String uri = String.format("%s/apps/%s/program-type/schedules/program-id/%s/action/enable",
+                               getNamespacePath(scheduleId.getNamespace()), scheduleId.getApplication(),
+                               scheduleId.getSchedule());
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     HttpUtil.setContentLength(request, 0);
-    programLifecycleHttpHandler.performActionVersioned(request, responder, scheduleId.getNamespace(),
-                                              scheduleId.getApplication(), scheduleId.getVersion(),
-                                              "schedules", scheduleId.getSchedule(), "enable");
+    programLifecycleHttpHandler.performAction(request, responder, scheduleId.getNamespace(),
+                                              scheduleId.getApplication(), "schedules",
+                                              scheduleId.getSchedule(), "enable");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Enable schedule failed");
   }
 

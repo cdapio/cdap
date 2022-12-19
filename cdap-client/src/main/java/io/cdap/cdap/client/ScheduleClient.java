@@ -129,8 +129,8 @@ public class ScheduleClient {
 
   public void suspend(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
     UnauthorizedException {
-    String path = String.format("apps/%s/versions/%s/schedules/%s/suspend", scheduleId.getApplication(),
-                                scheduleId.getVersion(), scheduleId.getSchedule());
+    String path = String.format("apps/%s/schedules/%s/suspend", scheduleId.getApplication(),
+                                scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -141,8 +141,8 @@ public class ScheduleClient {
 
   public void resume(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
     UnauthorizedException {
-    String path = String.format("apps/%s/versions/%s/schedules/%s/resume", scheduleId.getApplication(),
-                                scheduleId.getVersion(), scheduleId.getSchedule());
+    String path = String.format("apps/%s/schedules/%s/resume", scheduleId.getApplication(),
+                                scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -158,8 +158,8 @@ public class ScheduleClient {
    */
   public void delete(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
     UnauthorizedException {
-    String path = String.format("apps/%s/versions/%s/schedules/%s", scheduleId.getApplication(),
-                                scheduleId.getVersion(), scheduleId.getSchedule());
+    String path = String.format("apps/%s/schedules/%s", scheduleId.getApplication(),
+                                scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -170,8 +170,8 @@ public class ScheduleClient {
 
   public String getStatus(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
     UnauthorizedException {
-    String path = String.format("apps/%s/versions/%s/schedules/%s/status", scheduleId.getApplication(),
-                                scheduleId.getVersion(), scheduleId.getSchedule());
+    String path = String.format("apps/%s/schedules/%s/status", scheduleId.getApplication(),
+                                scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getParent().getParent(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -208,8 +208,7 @@ public class ScheduleClient {
   private void doAdd(ScheduleId scheduleId, String json)  throws IOException,
     UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
 
-    String path = String.format("apps/%s/versions/%s/schedules/%s",
-                                scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
+    String path = String.format("apps/%s/schedules/%s", scheduleId.getApplication(), scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpRequest request = HttpRequest.put(url).withBody(json).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
@@ -225,8 +224,8 @@ public class ScheduleClient {
   private void doUpdate(ScheduleId scheduleId, String json) throws IOException,
     UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
 
-    String path = String.format("apps/%s/versions/%s/schedules/%s/update",
-                                scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
+    String path = String.format("apps/%s/schedules/%s/update", scheduleId.getApplication(),
+                                scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpRequest request = HttpRequest.post(url).withBody(json).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),

@@ -105,6 +105,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -932,7 +933,7 @@ public abstract class AppFabricTestBase {
   }
 
   /**
-   * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
+   * Tries to debug the given program with the given runtime arguments and expect the call completed with the status.
    */
   protected void debugProgram(Id.Program program, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/%s/%s/debug",
@@ -940,6 +941,19 @@ public abstract class AppFabricTestBase {
                                 program.getType().getCategoryName(),
                                 program.getId());
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()),
+                                   GSON.toJson(ImmutableMap.<String, String>of()));
+    assertResponseCode(expectedStatusCode, response);
+  }
+
+  /**
+   * Tries to debug the given program with the given runtime arguments and expect the call completed with the status.
+   */
+  protected void debugProgram(ProgramId programId, int expectedStatusCode) throws Exception {
+    String path = String.format("apps/%s/%s/%s/debug",
+                                programId.getApplication(),
+                                programId.getType().getCategoryName(),
+                                programId.getProgram());
+    HttpResponse response = doPost(getVersionedAPIPath(path, programId.getNamespace()),
                                    GSON.toJson(ImmutableMap.<String, String>of()));
     assertResponseCode(expectedStatusCode, response);
   }
@@ -1003,6 +1017,19 @@ public abstract class AppFabricTestBase {
     if (expectedMessage != null) {
       Assert.assertEquals(expectedMessage, response.getResponseBodyAsString());
     }
+  }
+
+  /**
+   * Tries to perform an invalid action on a program
+   */
+  protected void performInvalidProgramAction(Id.Program program, int expectedStatusCode) throws Exception {
+    String path = String.format("apps/%s/%s/%s/enable",
+                                program.getApplicationId(),
+                                program.getType().getCategoryName(),
+                                program.getId());
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()),
+                                   GSON.toJson(ImmutableMap.<String, String>of()));
+    assertResponseCode(expectedStatusCode, response);
   }
 
   /**
@@ -1120,12 +1147,20 @@ public abstract class AppFabricTestBase {
     return response.getResponseCode();
   }
 
-  protected List<ScheduleDetail> listSchedules(String namespace, String appName,
-                                               @Nullable String appVersion) throws Exception {
-    String schedulesUrl = String.format("apps/%s/versions/%s/schedules", appName,
-                                        appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion);
+  // test response for invalid schedule action
+  protected void performInvalidScheduleAction(String namespace, String appName, String schedule,
+                                             int expectedStatusCode) throws Exception {
+    String scheduleResume = String.format("apps/%s/schedules/%s/invalidAction", appName, schedule);
+    HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                       namespace));
+    Assert.assertEquals(expectedStatusCode, response.getResponseCode());
+  }
+
+  protected List<ScheduleDetail> listSchedules(String namespace, String appName) throws Exception {
+    String schedulesUrl = String.format("apps/%s/schedules", appName);
     return doGetSchedules(namespace, schedulesUrl);
   }
+
 
   protected List<ScheduleDetail> listSchedulesByTriggerProgram(String namespace, ProgramId programId,
                                                                ProgramStatus... programStatuses)
@@ -1194,10 +1229,9 @@ public abstract class AppFabricTestBase {
     return readResponse(response, Schedulers.SCHEDULE_DETAILS_TYPE);
   }
 
-  protected HttpResponse addSchedule(String namespace, String appName, @Nullable String appVersion, String scheduleName,
+  protected HttpResponse addSchedule(String namespace, String appName, String scheduleName,
                                      ScheduleDetail schedule) throws Exception {
-    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
-    String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
+    String path = String.format("apps/%s/schedules/%s", appName, scheduleName);
     return doPut(getVersionedAPIPath(path, namespace), GSON.toJson(schedule));
   }
 
@@ -1208,18 +1242,14 @@ public abstract class AppFabricTestBase {
     return doPost(getVersionedAPIPath(path, namespace));
   }
 
-  protected HttpResponse deleteSchedule(String namespace, String appName, @Nullable String appVersion,
-                                        String scheduleName) throws Exception {
-    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
-    String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
+  protected HttpResponse deleteSchedule(String namespace, String appName, String scheduleName) throws Exception {
+    String path = String.format("apps/%s/schedules/%s", appName, scheduleName);
     return doDelete(getVersionedAPIPath(path, namespace));
   }
 
-  protected HttpResponse updateSchedule(String namespace, String appName, @Nullable String appVersion,
-                                        String scheduleName,
+  protected HttpResponse updateSchedule(String namespace, String appName, String scheduleName,
                                         ScheduleDetail scheduleDetail) throws Exception {
-    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
-    String path = String.format("apps/%s/versions/%s/schedules/%s/update", appName, appVersion, scheduleName);
+    String path = String.format("apps/%s/schedules/%s/update", appName, scheduleName);
     return doPost(getVersionedAPIPath(path, namespace), GSON.toJson(scheduleDetail));
   }
 
@@ -1227,6 +1257,13 @@ public abstract class AppFabricTestBase {
                                        String scheduleName) throws Exception {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
     String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
+    HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
+    assertResponseCode(HttpResponseStatus.OK.code(), response);
+    return readResponse(response, ScheduleDetail.class);
+  }
+
+  protected ScheduleDetail getSchedule(String namespace, String appName, String scheduleName) throws Exception {
+    String path = String.format("apps/%s/schedules/%s", appName, scheduleName);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
     assertResponseCode(HttpResponseStatus.OK.code(), response);
     return readResponse(response, ScheduleDetail.class);
@@ -1330,6 +1367,37 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
     assertResponseCode(200, response);
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
+  }
+
+  protected int getProgramRunRecord(Id.Program program, String runId) throws Exception {
+    String path = String.format("apps/%s/%s/%s/runs/%s", program.getApplicationId(),
+                                program.getType().getCategoryName(), program.getId(), runId);
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+    return response.getResponseCode();
+  }
+
+  protected long getProgramRunCount(ProgramReference programRef) throws Exception {
+    String path = String.format("apps/%s/%s/%s/runcount", programRef.getApplication(),
+                                programRef.getType().getCategoryName(), programRef.getProgram());
+    HttpResponse response = doGet(getVersionedAPIPath(path, programRef.getNamespace()));
+    Assert.assertEquals(200, response.getResponseCode());
+    return Long.parseLong(response.getResponseBodyAsString());
+  }
+
+  protected long getProgramRunCount(ProgramId programId) throws Exception {
+    String path = String.format("apps/%s/versions/%s/%s/%s/runcount", programId.getApplication(),
+                                programId.getVersion(), programId.getType().getCategoryName(), programId.getProgram());
+    HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespace()));
+    Assert.assertEquals(200, response.getResponseCode());
+    return Long.parseLong(response.getResponseBodyAsString());
+  }
+
+  protected void validateProgramRunCountResponse(ProgramReference programRef, int expectedStatusCode)
+    throws Exception {
+    String path = String.format("apps/%s/%s/%s/runcount", programRef.getApplication(),
+                                programRef.getType().getCategoryName(), programRef.getProgram());
+    Assert.assertEquals(expectedStatusCode,
+                        doGet(getVersionedAPIPath(path, programRef.getNamespace())).getResponseCode());
   }
 
   protected void verifyProgramRuns(final ProgramId program, ProgramRunStatus status) throws Exception {

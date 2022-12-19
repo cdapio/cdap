@@ -848,7 +848,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, schedules.size());
     Assert.assertEquals(TEST_NAMESPACE2, schedules.get(0).getNamespace());
     Assert.assertEquals(appName, schedules.get(0).getApplication());
-    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, schedules.get(0).getApplicationVersion());
     Assert.assertEquals(sampleSchedule, schedules.get(0).getName());
 
     List<ScheduledRuntime> runtimes = getScheduledRunTimes(programId.toEntityId(), true);

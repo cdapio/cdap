@@ -99,8 +99,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     typesToKeys.put(PLUGIN, new String[][]{{NAMESPACE, ARTIFACT, VERSION, TYPE, PLUGIN}});
     typesToKeys.put(PROGRAM, new String[][]{{NAMESPACE, APPLICATION, VERSION, TYPE, PROGRAM},
       {NAMESPACE, APPLICATION, TYPE, PROGRAM}});
-    typesToKeys.put(SCHEDULE, new String[][]{{NAMESPACE, APPLICATION, VERSION, SCHEDULE},
-      {NAMESPACE, APPLICATION, SCHEDULE}});
+    typesToKeys.put(SCHEDULE, new String[][]{{NAMESPACE, APPLICATION, SCHEDULE}});
     typesToKeys.put(PROGRAM_RUN, new String[][]{{NAMESPACE, APPLICATION, VERSION, TYPE, PROGRAM, PROGRAM_RUN},
       {NAMESPACE, APPLICATION, TYPE, PROGRAM, PROGRAM_RUN}});
     TYPES_TO_KEY_SEQUENCES = Collections.unmodifiableMap(typesToKeys);

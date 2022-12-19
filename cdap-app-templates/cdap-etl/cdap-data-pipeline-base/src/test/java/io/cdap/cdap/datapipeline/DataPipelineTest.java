@@ -644,8 +644,7 @@ public class DataPipelineTest extends HydratorTestBase {
                                ImmutableSet.of(ProgramStatus.COMPLETED));
     ScheduleId scheduleId = appId.schedule("completeSchedule");
     appManager.addSchedule(
-      new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(),
-                         scheduleId.getSchedule(), "",
+      new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getSchedule(), "",
                          new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, SmartWorkflow.NAME),
                          ImmutableMap.of(SmartWorkflow.TRIGGERING_PROPERTIES_MAPPING, GSON.toJson(propertyMapping)),
                          completeTrigger, ImmutableList.of(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null));
