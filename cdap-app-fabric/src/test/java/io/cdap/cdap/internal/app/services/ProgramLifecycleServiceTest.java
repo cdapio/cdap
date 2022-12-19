@@ -19,13 +19,17 @@ package io.cdap.cdap.internal.app.services;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.SleepingWorkflowApp;
+import io.cdap.cdap.SleepingWorkflowApp.SleepWorkflow;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -41,6 +45,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -58,12 +63,17 @@ import java.util.Set;
  * ProgramLifecycleService tests.
  */
 public class ProgramLifecycleServiceTest extends AppFabricTestBase {
+  private static final String FEATURE_FLAG_PREFIX = "feature.";
+
   private static ProgramLifecycleService programLifecycleService;
   private static ProfileService profileService;
   private static ProvisioningService provisioningService;
+  private static CConfiguration cConf;
 
   @BeforeClass
-  public static void setup() {
+  public static void beforeClass() throws Throwable {
+    cConf = createBasicCConf();
+    initializeAndStartServices(cConf);
     Injector injector = getInjector();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     profileService = injector.getInstance(ProfileService.class);
@@ -220,5 +230,45 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
       profileService.disableProfile(profileId);
       profileService.deleteProfile(profileId);
     }
+  }
+
+  @Test
+  public void testMultiVersionProgramActions() throws Exception {
+    setLCMFlag(true);
+    // deploy, check the status
+    deploy(SleepingWorkflowApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           TEST_NAMESPACE1);
+    ApplicationDetail appDetail = getAppDetails(TEST_NAMESPACE1, SleepingWorkflowApp.NAME);
+    ProgramId programIdV1 = new NamespaceId(TEST_NAMESPACE1).app(SleepingWorkflowApp.NAME, appDetail.getAppVersion())
+      .workflow(SleepWorkflow.NAME);
+    // starting program v1
+    startProgram(programIdV1, HttpResponseStatus.OK.code());
+    waitState(programIdV1, "STARTING");
+
+    // deploy the app again for a new version
+    deploy(SleepingWorkflowApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN,
+           TEST_NAMESPACE1);
+    appDetail = getAppDetails(TEST_NAMESPACE1, SleepingWorkflowApp.NAME);
+    ProgramId programIdV2 = new NamespaceId(TEST_NAMESPACE1).app(SleepingWorkflowApp.NAME, appDetail.getAppVersion())
+      .workflow(SleepWorkflow.NAME);
+
+    // stop old version program should be ok
+    stopProgram(programIdV1);
+    // starting old program version is not allowed
+    startProgram(programIdV1, HttpResponseStatus.BAD_REQUEST.code());
+
+    // start/stop the latest version program should be ok
+    startProgram(programIdV2);
+    waitState(programIdV2, "STARTING");
+    stopProgram(programIdV2);
+    waitState(programIdV2, "STOPPED");
+
+    // check the total run count is 1
+    Assert.assertEquals(2L, getProgramRunCount(programIdV2.getProgramReference()));
+    setLCMFlag(false);
+  }
+
+  private void setLCMFlag(boolean lcmFlag) {
+    cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), lcmFlag);
   }
 }

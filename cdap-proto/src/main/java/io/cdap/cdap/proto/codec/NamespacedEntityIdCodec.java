@@ -109,9 +109,10 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
   }
 
   private ScheduleId deserializeSchedule(JsonObject id) {
-    ApplicationId app = deserializeApplicationId(id);
+    String namespace = id.get("namespace").getAsString();
+    String applicationId = id.get("application").getAsString();
     String scheduleId = id.get("schedule").getAsString();
-    return new ScheduleId(app.getNamespace(), app.getApplication(), app.getVersion(), scheduleId);
+    return new ScheduleId(namespace, applicationId, scheduleId);
   }
 
   private WorkerId deserializeWorkerId(JsonObject id) {

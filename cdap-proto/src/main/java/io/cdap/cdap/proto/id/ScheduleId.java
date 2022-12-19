@@ -28,13 +28,8 @@ import java.util.Objects;
  */
 public class ScheduleId extends NamespacedEntityId implements ParentedId<ApplicationId> {
   private final String application;
-  private final String version;
   private final String schedule;
   private transient Integer hashCode;
-
-  public ScheduleId(String namespace, String application, String version, String schedule) {
-    this(new ApplicationId(namespace, application, version), schedule);
-  }
 
   public ScheduleId(String namespace, String application, String schedule) {
     this(new ApplicationId(namespace, application), schedule);
@@ -56,24 +51,19 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
       throw new NullPointerException("Schedule id cannot be null.");
     }
     this.application = application;
-    this.version = ApplicationId.DEFAULT_VERSION;
     this.schedule = schedule;
   }
 
   @Override
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
-      .append(MetadataEntity.APPLICATION, application).append(MetadataEntity.VERSION, version)
+      .append(MetadataEntity.APPLICATION, application)
       .appendAsType(MetadataEntity.SCHEDULE, schedule)
       .build();
   }
 
   public String getApplication() {
     return application;
-  }
-
-  public String getVersion() {
-    return version;
   }
 
   public String getSchedule() {
@@ -93,7 +83,6 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
     ScheduleId that = (ScheduleId) o;
     return Objects.equals(namespace, that.namespace) &&
       Objects.equals(application, that.application) &&
-      Objects.equals(version, that.version) &&
       Objects.equals(schedule, that.schedule);
   }
 
@@ -101,27 +90,27 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, version, schedule);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, schedule);
     }
     return hashCode;
   }
 
   @Override
   public ApplicationId getParent() {
-    return new ApplicationId(namespace, application, version);
+    return new ApplicationId(namespace, application);
   }
 
   @SuppressWarnings("unused")
   public static ScheduleId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ScheduleId(
-      next(iterator, "namespace"), next(iterator, "application"), next(iterator, "version"),
+      next(iterator, "namespace"), next(iterator, "application"),
       nextAndEnd(iterator, "schedule"));
   }
 
   @Override
   public Iterable<String> toIdParts() {
-    return Collections.unmodifiableList(Arrays.asList(namespace, application, version, schedule));
+    return Collections.unmodifiableList(Arrays.asList(namespace, application, schedule));
   }
 
   public static ScheduleId fromString(String string) {

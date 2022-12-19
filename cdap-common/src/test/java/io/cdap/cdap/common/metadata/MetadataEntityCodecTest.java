@@ -62,7 +62,6 @@ public class MetadataEntityCodecTest {
     MetadataEntity scheduleMetadata = MetadataEntity.builder()
       .append(MetadataEntity.NAMESPACE, "ns")
       .append(MetadataEntity.APPLICATION, "myApp")
-      .append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION)
       .append(MetadataEntity.SCHEDULE, "mySchedule")
       .build();
     json = gson.toJson(scheduleMetadata);

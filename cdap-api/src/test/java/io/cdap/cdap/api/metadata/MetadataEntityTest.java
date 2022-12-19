@@ -169,7 +169,7 @@ public class MetadataEntityTest {
     MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns").appendAsType(MetadataEntity.APPLICATION, "myApp")
       .appendAsType(MetadataEntity.SCHEDULE, "sched").build();
     MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns").appendAsType(MetadataEntity.APPLICATION, "myApp")
-      .append(MetadataEntity.VERSION, "1").appendAsType(MetadataEntity.SCHEDULE, "sched").build();
+      .appendAsType(MetadataEntity.SCHEDULE, "sched").build();
     try {
       MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns")
         .appendAsType(MetadataEntity.SCHEDULE, "sched").build();

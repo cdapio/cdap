@@ -407,7 +407,6 @@ public class JobQueueTable implements JobQueue {
     int hash = Hashing.murmur3_32().newHasher()
       .putString(scheduleId.getNamespace())
       .putString(scheduleId.getApplication())
-      .putString(scheduleId.getVersion())
       .putString(scheduleId.getSchedule())
       .hash().asInt();
     return Math.abs(hash) % numPartitions;
