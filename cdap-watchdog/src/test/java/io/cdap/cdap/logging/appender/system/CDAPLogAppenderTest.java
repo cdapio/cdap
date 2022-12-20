@@ -125,7 +125,7 @@ public class CDAPLogAppenderTest {
   @Test
   public void testCDAPLogAppender() {
     int syncInterval = 1024 * 1024;
-    CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
+    CDAPLogAppender cdapLogAppender = new CDAPLogAppender(true);
 
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
@@ -190,7 +190,7 @@ public class CDAPLogAppenderTest {
   public void testCDAPLogAppenderRotation() throws Exception {
     int syncInterval = 1024 * 1024;
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
-    CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
+    CDAPLogAppender cdapLogAppender = new CDAPLogAppender(true);
     AppenderContext context = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                        injector.getInstance(LocationFactory.class),
                                                        new NoOpMetricsCollectionService());
@@ -261,7 +261,7 @@ public class CDAPLogAppenderTest {
   public void testCDAPLogAppenderSizeBasedRotation() throws Exception {
     int syncInterval = 1024 * 1024;
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
-    CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
+    CDAPLogAppender cdapLogAppender = new CDAPLogAppender(true);
     AppenderContext context = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                        injector.getInstance(LocationFactory.class),
                                                        new NoOpMetricsCollectionService());
