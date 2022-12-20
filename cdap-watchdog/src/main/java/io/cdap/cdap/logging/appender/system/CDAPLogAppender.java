@@ -66,8 +66,20 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private int fileRetentionDurationDays;
   private int fileCleanupBatchSize;
 
-  public CDAPLogAppender() {
+  private final boolean disableLogCleanerForTest;
+
+  /**
+   * Unit tests do not need to use a log cleaner because JUnit automatically cleans up temporary directories.
+   * LogCleaner is disabled in tests to avoid deleting the directory required by another test when run in parallel.
+   */
+  @VisibleForTesting
+  CDAPLogAppender(boolean disableLogCleanerForTest) {
+    this.disableLogCleanerForTest = disableLogCleanerForTest;
     setName(getClass().getName());
+  }
+
+  public CDAPLogAppender() {
+    this(false);
   }
 
   /**
@@ -146,7 +158,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
                                           syncIntervalBytes,
                                           new FileMetaDataWriter(context.getTransactionRunner()),
                                           context.getLocationFactory());
-      if (context.getInstanceId() == 0) {
+      if (context.getInstanceId() == 0 && !disableLogCleanerForTest) {
         scheduledExecutorService =
           Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("log-clean-up"));
         FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(context.getTransactionRunner());
@@ -235,7 +247,9 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
       if (logFileManager != null) {
         logFileManager.close();
       }
-      scheduledExecutorService.shutdownNow();
+      if (scheduledExecutorService != null) {
+        scheduledExecutorService.shutdownNow();
+      }
     } finally {
       super.stop();
     }
