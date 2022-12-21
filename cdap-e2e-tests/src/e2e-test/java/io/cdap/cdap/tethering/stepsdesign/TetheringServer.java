@@ -92,8 +92,8 @@ public class TetheringServer implements CdfHelper {
     }
   }
 
-  @Then("Delete rejected request on server from client")
-  public static void deleteRejectedRequest() throws IOException {
+  @Then("Delete tethering connection on server")
+  public static void deleteTethering() throws IOException {
     String clientName = PluginPropertyUtils.pluginProp("clientName");
     HttpURLConnection connection = createConnection("tethering/connections/" + clientName, "DELETE");
     try {

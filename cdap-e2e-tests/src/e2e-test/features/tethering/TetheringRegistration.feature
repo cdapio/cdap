@@ -86,7 +86,6 @@ Feature: Tethering registration and management
     Given Connect to tethering server Datafusion instance
     Then Reject request on server from client
     Then Verify no pending tethering requests on server
-    Then Delete rejected request on server from client
 
   @TETHERING_CONNECTION_MANAGEMENT
   Scenario: Validate successful connection between client and server
@@ -121,4 +120,4 @@ Feature: Tethering registration and management
     Then Confirm the delete action
     Then Verify the established connection has been deleted on client
     Given Connect to tethering server Datafusion instance
-    Then Delete rejected request on server from client
+    Then Delete tethering connection on server
