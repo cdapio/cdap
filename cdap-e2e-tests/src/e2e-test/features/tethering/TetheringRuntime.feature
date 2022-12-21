@@ -18,28 +18,6 @@
 # TODO - Add pipeline deployment tests once additional auth options are enabled in e2e framework - see CDAP-19412
 Feature: Tethering profile and runtime
 
-  Scenario: Create established connection
-    Given Open tethering client Datafusion instance
-    When Navigate to tethering page
-    Then Open create new request page
-    Then Click to select a namespace
-    Then Enter project name "test-project"
-    Then Enter region "us-west-1b"
-    Then Enter instance name "test"
-    Then Enter instance url for tethering server
-    Then Enter description "test description"
-    Then Finish creating new tethering request
-    Then Verify the request was created successfully
-    When Navigate to tethering page
-    Then Count number of pending requests on client
-    Then Count number of established connections on server
-    Given Connect to tethering server Datafusion instance
-    Then Accept request on server from client
-    Then Verify no pending tethering requests on server
-    Given Open tethering client Datafusion instance
-    When Navigate to tethering page
-    Then Verify the connection is established
-
   @TETHERING_PROFILE_TEST
   Scenario: Validate creation of tethering compute profile
     Given Connect to tethering server Datafusion instance
