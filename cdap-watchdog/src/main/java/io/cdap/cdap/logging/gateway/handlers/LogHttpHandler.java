@@ -30,7 +30,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -104,9 +104,9 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                            @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
-    RunRecordDetail runRecord = getRunRecordMeta(programRunId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+    ProgramReference programRef = new ProgramReference(namespaceId, appId, type, programId);
+    RunRecordDetail runRecord = getRunRecordMeta(programRef, runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef, runId,
                                                                                     runRecord.getSystemArgs());
 
     doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam, toTimeSecsParam,
@@ -143,9 +143,9 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                         @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
-    RunRecordDetail runRecord = getRunRecordMeta(programRunId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+    ProgramReference programRef = new ProgramReference(namespaceId, appId, type, programId);
+    RunRecordDetail runRecord = getRunRecordMeta(programRef, runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef, runId,
                                                                                     runRecord.getSystemArgs());
 
     doNext(logReader, responder, loggingContext, maxEvents, fromOffsetStr,
@@ -182,9 +182,9 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                         @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
-    RunRecordDetail runRecord = getRunRecordMeta(programRunId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+    ProgramReference programRef = new ProgramReference(namespaceId, appId, type, programId);
+    RunRecordDetail runRecord = getRunRecordMeta(programRef, runId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef, runId,
                                                                                     runRecord.getSystemArgs());
 
     doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr,
@@ -239,11 +239,11 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
     doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
-  private RunRecordDetail getRunRecordMeta(ProgramRunId programRunId)
+  private RunRecordDetail getRunRecordMeta(ProgramReference programRef, String runId)
     throws IOException, NotFoundException, UnauthorizedException {
-    RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRunId);
+    RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRef, runId);
     if (runRecordMeta == null) {
-      throw new NotFoundException(programRunId);
+      throw new NotFoundException(String.format("No run record found for program %s and runID: %s", programRef, runId));
     }
     return runRecordMeta;
   }

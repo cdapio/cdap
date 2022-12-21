@@ -18,7 +18,7 @@ package io.cdap.cdap.logging.gateway.handlers.store;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -38,16 +38,17 @@ public class ProgramStore {
   }
 
   /**
-   * Returns run record for a given run.
+   * Returns run record for a given run reference.
    *
-   * @param programRunId program run id
-   * @return run record for runid
+   * @param programRef program id without version
+   * @param runId the run id
+   * @return run record for run reference
    */
-  public RunRecordDetail getRun(ProgramRunId programRunId) {
+  public RunRecordDetail getRun(ProgramReference programRef, String runId) {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(StoreDefinition.AppMetadataStore.RUN_RECORDS);
       AppMetadataStore metaStore = new AppMetadataStore(table);
-      return metaStore.getRun(programRunId.getParent(), programRunId.getRun());
+      return metaStore.getRun(programRef, runId);
     });
   }
 }

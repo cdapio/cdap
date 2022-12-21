@@ -476,7 +476,7 @@ public class DefaultStore implements Store {
   }
 
   /**
-   * Returns run record for a given run.
+   * Returns run record for a given run id.
    *
    * @param id program run id
    * @return run record for runid
@@ -485,6 +485,20 @@ public class DefaultStore implements Store {
   public RunRecordDetail getRun(ProgramRunId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRun(id);
+    });
+  }
+
+  /**
+   * Returns run record for a given run reference.
+   *
+   * @param programRef    versionless program id of the run
+   * @param runId         the run id
+   * @return run record for run reference
+   */
+  @Override
+  public RunRecordDetail getRun(ProgramReference programRef, String runId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getRun(programRef, runId);
     });
   }
 

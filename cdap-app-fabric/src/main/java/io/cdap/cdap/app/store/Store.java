@@ -328,6 +328,16 @@ public interface Store {
   RunRecordDetail getRun(ProgramRunId id);
 
   /**
+   * Fetches the run record for particular run of a program without version.
+   *
+   * @param programRef    versionless program id of the run
+   * @param runId         the run id
+   * @return          run record for the specified program and runRef, null if not found
+   */
+  @Nullable
+  RunRecordDetail getRun(ProgramReference programRef, String runId);
+
+  /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
    * @param id            application id
    * @param meta          application metadata to store
