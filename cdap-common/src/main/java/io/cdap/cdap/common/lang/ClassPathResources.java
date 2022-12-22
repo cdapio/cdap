@@ -25,6 +25,8 @@ import io.cdap.cdap.common.internal.guava.ClassPath;
 import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +43,8 @@ import java.util.Set;
  * Utility methods for {@link ClassPath} {@link ResourceInfo resources}.
  */
 public final class ClassPathResources {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ClassPathResources.class);
 
   public static final Function<ClassPath.ClassInfo, String> CLASS_INFO_TO_CLASS_NAME =
     new Function<ClassPath.ClassInfo, String>() {
@@ -131,22 +135,10 @@ public final class ClassPathResources {
     }
   }
 
-  /**
-   * Finds all resource names that the given set of classes depends on.
-   *
-   * @param classLoader class loader for looking up .class resources
-   * @param classes set of class names that need to trace dependencies from
-   * @param result collection to store the resulting resource names
-   * @param <T> type of the result collection
-   * @throws IOException if fails to load class bytecode during tracing
-   */
-  private static <T extends Collection<String>> T findClassDependencies(final ClassLoader classLoader,
-                                                                        Iterable<String> classes,
-                                                                        final T result) throws IOException {
+  static ClassAcceptor createClassAcceptor(final ClassLoader classLoader, final Collection<String> result) {
     final Set<String> bootstrapClassPaths = getBootstrapClassPaths();
     final Set<URL> classPathSeen = Sets.newHashSet();
-
-    Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+    return new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Ignore bootstrap classes
@@ -158,6 +150,35 @@ public final class ClassPathResources {
         // visible through the program classloader.
         if (className.startsWith("org.slf4j.impl.")) {
           return false;
+        }
+
+        // Ignore classes with incompatible Java specification version in multi-release jars.
+        // See https://docs.oracle.com/javase/10/docs/specs/jar/jar.html#multi-release-jar-files for details.
+        if (className.startsWith("META-INF.versions.")) {
+          // Get current Java specification version
+          // See https://docs.oracle.com/en/java/javase/12/docs/api/java.base/java/lang/System.html#getProperties().
+          String javaSpecVersion = System.getProperty("java.specification.version").replaceFirst("^1[.]", "");
+          int version = 0;
+          try {
+            version = Integer.parseInt(javaSpecVersion);
+          } catch (NumberFormatException e) {
+            throw new IllegalStateException(String.format("Failed to parse Java specification version string %s",
+                                                          javaSpecVersion), e);
+          }
+          if (version < 9) {
+            // Per JAR spec, classes for Java 8 and below will not be versioned.
+            return false;
+          }
+          // Check if the specification version matches the dependency version
+          try {
+            int classVersion = Integer.parseInt(className.split("[.]")[2]);
+            if (version < classVersion) {
+              return false;
+            }
+          } catch (NumberFormatException e) {
+            // If the class version fails to parse, allow it through.
+            LOG.debug("Failed to parse multi-release versioned dependency class '%s'", className);
+          }
         }
 
         if (!classPathSeen.add(classPathUrl)) {
@@ -175,8 +196,22 @@ public final class ClassPathResources {
         }
         return true;
       }
-    }, classes);
+    };
+  }
 
+  /**
+   * Finds all resource names that the given set of classes depends on.
+   *
+   * @param classLoader class loader for looking up .class resources
+   * @param classes set of class names that need to trace dependencies from
+   * @param result collection to store the resulting resource names
+   * @param <T> type of the result collection
+   * @throws IOException if fails to load class bytecode during tracing
+   */
+  private static <T extends Collection<String>> T findClassDependencies(final ClassLoader classLoader,
+                                                                        Iterable<String> classes,
+                                                                        final T result) throws IOException {
+    Dependencies.findClassDependencies(classLoader, createClassAcceptor(classLoader, result), classes);
     return result;
   }
 
