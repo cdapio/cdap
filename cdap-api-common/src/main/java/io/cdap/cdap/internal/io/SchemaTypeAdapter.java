@@ -380,15 +380,13 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     }
 
     // If it is a record or enum that refers to a previously defined schema, just emit the name of it
-    String typeName = null;
-    if (schema.getType() == Schema.Type.RECORD) {
-      typeName = schema.getRecordName();
-    } else if (schema.getType() == Schema.Type.ENUM) {
-      typeName = schema.getEnumName();
+    if (schema.getType() == Schema.Type.ENUM) {
+      String typeName = schema.getEnumName();
+      if (definedTypes.contains(typeName)) {
+        return writer.value(typeName);
+      }
     }
-    if (definedTypes.contains(typeName)) {
-      return writer.value(typeName);
-    }
+
     // Complex types, represented as an object with "type" property carrying the type name
     writer.beginObject().name(TYPE).value(schema.getType().name().toLowerCase());
     switch (schema.getType()) {

@@ -610,9 +610,6 @@ public final class Schema implements Serializable {
 
   private final List<Schema> unionSchemas;
 
-  // No need to serialize the schemaString to save space
-  // It can be recomputed on demand (and usually it is not used in the context that serialization is used)
-  private transient String schemaString;
   private SchemaHash schemaHash;
 
   // This is a on demand cache for case insensitive field lookup. No need to serialize.
@@ -871,11 +868,7 @@ public final class Schema implements Serializable {
   public String toString() {
     // The follow logic is thread safe, as all the fields buildString() needs are immutable.
     // It's possible that buildString() get triggered multiple times, but they should yield the same result.
-    String str = schemaString;
-    if (str == null) {
-      schemaString = str = buildString();
-    }
-    return str;
+    return buildString();
   }
 
   @Override
@@ -1139,11 +1132,12 @@ public final class Schema implements Serializable {
         }
         return schema;
       case RECORD:
-        Schema knownSchema = knownSchemas.get(schema.getRecordName());
-        if (knownSchema != null) {
-          return knownSchema;
-        }
-        if (schema.fields != null) {
+        if (schema.getFields() == null || schema.getFields().isEmpty()) {
+          Schema knownSchema = knownSchemas.get(schema.getRecordName());
+          if (knownSchema != null) {
+            return knownSchema;
+          }
+        } else {
           knownSchemas.put(schema.getRecordName(), schema);
           for (Field field : schema.fields) {
             field.setSchema(resolveSchema(field.getSchema(), knownSchemas));
@@ -1151,7 +1145,7 @@ public final class Schema implements Serializable {
         }
         return schema;
       case ENUM:
-        knownSchema = knownSchemas.get(schema.getEnumName());
+        Schema knownSchema = knownSchemas.get(schema.getEnumName());
         if (knownSchema != null) {
           return knownSchema;
         }
