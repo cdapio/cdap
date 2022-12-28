@@ -121,7 +121,7 @@ public class AbstractWatcherThreadTest {
     CoreV1Api coreV1Api = new CoreV1Api(apiClient);
 
     // Create a config before starting the thread
-    coreV1Api.createNamespacedConfigMap(namespace, createConfigMap("test", "key", "value"), null, null, null);
+    coreV1Api.createNamespacedConfigMap(namespace, createConfigMap("test", "key", "value"), null, null, null, null);
 
     // Start the thread.
     watcherThread.start();
@@ -132,7 +132,7 @@ public class AbstractWatcherThreadTest {
 
     // Update the configmap and should see the changes
     configMap.data(ImmutableMap.of("key", "newvalue"));
-    coreV1Api.replaceNamespacedConfigMap(name, namespace, configMap, null, null, null);
+    coreV1Api.replaceNamespacedConfigMap(name, namespace, configMap, null, null, null, null);
 
     waitFor(() -> configMapNames.get(name), c -> "newvalue".equals(c.getData().get("key")), 5, TimeUnit.SECONDS);
 
@@ -180,7 +180,7 @@ public class AbstractWatcherThreadTest {
     // Create and delete configmap multiple times with a watch reset in between.
     // This is to make sure during the watch reset, we are not losing any deletion events.
     for (int i = 0; i < 50; i++) {
-      coreV1Api.createNamespacedConfigMap(namespace, createConfigMap("test", "key", "value"), null, null, null);
+      coreV1Api.createNamespacedConfigMap(namespace, createConfigMap("test", "key", "value"), null, null, null, null);
       V1ConfigMap configMap = waitFor(() -> configMapNames.get("test"), Objects::nonNull, 5, TimeUnit.SECONDS);
       String name = configMap.getMetadata().getName();
       watcherThread.closeWatch();

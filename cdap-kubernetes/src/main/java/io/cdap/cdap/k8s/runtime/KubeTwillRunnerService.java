@@ -350,7 +350,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    */
   private void findOrCreateKubeNamespace(String namespace, String cdapNamespace) throws Exception {
     try {
-      V1Namespace existingNamespace = coreV1Api.readNamespace(namespace, null, null, null);
+      V1Namespace existingNamespace = coreV1Api.readNamespace(namespace, null);
       if (existingNamespace.getMetadata() == null) {
         throw new IOException(String.format("Kubernetes namespace %s exists but was not created by CDAP", namespace));
       }
@@ -372,7 +372,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     V1Namespace namespaceObject = new V1Namespace();
     namespaceObject.setMetadata(new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
     try {
-      coreV1Api.createNamespace(namespaceObject, null, null, null);
+      coreV1Api.createNamespace(namespaceObject, null, null, null, null);
       LOG.debug("Created Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
     } catch (ApiException e) {
       try {
@@ -412,7 +412,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     resourceQuota.setSpec(new V1ResourceQuotaSpec().hard(hardLimitMap));
     try {
       V1ResourceQuota existingResourceQuota = coreV1Api.readNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace,
-                                                                                    null, null, null);
+                                                                                    null);
       if (existingResourceQuota.getMetadata() == null) {
         throw new IOException(String.format("%s exists but was not created by CDAP", RESOURCE_QUOTA_NAME));
       }
@@ -423,7 +423,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       }
       if (!hardLimitMap.equals(existingResourceQuota.getSpec().getHard())) {
         coreV1Api.replaceNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace, resourceQuota,
-                                                 null, null, null);
+                                                 null, null, null, null);
       }
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
@@ -436,7 +436,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
   private void createKubeResourceQuota(String namespace, V1ResourceQuota resourceQuota) throws Exception {
     try {
-      coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null);
+      coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null, null);
       LOG.debug("Created resource quota for Kubernetes namespace {}", namespace);
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating Kubernetes resource quota. Error code = "
@@ -454,12 +454,12 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
         if (volume.getSecret() != null) {
           String secretName = volume.getSecret().getSecretName();
           V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName, podInfo.getNamespace(),
-                                                                   null, null, null);
+                                                                   null);
           V1Secret secret = new V1Secret().data(existingSecret.getData()).type(existingSecret.getType())
             .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL,
                                                                         cdapNamespace));
           try {
-            coreV1Api.createNamespacedSecret(namespace, secret, null, null, null);
+            coreV1Api.createNamespacedSecret(namespace, secret, null, null, null, null);
           } catch (ApiException e) {
             if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
               throw e;
@@ -509,7 +509,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       .metadata(new V1ObjectMeta().name(serviceAccountName)
                   .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
     try {
-      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null);
+      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null, null);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
@@ -537,7 +537,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
                       .withName(serviceAccountName).build())
       .build();
     try {
-      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding, null, null, null);
+      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding, null, null, null, null);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
@@ -567,7 +567,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
                       .withName(serviceAccountName).build())
       .build();
     try {
-      rbacV1Api.createClusterRoleBinding(clusterWorkloadLauncherBinding, null, null, null);
+      rbacV1Api.createClusterRoleBinding(clusterWorkloadLauncherBinding, null, null, null, null);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
@@ -585,7 +585,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    */
   private void deleteKubeNamespace(String namespace, String cdapNamespace) throws Exception {
     try {
-      V1Namespace namespaceObject = coreV1Api.readNamespace(namespace, null, null, null);
+      V1Namespace namespaceObject = coreV1Api.readNamespace(namespace, null);
       if (namespaceObject.getMetadata() != null) {
         Map<String, String> namespaceLabels = namespaceObject.getMetadata().getLabels();
         if (namespaceLabels != null && namespaceLabels.get(CDAP_NAMESPACE_LABEL)
