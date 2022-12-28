@@ -665,7 +665,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     return updateApplicationInternal(appId, appSpec.getConfiguration(), programId -> { }, newArtifactDetail,
                                      Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
-                                     allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId));
+                                     allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId), appSpec);
   }
 
   /**
@@ -679,7 +679,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                                   List<ApplicationConfigUpdateAction> updateActions,
                                                   Set<ArtifactScope> allowedArtifactScopes,
                                                   boolean allowSnapshot,
-                                                  @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                                                  @Nullable KerberosPrincipalId ownerPrincipal,
+                                                  @Nullable ApplicationSpecification appSpec) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
       // This should never happen.
@@ -736,6 +737,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setUpdateSchedules(false)
       .setChangeDetail(new ChangeDetail(null, appId.getVersion(), requestingUser == null ? null :
         requestingUser.getName(), System.currentTimeMillis()))
+      .setCurrentAppSpec(appSpec)
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);

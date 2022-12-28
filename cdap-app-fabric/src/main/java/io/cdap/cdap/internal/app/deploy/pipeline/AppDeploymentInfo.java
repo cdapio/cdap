@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
@@ -53,6 +54,8 @@ public class AppDeploymentInfo {
   private final AppDeploymentRuntimeInfo runtimeInfo;
   @Nullable
   private final ChangeDetail changeDetail;
+  @Nullable
+  private final ApplicationSpecification currentAppSpec;
 
   /**
    * Creates a new {@link Builder}.
@@ -76,14 +79,15 @@ public class AppDeploymentInfo {
       .setOwnerPrincipal(other.ownerPrincipal)
       .setUpdateSchedules(other.updateSchedules)
       .setRuntimeInfo(other.runtimeInfo)
-      .setChangeDetail(other.changeDetail);
+      .setChangeDetail(other.changeDetail)
+      .setCurrentAppSpec(other.currentAppSpec);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable ChangeDetail changeDetail) {
+                            @Nullable ChangeDetail changeDetail, @Nullable ApplicationSpecification currentAppSpec) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -95,6 +99,7 @@ public class AppDeploymentInfo {
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
     this.changeDetail = changeDetail;
+    this.currentAppSpec = currentAppSpec;
   }
 
   /**
@@ -185,6 +190,14 @@ public class AppDeploymentInfo {
   }
 
   /**
+   * Returns the previously deployed Application Specification. Will be null for the 1st deployment
+   */
+  @Nullable
+  public ApplicationSpecification getCurrentAppSpec() {
+    return currentAppSpec;
+  }
+
+  /**
    * Builder class for the {@link AppDeploymentInfo}.
    */
   public static final class Builder {
@@ -202,6 +215,8 @@ public class AppDeploymentInfo {
     private AppDeploymentRuntimeInfo runtimeInfo;
     @Nullable
     private ChangeDetail changeDetail;
+    @Nullable
+    private ApplicationSpecification currentAppSpec;
 
     private Builder() {
       // Only for the builder() method to use
@@ -269,6 +284,11 @@ public class AppDeploymentInfo {
       return this;
     }
 
+    public Builder setCurrentAppSpec(@Nullable ApplicationSpecification currentAppSpec) {
+      this.currentAppSpec = currentAppSpec;
+      return this;
+    }
+
     public AppDeploymentInfo build() {
       if (artifactId == null) {
         throw new IllegalStateException("Missing artifact ID");
@@ -284,7 +304,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
                                    appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeDetail);
+                                   changeDetail, currentAppSpec);
     }
   }
 }
