@@ -72,6 +72,7 @@ import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
+import io.cdap.cdap.gateway.handlers.SourceControlServiceHandler;
 import io.cdap.cdap.gateway.handlers.TransactionHttpHandler;
 import io.cdap.cdap.gateway.handlers.UsageHandler;
 import io.cdap.cdap.gateway.handlers.VersionHandler;
@@ -426,6 +427,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TetheringServerHandler.class);
       handlerBinder.addBinding().to(TetheringClientHandler.class);
       handlerBinder.addBinding().to(AppStateHandler.class);
+      handlerBinder.addBinding().to(SourceControlServiceHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
