@@ -850,7 +850,21 @@
     <name>program.status.event.topic</name>
     <value>programstatusevent</value>
     <description>
-      Topic name for publishing status transitioning events of program runs to the messaging system
+      Topic prefix for publishing status transitioning events of program runs to the messaging system.
+      Note that depending on program.status.event.topic.num.partitions, it's either topic name
+      (when 1 partition is requested) or prefix (when more than 1 partition is requested). Also all subscribers
+      must always subscribe to the bare name to ensure backwards compatibility.
+    </description>
+  </property>
+
+  <property>
+    <name>program.status.event.topic.num.partitions</name>
+    <value>1</value>
+    <description>
+      Number of topics to use for program run events. All events realted to same run should always
+      go to same topic. Note that for backwards compatiblity reasons 1 extra topic without number suffix is always
+      created and subscribed. As for publishing, bare topic is used when 1 parition is requested and suffixed
+      topics are used when more than 1 partition is requested.
     </description>
   </property>
 
@@ -2387,7 +2401,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
+    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.event.topic}:${program.status.event.topic.num.partitions},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -3014,7 +3028,7 @@
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,log.tms.topic.prefix:${log.publish.num.partitions}</value>
+    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,program.status.event.topic:${program.status.event.topic.num.partitions},log.tms.topic.prefix:${log.publish.num.partitions}</value>
     <description>
       A comma-separated list of topic config to be monitored by runtime monitor
     </description>

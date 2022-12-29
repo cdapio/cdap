@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.net.Authenticator;
 import java.net.ProxySelector;
 import java.net.URI;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -80,23 +81,13 @@ public final class RuntimeMonitors {
         throw new IllegalArgumentException("Total topic number must be a positive number for system topic config'"
                                              + key + "'.", e);
       }
-    }).sorted((o1, o2) -> {
+    }).sorted(Comparator.comparing(topic ->
       // Always put program status event to the last
       // Logs to the second to the last
-      if (Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC.equals(o1.getKey())) {
-        return 1;
-      }
-      if (Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC.equals(o2.getKey())) {
-        return -1;
-      }
-      if (o1.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
-        return 1;
-      }
-      if (o2.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
-        return -1;
-      }
-      return o1.getKey().compareTo(o2.getKey());
-    }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
+      topic.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC) ? 2 :
+      topic.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX) ? 1 :
+      0
+    )).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
   }
 
   /**

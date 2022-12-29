@@ -334,9 +334,22 @@ public final class Constants {
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
 
     /**
-     * Topic name for publishing status transitioning events of program runs to the messaging system
+     * Topic prefix for publishing status transitioning events of program runs to the messaging system
      */
     public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
+
+    /**
+     * Prefix for program status retry strategy settings
+     */
+    public static final String PROGRAM_STATUS_RETRY_STRATEGY_PREFIX = "system.program.state.";
+
+    /**
+     * Number of topics to use for program status events. All events related to same run should always
+     * go to same topic. If this value is 1, {@link #PROGRAM_STATUS_EVENT_TOPIC} is a topic name.
+     * If it's more than 1, {@link #PROGRAM_STATUS_EVENT_TOPIC} is a prefix, but bare name should still be
+     * subscribed to ensure any pending messages / active run events are processed properly.
+     */
+    public static final String PROGRAM_STATUS_EVENT_NUM_PARTITIONS = "program.status.event.topic.num.partitions";
 
     /**
      * Topic name for publishing program status recording events to the messaging system

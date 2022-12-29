@@ -16,33 +16,20 @@
 
 package io.cdap.cdap.internal.provision;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.cdap.cdap.api.messaging.TopicNotFoundException;
-import io.cdap.cdap.api.retry.RetryableException;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.service.Retries;
-import io.cdap.cdap.common.service.RetryStrategies;
-import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.StoreRequest;
-import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import javax.inject.Inject;
@@ -52,15 +39,11 @@ import javax.inject.Inject;
  */
 public class ProvisionerNotifier {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private final TopicId topic;
-  private final RetryStrategy retryStrategy;
-  private final MessagingService messagingService;
+  private final ProgramStatePublisher publisher;
 
   @Inject
-  ProvisionerNotifier(CConfiguration cConf, MessagingService messagingService) {
-    this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
-    this.messagingService = messagingService;
+  ProvisionerNotifier(MessagingProgramStatePublisher publisher) {
+    this.publisher = publisher;
   }
 
   public void provisioning(ProgramRunId programRunId, ProgramOptions programOptions,
@@ -125,20 +108,6 @@ public class ProvisionerNotifier {
   }
 
   private void publish(Map<String, String> properties) {
-    final StoreRequest storeRequest = StoreRequestBuilder.of(topic)
-      .addPayload(GSON.toJson(new Notification(Notification.Type.PROGRAM_STATUS, properties)))
-      .build();
-    Retries.supplyWithRetries(
-      () -> {
-        try {
-          messagingService.publish(storeRequest);
-        } catch (TopicNotFoundException e) {
-          throw new RetryableException(e);
-        } catch (IOException | AccessException e) {
-          throw Throwables.propagate(e);
-        }
-        return null;
-      },
-      retryStrategy);
+    publisher.publish(Notification.Type.PROGRAM_STATUS, properties);
   }
 }
