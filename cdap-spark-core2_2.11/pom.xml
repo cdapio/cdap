@@ -94,12 +94,6 @@
       <artifactId>spark-core_2.11</artifactId>
     </dependency>
     <dependency>
-      <!-- Overwrite Apache Ivy version to 2.5.1 for remediating CVE-2022-37866-->
-      <groupId>org.apache.ivy</groupId>
-      <artifactId>ivy</artifactId>
-      <version>${ivy.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming_2.11</artifactId>
     </dependency>
