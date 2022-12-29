@@ -16,28 +16,40 @@
 
 package io.cdap.cdap.internal.app.program;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Publishes program state and heartbeat messages through the messaging service
@@ -49,14 +61,43 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
       .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
       .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
   private final MessagingService messagingService;
-  private final TopicId topicId;
+  private final List<TopicId> topicIds;
   private final RetryStrategy retryStrategy;
 
+  @Inject
+  public MessagingProgramStatePublisher(CConfiguration cConf, MessagingService messagingService) {
+    this(
+      messagingService,
+      cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
+      cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS),
+      RetryStrategies.fromConfiguration(
+        cConf, Constants.AppFabric.PROGRAM_STATUS_RETRY_STRATEGY_PREFIX)
+    );
+  }
+
+  @VisibleForTesting
   public MessagingProgramStatePublisher(MessagingService messagingService,
-                                        TopicId topicId, RetryStrategy retryStrategy) {
+                                        String topicPrefix, int numTopics, RetryStrategy retryStrategy) {
     this.messagingService = messagingService;
-    this.topicId = topicId;
+    this.topicIds =
+      numTopics == 1 ? Collections.singletonList(NamespaceId.SYSTEM.topic(topicPrefix)) :
+        Collections.unmodifiableList(IntStream
+                                       .range(0, numTopics)
+                                       .mapToObj(i -> NamespaceId.SYSTEM.topic(topicPrefix + i))
+                                       .collect(Collectors.toList()));
     this.retryStrategy = retryStrategy;
+  }
+
+  private TopicId getTopic(Notification programStatusNotification) {
+    if (topicIds.size() == 1) {
+      return topicIds.get(0);
+    }
+    String programRunIdStr = programStatusNotification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
+    if (programRunIdStr == null) {
+       return topicIds.get(0);
+    }
+    ProgramRunId programRunId = GSON.fromJson(programRunIdStr, ProgramRunId.class);
+    return topicIds.get(Math.abs(programRunId.getRun().hashCode()) % topicIds.size());
   }
 
   public void publish(Notification.Type notificationType, Map<String, String> properties) {
@@ -70,7 +111,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
     // This should be refactored into a common class for publishing to TMS with a retry strategy
     while (!done) {
       try {
-        messagingService.publish(StoreRequestBuilder.of(topicId)
+        messagingService.publish(StoreRequestBuilder.of(getTopic(programStatusNotification))
                                    .addPayload(GSON.toJson(programStatusNotification))
                                    .build());
         LOG.trace("Published program status notification: {}", programStatusNotification);

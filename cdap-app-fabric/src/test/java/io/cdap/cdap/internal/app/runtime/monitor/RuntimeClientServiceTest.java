@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -27,7 +28,6 @@ import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
-import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
@@ -39,7 +39,9 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -60,13 +62,13 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -81,10 +83,13 @@ public class RuntimeClientServiceTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static final int PROGRAM_STATUS_EVENT_TEST_PARTITIONS = 10;
+
   // The cConf value for the runtime monitor topic configs to have two topics, and one has to be program status event
   // This is for testing the RuntimeClientService handling of program status correctly
   private static final String TOPIC_CONFIGS_VALUE =
     Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC
+      + "," + Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC + ":" + PROGRAM_STATUS_EVENT_TEST_PARTITIONS
       + "," + Constants.Metadata.MESSAGING_TOPIC
       + "," + Constants.Audit.TOPIC;
 
@@ -102,6 +107,7 @@ public class RuntimeClientServiceTest {
   private CConfiguration clientCConf;
   private MessagingService clientMessagingService;
   private RuntimeClientService runtimeClientService;
+  private ProgramStatePublisher clientProgramStatePublisher;
 
   @Before
   public void beforeTest() throws Exception {
@@ -109,6 +115,7 @@ public class RuntimeClientServiceTest {
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, TOPIC_CONFIGS_VALUE);
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, PROGRAM_STATUS_EVENT_TEST_PARTITIONS);
 
     topicConfigs = RuntimeMonitors.createTopicConfigs(cConf);
 
@@ -155,6 +162,7 @@ public class RuntimeClientServiceTest {
     clientCConf = CConfiguration.create();
     clientCConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     clientCConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, TOPIC_CONFIGS_VALUE);
+    clientCConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, PROGRAM_STATUS_EVENT_TEST_PARTITIONS);
 
     // Shorten the poll delay and grace period to speed up testing of program terminate state handling
     clientCConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 200);
@@ -171,6 +179,7 @@ public class RuntimeClientServiceTest {
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
           bind(DiscoveryService.class).toInstance(discoveryService);
           bind(DiscoveryServiceClient.class).toInstance(discoveryService);
@@ -183,6 +192,7 @@ public class RuntimeClientServiceTest {
     if (clientMessagingService instanceof Service) {
       ((Service) clientMessagingService).startAndWait();
     }
+    clientProgramStatePublisher = injector.getInstance(ProgramStatePublisher.class);
     runtimeClientService = injector.getInstance(RuntimeClientService.class);
     runtimeClientService.startAndWait();
   }
@@ -205,31 +215,33 @@ public class RuntimeClientServiceTest {
     // Send some messages to multiple topics in the client side TMS, they should get replicated to the server side TMS.
     MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
     MessagePublisher messagePublisher = messagingContext.getDirectMessagePublisher();
-    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientCConf, clientMessagingService);
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientProgramStatePublisher);
+
+    // For program status event topic, we need to send valid program status event because
+    // the RuntimeClientService will decode it to watch for program termination
+    programStateWriter.running(PROGRAM_RUN_ID, null);
 
     for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      // For program status event topic, we need to send valid program status event because
-      // the RuntimeClientService will decode it to watch for program termination
-      if (entry.getKey().equals(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        // Write a non-terminal state to test basic relaying
-        programStateWriter.running(PROGRAM_RUN_ID, null);
-      } else {
+      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
         messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), entry.getValue(), entry.getKey(), entry.getKey());
       }
     }
 
+    // Extract the program run status from the Notification
     MessagingContext serverMessagingContext = new MultiThreadMessagingContext(messagingService);
+    waitForStatus(serverMessagingContext, ProgramRunStatus.RUNNING);
+
     for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      if (entry.getKey().equals(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        // Extract the program run status from the Notification
-        Tasks.waitFor(Collections.singletonList(ProgramRunStatus.RUNNING),
-                      () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null).stream()
-                        .map(Message::getPayloadAsString)
-                        .map(s -> GSON.fromJson(s, Notification.class))
-                        .map(n -> n.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS))
-                        .map(ProgramRunStatus::valueOf)
-                        .collect(Collectors.toList()), 5, TimeUnit.SECONDS);
-      } else {
+      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
+        Tasks.waitFor(Arrays.asList(entry.getKey(), entry.getKey()),
+                      () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null)
+                        .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
+                      5, TimeUnit.SECONDS);
+      }
+    }
+
+    for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
+      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
         Tasks.waitFor(Arrays.asList(entry.getKey(), entry.getKey()),
                       () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null)
                         .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
@@ -249,7 +261,7 @@ public class RuntimeClientServiceTest {
     MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
     MessagePublisher messagePublisher = messagingContext.getDirectMessagePublisher();
 
-    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientCConf, clientMessagingService);
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientProgramStatePublisher);
 
     // Send a terminate program state first, wait for the service sees the state change,
     // then publish messages to other topics.
@@ -257,9 +269,7 @@ public class RuntimeClientServiceTest {
     Tasks.waitFor(true, () -> runtimeClientService.getProgramFinishTime() >= 0, 2, TimeUnit.SECONDS);
 
     for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      // For program status event topic, we need to send valid program status event because
-      // the RuntimeClientService will decode it to watch for program termination
-      if (!entry.getKey().equals(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
+      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
         List<String> payloads = Arrays.asList(entry.getKey(), entry.getKey(), entry.getKey());
         messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), entry.getValue(),
                                  StandardCharsets.UTF_8, payloads.iterator());
@@ -273,22 +283,14 @@ public class RuntimeClientServiceTest {
     // All messages should be sent after the runtime client service stopped
     MessagingContext serverMessagingContext = new MultiThreadMessagingContext(messagingService);
     for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      if (entry.getKey().equals(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        // Extract the program run status from the Notification
-        Tasks.waitFor(Collections.singletonList(ProgramRunStatus.COMPLETED),
-                      () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null).stream()
-                        .map(Message::getPayloadAsString)
-                        .map(s -> GSON.fromJson(s, Notification.class))
-                        .map(n -> n.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS))
-                        .map(ProgramRunStatus::valueOf)
-                        .collect(Collectors.toList()), 5, TimeUnit.SECONDS);
-      } else {
+      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
         Tasks.waitFor(Arrays.asList(entry.getKey(), entry.getKey(), entry.getKey()),
                       () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null)
                         .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
                       5, TimeUnit.SECONDS);
       }
     }
+    waitForStatus(serverMessagingContext, ProgramRunStatus.COMPLETED);
   }
 
   /**
@@ -296,7 +298,7 @@ public class RuntimeClientServiceTest {
    */
   @Test(timeout = 10000L)
   public void testRuntimeClientStop() throws Exception {
-    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientCConf, clientMessagingService);
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientProgramStatePublisher);
 
     ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
     try {
@@ -312,11 +314,31 @@ public class RuntimeClientServiceTest {
   }
 
   private List<Message> fetchMessages(MessagingContext messagingContext, String topic, int limit,
-                                      @Nullable String lastMessageId) throws TopicNotFoundException, IOException {
-    MessageFetcher messageFetcher = messagingContext.getMessageFetcher();
-    try (CloseableIterator<Message> iterator = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                                                                    topic, limit, lastMessageId)) {
-      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false).collect(Collectors.toList());
+                                      @Nullable String lastMessageId) {
+    try {
+      MessageFetcher messageFetcher = messagingContext.getMessageFetcher();
+      try (CloseableIterator<Message> iterator = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
+                                                                      topic, limit, lastMessageId)) {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
+          .collect(Collectors.toList());
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
+  }
+
+  private void waitForStatus(MessagingContext serverMessagingContext, ProgramRunStatus status)
+    throws TimeoutException, InterruptedException, ExecutionException {
+
+    Tasks.waitFor(Collections.singletonList(status),
+                  () -> topicConfigs.entrySet().stream().filter(
+                      entry -> entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)
+                    ).flatMap(entry ->
+                                fetchMessages(serverMessagingContext, entry.getValue(), 10, null).stream()
+                                  .map(Message::getPayloadAsString)
+                                  .map(s -> GSON.fromJson(s, Notification.class))
+                                  .map(n -> n.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS))
+                                  .map(ProgramRunStatus::valueOf))
+                    .collect(Collectors.toList()), 5, TimeUnit.SECONDS);
   }
 }

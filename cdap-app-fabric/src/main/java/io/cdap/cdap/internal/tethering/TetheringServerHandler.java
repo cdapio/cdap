@@ -29,6 +29,8 @@ import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
@@ -75,19 +77,20 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final String topicPrefix;
-  private final String programStatusTopic;
   private final ContextAccessEnforcer contextAccessEnforcer;
+  private final ProgramStatePublisher programStatePublisher;
 
   @Inject
   TetheringServerHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
-                         ContextAccessEnforcer contextAccessEnforcer) {
+                         ContextAccessEnforcer contextAccessEnforcer,
+                         MessagingProgramStatePublisher programStatePublisher) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
-    this.programStatusTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     this.contextAccessEnforcer = contextAccessEnforcer;
+    this.programStatePublisher = programStatePublisher;
   }
 
   @Override
@@ -312,19 +315,14 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to parse request: " + e.getMessage(), e);
     }
 
-    try {
-      for (Notification notification : notificationList) {
-        Map<String, String> properties = notification.getProperties();
-        String programRunId = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
-        String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
+    for (Notification notification : notificationList) {
+      Map<String, String> properties = notification.getProperties();
+      String programRunId = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
+      String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
 
-        LOG.debug("Received notification from peer {} about program run {} in state {}",
-                 peer, programRunId, programStatus);
-        messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), programStatusTopic,
-                                                       GSON.toJson(notification));
-      }
-    } catch (TopicNotFoundException | IOException e) {
-      throw new BadRequestException("Unable to publish program status update", e);
+      LOG.debug("Received notification from peer {} about program run {} in state {}",
+               peer, programRunId, programStatus);
+      programStatePublisher.publish(notification.getNotificationType(), notification.getProperties());
     }
     return lastControlMessageId;
   }

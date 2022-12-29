@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -72,6 +74,7 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import org.apache.twill.internal.CompositeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,13 +93,82 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
 /**
- * Service that receives program status notifications and persists to the store.
+ * Service that creates children services, each to handle a single partition of program status events topic
+ */
+public class ProgramNotificationSubscriberService extends AbstractIdleService {
+  private final MessagingService messagingService;
+  private final CConfiguration cConf;
+  private final MetricsCollectionService metricsCollectionService;
+  private final ProvisionerNotifier provisionerNotifier;
+  private final ProgramLifecycleService programLifecycleService;
+  private final ProvisioningService provisioningService;
+  private final ProgramStateWriter programStateWriter;
+  private final TransactionRunner transactionRunner;
+  private final Store store;
+  private final RunRecordMonitorService runRecordMonitorService;
+  private final Service delegate;
+
+  @Inject
+  ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
+                                       MetricsCollectionService metricsCollectionService,
+                                       ProvisionerNotifier provisionerNotifier,
+                                       ProgramLifecycleService programLifecycleService,
+                                       ProvisioningService provisioningService,
+                                       ProgramStateWriter programStateWriter, TransactionRunner transactionRunner,
+                                       Store store,
+                                       RunRecordMonitorService runRecordMonitorService) {
+
+    this.messagingService = messagingService;
+    this.cConf = cConf;
+    this.metricsCollectionService = metricsCollectionService;
+    this.provisionerNotifier = provisionerNotifier;
+    this.programLifecycleService = programLifecycleService;
+    this.provisioningService = provisioningService;
+    this.programStateWriter = programStateWriter;
+    this.transactionRunner = transactionRunner;
+    this.store = store;
+    this.runRecordMonitorService = runRecordMonitorService;
+    List<Service> children = new ArrayList<>();
+    String topicPrefix = cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
+    int numPartitions = cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS);
+    //Add bare one - we always listen to it
+    children.add(createChildService("program.status", topicPrefix));
+    //If number of partitions is more than 1 - create partitioned services
+    if (numPartitions > 1) {
+      IntStream.range(0, numPartitions).forEach(
+        i -> children.add(createChildService("program.status." + i, topicPrefix + i)));
+    }
+    this.delegate = new CompositeService(children);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    delegate.startAndWait();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    delegate.stopAndWait();
+  }
+
+  private ProgramNotificationSingleTopicSubscriberService createChildService(String name, String topicName) {
+    return new ProgramNotificationSingleTopicSubscriberService(messagingService, cConf, metricsCollectionService,
+                                                               provisionerNotifier, programLifecycleService,
+                                                               provisioningService, programStateWriter,
+                                                               transactionRunner, store, runRecordMonitorService,
+                                                               name, topicName);
+  }
+}
+
+/**
+ * Service that receives program status notifications from a single topic and persists to the store.
  * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
  */
-public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
+class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificationSubscriberService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
 
@@ -126,16 +198,17 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final Store store;
   private final RunRecordMonitorService runRecordMonitorService;
 
-  @Inject
-  ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
-                                       MetricsCollectionService metricsCollectionService,
-                                       ProvisionerNotifier provisionerNotifier,
-                                       ProgramLifecycleService programLifecycleService,
-                                       ProvisioningService provisioningService,
-                                       ProgramStateWriter programStateWriter, TransactionRunner transactionRunner,
-                                       Store store,
-                                       RunRecordMonitorService runRecordMonitorService) {
-    super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
+  ProgramNotificationSingleTopicSubscriberService(MessagingService messagingService, CConfiguration cConf,
+                                                  MetricsCollectionService metricsCollectionService,
+                                                  ProvisionerNotifier provisionerNotifier,
+                                                  ProgramLifecycleService programLifecycleService,
+                                                  ProvisioningService provisioningService,
+                                                  ProgramStateWriter programStateWriter,
+                                                  TransactionRunner transactionRunner,
+                                                  Store store,
+                                                  RunRecordMonitorService runRecordMonitorService,
+                                                  String name, String topicName) {
+    super(name, cConf, topicName,
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
           messagingService, metricsCollectionService, transactionRunner);
