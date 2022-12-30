@@ -75,6 +75,6 @@ public class GitRepoInitializationTask implements RunnableTask {
   // right now we only support PAT
   // this should have a switch once other methods are onboarded
   private CredentialsProvider generateCredentialProvider(SourceControlInfo sourceControlInfo) {
-    return new UsernamePasswordCredentialsProvider(String.format("%s", sourceControlInfo.getAccessToken()), "");
+    return new UsernamePasswordCredentialsProvider("oauth2", String.format("%s", sourceControlInfo.getAccessToken()));
   }
 }
