@@ -37,5 +37,6 @@ public interface RuntimeConfigurer extends ServiceDiscoverer {
    * for preview run, there is no existing app spec
    */
   @Nullable
+  @Deprecated
   ApplicationSpecification getDeployedApplicationSpec();
 }

@@ -49,6 +49,7 @@ public class DefaultAppRuntimeConfigurer extends AbstractServiceDiscoverer imple
   }
 
   @Override
+  @Deprecated
   public ApplicationSpecification getDeployedApplicationSpec() {
     return deployedAppSpec;
   }

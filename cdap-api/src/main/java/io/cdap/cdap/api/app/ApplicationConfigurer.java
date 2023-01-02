@@ -151,7 +151,7 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * @return the application Specification of the app if previously deployed otherwise null
    */
   @Nullable
-  default ApplicationSpecification getCurrentAppSpec() {
+  default ApplicationSpecification getDeployedApplicationSpec() {
     return null;
   }
 }

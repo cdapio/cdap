@@ -358,6 +358,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       .setOwnerPrincipal(null)
       .setUpdateSchedules(false)
       .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments))
+      .setDeployedApplicationSpec(existingAppSpec)
       .build();
 
     Configurator configurator = configuratorFactory.create(deploymentInfo);
