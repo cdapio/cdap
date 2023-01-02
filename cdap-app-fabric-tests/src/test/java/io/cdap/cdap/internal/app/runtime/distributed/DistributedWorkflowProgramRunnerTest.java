@@ -51,7 +51,6 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -282,7 +281,6 @@ public class DistributedWorkflowProgramRunnerTest {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new MessagingClientModule(),
-      new ExploreClientModule(),
       new AuditModule(),
       CoreSecurityRuntimeModule.getDistributedModule(cConf),
       new AuthenticationContextModules().getNoOpModule(),

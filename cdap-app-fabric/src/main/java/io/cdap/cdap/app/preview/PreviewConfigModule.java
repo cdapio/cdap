@@ -74,7 +74,6 @@ public class PreviewConfigModule extends AbstractModule {
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.set(Constants.Namespace.NAMESPACES_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
-    previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
     // Use No-SQL store for preview data
     previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 

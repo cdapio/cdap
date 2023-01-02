@@ -17,7 +17,7 @@
   -->
 
 <!--
-  Logback used by containers that run in YARN, such as Explore, MapReduce, Spark
+  Logback used by containers that run in YARN, such as  MapReduce, Spark
 -->
 <configuration>
 
@@ -63,10 +63,6 @@
 
   <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
   <logger name="org.apache.hadoop.http.HttpRequestLog" level="ERROR"/>
-
-  <!-- Redirected stdout and stderr of Hive operations -->
-  <logger name="Explore.stdout" level="INFO"/>
-  <logger name="Explore.stderr" level="INFO"/>
 
   <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <!-- CDAP_LOG_DIR is the environment variable set by CDAP for logs -->

@@ -72,8 +72,7 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount;
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.AppFabric.SPARK_COMPAT,
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.AppFabric.SPARK_COMPAT,
                                                                        Compat.SPARK_COMPAT);
   private static final String DATA_TRACER_PROPERTY = "records.out";
 

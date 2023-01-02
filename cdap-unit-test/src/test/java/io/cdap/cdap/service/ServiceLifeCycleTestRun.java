@@ -58,6 +58,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -72,7 +73,7 @@ import java.util.concurrent.TimeUnit;
 public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   private static final Gson GSON = new Gson();
   private static final Type STATES_TYPE = new TypeToken<List<ImmutablePair<Integer, String>>>() { }.getType();
@@ -432,7 +433,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     try {
       // 200 will be the status code. Since the response is completed, from the client perspective, there is no error.
       Assert.assertEquals(200, urlConn.getResponseCode());
-      Assert.assertEquals("0123456789", new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
+      Assert.assertEquals("0123456789", new String(ByteStreams.toByteArray(urlConn.getInputStream()),
+                                                   StandardCharsets.UTF_8));
     } finally {
       serviceManager.stop();
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);

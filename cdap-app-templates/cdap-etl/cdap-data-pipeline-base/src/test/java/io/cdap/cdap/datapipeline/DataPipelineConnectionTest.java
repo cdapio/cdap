@@ -137,8 +137,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG =
-    new TestConfiguration(io.cdap.cdap.common.conf.Constants.Explore.EXPLORE_ENABLED, false,
-                          io.cdap.cdap.common.conf.Constants.Security.Store.PROVIDER, "file",
+    new TestConfiguration(io.cdap.cdap.common.conf.Constants.Security.Store.PROVIDER, "file",
                           io.cdap.cdap.common.conf.Constants.AppFabric.SPARK_COMPAT,
                           Compat.SPARK_COMPAT).enableAuthorization(TMP_FOLDER);
 

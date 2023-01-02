@@ -29,8 +29,7 @@ public class FeatureDisabledException extends AccessException implements HttpErr
    */
   public enum Feature {
     AUTHENTICATION,
-    AUTHORIZATION,
-    EXPLORE
+    AUTHORIZATION
   }
 
   public static final String CDAP_SITE = "cdap-site.xml";

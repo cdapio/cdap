@@ -29,20 +29,6 @@ public class DatasetSystemMetadataProviderTest {
 
   @Test
   public void testFilesetSchema() {
-    DatasetProperties filesetAvroTableProps =
-      FileSetProperties.builder()
-        .setTableProperty(DatasetSystemMetadataProvider.FILESET_AVRO_SCHEMA_PROPERTY, "avro-table-schema")
-        .build();
-    assertDatasetSchema("avro-table-schema", filesetAvroTableProps);
-
-    // When SCHEMA property is present, it should override
-    filesetAvroTableProps =
-      FileSetProperties.builder()
-        .setTableProperty(DatasetSystemMetadataProvider.FILESET_AVRO_SCHEMA_PROPERTY, "avro-table-schema")
-        .add(DatasetProperties.SCHEMA, "avro-schema")
-        .build();
-    assertDatasetSchema("avro-schema", filesetAvroTableProps);
-
     DatasetProperties filesetAvroOutputProps =
       FileSetProperties.builder()
         .setOutputProperty(DatasetSystemMetadataProvider.FILESET_AVRO_SCHEMA_OUTPUT_KEY, "avro-output-schema")

@@ -28,7 +28,6 @@ import io.cdap.cdap.proto.codec.AuditMessageTypeAdapter;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.SystemServiceId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -76,15 +75,6 @@ public class AuditMessageTest {
     Assert.assertEquals(jsonToMap(workerAccessJson), jsonToMap(GSON.toJson(workerAccess)));
     Assert.assertEquals(workerAccess, GSON.fromJson(workerAccessJson, AuditMessage.class));
 
-    String exploreAccessJson =
-      "{\"version\":2,\"time\":2500,\"metadataEntity\":{\"details\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\"}," +
-        "\"type\":\"dataset\"},\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"UNKNOWN\"," +
-        "\"accessor\":{\"service\":\"explore\",\"entity\":\"SYSTEM_SERVICE\"}}}";
-    AuditMessage exploreAccess =
-      new AuditMessage(2500L, new NamespaceId("ns1").dataset("ds1"), "user1", AuditType.ACCESS,
-                       new AccessPayload(AccessType.UNKNOWN, new SystemServiceId("explore")));
-    Assert.assertEquals(jsonToMap(exploreAccessJson), jsonToMap(GSON.toJson(exploreAccess)));
-    Assert.assertEquals(exploreAccess, GSON.fromJson(exploreAccessJson, AuditMessage.class));
   }
 
   @Test

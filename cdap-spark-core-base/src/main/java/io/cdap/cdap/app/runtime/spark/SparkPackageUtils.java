@@ -103,8 +103,6 @@ public final class SparkPackageUtils {
   private static final String SPARK_YARN_JAR = "spark.yarn.jar";
   // Spark2 conf key for spark archive (zip of jars) location
   private static final String SPARK_YARN_ARCHIVE = "spark.yarn.archive";
-  // The Hive conf directories as determined by the startup script
-  private static final String EXPLORE_CONF_DIRS = "explore.conf.dirs";
 
   // Environment variable name for locating spark home directory
   private static final String SPARK_HOME = Constants.SPARK_HOME;
@@ -228,7 +226,7 @@ public final class SparkPackageUtils {
     localizeResources.put(SPARK_DEFAULTS_CONF, new LocalizeResource(sparkDefaultConfFile));
     env.putAll(getSparkClientEnv());
 
-    // Shallow copy all files under directory defined by $HADOOP_CONF_DIR and the explore conf directory
+    // Shallow copy all files under directory defined by $HADOOP_CONF_DIR
     // If $HADOOP_CONF_DIR is not defined, use the location of "yarn-site.xml" to determine the directory
     // This is part of workaround for CDAP-5019 (SPARK-13441) and CDAP-12330
     List<File> configDirs = new ArrayList<>();
@@ -244,11 +242,7 @@ public final class SparkPackageUtils {
       }
     }
 
-    // Include the explore config dirs as well
     Splitter splitter = Splitter.on(File.pathSeparatorChar).omitEmptyStrings();
-    for (String dir: splitter.split(System.getProperty(EXPLORE_CONF_DIRS, ""))) {
-      configDirs.add(new File(dir));
-    }
 
     if (!configDirs.isEmpty()) {
       File targetFile = File.createTempFile(LOCALIZED_CONF_DIR, ".zip", tempDir);
@@ -289,7 +283,6 @@ public final class SparkPackageUtils {
         Configuration conf = new Configuration(false);
         conf.clear();
         conf.addResource(file.toURI().toURL());
-        conf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
         conf.writeXml(zipOutput);
       } else {
         Files.copy(file.toPath(), zipOutput);

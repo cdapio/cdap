@@ -21,7 +21,6 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetProperties;
-import io.cdap.cdap.api.dataset.ExploreProperties;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 
 import java.io.IOException;
@@ -273,7 +272,7 @@ public class TableProperties {
    * @param <B> the type of the builder.
    */
   public abstract static class AbstractBuilder<B extends AbstractBuilder>
-    extends ExploreProperties.AbstractBuilder<B> {
+    extends DatasetProperties.Builder {
 
     /**
      * Set the conflict detection level.

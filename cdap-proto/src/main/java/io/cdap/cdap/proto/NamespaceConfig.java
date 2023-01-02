@@ -36,7 +36,7 @@ public class NamespaceConfig {
   public static final String ROOT_DIRECTORY = "root.directory";
   public static final String HBASE_NAMESPACE = "hbase.namespace";
   public static final String HIVE_DATABASE = "hive.database";
-  public static final String EXPLORE_AS_PRINCIPAL = "explore.as.principal";
+
   public static final String PRINCIPAL = "principal";
   public static final String GROUP_NAME = "groupName";
   public static final String KEYTAB_URI = "keytabURI";
@@ -48,21 +48,14 @@ public class NamespaceConfig {
   public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
                          @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
                          @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI) {
-    this(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI, true);
-  }
-
-  public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
-                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
-                         @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
-                         boolean exploreAsPrincipal) {
     this(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI,
-            exploreAsPrincipal, new HashMap<>());
+         new HashMap<>());
   }
 
   public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
                          @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
                          @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
-                         boolean exploreAsPrincipal, Map<String, String> existingConfigs) {
+                         Map<String, String> existingConfigs) {
     Map<String, String> configs = new HashMap<>(existingConfigs);
     configs.put(SCHEDULER_QUEUE_NAME, schedulerQueueName);
 
@@ -90,7 +83,6 @@ public class NamespaceConfig {
       configs.put(KEYTAB_URI, keytabURI);
     }
 
-    configs.put(EXPLORE_AS_PRINCIPAL, Boolean.toString(exploreAsPrincipal));
 
     this.configs = Collections.unmodifiableMap(configs);
   }
@@ -163,11 +155,6 @@ public class NamespaceConfig {
       return versionIdx < 0 ? 0 : Integer.parseInt(keytabURI.substring(versionIdx + 1));
     }
     return 0;
-  }
-
-  public Boolean isExploreAsPrincipal() {
-    String value = configs.get(EXPLORE_AS_PRINCIPAL);
-    return value == null || Boolean.parseBoolean(value);
   }
 
   public Set<String> getDifference(@Nullable NamespaceConfig other) {

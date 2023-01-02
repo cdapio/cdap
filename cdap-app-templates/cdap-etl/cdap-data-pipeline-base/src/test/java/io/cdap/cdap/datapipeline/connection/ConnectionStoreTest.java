@@ -20,7 +20,6 @@ package io.cdap.cdap.datapipeline.connection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.NamespaceSummary;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionConflictException;
@@ -42,7 +41,7 @@ import java.util.Collections;
  */
 public class ConnectionStoreTest extends SystemAppTestBase {
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration();
   private static ConnectionStore connectionStore;
 
   @BeforeClass

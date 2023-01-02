@@ -131,7 +131,6 @@ public class AuthorizationTest extends TestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(
-    Constants.Explore.EXPLORE_ENABLED, false,
     Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0
   );
   private static final EnumSet<? extends Permission> ALL_STANDARD_PERMISSIONS = EnumSet.allOf(StandardPermission.class);

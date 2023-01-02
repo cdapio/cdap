@@ -3,8 +3,6 @@
     "cdap_site": {
       "dashboard.bind.port": "11011",
       "dataset.executor.container.memory.mb": "1536",
-      "explore.enabled": "{{EXPLORE_ENABLED}}",
-      "explore.executor.container.memory.mb": "2304",
       "http.client.read.timeout.ms": "120000",
       "kafka.server.log.dirs": "/var/cdap/kafka-logs",
       "log.saver.container.memory.mb": "1536",

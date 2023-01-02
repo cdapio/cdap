@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 /**
- * This is a test suite that runs all tests in the cdap-unit-test module that don't require explore to be enabled.
+ * This is a test suite that runs all tests in the cdap-unit-test module.
  * This avoid starting/stopping app-fabric per test.
  */
 @Category(XSlowTests.class)
@@ -59,7 +59,6 @@ public class TestFrameworkTestSuite extends TestFrameworkTestBase {
   // Note that setting the following configuration in any of the above Test classes is ignored, since
   // they are run as part of this TestSuite.
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.CLUSTER_NAME, "testCluster");
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.CLUSTER_NAME, "testCluster");
 
 }
