@@ -98,7 +98,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private String name;
   private Map<MetadataScope, Metadata> appMetadata;
   private String description;
-  private ApplicationSpecification currentAppSpec;
+  private ApplicationSpecification deployedApplicationSpec;
 
   // passed app to be used to resolve default name and description
   @VisibleForTesting
@@ -124,7 +124,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
                               @Nullable RuntimeConfigurer runtimeConfigurer,
                               @Nullable AppDeploymentRuntimeInfo runtimeInfo,
                               FeatureFlagsProvider featureFlagsProvider,
-                              @Nullable ApplicationSpecification currentAppSpec) {
+                              @Nullable ApplicationSpecification deployedApplicationSpec) {
     super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
           featureFlagsProvider);
     this.name = app.getClass().getSimpleName();
@@ -137,7 +137,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
     this.runtimeConfigurer = runtimeConfigurer;
     this.runtimeInfo = runtimeInfo;
-    this.currentAppSpec = currentAppSpec;
+    this.deployedApplicationSpec = deployedApplicationSpec;
   }
 
   @Override
@@ -296,8 +296,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   @Nullable
   @Override
-  public ApplicationSpecification getCurrentAppSpec() {
-    return this.currentAppSpec;
+  public ApplicationSpecification getDeployedApplicationSpec() {
+    return this.deployedApplicationSpec;
   }
 
   /**

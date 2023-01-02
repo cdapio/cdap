@@ -663,7 +663,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                                                                    newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
 
-    return updateApplicationInternal(appId, appSpec.getConfiguration(), programId -> { }, newArtifactDetail,
+    return updateApplicationInternal(appId, programId -> { }, newArtifactDetail,
                                      Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
                                      allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId), appSpec);
   }
@@ -673,7 +673,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * to its config.
    */
   private ApplicationId updateApplicationInternal(ApplicationId appId,
-                                                  @Nullable String currentConfigStr,
                                                   ProgramTerminator programTerminator,
                                                   ArtifactDetail artifactDetail,
                                                   List<ApplicationConfigUpdateAction> updateActions,
@@ -694,7 +693,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String updatedAppConfig;
     DefaultApplicationUpdateContext updateContext =
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
-                                          artifactRepository, currentConfigStr, updateActions,
+                                          artifactRepository, appSpec.getConfiguration(), updateActions,
                                           allowedArtifactScopes, allowSnapshot);
 
     try (CloseableClassLoader artifactClassLoader =
@@ -737,7 +736,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setUpdateSchedules(false)
       .setChangeDetail(new ChangeDetail(null, appId.getVersion(), requestingUser == null ? null :
         requestingUser.getName(), System.currentTimeMillis()))
-      .setCurrentAppSpec(appSpec)
+      .setDeployedApplicationSpec(appSpec)
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);

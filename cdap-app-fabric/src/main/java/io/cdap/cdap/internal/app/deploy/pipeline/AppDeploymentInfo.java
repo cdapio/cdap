@@ -55,7 +55,7 @@ public class AppDeploymentInfo {
   @Nullable
   private final ChangeDetail changeDetail;
   @Nullable
-  private final ApplicationSpecification currentAppSpec;
+  private final ApplicationSpecification deployedApplicationSpec;
 
   /**
    * Creates a new {@link Builder}.
@@ -80,14 +80,15 @@ public class AppDeploymentInfo {
       .setUpdateSchedules(other.updateSchedules)
       .setRuntimeInfo(other.runtimeInfo)
       .setChangeDetail(other.changeDetail)
-      .setCurrentAppSpec(other.currentAppSpec);
+      .setDeployedApplicationSpec(other.deployedApplicationSpec);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable ChangeDetail changeDetail, @Nullable ApplicationSpecification currentAppSpec) {
+                            @Nullable ChangeDetail changeDetail,
+                            @Nullable ApplicationSpecification deployedApplicationSpec) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -99,7 +100,7 @@ public class AppDeploymentInfo {
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
     this.changeDetail = changeDetail;
-    this.currentAppSpec = currentAppSpec;
+    this.deployedApplicationSpec = deployedApplicationSpec;
   }
 
   /**
@@ -193,8 +194,8 @@ public class AppDeploymentInfo {
    * Returns the previously deployed Application Specification. Will be null for the 1st deployment
    */
   @Nullable
-  public ApplicationSpecification getCurrentAppSpec() {
-    return currentAppSpec;
+  public ApplicationSpecification getDeployedApplicationSpec() {
+    return deployedApplicationSpec;
   }
 
   /**
@@ -216,7 +217,7 @@ public class AppDeploymentInfo {
     @Nullable
     private ChangeDetail changeDetail;
     @Nullable
-    private ApplicationSpecification currentAppSpec;
+    private ApplicationSpecification deployedApplicationSpec;
 
     private Builder() {
       // Only for the builder() method to use
@@ -284,8 +285,8 @@ public class AppDeploymentInfo {
       return this;
     }
 
-    public Builder setCurrentAppSpec(@Nullable ApplicationSpecification currentAppSpec) {
-      this.currentAppSpec = currentAppSpec;
+    public Builder setDeployedApplicationSpec(@Nullable ApplicationSpecification deployedApplicationSpec) {
+      this.deployedApplicationSpec = deployedApplicationSpec;
       return this;
     }
 
@@ -304,7 +305,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
                                    appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeDetail, currentAppSpec);
+                                   changeDetail, deployedApplicationSpec);
     }
   }
 }
