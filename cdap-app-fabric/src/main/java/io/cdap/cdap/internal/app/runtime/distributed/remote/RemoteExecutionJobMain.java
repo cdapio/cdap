@@ -113,9 +113,6 @@ public class RemoteExecutionJobMain {
     RunId runId = RunIds.fromString(arguments.get(RUN_ID));
     CConfiguration cConf = CConfiguration.create();
 
-    // Not support explore functionality in remote execution
-    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
-
     // Namespace the HDFS on the current cluster to segregate multiple runs on the same cluster
     cConf.set(Constants.CFG_HDFS_NAMESPACE, "/twill-" + runId);
 

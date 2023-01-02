@@ -125,14 +125,12 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     // Update the container hConf
     if (clusterMode == ClusterMode.ON_PREMISE) {
-      // Kerberos is only supported in on premise mode
-      hConf.set(Constants.Explore.HIVE_METASTORE_TOKEN_SIG, Constants.Explore.HIVE_METASTORE_TOKEN_SERVICE_NAME);
 
       if (SecurityUtil.isKerberosEnabled(cConf)) {
         // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval
         // If we don't offset it, it will look for the new credentials too soon
         // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
-        long interval = (long) ((TokenSecureStoreRenewer.calculateUpdateInterval(cConf, hConf) + 5000) / 0.8);
+        long interval = (long) ((TokenSecureStoreRenewer.calculateUpdateInterval(hConf) + 5000) / 0.8);
         launchConfig.addExtraSystemArgument(SparkRuntimeContextConfig.CREDENTIALS_UPDATE_INTERVAL_MS,
                                             Long.toString(interval));
       }

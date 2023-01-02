@@ -33,7 +33,6 @@ public class ReportGenerationApp extends AbstractApplication {
     setName(NAME);
     addSpark(new ReportGenerationSpark());
     createDataset(REPORT_FILESET, FileSet.class, FileSetProperties.builder()
-      .setEnableExploreOnCreate(false)
       .setDescription("fileSet")
       .build());
   }

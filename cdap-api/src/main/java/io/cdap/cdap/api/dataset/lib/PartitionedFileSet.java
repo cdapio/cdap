@@ -26,7 +26,6 @@ import io.cdap.cdap.api.dataset.PartitionNotFoundException;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
@@ -36,10 +35,6 @@ import javax.annotation.Nullable;
  * is fixed, that is, all operations that accept a partition key as a parameter require
  * that that key has exactly the same schema as the partitioning.
  *
- * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
- * properties when the dataset is created. See {@link FileSetProperties}
- * for details. If it is enabled for explore, a Hive external table will be created when the dataset is
- * created. The Hive table is partitioned by the same keys as this dataset.
  */
 @Beta
 public interface PartitionedFileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
@@ -124,17 +119,6 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void dropPartition(PartitionKey key);
-
-  /**
-   * Asynchronous operation to concatenate the partition in Hive. Note that Hive only supports certain formats.
-   * Concatenation merges the files within one partition into fewer, larger files.
-   * If this Dataset is not enabled for Explore, this operation is a no-op.
-   *
-   * @throws PartitionNotFoundException when a partition for the given key is not found
-   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
-   * @return a {@link Future} which returns null, but may be used to await completion of the concatenation operation.
-   */
-  Future<Void> concatenatePartition(PartitionKey key);
 
   /**
    * Return the partition for a specific partition key, or null if key is not found.

@@ -169,7 +169,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
         bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
         // Bind ProgramId to the passed in instance programId so that we can retrieve it back later when needed.
-        // For example see ProgramDiscoveryExploreClient.
         // Also binding to instance is fine here as the programId is guaranteed to not change throughout the
         // lifecycle of this program runnable
         bind(ProgramId.class).toInstance(programRunId.getParent());

@@ -52,7 +52,7 @@ public class DatasetsUtilTest extends DatasetServiceTestBase {
     testFix("fileSet",
             FileSetProperties.builder().setBasePath("/tmp/nn").setDataExternal(true).build());
     testFix(FileSet.class.getName(),
-            FileSetProperties.builder().setEnableExploreOnCreate(true).setExploreFormat("csv").build());
+            FileSetProperties.builder().build());
 
     testFix("timePartitionedFileSet",
             FileSetProperties.builder().setBasePath("relative").build());

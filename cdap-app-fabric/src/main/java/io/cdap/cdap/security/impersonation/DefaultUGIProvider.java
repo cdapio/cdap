@@ -19,7 +19,6 @@ package io.cdap.cdap.security.impersonation;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -94,12 +93,6 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       try {
         NamespaceConfig nsConfig =
           namespaceQueryAdmin.get(impersonationRequest.getEntityId().getNamespaceId()).getConfig();
-        if (!nsConfig.isExploreAsPrincipal()) {
-          throw new FeatureDisabledException(FeatureDisabledException.Feature.EXPLORE,
-                                             NamespaceConfig.class.getSimpleName() + " of " +
-                                               impersonationRequest.getEntityId(),
-                                             NamespaceConfig.EXPLORE_AS_PRINCIPAL, String.valueOf(true));
-        }
 
       } catch (Exception e) {
         throw AuthEnforceUtil.propagateAccessException(e);

@@ -23,7 +23,6 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.service.Service;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
@@ -53,7 +52,7 @@ import java.util.jar.JarOutputStream;
 public class ServiceArtifactTestRun extends TestFrameworkTestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   private static File artifactJar;
 

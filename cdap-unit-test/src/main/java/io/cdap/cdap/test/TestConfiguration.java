@@ -35,7 +35,7 @@ import java.util.Optional;
  * class MyUnitTest extends TestBase {
  *
  *   @ClassRule
- *   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", "false");
+ *   public static final TestConfiguration CONFIG = new TestConfiguration();
  *
  *   ....
  * }

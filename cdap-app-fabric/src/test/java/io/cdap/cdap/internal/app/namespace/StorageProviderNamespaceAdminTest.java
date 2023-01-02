@@ -63,7 +63,6 @@ public class StorageProviderNamespaceAdminTest {
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     Injector injector = Guice.createInjector(Modules.override(new AppFabricTestModule(cConf)).with(
       new AbstractModule() {
         @Override

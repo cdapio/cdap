@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.service.Service;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -55,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration();
   private static final Gson GSON = new Gson();
 
   private ServiceManager serviceManager;

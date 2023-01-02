@@ -17,23 +17,17 @@
 package io.cdap.cdap.data.runtime.main;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.twill.AbortOnTimeoutEventHandler;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.hive.ExploreUtils;
-import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -50,10 +44,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -76,7 +68,6 @@ public class MasterTwillApplication implements TwillApplication {
     .put(Constants.Service.LOGSAVER, "log.saver.")
     .put(Constants.Service.METRICS_PROCESSOR, "metrics.processor.")
     .put(Constants.Service.METRICS, "metrics.")
-    .put(Constants.Service.EXPLORE_HTTP_USER_SERVICE, "explore.executor.")
     .build();
 
   private final CConfiguration cConf;
@@ -113,12 +104,6 @@ public class MasterTwillApplication implements TwillApplication {
                              runnableLocalizeResources.get(Constants.Service.LOGSAVER), extraClassPath);
 
     prepareHBaseDDLExecutorResources(tempDir, containerCConf);
-
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      prepareExploreResources(tempDir, hConf,
-                              runnableLocalizeResources.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE),
-                              extraClassPath);
-    }
 
     Path cConfPath = saveCConf(containerCConf, Files.createTempFile(tempDir, "cConf", ".xml"));
     Path hConfPath = saveHConf(hConf, Files.createTempFile(tempDir, "hConf", ".xml"));
@@ -325,37 +310,6 @@ public class MasterTwillApplication implements TwillApplication {
     // Set it to empty value since we don't use this in the container.
     // All jars are already added as part of container classpath.
     containerCConf.set(Constants.Logging.PIPELINE_LIBRARY_DIR, "");
-  }
-
-  /**
-   * Prepares resources to be localized to the explore container.
-   */
-  private void prepareExploreResources(Path tempDir, Configuration hConf,
-                                       Map<String, LocalizeResource> localizeResources,
-                                       Collection<String> extraClassPath) throws IOException {
-    // Find the jars in the yarn application classpath
-    String yarnAppClassPath = Joiner.on(File.pathSeparatorChar).join(
-      hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                              YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-    final Set<File> yarnAppJarFiles = new LinkedHashSet<>();
-    Iterables.addAll(yarnAppJarFiles, ExploreUtils.getClasspathJarFiles(yarnAppClassPath));
-
-
-    // Filter out jar files that are already in the yarn application classpath as those,
-    // are already available in the Explore container.
-    Iterable<File> exploreFiles = Iterables.filter(
-      ExploreUtils.getExploreClasspathJarFiles("tgz", "gz"), new Predicate<File>() {
-        @Override
-        public boolean apply(File file) {
-          return !yarnAppJarFiles.contains(file);
-        }
-      });
-
-    // Explore also depends on MR, hence adding MR jars to the classpath.
-    // Depending on how the cluster is configured, we might need to localize the MR framework tgz as well.
-    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
-    MapReduceContainerHelper.addMapReduceClassPath(hConf, extraClassPath);
-    LOG.trace("Jars in extra classpath after adding jars in explore classpath: {}", extraClassPath);
   }
 
   /**

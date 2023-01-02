@@ -136,8 +136,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     new TypeToken<Map<MetadataScope, Metadata>>() { }.getType();
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.CLUSTER_NAME, "testCluster");
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.CLUSTER_NAME, "testCluster");
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -574,7 +573,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getNamespace(),
                         Constants.Metrics.Tag.APP, appClass.getSimpleName(),
                         Constants.Metrics.Tag.MAPREDUCE, DatasetWithMRApp.MAPREDUCE_PROGRAM),
-        ImmutableList.<String>of()
+        ImmutableList.of()
       )
     );
 
@@ -957,9 +956,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkflowTokenNodeDetail workflowTokenAtNode =
       wfmanager.getTokenAtNode(pid, AppWithSchedule.DummyAction.class.getSimpleName(),
                                WorkflowToken.Scope.USER, "finished");
-    Assert.assertEquals(true, Boolean.parseBoolean(workflowTokenAtNode.getTokenDataAtNode().get("finished")));
+    Assert.assertTrue(Boolean.parseBoolean(workflowTokenAtNode.getTokenDataAtNode().get("finished")));
     workflowToken = wfmanager.getToken(pid, null, null);
-    Assert.assertEquals(false, Boolean.parseBoolean(workflowToken.getTokenData().get("running").get(0).getValue()));
+    Assert.assertFalse(Boolean.parseBoolean(workflowToken.getTokenData().get("running").get(0).getValue()));
   }
 
   @Test
@@ -1995,8 +1994,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getProperties().containsKey("entity-name"));
     Assert.assertEquals(AppWithMetadataPrograms.METADATA_SERVICE_DATASET,
                         scopeMetadata.get(MetadataScope.SYSTEM).getProperties().get("entity-name"));
-    Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getTags()
-                        .containsAll(Arrays.asList("explore", "batch")));
 
     // verify user metadata
     Assert.assertFalse(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());

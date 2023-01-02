@@ -37,8 +37,7 @@ public class AppDeployDatasetUpdateTest extends TestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(
-    Constants.Dataset.DATASET_UNCHECKED_UPGRADE, true,
-    Constants.Explore.EXPLORE_ENABLED, false
+    Constants.Dataset.DATASET_UNCHECKED_UPGRADE, true
   );
 
   @Category(XSlowTests.class)

@@ -62,10 +62,6 @@ public final class NamespaceCommandUtils {
       builder.append(ArgumentName.NAMESPACE_GROUP_NAME);
       builder.append("='").append(namespaceConfig.getGroupName()).append("', ");
     }
-    if (namespaceConfig.isExploreAsPrincipal() != null) {
-      builder.append(ArgumentName.NAMESPACE_EXPLORE_AS_PRINCIPAL);
-      builder.append("='").append(namespaceConfig.isExploreAsPrincipal()).append("', ");
-    }
     // Remove the final ", "
     if (builder.length() > 0) {
       builder.delete(builder.length() - 2, builder.length());

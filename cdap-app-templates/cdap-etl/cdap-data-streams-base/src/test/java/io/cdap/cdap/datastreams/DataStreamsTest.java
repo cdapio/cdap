@@ -107,8 +107,7 @@ public class DataStreamsTest extends HydratorTestBase {
   private static String checkpointDir;
   private static int startCount;
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.AppFabric.SPARK_COMPAT,
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.AppFabric.SPARK_COMPAT,
                                                                        Compat.SPARK_COMPAT);
 
   @BeforeClass

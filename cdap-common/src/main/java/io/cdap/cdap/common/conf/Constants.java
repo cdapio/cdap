@@ -36,7 +36,6 @@ public final class Constants {
     Security.SSL.EXTERNAL_ENABLED,
     Security.SSL.INTERNAL_ENABLED,
     Security.ENABLED,
-    Explore.EXPLORE_ENABLED,
   };
 
   public static final String[] PORT_PROPS = {
@@ -125,7 +124,6 @@ public final class Constants {
     public static final String DATASET_MANAGER = "dataset.service";
     public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
-    public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String MESSAGING_SERVICE = "messaging.service";
     public static final String RUNTIME = "runtime";
     public static final String AUTHENTICATION = "authentication";
@@ -1512,80 +1510,6 @@ public final class Constants {
     public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
 
     public static final String UGI_CACHE_EXPIRATION_MS = "cdap.ugi.cache.expiration.ms";
-  }
-
-  /**
-   * Explore module configuration.
-   */
-  public static final class Explore {
-    public static final String CCONF_KEY = "explore.cconfiguration";
-    public static final String HCONF_KEY = "explore.hconfiguration";
-    public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
-    public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
-    public static final String QUERY_ID = "explore.query.id";
-    public static final String CONTAINER_YARN_APP_CLASSPATH_FIRST = "explore.container.yarn.app.classpath.first";
-
-    public static final String START_ON_DEMAND = "explore.start.on.demand";
-    public static final String DATASET_NAME = "explore.dataset.name";
-    public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
-    public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
-    public static final String CREDENTIALS_DIR_NAME = "explore.credentials.dir";
-
-    // Older hive versions don't have the following defined so we cannot use conf.getVar or conf.setVar and
-    // we need to hardcode it here so that we can use conf.get and conf.set instead.
-    public static final String HIVE_SERVER2_SPNEGO_KEYTAB = "hive.server2.authentication.spnego.keytab";
-    public static final String HIVE_SERVER2_SPNEGO_PRINCIPAL = "hive.server2.authentication.spnego.principal";
-    public static final String SUBMITLOCALTASKVIACHILD = "hive.exec.submit.local.task.via.child";
-    public static final String SUBMITVIACHILD = "hive.exec.submitviachild";
-    public static final String HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND =
-      "hive.security.authorization.sqlstd.confwhitelist.append";
-    // Same as YarnConfiguration.TIMELINE_SERVICE_ENABLED, which isn't available on all hadoop versions
-    public static final String TIMELINE_SERVICE_ENABLED = "yarn.timeline-service.enabled";
-    // Same as YarnConfiguration.TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL, which isn't available on all hadoop versions
-    public static final String TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL =
-      "yarn.timeline-service.delegation.key.update-interval";
-
-    /** Determines how to behave when the Hive version is unsupported */
-    public static final String HIVE_VERSION_RESOLUTION_STRATEGY = "hive.version.resolution.strategy";
-    public static final String HIVE_AUTO_STRICT_VERSION = "auto.strict";
-    public static final String HIVE_AUTO_LATEST_VERSION = "auto.latest";
-
-    // a marker so that we know which tables are created by CDAP
-    public static final String CDAP_NAME = "cdap.name";
-    public static final String CDAP_VERSION = "cdap.version";
-
-    public static final String SERVER_ADDRESS = "explore.service.bind.address";
-    public static final String SERVER_PORT = "explore.service.bind.port";
-
-    public static final String BACKLOG_CONNECTIONS = "explore.service.connection.backlog";
-    public static final String EXEC_THREADS = "explore.service.exec.threads";
-    public static final String WORKER_THREADS = "explore.service.worker.threads";
-
-    /** Twill Runnable configuration **/
-    public static final String CONTAINER_VIRTUAL_CORES = "explore.executor.container.num.cores";
-    public static final String CONTAINER_MEMORY_MB = "explore.executor.container.memory.mb";
-
-    public static final String LOCAL_DATA_DIR = "explore.local.data.dir";
-    public static final String EXPLORE_ENABLED = "explore.enabled";
-    public static final String WRITES_ENABLED = "explore.writes.enabled";
-
-    public static final String ACTIVE_OPERATION_TIMEOUT_SECS = "explore.active.operation.timeout.secs";
-    public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
-    public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
-
-    public static final String SERVICE_DESCRIPTION = "Service to run ad-hoc queries.";
-    public static final String HTTP_TIMEOUT = "explore.http.timeout";
-
-    public static final String HIVE_SERVER_JDBC_URL = "hive.server2.jdbc.url";
-    public static final String HIVE_METASTORE_TOKEN_SIG = "hive.metastore.token.signature";
-    public static final String HIVE_METASTORE_TOKEN_SERVICE_NAME = "hive.metastore.service";
-
-    /**
-     * Explore JDBC constants.
-     */
-    public static final class Jdbc {
-      public static final String URL_PREFIX = "jdbc:cdap://";
-    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

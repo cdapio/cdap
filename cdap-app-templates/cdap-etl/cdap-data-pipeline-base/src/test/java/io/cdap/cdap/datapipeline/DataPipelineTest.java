@@ -182,8 +182,7 @@ public class DataPipelineTest extends HydratorTestBase {
   private static int startCount;
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.Security.Store.PROVIDER, "file",
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Security.Store.PROVIDER, "file",
                                                                        Constants.AppFabric.SPARK_COMPAT,
                                                                        Compat.SPARK_COMPAT);
   private static final String WORDCOUNT_PLUGIN = "wordcount";

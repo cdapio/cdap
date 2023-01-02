@@ -170,14 +170,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       hasValidKerberosConf = true;
     }
 
-    // check that if explore as principal is explicitly set to false then user has kerberos configuration
-    if (!metadata.getConfig().isExploreAsPrincipal() && !hasValidKerberosConf) {
-      throw new BadRequestException(
-        String.format("No kerberos principal or keytab-uri was provided while '%s' was set to true.",
-                      NamespaceConfig.EXPLORE_AS_PRINCIPAL));
-
-    }
-
     // store the meta first in the namespace store because namespacedLocationFactory needs to look up location
     // mapping from namespace config
     nsStore.create(metadata);
@@ -402,10 +394,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         // clear keytab URI version
         builder.setKeytabURIVersion(0);
       }
-    }
-
-    if (config != null) {
-      builder.setExploreAsPrincipal(config.isExploreAsPrincipal());
     }
 
     Set<String> difference = existingMeta.getConfig().getDifference(config);

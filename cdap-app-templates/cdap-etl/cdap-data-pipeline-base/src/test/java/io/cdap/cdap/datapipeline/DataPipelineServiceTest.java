@@ -98,8 +98,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
   static URI serviceURI;
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.Security.Store.PROVIDER, "file",
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Security.Store.PROVIDER, "file",
                                                                        Constants.AppFabric.SPARK_COMPAT,
                                                                        Compat.SPARK_COMPAT);
 

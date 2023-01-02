@@ -19,9 +19,7 @@ package io.cdap.cdap.data.runtime.main;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -73,7 +71,6 @@ import io.cdap.cdap.data2.util.hbase.ConfigurationWriter;
 import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import io.cdap.cdap.hive.ExploreUtils;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -947,23 +944,6 @@ public class MasterServiceMain extends DaemonMain {
 
           preparer.withApplicationClassPaths(yarnAppClassPath).withBundlerClassAcceptor(new HadoopClassExcluder());
 
-          // Setup extra classpath. Currently twill doesn't support different classpath per runnable,
-          // hence we just set it for all containers. The actual jars are localized via the MasterTwillApplication,
-          // and having missing jars as specified in the classpath is ok.
-          boolean yarnFirst = cConf.getBoolean(Constants.Explore.CONTAINER_YARN_APP_CLASSPATH_FIRST);
-          if (yarnFirst) {
-            // It's ok to have yarn application classpath set here even it can affect non-explore container,
-            // since we anyway have yarn application classpath in the "withApplicationClassPaths".
-            preparer = preparer.withClassPaths(Iterables.concat(yarnAppClassPath, extraClassPath));
-          } else {
-            preparer = preparer.withClassPaths(extraClassPath);
-          }
-
-          // Add explore dependencies
-          if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-            prepareExploreContainer(preparer);
-          }
-
           // Set the container to use MasterServiceMainClassLoader for class rewriting
           preparer.setClassLoader(MasterServiceMainClassLoader.class.getName());
 
@@ -1060,39 +1040,6 @@ public class MasterServiceMain extends DaemonMain {
         if (!config.isEmpty()) {
           preparer.withConfiguration(runnableName, config);
         }
-      }
-
-      return preparer;
-    }
-
-
-    /**
-     * Prepare the specs of the twill application for the Explore twill runnable.
-     * Add jars needed by the Explore module in the classpath of the containers, and
-     * add conf files (hive_site.xml, etc) as resources available for the Explore twill
-     * runnable.
-     */
-    private TwillPreparer prepareExploreContainer(TwillPreparer preparer) throws IOException {
-      // Add all the conf files needed by hive as resources. They will be available in the explore container classpath
-      Set<String> addedFiles = Sets.newHashSet();
-      for (File file : ExploreUtils.getExploreConfFiles()) {
-        String name = file.getName();
-        if (name.equals("logback.xml") || !name.endsWith(".xml")) {
-          continue;
-        }
-        if (addedFiles.add(name)) {
-          LOG.debug("Adding config file: {}", file.getAbsolutePath());
-          preparer = preparer.withResources(file.toURI());
-        } else {
-          LOG.warn("Ignoring duplicate config file: {}", file);
-        }
-      }
-
-      // Setup SPARK_HOME environment variable as well if spark is configured
-      String sparkHome = System.getenv(Constants.SPARK_HOME);
-      if (sparkHome != null) {
-        preparer.withEnv(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                         Collections.singletonMap(Constants.SPARK_HOME, sparkHome));
       }
 
       return preparer;

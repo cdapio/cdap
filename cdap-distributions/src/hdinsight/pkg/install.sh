@@ -29,8 +29,6 @@ CDAP_TAG=${CDAP_TAG:+hdi6.0}
 CDAP_VERSION='6.4.0-1'
 # The version of Chef to install
 CHEF_VERSION='13.8.5'
-# cdap-site.xml configuration parameters
-EXPLORE_ENABLED='true'
 
 __tmpdir="/tmp/cdap_install.$$.$(date +%s)"
 __gitdir="${__tmpdir}/cdap"
@@ -95,7 +93,6 @@ sed \
   -e "s/{{ZK_QUORUM}}/${__zk_quorum}/" \
   -e "s/{{HDP_VERSION}}/${__hdp_version}/" \
   -e "s/{{CDAP_VERSION}}/${CDAP_VERSION}/" \
-  -e "s/{{EXPLORE_ENABLED}}/${EXPLORE_ENABLED}/" \
   ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 
 # Install/Configure CDAP

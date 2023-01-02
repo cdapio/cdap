@@ -81,6 +81,6 @@ public class DataprocUtilsTest {
     for (int i = 0; i < 64; i++) {
       longStr.append('a');
     }
-    Assert.assertEquals(expected, DataprocUtils.parseLabels(String.format("a=%s", longStr.toString())));
+    Assert.assertEquals(expected, DataprocUtils.parseLabels(String.format("a=%s", longStr)));
   }
 }

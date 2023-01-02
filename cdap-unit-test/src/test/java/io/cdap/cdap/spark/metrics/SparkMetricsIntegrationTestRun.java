@@ -52,7 +52,6 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   @ClassRule
   public static final TestConfiguration CONFIG =
     new TestConfiguration(Constants.Metrics.SPARK_METRICS_ENABLED, true,
-                          Constants.Explore.EXPLORE_ENABLED, false,
                           Constants.CLUSTER_NAME, "testCluster");
 
   @Test

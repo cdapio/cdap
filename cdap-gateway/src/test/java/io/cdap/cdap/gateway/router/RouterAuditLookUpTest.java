@@ -86,18 +86,6 @@ public class RouterAuditLookUpTest {
                   new AuditLogConfig(HttpMethod.POST, true, false, EMPTY_HEADERS));
   }
 
-  @Test
-  public void testExploreEndpoints() throws Exception {
-    // endpoints from ExploreExecutorHttpHandler
-    assertContent("/v3/namespaces/default/data/explore/datasets/myDataset/update",
-                  new AuditLogConfig(HttpMethod.POST, true, false, EMPTY_HEADERS));
-    // endpoints from NamespacedExploreMetadataHttpHandler
-    assertContent("/v3/namespaces/default/data/explore/jdbc/tables",
-                  new AuditLogConfig(HttpMethod.POST, true, false, EMPTY_HEADERS));
-    // endpoints from NamespacedExploreQueryExecutorHttpHandler
-    assertContent("/v3/namespaces/default/data/explore/queries",
-                  new AuditLogConfig(HttpMethod.POST, true, false, EMPTY_HEADERS));
-  }
 
   private void assertContent(String path, AuditLogConfig expected) throws Exception {
     Assert.assertEquals(expected, AUDIT_LOOK_UP.getAuditLogContent(path, expected.getHttpMethod()));

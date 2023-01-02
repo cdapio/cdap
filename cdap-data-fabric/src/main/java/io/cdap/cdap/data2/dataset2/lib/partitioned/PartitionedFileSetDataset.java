@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Futures;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.Predicate;
@@ -87,7 +86,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -267,12 +265,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   private void undoPartitionCreate(AddPartitionOperation operation) throws Exception {
     Exception caughtExn = null;
-    if (operation.isExplorePartitionCreated()) {
-      try {
-      } catch (Exception e) {
-        caughtExn = e;
-      }
-    }
     if (operation.isFilesCreated()) {
       try {
         Location location = files.getLocation(operation.getRelativePath());
@@ -305,7 +297,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @WriteOnly
   @Override
   public void addPartition(PartitionKey key, String path) {
-    addPartition(key, path, Collections.<String, String>emptyMap());
+    addPartition(key, path, Collections.emptyMap());
   }
 
   @WriteOnly
@@ -352,9 +344,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
     partitionsTable.put(put);
 
-    if (!appending) {
-      operation.setExplorePartitionCreated();
-    }
   }
 
   @ReadWrite
@@ -594,15 +583,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
   }
 
-  @ReadWrite
-  @Override
-  public Future<Void> concatenatePartition(PartitionKey key) {
-    PartitionDetail partition = getPartition(key);
-    if (partition == null) {
-      throw new PartitionNotFoundException(key, getName());
-    }
-    return Futures.immediateFuture(null);
-  }
 
   @ReadOnly
   @Override
@@ -983,22 +963,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
   public static void fixPartitions(Transactional transactional, final String datasetName,
                                    boolean doDisable, final int partitionsPerTx, final boolean verbose) {
 
-    if (doDisable) {
-      try {
-        transactional.execute(new TxRunnable() {
-          @Override
-          public void run(io.cdap.cdap.api.data.DatasetContext context) throws Exception {
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw new DataSetException("Unable to disable and enable Explore", e.getCause());
-      } catch (RuntimeException e) {
-        if (e.getCause() instanceof TransactionFailureException) {
-          throw new DataSetException("Unable to disable and enable Explore", e.getCause().getCause());
-        }
-        throw e;
-      }
-    }
     final AtomicReference<PartitionKey> startKey = new AtomicReference<>();
     final AtomicLong errorCount = new AtomicLong(0L);
     final AtomicLong successCount = new AtomicLong(0L);

@@ -28,7 +28,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.spark.app.ScalaFileCountSparkProgram;
 import io.cdap.cdap.spark.app.SparkAppUsingFileSet;
@@ -60,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 public class SparkFileSetTestRun extends TestFrameworkTestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   private static File artifactJar;
   private ApplicationManager applicationManager;

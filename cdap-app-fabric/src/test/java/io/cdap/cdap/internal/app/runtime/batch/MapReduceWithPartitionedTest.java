@@ -53,7 +53,7 @@ import static io.cdap.cdap.internal.app.runtime.batch.AppWithTimePartitionedFile
  * This tests that we can read and write time-partitioned file sets with map/reduce, using the partition
  * time to specify input and output partitions. It does not test that the dataset is queryable with Hive,
  * or that its partitions are registered correctly in the Hive meta store. That is because here in the
- * app-fabric tests, explore is disabled.
+ * app-fabric test
  */
 @Category(XSlowTests.class)
 public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {

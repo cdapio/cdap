@@ -30,7 +30,6 @@ CDAP_VERSION=${CDAP_VERSION:-6.4.0-1}
 # The version of Chef to install
 CHEF_VERSION=${CHEF_VERSION:-13.8.5}
 # cdap-site.xml configuration parameters
-EXPLORE_ENABLED='true'
 # Sleep delay before starting services (in seconds)
 SERVICE_DELAY=${SERVICE_DELAY:-240}
 
@@ -132,7 +131,6 @@ __ipaddr=$(ifconfig eth0 | grep addr: | cut -d: -f2 | head -n 1 | awk '{print $1
 sed \
   -e "s#{{CDAP_VERSION}}#${CDAP_VERSION}#" \
   -e "s#{{CDAP_YUM_REPO_URL}}#${CDAP_YUM_REPO_URL}#" \
-  -e "s#{{EXPLORE_ENABLED}}#${EXPLORE_ENABLED}#" \
   -e "s#{{ROUTER_IP_ADDRESS}}#${__ipaddr}#" \
   ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 

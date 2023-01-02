@@ -20,7 +20,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.TimeseriesTable;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.kafka.KafkaTester;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -55,7 +54,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   @Test
   public void test() throws Exception {

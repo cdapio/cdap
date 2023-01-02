@@ -112,7 +112,7 @@ public class ReportGenerationAppTest extends TestBase {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   @ClassRule
   public static final TestConfiguration CONF =
-    new TestConfiguration(io.cdap.cdap.common.conf.Constants.Explore.EXPLORE_ENABLED, "false");
+    new TestConfiguration();
 
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationAppTest.class);
   private static final Gson GSON = new GsonBuilder()

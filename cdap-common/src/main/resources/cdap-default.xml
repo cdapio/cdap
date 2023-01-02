@@ -732,7 +732,7 @@
     <name>apps.scheduler.queue</name>
     <value></value>
     <description>
-      Scheduler queue for CDAP programs and CDAP Explore queries
+      Scheduler queue for CDAP programs
     </description>
   </property>
 
@@ -1522,127 +1522,14 @@
     </description>
   </property>
 
-  <!-- Explore Service Configuration -->
-
-  <property>
-    <name>explore.active.operation.timeout.secs</name>
-    <value>82800</value>
-    <description>
-      Timeout value in seconds for an SQL operation whose result was not
-      fetched completely
-    </description>
-  </property>
-
-  <property>
-    <name>explore.cleanup.job.schedule.secs</name>
-    <value>60</value>
-    <description>
-      Interval in seconds to schedule the clean-up of timed-out operations
-    </description>
-  </property>
-
-  <property>
-    <name>explore.container.yarn.app.classpath.first</name>
-    <value>false</value>
-    <description>
-      Determines if the YARN application classpath precedes the query engine
-      classpath
-    </description>
-  </property>
-
-  <property>
-    <name>explore.enabled</name>
-    <value>true</value>
-    <description>
-      Determines if the CDAP Explore Service (ad-hoc SQL queries) is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>explore.executor.container.memory.mb</name>
-    <value>2048</value>
-    <description>
-      Memory in megabytes for each CDAP Explore executor instance. This is
-      explicitly set differently than ${master.service.memory.mb} as Explore
-      requires more memory to run than the CDAP Master service.
-    </description>
-  </property>
-
-  <property>
-    <name>explore.executor.container.num.cores</name>
-    <value>1</value>
-    <description>
-      Number of virtual cores for each CDAP Explore executor instance
-    </description>
-  </property>
-
-  <property>
-    <name>explore.http.timeout</name>
-    <value>20</value>
-    <description>
-      The timeout in seconds for HTTP requests to the CDAP Explore service.
-      Because requests may happen within a transaction, it is recommended to
-      keep this timeout noticeably shorter than the default transaction
-      timeout, ${data.tx.timeout}.
-    </description>
-  </property>
-
-  <property>
-    <name>explore.inactive.operation.timeout.secs</name>
-    <value>3600</value>
-    <description>
-      Timeout value in seconds for an SQL operation which does not have any
-      more results to be fetched
-    </description>
-  </property>
-
-  <property>
-    <name>explore.local.data.dir</name>
-    <value>${local.data.dir}/explore</value>
-    <description>
-      Data directory for the CDAP Explore service when in CDAP Local Sandbox
-    </description>
-  </property>
-
-  <property>
-    <name>explore.service.bind.port</name>
-    <value>0</value>
-    <description>
-      CDAP Explore service bind port; if 0, binds to a random port
-    </description>
-  </property>
-
-  <property>
-    <name>explore.start.on.demand</name>
-    <value>false</value>
-    <description>
-      Determines the start-up of the CDAP Explore service (ad-hoc SQL
-      queries); if false, the Explore service starts up when CDAP is
-      started; if true, the Explore service will start upon the first query
-      it receives
-    </description>
-  </property>
-
-  <property>
-    <name>explore.writes.enabled</name>
-    <value>true</value>
-    <description>
-      Determines if writing to a table through the CDAP Explore service (ad-
-      hoc SQL queries) is enabled
-    </description>
-  </property>
-
   <property>
     <name>hive.version.resolution.strategy</name>
     <value>auto.strict</value>
     <description>
       Determines how to behave when the Hive version on a cluster is an unsupported value.
       The default value of "auto.strict" will require that the Hive version matches a
-      supported value; if Explore is enabled, CDAP Master will then not start if the Hive
-      version is unsupported. Set to "auto.latest" to use the latest Hive version of CDAP
-      modules available on the cluster with an unsupported Hive version. This property is
-      ignored for supported versions of Hive or if Explore has been disabled by setting
-      ${explore.enabled} to false.
+      supported value. Set to "auto.latest" to use the latest Hive version of CDAP
+      modules available on the cluster with an unsupported Hive version.
     </description>
   </property>
 

@@ -38,10 +38,6 @@ import javax.annotation.Nullable;
  * {@link #getPartitionOutput}, the seconds and milliseconds on the
  * time or time range are ignored.
  * <p>
- * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
- * properties when the dataset is created. See {@link io.cdap.cdap.api.dataset.lib.FileSetProperties}
- * for details. If it is enabled for explore, a Hive external table will be created when the dataset is
- * created. The Hive table is partitioned by year, month, day, hour and minute.
  */
 @Beta
 public interface TimePartitionedFileSet extends PartitionedFileSet {

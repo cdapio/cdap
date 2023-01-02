@@ -22,13 +22,10 @@ import io.cdap.cdap.api.data.batch.BatchReadable;
 import io.cdap.cdap.api.data.batch.BatchWritable;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
-import io.cdap.cdap.api.data.batch.RecordScannable;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
-import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
-import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -110,14 +107,6 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
   @Override
   public Set<String> getSystemTagsToAdd() {
     Set<String> tags = new HashSet<>();
-    if (dataset instanceof RecordScannable) {
-      tags.add(EXPLORE_TAG);
-    }
-    if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-      if (FileSetProperties.isExploreEnabled(dsProperties.getProperties())) {
-        tags.add(EXPLORE_TAG);
-      }
-    }
     if (dataset instanceof BatchReadable || dataset instanceof BatchWritable ||
       dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
       tags.add(BATCH_TAG);
@@ -143,9 +132,6 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
     } else if (datasetProperties.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA)) {
       // If it is an ObjectMappedTable, the schema is in a property called 'object.schema'
       schemaStr = datasetProperties.get(ObjectMappedTableProperties.OBJECT_SCHEMA);
-    } else if (datasetProperties.containsKey(getExplorePropName(FILESET_AVRO_SCHEMA_PROPERTY))) {
-      // Fileset with avro schema (CDAP-5322)
-      schemaStr = datasetProperties.get(getExplorePropName(FILESET_AVRO_SCHEMA_PROPERTY));
     } else if (datasetProperties.containsKey(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY))) {
       // Fileset with avro schema defined in output property (CDAP-5322)
       schemaStr = datasetProperties.get(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY));
@@ -156,9 +142,6 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
     return schemaStr;
   }
 
-  private static String getExplorePropName(String prop) {
-    return FileSetProperties.PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + prop;
-  }
 
   private static String getOutputPropName(String prop) {
     return FileSetProperties.OUTPUT_PROPERTIES_PREFIX + prop;

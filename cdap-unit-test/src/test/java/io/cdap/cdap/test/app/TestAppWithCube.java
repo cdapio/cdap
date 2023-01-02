@@ -28,7 +28,6 @@ import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import io.cdap.cdap.api.dataset.lib.cube.MeasureType;
 import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
@@ -56,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 public class TestAppWithCube extends TestBase {
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   private static final Gson GSON = new Gson();
 
