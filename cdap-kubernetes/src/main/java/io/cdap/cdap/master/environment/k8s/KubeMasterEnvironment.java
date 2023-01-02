@@ -349,6 +349,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         }
       }
     }
+    LOG.info(">>>>CDAP-20179 PodName {}, enableMonitor {}", podInfo.getName(), enableMonitor);
     twillRunner = new KubeTwillRunnerService(context, apiClientFactory, namespace, discoveryService,
                                              podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName),

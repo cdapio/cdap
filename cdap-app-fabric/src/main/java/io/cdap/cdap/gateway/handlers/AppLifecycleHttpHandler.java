@@ -278,7 +278,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
 
     validateNamespace(namespaceId);
-    LOG.info(">>>> CDAP-20179 debug");
     Set<String> names = new HashSet<>();
     if (!Strings.isNullOrEmpty(artifactName)) {
       for (String name : Splitter.on(',').split(artifactName)) {
