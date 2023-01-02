@@ -29,8 +29,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -43,6 +47,7 @@ import javax.ws.rs.PathParam;
 public class SourceControlServiceHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlServiceHandler.class);
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final HashMap<NamespaceId, SourceControlMeta> sourceControlRepo = new HashMap<>();
 
   @Inject
   SourceControlServiceHandler(NamespaceQueryAdmin namespaceQueryAdmin) {
@@ -84,12 +89,53 @@ public class SourceControlServiceHandler extends AbstractAppFabricHttpHandler {
         }
       }
       git.close();
+      sourceControlRepo.put(ns, meta);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid json object provided in request body.");
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
     responder.sendString(HttpResponseStatus.CREATED, "Got refs: " + s);
+  }
+
+  @GET
+  @Path("discover")
+  public void discoverPipelines(FullHttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") final String namespaceId)
+    throws BadRequestException, NamespaceNotFoundException {
+    NamespaceId ns = validateNamespace(namespaceId);
+    SourceControlMeta meta = sourceControlRepo.get(ns);
+    if (meta == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Namespace not found: " + ns.getNamespace());
+      return;
+    }
+
+    // This assumes running on Linux.
+    String parentDirName = "/tmp/" + UUID.randomUUID();
+    CredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(
+      meta.getPersonalAccessToken(), "");
+    File f = new File(parentDirName);
+    try {
+      Git git = Git.cloneRepository()
+        .setCredentialsProvider(credentialsProvider)
+        .setURI(meta.getRepositoryURL())
+        .setDirectory(f)
+        .setBranchesToClone(Collections.singleton(("refs/heads/develop")))
+        .setBranch("refs/heads/develop")
+        .call();
+      git.close();
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Errors: " + e.getMessage());
+      return;
+    }
+    StringBuilder s = new StringBuilder();
+    for (File ff : Objects.requireNonNull(f.listFiles())) {
+      if (!ff.isDirectory()) {
+        s.append(ff.getName());
+      }
+    }
+    responder.sendString(HttpResponseStatus.OK, "Got files: " + s);
   }
 
 
