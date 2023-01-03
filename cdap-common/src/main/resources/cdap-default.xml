@@ -2978,6 +2978,13 @@
     </description>
   </property>
 
+  <property>
+    <name>provisioner.cconf.reload.interval.ms</name>
+    <value>10000</value>
+    <description>
+      Minimum interval in milliseconds to reload configration in provisioner operations.
+    </description>
+  </property>
 
   <!-- Runtime Monitor Configuration -->
 
