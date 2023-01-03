@@ -21,11 +21,13 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -42,7 +44,8 @@ public class EndpointFieldDeserializer implements JsonDeserializer<EndPointField
                                    JsonDeserializationContext context) throws JsonParseException {
     JsonObject obj = json.getAsJsonObject();
     EndPoint endPoint = context.deserialize(obj.getAsJsonObject("endPoint"), EndPoint.class);
-    String field = obj.getAsJsonPrimitive("field").getAsString();
+    String field = Optional.ofNullable(obj.getAsJsonPrimitive("field"))
+      .map(JsonPrimitive::getAsString).orElse(null);
 
     EndPointField endPointField = new EndPointField(endPoint, field);
     return endpointFields.computeIfAbsent(endPointField, k -> endPointField);
