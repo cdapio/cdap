@@ -19,6 +19,7 @@ package io.cdap.cdap.data2.metadata.lineage.field;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represent a single field along with the EndPoint to which it belongs to.
@@ -28,7 +29,7 @@ public class EndPointField {
   private final String field;
   private transient Integer hashCode;
 
-  public EndPointField(EndPoint endPoint, String field) {
+  public EndPointField(EndPoint endPoint, @Nullable String field) {
     this.endPoint = endPoint;
     this.field = field;
   }
@@ -68,5 +69,23 @@ public class EndPointField {
       "endPoint=" + endPoint +
       ", field='" + field + '\'' +
       '}';
+  }
+
+  /**
+   * Checks for validity of an EndPointField.
+   *
+   * If in a pipeline a field is dropped, the source EndPointField corresponding to
+   * the dropped field maps to an empty EndPointField of the form
+   * `EndPointField{endPoint=EndPoint{namespace='null', name='null', properties='{}'}, field='null'}`.
+   * This method can be used to scan for such EndPointFields.
+   *
+   * @return true if an EndPointField is valid, false otherwise
+   */
+  public boolean isValid() {
+    return endPoint != null &&
+      endPoint.getName() != null &&
+      endPoint.getNamespace() != null &&
+      !endPoint.getProperties().isEmpty() &&
+      field != null;
   }
 }
