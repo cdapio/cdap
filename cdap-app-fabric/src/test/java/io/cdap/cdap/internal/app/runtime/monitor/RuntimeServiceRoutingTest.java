@@ -188,7 +188,7 @@ public class RuntimeServiceRoutingTest {
       Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces");
 
     for (HttpMethod method : EnumSet.of(HttpMethod.GET, HttpMethod.DELETE)) {
-      for (int status : Arrays.asList(200, 400, 404, 500)) {
+      for (int status : Arrays.asList(200, 400, 404, 501)) {
         io.cdap.common.http.HttpRequest request =
           remoteClient.requestBuilder(method,
                                       String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/services/%s/mock/%s/%d",
@@ -217,7 +217,7 @@ public class RuntimeServiceRoutingTest {
 
     for (String content : Arrays.asList("", "Small content", largeContent)) {
       for (HttpMethod method : EnumSet.of(HttpMethod.PUT, HttpMethod.POST)) {
-        for (int status : Arrays.asList(200, 400, 404, 500)) {
+        for (int status : Arrays.asList(200, 400, 404, 501)) {
           io.cdap.common.http.HttpRequest request =
             remoteClient.requestBuilder(method,
                                         String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/services/%s/mock/%s/%d",
