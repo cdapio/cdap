@@ -5464,7 +5464,7 @@
       The maximum number of records that can be set in preview configuration.
     </description>
   </property>
-  
+
   <property>
     <name>feature.replication.transformations.enabled</name>
     <value>true</value>
@@ -5536,7 +5536,7 @@
       Enables pipeline failures when Wrangler transformations fail in 'Fail Pipeline' mode
     </description>
   </property>
-  
+
   <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
@@ -5593,4 +5593,15 @@
       Health Check HTTP service bind port; if 0, binds to a random port
     </description>
   </property>
+
+  <!-- Configuration for Source Control Management -->
+  <property>
+    <name>feature.source.control.management.git.enabled</name>
+    <value>false</value>
+    <final>true</final>
+    <description>
+      If true, source control management using git will be enabled.
+    </description>
+  </property>
+
 </configuration>
