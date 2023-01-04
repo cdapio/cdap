@@ -22,6 +22,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.HttpCodes;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
@@ -73,7 +74,7 @@ public class RemoteIsolatedPluginFinder extends RemotePluginFinder {
     try {
       int responseCode = urlConn.getResponseCode();
       if (responseCode != HttpURLConnection.HTTP_OK) {
-        if (io.cdap.cdap.api.common.Constants.RETRYABLE_HTTP_CODES.contains(responseCode)) {
+        if (HttpCodes.isRetryable(responseCode)) {
           throw new ServiceUnavailableException(
             Constants.Service.APP_FABRIC_HTTP, Constants.Service.APP_FABRIC_HTTP +
             " service is not available with status " + responseCode);
