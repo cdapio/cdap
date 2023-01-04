@@ -192,7 +192,7 @@ public class SparkTest extends TestFrameworkTestBase {
     }
   }
 
-//  @Test
+  @Test
   public void testPySpark() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 
