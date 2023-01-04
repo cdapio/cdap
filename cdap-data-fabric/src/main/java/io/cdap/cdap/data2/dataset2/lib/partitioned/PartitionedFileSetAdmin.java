@@ -21,7 +21,6 @@ import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.CompositeDatasetAdmin;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -37,10 +36,5 @@ public class PartitionedFileSetAdmin extends CompositeDatasetAdmin {
     super(embeddedAdmins);
     this.context = context;
     this.spec = spec;
-  }
-
-  @Override
-  public void truncate() throws IOException {
-    super.truncate();
   }
 }

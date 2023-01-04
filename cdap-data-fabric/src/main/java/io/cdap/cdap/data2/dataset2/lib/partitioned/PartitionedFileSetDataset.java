@@ -264,23 +264,11 @@ public class PartitionedFileSetDataset extends AbstractDataset
   }
 
   private void undoPartitionCreate(AddPartitionOperation operation) throws Exception {
-    Exception caughtExn = null;
     if (operation.isFilesCreated()) {
-      try {
-        Location location = files.getLocation(operation.getRelativePath());
-        if (location.exists() && !location.delete(true)) {
-          throw new IOException(String.format("Failed to delete location %s.", location));
-        }
-      } catch (Exception e) {
-        if (caughtExn != null) {
-          caughtExn.addSuppressed(e);
-        } else {
-          caughtExn = e;
-        }
+      Location location = files.getLocation(operation.getRelativePath());
+      if (location.exists() && !location.delete(true)) {
+        throw new IOException(String.format("Failed to delete location %s.", location));
       }
-    }
-    if (caughtExn != null) {
-      throw caughtExn;
     }
   }
 
@@ -953,7 +941,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
    * transaction. Optionally, it can disable and re-enable explore first, that is, drop and recreate the Hive table.
    * @param transactional the Transactional for executing transactions
    * @param datasetName the name of the dataset to fix
-   * @param doDisable whether to disable and re-enable explore first
    * @param partitionsPerTx how many partitions to process per transaction
    * @param verbose whether to log verbosely. If true, this will log a message for every partition; otherwise it
    *                will only log a report of how many partitions were added / could not be added.
@@ -961,7 +948,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @Beta
   @SuppressWarnings("unused")
   public static void fixPartitions(Transactional transactional, final String datasetName,
-                                   boolean doDisable, final int partitionsPerTx, final boolean verbose) {
+                                    final int partitionsPerTx, final boolean verbose) {
 
     final AtomicReference<PartitionKey> startKey = new AtomicReference<>();
     final AtomicLong errorCount = new AtomicLong(0L);

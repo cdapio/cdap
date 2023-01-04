@@ -1994,6 +1994,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getProperties().containsKey("entity-name"));
     Assert.assertEquals(AppWithMetadataPrograms.METADATA_SERVICE_DATASET,
                         scopeMetadata.get(MetadataScope.SYSTEM).getProperties().get("entity-name"));
+    Assert.assertTrue(scopeMetadata.get(MetadataScope.SYSTEM).getTags().contains("batch"));
 
     // verify user metadata
     Assert.assertFalse(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());

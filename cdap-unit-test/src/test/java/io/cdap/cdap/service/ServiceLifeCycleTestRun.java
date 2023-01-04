@@ -42,12 +42,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.ServiceManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.app.ServiceLifecycleApp;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -71,9 +69,6 @@ import java.util.concurrent.TimeUnit;
  * Unit test for testing service handler lifecycle.
  */
 public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   private static final Gson GSON = new Gson();
   private static final Type STATES_TYPE = new TypeToken<List<ImmutablePair<Integer, String>>>() { }.getType();

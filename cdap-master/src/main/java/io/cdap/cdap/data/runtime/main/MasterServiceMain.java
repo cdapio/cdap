@@ -944,6 +944,11 @@ public class MasterServiceMain extends DaemonMain {
 
           preparer.withApplicationClassPaths(yarnAppClassPath).withBundlerClassAcceptor(new HadoopClassExcluder());
 
+          // Setup extra classpath. Currently twill doesn't support different classpath per runnable,
+          // hence we just set it for all containers. The actual jars are localized via the MasterTwillApplication,
+          // and having missing jars as specified in the classpath is ok.
+          preparer = preparer.withClassPaths(extraClassPath);
+
           // Set the container to use MasterServiceMainClassLoader for class rewriting
           preparer.setClassLoader(MasterServiceMainClassLoader.class.getName());
 

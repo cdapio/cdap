@@ -268,6 +268,14 @@ public class FileSetProperties {
       add(OUTPUT_PROPERTIES_PREFIX + name, value);
       return this;
     }
+
+    /**
+     * Set a table property to be added to the Hive table. Multiple properties can be set.
+     */
+    public Builder setTableProperty(String name, String value) {
+      add(name, value);
+      return this;
+    }
 /**
      * Set the default permissions for files and directories
      */

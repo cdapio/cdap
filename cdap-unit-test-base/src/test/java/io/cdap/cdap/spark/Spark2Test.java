@@ -57,7 +57,6 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestBase;
-import io.cdap.cdap.test.TestConfiguration;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -89,6 +88,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
@@ -96,9 +96,6 @@ import static org.junit.Assume.assumeTrue;
  *
  */
 public class Spark2Test extends TestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();

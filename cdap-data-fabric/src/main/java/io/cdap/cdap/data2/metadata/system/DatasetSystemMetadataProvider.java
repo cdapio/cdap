@@ -132,6 +132,9 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
     } else if (datasetProperties.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA)) {
       // If it is an ObjectMappedTable, the schema is in a property called 'object.schema'
       schemaStr = datasetProperties.get(ObjectMappedTableProperties.OBJECT_SCHEMA);
+    } else if (datasetProperties.containsKey(FILESET_AVRO_SCHEMA_PROPERTY)) {
+      // Fileset with avro schema (CDAP-5322)
+      schemaStr = datasetProperties.get(FILESET_AVRO_SCHEMA_PROPERTY);
     } else if (datasetProperties.containsKey(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY))) {
       // Fileset with avro schema defined in output property (CDAP-5322)
       schemaStr = datasetProperties.get(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY));

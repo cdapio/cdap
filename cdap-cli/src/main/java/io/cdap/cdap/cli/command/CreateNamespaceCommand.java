@@ -32,7 +32,7 @@ import java.io.PrintStream;
  * {@link Command} to create a namespace.
  */
 public class CreateNamespaceCommand extends AbstractCommand {
-  private static final String SUCCESS_MSG = "Namespace '%s' created successfully.";
+  private static final String SUCCESS_MSG = "Namespace '%s' created successfully.%n";
 
   private final NamespaceClient namespaceClient;
 
@@ -60,7 +60,7 @@ public class CreateNamespaceCommand extends AbstractCommand {
       .setKeytabURI(keytabPath).setRootDirectory(rootDir).setHBaseNamespace(hbaseNamespace)
       .setHiveDatabase(hiveDatabase).setSchedulerQueueName(schedulerQueueName);
     namespaceClient.create(builder.build());
-    output.printf((SUCCESS_MSG) + "%n", name);
+    output.printf(SUCCESS_MSG, name);
   }
 
   @Override

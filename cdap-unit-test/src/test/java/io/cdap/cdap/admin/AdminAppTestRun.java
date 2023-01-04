@@ -38,14 +38,12 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.ProgramManager;
 import io.cdap.cdap.test.ServiceManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -60,10 +58,6 @@ import java.util.concurrent.TimeUnit;
  * Tests whether admin operations work in program contexts.
  */
 public class AdminAppTestRun extends TestFrameworkTestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration();
-
   private static final Gson GSON = new Gson();
   private static final ArtifactId ADMIN_APP_ARTIFACT = NamespaceId.DEFAULT.artifact("admin-app", "1.0.0");
   private static final ArtifactSummary ADMIN_ARTIFACT_SUMMARY = new ArtifactSummary(ADMIN_APP_ARTIFACT.getArtifact(),

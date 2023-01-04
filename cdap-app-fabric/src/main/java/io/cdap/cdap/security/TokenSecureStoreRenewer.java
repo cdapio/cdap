@@ -24,11 +24,9 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.DelegationTokensUpdater;
 import io.cdap.cdap.common.security.YarnTokenUtils;
 import io.cdap.cdap.data.security.HBaseTokenUtils;
-import io.cdap.cdap.security.hive.JobHistoryServerTokenUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -58,7 +56,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final SecureStore secureStore;
-  private final boolean secureToken;
   private Long updateInterval;
 
   @Inject
@@ -69,7 +66,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
-    this.secureToken = UserGroupInformation.isSecurityEnabled();
   }
 
   /**
@@ -120,10 +116,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       LOG.trace("HBase is not available. Skipping HBase token", t);
     }
 
-    if (secureToken) {
-      JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
-    }
-
     try {
       if (secureStore instanceof DelegationTokensUpdater) {
         String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
@@ -139,7 +131,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   }
 
   private long calculateUpdateInterval() {
-    return calculateUpdateInterval(yarnConf, secureToken);
+    return calculateUpdateInterval(yarnConf);
   }
 
   /**
@@ -149,12 +141,11 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
    * @return time in millisecond that the secure token should be updated
    */
   public static long calculateUpdateInterval(Configuration hConf) {
-    boolean secureToken = UserGroupInformation.isSecurityEnabled();
 
-    return calculateUpdateInterval(hConf, secureToken);
+    return calculateUpdateIntervalHelper(hConf);
   }
 
-  private static long calculateUpdateInterval(Configuration hConf, boolean secureToken) {
+  private static long calculateUpdateIntervalHelper(Configuration hConf) {
     List<Long> renewalTimes = Lists.newArrayList();
 
     renewalTimes.add(hConf.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
@@ -164,15 +155,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     renewalTimes.add(hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL,
                                       TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
 
-    if (secureToken) {
-      // Renewal interval for YARN
-      renewalTimes.add(hConf.getLong(YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                     YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
-
-      // Renewal interval for JHS
-      renewalTimes.add(hConf.getLong(MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                        MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
-    }
 
     // Set the update interval to the shortest update interval of all required renewals.
     Long minimumInterval = Collections.min(renewalTimes);

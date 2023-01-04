@@ -17,7 +17,7 @@
   -->
 
 <!--
-  Logback used by containers that run in YARN, such as  MapReduce, Spark
+  Logback used by containers that run in YARN, such as MapReduce, Spark
 -->
 <configuration>
 

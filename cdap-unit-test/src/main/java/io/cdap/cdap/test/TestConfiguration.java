@@ -34,8 +34,6 @@ import java.util.Optional;
  * <pre>{@code
  * class MyUnitTest extends TestBase {
  *
- *   @ClassRule
- *   public static final TestConfiguration CONFIG = new TestConfiguration();
  *
  *   ....
  * }

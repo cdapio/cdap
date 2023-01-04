@@ -711,8 +711,6 @@ cdap_start_java() {
     if [[ -n ${SPARK_COMPAT} ]]; then
       __defines+=" -Dapp.program.spark.compat=${SPARK_COMPAT}"
     fi
-    # Master requires setting hive classpath
-    cdap_set_hive_classpath || return 1
     # Add proper HBase compatibility to CLASSPATH
     cdap_set_hbase || return 1
     # Master requires this local directory
@@ -784,7 +782,6 @@ cdap_run_class() {
   # Setup Java
   cdap_set_java || return 1
   cdap_set_spark || logecho "$(date) [WARN] Could not determine SPARK_HOME! Spark support unavailable!"
-  cdap_set_hive_classpath || return 1
   # Add proper HBase compatibility to CLASSPATH
   cdap_set_hbase || exit 1
   cdap_create_local_dir || die "Could not create local directory"
@@ -816,7 +813,6 @@ cdap_exec_class() {
   # Setup Java
   cdap_set_java || return 1
   cdap_set_spark || logecho "$(date) [WARN] Could not determine SPARK_HOME! Spark support unavailable!"
-  cdap_set_hive_classpath || return 1
   # Add proper HBase compatibility to CLASSPATH
   cdap_set_hbase || exit 1
   cdap_create_local_dir || die "Could not create local directory"

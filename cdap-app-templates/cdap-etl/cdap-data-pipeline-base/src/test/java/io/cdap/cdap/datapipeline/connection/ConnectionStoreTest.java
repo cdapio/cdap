@@ -27,11 +27,9 @@ import io.cdap.cdap.etl.proto.connection.ConnectionId;
 import io.cdap.cdap.etl.proto.connection.ConnectionNotFoundException;
 import io.cdap.cdap.etl.proto.connection.PluginInfo;
 import io.cdap.cdap.test.SystemAppTestBase;
-import io.cdap.cdap.test.TestConfiguration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -40,8 +38,6 @@ import java.util.Collections;
  * Unit test for connection store
  */
 public class ConnectionStoreTest extends SystemAppTestBase {
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration();
   private static ConnectionStore connectionStore;
 
   @BeforeClass

@@ -59,7 +59,6 @@ import io.cdap.cdap.spark.app.plugin.StringLengthUDT;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.twill.filesystem.Location;
@@ -102,9 +101,6 @@ import java.util.stream.Stream;
  * Unit-tests for testing Spark program.
  */
 public class SparkTest extends TestFrameworkTestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration();
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 

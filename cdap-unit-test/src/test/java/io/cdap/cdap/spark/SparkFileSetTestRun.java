@@ -34,14 +34,12 @@ import io.cdap.cdap.spark.app.SparkAppUsingFileSet;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -57,9 +55,6 @@ import java.util.concurrent.TimeUnit;
  * Unit-tests for testing FileSet usages in Spark program.
  */
 public class SparkFileSetTestRun extends TestFrameworkTestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration();
 
   private static File artifactJar;
   private ApplicationManager applicationManager;
