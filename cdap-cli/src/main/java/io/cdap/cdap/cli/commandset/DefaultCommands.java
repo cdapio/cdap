@@ -31,8 +31,7 @@ public class DefaultCommands extends CommandSet<Command> {
   @Inject
   public DefaultCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .build(),
+      ImmutableList.of(),
       ImmutableList.<CommandSet<Command>>builder()
         .add(injector.getInstance(GeneralCommands.class))
         .add(injector.getInstance(MetricsCommands.class))
