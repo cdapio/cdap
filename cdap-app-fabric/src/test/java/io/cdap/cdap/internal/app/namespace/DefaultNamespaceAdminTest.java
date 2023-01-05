@@ -213,9 +213,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       // expected
     }
 
-    // if set explore as principal is set to false it should be present with both keytab uri and principal
     namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabURI("/some/path")
-      .setExploreAsPrincipal(false).build();
+      .build();
     try {
       namespaceAdmin.create(namespaceMeta);
       Assert.fail();
@@ -223,9 +222,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       // expected
     }
 
-    // if set explore as principal is set to false it shoule be present with both keytab uri and principal
     namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setPrincipal("somePrincipal")
-      .setExploreAsPrincipal(false).build();
+      .build();
     try {
       namespaceAdmin.create(namespaceMeta);
       Assert.fail();
@@ -310,12 +308,6 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     } catch (BadRequestException e) {
       // expected
     }
-
-    // Although disabling explore impersonation should be allowed
-    Assert.assertTrue(namespaceAdmin.get(nsMeta.getNamespaceId()).getConfig().isExploreAsPrincipal());
-    namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
-                                    new NamespaceMeta.Builder(nsMeta).setExploreAsPrincipal(false).build());
-    Assert.assertFalse(namespaceAdmin.get(nsMeta.getNamespaceId()).getConfig().isExploreAsPrincipal());
 
     //clean up
     namespaceAdmin.delete(namespaceId);

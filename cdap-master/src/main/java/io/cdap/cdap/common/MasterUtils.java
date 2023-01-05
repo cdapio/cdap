@@ -19,7 +19,6 @@ package io.cdap.cdap.common;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.master.startup.ExploreServiceResourceKeys;
 import io.cdap.cdap.master.startup.ServiceResourceKeys;
 
 import java.util.Set;
@@ -83,12 +82,6 @@ public final class MasterUtils {
                                    Constants.SupportBundle.SERVICE_NUM_CORES,
                                    Constants.SupportBundle.CONTAINER_INSTANCES,
                                    Constants.SupportBundle.MAX_INSTANCES));
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      builder.add(new ExploreServiceResourceKeys(cConf,
-                                                 Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                                 Constants.Explore.CONTAINER_MEMORY_MB,
-                                                 Constants.Explore.CONTAINER_VIRTUAL_CORES));
-    }
     return builder.build();
   }
 }

@@ -59,7 +59,6 @@ import io.cdap.cdap.spark.app.plugin.StringLengthUDT;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.twill.filesystem.Location;
@@ -102,9 +101,6 @@ import java.util.stream.Stream;
  * Unit-tests for testing Spark program.
  */
 public class SparkTest extends TestFrameworkTestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -221,7 +217,7 @@ public class SparkTest extends TestFrameworkTestBase {
 
 
     List<String> lines = Files.readAllLines(resultFile.toPath(), StandardCharsets.UTF_8);
-    Assert.assertTrue(!lines.isEmpty());
+    Assert.assertFalse(lines.isEmpty());
 
     // Expected only even number
     int count = 0;
@@ -345,7 +341,8 @@ public class SparkTest extends TestFrameworkTestBase {
     urlConn.setChunkedStreamingMode(10);
 
     List<String> messages = new ArrayList<>();
-    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(urlConn.getOutputStream(), "UTF-8"))) {
+    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(urlConn.getOutputStream(),
+                                                                     StandardCharsets.UTF_8))) {
       for (int i = 0; i < 10; i++) {
         writer.printf("Message number %d\n", i);
         messages.add("Message number " + i);
@@ -353,7 +350,7 @@ public class SparkTest extends TestFrameworkTestBase {
     }
 
     Assert.assertEquals(200, urlConn.getResponseCode());
-    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), "UTF-8")) {
+    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
       Map<String, Integer> result = new Gson().fromJson(reader, new TypeToken<Map<String, Integer>>() { }.getType());
 
       // Do a wordcount locally to get the expected result
@@ -370,7 +367,8 @@ public class SparkTest extends TestFrameworkTestBase {
 
   @Test
   public void testSparkServicePlugin() throws Exception {
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("plugin", "1.0"), Collections.emptySet(), StringLengthFunc.class);
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("plugin", "1.0"), Collections.emptySet(),
+                      StringLengthFunc.class);
 
     // Generate some lines to a file
     File file = TMP_FOLDER.newFile();
@@ -391,7 +389,7 @@ public class SparkTest extends TestFrameworkTestBase {
     HttpURLConnection urlConn = (HttpURLConnection) pluginURL.openConnection();
     Assert.assertEquals(200, urlConn.getResponseCode());
 
-    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), "UTF-8")) {
+    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
       Map<String, Integer> result = new Gson().fromJson(reader, new TypeToken<Map<String, Integer>>() { }.getType());
       // The result should be from each line in the file to the length of the line
       Assert.assertEquals(1000, result.size());
@@ -399,8 +397,10 @@ public class SparkTest extends TestFrameworkTestBase {
     }
 
     // Deploy the UDT plugin and test the plugin extending plugin case
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("pluggable", "1.0"), Collections.emptySet(), PluggableFunc.class);
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("lenudt", "1.0"), NamespaceId.DEFAULT.artifact("pluggable", "1.0"),
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("pluggable", "1.0"), Collections.emptySet(),
+                      PluggableFunc.class);
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("lenudt", "1.0"),
+                      NamespaceId.DEFAULT.artifact("pluggable", "1.0"),
                       StringLengthUDT.class);
 
     pluginURL = url.toURI().resolve("udtPlugin?udtName=len&file="
@@ -408,7 +408,7 @@ public class SparkTest extends TestFrameworkTestBase {
     urlConn = (HttpURLConnection) pluginURL.openConnection();
     Assert.assertEquals(200, urlConn.getResponseCode());
 
-    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), "UTF-8")) {
+    try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
       Map<String, Integer> result = new Gson().fromJson(reader, new TypeToken<Map<String, Integer>>() { }.getType());
       // The result should be from each line in the file to the length of the line
       Assert.assertEquals(1000, result.size());

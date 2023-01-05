@@ -36,7 +36,6 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.metrics.MetricsTestBase;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
@@ -150,7 +149,6 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       new NonCustomLocationUnitTestModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new ExploreClientModule(),
       new NamespaceAdminTestModule(),
       new MetricsStoreModule(),
       new AuthorizationTestModule(),

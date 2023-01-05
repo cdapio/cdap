@@ -17,7 +17,6 @@
 package io.cdap.cdap.docgen.client;
 
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.DatasetClient;
@@ -26,12 +25,9 @@ import io.cdap.cdap.client.DatasetTypeClient;
 import io.cdap.cdap.client.MonitorClient;
 import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.client.QueryClient;
 import io.cdap.cdap.client.ServiceClient;
 import io.cdap.cdap.client.config.ClientConfig;
-import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.proto.ColumnDesc;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.DatasetTypeMeta;
@@ -163,26 +159,6 @@ public class GenerateClientUsageExample {
 
     // Fetch the dataset type information using the classname
     datasetTypeClient.get(NamespaceId.DEFAULT.datasetType(SomeDataset.class.getName()));
-  }
-
-  public void queryClient() throws Exception {
-    // Construct the client used to interact with CDAP
-    QueryClient queryClient = new QueryClient(clientConfig);
-
-    // Perform an ad-hoc query using the Purchase example
-    ListenableFuture<ExploreExecutionResult> resultFuture = queryClient.execute(
-      NamespaceId.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
-    ExploreExecutionResult results = resultFuture.get();
-
-    // Fetch schema
-    List<ColumnDesc> schema = results.getResultSchema();
-    String[] header = new String[schema.size()];
-    for (int i = 0; i < header.length; i++) {
-      ColumnDesc column = schema.get(i);
-      // Hive columns start at 1
-      int index = column.getPosition() - 1;
-      header[index] = column.getName() + ": " + column.getType();
-    }
   }
 
   public void serviceClient() throws Exception {

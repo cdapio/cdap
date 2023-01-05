@@ -519,9 +519,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Disable transaction support
       result.setBoolean(Constants.Transaction.TX_ENABLED, false);
 
-      // Disable explore
-      result.set(Constants.Explore.EXPLORE_ENABLED, Boolean.FALSE.toString());
-
       // Always use NoSQL as storage
       result.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 

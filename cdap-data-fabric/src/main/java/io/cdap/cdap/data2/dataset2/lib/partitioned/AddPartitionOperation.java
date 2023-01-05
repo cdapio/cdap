@@ -24,22 +24,14 @@ import io.cdap.cdap.api.dataset.lib.PartitionKey;
 class AddPartitionOperation extends PartitionOperation {
 
   private final boolean filesCreated;
-  private boolean explorePartitionCreated;
 
   AddPartitionOperation(PartitionKey partitionKey, String relativePath, boolean filesCreated) {
     super(partitionKey, relativePath);
     this.filesCreated = filesCreated;
   }
 
-  void setExplorePartitionCreated() {
-    explorePartitionCreated = true;
-  }
-
   boolean isFilesCreated() {
     return filesCreated;
   }
 
-  boolean isExplorePartitionCreated() {
-    return explorePartitionCreated;
-  }
 }

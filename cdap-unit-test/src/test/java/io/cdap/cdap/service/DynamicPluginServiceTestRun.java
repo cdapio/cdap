@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.service.Service;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -32,7 +31,6 @@ import io.cdap.cdap.service.function.DelegatingFunction;
 import io.cdap.cdap.service.function.MacroFunction;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -40,7 +38,6 @@ import io.cdap.common.http.HttpResponse;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.net.URI;
@@ -54,8 +51,6 @@ import java.util.concurrent.TimeUnit;
  * Unit test for the {@link ArtifactManager} from {@link Service}.
  */
 public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
   private static final Gson GSON = new Gson();
 
   private ServiceManager serviceManager;

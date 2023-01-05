@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.StandaloneTester;
@@ -40,7 +39,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.DatasetTypeClient;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.ProgramClient;
-import io.cdap.cdap.client.QueryClient;
 import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.app.FakeDataset;
 import io.cdap.cdap.client.app.FakePlugin;
@@ -56,12 +54,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramStatus;
-import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -217,8 +213,6 @@ public abstract class CLITestBase {
   abstract CLIMain getCliMain();
 
   abstract CLIConfig getCliConfig();
-
-  abstract QueryClient getQueryClient();
 
   private void testCommandOutputContains(String command,
                                          final String expectedOutput) throws Exception {
@@ -530,7 +524,7 @@ public abstract class CLITestBase {
 
   @Test
   public void testPreferences() throws Exception {
-    testPreferencesOutput("get instance preferences", ImmutableMap.<String, String>of());
+    testPreferencesOutput("get instance preferences", ImmutableMap.of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "newinstance");
     propMap.put("k1", "v1");
@@ -598,7 +592,6 @@ public abstract class CLITestBase {
     final String rootDirectory = rootdir.getAbsolutePath();
     final String defaultFields = PREFIX + "defaultFields";
     final String doesNotExist = "doesNotExist";
-    createHiveDB(hiveDatabase);
     // initially only default namespace should be present
     NamespaceMeta defaultNs = NamespaceMeta.DEFAULT;
     List<NamespaceMeta> expectedNamespaces = Lists.newArrayList(defaultNs);
@@ -614,16 +607,16 @@ public abstract class CLITestBase {
 
     // create a namespace
     String command = String.format("create namespace %s description %s principal %s group-name %s keytab-URI %s " +
-                                     "hbase-namespace %s hive-database %s root-directory %s %s %s %s %s",
+                                     "hbase-namespace %s hive-database %s root-directory %s %s %s",
                                    name, description, principal, group, keytab, hbaseNamespace,
                                    hiveDatabase, rootDirectory, ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME,
-                                   schedulerQueueName, ArgumentName.NAMESPACE_EXPLORE_AS_PRINCIPAL, false);
+                                   schedulerQueueName);
     testCommandOutputContains(command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
       .setName(name).setDescription(description).setPrincipal(principal).setGroupName(group).setKeytabURI(keytab)
       .setHBaseNamespace(hbaseNamespace).setSchedulerQueueName(schedulerQueueName)
-      .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).setExploreAsPrincipal(false).build();
+      .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput("list namespaces", expectedNamespaces);
@@ -654,7 +647,6 @@ public abstract class CLITestBase {
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    command = String.format("delete namespace %s", name);
 //    testCommandOutputContains(command, String.format("Namespace '%s' deleted successfully.", name));
-    dropHiveDb(hiveDatabase);
   }
 
   @Test
@@ -762,8 +754,6 @@ public abstract class CLITestBase {
                               FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME);
     testCommandOutputContains(String.format("get metadata-tags %s scope system", FAKE_DS_ID),
                               "batch");
-    testCommandOutputContains(String.format("get metadata-tags %s scope system", FAKE_DS_ID),
-                              "explore");
     testCommandOutputContains(String.format("add metadata-properties %s appKey=appValue", FAKE_APP_ID),
                               "Successfully added metadata properties");
     testCommandOutputContains(String.format("get metadata-properties %s", FAKE_APP_ID), "appKey,appValue");
@@ -923,27 +913,6 @@ public abstract class CLITestBase {
         return null;
       }
     });
-  }
-
-  private void createHiveDB(String hiveDb) throws Exception {
-    QueryClient queryClient = getQueryClient();
-    ListenableFuture<ExploreExecutionResult> future =
-      queryClient.execute(NamespaceId.DEFAULT, "create database " + hiveDb);
-    assertExploreQuerySuccess(future);
-    future = queryClient.execute(NamespaceId.DEFAULT, "describe database " + hiveDb);
-    assertExploreQuerySuccess(future);
-  }
-
-  private void dropHiveDb(String hiveDb) throws Exception {
-    QueryClient queryClient = getQueryClient();
-    assertExploreQuerySuccess(queryClient.execute(NamespaceId.DEFAULT, "drop database " + hiveDb));
-  }
-
-  private void assertExploreQuerySuccess(
-    ListenableFuture<ExploreExecutionResult> dbCreationFuture) throws Exception {
-    ExploreExecutionResult exploreExecutionResult = dbCreationFuture.get(10, TimeUnit.SECONDS);
-    QueryStatus status = exploreExecutionResult.getStatus();
-    Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
   }
 
   private static File createPluginConfig() throws IOException {

@@ -49,8 +49,6 @@ class TestSparkApp extends AbstractApplication[Config] {
     createDataset("PersonTable", classOf[ObjectMappedTable[Person]],
                   ObjectMappedTableProperties.builder()
                     .setType(classOf[Person])
-                    .setRowKeyExploreName("id")
-                    .setRowKeyExploreType(Schema.Type.STRING)
                     .build())
 
     addSpark(new DatasetSQLSpark)

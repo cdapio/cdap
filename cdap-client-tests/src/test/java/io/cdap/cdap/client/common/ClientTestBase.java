@@ -18,7 +18,6 @@ package io.cdap.cdap.client.common;
 
 import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.client.AbstractClientTest;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.test.SingletonExternalResource;
 import org.junit.ClassRule;
@@ -32,7 +31,7 @@ public abstract class ClientTestBase extends AbstractClientTest {
 
   @ClassRule
   public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(
-    new StandaloneTester(Constants.Explore.EXPLORE_ENABLED, false));
+    new StandaloneTester());
 
   @Override
   protected StandaloneTester getStandaloneTester() {

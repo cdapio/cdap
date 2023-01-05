@@ -25,7 +25,6 @@ public enum CommandCategory {
   ARTIFACT("Artifact"),
   DATASET("Dataset"),
   EGRESS("Egress"),
-  EXPLORE("Explore"),
   METADATA_AND_LINEAGE("Metadata and Lineage"),
   METRICS("Metrics"),
   NAMESPACE("Namespace"),

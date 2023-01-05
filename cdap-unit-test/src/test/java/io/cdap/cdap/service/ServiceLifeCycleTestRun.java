@@ -42,12 +42,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.ServiceManager;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.app.ServiceLifecycleApp;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -58,6 +56,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -70,9 +69,6 @@ import java.util.concurrent.TimeUnit;
  * Unit test for testing service handler lifecycle.
  */
 public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   private static final Gson GSON = new Gson();
   private static final Type STATES_TYPE = new TypeToken<List<ImmutablePair<Integer, String>>>() { }.getType();
@@ -432,7 +428,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     try {
       // 200 will be the status code. Since the response is completed, from the client perspective, there is no error.
       Assert.assertEquals(200, urlConn.getResponseCode());
-      Assert.assertEquals("0123456789", new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
+      Assert.assertEquals("0123456789", new String(ByteStreams.toByteArray(urlConn.getInputStream()),
+                                                   StandardCharsets.UTF_8));
     } finally {
       serviceManager.stop();
       serviceManager.waitForStopped(10, TimeUnit.SECONDS);

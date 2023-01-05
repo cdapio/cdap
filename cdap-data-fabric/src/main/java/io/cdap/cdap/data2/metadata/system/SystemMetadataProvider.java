@@ -33,7 +33,6 @@ import javax.annotation.Nullable;
 public interface SystemMetadataProvider {
 
   String VERSION_KEY = "version";
-  String EXPLORE_TAG = "explore";
 
   String PLUGIN_KEY_PREFIX = "plugin";
   String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";

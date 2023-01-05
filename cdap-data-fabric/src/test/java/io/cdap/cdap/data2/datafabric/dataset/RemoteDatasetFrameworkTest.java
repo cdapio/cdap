@@ -59,8 +59,6 @@ import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
-import io.cdap.cdap.explore.client.DiscoveryExploreClient;
-import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -161,8 +159,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                      discoveryService, commonNettyHttpServiceFactory, handlers);
     opExecutorService.startAndWait();
 
-    DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
-    ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
     AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
 
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, impersonator, transactionRunner);
@@ -178,7 +174,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetOpExecutor opExecutor = new RemoteDatasetOpExecutor(authenticationContext, remoteClientFactory);
     DatasetInstanceService instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
                                                                         instanceManager, opExecutor,
-                                                                        exploreFacade, namespaceQueryAdmin, ownerAdmin,
+                                                                        namespaceQueryAdmin, ownerAdmin,
                                                                         accessEnforcer, authenticationContext,
                                                                         new NoOpMetadataServiceClient());
     instanceService.setAuditPublisher(inMemoryAuditPublisher);

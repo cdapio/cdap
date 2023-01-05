@@ -41,8 +41,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination METRICS = new RouteDestination(Constants.Service.METRICS);
   public static final RouteDestination DATASET_MANAGER = new RouteDestination(Constants.Service.DATASET_MANAGER);
   public static final RouteDestination METADATA_SERVICE = new RouteDestination(Constants.Service.METADATA_SERVICE);
-  public static final RouteDestination EXPLORE_HTTP_USER_SERVICE = new RouteDestination(
-    Constants.Service.EXPLORE_HTTP_USER_SERVICE);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
   public static final RouteDestination TRANSACTION = new RouteDestination(Constants.Service.TRANSACTION_HTTP);
   public static final RouteDestination LOG_QUERY = new RouteDestination(Constants.Service.LOG_QUERY);
@@ -153,17 +151,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics
       return METRICS;
-    } else if (uriParts.length >= 5 && uriParts[1].equals("data") && uriParts[2].equals("explore") &&
-      (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("namespaces"))) {
-      // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}
-      return EXPLORE_HTTP_USER_SERVICE;
-    } else if (uriParts.length >= 6 && uriParts[3].equals("data") && uriParts[4].equals("explore") &&
-      (uriParts[5].equals("queries") || uriParts[5].equals("datasets")
-        || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
-      // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/datasets/{ds}/enable
-      return EXPLORE_HTTP_USER_SERVICE;
-    } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
-      return EXPLORE_HTTP_USER_SERVICE;
     } else if (beginsWith(uriParts, "v3", "system", "services", null, "status")
       || beginsWith(uriParts, "v3", "system", "services", null, "stacks")) {
       switch (uriParts[3]) {
@@ -174,7 +161,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.APP_FABRIC_HTTP: return APP_FABRIC_HTTP;
         case Constants.Service.DATASET_EXECUTOR: return DATASET_EXECUTOR;
         case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;
-        case Constants.Service.EXPLORE_HTTP_USER_SERVICE: return EXPLORE_HTTP_USER_SERVICE;
         case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
         case Constants.Service.RUNTIME: return RUNTIME;
         case Constants.Service.SUPPORT_BUNDLE_SERVICE: return SUPPORT_BUNDLE_SERVICE;

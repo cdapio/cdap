@@ -43,14 +43,10 @@ import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
-import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.client.util.RESTClient;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
-import io.cdap.cdap.explore.jdbc.ExploreConnectionParams;
-import io.cdap.cdap.explore.jdbc.ExploreDriver;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
@@ -64,7 +60,6 @@ import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.test.remote.RemoteApplicationManager;
 import io.cdap.cdap.test.remote.RemoteArtifactManager;
 import io.cdap.common.ContentProvider;
@@ -84,12 +79,8 @@ import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -368,25 +359,6 @@ public class IntegrationTestManager extends AbstractTestManager {
   @Override
   public <T> DataSetManager<T> getDataset(DatasetId datasetId) throws Exception {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Connection getQueryClient(NamespaceId namespace) throws Exception {
-    Map<String, String> connParams = new HashMap<>();
-    connParams.put(ExploreConnectionParams.Info.NAMESPACE.getName(), namespace.getNamespace());
-    AccessToken accessToken = clientConfig.getAccessToken();
-    if (accessToken != null) {
-      connParams.put(ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN.getName(), accessToken.getValue());
-    }
-    connParams.put(ExploreConnectionParams.Info.SSL_ENABLED.getName(),
-                   Boolean.toString(clientConfig.getConnectionConfig().isSSLEnabled()));
-    connParams.put(ExploreConnectionParams.Info.VERIFY_SSL_CERT.getName(),
-                   Boolean.toString(clientConfig.isVerifySSLCert()));
-
-    ConnectionConfig connConfig = clientConfig.getConnectionConfig();
-    String url = String.format("%s%s:%d?%s", Constants.Explore.Jdbc.URL_PREFIX, connConfig.getHostname(),
-                               connConfig.getPort(), Joiner.on("&").withKeyValueSeparator("=").join(connParams));
-    return new ExploreDriver().connect(url, new Properties());
   }
 
   @Override

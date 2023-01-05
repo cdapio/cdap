@@ -30,18 +30,12 @@ import javax.annotation.Nullable;
  * The timestamp is mapped to a partition key of a {@link io.cdap.cdap.api.dataset.lib.PartitionedFileSet}
  * with five integer partitioning fields: the year, month, day, hour and minute. Partitions can
  * be retrieved using time range or using a {@link io.cdap.cdap.api.dataset.lib.PartitionFilter}.
- * <p>
  * The granularity of time is in minutes, that is, any seconds or milliseconds after the
  * full minute is ignored for the partition keys. That means, there can not be be two partitions
  * in the same minute. Also, when retrieving partitions via time or time range using
  * {@link #getPartitionByTime}, {@link #getPartitionsByTime}, or when writing a partition using
  * {@link #getPartitionOutput}, the seconds and milliseconds on the
  * time or time range are ignored.
- * <p>
- * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
- * properties when the dataset is created. See {@link io.cdap.cdap.api.dataset.lib.FileSetProperties}
- * for details. If it is enabled for explore, a Hive external table will be created when the dataset is
- * created. The Hive table is partitioned by year, month, day, hour and minute.
  */
 @Beta
 public interface TimePartitionedFileSet extends PartitionedFileSet {

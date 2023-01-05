@@ -103,11 +103,6 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-authentication-client</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-explore-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
   </dependencies>
 
 </project>

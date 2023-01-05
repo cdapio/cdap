@@ -125,16 +125,6 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-explore</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-explore-jdbc</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -519,14 +509,14 @@
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm,org.apache.kafka,org.scala-lang,commons-logging</excludeGroupIds>
-                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
+                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>
                 </configuration>
               </execution>
               <execution>
-                <!-- This is for copying CDAP fat jars: cdap-cli and cdap-explore-jdbc -->
+                <!-- This is for copying CDAP fat jars: cdap-cli -->
                 <id>copy-libexec-dependencies</id>
                 <phase>prepare-package</phase>
                 <goals>
@@ -537,7 +527,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <includeArtifactIds>cdap-cli,cdap-explore-jdbc</includeArtifactIds>
+                  <includeArtifactIds>cdap-cli</includeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>
@@ -594,13 +584,6 @@
                       <directory>${project.parent.basedir}/cdap-common/bin</directory>
                       <targetPath>bin</targetPath>
                       <filtering>true</filtering>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-explore/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>send-query*</include>
-                      </includes>
                     </resource>
                     <!-- Copy binaries for Windows -->
                     <resource>

@@ -67,7 +67,6 @@ public class ReducibleAggregatorTestBase extends HydratorTestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(
-    Constants.Explore.EXPLORE_ENABLED, false,
              Constants.Security.Store.PROVIDER, "file",
              io.cdap.cdap.etl.common.Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, "false",
              Constants.AppFabric.SPARK_COMPAT, Compat.SPARK_COMPAT);

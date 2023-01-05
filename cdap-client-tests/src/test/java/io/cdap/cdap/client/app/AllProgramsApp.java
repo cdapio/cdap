@@ -94,30 +94,20 @@ public class AllProgramsApp extends AbstractApplication {
     createDataset(DATASET_NAME3, KeyValueTable.class);
     createDataset(DATASET_NAME4, FileSet.class,
                   FileSetProperties.builder()
-                    .setEnableExploreOnCreate(true)
-                    .setExploreFormat("text")
-                    .setExploreFormatProperty("delimiter", "\n")
-                    .setExploreSchema("record STRING")
                     .setDescription("fileSet")
                     .build());
     createDataset(DATASET_NAME5, PartitionedFileSet.class,
                   PartitionedFileSetProperties.builder()
-                    .setEnableExploreOnCreate(true)
-                    .setExploreFormat("text")
-                    .setExploreFormatProperty("delimiter", "\n")
-                    .setExploreSchema("record STRING")
                     .setDescription("partitonedFileSet")
                     .add("partitioning.fields.", "field1")
                     .add("partitioning.field.field1", "STRING")
                     .build());
     createDataset(DATASET_NAME6, FileSet.class,
                   FileSetProperties.builder()
-                    .setEnableExploreOnCreate(false)
                     .setDescription("fileSet")
                     .build());
     createDataset(DATASET_NAME7, PartitionedFileSet.class,
                   PartitionedFileSetProperties.builder()
-                    .setEnableExploreOnCreate(false)
                     .setDescription("partitonedFileSet")
                     .add("partitioning.fields.", "field1")
                     .add("partitioning.field.field1", "STRING")
@@ -288,7 +278,7 @@ public class AllProgramsApp extends AbstractApplication {
     private void makeServiceCall() throws IOException {
       URL serviceURL = getContext().getServiceURL(NoOpService.NAME);
       if (serviceURL != null) {
-        URL endpoint = new URL(serviceURL.toString() + NoOpService.ENDPOINT);
+        URL endpoint = new URL(serviceURL + NoOpService.ENDPOINT);
         LOG.info("Calling service endpoint {}", endpoint);
         URLConnection urlConnection = endpoint.openConnection();
         urlConnection.connect();

@@ -38,7 +38,6 @@ import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.InMemoryDatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.kv.HBaseKVTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.kv.InMemoryKVTableDefinition;
-import io.cdap.cdap.explore.service.ExploreServiceManager;
 import io.cdap.cdap.gateway.handlers.DatasetServiceStore;
 import io.cdap.cdap.gateway.handlers.MonitorHandler;
 import io.cdap.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
@@ -119,8 +118,6 @@ public class MonitorHandlerModule extends AbstractModule {
       .toProvider(new NonHadoopMasterServiceManagerProvider(DatasetExecutorServiceManager.class));
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
       .toProvider(new NonHadoopMasterServiceManagerProvider(MetadataServiceManager.class));
-    mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-      .toProvider(new NonHadoopMasterServiceManagerProvider(ExploreServiceManager.class));
     mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
       .toProvider(new NonHadoopMasterServiceManagerProvider(MessagingServiceManager.class));
     mapBinder.addBinding(Constants.Service.RUNTIME)
@@ -145,7 +142,6 @@ public class MonitorHandlerModule extends AbstractModule {
     mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(AppFabricServiceManager.class);
     mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(DatasetExecutorServiceManager.class);
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE).to(MetadataServiceManager.class);
-    mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE).to(ExploreServiceManager.class);
     mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE).to(MessagingServiceManager.class);
 
     // The ServiceStore uses a special non-TX KV Table.

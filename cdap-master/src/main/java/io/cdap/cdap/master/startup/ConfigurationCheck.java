@@ -227,7 +227,6 @@ class ConfigurationCheck extends AbstractMasterCheck {
    */
   private Integer validatePositiveInteger(String key, Set<String> problemKeys) {
     // it may happen that a service does not have this config.
-    // for example, explore service does not have instances and maxInstances
     if (key == null) {
       return null;
     }

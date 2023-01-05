@@ -33,7 +33,6 @@ import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -120,7 +119,6 @@ public class HBaseTableExporter {
       new MessagingClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),
-      new ExploreClientModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new AuthenticationContextModules().getMasterModule(),

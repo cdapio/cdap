@@ -24,13 +24,9 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.DelegationTokensUpdater;
 import io.cdap.cdap.common.security.YarnTokenUtils;
 import io.cdap.cdap.data.security.HBaseTokenUtils;
-import io.cdap.cdap.hive.ExploreUtils;
-import io.cdap.cdap.security.hive.HiveTokenUtils;
-import io.cdap.cdap.security.hive.JobHistoryServerTokenUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -60,7 +56,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final SecureStore secureStore;
-  private final boolean secureExplore;
   private Long updateInterval;
 
   @Inject
@@ -71,8 +66,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
-    this.secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)
-      && UserGroupInformation.isSecurityEnabled();
   }
 
   /**
@@ -123,11 +116,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       LOG.trace("HBase is not available. Skipping HBase token", t);
     }
 
-    if (secureExplore) {
-      HiveTokenUtils.obtainTokens(cConf, refreshedCredentials);
-      JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
-    }
-
     try {
       if (secureStore instanceof DelegationTokensUpdater) {
         String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
@@ -143,24 +131,21 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   }
 
   private long calculateUpdateInterval() {
-    return calculateUpdateInterval(yarnConf, secureExplore);
+    return calculateUpdateInterval(yarnConf);
   }
 
   /**
    * Calculates the secure token update interval based on the given configurations.
    *
-   * @param cConf the CDAP configuration
    * @param hConf the YARN configuration
    * @return time in millisecond that the secure token should be updated
    */
-  public static long calculateUpdateInterval(CConfiguration cConf, Configuration hConf) {
-    boolean secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)
-      && UserGroupInformation.isSecurityEnabled();
+  public static long calculateUpdateInterval(Configuration hConf) {
 
-    return calculateUpdateInterval(hConf, secureExplore);
+    return calculateUpdateIntervalHelper(hConf);
   }
 
-  private static long calculateUpdateInterval(Configuration hConf, boolean secureExplore) {
+  private static long calculateUpdateIntervalHelper(Configuration hConf) {
     List<Long> renewalTimes = Lists.newArrayList();
 
     renewalTimes.add(hConf.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
@@ -170,29 +155,6 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     renewalTimes.add(hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL,
                                       TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
 
-    if (hConf.getBoolean(Constants.Explore.TIMELINE_SERVICE_ENABLED, false)) {
-      renewalTimes.add(hConf.getLong(Constants.Explore.TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL,
-                                        TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
-    }
-
-    if (secureExplore) {
-      // Renewal interval for YARN
-      renewalTimes.add(hConf.getLong(YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                     YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
-
-      // Renewal interval for Hive. Also see: https://issues.apache.org/jira/browse/HIVE-9214
-      Configuration hiveConf = getHiveConf();
-      if (hiveConf != null) {
-        renewalTimes.add(hiveConf.getLong("hive.cluster.delegation.token.renew-interval",
-                                          TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
-      } else {
-        renewalTimes.add(TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS));
-      }
-
-      // Renewal interval for JHS
-      renewalTimes.add(hConf.getLong(MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                        MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
-    }
 
     // Set the update interval to the shortest update interval of all required renewals.
     Long minimumInterval = Collections.min(renewalTimes);
@@ -204,25 +166,5 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     }
     LOG.info("Setting token renewal time to: {} ms", delay);
     return delay;
-  }
-
-  /**
-   * Since Hive classes are not in MasterServiceMain's classpath, create an instance of HiveConf using reflection.
-   * Call this method only if explore is enabled.
-   */
-  private static Configuration getHiveConf() {
-    ClassLoader hiveClassloader = ExploreUtils.getExploreClassloader();
-    ClassLoader contextClassloader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(hiveClassloader);
-
-    try {
-      Class<?> clz = hiveClassloader.loadClass("org.apache.hadoop.hive.conf.HiveConf");
-      return (Configuration) clz.newInstance();
-    } catch (Exception e) {
-      LOG.error("Could not create an instance of HiveConf. Using default values.", e);
-      return null;
-    } finally {
-      Thread.currentThread().setContextClassLoader(contextClassloader);
-    }
   }
 }

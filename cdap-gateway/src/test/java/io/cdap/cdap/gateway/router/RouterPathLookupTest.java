@@ -254,22 +254,6 @@ public class RouterPathLookupTest {
   }
 
   @Test
-  public void testRouterExplorePathLookUp() {
-    String explorePath = "/v3/namespaces/default//data///explore//datasets////mydataset//enable";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), explorePath);
-    RouteDestination result = pathLookup.getRoutingService(explorePath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.EXPLORE_HTTP_USER_SERVICE, result);
-  }
-
-  @Test
-  public void testRouterExploreStatusPathLookUp() {
-    String explorePath = "/v3/explore/status";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), explorePath);
-    RouteDestination result = pathLookup.getRoutingService(explorePath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.EXPLORE_HTTP_USER_SERVICE, result);
-  }
-
-  @Test
   public void testRouterV3PathLookup() {
     final String namespacePath = "/v3////namespace/////";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), namespacePath);
@@ -396,8 +380,6 @@ public class RouterPathLookupTest {
                   RouterPathLookup.DATASET_EXECUTOR);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METADATA_SERVICE),
                   RouterPathLookup.METADATA_SERVICE);
-    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.EXPLORE_HTTP_USER_SERVICE),
-                  RouterPathLookup.EXPLORE_HTTP_USER_SERVICE);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.MESSAGING_SERVICE),
                   RouterPathLookup.MESSAGING);
     assertRouting(String.format("/v3/system/services/%s/status", "unknown.service"), null);
@@ -419,8 +401,6 @@ public class RouterPathLookupTest {
                   RouterPathLookup.DATASET_EXECUTOR);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METADATA_SERVICE),
                   RouterPathLookup.METADATA_SERVICE);
-    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.EXPLORE_HTTP_USER_SERVICE),
-                  RouterPathLookup.EXPLORE_HTTP_USER_SERVICE);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.MESSAGING_SERVICE),
                   RouterPathLookup.MESSAGING);
     assertRouting(String.format("/v3/system/services/%s/stacks", "unknown.service"), null);

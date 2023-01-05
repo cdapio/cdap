@@ -80,7 +80,6 @@ public class AppWithPartitionedFileSet extends AbstractApplication<AppWithPartit
       .setInputFormat(inputFormatClass)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, SEPARATOR)
-        // don't configure properties for the Hive table - this is used in a context where explore is disabled
       .build());
     addMapReduce(new PartitionWriter());
     addMapReduce(new PartitionReader());

@@ -17,9 +17,8 @@
 package io.cdap.cdap.api.dataset.lib;
 
 import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.api.dataset.ExploreProperties;
+import io.cdap.cdap.api.dataset.DatasetProperties;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -74,41 +73,6 @@ public class FileSetProperties {
    * Hadoop configuration, with the prefix stripped from the name.
    */
   public static final String OUTPUT_PROPERTIES_PREFIX = "output.properties.";
-
-  /**
-   * Whether this dataset should be enabled for explore.
-   */
-  public static final String PROPERTY_ENABLE_EXPLORE_ON_CREATE = "explore.enabled";
-
-  /**
-   * The format to use for the explore table. Currently, only text is supported.
-   */
-  public static final String PROPERTY_EXPLORE_FORMAT = "explore.format";
-
-  /**
-   * The schema to use for the explore table. This should have the form: column type, ...
-   */
-  public static final String PROPERTY_EXPLORE_SCHEMA = "explore.schema";
-
-  /**
-   * The serde to use for the Hive table.
-   */
-  public static final String PROPERTY_EXPLORE_SERDE = "explore.serde";
-
-  /**
-   * The input format to use for the Hive table.
-   */
-  public static final String PROPERTY_EXPLORE_INPUT_FORMAT = "explore.input.format";
-
-  /**
-   * The output format to use for the Hive table.
-   */
-  public static final String PROPERTY_EXPLORE_OUTPUT_FORMAT = "explore.output.format";
-
-  /**
-   * Prefix used to store additional table properties for Hive.
-   */
-  public static final String PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX = "explore.table.property.";
 
   /**
    * The permissions for the dataset. The value for this property must be given either as a
@@ -188,64 +152,6 @@ public class FileSetProperties {
   }
 
   /**
-   * @return whether explore is enabled by the properties
-   */
-  public static boolean isExploreEnabled(Map<String, String> properties) {
-    // Boolean.valueOf returns false if the value is null
-    return Boolean.valueOf(properties.get(PROPERTY_ENABLE_EXPLORE_ON_CREATE));
-  }
-
-  /**
-   * @return the format of the explore table
-   */
-  public static String getExploreFormat(Map<String, String> properties) {
-    return properties.get(PROPERTY_EXPLORE_FORMAT);
-  }
-
-  /**
-   * @return the schema of the explore table
-   */
-  public static String getExploreSchema(Map<String, String> properties) {
-    return properties.get(PROPERTY_EXPLORE_SCHEMA);
-  }
-
-  /**
-   * @return the properties for the explore format
-   */
-  public static Map<String, String> getExploreFormatProperties(Map<String, String> properties) {
-    String format = getExploreFormat(properties);
-    if (format == null) {
-      return Collections.emptyMap();
-    }
-    return propertiesWithPrefix(properties, String.format("%s.%s.", PROPERTY_EXPLORE_FORMAT, format));
-  }
-
-  /**
-   * @return the class name of the serde configured in the properties
-   */
-  public static String getSerDe(Map<String, String> properties) {
-    return properties.get(PROPERTY_EXPLORE_SERDE);
-  }
-
-  /**
-   * @return the class name of the input format to be used in Hive.
-   * Note that this can be different than the input format used
-   * for the file set itself.
-   */
-  public static String getExploreInputFormat(Map<String, String> properties) {
-    return properties.get(PROPERTY_EXPLORE_INPUT_FORMAT);
-  }
-
-  /**
-   * @return the class name of the output format to be used in Hive.
-   * Note that this can be different than the output format used
-   * for the file set itself.
-   */
-  public static String getExploreOutputFormat(Map<String, String> properties) {
-    return properties.get(PROPERTY_EXPLORE_OUTPUT_FORMAT);
-  }
-
-  /**
    * @return the default permissions for files and directories
    */
   @Beta
@@ -261,12 +167,6 @@ public class FileSetProperties {
     return properties.get(PROPERTY_FILES_GROUP);
   }
 
-  /**
-   * @return the Hive table properties configured in the properties
-   */
-  public static Map<String, String> getTableProperties(Map<String, String> properties) {
-    return propertiesWithPrefix(properties, PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX);
-  }
 
   /**
    * @return a map of all properties whose key begins with the given prefix, without that prefix
@@ -280,7 +180,7 @@ public class FileSetProperties {
   /**
    * A Builder to construct properties for FileSet datasets.
    */
-  public static class Builder extends ExploreProperties.AbstractBuilder<Builder> {
+  public static class Builder extends DatasetProperties.Builder {
 
     private String format;
 
@@ -370,106 +270,13 @@ public class FileSetProperties {
     }
 
     /**
-     * Enable explore for this dataset.
-     */
-    public Builder setEnableExploreOnCreate(boolean enabled) {
-      add(PROPERTY_ENABLE_EXPLORE_ON_CREATE, Boolean.toString(enabled));
-      return this;
-    }
-
-    /**
-     * Set the format for the Hive table.
-     * @param format currently, only "text" and "csv" are supported.
-     */
-    public Builder setExploreFormat(String format) {
-      add(PROPERTY_EXPLORE_FORMAT, format);
-      this.format = format;
-      return this;
-    }
-
-    /**
-     * Set the schema for the Hive table.
-     * @param schema a Hive schema string of the form: field type, ...
-     */
-    public Builder setExploreSchema(String schema) {
-      add(PROPERTY_EXPLORE_SCHEMA, schema);
-      return this;
-    }
-
-    /**
-     * Set a property for the table format.
-     * This may only be a called after setting the format using {@link #setExploreFormat}.
-     */
-    public Builder setExploreFormatProperty(String name, String value) {
-      if (format == null) {
-        throw new IllegalStateException("explore format has not been set");
-      }
-      add(String.format("%s.%s.%s", PROPERTY_EXPLORE_FORMAT, format, name), value);
-      return this;
-    }
-
-    /**
-     * Set the class name of the SerDe used to create the Hive table.
-     */
-    public Builder setSerDe(String className) {
-      add(PROPERTY_EXPLORE_SERDE, className);
-      return this;
-    }
-
-    /**
-     * Set the class name of the SerDe used to create the Hive table.
-     */
-    public Builder setSerDe(Class<?> serde) {
-      return setSerDe(serde.getName());
-    }
-
-    /**
-     * Set the input format used to create the Hive table.
-     * Note that this can be different than the input format used
-     * for the file set itself.
-     */
-    public Builder setExploreInputFormat(String className) {
-      add(PROPERTY_EXPLORE_INPUT_FORMAT, className);
-      return this;
-    }
-
-    /**
-     * Set the input format used to create the Hive table.
-     * Note that this can be different than the input format used
-     * for the file set itself.
-     */
-    public Builder setExploreInputFormat(Class<?> inputFormat) {
-      return setExploreInputFormat(inputFormat.getName());
-    }
-
-    /**
-     * Set the output format used to create the Hive table.
-     * Note that this can be different than the output format used
-     * for the file set itself.
-     */
-    public Builder setExploreOutputFormat(String className) {
-      add(PROPERTY_EXPLORE_OUTPUT_FORMAT, className);
-      return this;
-    }
-
-    /**
-     * Set the output format used to create the Hive table.
-     * Note that this can be different than the output format used
-     * for the file set itself.
-     */
-    public Builder setExploreOutputFormat(Class<?> outputFormat) {
-      return setExploreOutputFormat(outputFormat.getName());
-    }
-
-    /**
      * Set a table property to be added to the Hive table. Multiple properties can be set.
      */
     public Builder setTableProperty(String name, String value) {
-      add(PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + name, value);
+      add(name, value);
       return this;
     }
-
-    /**
+/**
      * Set the default permissions for files and directories
      */
     @Beta
@@ -486,5 +293,6 @@ public class FileSetProperties {
       add(PROPERTY_FILES_GROUP, group);
       return this;
     }
+
   }
 }

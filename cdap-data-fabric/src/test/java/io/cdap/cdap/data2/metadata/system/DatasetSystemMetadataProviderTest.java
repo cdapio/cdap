@@ -42,7 +42,6 @@ public class DatasetSystemMetadataProviderTest {
         .add(DatasetProperties.SCHEMA, "avro-schema")
         .build();
     assertDatasetSchema("avro-schema", filesetAvroTableProps);
-
     DatasetProperties filesetAvroOutputProps =
       FileSetProperties.builder()
         .setOutputProperty(DatasetSystemMetadataProvider.FILESET_AVRO_SCHEMA_OUTPUT_KEY, "avro-output-schema")

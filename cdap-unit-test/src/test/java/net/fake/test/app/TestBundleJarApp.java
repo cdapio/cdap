@@ -19,19 +19,16 @@ package net.fake.test.app;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.SlowTests;
 import io.cdap.cdap.test.TestBase;
-import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -49,9 +46,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(SlowTests.class)
 public class TestBundleJarApp extends TestBase {
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void testBundleJar() throws Exception {

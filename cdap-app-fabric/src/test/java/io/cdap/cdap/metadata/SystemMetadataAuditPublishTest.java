@@ -88,7 +88,7 @@ public class SystemMetadataAuditPublishTest {
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
     Set<String> addedMetadata = new HashSet<>();
     // TODO (CDAP-14670): this test is brittle, find a better condition to wait on
-    Tasks.waitFor(26, () -> addAllSystemMetadata(addedMetadata), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(25, () -> addAllSystemMetadata(addedMetadata), 10, TimeUnit.SECONDS);
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     Set<String> removedMetadata = new HashSet<>();
     // expect the same number of changes when namespace is deleted

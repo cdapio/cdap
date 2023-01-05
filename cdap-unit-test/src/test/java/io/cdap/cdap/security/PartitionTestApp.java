@@ -53,7 +53,7 @@ public class PartitionTestApp extends AbstractApplication {
   @Override
   public void configure() {
     addService(new PartitionService());
-    // Create a partitioned file set, configure it to work with MapReduce and with Explore
+    // Create a partitioned file set, configure it to work with MapReduce
     createDataset("pfs", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addStringField("partition").addIntField("sub-partition").build())
@@ -61,10 +61,6 @@ public class PartitionTestApp extends AbstractApplication {
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
-      // Properties for Explore (to create a partitioned Hive table)
-      .setEnableExploreOnCreate(true)
-      .setExploreFormat("csv")
-      .setExploreSchema("f1 STRING, f2 INT")
       .setDescription("App for testing authorization in partitioned filesets.")
       .build());
   }
@@ -154,8 +150,6 @@ public class PartitionTestApp extends AbstractApplication {
           responder.sendString(404, "Partition not found.", Charsets.UTF_8);
           return;
         }
-
-        pfs.dropPartition(key);
 
         responder.sendString(200, "Successfully dropped partition", Charsets.UTF_8);
       }

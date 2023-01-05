@@ -65,8 +65,6 @@ import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.discovery.EndpointStrategy;
-import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -85,10 +83,6 @@ import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import io.cdap.cdap.explore.client.ExploreClient;
-import io.cdap.cdap.explore.executor.ExploreExecutorService;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
-import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -154,7 +148,6 @@ import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -174,7 +167,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -211,8 +203,6 @@ public class TestBase {
   private static boolean firstInit = true;
   private static MetricsCollectionService metricsCollectionService;
   private static Scheduler scheduler;
-  private static ExploreExecutorService exploreExecutorService;
-  private static ExploreClient exploreClient;
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
@@ -315,8 +305,6 @@ public class TestBase {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
-      new ExploreRuntimeModule().getInMemoryModules(),
-      new ExploreClientModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewManagerModule(false),
@@ -363,18 +351,6 @@ public class TestBase {
     datasetService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
-      exploreExecutorService.startAndWait();
-      // wait for explore service to be discoverable
-      DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryService.discover(
-        Constants.Service.EXPLORE_HTTP_USER_SERVICE));
-      Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                                 "%s service is not up after 5 seconds",
-                                 Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-      exploreClient = injector.getInstance(ExploreClient.class);
-    }
     programScheduler = injector.getInstance(Scheduler.class);
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).startAndWait();
@@ -545,9 +521,6 @@ public class TestBase {
     throws IOException, NoSuchAlgorithmException {
     CConfiguration cConf = CConfiguration.create();
 
-    // Setup defaults that can be overridden by user
-    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, "");
     //Set this to artificially big value to effectively disable SystemProgramManagementService
     cConf.setLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS, 3600 * 24 * 30);
@@ -570,14 +543,12 @@ public class TestBase {
     cConf.set(Constants.MetricsProcessor.BIND_ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
     cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
-    cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
     cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    cConf.set(Constants.Explore.LOCAL_DATA_DIR, TMP_FOLDER.newFolder("hive").getAbsolutePath());
 
     // Speed up test
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
@@ -618,7 +589,7 @@ public class TestBase {
     }
 
     if (previewRunnerManager instanceof Service) {
-      ((Service) previewRunnerManager).stopAndWait();
+      previewRunnerManager.stopAndWait();
     }
 
     artifactLocalizerService.stopAndWait();
@@ -642,10 +613,6 @@ public class TestBase {
     metricsCollectionService.stopAndWait();
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
-    }
-    Closeables.closeQuietly(exploreClient);
-    if (exploreExecutorService != null) {
-      exploreExecutorService.stopAndWait();
     }
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
@@ -1031,27 +998,6 @@ public class TestBase {
   protected final void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
     getTestManager().updateSchedule(scheduleId, scheduleDetail);
   }
-
-  /**
-   * Returns a JDBC connection that allows the running of SQL queries over data sets.
-   *
-   * @param namespace namespace for the connection
-   * @return Connection to use to run queries
-   */
-  protected final Connection getQueryClient(NamespaceId namespace) throws Exception {
-    if (!cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      throw new UnsupportedOperationException("Explore service is disabled. QueryClient not supported.");
-    }
-    return getTestManager().getQueryClient(namespace);
-  }
-
-  /**
-   * Returns a JDBC connection that allows the running of SQL queries over data sets.
-   */
-  protected final Connection getQueryClient() throws Exception {
-    return getQueryClient(NamespaceId.DEFAULT);
-  }
-
   /**
    * Returns a {@link MessagingContext} for interacting with the messaging system.
    */
@@ -1172,7 +1118,6 @@ public class TestBase {
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
-    previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
     // Use No-SQL store for preview data
     previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 

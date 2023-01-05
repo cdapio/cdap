@@ -28,7 +28,6 @@ import io.cdap.cdap.app.runtime.spark.distributed.SparkTwillRunnable;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.test.MockTwillContext;
-import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -104,7 +103,6 @@ public class ProgramTwillRunnableModuleTest {
                    createProgramOptions(programRunId), programRunId);
     Injector injector = Guice.createInjector(module);
     injector.getInstance(ServiceProgramRunner.class);
-    injector.getInstance(ExploreClient.class);
     injector.getInstance(ProgramStateWriter.class);
   }
 
@@ -116,7 +114,6 @@ public class ProgramTwillRunnableModuleTest {
                                                                    programRunId);
     Injector injector = Guice.createInjector(module);
     injector.getInstance(WorkerProgramRunner.class);
-    injector.getInstance(ExploreClient.class);
     injector.getInstance(ProgramStateWriter.class);
   }
 
@@ -128,7 +125,6 @@ public class ProgramTwillRunnableModuleTest {
                                                                          programRunId);
     Injector injector = Guice.createInjector(module);
     injector.getInstance(MapReduceProgramRunner.class);
-    injector.getInstance(ExploreClient.class);
     injector.getInstance(ProgramStateWriter.class);
   }
 
@@ -142,7 +138,6 @@ public class ProgramTwillRunnableModuleTest {
     injector.getInstance(WorkflowProgramRunner.class);
     // Workflow supports spark, which supports PluginFinder
     injector.getInstance(PluginFinder.class);
-    injector.getInstance(ExploreClient.class);
     injector.getInstance(ProgramStateWriter.class);
   }
 
@@ -159,7 +154,6 @@ public class ProgramTwillRunnableModuleTest {
                    createProgramOptions(programRunId), programRunId);
     Injector injector = Guice.createInjector(module);
     injector.getInstance(SparkProgramRunner.class);
-    injector.getInstance(ExploreClient.class);
     injector.getInstance(ProgramStateWriter.class);
 
     Injector contextInjector = SparkRuntimeContextProvider.createInjector(CConfiguration.create(),
@@ -167,7 +161,6 @@ public class ProgramTwillRunnableModuleTest {
                                                                           programRunId.getParent(),
                                                                           createProgramOptions(programRunId));
     contextInjector.getInstance(PluginFinder.class);
-    contextInjector.getInstance(ExploreClient.class);
     contextInjector.getInstance(ProgramStateWriter.class);
   }
 

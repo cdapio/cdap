@@ -63,8 +63,6 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.explore.client.ExploreClient;
-import io.cdap.cdap.explore.client.MockExploreClient;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
@@ -342,8 +340,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
           bind(UGIProvider.class).to(DefaultUGIProvider.class);
           expose(UGIProvider.class);
 
-          bind(ExploreClient.class).to(MockExploreClient.class);
-          expose(ExploreClient.class);
           bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
 
           bind(NamespaceResourceDeleter.class).to(NoopNamespaceResourceDeleter.class).in(Scopes.SINGLETON);

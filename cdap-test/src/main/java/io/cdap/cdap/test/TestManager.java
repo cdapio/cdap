@@ -37,7 +37,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.io.File;
-import java.sql.Connection;
 import java.util.Set;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -283,13 +282,6 @@ public interface TestManager {
    * @throws Exception
    */
   <T> DataSetManager<T> getDataset(DatasetId datasetId) throws Exception;
-
-  /**
-   * @param namespace namespace to interact within
-   * @return a JDBC connection that allows the running of SQL queries over data sets
-   */
-  Connection getQueryClient(NamespaceId namespace) throws Exception;
-
   /**
    * Removes all apps in the specified namespace.
    *

@@ -40,16 +40,12 @@ import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.runtime.spark.SparkResourceFilter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.StickyEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.explore.jdbc.ExploreConnectionParams;
-import io.cdap.cdap.explore.jdbc.ExploreDriver;
 import io.cdap.cdap.internal.AppFabricClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
@@ -70,7 +66,6 @@ import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -78,18 +73,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.InetSocketAddress;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -287,7 +277,7 @@ public class UnitTestManager extends AbstractTestManager {
                                            Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), pluginJar, parents,
-                                   additionalPlugins, Collections.<String, String>emptyMap());
+                                   additionalPlugins, Collections.emptyMap());
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
   }
@@ -383,34 +373,6 @@ public class UnitTestManager extends AbstractTestManager {
       }
       txCtx.finish();
     }
-  }
-
-  @Override
-  public Connection getQueryClient(NamespaceId namespace) throws Exception {
-    // this makes sure the Explore JDBC driver is loaded
-    Class.forName(ExploreDriver.class.getName());
-
-    Discoverable discoverable = new StickyEndpointStrategy(() ->
-      discoveryClient.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
-
-    if (null == discoverable) {
-      throw new IOException("Explore service could not be discovered.");
-    }
-
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String host = address.getHostName();
-    int port = address.getPort();
-
-    Map<String, String> params = new HashMap<>();
-    params.put(ExploreConnectionParams.Info.NAMESPACE.getName(), namespace.getNamespace());
-    params.put(ExploreConnectionParams.Info.SSL_ENABLED.getName(),
-               Boolean.toString(URIScheme.HTTPS.isMatch(discoverable)));
-    params.put(ExploreConnectionParams.Info.VERIFY_SSL_CERT.getName(), Boolean.toString(false));
-
-    String connectString = String.format("%s%s:%d?%s", Constants.Explore.Jdbc.URL_PREFIX, host, port,
-                                         Joiner.on('&').withKeyValueSeparator("=").join(params));
-
-    return DriverManager.getConnection(connectString);
   }
 
   @Override
