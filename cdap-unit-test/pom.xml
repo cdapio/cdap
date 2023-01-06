@@ -71,12 +71,12 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-api-spark2_2.11</artifactId>
+      <artifactId>cdap-api-spark3_2.12</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-spark-core2_2.11</artifactId>
+      <artifactId>cdap-spark-core3_2.12</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -129,8 +129,8 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming-kafka-0-8_2.11</artifactId>
-      <version>${spark2.version}</version>
+      <artifactId>spark-streaming-kafka-0-10_2.12</artifactId>
+      <version>${spark3.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.scala-lang</groupId>
