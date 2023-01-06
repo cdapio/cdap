@@ -86,7 +86,7 @@ public class DistributedProgramRunnerTxTimeoutTest {
                                                       injector);
     mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null,
                                                             injector);
-    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK2_2_11, cConf, yConf, null, null,
+    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK3_2_12, cConf, yConf, null, null,
                                                     ClusterMode.ON_PREMISE, null, injector);
     workflowRunner = new DistributedWorkflowProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null, null,
                                                           injector);

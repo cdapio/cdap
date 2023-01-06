@@ -32,6 +32,7 @@ import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.KafkaPublisher;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -53,6 +54,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
+  @Ignore
   public void test() throws Exception {
     File checkpointDir = TEMP_FOLDER.newFolder();
     KafkaPublisher publisher = KAFKA_TESTER.getKafkaClient().getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED,

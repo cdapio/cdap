@@ -69,7 +69,7 @@
 
   <property>
     <name>app.program.spark.compat</name>
-    <value>spark2_2.11</value>
+    <value>spark3_2.12</value>
     <description>
       Spark compatibility version. Must be 'spark2_2.11' or 'spark3_2.12'. This is only
       used in CDAP Local Sandbox mode. In Distributed CDAP mode, the Spark version will be

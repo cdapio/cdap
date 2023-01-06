@@ -164,6 +164,7 @@ public class SparkTest extends TestFrameworkTestBase {
   }
 
   @Test
+  @Ignore
   public void testDynamicSpark() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 

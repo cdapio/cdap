@@ -27,7 +27,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <spark.version>2.3.1</spark.version>
+    <spark.version>3.1.1</spark.version>
     <cdap.version>6.9.0-SNAPSHOT</cdap.version>
     <hadoop.version>2.3.0</hadoop.version>
     <!-- properties for script build step that creates the config files for the artifacts -->
@@ -73,7 +73,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
+      <artifactId>spark-core_2.12</artifactId>
       <version>${spark.version}</version>
       <scope>provided</scope>
       <exclusions>
