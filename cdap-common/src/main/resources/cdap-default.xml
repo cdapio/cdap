@@ -5370,7 +5370,7 @@
 
   <property>
     <name>feature.lifecycle.management.edit.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Enables Design-time Lifecycle Management for applications.
     </description>

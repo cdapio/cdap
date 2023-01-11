@@ -304,7 +304,8 @@ public class ApplicationClient {
    */
   public void delete(ApplicationId app)
     throws ApplicationNotFoundException, IOException, AccessException {
-    String path = String.format("apps/%s/versions/%s", app.getApplication(), app.getVersion());
+    // Changing to non version specific app deletion - since version specific app deletion isn't supported after LCM.
+    String path = String.format("apps/%s", app.getApplication());
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
                                                config.resolveNamespacedURLV3(app.getParent(), path),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
