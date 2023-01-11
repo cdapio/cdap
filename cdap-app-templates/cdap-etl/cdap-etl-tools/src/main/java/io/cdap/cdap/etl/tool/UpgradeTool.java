@@ -93,7 +93,7 @@ public class UpgradeTool {
 
   private Set<ApplicationId> upgrade(NamespaceId namespace) throws Exception {
     Set<ApplicationId> upgraded = new HashSet<>();
-    for (ApplicationRecord appRecord : appClient.list(namespace, Upgrader.ARTIFACT_NAMES, null)) {
+    for (ApplicationRecord appRecord : appClient.list(namespace, Upgrader.ARTIFACT_NAMES, null, null)) {
       ApplicationId appId = namespace.app(appRecord.getName());
       if (upgrade(appId)) {
         upgraded.add(appId);

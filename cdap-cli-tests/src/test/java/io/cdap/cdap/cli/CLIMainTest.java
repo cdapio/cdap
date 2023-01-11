@@ -52,6 +52,7 @@ public class CLIMainTest extends CLITestBase {
   @AfterClass
   public static void tearDownClass() throws Exception {
     programClient.stopAll(NamespaceId.DEFAULT);
+    // Introduced in LCM: Deletion of app - removes all it's versions
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
   }
 

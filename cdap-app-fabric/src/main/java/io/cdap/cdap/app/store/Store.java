@@ -352,11 +352,11 @@ public interface Store {
    * Return a list of program specifications that are deleted comparing the specification in the store with the
    * spec that is passed.
    *
-   * @param id                   ApplicationId
+   * @param appRef               ApplicationReference
    * @param specification        Application specification
    * @return                     List of ProgramSpecifications that are deleted
    */
-  List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationId id,
+  List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationReference appRef,
                                                              ApplicationSpecification specification);
 
   /**

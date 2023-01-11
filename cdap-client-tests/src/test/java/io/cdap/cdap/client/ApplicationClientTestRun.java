@@ -258,41 +258,33 @@ public class ApplicationClientTestRun extends ClientTestBase {
     ApplicationId appId1 = NamespaceId.DEFAULT.app(FakeApp.NAME);
     ApplicationId appId2 = NamespaceId.DEFAULT.app("fake2");
     ApplicationId appId3 = NamespaceId.DEFAULT.app("fake3");
-    ApplicationId toDelete = NamespaceId.DEFAULT.app(FakeApp.NAME);;
-    ApplicationId toDelete2 = NamespaceId.DEFAULT.app(FakeApp.NAME);;
-    ApplicationId toDelete3 = NamespaceId.DEFAULT.app(FakeApp.NAME);;
-    ApplicationId toDelete4 = NamespaceId.DEFAULT.app(FakeApp.NAME);;
-    ApplicationId toDelete5 = NamespaceId.DEFAULT.app(FakeApp.NAME);;
+
     try {
       // app1 should use fake-1.0.0-SNAPSHOT
       appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "otherfake", "1.0.0-SNAPSHOT"));
       String version = appClient.listAppVersions(NamespaceId.DEFAULT, FakeApp.NAME).get(0);
-      toDelete = NamespaceId.DEFAULT.app(FakeApp.NAME, version);
       ApplicationDetail otherFakeAppDetail = appClient.get(new ApplicationId
                                                              (NamespaceId.DEFAULT.getNamespace(),
                                                               FakeApp.NAME, version));
       appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "fake", "0.1.0-SNAPSHOT"));
       version = appClient.listAppVersions(NamespaceId.DEFAULT, FakeApp.NAME).get(0);
-      toDelete2 = NamespaceId.DEFAULT.app(FakeApp.NAME, version);
       ApplicationDetail fakeAppDetail = appClient.get(new ApplicationId(NamespaceId.DEFAULT.getNamespace(),
                                                                         FakeApp.NAME, version));
       // app1 should end up with fake-1.0.0-SNAPSHOT
       appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class, "fake", "1.0.0-SNAPSHOT"));
       version = appClient.listAppVersions(NamespaceId.DEFAULT, FakeApp.NAME).get(0);
-      toDelete3 = NamespaceId.DEFAULT.app(FakeApp.NAME, version);
       ApplicationDetail fakeAppDetail2 = appClient.get(new ApplicationId(NamespaceId.DEFAULT.getNamespace(),
                                                                          FakeApp.NAME, version));
 
       // app2 should use fake-0.1.0-SNAPSHOT
       appClient.deploy(appId2, new AppRequest<Config>(new ArtifactSummary("fake", "0.1.0-SNAPSHOT")));
       version = appClient.listAppVersions(NamespaceId.DEFAULT, "fake2").get(0);
-      toDelete4 = NamespaceId.DEFAULT.app("fake2", version);
+
       ApplicationDetail appId2Detail = appClient.get(new ApplicationId(appId2.getNamespace(), appId2.getApplication(),
                                                                        version));
       // app3 should use otherfake-1.0.0-SNAPSHOT
       appClient.deploy(appId3, new AppRequest<Config>(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT")));
       version = appClient.listAppVersions(NamespaceId.DEFAULT, "fake3").get(0);
-      toDelete5 = NamespaceId.DEFAULT.app("fake3", version);
       ApplicationDetail appId3Detail = appClient.get(new ApplicationId(appId3.getNamespace(), appId3.getApplication(),
                                                                        version));
       appClient.waitForDeployed(appId1, 30, TimeUnit.SECONDS);
@@ -301,15 +293,15 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
       // check calls that should return nothing
       // these don't match anything
-      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "ghost", null).isEmpty());
-      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0").isEmpty());
-      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "ghost", "1.0.0").isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "ghost", null, null).isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0", null).isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "ghost", "1.0.0", null).isEmpty());
       // these match one but not the other
-      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "otherfake", "0.1.0-SNAPSHOT").isEmpty());
-      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "fake", "1.0.0").isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "otherfake", "0.1.0-SNAPSHOT", null).isEmpty());
+      Assert.assertTrue(appClient.list(NamespaceId.DEFAULT, "fake", "1.0.0", null).isEmpty());
 
       // check filter by name only
-      Set<ApplicationRecord> apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", null));
+      Set<ApplicationRecord> apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", null, true));
       Set<ApplicationRecord> expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getApplication(),
                               fakeAppDetail2.getAppVersion(), "", null,
@@ -320,7 +312,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       );
       Assert.assertEquals(expected, apps);
 
-      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "otherfake", null));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "otherfake", null, true));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getApplication(),
                               appId3Detail.getAppVersion(), "", null,
@@ -329,7 +321,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       Assert.assertEquals(expected, apps);
 
       // check filter by multiple names
-      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, ImmutableSet.of("fake", "otherfake"), null));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, ImmutableSet.of("fake", "otherfake"), null, true));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getApplication(),
                               fakeAppDetail2.getAppVersion(), "", null,
@@ -344,7 +336,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       Assert.assertEquals(expected, apps);
 
       // check filter by version only
-      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "0.1.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "0.1.0-SNAPSHOT", true));
       expected = ImmutableSet.of(new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"),
                                                        appId2.getApplication(), appId2Detail.getAppVersion(),
                                                        "", null,
@@ -352,7 +344,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
       );
       Assert.assertEquals(expected, apps);
 
-      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0-SNAPSHOT", true));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getApplication(),
                               fakeAppDetail2.getAppVersion(), "", null,
@@ -364,20 +356,14 @@ public class ApplicationClientTestRun extends ClientTestBase {
       Assert.assertEquals(expected, apps);
 
       // check filter by both
-      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", "0.1.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", "0.1.0-SNAPSHOT", true));
       expected = ImmutableSet.of(new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"),
                                                        appId2.getApplication(), appId2Detail.getAppVersion(),
                                                        "", null,
                                                        appId2Detail.getChange(), appId2Detail.getSourceControlMeta()));
       Assert.assertEquals(expected, apps);
     } finally {
-      //appClient.deleteAll(NamespaceId.DEFAULT);
-      appClient.delete(toDelete);
-      appClient.delete(toDelete4);
-      appClient.delete(toDelete5);
-      appClient.waitForDeleted(toDelete, 30, TimeUnit.SECONDS);
-      appClient.waitForDeleted(toDelete4, 30, TimeUnit.SECONDS);
-      appClient.waitForDeleted(toDelete5, 30, TimeUnit.SECONDS);
+      appClient.deleteAll(NamespaceId.DEFAULT);
       List<ApplicationRecord> list = appClient.list(NamespaceId.DEFAULT);
       Assert.assertEquals(0, appClient.list(NamespaceId.DEFAULT).size());
     }

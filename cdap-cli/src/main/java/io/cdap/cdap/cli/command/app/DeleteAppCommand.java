@@ -24,7 +24,6 @@ import io.cdap.cdap.cli.english.Article;
 import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ApplicationClient;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.common.cli.Arguments;
 import java.io.PrintStream;
@@ -45,9 +44,6 @@ public class DeleteAppCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ApplicationId appId = parseApplicationId(arguments);
-    ApplicationDetail appDetail = appClient.get(appId);
-    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(),
-        appDetail.getAppVersion());
     appClient.delete(appId);
     output.printf("Successfully deleted application '%s.%s'\n", appId.getEntityName(),
         appId.getVersion());
@@ -55,15 +51,11 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("delete app <%s> [version <%s>]", ArgumentName.APP,
-        ArgumentName.APP_VERSION);
+    return String.format("delete app <%s>", ArgumentName.APP);
   }
 
   @Override
   public String getDescription() {
-    return String.format(
-        "Deletes %s with an optional version. If version is not provided, default version '%s' "
-            + "will be used.", Fragment.of(Article.A, ElementType.APP.getName()),
-        ApplicationId.DEFAULT_VERSION);
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.APP.getName()));
   }
 }

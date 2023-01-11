@@ -1212,7 +1212,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     ApplicationId defaultAppId = TEST_NAMESPACE_META2.getNamespaceId().app(AppWithSchedule.NAME);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    ApplicationDetail appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     List<ScheduleDetail> actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                                          defaultAppId.getApplication());
@@ -1224,7 +1223,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
 
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication());
@@ -1235,7 +1233,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     // schedule should not be updated
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
@@ -1247,7 +1244,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication());
@@ -1258,7 +1254,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication());
@@ -1270,7 +1265,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication());
@@ -1281,7 +1275,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
-    appDetails = getAppDetails(defaultAppId.getNamespace(), defaultAppId.getApplication());
 
     actualSchedules = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
                                     defaultAppId.getApplication());

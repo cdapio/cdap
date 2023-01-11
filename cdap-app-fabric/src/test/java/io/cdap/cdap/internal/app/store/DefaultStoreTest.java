@@ -70,6 +70,7 @@ import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -574,7 +575,8 @@ public abstract class DefaultStoreTest {
     AbstractApplication newApp = new AppWithNoServices();
 
     // get the delete program specs after deploying AppWithNoServices
-    List<ProgramSpecification> programSpecs = store.getDeletedProgramSpecifications(appId, Specifications.from(newApp));
+    List<ProgramSpecification> programSpecs = store.getDeletedProgramSpecifications(appId.getAppReference(),
+                                                                                    Specifications.from(newApp));
 
     //verify the result.
     Assert.assertEquals(1, programSpecs.size());
@@ -890,14 +892,14 @@ public abstract class DefaultStoreTest {
     Assert.assertEquals(6, specsToBeVerified.size());
 
     // Check the diff with the same app - re-deployment scenario where programs are not removed.
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId.getAppReference(), spec);
     Assert.assertEquals(0, deletedSpecs.size());
 
     //Get the spec for app that contains no programs.
     spec = Specifications.from(new NoProgramsApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    deletedSpecs = store.getDeletedProgramSpecifications(appId.getAppReference(), spec);
     Assert.assertEquals(6, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
@@ -1039,7 +1041,7 @@ public abstract class DefaultStoreTest {
     spec = Specifications.from(new DefaultStoreTestApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId.getAppReference(), spec);
     Assert.assertEquals(2, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
