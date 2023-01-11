@@ -52,6 +52,7 @@ public class TetheringProvisioner implements Provisioner {
   private MessagingService messagingService;
   private TetheringStore tetheringStore;
   private LocationFactory locationFactory;
+  private CConfiguration cConf;
 
   /**
    * Using method injection instead of constructor injection because {@link ServiceLoader} (used by
@@ -73,6 +74,11 @@ public class TetheringProvisioner implements Provisioner {
   @SuppressWarnings("unused")
   void setLocationFactory(LocationFactory locationFactory) {
     this.locationFactory = locationFactory;
+  }
+
+  @Inject
+  void setCConf(CConfiguration cConf) {
+    this.cConf = cConf;
   }
 
   @Override
@@ -125,7 +131,6 @@ public class TetheringProvisioner implements Provisioner {
   @Override
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     TetheringConf conf = TetheringConf.fromProperties(context.getProperties());
-    CConfiguration cConf = CConfiguration.create();
     return Optional.of(new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore, locationFactory));
   }
 }
