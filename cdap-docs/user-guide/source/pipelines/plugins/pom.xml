@@ -113,7 +113,6 @@
     <cdh.hive.version>1.1.0-cdh5.5.1</cdh.hive.version>
     <javamail.version>1.4.1</javamail.version>
     <junit.version>4.11</junit.version>
-    <kafka.version>0.10.2.2</kafka.version>
     <mockftp.version>2.6</mockftp.version>
     <snappy.version>1.1.2</snappy.version>
     <slf4j.version>1.7.5</slf4j.version>

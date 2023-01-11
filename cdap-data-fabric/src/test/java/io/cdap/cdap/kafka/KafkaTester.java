@@ -34,12 +34,8 @@ import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.Tasks;
-import kafka.admin.AdminUtils;
-import kafka.admin.RackAwareMode;
-import kafka.utils.ZKStringSerializer$;
-import kafka.utils.ZkUtils;
-import org.I0Itec.zkclient.ZkClient;
-import org.I0Itec.zkclient.ZkConnection;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -57,6 +53,8 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
@@ -396,9 +394,12 @@ public class KafkaTester extends ExternalResource {
   /**
    * Creates a topic with the given number of partitions.
    */
-  public void createTopic(String topic, int partitions) {
-    ZkClient zkClient = new ZkClient(zkServer.getConnectionStr(), 20000, 2000, ZKStringSerializer$.MODULE$);
-    ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zkServer.getConnectionStr()), false);
-    AdminUtils.createTopic(zkUtils, topic, partitions, 1, new Properties(), RackAwareMode.Disabled$.MODULE$);
+  public void createTopic(String topic, int partitions) throws IOException {
+    Properties properties = new Properties();
+    properties.load(new FileReader(new File("kafka.properties")));
+    AdminClient adminClient = AdminClient.create(properties);
+    NewTopic newTopic = new NewTopic(topic, partitions, (short)1);
+    adminClient.createTopics(Collections.singletonList(newTopic));
+    adminClient.close();
   }
 }
