@@ -181,7 +181,12 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
 
     // Selects all runs started by the k8s twill runner that has the run id label
-    this.selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
+    if (this.podInfo.getName().contains("appfabric")) {
+      this.selector = String.format("cdap.twill.app!=preview-runner,%s=%s,%s",
+                                    RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
+    } else {
+      this.selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
+    }
     // Contains mapping of the Kubernetes namespace to a map of resource types and the watcher threads
     this.resourceWatchers = new HashMap<>();
     this.liveInfos = new ConcurrentSkipListMap<>();
