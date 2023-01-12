@@ -86,6 +86,7 @@ public final class InMemoryConfigurator implements Configurator {
   private final RemoteClientFactory remoteClientFactory;
   private final AppDeploymentRuntimeInfo runtimeInfo;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final ApplicationSpecification deployedApplicationSpec;
 
   // These fields are needed to create the classLoader in the config method
   private final ArtifactRepository artifactRepository;
@@ -113,6 +114,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.remoteClientFactory = remoteClientFactory;
     this.runtimeInfo = deploymentInfo.getRuntimeInfo();
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.deployedApplicationSpec = deploymentInfo.getDeployedApplicationSpec();
   }
 
   /**
@@ -171,7 +173,7 @@ public final class InMemoryConfigurator implements Configurator {
           runtimeInfo.getExistingAppSpec()) : null;
       configurer = new DefaultAppConfigurer(
         appNamespace, artifactId, app, configString, pluginFinder, pluginInstantiator, runtimeConfigurer, runtimeInfo,
-        featureFlagsProvider);
+        featureFlagsProvider, deployedApplicationSpec);
 
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());

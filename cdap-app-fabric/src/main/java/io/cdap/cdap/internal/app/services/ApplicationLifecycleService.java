@@ -576,9 +576,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
 
-    updateApplicationInternal(appId, currentSpec.getConfiguration(), programId -> { }, newArtifactDetail,
+    updateApplicationInternal(appId, programId -> { }, newArtifactDetail,
                               Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
-                              allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId), false);
+                              allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId), false,
+                              currentSpec);
   }
 
   /**
@@ -586,14 +587,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * to its config.
    */
   private void updateApplicationInternal(ApplicationId appId,
-                                         @Nullable String currentConfigStr,
-                                         ProgramTerminator programTerminator,
-                                         ArtifactDetail artifactDetail,
-                                         List<ApplicationConfigUpdateAction> updateActions,
-                                         Set<ArtifactScope> allowedArtifactScopes,
-                                         boolean allowSnapshot,
-                                         @Nullable KerberosPrincipalId ownerPrincipal,
-                                         boolean updateSchedules) throws Exception {
+                                                  ProgramTerminator programTerminator,
+                                                  ArtifactDetail artifactDetail,
+                                                  List<ApplicationConfigUpdateAction> updateActions,
+                                                  Set<ArtifactScope> allowedArtifactScopes,
+                                                  boolean allowSnapshot,
+                                                  @Nullable KerberosPrincipalId ownerPrincipal,
+                                                  boolean updateSchedules,
+                                                  ApplicationSpecification appSpec) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
       // This should never happen.
@@ -607,7 +608,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String updatedAppConfig;
     DefaultApplicationUpdateContext updateContext =
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
-                                          artifactRepository, currentConfigStr, updateActions,
+                                          artifactRepository, appSpec.getConfiguration(), updateActions,
                                           allowedArtifactScopes, allowSnapshot);
 
     try (CloseableClassLoader artifactClassLoader =
@@ -634,7 +635,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, artifactDetail.getDescriptor().getLocation(),
                                                              appId.getParent(), appClass, appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig, ownerPrincipal,
-                                                             updateSchedules, null);
+                                                             updateSchedules, null, appSpec);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
@@ -978,7 +979,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId()),
       artifactDetail.getDescriptor().getLocation(), namespaceId, appClass, appName,
       appVersion, configStr, ownerPrincipal, updateSchedules,
-      isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null);
+      isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null, null);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

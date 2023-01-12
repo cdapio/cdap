@@ -311,7 +311,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
                             appClass, existingAppSpec.getName(), existingAppSpec.getAppVersion(),
                             existingAppSpec.getConfiguration(), null, false,
                             new AppDeploymentRuntimeInfo(existingAppSpec, options.getUserArguments().asMap(),
-                                                         options.getArguments().asMap()));
+                                                         options.getArguments().asMap()), existingAppSpec);
     Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator, artifactRepository,
                                                          factory, deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
