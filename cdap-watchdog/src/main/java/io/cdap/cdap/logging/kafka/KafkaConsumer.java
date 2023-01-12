@@ -18,18 +18,21 @@ package io.cdap.cdap.logging.kafka;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
-import kafka.api.PartitionOffsetRequestInfo;
 import kafka.common.ErrorMapping;
 import kafka.common.OffsetOutOfRangeException;
-import kafka.common.TopicAndPartition;
 import kafka.javaapi.FetchResponse;
 import kafka.javaapi.OffsetRequest;
-import kafka.javaapi.OffsetResponse;
-import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
 import kafka.message.MessageAndOffset;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.RetriableException;
+import org.apache.kafka.common.requests.ListOffsetRequest;
 import org.apache.twill.kafka.client.BrokerInfo;
 import org.apache.twill.kafka.client.BrokerService;
 import org.slf4j.Logger;
@@ -37,9 +40,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
-
-import static kafka.api.OffsetRequest.CurrentVersion;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Kafka consumer that listens on a topic/partition and retrieves messages. This class is thread-safe.
@@ -58,14 +63,16 @@ public final class KafkaConsumer implements Closeable {
   private final int fetchTimeoutMs;
   private final String clientName;
 
-  // Simple consumer is thread safe
-  private volatile SimpleConsumer consumer;
+  // KafkaConsumer is not thread safe
+  private org.apache.kafka.clients.consumer.KafkaConsumer<String, String> consumer;
+  private org.apache.kafka.clients.KafkaClient client;
 
   /**
    * Creates a KafkaConsumer with initial set of seed brokers, topic and partition.
-   * @param brokerService the {@link BrokerService} for finding Kafka brokers.
-   * @param topic Kafka topic to subscribe to
-   * @param partition topic partition to subscribe to
+   *
+   * @param brokerService  the {@link BrokerService} for finding Kafka brokers.
+   * @param topic          Kafka topic to subscribe to
+   * @param partition      topic partition to subscribe to
    * @param fetchTimeoutMs timeout for a Kafka fetch call
    */
   public KafkaConsumer(BrokerService brokerService, String topic, int partition, int fetchTimeoutMs) {
@@ -78,7 +85,8 @@ public final class KafkaConsumer implements Closeable {
 
   /**
    * Fetches Kafka messages from an offset.
-   * @param offset message offset to start.
+   *
+   * @param offset   message offset to start.
    * @param callback callback to handle the messages fetched.
    * @return number of messages fetched.
    */
@@ -108,46 +116,51 @@ public final class KafkaConsumer implements Closeable {
 
   /**
    * Fetch offset before given time.
+   *
    * @param timeMillis offset to fetch before timeMillis.
    * @return Kafka message offset
    */
   public long fetchOffsetBefore(long timeMillis) {
-    TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
-    Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = Maps.newHashMap();
-    requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(timeMillis, 1));
-    OffsetRequest request = new OffsetRequest(requestInfo, CurrentVersion(), clientName);
+    TopicPartition topicAndPartition = new TopicPartition(topic, partition);
+    org.apache.kafka.clients.consumer.KafkaConsumer<String, String> consumer = getConsumer();
 
-    SimpleConsumer consumer = getConsumer();
-    OffsetResponse response = consumer.getOffsetsBefore(request);
-
-    if (response.hasError()) {
-      // Try once more
-      closeConsumer();
-      consumer = getConsumer();
-      response = consumer.getOffsetsBefore(request);
-
-      if (response.hasError()) {
-        closeConsumer();
-        throw new RuntimeException(String.format(
-          "Error fetching offset data from broker %s:%d for topic %s, partition %d. Error code: %d",
-          consumer.host(), consumer.port(), topic, partition, response.errorCode(topic, partition)));
+    try {
+      if (timeMillis == ListOffsetRequest.EARLIEST_TIMESTAMP) {
+        Map<TopicPartition, Long> offsets = consumer.beginningOffsets(Arrays.asList(topicAndPartition));
+        return offsets.get(topicAndPartition);
       }
-    }
 
-    long[] offsets = response.offsets(topic, partition);
-    if (offsets.length > 0) {
-      return offsets[0];
+      OffsetAndTimestamp offset = Retries.callWithRetries(
+        new Retries.Callable<OffsetAndTimestamp, RetriableException>() {
+          @Override
+          public OffsetAndTimestamp call() throws RetriableException {
+            Map<TopicPartition, Long> offsetRequest = Maps.newHashMap();
+            offsetRequest.put(topicAndPartition, timeMillis);
+            Map<TopicPartition, OffsetAndTimestamp> offsets = consumer.offsetsForTimes(offsetRequest);
+            return offsets.get(topicAndPartition);
+          }
+        }, RetryStrategies.exponentialDelay(200, 10000, TimeUnit.MILLISECONDS));
+
+      if (offset != null) {
+        return offset.offset();
+      }
+
+    } catch (Exception e) {
+      closeConsumer();
+      throw new RuntimeException(String.format(
+        "Error fetching offset data for topic %s, partition %d. Error: %s",
+        topic, partition, e.getCause().getMessage()));
     }
 
     // No offsets returned for given time. If this is not a request for earliest offset, return earliest offset.
     // Otherwise throw exception.
-    if (timeMillis != kafka.api.OffsetRequest.EarliestTime()) {
-      return fetchOffsetBefore(kafka.api.OffsetRequest.EarliestTime());
+    if (timeMillis != ListOffsetRequest.EARLIEST_TIMESTAMP) {
+      return fetchOffsetBefore(ListOffsetRequest.EARLIEST_TIMESTAMP);
     }
     closeConsumer();
     throw new RuntimeException(String.format(
-      "Got zero offsets in offset response for time %s from broker %s:%d for topic %s, partition %d",
-      timeMillis, consumer.host(), consumer.port(), topic, partition));
+      "Got zero offsets in offset response for time %s for topic %s, partition %d",
+      timeMillis, topic, partition));
   }
 
   private void closeConsumer() {
@@ -167,14 +180,14 @@ public final class KafkaConsumer implements Closeable {
 
     int failureCount = 0;
     while (true) {
-      SimpleConsumer consumer = getConsumer();
+      org.apache.kafka.clients.KafkaClient<String, String> consumer = getConsumer();
 
       FetchRequest req = new FetchRequestBuilder()
         .clientId(clientName)
         .addFetch(topic, partition, fetchOffset, BUFFER_SIZE_BYTES)
         .maxWait(fetchTimeoutMs)
         .build();
-      FetchResponse fetchResponse = consumer.fetch(req);
+      FetchResponse fetchResponse = consumer.poll(Duration.ofMillis(fetchTimeoutMs));
 
       if (!fetchResponse.hasError()) {
         return fetchResponse.messageSet(topic, partition);
@@ -183,14 +196,12 @@ public final class KafkaConsumer implements Closeable {
 
       if (++failureCount >= MAX_KAFKA_FETCH_RETRIES) {
         throw new RuntimeException(
-          String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
-                        consumer.host(), consumer.port(), topic, partition, errorCode));
+          String.format("Error fetching data for topic %s, partition %d. Error code: %d", topic, partition, errorCode));
       }
 
-      LOG.warn("Error fetching data from broker {}:{} for topic {}, partition {}. Error code: {}",
-               consumer.host(), consumer.port(), topic, partition, errorCode);
+      LOG.warn("Error fetching data for topic {}, partition {}. Error code: {}", topic, partition, errorCode);
 
-      if (errorCode == ErrorMapping.OffsetOutOfRangeCode())  {
+      if (errorCode == ErrorMapping.OffsetOutOfRangeCode()) {
         throw new OffsetOutOfRangeException(String.format(
           "Requested offset %d is out of range for topic %s partition %d", fetchOffset, topic, partition));
       }
@@ -198,12 +209,17 @@ public final class KafkaConsumer implements Closeable {
     }
   }
 
-  private SimpleConsumer getConsumer() {
+  private org.apache.kafka.clients.consumer.KafkaConsumer<String, String> getConsumer() {
     if (consumer != null) {
       return consumer;
     }
     BrokerInfo leader = brokerService.getLeader(topic, partition);
-    consumer = new SimpleConsumer(leader.getHost(), leader.getPort(), TIMEOUT_MS, BUFFER_SIZE_BYTES, clientName);
+    Properties clientProperties = new Properties();
+    clientProperties.setProperty(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, Integer.toString(TIMEOUT_MS));
+    clientProperties.setProperty(ConsumerConfig.RECEIVE_BUFFER_CONFIG, Integer.toString(BUFFER_SIZE_BYTES));
+    clientProperties.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, clientName);
+    clientProperties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, leader.getHost());
+    consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(clientProperties);
     return consumer;
   }
 }
