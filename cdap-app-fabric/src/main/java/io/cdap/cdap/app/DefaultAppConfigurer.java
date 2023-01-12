@@ -98,13 +98,14 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private String name;
   private Map<MetadataScope, Metadata> appMetadata;
   private String description;
+  private ApplicationSpecification deployedApplicationSpec;
 
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
     this(namespace, artifactId, app, "", null, null, null, null,
          new FeatureFlagsProvider() {
-         });
+         }, null);
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
@@ -113,8 +114,19 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
                               @Nullable RuntimeConfigurer runtimeConfigurer,
                               @Nullable AppDeploymentRuntimeInfo runtimeInfo,
                               FeatureFlagsProvider featureFlagsProvider) {
+   this(namespace, artifactId, app, configuration, pluginFinder, pluginInstantiator, runtimeConfigurer, runtimeInfo,
+        featureFlagsProvider, null);
+  }
+
+  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
+                              @Nullable PluginFinder pluginFinder,
+                              @Nullable PluginInstantiator pluginInstantiator,
+                              @Nullable RuntimeConfigurer runtimeConfigurer,
+                              @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                              FeatureFlagsProvider featureFlagsProvider,
+                              @Nullable ApplicationSpecification deployedApplicationSpec) {
     super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
-    featureFlagsProvider);
+          featureFlagsProvider);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
@@ -125,6 +137,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
     this.runtimeConfigurer = runtimeConfigurer;
     this.runtimeInfo = runtimeInfo;
+    this.deployedApplicationSpec = deployedApplicationSpec;
   }
 
   @Override
@@ -279,6 +292,12 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @Override
   public String getDeployedNamespace() {
     return deployNamespace.getId();
+  }
+
+  @Nullable
+  @Override
+  public ApplicationSpecification getDeployedApplicationSpec() {
+    return this.deployedApplicationSpec;
   }
 
   /**
