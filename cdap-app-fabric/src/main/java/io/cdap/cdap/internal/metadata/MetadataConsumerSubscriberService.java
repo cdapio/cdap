@@ -67,6 +67,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -301,7 +302,8 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
                                     .map(endPointField ->
                                            getAssetForEndpoint(endPointField.getEndPoint()))
                                     .collect(Collectors.toSet()),
-                                  (first, second) -> first));
+                                  (first, second) -> Stream.of(first, second).flatMap(Set::stream)
+                                    .collect(Collectors.toSet())));
     }
   }
 }
