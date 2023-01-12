@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -45,40 +46,45 @@ public class AppDeploymentInfo {
   @SerializedName("update-schedules")
   private final boolean updateSchedules;
   private final AppDeploymentRuntimeInfo runtimeInfo;
+  @Nullable
+  private final ApplicationSpecification deployedApplicationSpec;
 
   public AppDeploymentInfo(AppDeploymentInfo info, Location artifactLocation) {
     this(info.artifactId, artifactLocation, info.namespaceId, info.applicationClass, info.appName, info.appVersion,
-         info.configString, info.ownerPrincipal, info.updateSchedules, info.runtimeInfo);
+         info.configString, info.ownerPrincipal, info.updateSchedules, info.runtimeInfo, info.deployedApplicationSpec);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, appName, appVersion, configString, null,
-         true, null);
+         true, null, null);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                           @Nullable ApplicationSpecification deployedApplicationSpec) {
     this(artifactId, artifactLocation, namespaceId, applicationClass, applicationClass.getClassName(),
-         appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo);
+         appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo, deployedApplicationSpec);
   }
 
   public AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                            String applicationClassName, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                           boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                           @Nullable ApplicationSpecification deployedApplicationSpec) {
     this(artifactId, artifactLocation, namespaceId, null, applicationClassName, appName, appVersion, configString,
-         ownerPrincipal, updateSchedules, runtimeInfo);
+         ownerPrincipal, updateSchedules, runtimeInfo, deployedApplicationSpec);
   }
 
   private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
                             @Nullable ApplicationClass applicationClass, String applicationClassName,
                             @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo) {
+                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+                            @Nullable ApplicationSpecification deployedApplicationSpec) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -90,6 +96,7 @@ public class AppDeploymentInfo {
     this.applicationClass = applicationClass;
     this.applicationClassName = applicationClassName;
     this.runtimeInfo = runtimeInfo;
+    this.deployedApplicationSpec = deployedApplicationSpec;
   }
 
   /**
@@ -178,5 +185,13 @@ public class AppDeploymentInfo {
   @Nullable
   public AppDeploymentRuntimeInfo getRuntimeInfo() {
     return runtimeInfo;
+  }
+
+  /**
+   * Returns the previously deployed Application Specification. Will be null for the 1st deployment
+   */
+  @Nullable
+  public ApplicationSpecification getDeployedApplicationSpec() {
+    return deployedApplicationSpec;
   }
 }

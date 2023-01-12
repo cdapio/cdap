@@ -352,7 +352,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(
       programDescriptor.getArtifactId(), programJarLocation, programId.getNamespaceId(), appClassName,
       programId.getApplication(), programId.getVersion(), existingAppSpec.getConfiguration(), null, false,
-      new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments));
+      new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments), existingAppSpec);
     Configurator configurator = configuratorFactory.create(deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
     ConfigResponse response = future.get(120, TimeUnit.SECONDS);

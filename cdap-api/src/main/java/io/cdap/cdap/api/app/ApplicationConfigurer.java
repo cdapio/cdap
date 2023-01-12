@@ -143,4 +143,15 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
   default String getDeployedNamespace() {
     throw new UnsupportedOperationException("Getting deployed namespace is not supported");
   }
+
+  /**
+   * Return the application Specification if it was deployed before. This is useful for upgrade
+   * usecases ( for example - transferring checkpoints for realtime / replication pipelines)
+   *
+   * @return the application Specification of the app if previously deployed otherwise null
+   */
+  @Nullable
+  default ApplicationSpecification getDeployedApplicationSpec() {
+    return null;
+  }
 }
