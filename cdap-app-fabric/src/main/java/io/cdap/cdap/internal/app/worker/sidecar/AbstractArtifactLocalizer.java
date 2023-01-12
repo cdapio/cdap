@@ -115,8 +115,12 @@ public abstract class AbstractArtifactLocalizer {
       // Download the artifact to a temporary file then atomically rename it to the final name to
       // avoid race conditions with multiple threads.
       Path tempFile = Files.createTempFile(newLocation.getParentFile().toPath(),
-                                           String.valueOf(newTimestamp), ".jar");
-      return downloadArtifact(urlConn, newLocation.toPath(), tempFile);
+                                           String.valueOf(newTimestamp), ".tmp");
+      long start = System.currentTimeMillis();
+      File downloadedFile = downloadArtifact(urlConn, newLocation.toPath(), tempFile);
+      long downloadTime = (System.currentTimeMillis() - start) / 1000;
+      LOG.info("Downloaded {} to location {} in {} seconds", artifactId, downloadedFile, downloadTime);
+      return downloadedFile;
     } finally {
       urlConn.disconnect();
     }
@@ -187,6 +191,8 @@ public abstract class AbstractArtifactLocalizer {
     // Check if we have cached jars in the artifact directory, if so return the latest modified timestamp.
     return DirUtils.listFiles(artifactDir, File::isFile).stream()
       .map(File::getName)
+      // filter out temporary files whose name doesn't end in .jar
+      .filter(name -> name.endsWith(".jar"))
       .map(FileUtils::getNameWithoutExtension)
       .map(Long::valueOf)
       .max(Long::compare)
