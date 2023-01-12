@@ -79,7 +79,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ns));
   }
 
-
   @PUT
   @Path("/namespaces/{namespace-id}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -107,6 +106,10 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     if (NamespaceId.isReserved(namespaceId)) {
       throw new BadRequestException(String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
                                                   namespaceId, namespaceId));
+    }
+
+    if (metadata != null && metadata.getRepository() != null && !metadata.getRepository().isValid()) {
+      throw new BadRequestException(String.format("Invalid repository configuration: %s.", metadata.getRepository()));
     }
 
     NamespaceMeta.Builder builder = metadata == null ? new NamespaceMeta.Builder() :

@@ -72,6 +72,7 @@ import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
+import io.cdap.cdap.gateway.handlers.SourceControlHttpHandler;
 import io.cdap.cdap.gateway.handlers.TransactionHttpHandler;
 import io.cdap.cdap.gateway.handlers.UsageHandler;
 import io.cdap.cdap.gateway.handlers.VersionHandler;
@@ -400,6 +401,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(UsageHandler.class);
       handlerBinder.addBinding().to(InstanceOperationHttpHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
+      handlerBinder.addBinding().to(SourceControlHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);

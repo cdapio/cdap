@@ -21,6 +21,7 @@ import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,5 +85,25 @@ public class InMemoryNamespaceAdmin implements NamespaceAdmin {
     if (namespaces.replace(namespaceId, namespaceMeta) == null) {
       throw new NamespaceNotFoundException(namespaceId);
     }
+  }
+
+  @Override
+  public void setRepository(NamespaceId namespaceId, RepositoryConfig repository) throws Exception {
+    NamespaceMeta meta = namespaces.get(namespaceId);
+    if (meta == null) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(meta).setRepository(repository);
+    namespaces.replace(namespaceId, builder.build());
+  }
+
+  @Override
+  public void deleteRepository(NamespaceId namespaceId) throws Exception {
+    NamespaceMeta meta = namespaces.get(namespaceId);
+    if (meta == null) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(meta).setRepository(null);
+    namespaces.replace(namespaceId, builder.build());
   }
 }

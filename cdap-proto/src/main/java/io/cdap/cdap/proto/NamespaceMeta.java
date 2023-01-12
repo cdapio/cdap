@@ -17,6 +17,7 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,12 +45,15 @@ public final class NamespaceMeta {
   private final String description;
   private final long generation;
   private final NamespaceConfig config;
+  private final RepositoryConfig repository;
 
-  private NamespaceMeta(String name, String description, long generation, NamespaceConfig config) {
+  private NamespaceMeta(String name, String description, long generation,
+                        NamespaceConfig config, @Nullable RepositoryConfig repository) {
     this.name = name;
     this.description = description;
     this.generation = generation;
     this.config = config;
+    this.repository = repository;
   }
 
   public String getName() {
@@ -74,6 +78,10 @@ public final class NamespaceMeta {
     return config;
   }
 
+  public RepositoryConfig getRepository() {
+    return repository;
+  }
+
   /**
    * Builder used to build {@link NamespaceMeta}
    */
@@ -90,6 +98,9 @@ public final class NamespaceMeta {
     private int keytabURIVersion;
     private long generation;
     private Map<String, String> configMap = new HashMap<>();
+    
+    // The repository configuration properties
+    private RepositoryConfig repository;
 
     public Builder() {
       // No-Op
@@ -111,6 +122,7 @@ public final class NamespaceMeta {
         this.keytabURIWithoutVersion = config.getKeytabURIWithoutVersion();
         this.keytabURIVersion = config.getKeytabURIVersion();
       }
+      this.repository = meta.getRepository();
     }
 
     public Builder setName(NamespaceId id) {
@@ -188,6 +200,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setRepository(@Nullable RepositoryConfig repository) {
+      this.repository = repository;
+      return this;
+    }
+
     public NamespaceMeta build() {
       // combine the keytab URI with the version if the version is not 0
       String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion : keytabURIWithoutVersion + "#" + keytabURIVersion;
@@ -216,7 +233,8 @@ public final class NamespaceMeta {
                                new NamespaceConfig(schedulerQueueName, rootDirectory,
                                                    hbaseNamespace, hiveDatabase,
                                                    principal, groupName, keytabURI,
-                                                   configMap));
+                                                   configMap),
+                               repository);
     }
   }
 
@@ -236,12 +254,13 @@ public final class NamespaceMeta {
     return Objects.equals(name, other.name)
       && generation == other.generation
       && Objects.equals(description, other.description)
-      && Objects.equals(config, other.config);
+      && Objects.equals(config, other.config)
+      && Objects.equals(repository, other.repository);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, generation, config);
+    return Objects.hash(name, description, generation, config, repository);
   }
 
   @Override
@@ -251,6 +270,7 @@ public final class NamespaceMeta {
       ", description='" + description + '\'' +
       ", generation=" + generation +
       ", config=" + config +
+      ", repositoryConfig=" + repository +
       '}';
   }
 }
