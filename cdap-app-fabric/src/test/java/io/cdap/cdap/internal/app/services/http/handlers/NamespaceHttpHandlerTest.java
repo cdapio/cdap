@@ -36,6 +36,7 @@ import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -63,6 +64,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
   private static final String CONFIG_FIELD = "config";
+  private static final String REPOSITORY_FIELD = "repository";
   private static final String NAME = "test";
   private static final Id.Namespace NAME_ID = Id.Namespace.from(NAME);
   private static final String DESCRIPTION = "test description";
@@ -146,7 +148,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testCreateWithConfig() throws Exception {
-    // create the custom namespace location first since we will set the root directory the location needs to exists
+    // create the custom namespace location first since we will set the root directory the location needs to exist
     String customRoot = "/custom/root/" + NAME;
     Location customLocation = getInjector().getInstance(LocationFactory.class).create(customRoot);
     Assert.assertTrue(customLocation.mkdirs());
@@ -156,8 +158,15 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                                                                 NamespaceConfig.ROOT_DIRECTORY,
                                                                 customRoot);
 
+    Map<String, String> namespaceRepoString = ImmutableMap.of(NamespaceRepositoryConfig.PROVIDER, "github",
+                                                              NamespaceRepositoryConfig.REPOSITORY_LINK,
+                                                              "example.com",
+                                                              NamespaceRepositoryConfig.AUTH_TYPE, "PAT",
+                                                              NamespaceRepositoryConfig.DEFAULT_BRANCH, "develop");
+    
     String propertiesString = GSON.toJson(ImmutableMap.of(NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
-                                                          CONFIG_FIELD, namespaceConfigString));
+                                                          CONFIG_FIELD, namespaceConfigString,
+                                                          REPOSITORY_FIELD, namespaceRepoString));
 
     HttpResponse response = createNamespace(propertiesString, NAME);
     assertResponseCode(200, response);
@@ -170,6 +179,18 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("scheduler.queue.name").getAsString());
     Assert.assertEquals(customRoot,
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("root.directory").getAsString());
+    Assert.assertEquals("github",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
+    Assert.assertEquals("example.com",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.REPOSITORY_LINK).getAsString());
+    Assert.assertEquals("PAT",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
+    Assert.assertEquals("develop",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.DEFAULT_BRANCH).getAsString());
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
     // check that the custom location for the namespace was not deleted while deleting namespace
@@ -409,7 +430,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     String nsPrincipal = "nsCreator/somehost.net@somekdc.net";
     String nsKeytabURI = "some/path";
     NamespaceMeta impNsMeta =
-      new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal).setKeytabURI(nsKeytabURI).build();
+      new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal)
+        .setKeytabURI(nsKeytabURI).setRepoProvider("github").setRepoAuthType("PAT").build();
     HttpResponse response = createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
     assertResponseCode(200, response);
     // verify
@@ -418,6 +440,12 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(namespace);
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
+    Assert.assertEquals("PAT",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
+    Assert.assertEquals("github",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
 
     // Update scheduler queue name.
     String nonexistentName = NAME + "nonexistent";
@@ -445,7 +473,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
 
-    //verify that the description has changed
+    // Verify that the description has changed
     Assert.assertEquals("new fancy description", namespace.get(DESCRIPTION_FIELD).getAsString());
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
 
@@ -461,6 +489,42 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(), NamespaceConfig.class);
     // verify that the uri has changed
     Assert.assertEquals("new/url", config.getKeytabURI());
+
+    // Update repository config
+    meta = new NamespaceMeta.Builder(impNsMeta).setRepoLink("example.com")
+      .setRepoDefaultBranch("master").setRepoPathPrefix(NAME).setRepoAuthType("OAuth").build();
+    setProperties(NAME, meta);
+    response = getNamespace(NAME);
+    namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+
+    // verify that the repo config has changed
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals("example.com",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.REPOSITORY_LINK).getAsString());
+    Assert.assertEquals("OAuth",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
+    Assert.assertEquals("master",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.DEFAULT_BRANCH).getAsString());
+
+    // verify other repository properties set earlier has not changed.
+    Assert.assertEquals("github",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
+
+    // Delete repository config
+    response = deleteNamespaceRepository(NAME);
+    Assert.assertEquals(200, response.getResponseCode());
+    response = getNamespace(NAME);
+    namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+    // verify that the repo config has been deleted
+    Assert.assertEquals("{}", namespace.get(REPOSITORY_FIELD).toString());
+
+
     // cleanup
     response = deleteNamespace(NAME);
     Assert.assertEquals(200, response.getResponseCode());

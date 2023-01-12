@@ -1447,6 +1447,10 @@ public abstract class AppFabricTestBase {
     return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
   }
 
+  protected HttpResponse deleteNamespaceRepository(String name) throws Exception {
+    return doDelete(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, name));
+  }
+
   protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
     return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
                  GSON.toJson(meta));

@@ -44,12 +44,15 @@ public final class NamespaceMeta {
   private final String description;
   private final long generation;
   private final NamespaceConfig config;
+  private final NamespaceRepositoryConfig repository;
 
-  private NamespaceMeta(String name, String description, long generation, NamespaceConfig config) {
+  private NamespaceMeta(String name, String description, long generation,
+                        NamespaceConfig config, NamespaceRepositoryConfig repo) {
     this.name = name;
     this.description = description;
     this.generation = generation;
     this.config = config;
+    this.repository = repo;
   }
 
   public String getName() {
@@ -74,6 +77,10 @@ public final class NamespaceMeta {
     return config;
   }
 
+  public NamespaceRepositoryConfig getRepoConfig() {
+    return repository;
+  }
+
   /**
    * Builder used to build {@link NamespaceMeta}
    */
@@ -90,6 +97,14 @@ public final class NamespaceMeta {
     private int keytabURIVersion;
     private long generation;
     private Map<String, String> configMap = new HashMap<>();
+    // The repository configuration properties
+    private String repoProvider;
+    private String repoLink;
+    private String repoDefaultBranch;
+    private String repoAuthType;
+    private String repoUserName;
+    private String repoPathPrefix;
+    private Map<String, String> repoConfigMap = new HashMap<>();
 
     public Builder() {
       // No-Op
@@ -110,6 +125,17 @@ public final class NamespaceMeta {
         this.groupName = config.getGroupName();
         this.keytabURIWithoutVersion = config.getKeytabURIWithoutVersion();
         this.keytabURIVersion = config.getKeytabURIVersion();
+      }
+
+      NamespaceRepositoryConfig repoConfig = meta.getRepoConfig();
+      if (repoConfig != null) {
+        this.repoConfigMap = repoConfig.getConfigs();
+        this.repoProvider = repoConfig.getProvider();
+        this.repoLink = repoConfig.getRepositoryLink();
+        this.repoDefaultBranch = repoConfig.getDefaultBranch();
+        this.repoAuthType = repoConfig.getAuthType();
+        this.repoUserName = repoConfig.getUsername();
+        this.repoPathPrefix = repoConfig.getPathPrefix();
       }
     }
 
@@ -188,6 +214,52 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setRepoProvider(String provider) {
+      this.repoProvider = provider;
+      return this;
+    }
+
+    public Builder setRepoLink(String repoLink) {
+      this.repoLink = repoLink;
+      return this;
+    }
+
+    public Builder setRepoDefaultBranch(String defaultBranch) {
+      this.repoDefaultBranch = defaultBranch;
+      return this;
+    }
+
+    public Builder setRepoAuthType(String authType) {
+      this.repoAuthType = authType;
+      return this;
+    }
+
+    public Builder setRepoUserName(String userName) {
+      this.repoUserName = userName;
+      return this;
+    }
+    
+    public Builder setRepoPathPrefix(String pathPrefix) {
+      this.repoPathPrefix = pathPrefix;
+      return this;
+    }
+
+    public Builder setRepoConfig(Map<String, String> repoConfigMap) {
+      this.repoConfigMap = repoConfigMap;
+      return this;
+    }
+
+    public Builder deleteRepoConfig() {
+      this.repoConfigMap = new HashMap<>();
+      this.repoProvider = null;
+      this.repoLink = null;
+      this.repoDefaultBranch = null;
+      this.repoAuthType = null;
+      this.repoUserName = null;
+      this.repoPathPrefix = null;
+      return this;
+    }
+
     public NamespaceMeta build() {
       // combine the keytab URI with the version if the version is not 0
       String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion : keytabURIWithoutVersion + "#" + keytabURIVersion;
@@ -216,7 +288,11 @@ public final class NamespaceMeta {
                                new NamespaceConfig(schedulerQueueName, rootDirectory,
                                                    hbaseNamespace, hiveDatabase,
                                                    principal, groupName, keytabURI,
-                                                   configMap));
+                                                   configMap),
+                               new NamespaceRepositoryConfig(repoProvider, repoLink,
+                                                             repoDefaultBranch, repoAuthType,
+                                                             repoUserName, repoPathPrefix,
+                                                             repoConfigMap));
     }
   }
 
@@ -236,12 +312,13 @@ public final class NamespaceMeta {
     return Objects.equals(name, other.name)
       && generation == other.generation
       && Objects.equals(description, other.description)
-      && Objects.equals(config, other.config);
+      && Objects.equals(config, other.config)
+      && Objects.equals(repository, other.repository);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, generation, config);
+    return Objects.hash(name, description, generation, config, repository);
   }
 
   @Override
@@ -251,6 +328,7 @@ public final class NamespaceMeta {
       ", description='" + description + '\'' +
       ", generation=" + generation +
       ", config=" + config +
+      ", repoConfig=" + repository +
       '}';
   }
 }

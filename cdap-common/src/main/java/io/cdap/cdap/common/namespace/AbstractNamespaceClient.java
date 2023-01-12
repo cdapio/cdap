@@ -101,6 +101,21 @@ public abstract class AbstractNamespaceClient extends AbstractNamespaceQueryClie
                                         namespaceId, response.getResponseBodyAsString()));
   }
 
+  @Override
+  public void deleteRepository(NamespaceId namespaceId) throws Exception {
+    URL url = resolve(String.format("namespaces/%s/repository", namespaceId.getNamespace()));
+    HttpResponse response = execute(HttpRequest.delete(url).build());
+    String responseBody = response.getResponseBodyAsString();
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return;
+    }
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException("Bad request: " + responseBody);
+    }
+    throw new IOException(String.format("Cannot delete repository on namespace %s. Reason: %s",
+                                        namespaceId, responseBody));
+  }
+
   public void deleteAll() throws Exception {
     for (NamespaceMeta meta : list()) {
       delete(meta.getNamespaceId());

@@ -85,4 +85,14 @@ public class InMemoryNamespaceAdmin implements NamespaceAdmin {
       throw new NamespaceNotFoundException(namespaceId);
     }
   }
+
+  @Override
+  public synchronized void deleteRepository(NamespaceId namespaceId) throws Exception {
+    NamespaceMeta meta = namespaces.get(namespaceId);
+    if (meta == null) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(meta).deleteRepoConfig();
+    namespaces.replace(namespaceId, builder.build());
+  }
 }

@@ -45,6 +45,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.AccessPermission;
@@ -401,6 +402,50 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw new BadRequestException(String.format("Mappings %s for namespace %s cannot be updated once the namespace " +
                                                     "is created.", difference, namespaceId));
     }
+
+    if (namespaceMeta.getRepoConfig() != null) {
+      updateRepoConfig(builder, namespaceMeta.getRepoConfig());
+    }
+    
+    NamespaceMeta updatedMeta = builder.build();
+    nsStore.update(updatedMeta);
+    // refresh the cache with new meta
+    namespaceMetaCache.refresh(namespaceId);
+    LOG.info("Namespace {} updated with meta {}", namespaceId, updatedMeta);
+  }
+
+  private void updateRepoConfig(NamespaceMeta.Builder builder, NamespaceRepositoryConfig repoConfig) {
+    if (repoConfig.getProvider() != null) {
+      builder.setRepoProvider(repoConfig.getProvider());
+    }
+    if (repoConfig.getRepositoryLink() != null) {
+      builder.setRepoLink(repoConfig.getRepositoryLink());
+    }
+    if (repoConfig.getDefaultBranch() != null) {
+      builder.setRepoDefaultBranch(repoConfig.getDefaultBranch());
+    }
+    if (repoConfig.getAuthType() != null) {
+      builder.setRepoAuthType(repoConfig.getAuthType());
+    }
+    if (repoConfig.getUsername() != null) {
+      builder.setRepoUserName(repoConfig.getUsername());
+    }
+    if (repoConfig.getPathPrefix() != null) {
+      builder.setRepoPathPrefix(repoConfig.getPathPrefix());
+    }
+  }
+
+  @Override
+  public synchronized void deleteRepository(NamespaceId namespaceId) throws Exception {
+    if (!exists(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+
+    NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    // Already ensured that namespace exists, so namespace meta should not be null
+    Preconditions.checkNotNull(existingMeta);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).deleteRepoConfig();
     NamespaceMeta updatedMeta = builder.build();
     nsStore.update(updatedMeta);
     // refresh the cache with new meta
