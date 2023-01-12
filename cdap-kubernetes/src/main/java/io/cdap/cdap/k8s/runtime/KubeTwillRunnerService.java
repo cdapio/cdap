@@ -179,14 +179,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.resourcePrefix = resourcePrefix;
     this.discoveryServiceClient = discoveryServiceClient;
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
-
-    // Selects all runs started by the k8s twill runner that has the run id label
-    if (this.podInfo.getName().contains("appfabric")) {
-      this.selector = String.format("cdap.twill.app!=preview-runner,%s=%s,%s",
-                                    RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
-    } else {
-      this.selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
-    }
+    this.selector = generateSelector();
     // Contains mapping of the Kubernetes namespace to a map of resource types and the watcher threads
     this.resourceWatchers = new HashMap<>();
     this.liveInfos = new ConcurrentSkipListMap<>();
@@ -199,6 +192,17 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.workloadIdentityProvider = workloadIdentityProvider;
   }
 
+  private String generateSelector() {
+    // Selects all runs started by the k8s twill runner that has the run id label
+    if (this.podInfo.getName().contains("appfabric")) {
+     return String.format("cdap.twill.app!=preview-runner,%s=%s,%s",
+                                    RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
+    } else {
+      return String.format("cdap.twill.app!=task-worker,cdap.twill.app!=system-worker,%s=%s,%s",
+                           RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
+    }
+  }
+   
   @Override
   public TwillPreparer prepare(TwillRunnable runnable) {
     return prepare(runnable, ResourceSpecification.BASIC);
