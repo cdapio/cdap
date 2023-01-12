@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,19 @@
  * the License.
  */
 
-
-package io.cdap.cdap.gateway.router;
+package io.cdap.cdap.proto.sourcecontrol;
 
 /**
- * Expected number of paths annotated with {@link io.cdap.cdap.common.security.AuditPolicy}
+ * Class that handles Repository Configuration validation failure.
  */
-public final class ExpectedNumberOfAuditPolicyPaths {
-  public static final int EXPECTED_PATH_NUMBER = 46;
+public class RepositoryValidationFailure {
+  private final String message;
+
+  public RepositoryValidationFailure(String message) {
+    this.message = message;
+  }
+
+  public String getMessage() {
+    return message;
+  }
 }

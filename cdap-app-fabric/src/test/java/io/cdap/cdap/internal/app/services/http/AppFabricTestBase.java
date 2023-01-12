@@ -1452,6 +1452,19 @@ public abstract class AppFabricTestBase {
                  GSON.toJson(meta));
   }
 
+  protected HttpResponse setRepository(String id, String repoString) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, id), repoString);
+  }
+
+  protected HttpResponse getRepository(String name) throws Exception {
+    Preconditions.checkArgument(name != null, "namespace name cannot be null");
+    return doGet(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse deleteRepository(String name) throws Exception {
+    return doDelete(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, name));
+  }
+
   protected String getPreferenceURI() {
     return "";
   }
