@@ -30,6 +30,7 @@ import io.kubernetes.client.openapi.models.V1ClusterRoleBindingList;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import io.kubernetes.client.openapi.models.V1RoleBindingList;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.when;
 public class KubeTwillRunnerServiceTest {
   private static final String CDAP_NAMESPACE = "TEST_CDAP_Namespace";
   private static final String KUBE_NAMESPACE = "test-kube-namespace";
+  private static final String POD_NAME = "test-pod-name";
 
   private CoreV1Api coreV1Api;
   private RbacAuthorizationV1Api rbacV1Api;
@@ -66,12 +68,15 @@ public class KubeTwillRunnerServiceTest {
   public ExpectedException thrown = ExpectedException.none();
 
   @Before
-  public void init() {
+  public void init() throws IllegalStateException {
     coreV1Api = mock(CoreV1Api.class);
     rbacV1Api = mock(RbacAuthorizationV1Api.class);
-    PodInfo podInfo = new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
+    V1OwnerReference ownerRef = new V1OwnerReference();
+    ownerRef.setKind("StatefulSet");
+
+    PodInfo podInfo = new PodInfo(POD_NAME, "test-pod-dir", "test-label-file.txt",
                                   "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
-                                  "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
+                                  "test-pod-namespace", Collections.emptyMap(), Collections.singletonList(ownerRef),
                                   "test-pod-service-account", "test-pod-runtime-class",
                                   Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",
                                   Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
@@ -87,6 +92,28 @@ public class KubeTwillRunnerServiceTest {
                                                     null, null);
     twillRunnerService.setCoreV1Api(coreV1Api);
     twillRunnerService.setRbacV1Api(rbacV1Api);
+  }
+
+  @Test
+  public void testIllegalPodOwnerReferences() throws IllegalStateException {
+    MasterEnvironmentContext context = mock(MasterEnvironmentContext.class);
+    DiscoveryServiceClient discoveryServiceClient = mock(DiscoveryServiceClient.class);
+    ApiClientFactory apiClientFactory = new DefaultApiClientFactory(10, 300);
+    V1OwnerReference ownerRef = new V1OwnerReference();
+    ownerRef.setKind("Deployment");
+
+    PodInfo podInfo = new PodInfo(POD_NAME, "test-pod-dir", "test-label-file.txt",
+                                  "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
+                                  "test-pod-namespace", Collections.emptyMap(), Collections.singletonList(ownerRef),
+                                  "test-pod-service-account", "test-pod-runtime-class",
+                                  Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",
+                                  Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
+                                  "test-pod-image-pull-policy");
+
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage(String.format("Pod: " + POD_NAME + " should be controlled by a stateful set"));
+    new KubeTwillRunnerService(context, apiClientFactory, KUBE_NAMESPACE, discoveryServiceClient, podInfo,
+                               "", Collections.emptyMap(), true, false, null, null, null, null);
   }
 
   @Test
