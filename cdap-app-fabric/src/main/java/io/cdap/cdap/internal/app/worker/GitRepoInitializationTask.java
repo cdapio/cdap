@@ -41,6 +41,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.mortbay.log.Log;
 
 import java.io.File;
+import java.io.FileWriter;
 
 /**
  * Implementation of {@link RunnableTask} to execute Program-run operation in a system worker.
@@ -64,12 +65,19 @@ public class GitRepoInitializationTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
+    context.getRunnableTaskSystemAppContext();
     SourceControlInfo sourceControlInfo = GSON.fromJson(context.getParam(), SourceControlInfo.class);
     Log.debug("Cloning git repository %s", sourceControlInfo.getRepositoryLink());
     Git.cloneRepository().setURI(sourceControlInfo.getRepositoryLink())
       .setCredentialsProvider(generateCredentialProvider(sourceControlInfo)).setDirectory(new File("/tmp/gitrepo"))
       .call();
+    File testFile = new File("/tmp/gitrepo/testfile");
+    testFile.createNewFile();
+    FileWriter fileWriter = new FileWriter(testFile);
+    fileWriter.append("test");
   }
+
+//  private isRepositoryExist()
 
 
   // right now we only support PAT
