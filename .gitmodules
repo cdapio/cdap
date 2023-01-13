@@ -16,4 +16,4 @@
 [submodule "cdap-ui"]
   path = cdap-ui
   url = ../cdap-ui
-  branch = develop
+  branch = feature/wrangler-2022
