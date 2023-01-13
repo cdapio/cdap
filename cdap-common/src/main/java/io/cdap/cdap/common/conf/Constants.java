@@ -1734,6 +1734,7 @@ public final class Constants {
     public static final String SYSTEM_PROPERTY_PREFIX = "provisioner.system.properties.";
     public static final String EXECUTOR_THREADS = "provisioner.executor.threads";
     public static final String CONTEXT_EXECUTOR_THREADS = "provisioner.context.executor.threads";
+    public static final String RELOAD_INTERVAL = "provisioner.cconf.reload.interval.ms";
   }
 
   /**
