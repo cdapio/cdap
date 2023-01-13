@@ -47,12 +47,12 @@ public final class NamespaceMeta {
   private final NamespaceRepositoryConfig repository;
 
   private NamespaceMeta(String name, String description, long generation,
-                        NamespaceConfig config, NamespaceRepositoryConfig repo) {
+                        NamespaceConfig config, NamespaceRepositoryConfig repository) {
     this.name = name;
     this.description = description;
     this.generation = generation;
     this.config = config;
-    this.repository = repo;
+    this.repository = repository;
   }
 
   public String getName() {
@@ -131,7 +131,7 @@ public final class NamespaceMeta {
       if (repoConfig != null) {
         this.repoConfigMap = repoConfig.getConfigs();
         this.repoProvider = repoConfig.getProvider();
-        this.repoLink = repoConfig.getRepositoryLink();
+        this.repoLink = repoConfig.getLink();
         this.repoDefaultBranch = repoConfig.getDefaultBranch();
         this.repoAuthType = repoConfig.getAuthType();
         this.repoUserName = repoConfig.getUsername();
@@ -214,8 +214,8 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setRepoProvider(String provider) {
-      this.repoProvider = provider;
+    public Builder setRepoProvider(String repoProvider) {
+      this.repoProvider = repoProvider;
       return this;
     }
 
@@ -224,23 +224,23 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setRepoDefaultBranch(String defaultBranch) {
-      this.repoDefaultBranch = defaultBranch;
+    public Builder setRepoDefaultBranch(String repoDefaultBranch) {
+      this.repoDefaultBranch = repoDefaultBranch;
       return this;
     }
 
-    public Builder setRepoAuthType(String authType) {
-      this.repoAuthType = authType;
+    public Builder setRepoAuthType(String repoAuthType) {
+      this.repoAuthType = repoAuthType;
       return this;
     }
 
-    public Builder setRepoUserName(String userName) {
-      this.repoUserName = userName;
+    public Builder setRepoUserName(String repoUserName) {
+      this.repoUserName = repoUserName;
       return this;
     }
     
-    public Builder setRepoPathPrefix(String pathPrefix) {
-      this.repoPathPrefix = pathPrefix;
+    public Builder setRepoPathPrefix(String repoPathPrefix) {
+      this.repoPathPrefix = repoPathPrefix;
       return this;
     }
 

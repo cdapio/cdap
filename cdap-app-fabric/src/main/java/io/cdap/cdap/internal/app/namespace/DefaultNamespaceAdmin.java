@@ -33,6 +33,7 @@ import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceCannotBeCreatedException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NamespaceRepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -418,8 +419,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (repoConfig.getProvider() != null) {
       builder.setRepoProvider(repoConfig.getProvider());
     }
-    if (repoConfig.getRepositoryLink() != null) {
-      builder.setRepoLink(repoConfig.getRepositoryLink());
+    if (repoConfig.getLink() != null) {
+      builder.setRepoLink(repoConfig.getLink());
     }
     if (repoConfig.getDefaultBranch() != null) {
       builder.setRepoDefaultBranch(repoConfig.getDefaultBranch());
@@ -445,6 +446,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     NamespaceMeta existingMeta = nsStore.get(namespaceId);
     // Already ensured that namespace exists, so namespace meta should not be null
     Preconditions.checkNotNull(existingMeta);
+    if (existingMeta.getRepoConfig() == null || !existingMeta.getRepoConfig().exists()) {
+      throw new NamespaceRepositoryNotFoundException(
+        namespaceId, "The namespace repository configuration");
+    }
+
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).deleteRepoConfig();
     NamespaceMeta updatedMeta = builder.build();
     nsStore.update(updatedMeta);

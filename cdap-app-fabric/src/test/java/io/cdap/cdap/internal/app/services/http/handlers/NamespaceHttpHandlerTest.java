@@ -159,7 +159,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                                                                 customRoot);
 
     Map<String, String> namespaceRepoString = ImmutableMap.of(NamespaceRepositoryConfig.PROVIDER, "github",
-                                                              NamespaceRepositoryConfig.REPOSITORY_LINK,
+                                                              NamespaceRepositoryConfig.LINK,
                                                               "example.com",
                                                               NamespaceRepositoryConfig.AUTH_TYPE, "PAT",
                                                               NamespaceRepositoryConfig.DEFAULT_BRANCH, "develop");
@@ -184,7 +184,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                           .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
     Assert.assertEquals("example.com",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.REPOSITORY_LINK).getAsString());
+                          .get(NamespaceRepositoryConfig.LINK).getAsString());
     Assert.assertEquals("PAT",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
                           .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
@@ -502,7 +502,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals("example.com",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.REPOSITORY_LINK).getAsString());
+                          .get(NamespaceRepositoryConfig.LINK).getAsString());
     Assert.assertEquals("OAuth",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
                           .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
@@ -524,7 +524,10 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // verify that the repo config has been deleted
     Assert.assertEquals("{}", namespace.get(REPOSITORY_FIELD).toString());
 
-
+    // Delete repository config
+    response = deleteNamespaceRepository(NAME);
+    Assert.assertEquals(404, response.getResponseCode());
+    
     // cleanup
     response = deleteNamespace(NAME);
     Assert.assertEquals(200, response.getResponseCode());

@@ -30,20 +30,15 @@ import javax.annotation.Nullable;
 @JsonAdapter(NamespaceRepositoryConfigCodec.class)
 public class NamespaceRepositoryConfig {
   public static final String PROVIDER = "provider";
-  public static final String REPOSITORY_LINK = "repository.link";
+  public static final String LINK = "link";
   public static final String DEFAULT_BRANCH = "default.branch";
   public static final String AUTH_TYPE = "auth.type";
   public static final String USERNAME = "username";
   public static final String PATH_PREFIX = "path.prefix";
 
   private final Map<String, String> configs;
-
-  public NamespaceRepositoryConfig(@Nullable String provider, @Nullable String repoLink, @Nullable String defaultBranch,
-                                   @Nullable String authType, @Nullable String username, @Nullable String pathPrefix) {
-    this(provider, username, repoLink, defaultBranch, authType, pathPrefix, new HashMap<>());
-  }
   
-  public NamespaceRepositoryConfig(@Nullable String provider, @Nullable String repoLink, @Nullable String defaultBranch,
+  public NamespaceRepositoryConfig(@Nullable String provider, @Nullable String link, @Nullable String defaultBranch,
                                    @Nullable String authType, @Nullable String username, @Nullable String pathPrefix,
                                    Map<String, String> existingConfigs) {
     Map<String, String> configs = new HashMap<>(existingConfigs);
@@ -52,8 +47,8 @@ public class NamespaceRepositoryConfig {
       configs.put(PROVIDER, provider);
     }
 
-    if (repoLink != null) {
-      configs.put(REPOSITORY_LINK, repoLink);
+    if (link != null) {
+      configs.put(LINK, link);
     }
 
     if (defaultBranch != null) {
@@ -86,8 +81,8 @@ public class NamespaceRepositoryConfig {
     return getConfig(PROVIDER);
   }
 
-  public String getRepositoryLink() {
-    return getConfig(REPOSITORY_LINK);
+  public String getLink() {
+    return getConfig(LINK);
   }
 
   public String getAuthType() {
@@ -117,6 +112,10 @@ public class NamespaceRepositoryConfig {
   @Nullable
   public String getConfig(String name) {
     return configs.get(name);
+  }
+
+  public boolean exists() {
+    return !this.configs.isEmpty();
   }
 
   @Override
