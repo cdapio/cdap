@@ -108,6 +108,38 @@ public class KubeMasterEnvironmentTest {
   }
 
   @Test
+  public void testGenerateSparkConfigWithDriverTimeouts() throws Exception {
+    Map<String, String> config = new HashMap<>();
+    String requestTimeout = "20000";
+    String connectTimeout = "20000";
+    config.put(KubeMasterEnvironment.SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS, requestTimeout);
+    config.put(KubeMasterEnvironment.SPARK_DRIVER_CONNECTION_TIMEOUT_MILLIS, connectTimeout);
+
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), config, 1, 1);
+    SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    Assert.assertEquals(requestTimeout,
+                        sparkConfig.getConfigs().get(KubeMasterEnvironment.SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS));
+    Assert.assertEquals(connectTimeout,
+                        sparkConfig.getConfigs().get(KubeMasterEnvironment.SPARK_DRIVER_CONNECTION_TIMEOUT_MILLIS));
+  }
+
+  @Test
+  public void testGenerateSparkConfigWithDefaultDriverTimeouts() throws Exception {
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), Collections.emptyMap(),
+                                                                   1, 1);
+    kubeMasterEnvironment.setConnectTimeout(Integer.parseInt(KubeMasterEnvironment.CONNECT_TIMEOUT_DEFAULT));
+    kubeMasterEnvironment.setReadTimeout(Integer.parseInt(KubeMasterEnvironment.READ_TIMEOUT_DEFAULT));
+
+    SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    int readTimeoutMillis = Integer.parseInt(KubeMasterEnvironment.READ_TIMEOUT_DEFAULT) * 1000;
+    Assert.assertEquals(String.valueOf(readTimeoutMillis),
+                        sparkConfig.getConfigs().get(KubeMasterEnvironment.SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS));
+    int connectTimeoutMillis = Integer.parseInt(KubeMasterEnvironment.CONNECT_TIMEOUT_DEFAULT) * 1000;
+    Assert.assertEquals(String.valueOf(connectTimeoutMillis),
+                        sparkConfig.getConfigs().get(KubeMasterEnvironment.SPARK_DRIVER_CONNECTION_TIMEOUT_MILLIS));
+  }
+
+  @Test
   public void testGenerateSparkConfigWithWorkloadIdentityEnabledInNonInstallNamespaceMountsConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
