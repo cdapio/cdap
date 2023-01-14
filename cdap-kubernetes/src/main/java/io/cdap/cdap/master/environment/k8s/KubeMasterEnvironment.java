@@ -146,6 +146,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_DRIVER_POD_CPU_LIMIT = "spark.kubernetes.driver.limit.cores";
   private static final String SPARK_EXECUTOR_POD_CPU_REQUEST = "spark.kubernetes.executor.request.cores";
   private static final String SPARK_EXECUTOR_POD_CPU_LIMIT = "spark.kubernetes.executor.limit.cores";
+  static final String SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS = "spark.kubernetes.driver.requestTimeout";
+  static final String SPARK_DRIVER_CONNECTION_TIMEOUT_MILLIS = "spark.kubernetes.driver.connectionTimeout";
 
   private static final String PROGRAM_CPU_MULTIPLIER = "program.k8s.container.cpu.multiplier";
   private static final String DEFAULT_PROGRAM_CPU_MULTIPLIER = "0.5";
@@ -208,9 +210,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String TWILL_RUNNER_SERVICE_MONITOR_DISABLE = "twill.runner.service.monitor.disable";
 
   private static final String CONNECT_TIMEOUT = "master.environment.k8s.connect.timeout.sec";
-  private static final String CONNECT_TIMEOUT_DEFAULT = "120";
+  static final String CONNECT_TIMEOUT_DEFAULT = "120";
   private static final String READ_TIMEOUT = "master.environment.k8s.read.timeout.sec";
-  private static final String READ_TIMEOUT_DEFAULT = "300";
+  static final String READ_TIMEOUT_DEFAULT = "300";
 
   private final List<MasterEnvironmentTask> tasks;
   private KubeDiscoveryService discoveryService;
@@ -233,6 +235,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private long workloadIdentityServiceAccountTokenTTLSeconds;
   private String programCpuMultiplier;
   private String cdapInstallNamespace;
+  private int connectTimeoutSec;
+  private int readTimeoutSec;
 
   public KubeMasterEnvironment() {
     this.tasks = new ArrayList<>();
@@ -244,8 +248,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     Map<String, String> conf = context.getConfigurations();
 
-    int connectTimeoutSec = Integer.parseInt(conf.getOrDefault(CONNECT_TIMEOUT, CONNECT_TIMEOUT_DEFAULT));
-    int readTimeoutSec = Integer.parseInt(conf.getOrDefault(READ_TIMEOUT, READ_TIMEOUT_DEFAULT));
+    connectTimeoutSec = Integer.parseInt(conf.getOrDefault(CONNECT_TIMEOUT, CONNECT_TIMEOUT_DEFAULT));
+    readTimeoutSec = Integer.parseInt(conf.getOrDefault(READ_TIMEOUT, READ_TIMEOUT_DEFAULT));
     apiClientFactory = new DefaultApiClientFactory(connectTimeoutSec, readTimeoutSec);
     ApiClient apiClient = apiClientFactory.create();
 
@@ -433,6 +437,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     Map<String, String> submitConfigs = sparkSubmitContext.getConfig();
     String executionNamespace = submitConfigs.getOrDefault(NAMESPACE_PROPERTY, podInfo.getNamespace());
     sparkConfMap.put(SPARK_KUBERNETES_NAMESPACE, executionNamespace);
+    String connectTimeout = submitConfigs.getOrDefault(SPARK_DRIVER_CONNECTION_TIMEOUT_MILLIS,
+                                                       String.format("%d", connectTimeoutSec * 1000));
+    sparkConfMap.put(SPARK_DRIVER_CONNECTION_TIMEOUT_MILLIS, connectTimeout);
+    String requestTimeout = submitConfigs.getOrDefault(SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS,
+                                                       String.format("%d", readTimeoutSec * 1000));
+    sparkConfMap.put(SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS, requestTimeout);
 
     // Set spark service account for both driver and executor to be inherited from app-fabric. Since the service account
     // is created by CDAP specifically for the namespace, it is granted reduced permissions.
@@ -1018,5 +1028,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setCDAPInstallNamespace(String cdapInstallNamespace) {
     this.cdapInstallNamespace = cdapInstallNamespace;
+  }
+
+  @VisibleForTesting
+  void setConnectTimeout(int connectTimeoutSec) {
+    this.connectTimeoutSec = connectTimeoutSec;
+  }
+
+  @VisibleForTesting
+  void setReadTimeout(int readTimeoutSec) {
+    this.readTimeoutSec = readTimeoutSec;
   }
 }
