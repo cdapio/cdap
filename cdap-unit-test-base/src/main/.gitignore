@@ -1,0 +1,8 @@
+# This directory is necesssary in case we want to add files to this directory in the future, otherwise we'll need to
+# re-add configurations for copying and symlinking the main directory for compilation. See CDAP-20281 for details.
+# This file is necessary because git does not allow committing empty directories.
+# Please remove this file when this directory is no longer empty.
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
