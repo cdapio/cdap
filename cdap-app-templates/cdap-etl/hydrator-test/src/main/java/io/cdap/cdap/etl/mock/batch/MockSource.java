@@ -90,6 +90,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     private ConnectionConfig connectionConfig;
 
     @Nullable
+    @Macro
     private String schema;
 
     @Nullable
@@ -124,7 +125,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     if (!config.containsMacro("tableName")) {
       pipelineConfigurer.createDataset(config.connectionConfig.tableName, Table.class);
     }
-    if (config.schema != null) {
+    if (!config.containsMacro("schema") && config.schema != null) {
       try {
         pipelineConfigurer.getStageConfigurer().setOutputSchema(Schema.parseJson(config.schema));
       } catch (IOException e) {
@@ -136,7 +137,8 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
-    if (config.schema != null) {
+    // context.getOutputSchema is null if schema has macro at configure time, so skip the comparison
+    if (config.schema != null && context.getOutputSchema() != null) {
       // should never happen, just done to test App correctness in unit tests
       Schema outputSchema = Schema.parseJson(config.schema);
       if (!outputSchema.equals(context.getOutputSchema())) {
@@ -275,7 +277,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     properties.put("connectionConfig", new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
                                                                false, Collections.singleton("tableName")));
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
-    properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
+    properties.put("schema", new PluginPropertyField("schema", "", "string", false, true));
     properties.put("metadataOperations", new PluginPropertyField("metadataOperations", "", "string", false, false));
     properties.put("sleepInMillis", new PluginPropertyField("sleepInMillis", "", "long", false, false));
     return PluginClass.builder().setName("Mock").setType(BatchSource.PLUGIN_TYPE)
