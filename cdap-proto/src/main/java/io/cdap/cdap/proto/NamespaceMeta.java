@@ -244,8 +244,25 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setRepoConfig(Map<String, String> repoConfigMap) {
-      this.repoConfigMap = repoConfigMap;
+    public Builder setRepoConfig(NamespaceRepositoryConfig repoConfig) {
+      if (repoConfig.getProvider() != null) {
+        this.repoProvider = repoConfig.getProvider();
+      }
+      if (repoConfig.getLink() != null) {
+        this.repoLink = repoConfig.getLink();
+      }
+      if (repoConfig.getDefaultBranch() != null) {
+        this.repoDefaultBranch = repoConfig.getDefaultBranch();
+      }
+      if (repoConfig.getAuthType() != null) {
+        this.repoAuthType = repoConfig.getAuthType();
+      }
+      if (repoConfig.getUsername() != null) {
+        this.repoUserName = repoConfig.getUsername();
+      }
+      if (repoConfig.getPathPrefix() != null) {
+        this.repoPathPrefix = repoConfig.getPathPrefix();
+      }
       return this;
     }
 

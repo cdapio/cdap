@@ -25,8 +25,8 @@ public class NamespaceRepositoryNotFoundException extends NotFoundException  {
 
   private final NamespaceId namespace;
 
-  public NamespaceRepositoryNotFoundException(NamespaceId id, String reason) {
-    super(id, reason);
+  public NamespaceRepositoryNotFoundException(NamespaceId id) {
+    super(String.format("The repository configuration of namespace %s is not found.", id));
     this.namespace = id;
   }
 

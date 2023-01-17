@@ -46,7 +46,6 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.AccessPermission;
@@ -405,7 +404,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     if (namespaceMeta.getRepoConfig() != null) {
-      updateRepoConfig(builder, namespaceMeta.getRepoConfig());
+      builder.setRepoConfig(namespaceMeta.getRepoConfig());
     }
     
     NamespaceMeta updatedMeta = builder.build();
@@ -413,27 +412,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // refresh the cache with new meta
     namespaceMetaCache.refresh(namespaceId);
     LOG.info("Namespace {} updated with meta {}", namespaceId, updatedMeta);
-  }
-
-  private void updateRepoConfig(NamespaceMeta.Builder builder, NamespaceRepositoryConfig repoConfig) {
-    if (repoConfig.getProvider() != null) {
-      builder.setRepoProvider(repoConfig.getProvider());
-    }
-    if (repoConfig.getLink() != null) {
-      builder.setRepoLink(repoConfig.getLink());
-    }
-    if (repoConfig.getDefaultBranch() != null) {
-      builder.setRepoDefaultBranch(repoConfig.getDefaultBranch());
-    }
-    if (repoConfig.getAuthType() != null) {
-      builder.setRepoAuthType(repoConfig.getAuthType());
-    }
-    if (repoConfig.getUsername() != null) {
-      builder.setRepoUserName(repoConfig.getUsername());
-    }
-    if (repoConfig.getPathPrefix() != null) {
-      builder.setRepoPathPrefix(repoConfig.getPathPrefix());
-    }
   }
 
   @Override
@@ -447,8 +425,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // Already ensured that namespace exists, so namespace meta should not be null
     Preconditions.checkNotNull(existingMeta);
     if (existingMeta.getRepoConfig() == null || !existingMeta.getRepoConfig().exists()) {
-      throw new NamespaceRepositoryNotFoundException(
-        namespaceId, "The namespace repository configuration");
+      throw new NamespaceRepositoryNotFoundException(namespaceId);
     }
 
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).deleteRepoConfig();
@@ -456,7 +433,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     nsStore.update(updatedMeta);
     // refresh the cache with new meta
     namespaceMetaCache.refresh(namespaceId);
-    LOG.info("Namespace {} updated with meta {}", namespaceId, updatedMeta);
+    LOG.info("Repository configuration of namespace {} removed.", namespaceId);
   }
 
   /**
