@@ -84,6 +84,15 @@ public final class DataprocUtils {
   public static final String TROUBLESHOOTING_DOCS_URL_DEFAULT = "";
 
   /**
+   *  resources required by Runtime Job (io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob)
+   *  that will be running on driver pool nodes.
+   */
+  public static final String DRIVER_MEMORY_MB = "driverMemoryMB";
+  public static final String DRIVER_MEMORY_MB_DEFAULT = "2048";
+  public static final String DRIVER_VCORES = "driverVCores";
+  public static final String DRIVER_VCORES_DEFAULT = "1";
+
+  /**
    * HTTP Status-Code 429: RESOURCE_EXHAUSTED.
    */
   public static final int RESOURCE_EXHAUSTED = 403;
