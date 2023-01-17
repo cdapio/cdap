@@ -23,13 +23,13 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
   */
 object SparkCompat {
 
-  val SPARK_VERSION = "spark2_2.11"
+  val SPARK_VERSION = "spark3_2.12"
 
   /**
     * @return the compatible Spark version
     */
   def getSparkVersion: String = {
-    return SPARK_VERSION
+    SPARK_VERSION
   }
 
   /**
@@ -39,7 +39,7 @@ object SparkCompat {
     * @param inputURIs URIs of the avro files to read
     */
   def readAvroFiles(sql: SQLContext, inputURIs: Seq[String]): DataFrame = {
-    sql.sparkSession.read.format("com.databricks.spark.avro").load(inputURIs: _*)
+    sql.read.format("avro").load(inputURIs: _*)
   }
 
   /**

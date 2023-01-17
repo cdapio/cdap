@@ -43,16 +43,6 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-spark-core2_2.11</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-api-spark2_2.11</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>

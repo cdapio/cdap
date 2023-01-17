@@ -113,7 +113,7 @@
     <cdh.hive.version>1.1.0-cdh5.5.1</cdh.hive.version>
     <javamail.version>1.4.1</javamail.version>
     <junit.version>4.11</junit.version>
-    <kafka.version>0.8.2.2</kafka.version>
+    <kafka.version>0.10.2.2</kafka.version>
     <mockftp.version>2.6</mockftp.version>
     <snappy.version>1.1.2</snappy.version>
     <slf4j.version>1.7.5</slf4j.version>
@@ -164,12 +164,6 @@
       <dependency>
         <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-api</artifactId>
-        <version>${cdap.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.cdap.cdap</groupId>
-        <artifactId>cdap-api-spark2_2.11</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
       </dependency>
@@ -567,29 +561,6 @@
         <artifactId>twill-core</artifactId>
         <version>${twill.version}</version>
         <exclusions>
-          <exclusion>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-compiler</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.10</artifactId>
-        <version>${kafka.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jdmk</groupId>
-            <artifactId>jmxtools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jmx</groupId>
-            <artifactId>jmxri</artifactId>
-          </exclusion>
           <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>

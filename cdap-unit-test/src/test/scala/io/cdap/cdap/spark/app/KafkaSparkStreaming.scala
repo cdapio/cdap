@@ -19,12 +19,13 @@ package io.cdap.cdap.spark.app
 import io.cdap.cdap.api.common.Bytes
 import io.cdap.cdap.api.dataset.lib.TimeseriesTable
 import io.cdap.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
-import kafka.serializer.StringDecoder
 import org.apache.spark.SparkContext
+import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.apache.spark.streaming.kafka.KafkaUtils
+import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils}
 
-import scala.collection.JavaConversions._
+import scala.collection.convert.ImplicitConversions.`map AsScala`
+
 
 /**
   * A testing Spark program for testing Spark streaming in CDAP.
@@ -57,14 +58,14 @@ class KafkaSparkStreaming extends AbstractSpark with SparkMain {
     // Expect the result dataset a timeseries table
     val resultDataset = args("result.dataset")
     val topics = args("kafka.topics").split(",").toSet
+    val kafkaParams = Map(("metadata.broker.list", args("kafka.brokers")),
+      ("auto.offset.reset", "smallest"))
+    val consumerStrategy = ConsumerStrategies.Subscribe[String, String](topics, kafkaParams)
 
-    val kafkaDStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,
-      Map(("metadata.broker.list", args("kafka.brokers")),
-        ("auto.offset.reset", "smallest")
-      ), topics)
+    val kafkaDStream = KafkaUtils.createDirectStream[String, String](ssc, PreferConsistent, consumerStrategy)
 
     kafkaDStream
-      .map(_._2)
+      .map(_.value())
       .flatMap(_.split("\\s+"))
       .map((_, 1L))
       .reduceByKey(_ + _)

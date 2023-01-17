@@ -36,7 +36,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-api-spark2_2.11</artifactId>
+      <artifactId>cdap-api-spark3_2.12</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -45,7 +45,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.11</artifactId>
+      <artifactId>spark-core_2.12</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -76,7 +76,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-unit-test-spark2_2.11</artifactId>
+      <artifactId>cdap-unit-test-spark3_2.12</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -112,10 +112,6 @@ the License.
           <groupId>com.fasterxml.jackson.core</groupId>
           <artifactId>jackson-annotations</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.module</groupId>
-          <artifactId>jackson-module-scala_2.10</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -144,10 +140,6 @@ the License.
         <exclusion>
           <groupId>com.fasterxml.jackson.core</groupId>
           <artifactId>jackson-annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.module</groupId>
-          <artifactId>jackson-module-scala_2.10</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

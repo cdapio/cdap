@@ -37,7 +37,7 @@ public class SparkCompatReader {
 
   /**
    * Read {@link SparkCompat} from the system properties, environment, or the {@link CConfiguration}.
-   * Tries to detect or falls back to {@link SparkCompat#SPARK2_2_11} if it is not defined in any place.
+   * Tries to detect or falls back to {@link SparkCompat#SPARK3_2_12} if it is not defined in any place.
    *
    * @param cConf the {@link CConfiguration} for CDAP
    * @return the configured {@link SparkCompat}
@@ -51,7 +51,7 @@ public class SparkCompatReader {
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 
     if (compatStr == null) {
-      return SparkCompat.SPARK2_2_11;
+      return SparkCompat.SPARK3_2_12;
     }
 
     for (SparkCompat sparkCompat : SparkCompat.values()) {

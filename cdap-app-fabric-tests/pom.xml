@@ -37,7 +37,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-api-spark2_2.11</artifactId>
+      <artifactId>cdap-api-spark3_2.12</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -62,7 +62,7 @@ the License.
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-spark-core2_2.11</artifactId>
+      <artifactId>cdap-spark-core3_2.12</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

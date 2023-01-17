@@ -18,12 +18,10 @@ package io.cdap.cdap.report
 import java.io.{IOException, OutputStreamWriter, PrintWriter}
 import java.nio.charset.StandardCharsets
 import java.util.stream.Collectors
-
 import io.cdap.cdap.report.proto.Sort.Order
 import io.cdap.cdap.report.proto.summary._
 import io.cdap.cdap.report.proto.{Sort, _}
 import io.cdap.cdap.report.util.Constants
-import com.databricks.spark._
 import com.google.gson._
 import org.apache.avro.mapred._
 import org.apache.spark.sql._
@@ -31,7 +29,7 @@ import org.apache.spark.sql.functions.{avg, max, min}
 import org.apache.twill.filesystem.Location
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions._
+import scala.collection.convert.ImplicitConversions._
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -46,7 +44,6 @@ object ReportGenerationHelper {
   val REQUIRED_FILTER_FIELDS = Set(Constants.START, Constants.END)
   val REQUIRED_SUMMARY_FIELDS = Set(Constants.NAMESPACE, Constants.ARTIFACT_NAME, Constants.ARTIFACT_VERSION,
     Constants.ARTIFACT_SCOPE, Constants.DURATION, Constants.START, Constants.USER, Constants.START_METHOD)
-  val AVRO_READER = avro.AvroDataFrameReader(_)
   val FS_INPUT = classOf[FsInput]
   // the default name of the column created by calling aggregate function count
   val COUNT_COL = "count"
@@ -136,7 +133,7 @@ object ReportGenerationHelper {
     // by default spart sql uses snappy compression codec, set it to uncompressed
     sql.setConf("spark.sql.avro.compression.codec", "uncompressed")
     resultDf.coalesce(1).write.option("timestampFormat",
-      "yyyy/MM/dd HH:mm:ss ZZ").format("com.databricks.spark.avro").save(reportDir)
+      "yyyy/MM/dd HH:mm:ss ZZ").format("avro").save(reportDir)
     writeSummaryToFile(reportSummary, reportIdDir)
   }
 

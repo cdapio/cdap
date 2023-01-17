@@ -143,7 +143,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.spark.package$;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -1125,15 +1124,7 @@ public class TestBase {
   }
 
   public static SparkCompat getCurrentSparkCompat() {
-    String sparkVersion = package$.MODULE$.SPARK_VERSION();
-    switch (sparkVersion.charAt(0)) {
-      case '3':
-        return SparkCompat.SPARK3_2_12;
-      case '2':
-        return SparkCompat.SPARK2_2_11;
-      default:
-        throw new IllegalStateException("Spark version " + sparkVersion + " is unknown");
-    }
+    return SparkCompat.SPARK3_2_12;
   }
 
   public static AppStateStore getAppStateStore(String namespace, String application) {
