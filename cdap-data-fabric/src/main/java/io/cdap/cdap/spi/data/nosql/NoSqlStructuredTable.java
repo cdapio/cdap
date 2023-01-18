@@ -26,6 +26,8 @@ import io.cdap.cdap.api.dataset.table.Get;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 import io.cdap.cdap.spi.data.InvalidFieldException;
@@ -56,6 +58,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -65,6 +68,8 @@ import java.util.stream.Collectors;
  */
 public final class NoSqlStructuredTable implements StructuredTable {
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTable.class);
+  private static final Logger LOG_RATE_LIMITED =
+    Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(10L)));
   private final IndexedTable table;
   private final StructuredTableSchema schema;
   private final FieldValidator fieldValidator;
@@ -151,9 +156,9 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
 
     // TODO: remove this warning after CDAP-20177
-    LOG.warn("Potential performance impact while scanning table {} with range {} " +
-               "which does in-memory filtering with filterRange {}",
-             schema.getTableId(), keyRange, filterRange);
+    LOG_RATE_LIMITED.warn("Potential performance impact while scanning table {} with range {} " +
+                            "which does in-memory filtering with filterRange {}",
+                          schema.getTableId(), keyRange, filterRange);
     return new FilterByRangeIterator(Collections.singleton(scannerIterator).iterator(),
                                      Collections.singleton(filterRange));
   }
