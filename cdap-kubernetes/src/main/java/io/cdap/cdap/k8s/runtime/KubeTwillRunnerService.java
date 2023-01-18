@@ -53,6 +53,7 @@ import io.kubernetes.client.openapi.models.V1RoleBindingBuilder;
 import io.kubernetes.client.openapi.models.V1RoleRefBuilder;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
+import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.openapi.models.V1SubjectBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
@@ -123,6 +124,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
   static final String APP_LABEL = "cdap.twill.app";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
+  private static final String CDAP_CONTAINER_LABEL = "cdap.container";
+  public static final String PARENT_SERVICE_LABEL = "cdap.twill.parent.service";
   private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
   private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
   public static final String RUN_ID_LABEL = "cdap.twill.run.id";
@@ -152,6 +155,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private final Map<String, KubeLiveInfo> liveInfos;
   private final Lock liveInfoLock;
   private final String selector;
+  private final String serviceName;
   private final boolean enableMonitor;
   private final String workloadLauncherRoleNameForNamespace;
   private final String workloadLauncherRoleNameForCluster;
@@ -179,9 +183,10 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.resourcePrefix = resourcePrefix;
     this.discoveryServiceClient = discoveryServiceClient;
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
-
+    this.serviceName = getServiceName();
     // Selects all runs started by the k8s twill runner that has the run id label
-    this.selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
+    this.selector = String.format("%s=%s,%s=%s,%s", PARENT_SERVICE_LABEL, this.serviceName,
+                                  RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
     // Contains mapping of the Kubernetes namespace to a map of resource types and the watcher threads
     this.resourceWatchers = new HashMap<>();
     this.liveInfos = new ConcurrentSkipListMap<>();
@@ -218,6 +223,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     labels.put(RUNNER_LABEL, RUNNER_LABEL_VAL);
     labels.put(APP_LABEL, spec.getName());
     labels.put(RUN_ID_LABEL, runId.getId());
+    labels.put(PARENT_SERVICE_LABEL, this.serviceName);
 
     return new KubeTwillPreparer(masterEnvContext, apiClient, kubeNamespace, podInfo,
                                  spec, runId, appLocation, resourcePrefix, labels,
@@ -810,6 +816,33 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       LOG.warn("Failed to get number of replicas and ready replicas from the resource {}", resource, e);
       return false;
     }
+  }
+
+  /**
+   * Get the Service Name corresponding to the pod.
+   */
+  private String getServiceName() {
+    Optional<String> labelSelector = podInfo.getLabels().entrySet().stream()
+      .map(e -> e.getKey() + "=" + e.getValue())
+      .filter(e -> e.contains(CDAP_CONTAINER_LABEL)).findFirst();
+
+    if (!labelSelector.isPresent()) {
+      LOG.info("Did not find labelSelector");
+      return "";
+    }
+
+    try {
+      LOG.info("labelSelector {}", labelSelector.get());
+
+      V1ServiceList serviceList = coreV1Api.listNamespacedService(podInfo.getNamespace(), null, null, null, null,
+                                                                  labelSelector.get(), null, null, null, null, null);
+      String serviceName = serviceList.getItems().get(0).getMetadata().getName();
+      LOG.info("Found serviceName {}", serviceName);
+      return serviceName;
+    } catch (ApiException e) {
+      LOG.warn("Error when getting service list");
+    }
+    return "";
   }
 
   /**
