@@ -35,7 +35,10 @@ public interface RuntimeConfigurer extends ServiceDiscoverer {
   /**
    * @return The app spec generated when the app is initially deployed, null if there is no such spec, for example,
    * for preview run, there is no existing app spec
+   *
+   * This is deprecated, Use {@link ApplicationConfigurer#getDeployedApplicationSpec()}
    */
   @Nullable
+  @Deprecated
   ApplicationSpecification getDeployedApplicationSpec();
 }
