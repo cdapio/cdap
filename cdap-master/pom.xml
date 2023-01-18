@@ -203,7 +203,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.11</artifactId>
+      <artifactId>kafka_2.12</artifactId>
     </dependency>
 
     <!-- for tools -->
@@ -305,19 +305,7 @@
       <dependencies>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-api-spark2_2.11</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-api-spark3_2.12</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-spark-core2_2.11</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -366,19 +354,7 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-data-pipeline2_2.11</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-pipeline3_2.12</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-data-streams2_2.11</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -413,34 +389,6 @@
             <artifactId>maven-resources-plugin</artifactId>
             <version>2.6</version>
             <executions>
-              <execution>
-                <id>copy-pipelines-spark2_2.11</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/${spark2.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline2_2.11/target
-                      </directory>
-                      <includes>
-                        <include>cdap-data-pipeline2_2.11-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams2_2.11/target
-                      </directory>
-                      <includes>
-                        <include>cdap-data-streams2_2.11-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
               <execution>
                 <id>copy-pipelines-spark3_2.12</id>
                 <phase>process-resources</phase>
@@ -510,26 +458,6 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-program-report-app</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/${spark2.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
-                      </directory>
-                      <includes>
-                        <include>cdap-program-report-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-program-report-app-spark3</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -573,28 +501,6 @@
               </execution>
 
               <!-- Copy runtime extensions. Currently only has Spark -->
-              <execution>
-                <id>copy-spark2-extensions</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/${spark2.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-spark-core2_2.11/target/libexec
-                      </directory>
-                      <!-- Only package with the cdap extensions, not the spark assembly jar -->
-                      <includes>
-                        <include>io.cdap.cdap.cdap-api-spark*.jar</include>
-                        <include>io.cdap.cdap.cdap-spark-*.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
               <execution>
                 <id>copy-spark3-extensions</id>
                 <phase>process-resources</phase>
@@ -927,23 +833,6 @@
                 <goals>
                   <goal>run</goal>
                 </goals>
-              </execution>
-              <!--
-                Rename cdap-data-pipeline2_2.11 to cdap-data-pipeline and cdap-data-streams2_2.11 to cdap-data-streams
-                This is may be removed if the UI supports different artifacts for each pipeline type.
-              -->
-              <execution>
-                <id>rename-pipeline-jars</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
-                  </target>
-                </configuration>
               </execution>
               <execution>
                 <id>rename-pipeline-jars-spark3</id>

@@ -34,12 +34,6 @@
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-api-spark2_2.11</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -123,7 +117,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.11</artifactId>
+      <artifactId>kafka_2.12</artifactId>
       <scope>provided</scope>
     </dependency>
 

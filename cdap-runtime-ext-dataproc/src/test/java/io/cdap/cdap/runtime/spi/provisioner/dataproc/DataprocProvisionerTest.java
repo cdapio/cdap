@@ -245,10 +245,6 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
-    context.setSparkCompat(SparkCompat.SPARK2_2_11);
-    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
-    Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
-
     context.setAppCDAPVersionInfo(new MockVersionInfo("6.5.0"));
     Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
@@ -280,7 +276,7 @@ public class DataprocProvisionerTest {
       .setRun("runId")
       .build();
     context.setProgramRunInfo(programRunInfo);
-    context.setSparkCompat(SparkCompat.SPARK2_2_11);
+    context.setSparkCompat(SparkCompat.SPARK3_2_12);
     context.addProperty(DataprocConf.CLUSTER_REUSE_ENABLED, "false");
 
     Mockito.when(dataprocClient.getCluster("cdap-app-runId")).thenReturn(Optional.empty());

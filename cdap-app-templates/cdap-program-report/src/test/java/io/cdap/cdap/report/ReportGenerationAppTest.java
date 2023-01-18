@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.report;
 
-import com.databricks.spark.avro.DefaultSource;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -74,6 +73,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
+import org.apache.spark.sql.avro.AvroFileFormat;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
@@ -284,7 +284,7 @@ public class ReportGenerationAppTest extends TestBase {
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        if (className.startsWith("org.apache.spark.")) {
+        if (className.startsWith("org.apache.spark.") && !className.startsWith("org.apache.spark.sql.avro.")) {
           return false;
         }
         if (className.startsWith("scala.")) {
@@ -302,9 +302,9 @@ public class ReportGenerationAppTest extends TestBase {
 
     Location avroSparkBundle = Locations.toLocation(TEMP_FOLDER.newFile());
     // Since spark-avro and its dependencies need to be included into the application jar,
-    // but spark-avro is not used directly in the application code, explicitly add a class DefaultSource
+    // but spark-avro is not used directly in the application code, explicitly add a class AvroFileFormat
     // from spark-avro so that spark-avro and its dependencies will be included.
-    bundler.createBundle(avroSparkBundle, DefaultSource.class);
+    bundler.createBundle(avroSparkBundle, AvroFileFormat.class);
     File unJarDir = BundleJarUtil.prepareClassLoaderFolder(avroSparkBundle, TEMP_FOLDER::newFolder).getDir();
 
     ApplicationManager app = deployApplication(deployNamespace,
