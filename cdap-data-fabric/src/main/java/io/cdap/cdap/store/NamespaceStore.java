@@ -18,6 +18,7 @@ package io.cdap.cdap.store;
 
 import com.google.inject.ImplementedBy;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.util.List;
@@ -80,4 +81,24 @@ public interface NamespaceStore {
    * @return long of the count
    */
   long getNamespaceCount();
+
+  /**
+   * Update the configuration properties except repository configuration of the namespace.
+   * @param namespaceId {@link NamespaceId} of the requested namespace
+   * @param namespaceMeta {@link NamespaceMeta} representing the namespace metadata
+   */
+  void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception;
+
+  /**
+   * Update the repository configuration of the namespace.
+   * @param namespaceId {@link NamespaceId} of the requested namespace
+   * @param repository {@link NamespaceRepositoryConfig} representing the namespace repository configuration
+   */
+  void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository) throws Exception;
+
+  /**
+   * Delete the repository configuration of the namespace.
+   * @param namespaceId {@link NamespaceId} of the requested namespace
+   */
+  void deleteRepository(NamespaceId namespaceId) throws Exception;
 }

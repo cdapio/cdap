@@ -33,7 +33,7 @@ import java.lang.reflect.Type;
 /**
  * Tests for {@link SourceControlHttpHandler}
  */
-public class SourceControlHttpHandlerTests  extends AppFabricTestBase {
+public class SourceControlHttpHandlerTests extends AppFabricTestBase {
   
   private static final String EMPTY = "";
   private static final String NAME_FIELD = "name";

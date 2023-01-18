@@ -17,15 +17,25 @@
 package io.cdap.cdap.store;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NamespaceRepositoryNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -33,6 +43,7 @@ import javax.annotation.Nullable;
  */
 public class DefaultNamespaceStore implements NamespaceStore {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceStore.class);
   private final TransactionRunner transactionRunner;
 
   @Inject
@@ -106,5 +117,96 @@ public class DefaultNamespaceStore implements NamespaceStore {
     return TransactionRunners.run(transactionRunner, context -> {
       return getNamespaceTable(context).getNamespaceCount();
     });
+  }
+
+  @Override
+  public void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception {
+    TransactionRunners.run(transactionRunner, context -> {
+      NamespaceTable table = getNamespaceTable(context);
+      updatePropertiesInternal(table, namespaceId, namespaceMeta);
+      LOG.info("Namespace {} updated", namespaceId);
+    }, BadRequestException.class);
+  }
+
+  private void updatePropertiesInternal (NamespaceTable table, NamespaceId namespaceId, NamespaceMeta namespaceMeta)
+    throws Exception {
+    NamespaceMeta existingMeta = table.get(namespaceId);
+    if (existingMeta == null) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
+
+    if (namespaceMeta.getDescription() != null) {
+      builder.setDescription(namespaceMeta.getDescription());
+    }
+
+    NamespaceConfig config = namespaceMeta.getConfig();
+    if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
+      builder.setSchedulerQueueName(config.getSchedulerQueueName());
+    }
+
+    if (config != null && config.getKeytabURI() != null) {
+      String keytabURI = config.getKeytabURI();
+      if (keytabURI.isEmpty()) {
+        throw new BadRequestException("Cannot update keytab URI with an empty URI.");
+      }
+      String existingKeytabURI = existingMeta.getConfig().getKeytabURIWithoutVersion();
+      if (existingKeytabURI == null) {
+        throw new BadRequestException("Cannot update keytab URI since there is no existing principal or keytab URI.");
+      }
+      if (keytabURI.equals(existingKeytabURI)) {
+        // The given keytab URI is the same as the existing one, but the content of the keytab file might be changed.
+        // Increment the keytab URI version so that the cache will reload content in the updated keytab file.
+        builder.incrementKeytabURIVersion();
+      } else {
+        builder.setKeytabURIWithoutVersion(keytabURI);
+        // clear keytab URI version
+        builder.setKeytabURIVersion(0);
+      }
+    }
+
+    Set<String> difference = existingMeta.getConfig().getDifference(config);
+    if (!difference.isEmpty()) {
+      throw new BadRequestException(String.format("Mappings %s for namespace %s cannot be updated " +
+                                                    "once the namespace is created.", difference, namespaceId));
+    }
+    table.create(builder.build());
+  }
+
+  @Override
+  public void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository) throws Exception {
+    TransactionRunners.run(transactionRunner, context -> {
+      NamespaceTable table = getNamespaceTable(context);
+
+      NamespaceMeta existingMeta = table.get(namespaceId);
+      if (existingMeta == null) {
+        throw new NamespaceNotFoundException(namespaceId);
+      }
+      NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).setRepoConfig(repository);
+      NamespaceMeta updatedMeta = builder.build();
+      table.create(updatedMeta);
+      LOG.info("Repository configuration of Namespace {} is updated.", namespaceId);
+    }, NamespaceNotFoundException.class);
+  }
+
+  @Override
+  public void deleteRepository(NamespaceId namespaceId) throws Exception {
+    TransactionRunners.run(transactionRunner, context -> {
+      NamespaceTable table = getNamespaceTable(context);
+
+      NamespaceMeta existingMeta = table.get(namespaceId);
+      if (existingMeta == null) {
+        throw new NamespaceNotFoundException(namespaceId);
+      }
+      if (existingMeta.getRepoConfig() == null || !existingMeta.getRepoConfig().exists()) {
+        throw new NamespaceRepositoryNotFoundException(namespaceId);
+      }
+
+      NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).deleteRepoConfig();
+      NamespaceMeta updatedMeta = builder.build();
+      table.create(updatedMeta);
+      LOG.info("Repository configuration of namespace {} is removed.", namespaceId);
+    }, NotFoundException.class);
   }
 }
