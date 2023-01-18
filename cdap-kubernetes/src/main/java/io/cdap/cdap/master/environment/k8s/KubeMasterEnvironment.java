@@ -430,7 +430,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                      getDriverPodTemplate(podInfo, sparkSubmitContext).getAbsolutePath());
     sparkConfMap.put(SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE,
                      getExecutorPodTemplateFile(sparkSubmitContext).getAbsolutePath());
-    sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
+    if (sparkSubmitContext.getLocalizeResources().containsKey("metrics.properties")) {
+      sparkConfMap.put(SPARK_KUBERNETES_METRICS_PROPERTIES_CONF, "/opt/spark/work-dir/metrics.properties");
+    }
 
     Map<String, String> submitConfigs = sparkSubmitContext.getConfig();
     String executionNamespace = submitConfigs.getOrDefault(NAMESPACE_PROPERTY, podInfo.getNamespace());

@@ -86,7 +86,7 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
     Constraint constraint = new DelayConstraint(1, TimeUnit.HOURS);
     ScheduleProgramInfo scheduleProgramInfo = new ScheduleProgramInfo(programId.getType().getSchedulableType(),
                                                                       programId.getProgram());
-    addSchedule(appId.getNamespace(), appId.getApplication(), appId.getVersion(), scheduleName,
+    addSchedule(appId.getNamespace(), appId.getApplication(), scheduleName,
                 new ScheduleDetail(scheduleName, null, scheduleProgramInfo, null,
                                    new TimeTrigger("0 0 * * * "), Collections.singletonList(constraint), null));
 
@@ -124,7 +124,7 @@ public class ScheduledRunTimeTest extends AppFabricTestBase {
 
       ScheduleProgramInfo scheduleProgramInfo = new ScheduleProgramInfo(programId.getType().getSchedulableType(),
                                                                         programId.getProgram());
-      addSchedule(appId.getNamespace(), appId.getApplication(), appId.getVersion(), scheduleName,
+      addSchedule(appId.getNamespace(), appId.getApplication(), scheduleName,
                   new ScheduleDetail(scheduleName, null, scheduleProgramInfo, null,
                                      new TimeTrigger("0 0 * * * "), Collections.singletonList(constraint), null));
       HttpResponse response = enableSchedule(programId.getNamespace(), programId.getApplication(),

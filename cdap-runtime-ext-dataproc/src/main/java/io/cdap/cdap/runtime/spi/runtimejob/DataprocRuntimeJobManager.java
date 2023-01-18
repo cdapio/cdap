@@ -723,7 +723,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private void stopJob(String jobId) throws Exception {
     try {
-      jobControllerClient.cancelJob(projectId, region, jobId);
+      getJobControllerClient().cancelJob(projectId, region, jobId);
       LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.FAILED_PRECONDITION) {

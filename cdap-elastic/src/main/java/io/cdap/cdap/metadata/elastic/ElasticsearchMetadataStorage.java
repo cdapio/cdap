@@ -942,7 +942,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       searchRequest.scroll(scrollTimeout);
     }
     RestHighLevelClient client = getClient();
-    LOG.debug("Executing search request {}", searchRequest);
+    LOG.trace("Executing search request {}", searchRequest);
     SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
     return createSearchResponse(request, searchResponse, computeCursor(searchResponse, request),
                                 request.getOffset(), request.getLimit());

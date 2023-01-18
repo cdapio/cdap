@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.store;
 
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.SortOrder;
 
@@ -32,6 +33,8 @@ public class ScanApplicationsRequest {
   @Nullable
   private final NamespaceId namespaceId;
   @Nullable
+  private final String application;
+  @Nullable
   private final ApplicationId scanFrom;
   @Nullable
   private final ApplicationId scanTo;
@@ -43,6 +46,7 @@ public class ScanApplicationsRequest {
 
   /**
    * @param namespaceId  namespace to return applications for or null for all namespaces
+   * @param application  application to return applications for
    * @param scanFrom     application id to start scan from (exclusive)
    * @param scanTo       application id to stop scan at (exclusive)
    * @param filters      additional filters to apply
@@ -50,12 +54,14 @@ public class ScanApplicationsRequest {
    * @param limit        maximum number of records to return
    */
   private ScanApplicationsRequest(@Nullable NamespaceId namespaceId,
+                                  @Nullable String application,
                                   @Nullable ApplicationId scanFrom,
                                   @Nullable ApplicationId scanTo,
                                   List<ApplicationFilter> filters,
                                   SortOrder sortOrder, int limit,
                                   boolean latestOnly, boolean sortCreationTime) {
     this.namespaceId = namespaceId;
+    this.application = application;
     this.scanFrom = scanFrom;
     this.scanTo = scanTo;
     this.filters = filters;
@@ -72,6 +78,15 @@ public class ScanApplicationsRequest {
   @Nullable
   public NamespaceId getNamespaceId() {
     return namespaceId;
+  }
+
+  /**
+   *
+   * @return application to scan for
+   */
+  @Nullable
+  public String getApplication() {
+    return application;
   }
 
   /**
@@ -140,6 +155,7 @@ public class ScanApplicationsRequest {
   public String toString() {
     return "ScanApplicationsRequest{" +
       "namespaceId=" + namespaceId +
+      ", application=" + application +
       ", scanFrom=" + scanFrom +
       ", scanTo=" + scanTo +
       ", filters=" + filters +
@@ -171,6 +187,8 @@ public class ScanApplicationsRequest {
     @Nullable
     private NamespaceId namespaceId;
     @Nullable
+    private String application;
+    @Nullable
     private ApplicationId scanFrom;
     @Nullable
     private ApplicationId scanTo;
@@ -185,6 +203,7 @@ public class ScanApplicationsRequest {
 
     private Builder(ScanApplicationsRequest request) {
       this.namespaceId = request.namespaceId;
+      this.application = request.application;
       this.scanFrom = request.scanFrom;
       this.scanTo = request.scanTo;
       this.filters = request.filters;
@@ -199,6 +218,15 @@ public class ScanApplicationsRequest {
      */
     public Builder setNamespaceId(NamespaceId namespaceId) {
       this.namespaceId = namespaceId;
+      return this;
+    }
+
+    /**
+     * @param applicationReference application to scan in without version
+     */
+    public Builder setApplicationReference(ApplicationReference applicationReference) {
+      this.namespaceId = applicationReference.getNamespaceId();
+      this.application = applicationReference.getApplication();
       return this;
     }
 
@@ -282,8 +310,45 @@ public class ScanApplicationsRequest {
      * @return new {@link ScanApplicationsRequest}
      */
     public ScanApplicationsRequest build() {
-      return new ScanApplicationsRequest(namespaceId, scanFrom, scanTo, filters, sortOrder, limit, latestOnly,
-                                         sortCreationTime);
+      validate();
+      return new ScanApplicationsRequest(namespaceId, application, scanFrom, scanTo,
+                                         filters, sortOrder, limit, latestOnly, sortCreationTime);
+    }
+
+    private void validate() {
+      // Validate namespace
+      if (namespaceId != null) {
+        if (scanFrom != null && !namespaceId.equals(scanFrom.getNamespaceId())) {
+          throw new IllegalArgumentException("Requested to start scan from application " + scanFrom +
+                                               " that is outside of scan namespace " + namespaceId
+          );
+        }
+
+        if (scanTo != null && !namespaceId.equals(scanTo.getNamespaceId())) {
+          throw new IllegalArgumentException("Requested to finish scan at application " + scanTo +
+                                               " that is outside of scan namespace " + namespaceId
+          );
+        }
+      }
+
+      // Validate application reference
+      if (application != null) {
+        if (namespaceId == null) {
+          throw new IllegalArgumentException("Requested to scan application " + application + " without namespaceId");
+        }
+
+        if (scanFrom != null && !application.equals(scanFrom.getApplication())) {
+          throw new IllegalArgumentException("Requested to start scan from application ID " + scanFrom +
+                                               " that does not match application name" + application
+          );
+        }
+
+        if (scanTo != null && !application.equals(scanTo.getApplication())) {
+          throw new IllegalArgumentException("Requested to finish scan at application ID " + scanTo +
+                                               " that does not match application name" + application
+          );
+        }
+      }
     }
   }
 }

@@ -629,6 +629,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     prependConfig(configs, "spark.driver.extraJavaOptions", sparkCheckpointTempRewrite, " ");
     prependConfig(configs, "spark.executor.extraJavaOptions", sparkCheckpointTempRewrite, " ");
 
+    // Prepend the extra java opts
+    prependConfig(configs, "spark.driver.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
+    prependConfig(configs, "spark.executor.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
+
     // CDAP-5854: On Windows * is a reserved character which cannot be used in paths. So adding the below to
     // classpaths will fail. Please see CDAP-5854.
     // In local mode spark program runs under the same jvm as cdap master and these jars will already be in the
@@ -640,10 +644,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // Set extraClasspath config by appending user specified extra classpath
       prependConfig(configs, "spark.driver.extraClassPath", extraClassPath, File.pathSeparator);
       prependConfig(configs, "spark.executor.extraClassPath", extraClassPath, File.pathSeparator);
-
-      // Prepend the extra java opts
-      prependConfig(configs, "spark.driver.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
-      prependConfig(configs, "spark.executor.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
     } else {
       // Only need to set this for local mode.
       // In distributed mode, Spark will not use this but instead use the yarn container directory.

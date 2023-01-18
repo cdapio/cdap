@@ -325,7 +325,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (nameFilterType != null) {
         switch (nameFilterType) {
           case EQUALS:
-            builder.addFilter(new ApplicationFilter.ApplicationIdEqualsCaseSensitiveFilter(nameFilter));
+            builder.setApplicationReference(new ApplicationReference(namespaceId, nameFilter));
             break;
           case CONTAINS:
             builder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));

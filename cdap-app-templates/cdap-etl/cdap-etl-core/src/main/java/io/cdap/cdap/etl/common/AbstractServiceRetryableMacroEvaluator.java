@@ -20,6 +20,7 @@ package io.cdap.cdap.etl.common;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.api.common.Constants;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -106,23 +107,29 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     if (urlConn == null) {
       throw new RetryableException(serviceName + " service is not available");
     }
-
-    int responseCode = urlConn.getResponseCode();
-    if (responseCode != HttpURLConnection.HTTP_OK) {
-      switch (responseCode) {
-        case HttpURLConnection.HTTP_BAD_GATEWAY:
-        case HttpURLConnection.HTTP_UNAVAILABLE:
-        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
-          throw new RetryableException(serviceName + " service is not available with status " + responseCode);
-      }
-      throw new IOException("Failed to call " + serviceName + " service with status " + responseCode + ": " +
-                              getError(urlConn));
-    }
-
+    validateResponseCode(serviceName, urlConn);
     try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
       return CharStreams.toString(reader);
     } finally {
       urlConn.disconnect();
+    }
+  }
+
+  private void validateResponseCode(String serviceName, HttpURLConnection urlConn) throws IOException {
+    int responseCode;
+    try {
+      responseCode = urlConn.getResponseCode();
+    } catch (IOException e) {
+      // IOExceptions are retryable for idempotent operations.
+      throw new RetryableException(e);
+    }
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      if (Constants.RETRYABLE_HTTP_CODES.contains(responseCode)
+        || responseCode == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+        throw new RetryableException(serviceName + " service is not available with status " + responseCode);
+      }
+      throw new IOException("Failed to call " + serviceName + " service with status " + responseCode + ": " +
+                              getError(urlConn));
     }
   }
 

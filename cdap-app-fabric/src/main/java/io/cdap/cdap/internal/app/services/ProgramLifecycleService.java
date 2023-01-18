@@ -35,6 +35,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
@@ -111,6 +112,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -125,6 +127,10 @@ public class ProgramLifecycleService {
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
+  private static final EnumSet<ProgramRunStatus> ACTIVE_STATES = EnumSet.of(ProgramRunStatus.PENDING,
+                                                                            ProgramRunStatus.STARTING,
+                                                                            ProgramRunStatus.RUNNING,
+                                                                            ProgramRunStatus.SUSPENDED);
 
   private final Store store;
   private final ProfileService profileService;
@@ -140,6 +146,7 @@ public class ProgramLifecycleService {
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final int defaultStopTimeoutSecs;
+  private final int batchSize;
   private final ArtifactRepository artifactRepository;
   private final RunRecordMonitorService runRecordMonitorService;
   private final boolean userProgramLaunchDisabled;
@@ -158,6 +165,7 @@ public class ProgramLifecycleService {
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
     this.userProgramLaunchDisabled = cConf.getBoolean(Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
+    this.batchSize = cConf.getInt(Constants.AppFabric.STREAMING_BATCH_SIZE);
     this.store = store;
     this.profileService = profileService;
     this.runtimeService = runtimeService;
@@ -295,25 +303,26 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Returns the {@link RunRecordDetail} for the given program run.
+   * Returns the {@link RunRecordDetail} for the given program run reference.
    *
-   * @param programRunId the program run to fetch
+   * @param programRef the program reference of the run record
+   * @param runId the run id of the run record
    * @return the {@link RunRecordDetail} for the given run
    * @throws NotFoundException if the given program or program run doesn't exist
    * @throws Exception if authorization failed
    */
-  public RunRecordDetail getRunRecordMeta(ProgramRunId programRunId) throws Exception {
-    accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
-
-    ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programRunId.getParent());
-    if (programSpec == null) {
-      throw new NotFoundException(programRunId.getParent());
+  public RunRecordDetail getRunRecordMeta(ProgramReference programRef, String runId) throws Exception {
+    accessEnforcer.enforce(programRef, authenticationContext.getPrincipal(), StandardPermission.GET);
+    RunRecordDetail runRecord = store.getRun(programRef, runId);
+    if (runRecord == null) {
+      throw new NotFoundException(String.format("No run record found for program %s and runID: %s", programRef, runId));
     }
-    RunRecordDetail meta = store.getRun(programRunId);
-    if (meta == null) {
-      throw new NotFoundException(programRunId);
+    ApplicationId appId = runRecord.getProgramRunId().getParent().getParent();
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(appId);
     }
-    return meta;
+    return runRecord;
   }
 
   /**
@@ -878,7 +887,7 @@ public class ProgramLifecycleService {
    * Stops the specified run of the specified program.
    *
    * @param programRef the {@link ProgramReference program} to stop
-   * @param runId the runId of the program run to stop. It should not be null.
+   * @param runId the run id, cannot be null
    * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
@@ -888,20 +897,16 @@ public class ProgramLifecycleService {
    */
   public void stop(ProgramReference programRef, String runId, @Nullable Integer gracefulShutdownSecs)
     throws Exception {
-    if (runId == null) {
-      throw new BadRequestException(
-        String.format("RunId should not be null when stopping a particular run: '%s'.", programRef));
-    }
     issueStop(programRef, runId, gracefulShutdownSecs);
   }
 
   /**
-   * Issues a command to stop the specified {@link RunId} of the specified {@link ProgramReference} and returns a
+   * Issues a command to stop the specified {@link ProgramReference} and run id returns a
    * {@link ListenableFuture} with the {@link ProgramRunId} for the runs that were stopped.
    * Clients can wait for completion of the {@link ListenableFuture}.
    *
    * @param programRef the {@link ProgramReference program} to issue a stop for
-   * @param runId the runId of the program run to stop. If null, all runs of the program are stopped.
+   * @param runId run id to stop
    * @param gracefulShutdownSecs amount of seconds to wait for graceful shutdown before killing the run
    * @return a list of {@link ListenableFuture} with the {@link ProgramRunId} that clients can wait on for stop
    *         to complete.
@@ -912,7 +917,7 @@ public class ProgramLifecycleService {
    *                               program, a user requires {@link ApplicationPermission#EXECUTE} permission on
    *                               the program.
    */
-  public Collection<ProgramRunId> issueStop(ProgramReference programRef, @Nullable String runId,
+  public Collection<ProgramRunId> issueStop(ProgramReference programRef, String runId,
                                             @Nullable Integer gracefulShutdownSecs) throws Exception {
     ProgramId defaultVersionedProgram = programRef.id(ApplicationId.DEFAULT_VERSION);
     accessEnforcer.enforce(defaultVersionedProgram, authenticationContext.getPrincipal(),
@@ -921,16 +926,17 @@ public class ProgramLifecycleService {
     if (gracefulShutdownSecs == null) {
       gracefulShutdownSecs = this.defaultStopTimeoutSecs;
     }
-    // TODO: getActiveRuns is ignoring versions, use ProgramRunReference in CDAP-20031
-    Map<ProgramRunId, RunRecordDetail> activeRunRecords = getActiveRuns(defaultVersionedProgram, runId);
 
-    if (activeRunRecords.isEmpty()) {
+    RunRecordDetail runRecord = store.getRun(programRef, runId);
+
+    if (runRecord == null || !ACTIVE_STATES.contains(runRecord.getStatus())) {
       // Error out if no run information from run record
       ensureLatestProgramExists(programRef);
       throw new BadRequestException(String.format("Program '%s' is not running.", programRef));
     }
 
-    return issueStopInternal(activeRunRecords, gracefulShutdownSecs);
+    return issueStopInternal(Collections.singletonMap(runRecord.getProgramRunId(), runRecord),
+                             gracefulShutdownSecs);
   }
 
   /**
@@ -1229,35 +1235,42 @@ public class ProgramLifecycleService {
    * @return the programs in the provided namespace
    */
   public List<ProgramRecord> list(NamespaceId namespaceId, ProgramType type) throws Exception {
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
-    List<ProgramRecord> programRecords = new ArrayList<>();
-    for (ApplicationSpecification appSpec : appSpecs) {
-      switch (type) {
-        case MAPREDUCE:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
-          break;
-        case SPARK:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getSpark().values(), programRecords);
-          break;
-        case SERVICE:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getServices().values(), programRecords);
-          break;
-        case WORKER:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkers().values(), programRecords);
-          break;
-        case WORKFLOW:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
-          break;
-        default:
-          throw new Exception("Unknown program type: " + type.name());
-      }
+    Function<ApplicationSpecification, Map<String, ? extends ProgramSpecification>> func;
+    switch (type) {
+      case MAPREDUCE:
+        func = ApplicationSpecification::getMapReduce;
+        break;
+      case SPARK:
+        func = ApplicationSpecification::getSpark;
+        break;
+      case SERVICE:
+        func = ApplicationSpecification::getServices;
+        break;
+      case WORKER:
+        func = ApplicationSpecification::getWorkers;
+        break;
+      case WORKFLOW:
+        func = ApplicationSpecification::getWorkflows;
+        break;
+      default:
+        throw new RuntimeException("Unknown program type: " + type.name());
     }
+
+    List<ProgramRecord> programRecords = new ArrayList<>();
+    store.scanApplications(
+      ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
+      batchSize,
+      (appId, appMeta) -> {
+        ApplicationSpecification appSpec = appMeta.getSpec();
+        createProgramRecords(namespaceId, appSpec.getName(), type, func.apply(appSpec).values(), programRecords);
+      });
+
     return programRecords;
   }
 
   private void createProgramRecords(NamespaceId namespaceId, String appId, ProgramType type,
                                     Iterable<? extends ProgramSpecification> programSpecs,
-                                    List<ProgramRecord> programRecords) throws Exception {
+                                    List<ProgramRecord> programRecords) {
     for (ProgramSpecification programSpec : programSpecs) {
       if (hasAccess(namespaceId.app(appId).program(type, programSpec.getName()))) {
         programRecords.add(new ProgramRecord(type, appId, programSpec.getName(), programSpec.getDescription()));
@@ -1265,7 +1278,7 @@ public class ProgramLifecycleService {
     }
   }
 
-  private boolean hasAccess(ProgramId programId) throws Exception {
+  private boolean hasAccess(ProgramId programId) {
     Principal principal = authenticationContext.getPrincipal();
     return !accessEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
   }
@@ -1345,11 +1358,7 @@ public class ProgramLifecycleService {
       return store.getActiveRuns(programId);
     }
     RunRecordDetail runRecord = store.getRun(programId.run(runId));
-    EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.PENDING,
-                                                        ProgramRunStatus.STARTING,
-                                                        ProgramRunStatus.RUNNING,
-                                                        ProgramRunStatus.SUSPENDED);
-    return runRecord == null || !activeStates.contains(runRecord.getStatus())
+    return runRecord == null || !ACTIVE_STATES.contains(runRecord.getStatus())
       ? Collections.emptyMap()
       : Collections.singletonMap(programId.run(runId), runRecord);
   }

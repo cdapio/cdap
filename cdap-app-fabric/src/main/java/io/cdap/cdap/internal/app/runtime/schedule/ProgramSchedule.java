@@ -132,9 +132,9 @@ public class ProgramSchedule {
   public ScheduleDetail toScheduleDetail() {
     ScheduleProgramInfo programInfo =
       new ScheduleProgramInfo(programId.getType().getSchedulableType(), programId.getProgram());
-    return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(),
-                              scheduleId.getSchedule(), description, programInfo, properties, trigger, constraints,
-                              timeoutMillis, null, null);
+    return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getSchedule(),
+                              description, programInfo, properties, trigger, constraints, timeoutMillis,
+                              null, null);
   }
 
   public static ProgramSchedule fromScheduleDetail(ScheduleDetail schedule) throws IllegalArgumentException {
