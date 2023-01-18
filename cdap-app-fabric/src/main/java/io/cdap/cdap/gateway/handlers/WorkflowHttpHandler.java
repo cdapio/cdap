@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.InstanceNotFoundException;
 import io.cdap.cdap.api.schedule.Trigger;
@@ -42,10 +43,11 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
-import io.cdap.cdap.internal.app.store.ApplicationMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
@@ -56,6 +58,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -142,11 +145,8 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private ProgramController getProgramController(String namespace, String appName,
                                                  String workflowName, String runId) throws NotFoundException {
     NamespaceId namespaceId = Ids.namespace(namespace);
-    ApplicationMeta appMeta = store.getLatest(namespaceId.appReference(appName));
-    if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(namespaceId.app(appName));
-    }
-    ApplicationId appId =  namespaceId.app(appName, appMeta.getSpec().getAppVersion());
+    ApplicationSpecification appSpec = getAppSpecForValidRun(namespaceId, appName, workflowName, runId);
+    ApplicationId appId =  namespaceId.app(appName, appSpec.getAppVersion());
     ProgramId id = appId.workflow(workflowName);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
@@ -212,17 +212,10 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private WorkflowToken getWorkflowToken(String namespace, String appName, String workflow,
                                          String runId) throws NotFoundException {
     NamespaceId namespaceId = Ids.namespace(namespace);
-    ApplicationMeta appMeta = store.getLatest(namespaceId.appReference(appName));
-    if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(namespaceId.app(appName));
-    }
-    ApplicationId appId =  namespaceId.app(appName, appMeta.getSpec().getAppVersion());
-    WorkflowId workflowId = appId.workflow(workflow);
-    if (!appMeta.getSpec().getWorkflows().containsKey(workflow)) {
+    ApplicationSpecification appSpec = getAppSpecForValidRun(namespaceId, appName, workflow, runId);
+    WorkflowId workflowId = namespaceId.app(appName, appSpec.getAppVersion()).workflow(workflow);
+    if (!appSpec.getWorkflows().containsKey(workflow)) {
       throw new NotFoundException(workflowId);
-    }
-    if (store.getRun(workflowId.run(runId)) == null) {
-      throw new NotFoundException(workflowId.run(runId));
     }
     return store.getWorkflowToken(workflowId, runId);
   }
@@ -236,22 +229,15 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("run-id") String runId)
     throws NotFoundException {
     NamespaceId namespace = Ids.namespace(namespaceId);
-    ApplicationMeta appMeta = store.getLatest(namespace.appReference(applicationId));
-    if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(namespace.app(applicationId));
-    }
-    ApplicationId appId =  namespace.app(applicationId, appMeta.getSpec().getAppVersion());
-    ProgramId workflowProgramId = appId.workflow(workflowId);
-    WorkflowSpecification workflowSpec = appMeta.getSpec().getWorkflows().get(workflowProgramId.getProgram());
+    ApplicationSpecification appSpec = getAppSpecForValidRun(namespace, applicationId, workflowId, runId);
+    ProgramId workflowProgramId = namespace.app(applicationId, appSpec.getAppVersion()).workflow(workflowId);
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
 
     if (workflowSpec == null) {
       throw new ProgramNotFoundException(workflowProgramId);
     }
 
     ProgramRunId workflowRunId = workflowProgramId.run(runId);
-    if (store.getRun(workflowRunId) == null) {
-      throw new NotFoundException(workflowRunId);
-    }
 
     List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRunId);
     Map<String, WorkflowNodeStateDetail> nodeStates = new HashMap<>();
@@ -328,21 +314,39 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private WorkflowSpecification getWorkflowSpecForValidRun(String namespaceId, String applicationId,
                                                            String workflowId, String runId) throws NotFoundException {
     NamespaceId namespace = Ids.namespace(namespaceId);
-    ApplicationMeta appMeta = store.getLatest(namespace.appReference(applicationId));
-    if (appMeta == null || appMeta.getSpec() == null) {
-      throw new NotFoundException(namespace.app(applicationId));
-    }
-    ApplicationId appId =  namespace.app(applicationId, appMeta.getSpec().getAppVersion());
-    WorkflowSpecification workflowSpec = appMeta.getSpec().getWorkflows().get(workflowId);
-    ProgramId programId = appId.workflow(workflowId);
+    ApplicationSpecification appSpec = getAppSpecForValidRun(namespace, applicationId, workflowId, runId);
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
+    ProgramId programId = namespace.app(applicationId, appSpec.getAppVersion()).workflow(workflowId);
     if (workflowSpec == null) {
       throw new ProgramNotFoundException(programId);
     }
-
-    ProgramRunId programRunId = programId.run(runId);
-    if (store.getRun(programRunId) == null) {
-      throw new NotFoundException(programRunId);
-    }
     return workflowSpec;
+  }
+
+  /**
+   * Get the {@link ApplicationSpecification} if valid application id, workflow id, and runid are provided.
+   * @param namespace the namespace id
+   * @param applicationId the application id
+   * @param workflowId the workflow id
+   * @param runId the runid of the workflow
+   * @return the specifications for the Workflow
+   * @throws NotFoundException is thrown when the application, workflow, or runid is not found
+   */
+  private ApplicationSpecification getAppSpecForValidRun(NamespaceId namespace, String applicationId,
+                                                         String workflowId, String runId) throws NotFoundException {
+    ProgramReference programRef = namespace.appReference(applicationId).program(ProgramType.WORKFLOW, workflowId);
+    // Fetch run record ignoring version
+    RunRecordDetail runRecord = store.getRun(programRef, runId);
+    if (runRecord == null) {
+      throw new NotFoundException(String.format("No run record found for program %s and runID: %s", programRef, runId));
+    }
+
+    // Get correct version from runRecord and fetch the appSpec
+    ApplicationId appId = namespace.app(applicationId, runRecord.getProgramRunId().getVersion());
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      throw new NotFoundException(appId);
+    }
+    return appSpec;
   }
 }

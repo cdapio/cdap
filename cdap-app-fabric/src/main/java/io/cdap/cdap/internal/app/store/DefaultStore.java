@@ -333,29 +333,50 @@ public class DefaultStore implements Store {
   public WorkflowTable.WorkflowRunRecord getWorkflowRun(NamespaceId namespaceId, String appName, String workflowName,
                                                         String runId) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
-      if (latestAppMeta == null) {
-        throw new ApplicationNotFoundException(namespaceId.app(appName));
-      }
-      WorkflowId workflowId = new WorkflowId(namespaceId.getNamespace(), appName,
-                                             latestAppMeta.getSpec().getAppVersion(), workflowName);
+      AppMetadataStore appMetaStore = getAppMetadataStore(context);
+      WorkflowId workflowId = getWorkflowIdFromRun(appMetaStore, namespaceId, appName, workflowName, runId);
       return getWorkflowTable(context).getRecord(workflowId, runId);
     });
   }
 
   @Override
   public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(NamespaceId namespaceId, String appName,
-                                                                           String program, String runId, int limit,
+                                                                           String workflowName, String runId, int limit,
                                                                            long timeInterval) {
     return  TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
-      if (latestAppMeta == null) {
-        throw new ApplicationNotFoundException(namespaceId.app(appName));
-      }
-      WorkflowId workflow = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
-                                           program);
+      AppMetadataStore appMetaStore = getAppMetadataStore(context);
+      WorkflowId workflow = getWorkflowIdFromRun(appMetaStore, namespaceId, appName, workflowName, runId);
       return getWorkflowTable(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
     });
+  }
+
+  /**
+   * Fetches the run record for particular run of a program without version.
+   *
+   * @param appMetaStore     AppMetadataStore
+   * @param namespaceId      namespace id
+   * @param appName          application name
+   * @param workflowName     the name of the workflow program
+   * @param runId            the run id
+   * @return          run record for the specified program and runRef, null if not found
+   */
+  private WorkflowId getWorkflowIdFromRun(AppMetadataStore appMetaStore, NamespaceId namespaceId,
+                                          String appName, String workflowName, String runId)
+    throws IOException, NotFoundException {
+    ProgramReference programRef = namespaceId.appReference(appName).program(ProgramType.WORKFLOW, workflowName);
+    // Fetch run record ignoring version
+    RunRecordDetail runRecord = appMetaStore.getRun(programRef, runId);
+    if (runRecord == null) {
+      throw new NotFoundException(
+        String.format("No run record found for program %s and runID: %s", programRef, runId));
+    }
+
+    ApplicationId appId = namespaceId.app(appName, runRecord.getVersion());
+    ApplicationMeta appMeta = appMetaStore.getApplication(appId);
+    if (appMeta == null) {
+      throw new ApplicationNotFoundException(appId);
+    }
+    return new WorkflowId(appId, workflowName);
   }
 
   @Override
