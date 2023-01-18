@@ -46,6 +46,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.AccessPermission;
@@ -403,15 +404,34 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                                     "is created.", difference, namespaceId));
     }
 
-    if (namespaceMeta.getRepoConfig() != null) {
-      builder.setRepoConfig(namespaceMeta.getRepoConfig());
-    }
-    
     NamespaceMeta updatedMeta = builder.build();
     nsStore.update(updatedMeta);
     // refresh the cache with new meta
     namespaceMetaCache.refresh(namespaceId);
     LOG.info("Namespace {} updated with meta {}", namespaceId, updatedMeta);
+  }
+
+  @Override
+  public synchronized void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository)
+    throws Exception {
+    if (!exists(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+
+    NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    // Already ensured that namespace exists, so namespace meta should not be null
+    Preconditions.checkNotNull(existingMeta);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
+    
+    if (repository != null) {
+      builder.setRepoConfig(repository);
+      NamespaceMeta updatedMeta = builder.build();
+      nsStore.update(updatedMeta);
+      // refresh the cache with new meta
+      namespaceMetaCache.refresh(namespaceId);
+      LOG.info("Repository configuration of Namespace {} is updated.", namespaceId);
+    }
   }
 
   @Override

@@ -22,6 +22,7 @@ import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -99,6 +100,21 @@ public abstract class AbstractNamespaceClient extends AbstractNamespaceQueryClie
     }
     throw new IOException(String.format("Cannot delete datasets in namespace %s. Reason: %s",
                                         namespaceId, response.getResponseBodyAsString()));
+  }
+
+  @Override
+  public void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository) throws Exception {
+    URL url = resolve(String.format("namespaces/%s/repository", namespaceId.getNamespace()));
+    HttpResponse response = execute(HttpRequest.put(url).withBody(GSON.toJson(repository)).build());
+    String responseBody = response.getResponseBodyAsString();
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return;
+    }
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException("Bad request: " + responseBody);
+    }
+    throw new IOException(String.format("Cannot update repository on namespace %s. Reason: %s",
+                                        namespaceId, responseBody));
   }
 
   @Override

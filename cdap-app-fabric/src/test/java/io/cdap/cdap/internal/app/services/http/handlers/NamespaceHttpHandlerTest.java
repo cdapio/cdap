@@ -430,8 +430,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     String nsPrincipal = "nsCreator/somehost.net@somekdc.net";
     String nsKeytabURI = "some/path";
     NamespaceMeta impNsMeta =
-      new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal)
-        .setKeytabURI(nsKeytabURI).setRepoProvider("github").setRepoAuthType("PAT").build();
+      new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal).setKeytabURI(nsKeytabURI).build();
     HttpResponse response = createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
     assertResponseCode(200, response);
     // verify
@@ -440,12 +439,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(namespace);
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
-    Assert.assertEquals("PAT",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
-    Assert.assertEquals("github",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
 
     // Update scheduler queue name.
     String nonexistentName = NAME + "nonexistent";
@@ -489,44 +482,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(), NamespaceConfig.class);
     // verify that the uri has changed
     Assert.assertEquals("new/url", config.getKeytabURI());
-
-    // Update repository config
-    meta = new NamespaceMeta.Builder(impNsMeta).setRepoLink("example.com")
-      .setRepoDefaultBranch("master").setRepoPathPrefix(NAME).setRepoAuthType("OAuth").build();
-    setProperties(NAME, meta);
-    response = getNamespace(NAME);
-    namespace = readGetResponse(response);
-    Assert.assertNotNull(namespace);
-
-    // verify that the repo config has changed
-    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
-    Assert.assertEquals("example.com",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.LINK).getAsString());
-    Assert.assertEquals("OAuth",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
-    Assert.assertEquals("master",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.DEFAULT_BRANCH).getAsString());
-
-    // verify other repository properties set earlier has not changed.
-    Assert.assertEquals("github",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
-
-    // Delete repository config
-    response = deleteNamespaceRepository(NAME);
-    Assert.assertEquals(200, response.getResponseCode());
-    response = getNamespace(NAME);
-    namespace = readGetResponse(response);
-    Assert.assertNotNull(namespace);
-    // verify that the repo config has been deleted
-    Assert.assertEquals("{}", namespace.get(REPOSITORY_FIELD).toString());
-
-    // Delete repository config
-    response = deleteNamespaceRepository(NAME);
-    Assert.assertEquals(404, response.getResponseCode());
     
     // cleanup
     response = deleteNamespace(NAME);

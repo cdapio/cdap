@@ -79,7 +79,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ns));
   }
 
-
   @PUT
   @Path("/namespaces/{namespace-id}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)

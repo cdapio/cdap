@@ -16,18 +16,22 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DELETE;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -43,13 +47,31 @@ public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
     this.namespaceAdmin = namespaceAdmin;
   }
 
-  @DELETE
+  @PUT
   @Path("/")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void updateNamespaceRepository(FullHttpRequest request, HttpResponder responder,
+                                        @PathParam("namespace-id") String namespaceId) throws Exception {
+    NamespaceRepositoryConfig repository = getNamespaceRepository(request);
+    namespaceAdmin.updateRepository(new NamespaceId(namespaceId), repository);
+    responder.sendString(HttpResponseStatus.OK, String.format("Updated repository configuration for namespace '%s'.",
+                                                              namespaceId));
+  }
+
+  @DELETE
+  @Path("/")
   public void deleteNamespaceRepository(FullHttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) throws Exception {
     namespaceAdmin.deleteRepository(new NamespaceId(namespaceId));
     responder.sendString(HttpResponseStatus.OK, String.format("Deleted repository configuration for namespace '%s'.",
                                                               namespaceId));
+  }
+
+  private NamespaceRepositoryConfig getNamespaceRepository(FullHttpRequest request) throws BadRequestException {
+    try {
+      return parseBody(request, NamespaceRepositoryConfig.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid json object provided in request body.");
+    }
   }
 }

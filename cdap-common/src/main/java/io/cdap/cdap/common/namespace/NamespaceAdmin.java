@@ -21,6 +21,7 @@ import io.cdap.cdap.common.NamespaceCannotBeCreatedException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
@@ -63,6 +64,14 @@ public interface NamespaceAdmin extends NamespaceQueryAdmin {
    * @throws NamespaceNotFoundException if the specified namespace is not found
    */
   void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception;
+
+  /**
+   * Deletes repository configuration in the specified namespace.
+   *
+   * @param namespaceId the {@link NamespaceId} of the specified namespace
+   * @throws NamespaceNotFoundException if the specified namespace does not exist
+   */
+  void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository) throws Exception;
 
   /**
    * Deletes repository configuration in the specified namespace.

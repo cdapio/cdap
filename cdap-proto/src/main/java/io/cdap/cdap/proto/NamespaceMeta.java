@@ -214,36 +214,6 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setRepoProvider(String repoProvider) {
-      this.repoProvider = repoProvider;
-      return this;
-    }
-
-    public Builder setRepoLink(String repoLink) {
-      this.repoLink = repoLink;
-      return this;
-    }
-
-    public Builder setRepoDefaultBranch(String repoDefaultBranch) {
-      this.repoDefaultBranch = repoDefaultBranch;
-      return this;
-    }
-
-    public Builder setRepoAuthType(String repoAuthType) {
-      this.repoAuthType = repoAuthType;
-      return this;
-    }
-
-    public Builder setRepoUserName(String repoUserName) {
-      this.repoUserName = repoUserName;
-      return this;
-    }
-    
-    public Builder setRepoPathPrefix(String repoPathPrefix) {
-      this.repoPathPrefix = repoPathPrefix;
-      return this;
-    }
-
     public Builder setRepoConfig(NamespaceRepositoryConfig repoConfig) {
       if (repoConfig.getProvider() != null) {
         this.repoProvider = repoConfig.getProvider();
