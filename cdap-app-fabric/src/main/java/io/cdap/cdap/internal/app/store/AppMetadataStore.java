@@ -1941,7 +1941,7 @@ public class AppMetadataStore {
 
     if (!row.isPresent()) {
       LOG.debug("No workflow token available for workflow: {}, runId: {}", workflowId, workflowRunId);
-      // Its ok to not allow any updates by returning a 0 size token.
+      // It's ok to not allow any updates by returning a 0 size token.
       return new BasicWorkflowToken(0);
     }
 
