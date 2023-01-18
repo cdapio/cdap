@@ -494,19 +494,25 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     String srcTableName = "src" + engine;
     String sinkTableName = "sink" + engine;
 
+    Schema schema = Schema.recordOf("x", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+
+    // add secure macro to verify json value of secure data does not fail the macro evaluation in connections
+    String schemaJson = schema.toString();
+    getSecureStoreManager().put(NamespaceId.DEFAULT.getNamespace(), "json", schemaJson, "", Collections.emptyMap());
+
     // add some bad json object to the property
     addConnection(
       sourceConnName, new ConnectionCreationRequest(
         "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", srcTableName,
-                                                                  "key1", "${badval}"),
+                                                                  "schema", "${secure(json)}"),
                            new ArtifactSelectorConfig())));
     addConnection(
       sinkConnName, new ConnectionCreationRequest(
         "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", sinkTableName,
-                                                                  "key1", "${badval}"),
+                                                                  "schema", "${badval}"),
                            new ArtifactSelectorConfig())));
     // add json string to the runtime arguments to ensure plugin can get instantiated under such condition
-    Map<String, String> runtimeArguments = Collections.singletonMap("badval", "{\"a\" : 1}");
+    Map<String, String> runtimeArguments = Collections.singletonMap("badval", schemaJson);
 
     // source -> sink
     ETLBatchConfig config = ETLBatchConfig.builder()
@@ -516,7 +522,6 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                               .addConnection("source", "sink")
                               .build();
 
-    Schema schema = Schema.recordOf("x", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     StructuredRecord samuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord dwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
 

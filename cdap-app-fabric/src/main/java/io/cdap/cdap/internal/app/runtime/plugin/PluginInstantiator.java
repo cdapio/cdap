@@ -349,7 +349,28 @@ public class PluginInstantiator implements Closeable {
                                                                  .setEscaping(field.isMacroEscapingEnabled())
                                                                  .build() : options;
           MacroParser macroParser = new MacroParser(macroEvaluator, parserOptions);
+          String oldValue = propertyValue;
           propertyValue = macroParser.parse(propertyValue);
+
+          // There is a special case when the field can contain nested fields:
+          // At runtime, the value of this field should be a json map, with possibly unevaluated macro inside,
+          // i.e, secure macro is not evaluated when regenerating app spec.
+          // Therefore, if the value of this macro is a also a json, the combined string itself is no longer
+          // a valid json map, since the replaced value is not escaped.
+          // So we do the following check to verify it is a valid json map, if not,
+          // we convert old value to the map first, and evaluate the map fields one by one, then convert it
+          // back to ensure it is a valid json map
+          if (!field.getChildren().isEmpty() && propertyValue != null && !parserOptions.shouldSkipInvalid()) {
+            try {
+              gson.fromJson(propertyValue, MAP_STRING_TYPE);
+            } catch (JsonSyntaxException e) {
+              // convert using old value
+              Map<String, String> unevaluatedProperties = gson.fromJson(oldValue, MAP_STRING_TYPE);
+              Map<String, String> evaluated = new HashMap<>();
+              unevaluatedProperties.forEach((key, val) -> evaluated.put(key, macroParser.parse(val)));
+              propertyValue = gson.toJson(evaluated);
+            }
+          }
         }
       }
       properties.put(property.getKey(), propertyValue);
