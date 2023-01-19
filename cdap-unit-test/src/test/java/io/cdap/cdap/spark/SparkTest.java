@@ -164,8 +164,6 @@ public class SparkTest extends TestFrameworkTestBase {
   }
 
   @Test
-  @Ignore
-  // TODO: CDAP-20285 - fix test
   public void testDynamicSpark() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 

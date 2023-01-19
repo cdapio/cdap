@@ -52,6 +52,13 @@ import javax.annotation.Nullable;
  */
 public class BundleJarUtil {
 
+  private static final Predicate<String> NO_FILTER = new Predicate<String>() {
+    @Override
+    public boolean test(String s) {
+      return false;
+    }
+  };
+
   /**
    * Gets the {@link Manifest} inside the given jar.
    *
@@ -140,6 +147,23 @@ public class BundleJarUtil {
    */
   public static void addToArchive(final File input, final boolean includeDirName,
                                   final ZipOutputStream output) throws IOException {
+    addToArchive(input, includeDirName, output, NO_FILTER);
+  }
+
+  /**
+   * Adds file(s) to a zip archive. If the given input file is a directory,
+   * all files under it will be added recursively.
+   *
+   * @param input input directory (or file) whose contents needs to be archived
+   * @param includeDirName if {@code true} and if the input is a directory, prefix each entries with the directory name
+   * @param output an opened {@link ZipOutputStream} for the archive content to add to
+   * @param fileNameFilter a filter to ignore adding certain files to the JAR. If the predicate returns true, the file
+   *                       is excluded from the created JAR.
+   * @throws IOException if there is failure in the archive creation
+   */
+  public static void addToArchive(final File input, final boolean includeDirName,
+                                  final ZipOutputStream output,
+                                  final Predicate<String> fileNameFilter) throws IOException {
     final URI baseURI = input.toURI();
     Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS),
                        Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
@@ -157,6 +181,9 @@ public class BundleJarUtil {
 
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (fileNameFilter.test(file.getFileName().toString())) {
+          return FileVisitResult.CONTINUE;
+        }
         URI uri = baseURI.relativize(file.toUri());
         if (uri.getPath().isEmpty()) {
           // Only happen if the given "input" is a file.

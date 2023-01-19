@@ -27,13 +27,16 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 
 /**
  * Unit Tests for {@link BundleJarUtil}.
@@ -109,6 +112,52 @@ public class BundleJarUtilTest {
 
     // Closing the ClassLoaderFolder should have the original unpackedDir retained
     Assert.assertTrue(unpackedDir.exists());
+  }
+
+  @Test
+  public void testPackFolderWithFileNameFilter() throws IOException {
+    Predicate<String> fileNameFilter = new Predicate<String>() {
+      @Override
+      public boolean test(String name) {
+        return name.startsWith("abcd");
+      }
+    };
+
+    File inputFolder = TEMP_FOLDER.newFolder();
+    File inputExcluded = File.createTempFile("abcd", "txt", inputFolder);
+    File inputIncluded = File.createTempFile("efgh", "txt", inputFolder);
+    Set<String> expectedFiles = new HashSet<>();
+    expectedFiles.add(inputIncluded.getName());
+
+    File destArchive = new File(TEMP_FOLDER.newFolder(), "myBundle.jar");
+    try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(destArchive))) {
+      BundleJarUtil.addToArchive(inputFolder, false, jarOut, fileNameFilter);
+    }
+
+    try (JarFile jarFile = new JarFile(destArchive)) {
+      Assert.assertTrue(jarFile.stream().map(JarEntry::getName).allMatch(expectedFiles::contains));
+    }
+  }
+
+  @Test
+  public void testPackFileWithFileNameFilter() throws IOException {
+    Predicate<String> fileNameFilter = new Predicate<String>() {
+      @Override
+      public boolean test(String name) {
+        return name.startsWith("abcd");
+      }
+    };
+
+    File inputExcluded = File.createTempFile("abcd", "txt", TEMP_FOLDER.newFolder());
+
+    File destArchive = new File(TEMP_FOLDER.newFolder(), "myBundle.jar");
+    try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(destArchive))) {
+      BundleJarUtil.addToArchive(inputExcluded, false, jarOut, fileNameFilter);
+    }
+
+    try (JarFile jarFile = new JarFile(destArchive)) {
+      Assert.assertEquals(0, jarFile.stream().count());
+    }
   }
 
   /**

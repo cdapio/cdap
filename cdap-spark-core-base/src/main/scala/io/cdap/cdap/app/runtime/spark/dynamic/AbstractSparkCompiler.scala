@@ -23,13 +23,13 @@ import io.cdap.cdap.common.lang.CombineClassLoader
 import io.cdap.cdap.common.lang.jar.BundleJarUtil
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager
-
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URL
+import java.util.function.Predicate
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 
@@ -49,6 +49,13 @@ import scala.tools.nsc.io.PlainFile
 abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) extends SparkCompiler {
 
   import AbstractSparkCompiler._
+
+  // Filter out $repl_$init, as newer versions of scala will throw errors for files that already exist on claspath.
+  private val REPL_INIT_FILTER = new Predicate[String] {
+    def test(name: String): Boolean = {
+      return name.equals("$repl_$init.class")
+    }
+  }
 
   private val errorReporter = new ErrorReporter()
   private lazy val iMain = createIMain(settings, errorReporter)
@@ -95,7 +102,7 @@ abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) ex
     try {
       // If it is file, use the BundleJarUtil to handle it
       if (outputDir.isInstanceOf[PlainFile]) {
-        BundleJarUtil.addToArchive(outputDir.file, jarOutput)
+        BundleJarUtil.addToArchive(outputDir.file, false, jarOutput, REPL_INIT_FILTER)
         return
       }
 
@@ -110,7 +117,7 @@ abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) ex
           jarOutput.putNextEntry(new JarEntry(name + "/"))
           jarOutput.closeEntry()
           entry.foreach(f => queue.enqueue(f))
-        } else {
+        } else if (!REPL_INIT_FILTER.test(name)) {
           jarOutput.putNextEntry(new JarEntry(name))
           copyStreams(entry.input, jarOutput)
           jarOutput.closeEntry()
