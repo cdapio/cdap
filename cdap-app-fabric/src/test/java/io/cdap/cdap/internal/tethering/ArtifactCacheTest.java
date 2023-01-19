@@ -35,9 +35,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +49,6 @@ import java.util.List;
  * Test for Artifact Cache.
  */
 public class ArtifactCacheTest extends AppFabricTestBase {
-  @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private Id.Artifact artifactId;
   private ArtifactRepository artifactRepository;
@@ -76,7 +72,7 @@ public class ArtifactCacheTest extends AppFabricTestBase {
     Locations.linkOrCopy(appJar, appJarFile);
     artifactRepository.addArtifact(artifactId, appJarFile);
     cConf = CConfiguration.create();
-    cacheDir = tmpFolder.toString();
+    cacheDir = tmpFolder.newFolder().getAbsolutePath();
     cConf.set(Constants.ArtifactCache.LOCAL_DATA_DIR, cacheDir);
     store = getInjector().getInstance(TetheringStore.class);
     RemoteClientFactory factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(getEndPoint("").toString()),
