@@ -32,7 +32,6 @@
   <packaging>jar</packaging>
 
   <dependencies>
-    <!-- Need to make it first to override hive-exec -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
@@ -139,12 +138,6 @@
       <version>${spark3.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hive</groupId>
-      <artifactId>hive-exec</artifactId>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
   <build>

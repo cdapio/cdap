@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AllProgramsApp;
@@ -63,6 +64,7 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.MockProvisioner;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.BatchProgramHistory;
+import io.cdap.cdap.proto.BatchProgramResult;
 import io.cdap.cdap.proto.Instances;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
@@ -86,8 +88,6 @@ import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -1597,14 +1597,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // test starting nonexistent program
     HttpResponse response = doPost(batchStartUrl, gson.toJson(request));
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    JSONObject jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), jsonResponse.getInt("statusCode"));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(),
+                        getResponseStatusCode(response.getResponseBodyAsString(), 0));
 
     // test stopping nonexistent program
     response = doPost(batchStopUrl, gson.toJson(request));
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), jsonResponse.getInt("statusCode"));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(),
+                        getResponseStatusCode(response.getResponseBodyAsString(), 0));
 
     request = Arrays.asList(
       ImmutableMap.of("appId", programId1.getApplication(),
@@ -1624,9 +1624,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doPost(batchStartUrl, gson.toJson(request));
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
     Assert.assertEquals(HttpResponseStatus.CONFLICT.code(),
-                        ((JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0))).getInt("statusCode"));
+                        getResponseStatusCode(response.getResponseBodyAsString(), 0));
     Assert.assertEquals(HttpResponseStatus.CONFLICT.code(),
-                        ((JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(1))).getInt("statusCode"));
+                        getResponseStatusCode(response.getResponseBodyAsString(), 1));
 
     // stopping running services
     Assert.assertEquals(HttpResponseStatus.OK.code(), doPost(batchStopUrl, gson.toJson(request)).getResponseCode());
@@ -1669,8 +1669,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Gson gson = new Gson();
     HttpResponse response = doPost(batchRunCount, gson.toJson(request));
-    JSONObject jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), jsonResponse.getInt("statusCode"));
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(),
+                        getResponseStatusCode(response.getResponseBodyAsString(), 0));
 
     // test valid program
     request = Arrays.asList(
@@ -1679,8 +1679,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                       "programId", programId.getProgram()));
     response = doPost(batchRunCount, gson.toJson(request));
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
-    jsonResponse = (JSONObject) (new JSONArray(response.getResponseBodyAsString()).get(0));
-    Assert.assertEquals(2L, jsonResponse.getLong("runCount"));
+    JsonObject jsonResponse = GSON.fromJson(response.getResponseBodyAsString(),
+                                            JsonArray.class).get(0).getAsJsonObject();
+    Assert.assertEquals(2L, jsonResponse.get("runCount").getAsLong());
   }
 
   @Test
@@ -1994,5 +1995,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getResponseCode());
     argsRead = GSON.fromJson(response.getResponseBodyAsString(), mapStringStringType);
     Assert.assertEquals(0, argsRead.size());
+  }
+
+  private int getResponseStatusCode(String json, int position) {
+    return ((List<BatchProgramResult>) GSON.fromJson(json, new TypeToken<List<BatchProgramResult>>() { }.getType()))
+      .get(position).getStatusCode();
   }
 }
