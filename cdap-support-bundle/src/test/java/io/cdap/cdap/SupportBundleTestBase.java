@@ -57,6 +57,7 @@ import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
@@ -409,5 +410,11 @@ public abstract class SupportBundleTestBase {
   protected static HttpResponse doDelete(String resource) throws Exception {
     return HttpRequests.execute(addStandardHeaders(HttpRequest.delete(getEndPoint(resource).toURL()))
                                   .build(), httpRequestConfig);
+  }
+
+  protected static String getResponseApplicationRecordVersion(String jsonResponse) {
+    return ((List<ApplicationRecord>) GSON.fromJson(jsonResponse,
+                                                    new TypeToken<List<ApplicationRecord>>() { }.getType()))
+      .get(0).getAppVersion();
   }
 }

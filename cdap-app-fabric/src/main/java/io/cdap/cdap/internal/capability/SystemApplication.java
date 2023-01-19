@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.capability;
 
 import com.google.gson.JsonObject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
-import org.json.JSONObject;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -63,7 +62,7 @@ public class SystemApplication {
   }
 
   /**
-   * @return {@link JSONObject} configuration
+   * @return {@link JsonObject} configuration
    */
   @Nullable
   public JsonObject getConfig() {

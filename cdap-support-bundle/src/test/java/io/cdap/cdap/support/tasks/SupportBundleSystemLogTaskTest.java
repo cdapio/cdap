@@ -40,8 +40,6 @@ import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.api.RunId;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -109,8 +107,7 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
       doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
                                 NAMESPACE.getNamespace()));
     Assert.assertEquals(200, appsResponse.getResponseCode());
-    JSONObject jsonResponse = (JSONObject) (new JSONArray(appsResponse.getResponseBodyAsString()).get(0));
-    String version = jsonResponse.getString("version");
+    String version = getResponseApplicationRecordVersion(appsResponse.getResponseBodyAsString());
 
     // We need the exact version here because setStartAndRunning() writes to store directly
     ProgramId workflowProgram = new ProgramId(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, version,

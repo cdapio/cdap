@@ -217,10 +217,6 @@
       <artifactId>sshd-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hive</groupId>
-      <artifactId>hive-service</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
     </dependency>
@@ -262,6 +258,11 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.12</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <!-- Replaces log4j used by Hadoop -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
     </dependency>
   </dependencies>
 
