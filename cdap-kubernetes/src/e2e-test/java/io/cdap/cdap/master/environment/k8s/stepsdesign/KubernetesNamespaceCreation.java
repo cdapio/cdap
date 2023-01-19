@@ -89,7 +89,7 @@ public class KubernetesNamespaceCreation implements CdfHelper {
   @Then("Verify Kubernetes namespace {string} exists")
   public static void verifyKubeNamespaceExists(String namespace) throws IOException {
     try {
-      coreV1Api.readNamespace(namespace, null, null, null);
+      coreV1Api.readNamespace(namespace, null);
     } catch (ApiException e) {
       throw new IOException("Error occurred while checking for Kubernetes namespace. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
@@ -102,7 +102,7 @@ public class KubernetesNamespaceCreation implements CdfHelper {
                                                          new Quantity(memLimit));
     try {
       V1ResourceQuota resourceQuota = coreV1Api.readNamespacedResourceQuota(KubeTwillRunnerService.RESOURCE_QUOTA_NAME,
-                                                                            namespace, null, null, null);
+                                                                            namespace, null);
       if (resourceQuota.getSpec() == null) {
         throw new IOException("Resource quota not created");
       } else if (!hardLimitMap.equals(resourceQuota.getSpec().getHard())) {

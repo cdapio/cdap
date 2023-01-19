@@ -20,13 +20,14 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
-import io.cdap.cdap.api.common.Constants;
 import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.http.HttpCodes;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
@@ -37,6 +38,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -106,18 +108,24 @@ public class RemoteClient {
    *                                     was a 503
    */
   public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
-    HttpRequest httpRequest = request;
     URL rewrittenURL = rewriteURL(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
-    httpRequest = new HttpRequest(request.getMethod(), rewrittenURL,
-                                  headers, request.getBody(), request.getBodyLength());
+    HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenURL,
+                                              headers, request.getBody(), request.getBodyLength());
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
       int responseCode = response.getResponseCode();
-      if (Constants.RETRYABLE_HTTP_CODES.contains(responseCode)) {
+      // 503 is always retryable. Other 5xx errors are retryable if the request is idempotent (handled in
+      // RemoteClient#executeIdempotent(HttpRequest)
+      if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
         throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
+      }
+      if (HttpCodes.isRetryable(responseCode)) {
+        String message = String.format("Service %s is not available: %s",
+                                       discoverableServiceName, response.getResponseBodyAsString());
+        throw new ServiceException(message, null, HttpResponseStatus.valueOf(responseCode));
       }
       if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
         throw new UnauthorizedException(response.getResponseBodyAsString());
@@ -136,6 +144,7 @@ public class RemoteClient {
    * @param idempotency the type of idempotency
    * @return the response
    * @throws IOException if there was an IOException while performing the non-idempotent request
+   * @throws RetryableException if there was an exception while performing an idempotent request
    */
   public HttpResponse execute(HttpRequest request, Idempotency idempotency) throws IOException {
     switch (idempotency) {
@@ -154,7 +163,7 @@ public class RemoteClient {
   private HttpResponse executeIdempotent(HttpRequest request) {
     try {
       return execute(request);
-    } catch (IOException e) {
+    } catch (IOException | ServiceException e) {
       throw new RetryableException(e);
     }
   }

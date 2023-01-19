@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -33,14 +34,18 @@ import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Test for Artifact Cache.
@@ -49,33 +54,43 @@ public class ArtifactCacheTest extends AppFabricTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  @Test
-  public void testArtifactCache() throws Exception {
-    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
-    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+  private Id.Artifact artifactId;
+  private ArtifactRepository artifactRepository;
+  private RemoteClient remoteClient;
+  private ArtifactCache cache;
+  private File appJarFile;
+  private TetheringStore store;
+  private String cacheDir;
+  private CConfiguration cConf;
 
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
+  @Before
+  public void setUp() throws Exception {
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+
+    artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "some-task", "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
-    File appJarFile = new File(tmpFolder.newFolder(),
-                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    appJarFile = new File(tmpFolder.newFolder(),
+                          String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
 
     Locations.linkOrCopy(appJar, appJarFile);
     artifactRepository.addArtifact(artifactId, appJarFile);
-
-    CConfiguration cConf = CConfiguration.create();
-    String cacheDir = tmpFolder.toString();
+    cConf = CConfiguration.create();
+    cacheDir = tmpFolder.toString();
     cConf.set(Constants.ArtifactCache.LOCAL_DATA_DIR, cacheDir);
-    TetheringStore store = getInjector().getInstance(TetheringStore.class);
-    ArtifactCache cache = new ArtifactCache(cConf);
-    // Add a couple of tethered peers
-    addPeer(store, "peer1");
-    addPeer(store, "peer2");
-
+    store = getInjector().getInstance(TetheringStore.class);
     RemoteClientFactory factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(getEndPoint("").toString()),
                                                           new NoOpInternalAuthenticator());
     HttpRequestConfig config = new DefaultHttpRequestConfig(true);
-    RemoteClient remoteClient = factory.createRemoteClient("", config,
-                                                           Constants.Gateway.INTERNAL_API_VERSION_3);
+    remoteClient = factory.createRemoteClient("", config,
+                                              Constants.Gateway.INTERNAL_API_VERSION_3);
+    cache = new ArtifactCache(cConf);
+  }
+
+  @Test
+  public void testArtifactCache() throws Exception {
+    // Add a couple of tethered peers
+    addPeers(ImmutableList.of("peer1", "peer2"));
     // Get artifact from first peer
     File peer1ArtifactPath = cache.getArtifact(artifactId.toEntityId(), "peer1", remoteClient);
     // Get the artifact again. The same path was returned
@@ -103,13 +118,35 @@ public class ArtifactCacheTest extends AppFabricTestBase {
     Assert.assertTrue(newPeer1ArtifactPath.exists());
   }
 
-  private void addPeer(TetheringStore tetheringStore, String peerName) throws PeerAlreadyExistsException, IOException {
+  @Test
+  public void testTemporaryFileIgnored() throws Exception {
+    // Add a tethered peer
+    addPeers(Collections.singletonList("peer3"));
+
+    // Get artifact from the peer, it will be cached
+    File artifactPath = cache.getArtifact(artifactId.toEntityId(), "peer3", remoteClient);
+
+    // Create a temporary file in the same directory
+    try {
+      Files.createFile(artifactPath.getParentFile().toPath().resolve("16734042670004650467150673059434.tmp"));
+    } catch (FileAlreadyExistsException e) {
+      // no-op
+    }
+
+    // Get the artifact again. It should be fetched from the cache and the temporary file should be ignored.
+    File newPath = cache.getArtifact(artifactId.toEntityId(), "peer3", remoteClient);
+    Assert.assertEquals(artifactPath, newPath);
+  }
+
+  private void addPeers(List<String> peers) throws PeerAlreadyExistsException, IOException {
     NamespaceAllocation namespaceAllocation = new NamespaceAllocation("default", null,
                                                                       null);
     PeerMetadata peerMetadata = new PeerMetadata(Collections.singletonList(namespaceAllocation),
                                                  Collections.emptyMap(), null);
-    PeerInfo peerInfo = new PeerInfo(peerName, getEndPoint("").toString(),
-                                     TetheringStatus.ACCEPTED, peerMetadata, System.currentTimeMillis());
-    tetheringStore.addPeer(peerInfo);
+    for (String peer: peers) {
+      PeerInfo peerInfo = new PeerInfo(peer, getEndPoint("").toString(),
+                                       TetheringStatus.ACCEPTED, peerMetadata, System.currentTimeMillis());
+      store.addPeer(peerInfo);
+    }
   }
 }

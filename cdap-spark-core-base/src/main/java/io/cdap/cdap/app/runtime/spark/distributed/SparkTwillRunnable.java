@@ -33,6 +33,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnable;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
+import io.cdap.cdap.master.spi.twill.Completable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
@@ -41,6 +42,7 @@ import org.apache.twill.api.TwillRunnable;
 /**
  * A {@link TwillRunnable} wrapper for {@link ProgramRunner} that runs spark.
  */
+@Completable
 public class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunner> {
 
   public SparkTwillRunnable(String name) {

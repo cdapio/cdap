@@ -136,7 +136,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     this.provisionerNotifier = provisionerNotifier;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.programUpdateTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
-    this.tetheringClient = new TetheringClient(remoteAuthenticator, cConf.get(Constants.INSTANCE_NAME));
+    this.tetheringClient = new TetheringClient(remoteAuthenticator, cConf);
     this.programUpdateFetchSize = cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE);
   }
 

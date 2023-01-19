@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.collect.Range;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
@@ -40,6 +42,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -49,13 +55,17 @@ import java.util.zip.ZipInputStream;
 public class FileLocalizer implements MasterEnvironmentRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileLocalizer.class);
+  private static final int MAX_RETRIES = 5;
+  private static final Range<Integer> FAILURE_RETRY_RANGE = Range.closedOpen(1000, 5000);
 
   private final MasterEnvironmentRunnableContext context;
+  private final Random random;
   private volatile boolean stopped;
 
   public FileLocalizer(MasterEnvironmentRunnableContext context,
                        @SuppressWarnings("unused") MasterEnvironment masterEnv) {
     this.context = context;
+    this.random = new Random();
   }
 
   @Override
@@ -70,18 +80,21 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
     // Localize the runtime config jar
     URI uri = URI.create(args[0]);
 
-    Path runtimeConfigDir;
+    AtomicReference<Path> runtimeConfigDir = new AtomicReference<>();
     if (localLocationFactory.getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
       try (FileInputStream is = new FileInputStream(new File(uri))) {
-        runtimeConfigDir = expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
+        runtimeConfigDir.set(expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR)));
       }
     } else {
-      try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(uri))) {
-        runtimeConfigDir = expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR));
-      }
+      callWithRetries(() -> {
+        try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(uri))) {
+          runtimeConfigDir.set(expand(uri, is, Paths.get(Constants.Files.RUNTIME_CONFIG_JAR)));
+        }
+        return null;
+      });
     }
 
-    try (Reader reader = Files.newBufferedReader(runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC),
+    try (Reader reader = Files.newBufferedReader(runtimeConfigDir.get().resolve(Constants.Files.TWILL_SPEC),
                                                  StandardCharsets.UTF_8)) {
       TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create().fromJson(reader);
 
@@ -96,13 +109,16 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
 
         Path targetPath = targetDir.resolve(localFile.getName());
 
-        try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(localFile.getURI()))) {
-          if (localFile.isArchive()) {
-            expand(localFile.getURI(), is, targetPath);
-          } else {
-            copy(localFile.getURI(), is, targetPath);
+        callWithRetries(() -> {
+          try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(localFile.getURI()))) {
+            if (localFile.isArchive()) {
+              expand(localFile.getURI(), is, targetPath);
+            } else {
+              copy(localFile.getURI(), is, targetPath);
+            }
           }
-        }
+          return null;
+        });
       }
     }
   }
@@ -157,5 +173,29 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
       }
     }
     return targetDir;
+  }
+
+  /**
+   * Executes a {@link Callable} and retries the call if it throws {@link RetryableException}.
+   * TODO(CDAP-20236): Move Retries code from cdap-common into cdap-retries module and use it here.
+   *
+   * @param callable the callable to run
+   */
+  private void callWithRetries(Callable<Void> callable) throws Exception {
+    int retries = 0;
+    while (true) {
+      try {
+        callable.call();
+        return;
+      } catch (RetryableException e) {
+        if (++retries > MAX_RETRIES) {
+          throw e;
+        }
+        // Sleep for some random milliseconds before retrying
+        int sleepMs = random.nextInt(FAILURE_RETRY_RANGE.upperEndpoint()) + FAILURE_RETRY_RANGE.lowerEndpoint();
+        LOG.debug("Retry fetching artifacts after {} ms", sleepMs);
+        TimeUnit.MILLISECONDS.sleep(sleepMs);
+      }
+    }
   }
 }

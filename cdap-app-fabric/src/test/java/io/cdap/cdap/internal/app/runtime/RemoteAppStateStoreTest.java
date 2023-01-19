@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime;
 
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -209,7 +210,7 @@ public class RemoteAppStateStoreTest {
 
   @Test
   public void testSaveFail() throws IOException {
-    expectedException.expectCause(CoreMatchers.isA(IOException.class));
+    expectedException.expectCause(CoreMatchers.isA(ServiceException.class));
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
                                                                       ERROR_APP);
     remoteAppStateStore.saveState("some_key", "some value".getBytes());
@@ -258,7 +259,7 @@ public class RemoteAppStateStoreTest {
 
   @Test
   public void testGetFail() throws IOException {
-    expectedException.expectCause(CoreMatchers.isA(IOException.class));
+    expectedException.expectCause(CoreMatchers.isA(ServiceException.class));
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
                                                                       ERROR_APP);
     remoteAppStateStore.getState("some_key");

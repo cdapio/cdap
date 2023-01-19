@@ -26,6 +26,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -144,8 +145,8 @@ public class MessagingHttpServiceTest {
     try {
       client.publish(StoreRequestBuilder.of(topic1)
                        .setTransaction(-Long.MAX_VALUE).addPayload("c").addPayload("d").build());
-      Assert.fail("Expected IOException");
-    } catch (IOException ex) {
+      Assert.fail("Expected ServiceException");
+    } catch (ServiceException ex) {
       // expected
     }
 

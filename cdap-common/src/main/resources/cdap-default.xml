@@ -5409,6 +5409,22 @@
   </property>
 
   <property>
+    <name>tethering.client.connection.timeout.ms</name>
+    <value>${http.client.connection.timeout.ms}</value>
+    <description>
+      Tethering client connection timeout in milliseconds.
+    </description>
+  </property>
+
+  <property>
+    <name>tethering.client.read.timeout.ms</name>
+    <value>${http.client.read.timeout.ms}</value>
+    <description>
+      Tethering client read timeout in milliseconds.
+    </description>
+  </property>
+
+  <property>
     <name>tethering.server.enabled</name>
     <value>false</value>
     <description>

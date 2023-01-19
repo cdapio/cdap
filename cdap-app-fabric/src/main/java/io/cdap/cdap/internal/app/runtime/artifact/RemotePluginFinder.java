@@ -26,10 +26,12 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.http.HttpCodes;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
@@ -163,21 +165,17 @@ public class RemotePluginFinder implements PluginFinder {
                         ? ArtifactScope.SYSTEM : ArtifactScope.USER
         ));
 
-    HttpResponse response = remoteClient.execute(requestBuilder.build());
+    HttpResponse response = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
 
     int responseCode = response.getResponseCode();
     if (responseCode != HttpURLConnection.HTTP_OK) {
-      switch (responseCode) {
-        // throw retryable error if app fabric is not available, might be due to restarting
-        case HttpURLConnection.HTTP_BAD_GATEWAY:
-        case HttpURLConnection.HTTP_UNAVAILABLE:
-        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
-          throw new ServiceUnavailableException(
-            Constants.Service.APP_FABRIC_HTTP,
-            Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
-        case HttpURLConnection.HTTP_NOT_FOUND:
-          throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
-
+      if (HttpCodes.isRetryable(responseCode)) {
+        throw new ServiceUnavailableException(
+          Constants.Service.APP_FABRIC_HTTP,
+          Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
+      }
+      if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
       }
       throw new IllegalArgumentException("Failure in getting plugin information with type " + pluginType + " and name "
                                            + pluginName + " that extends " + parentArtifactId
@@ -198,20 +196,17 @@ public class RemotePluginFinder implements PluginFinder {
         HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",
                                       artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion()));
 
-    HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
+    HttpResponse response = remoteClientInternal.execute(requestBuilder.build(), Idempotency.AUTO);
 
     int responseCode = response.getResponseCode();
     if (responseCode != HttpURLConnection.HTTP_OK) {
-      switch (responseCode) {
-        // throw retryable error if app fabric is not available, might be due to restarting
-        case HttpURLConnection.HTTP_BAD_GATEWAY:
-        case HttpURLConnection.HTTP_UNAVAILABLE:
-        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
-          throw new ServiceUnavailableException(
-            Constants.Service.APP_FABRIC_HTTP,
-            Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
-        case HttpURLConnection.HTTP_NOT_FOUND:
-          throw new ArtifactNotFoundException(artifactId);
+      if (HttpCodes.isRetryable(responseCode)) {
+        throw new ServiceUnavailableException(
+          Constants.Service.APP_FABRIC_HTTP,
+          Constants.Service.APP_FABRIC_HTTP + " service is not available with status " + responseCode);
+      }
+      if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new ArtifactNotFoundException(artifactId);
       }
       throw new IOException("Exception while getting artifacts list: " + response.getResponseCode()
                               + ": " + response.getResponseBodyAsString());
