@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * if this is a preview run
  */
 public class AppDeploymentRuntimeInfo {
+  @Deprecated
   private final ApplicationSpecification existingAppSpec;
   private final Map<String, String> userArguments;
   private final Map<String, String> systemArguments;
@@ -38,6 +39,7 @@ public class AppDeploymentRuntimeInfo {
     this.systemArguments = systemArguments;
   }
 
+  @Deprecated
   @Nullable
   public ApplicationSpecification getExistingAppSpec() {
     return existingAppSpec;
