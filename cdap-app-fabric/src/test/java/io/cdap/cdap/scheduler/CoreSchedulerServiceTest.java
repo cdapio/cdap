@@ -51,7 +51,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
-import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -376,7 +375,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     TopicId programEventTopic =
       NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC));
-    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
+    ProgramStateWriter programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
 
     // These notifications should not trigger the program
     ProgramRunId anotherWorkflowRun = anotherWorkflow.run(RunIds.generate());

@@ -22,7 +22,9 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 
 /**
  *
@@ -62,13 +64,13 @@ public final class ProgramRunnerRuntimeModule extends RuntimeModule {
   }
 
   /**
-   * Guice module for exposing the {@link ProgramStateWriter}.
+   * Guice module for exposing the {@link ProgramStateWriter} and {@link ProgramStatePublisher}.
    */
   public static final class ProgramStateWriterModule extends AbstractModule {
 
     @Override
     protected void configure() {
-      // Bind ProgramStateWriter
+      bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class).in(Scopes.SINGLETON);
       bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
     }
   }

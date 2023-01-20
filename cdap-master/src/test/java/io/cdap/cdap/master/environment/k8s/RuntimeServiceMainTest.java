@@ -94,9 +94,11 @@ public class RuntimeServiceMainTest extends MasterServiceMainTestBase {
     // Write out program state events to simulate program start
     Injector appFabricInjector = getServiceMainInstance(AppFabricServiceMain.class).getInjector();
     CConfiguration cConf = appFabricInjector.getInstance(CConfiguration.class);
+    // We publish to the record event topic here directly, bypassing ProgramNotificationSubscriberService
     ProgramStatePublisher programStatePublisher = new MessagingProgramStatePublisher(
       appFabricInjector.getInstance(MessagingService.class),
-      NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC)),
+      cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
+      1,
       RetryStrategies.fromConfiguration(cConf, "system.program.state.")
     );
     new MessagingProgramStateWriter(programStatePublisher).start(programRunId, programOptions, null,

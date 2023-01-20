@@ -49,6 +49,7 @@ import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.profile.ProfileService;
@@ -121,6 +122,7 @@ public class TetheringServerHandlerTest {
   private static final long REQUEST_TIME = System.currentTimeMillis();
   private static TetheringStore tetheringStore;
   private static MessagingService messagingService;
+  private static MessagingProgramStatePublisher messagingProgramStatePublisher;
   private static ProfileService profileService;
   private static CConfiguration cConf;
   private static Injector injector;
@@ -170,6 +172,7 @@ public class TetheringServerHandlerTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
+    messagingProgramStatePublisher = injector.getInstance(MessagingProgramStatePublisher.class);
     profileService = injector.getInstance(ProfileService.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -203,7 +206,8 @@ public class TetheringServerHandlerTest {
     service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName(),
         new NoOpMetricsCollectionService())
       .setHttpHandlers(
-        new TetheringServerHandler(cConf, tetheringStore, messagingService, contextAccessEnforcer),
+        new TetheringServerHandler(cConf, tetheringStore, messagingService, contextAccessEnforcer,
+                                   messagingProgramStatePublisher),
         new TetheringHandler(cConf, tetheringStore, messagingService, profileService)).build();
     service.start();
     config = ClientConfig.builder()
