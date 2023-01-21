@@ -47,7 +47,7 @@ public final class NamespaceMeta {
   private final NamespaceRepositoryConfig repository;
 
   private NamespaceMeta(String name, String description, long generation,
-                        NamespaceConfig config, NamespaceRepositoryConfig repository) {
+                        NamespaceConfig config, @Nullable NamespaceRepositoryConfig repository) {
     this.name = name;
     this.description = description;
     this.generation = generation;
@@ -77,7 +77,7 @@ public final class NamespaceMeta {
     return config;
   }
 
-  public NamespaceRepositoryConfig getRepoConfig() {
+  public NamespaceRepositoryConfig getRepository() {
     return repository;
   }
 
@@ -97,14 +97,9 @@ public final class NamespaceMeta {
     private int keytabURIVersion;
     private long generation;
     private Map<String, String> configMap = new HashMap<>();
+    
     // The repository configuration properties
-    private String repoProvider;
-    private String repoLink;
-    private String repoDefaultBranch;
-    private String repoAuthType;
-    private String repoUserName;
-    private String repoPathPrefix;
-    private Map<String, String> repoConfigMap = new HashMap<>();
+    private NamespaceRepositoryConfig repository;
 
     public Builder() {
       // No-Op
@@ -126,17 +121,7 @@ public final class NamespaceMeta {
         this.keytabURIWithoutVersion = config.getKeytabURIWithoutVersion();
         this.keytabURIVersion = config.getKeytabURIVersion();
       }
-
-      NamespaceRepositoryConfig repoConfig = meta.getRepoConfig();
-      if (repoConfig != null) {
-        this.repoConfigMap = repoConfig.getConfigs();
-        this.repoProvider = repoConfig.getProvider();
-        this.repoLink = repoConfig.getLink();
-        this.repoDefaultBranch = repoConfig.getDefaultBranch();
-        this.repoAuthType = repoConfig.getAuthType();
-        this.repoUserName = repoConfig.getUsername();
-        this.repoPathPrefix = repoConfig.getPathPrefix();
-      }
+      this.repository = meta.getRepository();
     }
 
     public Builder setName(NamespaceId id) {
@@ -214,36 +199,13 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setRepoConfig(NamespaceRepositoryConfig repoConfig) {
-      if (repoConfig.getProvider() != null) {
-        this.repoProvider = repoConfig.getProvider();
-      }
-      if (repoConfig.getLink() != null) {
-        this.repoLink = repoConfig.getLink();
-      }
-      if (repoConfig.getDefaultBranch() != null) {
-        this.repoDefaultBranch = repoConfig.getDefaultBranch();
-      }
-      if (repoConfig.getAuthType() != null) {
-        this.repoAuthType = repoConfig.getAuthType();
-      }
-      if (repoConfig.getUsername() != null) {
-        this.repoUserName = repoConfig.getUsername();
-      }
-      if (repoConfig.getPathPrefix() != null) {
-        this.repoPathPrefix = repoConfig.getPathPrefix();
-      }
+    public Builder setRepository(NamespaceRepositoryConfig repository) {
+      this.repository = repository;
       return this;
     }
 
     public Builder deleteRepoConfig() {
-      this.repoConfigMap = new HashMap<>();
-      this.repoProvider = null;
-      this.repoLink = null;
-      this.repoDefaultBranch = null;
-      this.repoAuthType = null;
-      this.repoUserName = null;
-      this.repoPathPrefix = null;
+      this.repository = null;
       return this;
     }
 
@@ -276,10 +238,7 @@ public final class NamespaceMeta {
                                                    hbaseNamespace, hiveDatabase,
                                                    principal, groupName, keytabURI,
                                                    configMap),
-                               new NamespaceRepositoryConfig(repoProvider, repoLink,
-                                                             repoDefaultBranch, repoAuthType,
-                                                             repoUserName, repoPathPrefix,
-                                                             repoConfigMap));
+                               repository);
     }
   }
 
@@ -315,7 +274,7 @@ public final class NamespaceMeta {
       ", description='" + description + '\'' +
       ", generation=" + generation +
       ", config=" + config +
-      ", repoConfig=" + repository +
+      ", repositoryConfig=" + repository +
       '}';
   }
 }

@@ -158,11 +158,10 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                                                                 NamespaceConfig.ROOT_DIRECTORY,
                                                                 customRoot);
 
-    Map<String, String> namespaceRepoString = ImmutableMap.of(NamespaceRepositoryConfig.PROVIDER, "github",
-                                                              NamespaceRepositoryConfig.LINK,
-                                                              "example.com",
-                                                              NamespaceRepositoryConfig.AUTH_TYPE, "PAT",
-                                                              NamespaceRepositoryConfig.DEFAULT_BRANCH, "develop");
+    NamespaceRepositoryConfig namespaceRepoString =
+      new NamespaceRepositoryConfig("github", "example.com", "develop",
+                                    NamespaceRepositoryConfig.AuthType.PAT, "token",
+                                    "user", "");
     
     String propertiesString = GSON.toJson(ImmutableMap.of(NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
                                                           CONFIG_FIELD, namespaceConfigString,
@@ -181,16 +180,16 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("root.directory").getAsString());
     Assert.assertEquals("github",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
+                          .get("provider").getAsString());
     Assert.assertEquals("example.com",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.LINK).getAsString());
-    Assert.assertEquals("PAT",
+                          .get("link").getAsString());
+    Assert.assertEquals("pat",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
+                          .get("authType").getAsString());
     Assert.assertEquals("develop",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.DEFAULT_BRANCH).getAsString());
+                          .get("defaultBranch").getAsString());
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
     // check that the custom location for the namespace was not deleted while deleting namespace

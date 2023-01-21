@@ -53,6 +53,9 @@ public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateNamespaceRepository(FullHttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceRepositoryConfig repository = getNamespaceRepository(request);
+    if (repository != null && !repository.isValid()) {
+      throw new BadRequestException(String.format("Invalid repository configuration: %s.", repository));
+    }
     namespaceAdmin.updateRepository(new NamespaceId(namespaceId), repository);
     responder.sendString(HttpResponseStatus.OK, String.format("Updated repository configuration for namespace '%s'.",
                                                               namespaceId));

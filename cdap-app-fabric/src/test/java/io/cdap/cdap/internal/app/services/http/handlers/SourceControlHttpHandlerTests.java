@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -67,14 +66,13 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
     Assert.assertNotNull(namespace);
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
-    Assert.assertEquals("{}", namespace.get(REPOSITORY_FIELD).toString());
+    Assert.assertNull(namespace.get(REPOSITORY_FIELD));
 
     // Update repository config
-    NamespaceRepositoryConfig namespaceRepo = new NamespaceRepositoryConfig(
-      ImmutableMap.of(NamespaceRepositoryConfig.PROVIDER, "github",
-                      NamespaceRepositoryConfig.LINK, "example.com",
-                      NamespaceRepositoryConfig.AUTH_TYPE, "OAuth",
-                      NamespaceRepositoryConfig.DEFAULT_BRANCH, "develop"));
+    NamespaceRepositoryConfig namespaceRepo =
+      new NamespaceRepositoryConfig("github", "example.com", "develop",
+                                    NamespaceRepositoryConfig.AuthType.PAT, "token",
+                                    "user", "");
     response = updateRepository(NAME, namespaceRepo);
     assertResponseCode(200, response);
     response = getNamespace(NAME);
@@ -85,16 +83,16 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals("github",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
+                          .get("provider").getAsString());
     Assert.assertEquals("example.com",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.LINK).getAsString());
-    Assert.assertEquals("OAuth",
+                          .get("link").getAsString());
+    Assert.assertEquals("pat",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
+                          .get("authType").getAsString());
     Assert.assertEquals("develop",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.DEFAULT_BRANCH).getAsString());
+                          .get("defaultBranch").getAsString());
 
     // cleanup
     response = deleteNamespace(NAME);
@@ -106,15 +104,15 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
     // create a namespace with principal
     String nsPrincipal = "nsCreator/somehost.net@somekdc.net";
     String nsKeytabURI = "some/path";
+    
+    NamespaceRepositoryConfig namespaceRepo =
+      new NamespaceRepositoryConfig("github", "example.com", "master",
+                                    NamespaceRepositoryConfig.AuthType.PAT, "token",
+                                    "user", "");
 
-    NamespaceRepositoryConfig namespaceRepo = new NamespaceRepositoryConfig(
-      ImmutableMap.of(NamespaceRepositoryConfig.PROVIDER, "github",
-                      NamespaceRepositoryConfig.LINK, "example.com",
-                      NamespaceRepositoryConfig.AUTH_TYPE, "PAT",
-                      NamespaceRepositoryConfig.DEFAULT_BRANCH, "master"));
     NamespaceMeta impNsMeta =
       new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal)
-        .setKeytabURI(nsKeytabURI).setRepoConfig(namespaceRepo).build();
+        .setKeytabURI(nsKeytabURI).setRepository(namespaceRepo).build();
     HttpResponse response = createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
     assertResponseCode(200, response);
     // verify
@@ -125,16 +123,16 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
     Assert.assertEquals("github",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.PROVIDER).getAsString());
+                          .get("provider").getAsString());
     Assert.assertEquals("example.com",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.LINK).getAsString());
-    Assert.assertEquals("PAT",
+                          .get("link").getAsString());
+    Assert.assertEquals("pat",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.AUTH_TYPE).getAsString());
+                          .get("authType").getAsString());
     Assert.assertEquals("master",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get(NamespaceRepositoryConfig.DEFAULT_BRANCH).getAsString());
+                          .get("defaultBranch").getAsString());
 
     // Delete repository config
     response = deleteNamespaceRepository(NAME);
@@ -143,7 +141,7 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
     // verify that the repo config has been deleted
-    Assert.assertEquals("{}", namespace.get(REPOSITORY_FIELD).toString());
+    Assert.assertNull(namespace.get(REPOSITORY_FIELD));
 
     // Delete repository config again
     response = deleteNamespaceRepository(NAME);

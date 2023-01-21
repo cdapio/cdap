@@ -93,7 +93,7 @@ public class InMemoryNamespaceAdmin implements NamespaceAdmin {
     if (meta == null) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(meta).setRepoConfig(repository);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(meta).setRepository(repository);
     namespaces.replace(namespaceId, builder.build());
   }
 

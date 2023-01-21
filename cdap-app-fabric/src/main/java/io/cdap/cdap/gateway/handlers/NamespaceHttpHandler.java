@@ -108,6 +108,10 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                                                   namespaceId, namespaceId));
     }
 
+    if (metadata != null && metadata.getRepository() != null && !metadata.getRepository().isValid()) {
+      throw new BadRequestException(String.format("Invalid repository configuration: %s.", metadata.getRepository()));
+    }
+
     NamespaceMeta.Builder builder = metadata == null ? new NamespaceMeta.Builder() :
       new NamespaceMeta.Builder(metadata);
     builder.setName(namespace);

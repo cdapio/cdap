@@ -16,106 +16,74 @@
 
 package io.cdap.cdap.proto;
 
-import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
  * Represents the repository configuration of a namespace. This class needs to be GSON serializable.
  */
-@JsonAdapter(NamespaceRepositoryConfigCodec.class)
 public class NamespaceRepositoryConfig {
-  public static final String PROVIDER = "provider";
-  public static final String LINK = "link";
-  public static final String DEFAULT_BRANCH = "default.branch";
-  public static final String AUTH_TYPE = "auth.type";
-  public static final String USERNAME = "username";
-  public static final String PATH_PREFIX = "path.prefix";
+  private final String provider;
+  private final String link;
+  private final String defaultBranch;
+  private final AuthType authType;
+  private final String tokenName;
+  private final String username;
+  private final String pathPrefix;
 
-  private final Map<String, String> configs;
-  
-  public NamespaceRepositoryConfig(@Nullable String provider, @Nullable String link, @Nullable String defaultBranch,
-                                   @Nullable String authType, @Nullable String username, @Nullable String pathPrefix,
-                                   Map<String, String> existingConfigs) {
-    Map<String, String> configs = new HashMap<>(existingConfigs);
-
-    if (provider != null) {
-      configs.put(PROVIDER, provider);
-    }
-
-    if (link != null) {
-      configs.put(LINK, link);
-    }
-
-    if (defaultBranch != null) {
-      configs.put(DEFAULT_BRANCH, defaultBranch);
-    }
-
-    if (authType != null) {
-      configs.put(AUTH_TYPE, authType);
-    }
-
-    if (username != null) {
-      configs.put(USERNAME, username);
-    }
-
-    if (pathPrefix != null) {
-      configs.put(PATH_PREFIX, pathPrefix);
-    }
-
-    this.configs = Collections.unmodifiableMap(configs);
+  public NamespaceRepositoryConfig(String provider, String link, String defaultBranch, AuthType authType,
+                                   String tokenName, @Nullable String username, @Nullable String pathPrefix) {
+    this.provider = provider;
+    this.link = link;
+    this.defaultBranch = defaultBranch;
+    this.authType = authType;
+    this.tokenName = tokenName;
+    this.username = username;
+    this.pathPrefix = pathPrefix;
   }
 
   /**
-   * Creates a new instance with the given set of configurations.
+   * Auth Type Enums.
    */
-  public NamespaceRepositoryConfig(Map<String, String> configs) {
-    this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
+  public enum AuthType {
+    @SerializedName(value = "pat")
+    PAT;
   }
 
   public String getProvider() {
-    return getConfig(PROVIDER);
+    return provider;
   }
 
   public String getLink() {
-    return getConfig(LINK);
-  }
-
-  public String getAuthType() {
-    return getConfig(AUTH_TYPE);
+    return link;
   }
 
   public String getDefaultBranch() {
-    return getConfig(DEFAULT_BRANCH);
+    return defaultBranch;
+  }
+
+  public AuthType getAuthType() {
+    return authType;
+  }
+
+  public String getTokenName() {
+    return tokenName;
   }
 
   @Nullable
   public String getUsername() {
-    return getConfig(USERNAME);
+    return username;
   }
   
   @Nullable
   public String getPathPrefix() {
-    return getConfig(PATH_PREFIX);
+    return pathPrefix;
   }
 
-  /**
-   * Returns the config value of the given name.
-   *
-   * @param name name of the config
-   * @return the value of the config or {@code null} if the config doesn't exist.
-   */
-  @Nullable
-  public String getConfig(String name) {
-    return configs.get(name);
-  }
-
-  public boolean exists() {
-    return !this.configs.isEmpty();
+  public boolean isValid() {
+    return provider != null && link != null && defaultBranch != null && authType != null && tokenName != null;
   }
 
   @Override
@@ -127,25 +95,30 @@ public class NamespaceRepositoryConfig {
       return false;
     }
     NamespaceRepositoryConfig that = (NamespaceRepositoryConfig) o;
-    return Objects.equals(configs, that.configs);
+    return Objects.equals(provider, that.provider) &&
+      Objects.equals(link, that.link) &&
+      Objects.equals(defaultBranch, that.defaultBranch) &&
+      Objects.equals(authType, that.authType) &&
+      Objects.equals(tokenName, that.tokenName) &&
+      Objects.equals(username, that.username) &&
+      Objects.equals(pathPrefix, that.pathPrefix);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(configs);
+    return Objects.hash(provider, link, defaultBranch, authType, tokenName, username, pathPrefix);
   }
 
   @Override
   public String toString() {
     return "NamespaceRepositoryConfig{" +
-      "configs=" + configs +
+      "provider=" + provider +
+      ", link=" + link +
+      ", defaultBranch=" + defaultBranch +
+      ", authType=" + authType +
+      ", tokenName=" + tokenName +
+      ", username=" + username +
+      ", pathPrefix=" + pathPrefix +
       '}';
-  }
-
-  /**
-   * Returns the raw full config map. This is for the {@link NamespaceRepositoryConfigCodec} to use.
-   */
-  public Map<String, String> getConfigs() {
-    return configs;
   }
 }

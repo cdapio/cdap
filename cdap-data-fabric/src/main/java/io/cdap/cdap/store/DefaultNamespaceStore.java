@@ -183,7 +183,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
       if (existingMeta == null) {
         throw new NamespaceNotFoundException(namespaceId);
       }
-      NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).setRepoConfig(repository);
+      NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).setRepository(repository);
       NamespaceMeta updatedMeta = builder.build();
       table.create(updatedMeta);
       LOG.info("Repository configuration of Namespace {} is updated.", namespaceId);
@@ -199,7 +199,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
       if (existingMeta == null) {
         throw new NamespaceNotFoundException(namespaceId);
       }
-      if (existingMeta.getRepoConfig() == null || !existingMeta.getRepoConfig().exists()) {
+      if (existingMeta.getRepository() == null) {
         throw new NamespaceRepositoryNotFoundException(namespaceId);
       }
 
