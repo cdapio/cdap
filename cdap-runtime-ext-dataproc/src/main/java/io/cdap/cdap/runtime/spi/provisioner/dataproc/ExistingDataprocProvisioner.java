@@ -145,6 +145,10 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
-    return PollingStrategies.fixedInterval(0, TimeUnit.SECONDS);
+    if (cluster.getStatus() == ClusterStatus.CREATING) {
+      return PollingStrategies.fixedInterval(0, TimeUnit.SECONDS);
+    }
+    DataprocConf conf = DataprocConf.create(createContextProperties(context));
+    return PollingStrategies.fixedInterval(conf.getPollInterval(), TimeUnit.SECONDS);
   }
 }
