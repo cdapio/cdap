@@ -20,6 +20,7 @@ package io.cdap.cdap.common.utils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.PeekingIterator;
 
 import java.util.Iterator;
 
@@ -29,7 +30,7 @@ import java.util.Iterator;
  *
  * @param <T> type of element in the iterator
  */
-public class TimeBoundIterator<T> extends AbstractIterator<T> {
+public class TimeBoundIterator<T> extends AbstractIterator<T> implements PeekingIterator<T> {
   private final Iterator<T> delegate;
   private final long timeBoundMillis;
   private final Stopwatch stopwatch;

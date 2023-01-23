@@ -17,6 +17,7 @@
 package io.cdap.cdap.metrics.process;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.PeekingIterator;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
@@ -38,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
@@ -105,7 +105,7 @@ public class MetricsAdminSubscriberService extends AbstractMessagingPollingServi
 
   @Nullable
   @Override
-  protected String processMessages(Iterator<ImmutablePair<String, MetricsAdminMessage>> messages) {
+  protected String processMessages(PeekingIterator<ImmutablePair<String, MetricsAdminMessage>> messages) {
     MetricsConsumerMetaTable metaTable = getMetaTable();
 
     List<ImmutablePair<String, MetricsAdminMessage>> pendingMessages =

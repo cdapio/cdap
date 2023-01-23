@@ -17,6 +17,8 @@
 package io.cdap.cdap.messaging.subscriber;
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
@@ -111,7 +113,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
    * @throws Exception if there is error processing messages.
    */
   @Nullable
-  protected abstract String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception;
+  protected abstract String processMessages(PeekingIterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
    * Perform pre-processing before a batch of messages will be processed.
@@ -202,7 +204,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
 
     startTime = System.currentTimeMillis();
 
-    MessageIterator iterator = new MessageIterator(messages.iterator());
+    MessageIterator iterator = new MessageIterator(Iterators.peekingIterator(messages.iterator()));
     String messageId = processMessages(iterator);
     this.messageId = messageId == null ? this.messageId : messageId;
 
@@ -233,12 +235,13 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
    * An {@link Iterator} that decodes {@link Message} to a given object type through the {@link #decodeMessage(Message)}
    * method.
    */
-  private final class MessageIterator extends AbstractIterator<ImmutablePair<String, T>> {
+  private final class MessageIterator extends AbstractIterator<ImmutablePair<String, T>>
+    implements PeekingIterator<ImmutablePair<String, T>> {
 
-    private final Iterator<Message> messages;
+    private final PeekingIterator<Message> messages;
     private int consumedCount;
 
-    MessageIterator(Iterator<Message> messages) {
+    MessageIterator(PeekingIterator<Message> messages) {
       this.messages = messages;
       this.consumedCount = 0;
     }
