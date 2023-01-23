@@ -23,14 +23,12 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -66,10 +64,7 @@ public class ProgramStateWriterWithHeartBeat {
                                          MessagingService messagingService,
                                          CConfiguration cConf) {
     this(programRunId, programStateWriter, cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS),
-         new MessagingProgramStatePublisher(messagingService,
-                                            NamespaceId.SYSTEM.topic(cConf.get(
-                                              Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
-                                            RetryStrategies.fromConfiguration(cConf, "system.program.state.")));
+         new MessagingProgramStatePublisher(cConf, messagingService));
   }
 
   @VisibleForTesting

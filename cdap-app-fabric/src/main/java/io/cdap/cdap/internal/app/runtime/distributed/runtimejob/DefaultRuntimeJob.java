@@ -71,7 +71,9 @@ import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -496,6 +498,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
         bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
           .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class).in(Scopes.SINGLETON);
         bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
 
         defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);

@@ -91,10 +91,12 @@ public class ProgramNotificationSubscriberServiceTest {
 
   @BeforeClass
   public static void setupClass() {
-    injector = AppFabricTestHelper.getInjector();
-    cConf = injector.getInstance(CConfiguration.class);
+    cConf = CConfiguration.create();
     // we only want to process and check program status messages processed by heart beat store, so set high value
     cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, String.valueOf(TimeUnit.HOURS.toSeconds(1)));
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 10);
+
+    injector = AppFabricTestHelper.getInjector(cConf);
 
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
     workflowStateWriter = injector.getInstance(WorkflowStateWriter.class);
@@ -179,6 +181,16 @@ public class ProgramNotificationSubscriberServiceTest {
 
     // Stop the Spark normally
     programStateWriter.completed(sparkRunId);
+
+    // Wait for Spark to turn to COMPLETED
+    Tasks.waitFor(ProgramRunStatus.COMPLETED, () -> TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      RunRecordDetail meta = metadataStoreDataset.getRun(sparkRunId);
+      if (meta == null) {
+        return null;
+      }
+      return meta.getStatus();
+    }), 10000, TimeUnit.SECONDS);
 
     // Error out the Workflow without stopping the MR
     programStateWriter.error(workflowRunId, new IllegalStateException("Explicitly error out"));

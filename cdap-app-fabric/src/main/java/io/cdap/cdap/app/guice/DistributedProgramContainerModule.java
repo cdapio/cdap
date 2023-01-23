@@ -51,7 +51,9 @@ import io.cdap.cdap.data2.registry.MessagingUsageWriter;
 import io.cdap.cdap.data2.registry.UsageWriter;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
+import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -327,40 +329,41 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
       if (clusterMode == ClusterMode.ISOLATED && tethered && masterEnv != null) {
         bind(MasterEnvironment.class).toInstance(masterEnv);
-        bind(ProgramStateWriter.class).toProvider(ProgramStateWriterProvider.class);
+        bind(ProgramStatePublisher.class).toProvider(ProgramStatePublisherProvider.class);
       } else {
-        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
+        bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class);
       }
 
+      bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
       expose(ProgramStateWriter.class);
     }
   }
 
   /**
-   * A guice {@link Provider} for providing the binding for {@link ProgramStateWriter} that is used in tethered
-   * execution.
+   * A guice {@link Provider} for providing the binding for {@link ProgramStatePublisher}
+   * that is used in tethered execution.
    */
-  private static final class ProgramStateWriterProvider implements Provider<ProgramStateWriter> {
+  private static final class ProgramStatePublisherProvider implements Provider<ProgramStatePublisher> {
 
     private final CConfiguration cConf;
     private final MasterEnvironment masterEnv;
     private final InternalAuthenticator internalAuthenticator;
 
     @Inject
-    ProgramStateWriterProvider(CConfiguration cConf, MasterEnvironment masterEnv,
-                               InternalAuthenticator internalAuthenticator) {
+    ProgramStatePublisherProvider(CConfiguration cConf, MasterEnvironment masterEnv,
+                                  InternalAuthenticator internalAuthenticator) {
       this.cConf = cConf;
       this.masterEnv = masterEnv;
       this.internalAuthenticator = internalAuthenticator;
     }
 
     @Override
-    public ProgramStateWriter get() {
+    public ProgramStatePublisher get() {
       RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
         masterEnv.getDiscoveryServiceClientSupplier().get(),
         internalAuthenticator);
 
-      return new MessagingProgramStateWriter(cConf, new ClientMessagingService(cConf, remoteClientFactory));
+      return new MessagingProgramStatePublisher(cConf, new ClientMessagingService(cConf, remoteClientFactory));
     }
   }
 }
