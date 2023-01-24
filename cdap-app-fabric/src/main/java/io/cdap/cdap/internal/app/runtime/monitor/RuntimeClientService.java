@@ -59,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -261,15 +262,15 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      * Prepare to close by sending out all messages except final program status.
      */
     public void prepareClose() throws IOException {
-      forcePoll();
+      forcePoll(t -> true);
     }
 
     @Override
     public void close() throws IOException {
-      forcePoll();
+      forcePoll(t -> t instanceof IOException || t instanceof RetryableException);
     }
 
-    protected void forcePoll() {
+    protected void forcePoll(Predicate<Throwable> retryPredicate) {
       try {
         // Force one extra poll with retry
         nextPublishTimeMillis = 0L;
@@ -278,7 +279,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           while (publishMessages() == 0) {
             LOG.trace("Continue processing final messages for {}", topicId.getTopic());
           }
-        }, getRetryStrategy(), t -> true);
+        }, getRetryStrategy(), retryPredicate);
       } catch (TopicNotFoundException | BadRequestException e) {
         // This shouldn't happen. If it does, it must be some bug in the system and there is no way to recover from it.
         // So just log the cause for debugging.
