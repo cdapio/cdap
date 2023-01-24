@@ -31,6 +31,7 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -63,6 +64,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -71,6 +73,7 @@ import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -109,6 +112,8 @@ public class RuntimeClientServiceTest {
   private RuntimeClientService runtimeClientService;
   private ProgramStatePublisher clientProgramStatePublisher;
 
+  private AtomicBoolean runCompleted = new AtomicBoolean(false);
+
   @Before
   public void beforeTest() throws Exception {
     CConfiguration cConf = CConfiguration.create();
@@ -132,7 +137,12 @@ public class RuntimeClientServiceTest {
         @Override
         protected void bindRequestValidator() {
           bind(RuntimeRequestValidator.class).toInstance(
-            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.COMPLETED));
+            (programRunId, request) -> {
+              if (runCompleted.get()) {
+                throw new GoneException();
+              }
+              return new ProgramRunInfo(ProgramRunStatus.RUNNING);
+            });
         }
 
         @Override
@@ -299,6 +309,45 @@ public class RuntimeClientServiceTest {
   @Test(timeout = 10000L)
   public void testRuntimeClientStop() throws Exception {
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientProgramStatePublisher);
+
+    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    try {
+      stopFuture.get(2, TimeUnit.SECONDS);
+      Assert.fail("Expected runtime client service not stopped");
+    } catch (TimeoutException e) {
+      // Expected
+    }
+
+    // Publish a program completed state, which should unblock the client service stop.
+    programStateWriter.completed(PROGRAM_RUN_ID);
+    stopFuture.get();
+  }
+
+  /**
+   * Test that runtime can complete even if run was stopped externally
+   */
+  @Test(timeout = 10000L)
+  public void testExternalStop() throws Exception {
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientProgramStatePublisher);
+    MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
+    MessagePublisher messagePublisher = messagingContext.getDirectMessagePublisher();
+
+    //Validate proper topic order as it's important for not to loose messages
+    Assert.assertEquals(
+      "Topics must be in proper order to ensure status messages are sent out last",
+      new ArrayList<>(topicConfigs.keySet()), new ArrayList<>(runtimeClientService.getTopicNames()));
+
+    //Mark run as externally stopped
+    runCompleted.set(true);
+
+    //Publish a message
+    Map.Entry<String, String> topicEntry = topicConfigs.entrySet().iterator().next();
+    Assert.assertFalse(
+      "Expected topics to be sorted so that status ones are last ones",
+      topicEntry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+
+    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topicEntry.getValue(),
+                             topicEntry.getKey(), topicEntry.getKey());
 
     ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
     try {
