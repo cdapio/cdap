@@ -26,12 +26,17 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -47,15 +52,29 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
@@ -70,6 +89,7 @@ import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -79,6 +99,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -125,6 +146,9 @@ public class TetheringClientHandlerTest {
   private ClientConfig clientConfig;
   private MockTetheringServerHandler serverHandler;
   private TetheringAgentService tetheringAgentService;
+  private TetheringProgramEventPublisher tetheringEventPublisher;
+  private MessagingService messagingService;
+  private TransactionRunner transactionRunner;
 
   // User having tethering permissions
   private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
@@ -212,11 +236,11 @@ public class TetheringClientHandlerTest {
       new DefaultContextAccessEnforcer(new AuthenticationTestContext(), inMemoryAccessController);
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
 
-    MessagingService messagingService = injector.getInstance(MessagingService.class);
+    messagingService = injector.getInstance(MessagingService.class);
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client",
                                                       new NoOpMetricsCollectionService())
       .setHttpHandlers(new TetheringClientHandler(cConf, tetheringStore, contextAccessEnforcer, namespaceAdmin,
-                                                  injector.getInstance(RemoteAuthenticator.class)),
+                                                  injector.getInstance(RemoteAuthenticator.class), messagingService),
                        new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
       .build();
     clientService.start();
@@ -228,10 +252,15 @@ public class TetheringClientHandlerTest {
           .setSSLEnabled(false)
           .build()).build();
 
-    tetheringAgentService = new TetheringAgentService(cConf, injector.getInstance(TransactionRunner.class),
-                                                      tetheringStore, injector.getInstance(ProgramStateWriter.class),
+    transactionRunner = injector.getInstance(TransactionRunner.class);
+    tetheringEventPublisher = new TetheringProgramEventPublisher(cConf, tetheringStore, messagingService,
+                                                                 injector.getInstance(ProgramRunRecordFetcher.class),
+                                                                 transactionRunner);
+    Assert.assertEquals(Service.State.RUNNING, tetheringEventPublisher.startAndWait());
+    tetheringAgentService = new TetheringAgentService(cConf,
+                                                      tetheringStore,
+                                                      injector.getInstance(ProgramStateWriter.class),
                                                       messagingService,
-                                                      injector.getInstance(ProgramRunRecordFetcher.class),
                                                       injector.getInstance(RemoteAuthenticator.class),
                                                       injector.getInstance(LocationFactory.class),
                                                       injector.getInstance(ProvisionerNotifier.class),
@@ -242,6 +271,7 @@ public class TetheringClientHandlerTest {
   @After
   public void tearDown() throws Exception {
     deleteTetheringIfNeeded(SERVER_INSTANCE);
+    Assert.assertEquals(Service.State.TERMINATED, tetheringEventPublisher.stopAndWait());
     Assert.assertEquals(Service.State.TERMINATED, tetheringAgentService.stopAndWait());
   }
 
@@ -337,6 +367,62 @@ public class TetheringClientHandlerTest {
     createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, DESCRIPTION,
                     TetheringStatus.REJECTED,
                     HttpResponseStatus.BAD_REQUEST);
+  }
+
+  @Test
+  public void testProgramStatusUpdate() throws IOException, InterruptedException, TopicNotFoundException {
+    serverHandler.setTetheringStatus(TetheringStatus.PENDING);
+    // Client initiates tethering with the server
+    createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, DESCRIPTION);
+
+    // Server accepts tethering
+    serverHandler.setTetheringStatus(TetheringStatus.ACCEPTED);
+
+    String serverEndpoint = serverConfig.getConnectionConfig().getURI().toString();
+    // Tethering state should transition to accepted on the client.
+    waitForTetheringStatus(TetheringStatus.ACCEPTED, SERVER_INSTANCE, serverEndpoint,
+                           PROJECT, LOCATION, NAMESPACES, DESCRIPTION, true);
+
+    // Make server respond with 500 error for control messages.
+    serverHandler.setResponseStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    ProgramId program = application.program(ProgramType.WORKFLOW, "program");
+    RunId runId = RunIds.generate(System.currentTimeMillis());
+    ProgramRunId programRunId = program.run(runId);
+    Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
+                                                     ProgramOptionConstants.PROGRAM_STATUS,
+                                                     ProgramRunStatus.STARTING.name());
+    Notification notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    Map<String, String> systemArgs = ImmutableMap.of(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+                                                     ProgramOptionConstants.PEER_NAME, SERVER_INSTANCE);
+    // Persist STARTING program status and publish on TMS
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      metadataStoreDataset.recordProgramProvisioning(programRunId, Collections.emptyMap(), systemArgs,
+                                                     AppFabricTestHelper.createSourceId(1),
+                                                     artifactId);
+      metadataStoreDataset.recordProgramProvisioned(programRunId, 0,
+                                                    AppFabricTestHelper.createSourceId(2));
+      metadataStoreDataset.recordProgramStart(programRunId, null, ImmutableMap.of(),
+                                              AppFabricTestHelper.createSourceId(3));
+    });
+    MessagePublisher publisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
+    String topic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
+    try {
+      messagingService.createTopic(new TopicMetadata(new TopicId(NamespaceId.SYSTEM.getNamespace(), topic),
+                                                     Collections.emptyMap()));
+    } catch (TopicAlreadyExistsException ex) {
+      // no-op
+    }
+    publisher.publish(NamespaceId.SYSTEM.getNamespace(), topic, GSON.toJson(notification));
+
+    // Server stops returning 500. Client should send pending program state updates.
+    serverHandler.setResponseStatus(HttpResponseStatus.OK);
+
+    // Program status update should be sent to the server
+    waitForProgramStatus(ProgramRunStatus.STARTING.name());
   }
 
   @Test
@@ -638,5 +724,15 @@ public class TetheringClientHandlerTest {
     Assert.assertEquals(namespaces, peer.getMetadata().getNamespaceAllocations());
     Assert.assertEquals(description, peer.getMetadata().getDescription());
     Assert.assertEquals(expectActive, peer.isActive());
+  }
+
+  private void waitForProgramStatus(String programStatus) throws InterruptedException {
+    for (int retry = 0; retry < 10; ++retry) {
+      if (programStatus.equals(serverHandler.getProgramStatus())) {
+        return;
+      }
+      Thread.sleep(1000);
+    }
+    Assert.assertEquals(programStatus, serverHandler.getProgramStatus());
   }
 }

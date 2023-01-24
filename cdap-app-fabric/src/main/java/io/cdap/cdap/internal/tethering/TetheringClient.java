@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import com.google.common.base.Strings;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -116,6 +117,9 @@ public final class TetheringClient {
                                         peerUri, content);
     if (resp.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       String body = resp.getResponseBodyAsString(StandardCharsets.UTF_8);
+      if (Strings.isNullOrEmpty(body)) {
+        throw new NotFoundException(String.format("Peer %s was not found", peerInfo.getName()));
+      }
       try {
         return GSON.fromJson(body, TetheringControlResponseV2.class);
       } catch (Exception e) {
