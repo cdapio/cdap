@@ -88,7 +88,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     this.messagePublisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
     this.tetheringStore = tetheringStore;
     this.topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                               cConf.get(Constants.Tethering.TOPIC_PREFIX) + tetheredInstanceName);
+                               cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX) + tetheredInstanceName);
     this.locationFactory = locationFactory;
   }
 

@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -43,7 +45,10 @@ import javax.inject.Inject;
  */
 public class TetheringStore {
   private static final Gson GSON = new GsonBuilder().create();
-
+  // Prefix of per-peer topic that contains last message id received
+  static final String PEER_TOPIC_PREFIX = "tethering.peer.message.state.";
+  // Prefix of per-peer topic that contains last message id sent
+  static final String MSG_TO_PEER_TOPIC_PREFIX = "tethering.peer.message.sent.state.";
   private final TransactionRunner transactionRunner;
 
   @Inject
@@ -174,6 +179,18 @@ public class TetheringStore {
    * @throws PeerNotFoundException if the peer is not found
    */
   public void deletePeer(String peerName) throws IOException, PeerNotFoundException {
+    deletePeer(peerName, false);
+  }
+
+  /**
+   * Deletes a peer
+   *
+   * @param peerName name of the peer
+   * @param deleteSubscriberState whether to delete subscriber state
+   * @throws IOException if deleting the table fails
+   * @throws PeerNotFoundException if the peer is not found
+   */
+  public void deletePeer(String peerName, boolean deleteSubscriberState) throws IOException, PeerNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable tetheringTable = context.getTable(StoreDefinition.TetheringStore.TETHERING);
       Optional<StructuredRow> row = getPeerInternal(tetheringTable, peerName);
@@ -182,6 +199,13 @@ public class TetheringStore {
       }
       tetheringTable
         .delete(Collections.singleton(Fields.stringField(StoreDefinition.TetheringStore.PEER_NAME_FIELD, peerName)));
+      if (deleteSubscriberState) {
+        AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+        appMetadataStore.deleteSubscriberState(PEER_TOPIC_PREFIX + peerName,
+                                               TetheringProgramEventPublisher.SUBSCRIBER);
+        appMetadataStore.deleteSubscriberState(MSG_TO_PEER_TOPIC_PREFIX + peerName,
+                                               TetheringProgramEventPublisher.SUBSCRIBER);
+      }
     }, IOException.class, PeerNotFoundException.class);
   }
 
@@ -222,6 +246,57 @@ public class TetheringStore {
       }
       return getPeerInfo(row.get());
     }, PeerNotFoundException.class, IOException.class);
+  }
+
+  /**
+   * Initialize last message id sent and received from each peer in {@code peers}
+   * @param peers list of peer names
+   * @return subscriber state
+   */
+  public SubscriberState initializeSubscriberState(List<String> peers) {
+    SubscriberState subscriberState = new SubscriberState();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+      for (String peer : peers) {
+        String messageId = appMetadataStore.retrieveSubscriberState(PEER_TOPIC_PREFIX + peer,
+                                                                    TetheringProgramEventPublisher.SUBSCRIBER);
+        subscriberState.setLastMessageIdReceived(peer, messageId);
+
+        messageId = appMetadataStore.retrieveSubscriberState(MSG_TO_PEER_TOPIC_PREFIX + peer,
+                                                             TetheringProgramEventPublisher.SUBSCRIBER);
+        subscriberState.setLastMessageIdSent(peer, messageId);
+      }
+    });
+    return subscriberState;
+  }
+
+  /**
+   * Updates subscriber state table entries for tethered peers
+   * @param subscriberState subscriber state
+   */
+  public void updateSubscriberState(SubscriberState subscriberState) {
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+      StructuredTable tetheringTable = context.getTable(StoreDefinition.TetheringStore.TETHERING);
+      for (Map.Entry<String, String> entry : subscriberState.getLastMessageIdsReceived().entrySet()) {
+        if (!getPeerInternal(tetheringTable, entry.getKey()).isPresent()) {
+          // Don't update subscriber state for deleted peer
+          continue;
+        }
+        appMetadataStore.persistSubscriberState(PEER_TOPIC_PREFIX + entry.getKey(),
+                                                TetheringProgramEventPublisher.SUBSCRIBER,
+                                                entry.getValue());
+      }
+      for (Map.Entry<String, String> entry : subscriberState.getLastMessageIdsSent().entrySet()) {
+        if (!getPeerInternal(tetheringTable, entry.getKey()).isPresent()) {
+          // Don't update subscriber state for deleted peer
+          continue;
+        }
+        appMetadataStore.persistSubscriberState(MSG_TO_PEER_TOPIC_PREFIX + entry.getKey(),
+                                                TetheringProgramEventPublisher.SUBSCRIBER,
+                                                entry.getValue());
+      }
+    });
   }
 
   private Optional<StructuredRow> getPeerInternal(StructuredTable tetheringTable, String peerName)
