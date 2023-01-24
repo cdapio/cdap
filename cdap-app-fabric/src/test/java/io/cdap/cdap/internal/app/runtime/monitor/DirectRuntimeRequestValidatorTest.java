@@ -27,6 +27,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -139,7 +140,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test
-  public void testValid() throws BadRequestException {
+  public void testValid() throws BadRequestException, GoneException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert the run
@@ -163,7 +164,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test (expected = BadRequestException.class)
-  public void testInvalid() throws BadRequestException {
+  public void testInvalid() throws BadRequestException, GoneException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Validation should fail
@@ -174,7 +175,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test (expected = UnauthorizedException.class)
-  public void testUnauthorized() throws BadRequestException {
+  public void testUnauthorized() throws BadRequestException, GoneException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
@@ -189,8 +190,8 @@ public class DirectRuntimeRequestValidatorTest {
     validator.getProgramRunStatus(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
-  @Test (expected = BadRequestException.class)
-  public void testNotRunning() throws BadRequestException {
+  @Test (expected = GoneException.class)
+  public void testNotRunning() throws BadRequestException, GoneException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert a completed run
@@ -213,7 +214,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test
-  public void testFetcher() throws BadRequestException {
+  public void testFetcher() throws BadRequestException, GoneException {
     ArtifactId artifactId = new ArtifactId("test", new ArtifactVersion("1.0"), ArtifactScope.USER);
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
     ProgramRunStatus programRunStatus = ProgramRunStatus.RUNNING;
@@ -246,7 +247,7 @@ public class DirectRuntimeRequestValidatorTest {
   }
 
   @Test
-  public void testValidProgramInStoppingState() throws BadRequestException {
+  public void testValidProgramInStoppingState() throws BadRequestException, GoneException {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Insert the run
