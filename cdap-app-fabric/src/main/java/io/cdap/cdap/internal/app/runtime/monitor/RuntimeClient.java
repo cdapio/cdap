@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -95,10 +96,13 @@ public class RuntimeClient {
    * @param messages the list of messages to send
    * @throws IOException if failed to send all the given messages
    * @throws BadRequestException if the server denial the request due to bad request
+   * @throws GoneException if the run already finished
    * @throws ServiceUnavailableException if the server is not available
    */
   public void sendMessages(ProgramRunId programRunId,
-                           TopicId topicId, Iterator<Message> messages) throws IOException, BadRequestException {
+                           TopicId topicId, Iterator<Message> messages)
+    throws IOException, BadRequestException, GoneException {
+
     if (!NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
       throw new IllegalArgumentException("Only topic in the system namespace is supported");
     }
@@ -176,7 +180,7 @@ public class RuntimeClient {
       try (OutputStream os = urlConn.getOutputStream()) {
         Files.copy(eventFile.toPath(), os);
         throwIfError(programRunId, urlConn);
-      } catch (BadRequestException e) {
+      } catch (BadRequestException | GoneException e) {
         // Just treat bad request as IOException since it won't be retriable
         throw new IOException(e);
       }
@@ -219,7 +223,7 @@ public class RuntimeClient {
    * Validates the responds from the given {@link HttpURLConnection} to be 200, or throws exception if it is not 200.
    */
   private void throwIfError(ProgramRunId programRunId,
-                            HttpURLConnection urlConn) throws IOException, BadRequestException {
+                            HttpURLConnection urlConn) throws IOException, BadRequestException, GoneException {
     int responseCode = urlConn.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_OK) {
       return;
@@ -234,6 +238,8 @@ public class RuntimeClient {
           throw new BadRequestException(errorMsg);
         case HttpURLConnection.HTTP_UNAVAILABLE:
           throw new ServiceUnavailableException(Constants.Service.RUNTIME, errorMsg);
+        case HttpURLConnection.HTTP_GONE:
+          throw new GoneException(errorMsg);
       }
 
       throw new IOException("Failed to send message for program run " + programRunId + " to " + urlConn.getURL()

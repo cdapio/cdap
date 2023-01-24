@@ -31,6 +31,7 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -66,11 +67,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -97,7 +99,8 @@ public class RuntimeClientServiceTest {
     NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
   private static final Gson GSON = new Gson();
 
-  private Map<String, String> topicConfigs;
+  private List<String> topicNames;
+  private List<String> nonStatusTopicNames;
 
   // Services for the runtime server side
   private MessagingService messagingService;
@@ -109,6 +112,8 @@ public class RuntimeClientServiceTest {
   private RuntimeClientService runtimeClientService;
   private ProgramStatePublisher clientProgramStatePublisher;
 
+  private AtomicBoolean runCompleted = new AtomicBoolean(false);
+
   @Before
   public void beforeTest() throws Exception {
     CConfiguration cConf = CConfiguration.create();
@@ -117,7 +122,12 @@ public class RuntimeClientServiceTest {
     cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, TOPIC_CONFIGS_VALUE);
     cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, PROGRAM_STATUS_EVENT_TEST_PARTITIONS);
 
-    topicConfigs = RuntimeMonitors.createTopicConfigs(cConf);
+    topicNames = RuntimeMonitors.createTopicNameList(cConf);
+    Pattern statusTopicRegex = Pattern.compile(
+      "^" + Pattern.quote(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) + "[0-9]*$");
+    nonStatusTopicNames = topicNames.stream()
+      .filter(name -> !statusTopicRegex.matcher(name).matches())
+      .collect(Collectors.toList());
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
 
@@ -132,7 +142,12 @@ public class RuntimeClientServiceTest {
         @Override
         protected void bindRequestValidator() {
           bind(RuntimeRequestValidator.class).toInstance(
-            (programRunId, request) -> new ProgramRunInfo(ProgramRunStatus.COMPLETED));
+            (programRunId, request) -> {
+              if (runCompleted.get()) {
+                throw new GoneException();
+              }
+              return new ProgramRunInfo(ProgramRunStatus.RUNNING);
+            });
         }
 
         @Override
@@ -221,32 +236,26 @@ public class RuntimeClientServiceTest {
     // the RuntimeClientService will decode it to watch for program termination
     programStateWriter.running(PROGRAM_RUN_ID, null);
 
-    for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), entry.getValue(), entry.getKey(), entry.getKey());
-      }
+    for (String topic : nonStatusTopicNames) {
+      messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic, "msg" + topic, "msg" + topic);
     }
 
     // Extract the program run status from the Notification
     MessagingContext serverMessagingContext = new MultiThreadMessagingContext(messagingService);
     waitForStatus(serverMessagingContext, ProgramRunStatus.RUNNING);
 
-    for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        Tasks.waitFor(Arrays.asList(entry.getKey(), entry.getKey()),
-                      () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null)
-                        .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
-                      5, TimeUnit.SECONDS);
-      }
+    for (String topic : nonStatusTopicNames) {
+      Tasks.waitFor(Arrays.asList("msg" + topic, "msg" + topic),
+                    () -> fetchMessages(serverMessagingContext, topic, 10, null)
+                      .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
+                    5, TimeUnit.SECONDS);
     }
 
-    for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        Tasks.waitFor(Arrays.asList(entry.getKey(), entry.getKey()),
-                      () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null)
-                        .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
-                      5, TimeUnit.SECONDS);
-      }
+    for (String topic : nonStatusTopicNames) {
+      Tasks.waitFor(Arrays.asList("msg" + topic, "msg" + topic),
+                    () -> fetchMessages(serverMessagingContext, topic, 10, null)
+                      .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
+                    5, TimeUnit.SECONDS);
     }
 
     // Writes a program terminate message to unblock stopping of the client service
@@ -268,12 +277,10 @@ public class RuntimeClientServiceTest {
     programStateWriter.completed(PROGRAM_RUN_ID);
     Tasks.waitFor(true, () -> runtimeClientService.getProgramFinishTime() >= 0, 2, TimeUnit.SECONDS);
 
-    for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        List<String> payloads = Arrays.asList(entry.getKey(), entry.getKey(), entry.getKey());
-        messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), entry.getValue(),
-                                 StandardCharsets.UTF_8, payloads.iterator());
-      }
+    for (String topic : nonStatusTopicNames) {
+      List<String> payloads = Arrays.asList("msg" + topic, "msg" + topic, "msg" + topic);
+      messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
+                               StandardCharsets.UTF_8, payloads.iterator());
     }
 
     // The client service should get stopped by itself.
@@ -282,13 +289,11 @@ public class RuntimeClientServiceTest {
 
     // All messages should be sent after the runtime client service stopped
     MessagingContext serverMessagingContext = new MultiThreadMessagingContext(messagingService);
-    for (Map.Entry<String, String> entry : topicConfigs.entrySet()) {
-      if (!entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)) {
-        Tasks.waitFor(Arrays.asList(entry.getKey(), entry.getKey(), entry.getKey()),
-                      () -> fetchMessages(serverMessagingContext, entry.getValue(), 10, null)
-                        .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
-                      5, TimeUnit.SECONDS);
-      }
+    for (String topic : nonStatusTopicNames) {
+      Tasks.waitFor(Arrays.asList("msg" + topic, "msg" + topic, "msg" + topic),
+                    () -> fetchMessages(serverMessagingContext, topic, 10, null)
+                      .stream().map(Message::getPayloadAsString).collect(Collectors.toList()),
+                    5, TimeUnit.SECONDS);
     }
     waitForStatus(serverMessagingContext, ProgramRunStatus.COMPLETED);
   }
@@ -299,6 +304,41 @@ public class RuntimeClientServiceTest {
   @Test(timeout = 10000L)
   public void testRuntimeClientStop() throws Exception {
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientProgramStatePublisher);
+
+    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    try {
+      stopFuture.get(2, TimeUnit.SECONDS);
+      Assert.fail("Expected runtime client service not stopped");
+    } catch (TimeoutException e) {
+      // Expected
+    }
+
+    // Publish a program completed state, which should unblock the client service stop.
+    programStateWriter.completed(PROGRAM_RUN_ID);
+    stopFuture.get();
+  }
+
+  /**
+   * Test that runtime can complete even if run was stopped externally
+   */
+  @Test(timeout = 10000L)
+  public void testExternalStop() throws Exception {
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientProgramStatePublisher);
+    MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
+    MessagePublisher messagePublisher = messagingContext.getDirectMessagePublisher();
+
+    //Validate proper topic order as it's important for not to loose messages
+    Assert.assertEquals(
+      "Topics must be in proper order to ensure status messages are sent out last",
+      topicNames, runtimeClientService.getTopicNames());
+
+    //Mark run as externally stopped
+    runCompleted.set(true);
+
+    //Publish a message
+    String topic = nonStatusTopicNames.get(0);
+    messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
+                             "msg1" + topic, "msg2" + topic);
 
     ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
     try {
@@ -331,10 +371,10 @@ public class RuntimeClientServiceTest {
     throws TimeoutException, InterruptedException, ExecutionException {
 
     Tasks.waitFor(Collections.singletonList(status),
-                  () -> topicConfigs.entrySet().stream().filter(
-                      entry -> entry.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)
-                    ).flatMap(entry ->
-                                fetchMessages(serverMessagingContext, entry.getValue(), 10, null).stream()
+                  () -> topicNames.stream().filter(
+                      topic -> !nonStatusTopicNames.contains(topic)
+                    ).flatMap(topic ->
+                                fetchMessages(serverMessagingContext, topic, 10, null).stream()
                                   .map(Message::getPayloadAsString)
                                   .map(s -> GSON.fromJson(s, Notification.class))
                                   .map(n -> n.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS))
