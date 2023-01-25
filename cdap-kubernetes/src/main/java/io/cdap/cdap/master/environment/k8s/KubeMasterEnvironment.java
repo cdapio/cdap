@@ -243,8 +243,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   @Override
-  public void initialize(MasterEnvironmentContext context)
-    throws IOException, IllegalArgumentException, ApiException, IllegalStateException {
+  public void initialize(MasterEnvironmentContext context) throws IOException, IllegalArgumentException, ApiException {
     LOG.info("Initializing Kubernetes environment");
 
     Map<String, String> conf = context.getConfigurations();

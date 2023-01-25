@@ -110,7 +110,6 @@ import javax.annotation.Nullable;
  * cdap.twill.runner=k8s
  * cdap.twill.run.id=[run id]
  * cdap.twill.app=[cleansed app name]
- * cdap.twill.parent.pod=[name of the pod which creates the resource]
  *
  * and annotations:
  *
@@ -126,7 +125,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
   private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
-  public static final String PARENT_POD_LABEL = "twill.parent.pod";
   public static final String RUN_ID_LABEL = "cdap.twill.run.id";
   private static final String RUNNER_LABEL = "cdap.twill.runner";
   private static final String RUNNER_LABEL_VAL = "k8s";
@@ -173,7 +171,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
                                 String workloadLauncherRoleNameForNamespace,
                                 String workloadLauncherRoleNameForCluster,
                                 String workloadIdentityPool,
-                                String workloadIdentityProvider) throws IllegalStateException {
+                                String workloadIdentityProvider) {
     this.masterEnvContext = masterEnvContext;
     this.apiClientFactory = apiClientFactory;
     this.kubeNamespace = kubeNamespace;
@@ -182,9 +180,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.discoveryServiceClient = discoveryServiceClient;
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
 
-    // Selects all runs started by the k8s twill runner that has the run id label and
-    // has parent pod label equal to current pod, if the pod is from a stateful set.
-    this.selector = generateSelector();
+    // Selects all runs started by the k8s twill runner that has the run id label
+    this.selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
     // Contains mapping of the Kubernetes namespace to a map of resource types and the watcher threads
     this.resourceWatchers = new HashMap<>();
     this.liveInfos = new ConcurrentSkipListMap<>();
@@ -195,31 +192,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     this.workloadLauncherRoleNameForCluster = workloadLauncherRoleNameForCluster;
     this.workloadIdentityPool = workloadIdentityPool;
     this.workloadIdentityProvider = workloadIdentityProvider;
-  }
-
-  /**
-   * Throws an exception if Pod is not controlled by a StatefulSet.
-   */
-  private void validatePodIsControlledByStatefulSet() throws IllegalStateException {
-    if (!this.podInfo.getOwnerReferences().stream().anyMatch(r -> r.getKind().equals("StatefulSet"))) {
-      throw new IllegalStateException("Pod: " + podInfo.getName() + " should be controlled by a stateful set");
-    }
-  }
-
-  /**
-   * Generates k8s label selector which selects all runs started by the k8s twill runner that has the run id label.
-   * If the pod is controlled by a StatefulSet it also adds a PARENT_POD_LABEL to the selector.
-   * The PARENT_POD_LABEL is meant to be an identifier for the resources created by the current pod.
-   * Unlike a Deployment, a StatefulSet maintains a sticky identity for each of their Pods.
-   * (https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
-   * Therefore, even if the pod goes down, it will come up with the same pod name and this selector can
-   * be continued to be used.
-   * Throws an exception if pod is not controlled by StatefulSet.
-   */
-  private String generateSelector() throws IllegalStateException {
-    validatePodIsControlledByStatefulSet();
-    return String.format("%s=%s,%s=%s,%s", PARENT_POD_LABEL, podInfo.getName(),
-                         RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
   }
 
   @Override
@@ -246,8 +218,6 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     labels.put(RUNNER_LABEL, RUNNER_LABEL_VAL);
     labels.put(APP_LABEL, spec.getName());
     labels.put(RUN_ID_LABEL, runId.getId());
-    labels.put(PARENT_POD_LABEL, podInfo.getName());
-
 
     return new KubeTwillPreparer(masterEnvContext, apiClient, kubeNamespace, podInfo,
                                  spec, runId, appLocation, resourcePrefix, labels,
