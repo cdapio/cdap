@@ -31,6 +31,7 @@ import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.OAuthAccessTokenMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -88,11 +89,10 @@ public class RemoteValidationTask implements RunnableTask {
     }
 
     Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
-      SecureStoreMacroEvaluator.FUNCTION_NAME,
-      new SecureStoreMacroEvaluator(namespace, systemAppContext),
+      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, systemAppContext),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(systemAppContext),
-      ConnectionMacroEvaluator.FUNCTION_NAME,
-      new ConnectionMacroEvaluator(namespace, systemAppContext)
+      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, systemAppContext),
+      OAuthAccessTokenMacroEvaluator.FUNCTION_NAME, new OAuthAccessTokenMacroEvaluator(systemAppContext)
     );
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
                                                               DefaultMacroEvaluator.MAP_FUNCTIONS);

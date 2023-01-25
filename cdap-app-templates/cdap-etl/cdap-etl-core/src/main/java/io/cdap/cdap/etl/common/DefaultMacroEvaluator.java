@@ -46,6 +46,7 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
       LogicalStartTimeMacroEvaluator.FUNCTION_NAME, new LogicalStartTimeMacroEvaluator(logicalStartTime),
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, secureStore),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer),
+      OAuthAccessTokenMacroEvaluator.FUNCTION_NAME, new OAuthAccessTokenMacroEvaluator(serviceDiscoverer),
       ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, serviceDiscoverer)
     ), MAP_FUNCTIONS);
   }
