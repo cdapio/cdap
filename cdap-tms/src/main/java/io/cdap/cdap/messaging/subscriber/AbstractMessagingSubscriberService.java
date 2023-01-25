@@ -133,14 +133,14 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   @Nullable
   @Override
-  protected String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception {
+  protected String processMessages(Iterable<ImmutablePair<String, T>> messages) throws Exception {
     MessageTrackingIterator iterator;
 
     // Process the notifications and record the message id of where the processing is up to.
     // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
     long timeBoundMillis = 900L * txTimeoutSeconds;
     iterator = TransactionRunners.run(getTransactionRunner(), context -> {
-      TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
+      TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(),
                                                                                               timeBoundMillis);
       MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
       processMessages(context, trackingIterator);
