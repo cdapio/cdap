@@ -38,9 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -105,11 +103,11 @@ public class MetricsAdminSubscriberService extends AbstractMessagingPollingServi
 
   @Nullable
   @Override
-  protected String processMessages(Iterator<ImmutablePair<String, MetricsAdminMessage>> messages) {
+  protected String processMessages(Iterable<ImmutablePair<String, MetricsAdminMessage>> messages) {
     MetricsConsumerMetaTable metaTable = getMetaTable();
 
     List<ImmutablePair<String, MetricsAdminMessage>> pendingMessages =
-      StreamSupport.stream(Spliterators.spliteratorUnknownSize(messages, 0), false).collect(Collectors.toList());
+      StreamSupport.stream(messages.spliterator(), false).collect(Collectors.toList());
 
     String messageId = null;
     for (ImmutablePair<String, MetricsAdminMessage> messagePair : pendingMessages) {
