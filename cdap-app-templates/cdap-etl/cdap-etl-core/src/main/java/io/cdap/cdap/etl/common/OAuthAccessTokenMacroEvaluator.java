@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -25,7 +24,6 @@ import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
@@ -33,19 +31,26 @@ import java.util.Map;
  * A {@link MacroEvaluator} for resolving the {@code ${oauth(provider, credentialId)}} macro function. It uses
  * the studio service for getting oauth access token at runtime.
  */
-public class OAuthMacroEvaluator extends AbstractServiceRetryableMacroEvaluator {
+public class OAuthAccessTokenMacroEvaluator extends AbstractServiceRetryableMacroEvaluator {
 
-  public static final String FUNCTION_NAME = "oauth";
+  public static final String FUNCTION_NAME = "oauthAccessToken";
   private static final String SERVICE_NAME = "Oauth";
-  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final ServiceDiscoverer serviceDiscoverer;
   private final Gson gson;
 
-  public OAuthMacroEvaluator(ServiceDiscoverer serviceDiscoverer) {
+  public OAuthAccessTokenMacroEvaluator(ServiceDiscoverer serviceDiscoverer) {
     super(FUNCTION_NAME);
     this.serviceDiscoverer = serviceDiscoverer;
     this.gson = new Gson();
+  }
+
+  @Override
+  public Map<String, String> evaluateMacroMap(
+    String macroFunction, String... args) throws InvalidMacroException, IOException, RetryableException {
+    throw new UnsupportedOperationException(
+        String.format("This function %s can only be evaluated as string, use evaluateMacro instead",
+            macroFunction));
   }
 
   /**
@@ -53,24 +58,16 @@ public class OAuthMacroEvaluator extends AbstractServiceRetryableMacroEvaluator 
    *
    * @param args should contains exactly two arguments. The first one is the name of the OAuth provider, and the
    *             second argument is the credential id.
-   * @return a map representing the OAuth token
+   * @return a string that's the value of the OAuth access token
    */
   @Override
-  public Map<String, String> evaluateMacroMap(
-    String macroFunction, String... args) throws InvalidMacroException, IOException, RetryableException {
+  public String evaluateMacro(String macroFunction, String... args) throws InvalidMacroException, IOException,
+          RetryableException {
     if (args.length != 2) {
       throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 2 arguments");
     }
 
-    return getOAuthToken(args[0], args[1]);
-  }
-
-  @Override
-  public String evaluateMacro(String macroFunction, String... args)
-      throws InvalidMacroException, RetryableException {
-    throw new UnsupportedOperationException(
-        String.format("This function %s can only be evaluated as map, use evaluateMacroMap instead",
-            macroFunction));
+    return getAccessToken(args[0], args[1]);
   }
 
   /**
@@ -78,17 +75,26 @@ public class OAuthMacroEvaluator extends AbstractServiceRetryableMacroEvaluator 
    *
    * @param provider the name of the OAuth provider
    * @param credentialId the ID of the authenticated credential
-   * @return a map representing the OAuth token
+   * @return a string that's the value of the OAuth access token
    * @throws IOException if failed to get the OAuth token due to non-retryable error
    * @throws RetryableException if failed to get the OAuth token due to transient error
    */
-  private Map<String, String> getOAuthToken(String provider,
+  private String getAccessToken(String provider,
                                             String credentialId) throws IOException, RetryableException {
     HttpURLConnection urlConn = serviceDiscoverer.openConnection(NamespaceId.SYSTEM.getNamespace(),
                                                                  Constants.PIPELINEID,
                                                                  Constants.STUDIO_SERVICE_NAME,
                                                                  String.format("v1/oauth/provider/%s/credential/%s",
                                                                                provider, credentialId));
-    return gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), MAP_STRING_TYPE);
+    OAuthInfo authInfo = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), OAuthInfo.class);
+    return authInfo.accessToken;
+  }
+
+  private static final class OAuthInfo {
+    private final String accessToken;
+
+    private OAuthInfo(String accessToken) {
+      this.accessToken = accessToken;
+    }
   }
 }
