@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 /**
@@ -103,7 +104,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
    * Processes the give list of messages. If {@link Exception} is raised from this method,
    * all messages as provided through the {@code messages} parameter will be replayed in the next call.
    *
-   * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
+   * @param messages an {@link Iterable} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
    *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
    * @return the message ID for the next fetch to start from (exclusively). If returning {@code null},
    *         the next fetch will start from the same message ID that was used to fetch the current batch of
@@ -111,7 +112,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
    * @throws Exception if there is error processing messages.
    */
   @Nullable
-  protected abstract String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception;
+  protected abstract String processMessages(Iterable<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
    * Perform pre-processing before a batch of messages will be processed.
@@ -202,13 +203,14 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
 
     startTime = System.currentTimeMillis();
 
-    MessageIterator iterator = new MessageIterator(messages.iterator());
-    String messageId = processMessages(iterator);
+    //This will hold number of consumed messages after last iterator was requested
+    AtomicInteger consumedCount = new AtomicInteger();
+    String messageId = processMessages(() -> new MessageIterator(consumedCount, messages.iterator()));
     this.messageId = messageId == null ? this.messageId : messageId;
 
     long endTime = System.currentTimeMillis();
     metricsContext.gauge("process.duration.ms", endTime - startTime);
-    metricsContext.increment("process.notifications", iterator.getConsumedCount());
+    metricsContext.increment("process.notifications", consumedCount.get());
 
     // Calculate the delay
     if (messageId != null) {
@@ -236,11 +238,12 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
   private final class MessageIterator extends AbstractIterator<ImmutablePair<String, T>> {
 
     private final Iterator<Message> messages;
-    private int consumedCount;
+    private final AtomicInteger consumedCount;
 
-    MessageIterator(Iterator<Message> messages) {
+    MessageIterator(AtomicInteger consumedCount, Iterator<Message> messages) {
+      this.consumedCount = consumedCount;
       this.messages = messages;
-      this.consumedCount = 0;
+      consumedCount.set(0);
     }
 
     @Override
@@ -252,7 +255,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
         try {
           T decoded = decodeMessage(message);
           LOG.trace("Processing message from topic {} with message id {}: {}", getTopicId(), message.getId(), decoded);
-          consumedCount++;
+          consumedCount.incrementAndGet();
           return new ImmutablePair<>(message.getId(), decoded);
         } catch (Exception e) {
           // This shouldn't happen.
@@ -260,13 +263,9 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
                    message.getId(), message.getPayloadAsString(), e);
         }
 
-        consumedCount++;
+        consumedCount.incrementAndGet();
       }
       return endOfData();
-    }
-
-    int getConsumedCount() {
-      return consumedCount;
     }
   }
 }
