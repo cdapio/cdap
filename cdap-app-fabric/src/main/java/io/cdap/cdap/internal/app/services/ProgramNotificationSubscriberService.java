@@ -302,7 +302,11 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
   protected void postProcess() {
     Runnable task = tasks.poll();
     while (task != null) {
-      task.run();
+      try {
+        task.run();
+      } catch (Exception e) {
+        LOG.error("Error in postProcess", e);
+      }
       task = tasks.poll();
     }
   }
