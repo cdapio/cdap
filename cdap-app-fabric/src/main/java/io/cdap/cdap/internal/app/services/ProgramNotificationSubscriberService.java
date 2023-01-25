@@ -413,17 +413,21 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
           Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
         ProgramOptions prgOptions = ProgramOptions.fromNotification(notification, GSON);
 
+        LOG.error(">>>> Starting Part 1 {}", programRunId);
         boolean programStartSkipped = ProgramStatePublisher.isProgramStartSkipped(systemArguments);
         if (programStartSkipped) {
+          LOG.error(">>>> Starting Part 2 {}", programRunId);
           ArtifactId artifactId = ProgramStatePublisher.getArtifactId(GSON, properties);
           appMetadataStore.recordProgramProvisioning(programRunId, prgOptions.getUserArguments().asMap(),
                                                      prgOptions.getArguments().asMap(), messageIdBytes,
                                                      artifactId.toApiArtifactId());
           appMetadataStore.recordProgramProvisioned(programRunId, 0, messageIdBytes);
         } else {
+          LOG.error(">>>> Starting Part 3 {}", programRunId);
           ProgramDescriptor prgDescriptor =
             GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
           runnables.add(() -> {
+            LOG.error(">>>> Starting Part 4 {}", programRunId);
             String oldUser = SecurityRequestContext.getUserId();
             try {
               SecurityRequestContext.setUserId(prgOptions.getArguments().getOption(ProgramOptionConstants.USER_ID));

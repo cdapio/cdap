@@ -116,6 +116,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
+    LOG.error(">>>>> in beginning of run for {}", runId);
     ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(programDescriptor, options, runId,
                                                                                     isDistributed());
     ProgramId programId = programDescriptor.getProgramId();
@@ -125,6 +126,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {
       try {
+        LOG.error(">>>>> in executor for run for {}", runId);
         controller.setProgramController(programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
                                           .dispatchProgram(dispatcherContext));
       } catch (Exception e) {
