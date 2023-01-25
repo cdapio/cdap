@@ -109,6 +109,9 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     validateResponseCode(serviceName, urlConn);
     try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
       return CharStreams.toString(reader);
+    } catch (IOException e) {
+      // IOExceptions are retryable for idempotent operations.
+      throw new RetryableException(e);
     } finally {
       urlConn.disconnect();
     }
