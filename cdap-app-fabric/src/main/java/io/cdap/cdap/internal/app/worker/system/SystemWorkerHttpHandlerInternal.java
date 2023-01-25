@@ -80,6 +80,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
+    LOG.error(">>>> requestProcessedCount is {}", requestProcessedCount.get());
     if (requestProcessedCount.incrementAndGet() > requestLimit) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
@@ -147,6 +148,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     public void finished() {
       context.executeCleanupTask();
       taskDetails.emitMetrics(true);
+      LOG.error(">>>> requestProcessedCount is {}", requestProcessedCount.get());
       requestProcessedCount.decrementAndGet();
     }
 
@@ -155,6 +157,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       LOG.error("Error when sending chunks", cause);
       context.executeCleanupTask();
       taskDetails.emitMetrics(false);
+      LOG.error(">>>> requestProcessedCount is {}", requestProcessedCount.get());
       requestProcessedCount.decrementAndGet();
     }
   }

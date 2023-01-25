@@ -339,6 +339,7 @@ public class ProvisioningService extends AbstractIdleService {
    */
   public Runnable provision(ProvisionRequest provisionRequest, StructuredTableContext context) throws IOException,
     InterruptedException {
+    LOG.error(">>> Entering provision for {}", provisionRequest.getProgramRunId());
     initializeLatch.await(120, TimeUnit.SECONDS);
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
@@ -383,6 +384,7 @@ public class ProvisioningService extends AbstractIdleService {
                                createKeysDirectory(programRunId).toURI(), null);
     ProvisionerTable provisionerTable = new ProvisionerTable(context);
     provisionerTable.putTaskInfo(provisioningTaskInfo);
+    LOG.error(">>> About to create provision task for {}", provisionRequest.getProgramRunId());
     return createProvisionTask(provisioningTaskInfo, provisioner);
   }
 

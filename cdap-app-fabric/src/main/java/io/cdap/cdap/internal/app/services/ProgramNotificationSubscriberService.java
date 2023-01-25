@@ -720,6 +720,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
       GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
     switch (clusterStatus) {
       case PROVISIONING:
+        LOG.error(">>>> PROVISIONING {}", programRunId);
         appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
                                                    programOptions.getArguments().asMap(), messageIdBytes,
                                                    programDescriptor.getArtifactId().toApiArtifactId());
