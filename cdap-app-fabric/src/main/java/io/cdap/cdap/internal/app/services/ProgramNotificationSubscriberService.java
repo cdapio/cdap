@@ -390,6 +390,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     RunRecordDetail recordedRunRecord;
     switch (programRunStatus) {
       case STARTING:
+        LOG.error(">>>> Starting {}", programRunId);
         try {
           RunRecordDetail runRecordDetail = appMetadataStore.getRun(programRunId);
           if (runRecordDetail != null
@@ -719,6 +720,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
                                                                  userId);
         return Optional.of(provisioningService.provision(provisionRequest, context));
       case PROVISIONED:
+        LOG.error(">>>> PROVISIONED {}", programRunId);
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
         RunRecordDetail runRecord =
           appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
@@ -741,6 +743,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
                                                                     programOptions.getUserArguments());
 
         // Publish the program STARTING state before starting the program
+        LOG.error(">>>> Publishing starting message {}", programRunId);
         programStateWriter.start(programRunId, newProgramOptions, null, programDescriptor);
 
         // emit provisioning time metric

@@ -101,8 +101,9 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     } catch (Exception e) {
       throw new ServiceUnavailableException(Constants.Service.RUNTIME, e);
     }
-    if (programRunInfo.getProgramRunStatus().isEndState())
+    if (programRunInfo.getProgramRunStatus().isEndState()) {
       throw new GoneException("Program run " + programRunId + " is already " + programRunInfo.getProgramRunStatus());
+    }
     return programRunInfo;
   }
 
