@@ -20,8 +20,8 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,7 +88,7 @@ public class InMemoryNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  public void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository) throws Exception {
+  public void setRepository(NamespaceId namespaceId, RepositoryConfig repository) throws Exception {
     NamespaceMeta meta = namespaces.get(namespaceId);
     if (meta == null) {
       throw new NamespaceNotFoundException(namespaceId);
@@ -103,7 +103,7 @@ public class InMemoryNamespaceAdmin implements NamespaceAdmin {
     if (meta == null) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(meta).deleteRepoConfig();
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(meta).setRepository(null);
     namespaces.replace(namespaceId, builder.build());
   }
 }

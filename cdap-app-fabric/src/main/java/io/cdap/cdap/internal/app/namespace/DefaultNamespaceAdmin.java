@@ -45,12 +45,12 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -360,16 +360,24 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     nsStore.updateProperties(namespaceId, namespaceMeta);
     // refresh the cache with new meta
-    namespaceMetaCache.refresh(namespaceId);
+    namespaceMetaCache.invalidate(namespaceId);
   }
 
   @Override
-  public void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository)
+  public void setRepository(NamespaceId namespaceId, RepositoryConfig repository)
     throws Exception {
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-    nsStore.updateRepository(namespaceId, repository);
+    if (repository == null) {
+      throw new BadRequestException("RepositoryConfig cannot be null.");
+    }
+
+    if (!repository.isValid()) {
+      throw new BadRequestException(String.format("Invalid repository configuration: %s.", repository));
+    }
+    
+    nsStore.setRepository(namespaceId, repository);
     // refresh the cache
-    namespaceMetaCache.refresh(namespaceId);
+    namespaceMetaCache.invalidate(namespaceId);
   }
 
   @Override
@@ -377,7 +385,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     nsStore.deleteRepository(namespaceId);
     // refresh the cache
-    namespaceMetaCache.refresh(namespaceId);
+    namespaceMetaCache.invalidate(namespaceId);
   }
 
   /**

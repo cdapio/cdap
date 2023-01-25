@@ -36,11 +36,13 @@ import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.Provider;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.test.MetricsManager;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
@@ -65,6 +67,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String DESCRIPTION_FIELD = "description";
   private static final String CONFIG_FIELD = "config";
   private static final String REPOSITORY_FIELD = "repository";
+  private static final String AUTHCONFIG_FIELD = "authConfig";
   private static final String NAME = "test";
   private static final Id.Namespace NAME_ID = Id.Namespace.from(NAME);
   private static final String DESCRIPTION = "test description";
@@ -158,10 +161,9 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                                                                 NamespaceConfig.ROOT_DIRECTORY,
                                                                 customRoot);
 
-    NamespaceRepositoryConfig namespaceRepoString =
-      new NamespaceRepositoryConfig("github", "example.com", "develop",
-                                    NamespaceRepositoryConfig.AuthType.PAT, "token",
-                                    "user", "");
+    RepositoryConfig namespaceRepoString = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
+      .setTokenName("token").setUsername("user").build();
     
     String propertiesString = GSON.toJson(ImmutableMap.of(NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
                                                           CONFIG_FIELD, namespaceConfigString,
@@ -178,14 +180,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("scheduler.queue.name").getAsString());
     Assert.assertEquals(customRoot,
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("root.directory").getAsString());
-    Assert.assertEquals("github",
+    Assert.assertEquals("GITHUB",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
                           .get("provider").getAsString());
     Assert.assertEquals("example.com",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()
                           .get("link").getAsString());
-    Assert.assertEquals("pat",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
+    Assert.assertEquals("PAT",
+                        namespace.get(REPOSITORY_FIELD).getAsJsonObject().get(AUTHCONFIG_FIELD).getAsJsonObject()
                           .get("authType").getAsString());
     Assert.assertEquals("develop",
                         namespace.get(REPOSITORY_FIELD).getAsJsonObject()

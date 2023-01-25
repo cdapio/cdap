@@ -91,7 +91,6 @@ import io.cdap.cdap.proto.BatchProgramSchedule;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
@@ -1457,8 +1456,8 @@ public abstract class AppFabricTestBase {
                  GSON.toJson(meta));
   }
 
-  protected HttpResponse updateRepository(String id, NamespaceRepositoryConfig repo) throws Exception {
-    return doPut(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, id), GSON.toJson(repo));
+  protected HttpResponse updateRepository(String id, String repoString) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, id), repoString);
   }
 
   protected String getPreferenceURI() {

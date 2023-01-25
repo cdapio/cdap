@@ -17,6 +17,7 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,10 +45,10 @@ public final class NamespaceMeta {
   private final String description;
   private final long generation;
   private final NamespaceConfig config;
-  private final NamespaceRepositoryConfig repository;
+  private final RepositoryConfig repository;
 
   private NamespaceMeta(String name, String description, long generation,
-                        NamespaceConfig config, @Nullable NamespaceRepositoryConfig repository) {
+                        NamespaceConfig config, @Nullable RepositoryConfig repository) {
     this.name = name;
     this.description = description;
     this.generation = generation;
@@ -77,7 +78,7 @@ public final class NamespaceMeta {
     return config;
   }
 
-  public NamespaceRepositoryConfig getRepository() {
+  public RepositoryConfig getRepository() {
     return repository;
   }
 
@@ -99,7 +100,7 @@ public final class NamespaceMeta {
     private Map<String, String> configMap = new HashMap<>();
     
     // The repository configuration properties
-    private NamespaceRepositoryConfig repository;
+    private RepositoryConfig repository;
 
     public Builder() {
       // No-Op
@@ -199,13 +200,8 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setRepository(NamespaceRepositoryConfig repository) {
+    public Builder setRepository(@Nullable RepositoryConfig repository) {
       this.repository = repository;
-      return this;
-    }
-
-    public Builder deleteRepoConfig() {
-      this.repository = null;
       return this;
     }
 

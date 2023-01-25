@@ -17,9 +17,11 @@
 package io.cdap.cdap.store;
 
 import com.google.inject.ImplementedBy;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -86,19 +88,23 @@ public interface NamespaceStore {
    * Update the configuration properties except repository configuration of the namespace.
    * @param namespaceId {@link NamespaceId} of the requested namespace
    * @param namespaceMeta {@link NamespaceMeta} representing the namespace metadata
+   * @throws NamespaceNotFoundException if the namespace does not exist
    */
   void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception;
 
   /**
    * Update the repository configuration of the namespace.
    * @param namespaceId {@link NamespaceId} of the requested namespace
-   * @param repository {@link NamespaceRepositoryConfig} representing the namespace repository configuration
+   * @param repository {@link RepositoryConfig} representing the namespace repository configuration
+   * @throws NamespaceNotFoundException if the namespace does not exist
    */
-  void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository) throws Exception;
+  void setRepository(NamespaceId namespaceId, RepositoryConfig repository) throws Exception;
 
   /**
    * Delete the repository configuration of the namespace.
    * @param namespaceId {@link NamespaceId} of the requested namespace
+   * @throws NamespaceNotFoundException if the namespace does not exist
+   * @throws RepositoryNotFoundException if there is no repository configured for this namespace
    */
   void deleteRepository(NamespaceId namespaceId) throws Exception;
 }

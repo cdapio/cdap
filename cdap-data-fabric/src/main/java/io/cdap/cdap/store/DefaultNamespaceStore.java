@@ -21,18 +21,15 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.NamespaceRepositoryNotFoundException;
-import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
@@ -43,7 +40,6 @@ import javax.annotation.Nullable;
  */
 public class DefaultNamespaceStore implements NamespaceStore {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceStore.class);
   private final TransactionRunner transactionRunner;
 
   @Inject
@@ -124,11 +120,10 @@ public class DefaultNamespaceStore implements NamespaceStore {
     TransactionRunners.run(transactionRunner, context -> {
       NamespaceTable table = getNamespaceTable(context);
       updatePropertiesInternal(table, namespaceId, namespaceMeta);
-      LOG.info("Namespace {} updated", namespaceId);
     }, BadRequestException.class);
   }
 
-  private void updatePropertiesInternal (NamespaceTable table, NamespaceId namespaceId, NamespaceMeta namespaceMeta)
+  private void updatePropertiesInternal(NamespaceTable table, NamespaceId namespaceId, NamespaceMeta namespaceMeta)
     throws Exception {
     NamespaceMeta existingMeta = table.get(namespaceId);
     if (existingMeta == null) {
@@ -146,6 +141,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
     }
 
+    // TODO: refactor this class, move out the TransactionRunner
     if (config != null && config.getKeytabURI() != null) {
       String keytabURI = config.getKeytabURI();
       if (keytabURI.isEmpty()) {
@@ -175,7 +171,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
   }
 
   @Override
-  public void updateRepository(NamespaceId namespaceId, NamespaceRepositoryConfig repository) throws Exception {
+  public void setRepository(NamespaceId namespaceId, RepositoryConfig repository) throws Exception {
     TransactionRunners.run(transactionRunner, context -> {
       NamespaceTable table = getNamespaceTable(context);
 
@@ -183,10 +179,10 @@ public class DefaultNamespaceStore implements NamespaceStore {
       if (existingMeta == null) {
         throw new NamespaceNotFoundException(namespaceId);
       }
+      
       NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).setRepository(repository);
       NamespaceMeta updatedMeta = builder.build();
       table.create(updatedMeta);
-      LOG.info("Repository configuration of Namespace {} is updated.", namespaceId);
     }, NamespaceNotFoundException.class);
   }
 
@@ -200,13 +196,12 @@ public class DefaultNamespaceStore implements NamespaceStore {
         throw new NamespaceNotFoundException(namespaceId);
       }
       if (existingMeta.getRepository() == null) {
-        throw new NamespaceRepositoryNotFoundException(namespaceId);
+        throw new RepositoryNotFoundException(namespaceId);
       }
 
-      NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).deleteRepoConfig();
+      NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta).setRepository(null);
       NamespaceMeta updatedMeta = builder.build();
       table.create(updatedMeta);
-      LOG.info("Repository configuration of namespace {} is removed.", namespaceId);
-    }, NotFoundException.class);
+    }, NamespaceNotFoundException.class, RepositoryNotFoundException.class);
   }
 }

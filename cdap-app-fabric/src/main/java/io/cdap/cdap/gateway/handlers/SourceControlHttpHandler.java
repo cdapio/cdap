@@ -24,8 +24,8 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.proto.NamespaceRepositoryConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -50,13 +50,10 @@ public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateNamespaceRepository(FullHttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespaceId) throws Exception {
-    NamespaceRepositoryConfig repository = getNamespaceRepository(request);
-    if (repository != null && !repository.isValid()) {
-      throw new BadRequestException(String.format("Invalid repository configuration: %s.", repository));
-    }
-    namespaceAdmin.updateRepository(new NamespaceId(namespaceId), repository);
+  public void setNamespaceRepository(FullHttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId) throws Exception {
+    RepositoryConfig repository = getNamespaceRepository(request);
+    namespaceAdmin.setRepository(validateNamespaceId(namespaceId), repository);
     responder.sendString(HttpResponseStatus.OK, String.format("Updated repository configuration for namespace '%s'.",
                                                               namespaceId));
   }
@@ -65,14 +62,22 @@ public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/")
   public void deleteNamespaceRepository(FullHttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) throws Exception {
-    namespaceAdmin.deleteRepository(new NamespaceId(namespaceId));
+    namespaceAdmin.deleteRepository(validateNamespaceId(namespaceId));
     responder.sendString(HttpResponseStatus.OK, String.format("Deleted repository configuration for namespace '%s'.",
                                                               namespaceId));
   }
 
-  private NamespaceRepositoryConfig getNamespaceRepository(FullHttpRequest request) throws BadRequestException {
+  private NamespaceId validateNamespaceId(String namespaceId) throws BadRequestException {
     try {
-      return parseBody(request, NamespaceRepositoryConfig.class);
+      return new NamespaceId(namespaceId);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("Namespace id can contain only alphanumeric characters or '_'.");
+    }
+  }
+
+  private RepositoryConfig getNamespaceRepository(FullHttpRequest request) throws BadRequestException {
+    try {
+      return parseBody(request, RepositoryConfig.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid json object provided in request body.");
     }

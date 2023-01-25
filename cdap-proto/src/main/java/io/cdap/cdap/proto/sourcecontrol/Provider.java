@@ -14,23 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.common;
-
-import io.cdap.cdap.proto.id.NamespaceId;
+package io.cdap.cdap.proto.sourcecontrol;
 
 /**
- * Thrown when a namespace repository configuration is not found in CDAP.
+ * The Provider Enum.
  */
-public class NamespaceRepositoryNotFoundException extends NotFoundException  {
-
-  private final NamespaceId namespace;
-
-  public NamespaceRepositoryNotFoundException(NamespaceId id) {
-    super(String.format("The repository configuration of namespace %s is not found.", id));
-    this.namespace = id;
-  }
-
-  public NamespaceId getId() {
-    return namespace;
-  }
+public enum Provider {
+  GITHUB;
 }
