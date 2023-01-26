@@ -696,15 +696,19 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           }
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
+          LOG.error("Error while deploying.", e);
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
         } catch (ConflictException e) {
+          LOG.error("Error while deploying.", e);
           responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
         } catch (UnauthorizedException e) {
+          LOG.error("Error while deploying.", e);
           responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
         } catch (InvalidArtifactException e) {
+          LOG.error("Error while deploying.", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
-          LOG.error("Error reading request body for creating app {}.", appId);
+          LOG.error("Error reading request body for creating app {}.", appId, e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
             "Error while reading json request body for app %s.", appId));
         } catch (Exception e) {
