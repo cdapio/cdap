@@ -83,6 +83,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+  private static final String FQN = "fqn";
 
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
@@ -248,11 +249,18 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
                  message, t);
         return;
       }
-      // create ProgramRun and LineageInfo for MetadataConsumer
-      long startTimeMs = RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS);
-      long endTimeMs = System.currentTimeMillis();
-      ProgramRun run = getProgramRunForConsumer(programRunId, startTimeMs, endTimeMs);
-      LineageInfo info = getLineageInfoForConsumer(fieldLineageInfo, startTimeMs, endTimeMs);
+      ProgramRun run;
+      LineageInfo info;
+      try {
+        // create ProgramRun and LineageInfo for MetadataConsumer
+        long startTimeMs = RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS);
+        long endTimeMs = System.currentTimeMillis();
+        run = getProgramRunForConsumer(programRunId, startTimeMs, endTimeMs);
+        info = getLineageInfoForConsumer(fieldLineageInfo, startTimeMs, endTimeMs);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Error while processing field-lineage information received from TMS. Ignoring : {}", message, e);
+        return;
+      }
       this.consumers.forEach((key, consumer) -> {
         try {
           DefaultMetadataConsumerContext metadataConsumerContext =
@@ -291,7 +299,13 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     }
 
     private Asset getAssetForEndpoint(EndPoint endPoint) {
-      return new Asset(endPoint.getProperties().get("fqn"));
+      // if the instance is upgraded and the pipeline is not, then there is a chance that fqn is null
+      // throw illegal argument exception so that such messages can be ignored as it does not make sense to retry
+      Map<String, String> properties = endPoint.getProperties();
+      if (!properties.containsKey(FQN) || (properties.containsKey(FQN) && properties.get(FQN) == null)) {
+        throw new IllegalArgumentException("FQN for the asset is null");
+      }
+      return new Asset(properties.get(FQN));
     }
 
     private Map<Asset, Set<Asset>> getAssetsMapFromEndpointFieldsMap(Map<EndPointField, Set<EndPointField>>
