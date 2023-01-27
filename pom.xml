@@ -188,7 +188,9 @@
     <sonar.organization>cdap</sonar.organization>
     <sonar.projectKey>cdapio_${project.artifactId}</sonar.projectKey>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-    <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/cdap-coverage/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.coverage.jacoco.xmlReportPaths>
+      ${maven.multiModuleProjectDirectory}/cdap-coverage/target/site/jacoco-aggregate/jacoco.xml
+    </sonar.coverage.jacoco.xmlReportPaths>
     <!-- We need next line to ensure generated classes are analyzed -->
     <sonar.scm.exclusions.disabled>true</sonar.scm.exclusions.disabled>
 
@@ -1617,7 +1619,9 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.0.0-M6</version>
           <configuration>
-            <argLine>@{argLine}  -Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+            <argLine>@{argLine} -Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p"
+              -XX:+HeapDumpOnOutOfMemoryError
+            </argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <forkCount>3</forkCount>
@@ -1950,7 +1954,8 @@
                 </bottom>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
-                  <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
+                  <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/
+                  </link>
                   <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
@@ -2011,9 +2016,11 @@
         <package.deb.arch>all</package.deb.arch>
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
-        <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
-        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,com.google.protobuf,\
-          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging,com.google.crypto.tink</dependency.groupId.exclusions>
+        <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security
+        </package.config.dirs>
+        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
+          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging,com.google.crypto.tink
+        </dependency.groupId.exclusions>
       </properties>
       <build>
         <pluginManagement>
@@ -2071,7 +2078,9 @@
                   <configuration>
                     <outputDirectory>${stage.third.party.dir}</outputDirectory>
                     <classifier>sources</classifier>
-                    <includeArtifactIds>jersey-client,jersey-core,jersey-server,activation,jsr250-api,servlet-api,jsp-api,jta,rs-api,jaxb-api,stax-api,jaxb-impl,jcip-annotations,jboss-annotations-api</includeArtifactIds>
+                    <includeArtifactIds>
+                      jersey-client,jersey-core,jersey-server,activation,jsr250-api,servlet-api,jsp-api,jta,rs-api,jaxb-api,stax-api,jaxb-impl,jcip-annotations,jboss-annotations-api
+                    </includeArtifactIds>
                     <failOnMissingClassifierArtifact>true</failOnMissingClassifierArtifact>
                     <useSubDirectoryPerArtifact>true</useSubDirectoryPerArtifact>
                     <silent>true</silent>
@@ -2271,7 +2280,7 @@
                 </goals>
                 <configuration>
                   <source>
-                    if (project.version.endsWith("-SNAPSHOT")){
+                    if (project.version.endsWith("-SNAPSHOT")) {
                       project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo']
                       project.properties['dist.deploy.groupId'] = "io.cdap.cdap.distributions.snapshots"
                     } else {
@@ -2334,7 +2343,8 @@
                   </goals>
                   <configuration>
                     <target>
-                      <copy file="${project.build.directory}/dist/rpm/cdap-service" tofile="${stage.dir}/etc/rc.d/init.d/cdap-${service.name}" />
+                      <copy file="${project.build.directory}/dist/rpm/cdap-service"
+                            tofile="${stage.dir}/etc/rc.d/init.d/cdap-${service.name}"/>
                     </target>
                   </configuration>
                 </execution>
@@ -2437,7 +2447,8 @@
                   </goals>
                   <configuration>
                     <target>
-                      <copy file="${project.build.directory}/dist/deb/cdap-service" tofile="${stage.dir}-deb/etc/init.d/cdap-${service.name}" />
+                      <copy file="${project.build.directory}/dist/deb/cdap-service"
+                            tofile="${stage.dir}-deb/etc/init.d/cdap-${service.name}"/>
                     </target>
                   </configuration>
                 </execution>
@@ -2498,7 +2509,8 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License,
+                      Version 2.0."
                       --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
@@ -2552,7 +2564,8 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License,
+                      Version 2.0."
                       --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
@@ -2728,6 +2741,7 @@
         <module>cdap-ui</module>
         <module>cdap-event-writer-spi</module>
         <module>cdap-authenticator-ext-gcp</module>
+        <module>cdap-source-control</module>
       </modules>
     </profile>
     <profile>
