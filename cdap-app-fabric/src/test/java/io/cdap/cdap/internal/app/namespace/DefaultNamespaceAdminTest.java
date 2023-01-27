@@ -21,7 +21,6 @@ import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -35,9 +34,6 @@ import io.cdap.cdap.internal.tethering.TetheringStatus;
 import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.AuthType;
-import io.cdap.cdap.proto.sourcecontrol.Provider;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -316,118 +312,6 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     //clean up
     namespaceAdmin.delete(namespaceId);
     Locations.deleteQuietly(customlocation);
-  }
-
-  @Test
-  public void testSetRepoConfig() throws Exception {
-    String namespace = "custompaceNamespace";
-    NamespaceId namespaceId = new NamespaceId(namespace);
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId).setRepository(namespaceRepo).build();
-    namespaceAdmin.create(nsMeta);
-    Assert.assertTrue(namespaceAdmin.exists(namespaceId));
-
-    RepositoryConfig newRepositoryConfig = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("another.example.com").setDefaultBranch("master").setAuthType(AuthType.PAT)
-      .setTokenName("another.token").setUsername("another.user").build();
-    namespaceAdmin.setRepository(nsMeta.getNamespaceId(), newRepositoryConfig);
-
-    NamespaceMeta updatedNamespaceMeta = namespaceAdmin.get(namespaceId);
-    Assert.assertEquals(newRepositoryConfig, updatedNamespaceMeta.getRepository());
-
-    // Setting a null RepositoryConfig returns 400
-    try {
-      namespaceAdmin.setRepository(nsMeta.getNamespaceId(), null);
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig Provider returns 400
-    try {
-      namespaceAdmin.setRepository(nsMeta.getNamespaceId(),
-                                   new RepositoryConfig.Builder(namespaceRepo).setProvider(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig Link returns 400
-    try {
-      namespaceAdmin.setRepository(nsMeta.getNamespaceId(),
-                                   new RepositoryConfig.Builder(namespaceRepo).setLink(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig DefaultBranch returns 400
-    try {
-      namespaceAdmin.setRepository(nsMeta.getNamespaceId(),
-                                   new RepositoryConfig.Builder(namespaceRepo).setDefaultBranch(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig TokenName returns 400
-    try {
-      namespaceAdmin.setRepository(nsMeta.getNamespaceId(),
-                                   new RepositoryConfig.Builder(namespaceRepo).setTokenName(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig AuthType returns 400
-    try {
-      namespaceAdmin.setRepository(nsMeta.getNamespaceId(),
-                                   new RepositoryConfig.Builder(namespaceRepo).setAuthType(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    //clean up
-    namespaceAdmin.delete(namespaceId);
-  }
-
-  @Test
-  public void testDeleteRepoConfig() throws Exception {
-    String namespace = "custompaceNamespace";
-    NamespaceId namespaceId = new NamespaceId(namespace);
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId).setRepository(namespaceRepo).build();
-    namespaceAdmin.create(nsMeta);
-    Assert.assertTrue(namespaceAdmin.exists(namespaceId));
-    NamespaceMeta namespaceMeta = namespaceAdmin.get(namespaceId);
-    Assert.assertEquals(namespaceRepo, namespaceMeta.getRepository());
-
-    // Setting a null RepositoryConfig returns 400
-    try {
-      String nonExistsNs = "NonExistsNamespace";
-      namespaceAdmin.deleteRepository(new NamespaceId(nonExistsNs));
-      Assert.fail();
-    } catch (NamespaceNotFoundException e) {
-      //expected
-    }
-
-    namespaceAdmin.deleteRepository(nsMeta.getNamespaceId());
-
-    // Setting a null RepositoryConfig Provider returns 400
-    try {
-      namespaceAdmin.deleteRepository(nsMeta.getNamespaceId());
-      Assert.fail();
-    } catch (RepositoryNotFoundException e) {
-      //expected
-    }
-
-    //clean up
-    namespaceAdmin.delete(namespaceId);
   }
 
   @Test

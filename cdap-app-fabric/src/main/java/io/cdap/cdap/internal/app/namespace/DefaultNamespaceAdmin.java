@@ -50,7 +50,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -68,6 +67,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -356,36 +356,56 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  public void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception {
+  public synchronized void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception {
+    if (!exists(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-    nsStore.updateProperties(namespaceId, namespaceMeta);
+
+    NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    // Already ensured that namespace exists, so namespace meta should not be null
+    Preconditions.checkNotNull(existingMeta);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
+
+    if (namespaceMeta.getDescription() != null) {
+      builder.setDescription(namespaceMeta.getDescription());
+    }
+
+    NamespaceConfig config = namespaceMeta.getConfig();
+    if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
+      builder.setSchedulerQueueName(config.getSchedulerQueueName());
+    }
+
+    if (config != null && config.getKeytabURI() != null) {
+      String keytabURI = config.getKeytabURI();
+      if (keytabURI.isEmpty()) {
+        throw new BadRequestException("Cannot update keytab URI with an empty URI.");
+      }
+      String existingKeytabURI = existingMeta.getConfig().getKeytabURIWithoutVersion();
+      if (existingKeytabURI == null) {
+        throw new BadRequestException("Cannot update keytab URI since there is no existing principal or keytab URI.");
+      }
+      if (keytabURI.equals(existingKeytabURI)) {
+        // The given keytab URI is the same as the existing one, but the content of the keytab file might be changed.
+        // Increment the keytab URI version so that the cache will reload content in the updated keytab file.
+        builder.incrementKeytabURIVersion();
+      } else {
+        builder.setKeytabURIWithoutVersion(keytabURI);
+        // clear keytab URI version
+        builder.setKeytabURIVersion(0);
+      }
+    }
+
+    Set<String> difference = existingMeta.getConfig().getDifference(config);
+    if (!difference.isEmpty()) {
+      throw new BadRequestException(String.format("Mappings %s for namespace %s cannot be updated once the namespace " +
+                                                    "is created.", difference, namespaceId));
+    }
+    NamespaceMeta updatedMeta = builder.build();
+    nsStore.update(updatedMeta);
     // refresh the cache with new meta
-    namespaceMetaCache.invalidate(namespaceId);
-  }
-
-  @Override
-  public void setRepository(NamespaceId namespaceId, RepositoryConfig repository)
-    throws Exception {
-    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-    if (repository == null) {
-      throw new BadRequestException("RepositoryConfig cannot be null.");
-    }
-
-    if (!repository.isValid()) {
-      throw new BadRequestException(String.format("Invalid repository configuration: %s.", repository));
-    }
-    
-    nsStore.setRepository(namespaceId, repository);
-    // refresh the cache
-    namespaceMetaCache.invalidate(namespaceId);
-  }
-
-  @Override
-  public void deleteRepository(NamespaceId namespaceId) throws Exception {
-    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.DELETE);
-    nsStore.deleteRepository(namespaceId);
-    // refresh the cache
-    namespaceMetaCache.invalidate(namespaceId);
+    namespaceMetaCache.refresh(namespaceId);
+    LOG.info("Namespace {} updated with meta {}", namespaceId, updatedMeta);
   }
 
   /**

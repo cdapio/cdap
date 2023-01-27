@@ -27,14 +27,14 @@ public class RepositoryConfig {
   private final String link;
   private final String defaultBranch;
   private final String pathPrefix;
-  private final AuthConfig authConfig;
+  private final AuthConfig auth;
 
-  private RepositoryConfig(Provider provider, String link, String defaultBranch, AuthConfig authConfig,
-                          @Nullable String pathPrefix) {
+  RepositoryConfig(Provider provider, String link, String defaultBranch, AuthConfig authConfig,
+                   @Nullable String pathPrefix) {
     this.provider = provider;
     this.link = link;
     this.defaultBranch = defaultBranch;
-    this.authConfig = authConfig;
+    this.auth = authConfig;
     this.pathPrefix = pathPrefix;
   }
 
@@ -55,12 +55,12 @@ public class RepositoryConfig {
     return pathPrefix;
   }
 
-  public AuthConfig getAuthConfig() {
-    return authConfig;
+  public AuthConfig getAuth() {
+    return auth;
   }
 
   public boolean isValid() {
-    return provider != null && link != null && defaultBranch != null && authConfig != null && authConfig.isValid();
+    return provider != null && link != null && defaultBranch != null && auth != null && auth.isValid();
   }
 
   /**
@@ -84,10 +84,10 @@ public class RepositoryConfig {
       this.link = repoConfig.getLink();
       this.defaultBranch = repoConfig.getDefaultBranch();
       this.pathPrefix = repoConfig.getPathPrefix();
-      if (repoConfig.getAuthConfig() != null) {
-        this.authType = repoConfig.getAuthConfig().getAuthType();
-        this.tokenName = repoConfig.getAuthConfig().getTokenName();
-        this.username = repoConfig.getAuthConfig().getUsername();
+      if (repoConfig.getAuth() != null) {
+        this.authType = repoConfig.getAuth().getType();
+        this.tokenName = repoConfig.getAuth().getTokenName();
+        this.username = repoConfig.getAuth().getUsername();
       }
     }
 
@@ -144,13 +144,13 @@ public class RepositoryConfig {
     return Objects.equals(provider, that.provider) &&
       Objects.equals(link, that.link) &&
       Objects.equals(defaultBranch, that.defaultBranch) &&
-      Objects.equals(authConfig, that.authConfig) &&
+      Objects.equals(auth, that.auth) &&
       Objects.equals(pathPrefix, that.pathPrefix);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(provider, link, defaultBranch, authConfig, pathPrefix);
+    return Objects.hash(provider, link, defaultBranch, auth, pathPrefix);
   }
 
   @Override
@@ -159,7 +159,7 @@ public class RepositoryConfig {
       "provider=" + provider +
       ", link=" + link +
       ", defaultBranch=" + defaultBranch +
-      ", authConfig=" + authConfig +
+      ", authConfig=" + auth +
       ", pathPrefix=" + pathPrefix +
       '}';
   }

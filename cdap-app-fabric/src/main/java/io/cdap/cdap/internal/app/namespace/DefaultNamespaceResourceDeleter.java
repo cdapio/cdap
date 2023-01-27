@@ -25,6 +25,7 @@ import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.internal.app.services.SourceControlService;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -53,6 +54,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   private final DatasetFramework dsFramework;
   private final MetricsSystemClient metricsSystemClient;
   private final ApplicationLifecycleService applicationLifecycleService;
+  private final SourceControlService sourceControlService;
   private final ArtifactRepository artifactRepository;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final MessagingService messagingService;
@@ -63,6 +65,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
                                   DatasetFramework dsFramework,
                                   MetricsSystemClient metricsSystemClient,
                                   ApplicationLifecycleService applicationLifecycleService,
+                                  SourceControlService sourceControlService,
                                   ArtifactRepository artifactRepository,
                                   StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
                                   MessagingService messagingService, ProfileService profileService) {
@@ -72,6 +75,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     this.dsFramework = dsFramework;
     this.metricsSystemClient = metricsSystemClient;
     this.applicationLifecycleService = applicationLifecycleService;
+    this.sourceControlService = sourceControlService;
     this.artifactRepository = artifactRepository;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.messagingService = messagingService;
@@ -86,6 +90,8 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     preferencesService.deleteProperties(namespaceId);
     // Delete all applications
     applicationLifecycleService.removeAll(namespaceId);
+    // Delete Source Control repository configuration
+    sourceControlService.deleteRepository(namespaceId);
     // Delete datasets and modules
     dsFramework.deleteAllInstances(namespaceId);
     dsFramework.deleteAllModules(namespaceId);

@@ -16,21 +16,25 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.app.services.SourceControlService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -40,29 +44,48 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/repository")
 public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
-  private final NamespaceAdmin namespaceAdmin;
+  private final SourceControlService sourceControlService;
+  private static final Gson GSON = new Gson();
 
   @Inject
-  SourceControlHttpHandler(NamespaceAdmin namespaceAdmin) {
-    this.namespaceAdmin = namespaceAdmin;
+  SourceControlHttpHandler(SourceControlService sourceControlService) {
+    this.sourceControlService = sourceControlService;
   }
 
   @PUT
   @Path("/")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void setNamespaceRepository(FullHttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId) throws Exception {
-    RepositoryConfig repository = getNamespaceRepository(request);
-    namespaceAdmin.setRepository(validateNamespaceId(namespaceId), repository);
-    responder.sendString(HttpResponseStatus.OK, String.format("Updated repository configuration for namespace '%s'.",
-                                                              namespaceId));
+  public void setRepository(FullHttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
+    RepositoryConfigRequest repoRequest = getRepositoryRequest(request);
+    if (!repoRequest.shouldValidate()) {
+      sourceControlService.setRepository(validateNamespaceId(namespaceId), repoRequest);
+      responder.sendString(HttpResponseStatus.OK, String.format("Updated repository configuration for namespace '%s'.",
+                                                                namespaceId));
+    }
+
+    // TODO: add the validate logic once the SourceControlManager module is ready
+  }
+
+  @GET
+  @Path("/")
+  public void getRepositoryRequest(FullHttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId) throws Exception {
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+    RepositoryConfig repository = sourceControlService.getRepository(namespace);
+
+    if (repository == null) {
+      throw new RepositoryNotFoundException(namespace);
+    }
+
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(repository));
   }
 
   @DELETE
   @Path("/")
-  public void deleteNamespaceRepository(FullHttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespaceId) throws Exception {
-    namespaceAdmin.deleteRepository(validateNamespaceId(namespaceId));
+  public void deleteRepository(FullHttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId) throws Exception {
+    sourceControlService.deleteRepository(validateNamespaceId(namespaceId));
     responder.sendString(HttpResponseStatus.OK, String.format("Deleted repository configuration for namespace '%s'.",
                                                               namespaceId));
   }
@@ -75,9 +98,9 @@ public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private RepositoryConfig getNamespaceRepository(FullHttpRequest request) throws BadRequestException {
+  private RepositoryConfigRequest getRepositoryRequest(FullHttpRequest request) throws BadRequestException {
     try {
-      return parseBody(request, RepositoryConfig.class);
+      return parseBody(request, RepositoryConfigRequest.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid json object provided in request body.");
     }

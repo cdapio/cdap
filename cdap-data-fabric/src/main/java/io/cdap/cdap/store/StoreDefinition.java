@@ -91,9 +91,11 @@ public final class StoreDefinition {
    */
   public static final class NamespaceStore {
     public static final StructuredTableId NAMESPACES = new StructuredTableId("namespaces");
+    public static final StructuredTableId REPOSITORIES = new StructuredTableId("repositories");
 
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String NAMESPACE_METADATA_FIELD = "namespace_metadata";
+    public static final String REPOSITORY_CONFIGURATION_FIELD = "repository_config";
 
     public static final StructuredTableSpecification NAMESPACE_TABLE_SPEC =
       new StructuredTableSpecification.Builder()
@@ -103,8 +105,17 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD)
         .build();
 
+    public static final StructuredTableSpecification REPOSITORY_TABLE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(REPOSITORIES)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(REPOSITORY_CONFIGURATION_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD)
+        .build();
+
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, NAMESPACE_TABLE_SPEC);
+      createIfNotExists(tableAdmin, REPOSITORY_TABLE_SPEC);
     }
   }
 

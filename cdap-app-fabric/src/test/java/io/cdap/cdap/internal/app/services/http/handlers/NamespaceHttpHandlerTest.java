@@ -40,9 +40,6 @@ import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.AuthType;
-import io.cdap.cdap.proto.sourcecontrol.Provider;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.test.MetricsManager;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
@@ -66,8 +63,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
   private static final String CONFIG_FIELD = "config";
-  private static final String REPOSITORY_FIELD = "repository";
-  private static final String AUTHCONFIG_FIELD = "authConfig";
   private static final String NAME = "test";
   private static final Id.Namespace NAME_ID = Id.Namespace.from(NAME);
   private static final String DESCRIPTION = "test description";
@@ -151,7 +146,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testCreateWithConfig() throws Exception {
-    // create the custom namespace location first since we will set the root directory the location needs to exist
+    // create the custom namespace location first since we will set the root directory the location needs to exists
     String customRoot = "/custom/root/" + NAME;
     Location customLocation = getInjector().getInstance(LocationFactory.class).create(customRoot);
     Assert.assertTrue(customLocation.mkdirs());
@@ -161,13 +156,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                                                                 NamespaceConfig.ROOT_DIRECTORY,
                                                                 customRoot);
 
-    RepositoryConfig namespaceRepoString = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    
     String propertiesString = GSON.toJson(ImmutableMap.of(NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
-                                                          CONFIG_FIELD, namespaceConfigString,
-                                                          REPOSITORY_FIELD, namespaceRepoString));
+                                                          CONFIG_FIELD, namespaceConfigString));
 
     HttpResponse response = createNamespace(propertiesString, NAME);
     assertResponseCode(200, response);
@@ -180,18 +170,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("scheduler.queue.name").getAsString());
     Assert.assertEquals(customRoot,
                         namespace.get(CONFIG_FIELD).getAsJsonObject().get("root.directory").getAsString());
-    Assert.assertEquals("GITHUB",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get("provider").getAsString());
-    Assert.assertEquals("example.com",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get("link").getAsString());
-    Assert.assertEquals("PAT",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject().get(AUTHCONFIG_FIELD).getAsJsonObject()
-                          .get("authType").getAsString());
-    Assert.assertEquals("develop",
-                        namespace.get(REPOSITORY_FIELD).getAsJsonObject()
-                          .get("defaultBranch").getAsString());
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
     // check that the custom location for the namespace was not deleted while deleting namespace
@@ -467,7 +445,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
 
-    // Verify that the description has changed
+    //verify that the description has changed
     Assert.assertEquals("new fancy description", namespace.get(DESCRIPTION_FIELD).getAsString());
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
 
@@ -483,7 +461,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(), NamespaceConfig.class);
     // verify that the uri has changed
     Assert.assertEquals("new/url", config.getKeytabURI());
-    
     // cleanup
     response = deleteNamespace(NAME);
     Assert.assertEquals(200, response.getResponseCode());

@@ -23,18 +23,18 @@ import javax.annotation.Nullable;
  * Auth Configuration for the linked repository
  */
 public class AuthConfig {
-  private final AuthType authType;
+  private final AuthType type;
   private final String tokenName;
   private final String username;
 
   public AuthConfig(AuthType authType, String tokenName, @Nullable String username) {
-    this.authType = authType;
+    this.type = authType;
     this.tokenName = tokenName;
     this.username = username;
   }
 
-  public AuthType getAuthType() {
-    return authType;
+  public AuthType getType() {
+    return type;
   }
 
   public String getTokenName() {
@@ -47,7 +47,7 @@ public class AuthConfig {
   }
 
   public boolean isValid() {
-    return authType != null && tokenName != null;
+    return type != null && tokenName != null;
   }
 
   @Override
@@ -59,20 +59,20 @@ public class AuthConfig {
       return false;
     }
     AuthConfig that = (AuthConfig) o;
-    return Objects.equals(authType, that.authType) &&
+    return Objects.equals(type, that.type) &&
       Objects.equals(tokenName, that.tokenName) &&
       Objects.equals(username, that.username);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(authType, tokenName, username);
+    return Objects.hash(type, tokenName, username);
   }
 
   @Override
   public String toString() {
     return "AuthConfig{" +
-      "authType=" + authType +
+      "authType=" + type +
       ", tokenName=" + tokenName +
       ", username=" + username +
       '}';
