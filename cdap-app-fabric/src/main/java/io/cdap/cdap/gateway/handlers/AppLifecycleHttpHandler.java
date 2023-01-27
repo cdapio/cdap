@@ -191,6 +191,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
+      LOG.error("Exception during deployment.", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
@@ -215,6 +216,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployApplication(responder, namespace, null, archiveName, configString, ownerPrincipal, updateSchedules);
     } catch (Exception ex) {
+      LOG.error("Exception during deployment.", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
@@ -241,6 +243,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
+      LOG.error("Exception during deployment.", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
