@@ -17,7 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -27,21 +27,23 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 
 /**
- * Service that manages source control for .
+ * Service that manages source control for repositories and applications.
+ * It exposes repository CRUD apis and source control tasks that do pull/pull/list applications in linked repository.
  */
-public class SourceControlService {
+public class SourceControlManagementService {
 
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final TransactionRunner transactionRunner;
 
   @Inject
-  public SourceControlService(TransactionRunner transactionRunner,
-                              AccessEnforcer accessEnforcer,
-                              AuthenticationContext authenticationContext) {
+  public SourceControlManagementService(TransactionRunner transactionRunner,
+                                        AccessEnforcer accessEnforcer,
+                                        AuthenticationContext authenticationContext) {
     this.transactionRunner = transactionRunner;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
@@ -51,24 +53,30 @@ public class SourceControlService {
     return new RepositoryTable(context);
   }
 
-  public void setRepository(NamespaceId namespace, RepositoryConfig repository) throws BadRequestException {
+  private NamespaceTable getNamespaceTable(StructuredTableContext context) throws TableNotFoundException {
+    return new NamespaceTable(context);
+  }
+
+  public void setRepository(NamespaceId namespace, RepositoryConfig repository) throws NamespaceNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-    if (repository == null || !repository.isValid()) {
-      throw new BadRequestException(String.format("Invalid repository configuration: %s.", repository));
-    }
 
     TransactionRunners.run(transactionRunner, context -> {
-      RepositoryTable table = getRepositoryTable(context);
-      table.create(namespace, repository);
-    });
+      NamespaceTable nsTable = getNamespaceTable(context);
+      if (nsTable.get(namespace) == null) {
+        throw new NamespaceNotFoundException(namespace);
+      }
+
+      RepositoryTable repoTable = getRepositoryTable(context);
+      repoTable.create(namespace, repository);
+    }, NamespaceNotFoundException.class);
   }
 
   public void deleteRepository(NamespaceId namespace) {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.DELETE);
     
     TransactionRunners.run(transactionRunner, context -> {
-      RepositoryTable table = getRepositoryTable(context);
-      table.delete(namespace);
+      RepositoryTable repoTable = getRepositoryTable(context);
+      repoTable.delete(namespace);
     });
   }
 

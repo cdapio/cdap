@@ -25,7 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.internal.app.services.SourceControlService;
+import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
@@ -43,12 +43,12 @@ import javax.ws.rs.PathParam;
  * {@link io.cdap.http.HttpHandler} for source control management.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/repository")
-public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
-  private final SourceControlService sourceControlService;
+public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHandler {
+  private final SourceControlManagementService sourceControlService;
   private static final Gson GSON = new Gson();
 
   @Inject
-  SourceControlHttpHandler(SourceControlService sourceControlService) {
+  SourceControlManagementHttpHandler(SourceControlManagementService sourceControlService) {
     this.sourceControlService = sourceControlService;
   }
 
@@ -57,20 +57,23 @@ public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setRepository(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
-    RepositoryConfigRequest repoRequest = getRepositoryRequest(request);
+    RepositoryConfigRequest repoRequest = getRepository(request);
     if (!repoRequest.shouldValidate()) {
+      if (!repoRequest.isValid()) {
+        throw new BadRequestException(String.format("Invalid repository configuration: %s.", repoRequest));
+      }
       sourceControlService.setRepository(validateNamespaceId(namespaceId), repoRequest);
       responder.sendString(HttpResponseStatus.OK, String.format("Updated repository configuration for namespace '%s'.",
                                                                 namespaceId));
     }
 
-    // TODO: add the validate logic once the SourceControlManager module is ready
+    // TODO: CDAP-20252 add the validate logic once the SourceControlManager module is ready
   }
 
   @GET
   @Path("/")
-  public void getRepositoryRequest(FullHttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId) throws Exception {
+  public void getRepository(FullHttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace = validateNamespaceId(namespaceId);
     RepositoryConfig repository = sourceControlService.getRepository(namespace);
 
@@ -98,7 +101,7 @@ public class SourceControlHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private RepositoryConfigRequest getRepositoryRequest(FullHttpRequest request) throws BadRequestException {
+  private RepositoryConfigRequest getRepository(FullHttpRequest request) throws BadRequestException {
     try {
       return parseBody(request, RepositoryConfigRequest.class);
     } catch (JsonSyntaxException e) {

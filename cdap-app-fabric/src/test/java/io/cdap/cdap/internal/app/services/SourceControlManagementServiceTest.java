@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
@@ -31,9 +33,10 @@ import org.junit.Test;
 /**
  *
  */
-public class SourceControlServiceTest extends AppFabricTestBase {
+public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private static CConfiguration cConf;
-  private static SourceControlService sourceControlService;
+  private static NamespaceAdmin namespaceAdmin;
+  private static SourceControlManagementService sourceControlService;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -42,8 +45,8 @@ public class SourceControlServiceTest extends AppFabricTestBase {
     cConf.set(Constants.Security.KERBEROS_ENABLED, Boolean.toString(true));
     cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "cdap");
     initializeAndStartServices(cConf);
-
-    sourceControlService = getInjector().getInstance(SourceControlService.class);
+    namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    sourceControlService = getInjector().getInstance(SourceControlManagementService.class);
   }
 
 
@@ -54,72 +57,30 @@ public class SourceControlServiceTest extends AppFabricTestBase {
     RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
       .setTokenName("token").setUsername("user").build();
+    
+    try {
+      sourceControlService.setRepository(namespaceId, namespaceRepo);
+    } catch (NamespaceNotFoundException e) {
+      // no-op
+      // Setting repository will fail since the namespace does not exist
+    }
+
+    // Create namespace and repository should succeed
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     sourceControlService.setRepository(namespaceId, namespaceRepo);
-    Assert.assertNotNull(sourceControlService.getRepository(namespaceId));
+    Assert.assertEquals(namespaceRepo, sourceControlService.getRepository(namespaceId));
 
     RepositoryConfig newRepositoryConfig = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink("another.example.com").setDefaultBranch("master").setAuthType(AuthType.PAT)
       .setTokenName("another.token").setUsername("another.user").build();
     sourceControlService.setRepository(namespaceId, newRepositoryConfig);
 
-    RepositoryConfig updatedNamespaceMeta = sourceControlService.getRepository(namespaceId);
-    Assert.assertEquals(newRepositoryConfig, updatedNamespaceMeta);
-
-    // Setting a null RepositoryConfig returns 400
-    try {
-      sourceControlService.setRepository(namespaceId, null);
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig Provider returns 400
-    try {
-      sourceControlService.setRepository(namespaceId,
-                                         new RepositoryConfig.Builder(namespaceRepo).setProvider(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig Link returns 400
-    try {
-      sourceControlService.setRepository(namespaceId,
-                                         new RepositoryConfig.Builder(namespaceRepo).setLink(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig DefaultBranch returns 400
-    try {
-      sourceControlService.setRepository(namespaceId,
-                                         new RepositoryConfig.Builder(namespaceRepo).setDefaultBranch(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig TokenName returns 400
-    try {
-      sourceControlService.setRepository(namespaceId,
-                                         new RepositoryConfig.Builder(namespaceRepo).setTokenName(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
-
-    // Setting a null RepositoryConfig AuthType returns 400
-    try {
-      sourceControlService.setRepository(namespaceId,
-                                         new RepositoryConfig.Builder(namespaceRepo).setAuthType(null).build());
-      Assert.fail();
-    } catch (BadRequestException e) {
-      //expected
-    }
+    // Verify repository updated
+    Assert.assertEquals(newRepositoryConfig, sourceControlService.getRepository(namespaceId));
 
     //clean up
-    sourceControlService.deleteRepository(namespaceId);
+    namespaceAdmin.delete(namespaceId);
+    Assert.assertNull(sourceControlService.getRepository(namespaceId));
   }
 
   @Test
@@ -129,15 +90,24 @@ public class SourceControlServiceTest extends AppFabricTestBase {
     RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
       .setTokenName("token").setUsername("user").build();
+    try {
+      sourceControlService.setRepository(namespaceId, namespaceRepo);
+    } catch (NamespaceNotFoundException e) {
+      // no-op
+      // Setting repository will fail since the namespace does not exist
+    }
+
+    // Create namespace and repository should succeed
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     sourceControlService.setRepository(namespaceId, namespaceRepo);
-    Assert.assertNotNull(sourceControlService.getRepository(namespaceId));
-    RepositoryConfig namespaceRepository = sourceControlService.getRepository(namespaceId);
-    Assert.assertEquals(namespaceRepo, namespaceRepository);
+    
+    Assert.assertEquals(namespaceRepo, sourceControlService.getRepository(namespaceId));
 
+    // Delete repository and verify it's deleted
     sourceControlService.deleteRepository(namespaceId);
+    Assert.assertNull(sourceControlService.getRepository(namespaceId));
 
-    namespaceRepository = sourceControlService.getRepository(namespaceId);
-
-    Assert.assertNull(namespaceRepository);
+    //clean up
+    namespaceAdmin.delete(namespaceId);
   }
 }

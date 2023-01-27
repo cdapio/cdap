@@ -30,7 +30,7 @@ public class RepositoryNotFoundException extends NotFoundException  {
     this.namespace = id;
   }
 
-  public NamespaceId getId() {
+  public NamespaceId getNamespace() {
     return namespace;
   }
 }

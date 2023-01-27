@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.cdap.gateway.handlers.SourceControlHttpHandler;
+import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
@@ -30,9 +30,9 @@ import org.junit.Test;
 import java.lang.reflect.Type;
 
 /**
- * Tests for {@link SourceControlHttpHandler}
+ * Tests for {@link SourceControlManagementHttpHandler}
  */
-public class SourceControlHttpHandlerTests extends AppFabricTestBase {
+public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   
   private static final String NAME = "test";
   private static final Gson GSON = new Gson();
@@ -57,8 +57,16 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
       .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
       .setTokenName("token").setUsername("user").build();
 
+    // Assert the namespace does not exist
+    response = setRepository(NAME, GSON.toJson(namespaceRepo));
+    assertResponseCode(404, response);
+
+    // Create the NS
+    assertResponseCode(200, createNamespace(NAME));
+
     response = setRepository(NAME, GSON.toJson(namespaceRepo));
     assertResponseCode(200, response);
+
     response = getRepository(NAME);
     RepositoryConfig repository = readGetRepositoryResponse(response);
     Assert.assertEquals(namespaceRepo, repository);
@@ -70,12 +78,14 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
     assertResponseCode(200, response);
     response = getRepository(NAME);
     repository = readGetRepositoryResponse(response);
-    // verify that the repo config has changed
+
+    // verify that the repo config has been updated
     Assert.assertEquals(newRepoConfig, repository);
 
     // cleanup
-    response = deleteRepository(NAME);
+    response = deleteNamespace(NAME);
     assertResponseCode(200, response);
+    assertResponseCode(404, getRepository(NAME));
   }
 
   @Test
@@ -109,9 +119,5 @@ public class SourceControlHttpHandlerTests extends AppFabricTestBase {
     invalidRepoConfigAuthType = new RepositoryConfig.Builder(namespaceRepo).setProvider(null).build();
     response = setRepository(NAME, GSON.toJson(invalidRepoConfigAuthType));
     assertResponseCode(400, response);
-
-    // cleanup
-    response = deleteRepository(NAME);
-    assertResponseCode(200, response);
   }
 }
