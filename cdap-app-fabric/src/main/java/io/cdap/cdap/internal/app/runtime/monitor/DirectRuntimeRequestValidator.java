@@ -22,6 +22,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -89,7 +90,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
 
   @Override
   public ProgramRunInfo getProgramRunStatus(ProgramRunId programRunId, HttpRequest request)
-    throws BadRequestException {
+    throws BadRequestException, GoneException {
     accessEnforcer.enforce(programRunId, authenticationContext.getPrincipal(), StandardPermission.GET);
     ProgramRunInfo programRunInfo;
     try {
@@ -99,6 +100,10 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
       throw e;
     } catch (Exception e) {
       throw new ServiceUnavailableException(Constants.Service.RUNTIME, e);
+    }
+    if (programRunInfo.getProgramRunStatus().isEndState()) {
+      throw new GoneException(String.format("Program run %s status is %s",
+                                            programRunId, programRunInfo.getProgramRunStatus()));
     }
     return programRunInfo;
   }
@@ -111,7 +116,7 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
       }, IOException.class);
 
       if (runRecord != null) {
-        return runRecord.getStatus().isEndState() ? Optional.empty() : getValidRunRecordStatus(runRecord);
+        return getValidRunRecordStatus(runRecord);
       }
       // If it is not found in the local store, which should be very rare, try to fetch the run record remotely.
       LOG.info("Remotely fetching program run details for {}", programRunId);

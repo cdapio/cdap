@@ -22,6 +22,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
@@ -182,10 +183,11 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
    * Opens a {@link HttpURLConnection} to the given service for the given program run.
    *
    * @throws BadRequestException if the request for service routing is not valid
+   * @throws GoneException if the run already finished
    */
   private HttpURLConnection openConnection(HttpRequest request, String namespace, String app,
                                            String version, String programType, String program, String run,
-                                           String service) throws BadRequestException {
+                                           String service) throws BadRequestException, GoneException {
     ApplicationId appId = new NamespaceId(namespace).app(app, version);
     ProgramRunId programRunId = new ProgramRunId(appId,
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
