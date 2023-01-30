@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,23 @@
  * the License.
  */
 
+package io.cdap.cdap.common;
 
-package io.cdap.cdap.gateway.router;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
- * Expected number of paths annotated with {@link io.cdap.cdap.common.security.AuditPolicy}
+ * Thrown when a namespace repository configuration is not found in CDAP.
  */
-public final class ExpectedNumberOfAuditPolicyPaths {
-  public static final int EXPECTED_PATH_NUMBER = 46;
+public class RepositoryNotFoundException extends NotFoundException  {
+
+  private final NamespaceId namespace;
+
+  public RepositoryNotFoundException(NamespaceId id) {
+    super(String.format("The repository configuration of namespace %s is not found.", id));
+    this.namespace = id;
+  }
+
+  public NamespaceId getNamespace() {
+    return namespace;
+  }
 }
