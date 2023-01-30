@@ -400,6 +400,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     if (client != null) {
       client.close();
     }
+    ClusterControllerClient clusterControllerClient = this.clusterControllerClient;
+    if (clusterControllerClient != null) {
+      clusterControllerClient.close();
+    }
   }
 
   /**
