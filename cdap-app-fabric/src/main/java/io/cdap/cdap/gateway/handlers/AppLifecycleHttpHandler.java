@@ -112,6 +112,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -663,6 +664,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
   private BodyConsumer deployAppFromArtifact(final ApplicationId appId) throws IOException {
+    UUID randomUUIDForDebug = UUID.randomUUID();
+    LOG.error("CVS debug: In deployAppFromArtifact() with app deployment request for appId {} , generated UUID ", appId,
+              randomUUIDForDebug);
     // Perform auth checks outside BodyConsumer as only the first http request containing auth header
     // to populate SecurityRequestContext while http chunk doesn't. BodyConsumer runs in the thread
     // that processes the last http chunk.
@@ -673,6 +677,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
+        LOG.error("CVS debug: Staring onFinish() for appId {} ", appId);
         try (FileReader fileReader = new FileReader(uploadedFile)) {
 
           AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
@@ -711,12 +716,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.error("Error while deploying.", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
-          LOG.error("Error reading request body for creating app {}.", appId, e);
+          LOG.error("CVS debug: Error reading request body for creating app {} with UUID {}.", appId,
+                    randomUUIDForDebug, e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
             "Error while reading json request body for app %s.", appId));
         } catch (Exception e) {
-          LOG.error("Deploy failure", e);
+          LOG.error("CVS debug: Deploy failure for appId {}, UUID {} ", appId, randomUUIDForDebug, e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        } finally {
+          LOG.error("CVS debug: Ending onFinish() for appId {}, UUID {} ", appId, randomUUIDForDebug);
         }
       }
     };
