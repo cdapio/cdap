@@ -14,38 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol;
+package io.cdap.cdap.sourcecontrol.SourceControlOperationRunner;
 
-import org.eclipse.jgit.api.Git;
+public class ListAppResponse {
+  String applicationName;
+  String applicationFileHash;
 
-import java.nio.file.Path;
-
-public class SourceControlManager {
-  private SourceControlContext context;
-  private AuthStrategy authStrategy;
-  private Git git;
-
-  public boolean validateConfig() {
-    return false;
-  }
-
-  public void push(CommitMeta meta) {
-
-  }
-
-  public String getCurrentBranch() {
-    return "";
-  }
-
-  public void switchToCleanBranch(String branchName) {
-
-  }
-
-  public String getFileHash(Path filePath) {
-    return "";
-  }
-
-  public Path getBasePath() {
-    return null;
+  public ListAppResponse(String applicationName, String applicationFileHash) {
+    this.applicationName = applicationName;
+    this.applicationFileHash = applicationFileHash;
   }
 }
