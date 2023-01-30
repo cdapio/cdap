@@ -139,6 +139,7 @@ public final class InMemoryConfigurator implements Configurator {
       return result;
 
     } catch (Throwable t) {
+      LOG.error("CVS debug: Exception in InMemoryConfigurator config.", t);
       return Futures.immediateFailedFuture(t);
     }
   }
@@ -179,6 +180,7 @@ public final class InMemoryConfigurator implements Configurator {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       } catch (Throwable t) {
+        LOG.error("CVS debug: Exception in InMemoryConfigurator createResponse.", t);
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof ClassNotFoundException) {
           // Heuristic to provide better error message

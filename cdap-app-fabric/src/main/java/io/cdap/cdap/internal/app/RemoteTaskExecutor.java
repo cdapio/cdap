@@ -105,7 +105,9 @@ public class RemoteTaskExecutor {
           }
           HttpRequest httpRequest = requestBuilder.build();
 
+          LOG.error("CVS debug: Initiating remote call");
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
+          LOG.error("CVS debug: Response code from remote call is {} .", httpResponse.getResponseCode());
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new RetryableException(
               String.format("Received response code %s for %s", httpResponse.getResponseCode(),
