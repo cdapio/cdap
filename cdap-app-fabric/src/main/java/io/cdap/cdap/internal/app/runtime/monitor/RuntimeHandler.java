@@ -97,7 +97,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
     this.eventLogsEnabled = cConf.getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED);
     this.eventLogsBaseLocation = locationFactory.create(cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR));
-    this.allowedTopics = new HashSet<>(RuntimeMonitors.createTopicConfigs(cConf).values());
+    this.allowedTopics = new HashSet<>(RuntimeMonitors.createTopicNameList(cConf));
   }
 
   @Override

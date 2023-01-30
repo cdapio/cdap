@@ -39,7 +39,7 @@ import java.net.ProxySelector;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -53,10 +53,10 @@ public final class RuntimeMonitors {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitors.class);
 
   /**
-   * Creates a map from topic configuration name to the actual TMS topic based on the list of topic configuration names
+   * Creates a properly ordered list of TMS topic names based on the list of topic configuration names
    * specified by the {@link Constants.RuntimeMonitor#TOPICS_CONFIGS} key.
    */
-  public static Map<String, String> createTopicConfigs(CConfiguration cConf) {
+  public static List<String> createTopicNameList(CConfiguration cConf) {
     return cConf.getTrimmedStringCollection(Constants.RuntimeMonitor.TOPICS_CONFIGS).stream().flatMap(key -> {
       int idx = key.lastIndexOf(':');
       if (idx < 0) {
@@ -87,7 +87,7 @@ public final class RuntimeMonitors {
       topic.getKey().startsWith(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC) ? 2 :
       topic.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX) ? 1 :
       0
-    )).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
+    )).map(e -> e.getValue()).collect(Collectors.toList());
   }
 
   /**

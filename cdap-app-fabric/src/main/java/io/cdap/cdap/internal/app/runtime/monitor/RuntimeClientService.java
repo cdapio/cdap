@@ -27,6 +27,7 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LogSamplers;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -74,7 +76,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     LOG, LogSamplers.all(LogSamplers.skipFirstN(5), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
   private static final Gson GSON = new Gson();
 
-  private final Map<String, TopicRelayer> topicRelayers;
+  private final List<TopicRelayer> topicRelayers;
   private final MessagingContext messagingContext;
   private final long pollTimeMillis;
   private final long gracefulShutdownMillis;
@@ -94,15 +96,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     this.runtimeClient = runtimeClient;
     this.fetchLimit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
     this.programFinishTime = new AtomicLong(-1L);
-    this.topicRelayers = RuntimeMonitors.createTopicConfigs(cConf).entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, e -> createTopicRelayer(cConf, e.getValue())));
+    this.topicRelayers = RuntimeMonitors.createTopicNameList(cConf)
+      .stream().map(name -> createTopicRelayer(cConf, name)).collect(Collectors.toList());
   }
 
   @Override
   protected long runTask() throws Exception {
     long nextPollDelay = pollTimeMillis;
-    for (Map.Entry<String, TopicRelayer> entry : topicRelayers.entrySet()) {
-      TopicRelayer topicRelayer = entry.getValue();
+    for (TopicRelayer topicRelayer : topicRelayers) {
       nextPollDelay = Math.min(nextPollDelay, topicRelayer.publishMessages());
     }
 
@@ -137,7 +138,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     RetryStrategy retryStrategy = RetryStrategies.timeLimit(gracefulShutdownMillis, TimeUnit.MILLISECONDS,
                                                             getRetryStrategy());
     Retries.runWithRetries(() -> {
-      for (TopicRelayer topicRelayer : topicRelayers.values()) {
+      for (TopicRelayer topicRelayer : topicRelayers) {
         topicRelayer.prepareClose();
       }
       if (getProgramFinishTime() < 0) {
@@ -146,7 +147,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }, retryStrategy, t -> t instanceof IOException || t instanceof RetryableException);
 
     // Close all the TopicRelay, which will flush out all pending messages
-    for (TopicRelayer topicRelayer : topicRelayers.values()) {
+    for (TopicRelayer topicRelayer : topicRelayers) {
       Retries.callWithRetries((Retries.Callable<Void, IOException>) () -> {
         topicRelayer.close();
         return null;
@@ -157,6 +158,13 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @VisibleForTesting
   long getProgramFinishTime() {
     return programFinishTime.get();
+  }
+
+  @VisibleForTesting
+  Collection<String> getTopicNames() {
+    return topicRelayers.stream()
+      .map(topicRelayer -> topicRelayer.getTopicId().getTopic())
+      .collect(Collectors.toList());
   }
 
   /**
@@ -197,14 +205,19 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       this.topicId = topicId;
     }
 
+    public TopicId getTopicId() {
+      return topicId;
+    }
+
     /**
      * Fetches messages from the {@link MessagingContext} and publish them using {@link RuntimeClient}.
      *
      * @return delay in milliseconds till the next poll
      * @throws TopicNotFoundException if the TMS topic to fetch from does not exist
      * @throws IOException if failed to read from TMS or write to RuntimeClient
+     * @throws GoneException if run already finished
      */
-    long publishMessages() throws TopicNotFoundException, IOException, BadRequestException {
+    long publishMessages() throws TopicNotFoundException, IOException, BadRequestException, GoneException {
       long currentTimeMillis = System.currentTimeMillis();
 
       // Not too publish more than necessary in one topic.
@@ -253,7 +266,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     /**
      * Processes the give list of {@link Message}. By default it sends them through the {@link RuntimeClient}.
      */
-    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException {
+    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException, GoneException {
       runtimeClient.sendMessages(programRunId, topicId, iterator);
     }
 
@@ -270,6 +283,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     protected void forcePoll() {
+      LOG.trace("Sending final messages for {}", topicId.getTopic());
       try {
         // Force one extra poll with retry
         nextPublishTimeMillis = 0L;
@@ -278,11 +292,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           while (publishMessages() == 0) {
             LOG.trace("Continue processing final messages for {}", topicId.getTopic());
           }
-        }, getRetryStrategy(), t -> true);
+        }, getRetryStrategy(), t -> !(t instanceof GoneException));
       } catch (TopicNotFoundException | BadRequestException e) {
         // This shouldn't happen. If it does, it must be some bug in the system and there is no way to recover from it.
         // So just log the cause for debugging.
         LOG.error("Failed to publish messages on close for topic {}", topicId, e);
+      } catch (GoneException e) {
+        LOG.warn("Failed to publish final messages on topic {} since the run is already marked completed",
+                 topicId, e);
       } catch (Exception e) {
         LOG.error("Retry exhausted when trying to publish message on close for topic {}", topicId, e);
       }
@@ -309,7 +326,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     @Override
-    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException {
+    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException, GoneException {
       List<Message> message = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
         .collect(Collectors.toList());
 
@@ -330,7 +347,12 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         lastProgramStateMessages.addAll(message);
 
         // Send an empty iterator to serve as the heartbeat.
-        super.processMessages(Collections.emptyIterator());
+        try {
+          super.processMessages(Collections.emptyIterator());
+        } catch (Exception e) {
+          //Don't pop this up to prevent retries and lastProgramStateMessages duplication
+          LOG.debug("Error sending topic heartbeat messages in {}", topicId, e);
+        }
       } else {
         // If the program is not yet finished, just publish the messages
         super.processMessages(message.iterator());
@@ -342,6 +364,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       super.close();
       if (!lastProgramStateMessages.isEmpty()) {
         try {
+          LOG.debug("Sending {} program completion messages to {}",
+                    lastProgramStateMessages.size(), topicId);
           Retries.runWithRetries(() -> super.processMessages(lastProgramStateMessages.iterator()),
                                  getRetryStrategy(), t -> t instanceof IOException || t instanceof RetryableException);
         } catch (BadRequestException e) {
@@ -349,6 +373,9 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           // The best we can do is to log here, even the log won't be collected by CDAP, but it will be retained
           // on the cluster.
           LOG.warn("Bad request when program state messages to runtime server: {}", lastProgramStateMessages, e);
+        } catch (GoneException e) {
+          LOG.warn("Failed to publish program state messages to {} since the run id already marked completed",
+                   topicId, e);
         } catch (Exception e) {
           LOG.error("Failed to send program state messages to runtime server: {}", lastProgramStateMessages, e);
         }
