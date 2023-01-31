@@ -54,6 +54,7 @@ import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.ConnectionRegistryMacroEvaluator;
 import io.cdap.cdap.etl.common.Constants;
@@ -345,6 +346,15 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         }
       }
     } catch (ValidationException e) {
+      LOG.error(String.format("CVS debug:  ValidationException encountered while configuring the stage %s.",
+                              stageName),
+                e);
+      List<ValidationFailure> failures = e.getFailures();
+      failures.forEach(validationFailure -> {
+        List<ValidationFailure.Cause> causes = validationFailure.getCauses();
+        causes.forEach(cause -> LOG.error("Causes : {}", cause.getAttributes()));
+      });
+
       throw e;
     } catch (NullPointerException e) {
       // handle the case where plugin throws null pointer exception, this is to avoid having 'null' as error message
@@ -355,6 +365,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     } catch (ConnectionBadRequestException e) {
       collector.addFailure(e.getMessage(), "Provide a valid connection name.");
     } catch (Exception e) {
+      LOG.error(String.format("CVS debug:  Error encountered while configuring the stage %s.", stageName), e);
       collector.addFailure(String.format("Error encountered while configuring the stage: '%s'",
                                          e.getMessage()), null).withStacktrace(e.getStackTrace());
     }
