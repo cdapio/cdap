@@ -220,7 +220,6 @@ public class KafkaClientModuleTest {
   private EmbeddedKafkaServer createKafkaServer(String zkConnectStr, File dir) throws Exception {
     // Don't set port, EmbeddedKafkaServer will find a ephemeral port.
     Properties properties = new Properties();
-    properties.setProperty("broker.id", "1");
     properties.setProperty("num.network.threads", "2");
     properties.setProperty("num.io.threads", "2");
     properties.setProperty("socket.send.buffer.bytes", "1048576");
