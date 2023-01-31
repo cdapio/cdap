@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.InvalidRepositoryConfigException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -83,17 +84,17 @@ public class SourceControlManagementService {
     });
   }
 
-  public RepositoryConfig getRepository(NamespaceId namespace) throws RepositoryNotFoundException {
+  public RepositoryMeta getRepositoryMeta(NamespaceId namespace) throws RepositoryNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
     
     return TransactionRunners.run(transactionRunner, context -> {
       RepositoryTable table = getRepositoryTable(context);
-      RepositoryConfig repository = table.get(namespace);
-      if (repository == null) {
+      RepositoryMeta repoMeta = table.get(namespace);
+      if (repoMeta == null) {
         throw new RepositoryNotFoundException(namespace);
       }
 
-      return repository;
+      return repoMeta;
     }, RepositoryNotFoundException.class);
   }
 }

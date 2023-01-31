@@ -31,8 +31,8 @@ public class RepositoryConfig {
   private final String pathPrefix;
   private final AuthConfig auth;
 
-  private RepositoryConfig(Provider provider, String link, String defaultBranch, AuthConfig authConfig,
-                           @Nullable String pathPrefix) {
+  private RepositoryConfig(Provider provider, String link, @Nullable String defaultBranch,
+                           AuthConfig authConfig, @Nullable String pathPrefix) {
     this.provider = provider;
     this.link = link;
     this.defaultBranch = defaultBranch;
@@ -65,18 +65,17 @@ public class RepositoryConfig {
     Collection<RepositoryValidationFailure> failures = new ArrayList<>();
 
     if (provider == null) {
-      failures.add(new RepositoryValidationFailure("'provider' field cannot be null or empty."));
+      failures.add(new RepositoryValidationFailure("'provider' field must be specified."));
     }
 
     if (link == null || link.equals("")) {
-      failures.add(new RepositoryValidationFailure("'link' field cannot be null or empty."));
+      failures.add(new RepositoryValidationFailure("'link' field must be specified."));
     }
 
     if (auth == null) {
-      failures.add(new RepositoryValidationFailure("'auth' field cannot be null or empty."));
+      failures.add(new RepositoryValidationFailure("'auth' field must be specified."));
     } else if (!auth.isValid()) {
-      failures.add(new RepositoryValidationFailure("'type' and 'tokenName' field in 'auth' object " +
-                                                     "cannot be null or empty."));
+      failures.add(new RepositoryValidationFailure("'type' and 'tokenName' fields must be specified."));
     }
 
     if (!failures.isEmpty()) {

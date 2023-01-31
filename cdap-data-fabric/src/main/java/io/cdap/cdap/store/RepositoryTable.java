@@ -19,6 +19,7 @@ package io.cdap.cdap.store;
 import com.google.gson.Gson;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -56,19 +57,20 @@ public class RepositoryTable {
                                                       id.getNamespace());
     Field<String> configField = Fields.stringField(StoreDefinition.NamespaceStore.REPOSITORY_CONFIGURATION_FIELD,
                                                    GSON.toJson(config));
-    table.upsert(Arrays.asList(namespaceField, configField));
+    Field<Long> timeField = Fields.longField(StoreDefinition.NamespaceStore.UPDATE_TIME, System.currentTimeMillis());
+    table.upsert(Arrays.asList(namespaceField, configField, timeField));
   }
 
   /**
    *
    * @param id the namespace id
-   * @return {@link RepositoryConfig} the repository configuration
+   * @return {@link RepositoryMeta} the repository configuration metadata.
    */
   @Nullable
-  public RepositoryConfig get(NamespaceId id) throws IOException {
+  public RepositoryMeta get(NamespaceId id) throws IOException {
     return table.read(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
                                                                id.getEntityName())))
-      .map(this::getRepositoryConfig)
+      .map(this::getRepositoryMeta)
       .orElse(null);
   }
 
@@ -83,9 +85,13 @@ public class RepositoryTable {
   }
 
   @Nullable
-  private RepositoryConfig getRepositoryConfig(StructuredRow row) {
-    return Optional.ofNullable(row.getString(StoreDefinition.NamespaceStore.REPOSITORY_CONFIGURATION_FIELD))
+  private RepositoryMeta getRepositoryMeta(StructuredRow row) {
+    RepositoryConfig config =
+      Optional.ofNullable(row.getString(StoreDefinition.NamespaceStore.REPOSITORY_CONFIGURATION_FIELD))
       .map(field -> GSON.fromJson(field, RepositoryConfig.class))
       .orElse(null);
+    long updatedTimeMillis =
+      Optional.ofNullable(row.getLong(StoreDefinition.NamespaceStore.UPDATE_TIME)).orElse(0L);
+    return new RepositoryMeta(config, updatedTimeMillis);
   }
 }

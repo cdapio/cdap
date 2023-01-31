@@ -30,7 +30,6 @@ public class RepositoryConfigTest {
   private static final String TOKEN_NAME = "token";
   private static final String USERNAME = "user";
 
-
   @Test
   public void testValidRepositoryConfig() {
     RepositoryConfig repo = new RepositoryConfig.Builder().setProvider(PROVIDER)
@@ -54,7 +53,7 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'provider' field cannot be null or empty.",
+      Assert.assertEquals("'provider' field must be specified.",
                           e.getFailures().get(0).getMessage());
     }
   }
@@ -68,7 +67,7 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'link' field cannot be null or empty.",
+      Assert.assertEquals("'link' field must be specified.",
                           e.getFailures().get(0).getMessage());
     }
   }
@@ -82,7 +81,7 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'type' and 'tokenName' field in 'auth' object cannot be null or empty.",
+      Assert.assertEquals("'type' and 'tokenName' fields must be specified.",
                           e.getFailures().get(0).getMessage());
     }
   }
@@ -96,7 +95,7 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'type' and 'tokenName' field in 'auth' object cannot be null or empty.",
+      Assert.assertEquals("'type' and 'tokenName' fields must be specified.",
                           e.getFailures().get(0).getMessage());
     }
   }
