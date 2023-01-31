@@ -16,9 +16,55 @@
 
 package io.cdap.cdap.sourcecontrol;
 
+import java.util.Objects;
+
+/**
+ * A class that holds metadata for a new commit.
+ */
 public class CommitMeta {
-  public String author;
-  public String commiter;
-  public long commitTime;
-  public String commitMessage;
+  private final String author;
+  private final String commiter;
+  private final long timestampMillis;
+  private final String message;
+
+  public CommitMeta(String author, String commiter, long timestampMillis, String message) {
+    this.author = author;
+    this.commiter = commiter;
+    this.timestampMillis = timestampMillis;
+    this.message = message;
+  }
+
+  public String getAuthor() {
+    return author;
+  }
+
+  public String getCommiter() {
+    return commiter;
+  }
+
+  public long getTimestampMillis() {
+    return timestampMillis;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof CommitMeta)) {
+      return false;
+    }
+    CommitMeta that = (CommitMeta) o;
+    return timestampMillis == that.timestampMillis && author.equals(that.author) && commiter.equals(that.commiter) &&
+      message.equals(that.message);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(author, commiter, timestampMillis, message);
+  }
 }

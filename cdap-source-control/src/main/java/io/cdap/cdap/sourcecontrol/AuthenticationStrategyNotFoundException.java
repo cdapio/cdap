@@ -16,32 +16,14 @@
 
 package io.cdap.cdap.sourcecontrol;
 
-import org.eclipse.jgit.api.Git;
+import io.cdap.cdap.common.NotFoundException;
 
-import java.nio.file.Path;
-
-public class SourceControlManager {
-  private SourceControlContext context;
-  private AuthStrategy authStrategy;
-  private Git git;
-
-  public boolean validateConfig() {
-    return false;
-  }
-
-  public void push(CommitMeta meta) {
-
-  }
-
-  public String getCurrentBranch() {
-    return "";
-  }
-
-  public void switchToCleanBranch(String branchName) {
-
-  }
-
-  public Path getBasePath() {
-    return null;
+/**
+ * Exception thrown when no auth strategy was found for the given {@link io.cdap.cdap.proto.sourcecontrol.Provider}
+ * and {@link io.cdap.cdap.proto.sourcecontrol.AuthType}.
+ */
+public class AuthenticationStrategyNotFoundException extends NotFoundException {
+  public AuthenticationStrategyNotFoundException(String message) {
+    super(message);
   }
 }

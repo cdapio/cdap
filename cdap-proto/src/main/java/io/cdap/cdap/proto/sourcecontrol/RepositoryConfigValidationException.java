@@ -22,19 +22,24 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Throw an exception when the RepositoryConfig is invalid.
+ * Throw an exception when the RepositoryConfig validation fails.
  */
-public class InvalidRepositoryConfigException extends RuntimeException {
+public class RepositoryConfigValidationException extends RuntimeException {
   private final List<RepositoryValidationFailure> failures;
 
-  public InvalidRepositoryConfigException(Collection<RepositoryValidationFailure> failures) {
+  public RepositoryConfigValidationException(Collection<RepositoryValidationFailure> failures) {
     super(generateMessage(failures));
     this.failures = Collections.unmodifiableList(new ArrayList<>(failures));
   }
 
-  public InvalidRepositoryConfigException(String message) {
+  public RepositoryConfigValidationException(String message) {
     super(message);
-    this.failures = Collections.unmodifiableList(new ArrayList<>());
+    this.failures = Collections.emptyList();
+  }
+
+  public RepositoryConfigValidationException(String message, Exception cause) {
+    super(message, cause);
+    this.failures = Collections.emptyList();
   }
 
   /**
@@ -46,7 +51,6 @@ public class InvalidRepositoryConfigException extends RuntimeException {
 
   private static String generateMessage(Collection<RepositoryValidationFailure> failures) {
     String errorMessage = failures.isEmpty() ? "" : failures.iterator().next().getMessage();
-    
     return String.format("Errors while validating repository configuration: %s", errorMessage);
   }
 }

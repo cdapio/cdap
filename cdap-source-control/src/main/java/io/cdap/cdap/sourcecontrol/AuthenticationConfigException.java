@@ -16,11 +16,12 @@
 
 package io.cdap.cdap.sourcecontrol;
 
-import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
-
-public class SourceControlContext {
-  public SecureStore store;
-  public String repoBasePath;
-  public RepositoryConfig repositoryConfig;
+/**
+ * Exception thrown when an error is encountered while setting up authentication credentials for the remote
+ * Git repo.
+ */
+public class AuthenticationConfigException extends Exception {
+  public AuthenticationConfigException(String message, Exception cause) {
+    super(message, cause);
+  }
 }
