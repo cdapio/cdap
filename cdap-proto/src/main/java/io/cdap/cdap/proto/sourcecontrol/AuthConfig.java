@@ -47,7 +47,7 @@ public class AuthConfig {
   }
 
   public boolean isValid() {
-    return type != null && tokenName != null;
+    return type != null && tokenName != null && !tokenName.equals("");
   }
 
   @Override

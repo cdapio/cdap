@@ -47,7 +47,6 @@ public class RepositoryConfigTest {
 
   @Test
   public void testInvalidProvider() {
-
     try {
       new RepositoryConfig.Builder().setProvider(null)
         .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
@@ -55,14 +54,13 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'provider' field cannot be null.",
+      Assert.assertEquals("'provider' field cannot be null or empty.",
                           e.getFailures().get(0).getMessage());
     }
   }
 
   @Test
   public void testInvalidLink() {
-
     try {
       new RepositoryConfig.Builder().setProvider(PROVIDER)
         .setLink(null).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
@@ -70,29 +68,13 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'link' field cannot be null.",
-                          e.getFailures().get(0).getMessage());
-    }
-  }
-
-  @Test
-  public void testInvalidDefaultBranch() {
-
-    try {
-      new RepositoryConfig.Builder().setProvider(PROVIDER)
-        .setLink(LINK).setDefaultBranch(null).setAuthType(AUTH_TYPE)
-        .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
-      Assert.fail();
-    } catch (InvalidRepositoryConfigException e) {
-      Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'defaultBranch' field cannot be null.",
+      Assert.assertEquals("'link' field cannot be null or empty.",
                           e.getFailures().get(0).getMessage());
     }
   }
 
   @Test
   public void testInvalidAuthType() {
-
     try {
       new RepositoryConfig.Builder().setProvider(PROVIDER)
         .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(null)
@@ -100,14 +82,13 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'type' and 'tokenName' field in 'auth' object cannot be null.",
+      Assert.assertEquals("'type' and 'tokenName' field in 'auth' object cannot be null or empty.",
                           e.getFailures().get(0).getMessage());
     }
   }
 
   @Test
   public void testInvalidTokenName() {
-
     try {
       new RepositoryConfig.Builder().setProvider(PROVIDER)
         .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
@@ -115,14 +96,13 @@ public class RepositoryConfigTest {
       Assert.fail();
     } catch (InvalidRepositoryConfigException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'type' and 'tokenName' field in 'auth' object cannot be null.",
+      Assert.assertEquals("'type' and 'tokenName' field in 'auth' object cannot be null or empty.",
                           e.getFailures().get(0).getMessage());
     }
   }
 
   @Test
   public void testMultipleInvalidFields() {
-
     try {
       new RepositoryConfig.Builder().setProvider(null)
         .setLink(null).setDefaultBranch(DEFAULT_BRANCH).setAuthType(null)

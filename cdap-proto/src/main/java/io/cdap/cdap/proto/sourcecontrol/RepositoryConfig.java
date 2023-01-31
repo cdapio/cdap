@@ -65,21 +65,18 @@ public class RepositoryConfig {
     Collection<RepositoryValidationFailure> failures = new ArrayList<>();
 
     if (provider == null) {
-      failures.add(new RepositoryValidationFailure("'provider' field cannot be null."));
+      failures.add(new RepositoryValidationFailure("'provider' field cannot be null or empty."));
     }
 
-    if (link == null) {
-      failures.add(new RepositoryValidationFailure("'link' field cannot be null."));
-    }
-
-    if (defaultBranch == null) {
-      failures.add(new RepositoryValidationFailure("'defaultBranch' field cannot be null."));
+    if (link == null || link.equals("")) {
+      failures.add(new RepositoryValidationFailure("'link' field cannot be null or empty."));
     }
 
     if (auth == null) {
-      failures.add(new RepositoryValidationFailure("'auth' field cannot be null."));
+      failures.add(new RepositoryValidationFailure("'auth' field cannot be null or empty."));
     } else if (!auth.isValid()) {
-      failures.add(new RepositoryValidationFailure("'type' and 'tokenName' field in 'auth' object cannot be null."));
+      failures.add(new RepositoryValidationFailure("'type' and 'tokenName' field in 'auth' object " +
+                                                     "cannot be null or empty."));
     }
 
     if (!failures.isEmpty()) {
