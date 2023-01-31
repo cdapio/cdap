@@ -22,8 +22,25 @@ import org.eclipse.jgit.transport.CredentialsProvider;
 
 import java.util.Optional;
 
+/**
+ * Interface to provide authentication objects used by JGit for different {@link io.cdap.cdap.proto.sourcecontrol.Provider}s
+ * and {@link io.cdap.cdap.proto.sourcecontrol.AuthType}s.
+ */
 public interface AuthStrategy {
-  CredentialsProvider getCredentialProvider(RepositoryConfig repositoryConfig);
+  /**
+   * Returns a credential provider for authenticating with a remote git repository.
+   * @param context source control related information.
+   * @return a Credential provider to be used with all git commands.
+   * @throws AuthenticationException when there are problems creating credentials.
+   */
+  CredentialsProvider getCredentialProvider(SourceControlContext context) throws AuthenticationException;
 
-  Optional<TransportConfigCallback> getTransportConfigCallback(RepositoryConfig repositoryConfig);
+  /**
+   * Provides the Http or ssh transport for connecting to the remote git repository. This can be used to set Http
+   * headers in the requests.
+   * @param context source control related information.
+   * @return a TransportConfigCallback to be used with all git commands.
+   * @throws AuthenticationException when there are problems creating credentials.
+   */
+  Optional<TransportConfigCallback> getTransportConfigCallback(SourceControlContext context) throws AuthenticationException;
 }

@@ -2001,4 +2001,13 @@ public final class Constants {
     public static final String METADATA_CONSUMER_EXTENSIONS_ENABLED_LIST = "metadata.consumer.extensions.enabled.list";
     public static final String METADATA_CONSUMER_EXTENSIONS_DIR = "metadata.consumer.extensions.dir";
   }
+
+  /**
+   * Constants for Source Control Management
+   */
+  public static final class SourceControl {
+    public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
+    public static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH =
+      "source.control.git.repositories.clone.directory.path";
+  }
 }

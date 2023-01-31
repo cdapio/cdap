@@ -51,7 +51,7 @@ public class RepositoryConfig {
   public String getDefaultBranch() {
     return defaultBranch;
   }
-  
+
   @Nullable
   public String getPathPrefix() {
     return pathPrefix;
@@ -140,7 +140,7 @@ public class RepositoryConfig {
       this.tokenName = tokenName;
       return this;
     }
-    
+
     public Builder setUsername(String username) {
       this.username = username;
       return this;

@@ -5511,5 +5511,19 @@
       If true, source control management using git will be enabled.
     </description>
   </property>
+  <property>
+    <name>source.control.git.command.timeout.seconds</name>
+    <value>30</value>
+    <description>
+      Timeout in seconds for git operations such as clone, pull push etc.
+    </description>
+  </property>
+  <property>
+    <name>source.control.git.repositories.clone.directory.path</name>
+    <value>/tmp/source-control/</value>
+    <description>
+      Path where git repositories will be cloned for source control operations.
+    </description>
+  </property>
 
 </configuration>
