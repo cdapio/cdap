@@ -14,14 +14,22 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol.SourceControlOperationRunner;
+package io.cdap.cdap.sourcecontrol.operationrunner;
 
-public class ListAppResponse {
+public class AppDetailsToPush {
+  String applicationSpecString;
   String applicationName;
-  String applicationFileHash;
+  String author;
 
-  public ListAppResponse(String applicationName, String applicationFileHash) {
-    this.applicationName = applicationName;
-    this.applicationFileHash = applicationFileHash;
+  public String getAuthor() {
+    return author;
+  }
+
+  public String getApplicationSpecString() {
+    return applicationSpecString;
+  }
+
+  public String getApplicationName() {
+    return applicationName;
   }
 }

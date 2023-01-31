@@ -14,17 +14,23 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol.SourceControlOperationRunner;
+package io.cdap.cdap.sourcecontrol.operationrunner;
 
-import io.cdap.cdap.sourcecontrol.CommitMeta;
-
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public interface SourceControlOperationRunner {
-  List<PushAppResponse> push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws IOException;
-  
-  PullAppResponse pull(String applicationName, String branchName) throws IOException;
+/**
+ *
+ */
+public class PushAppsResponse {
+  private final List<PushAppResponse> apps;
 
-  List<ListAppResponse> list();
+  public PushAppsResponse(List<PushAppResponse> apps) {
+    this.apps = Collections.unmodifiableList(new ArrayList<>(apps));
+  }
+
+  public List<PushAppResponse> getApps() {
+    return apps;
+  }
 }

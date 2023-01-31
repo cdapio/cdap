@@ -14,11 +14,23 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol.SourceControlOperationRunner;
+package io.cdap.cdap.internal.app.sourcecontrol;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.SourceControlManager;
+import io.cdap.cdap.sourcecontrol.operationrunner.AppDetailsToPush;
+import io.cdap.cdap.sourcecontrol.operationrunner.ListAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,10 +43,16 @@ import java.util.stream.Collectors;
 
 public class InMemorySourceControlOperationRunner implements SourceControlOperationRunner {
   private SourceControlManager sourceControlManager;
+  private final CConfiguration cConf;
 
+  @Inject
+  public InMemorySourceControlOperationRunner(CConfiguration cConf,
+                                              @Assisted RepositoryConfig repositoryConfig) {
+    this.cConf = cConf;
+  }
 
   @Override
-  public List<PushAppResponse> push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws IOException {
+  public ListenableFuture<PushAppsResponse> push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws IOException {
     Path repoBasePath = sourceControlManager.getBasePath();
 
     Map<String, Path> applicationPathMap =
@@ -52,11 +70,13 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
       return new PushAppResponse(appDetails.getApplicationName(), sourceControlManager.getFileHash(filePath));
     }).collect(Collectors.toList());
 
-    return response;
+    SettableFuture<PushAppsResponse> result = SettableFuture.create();
+    result.set(new PushAppsResponse(response));
+    return result;
   }
 
   @Override
-  public PullAppResponse pull(String applicationName, String branchName) throws IOException {
+  public ListenableFuture<PullAppResponse> pull(String applicationName, String branchName) throws IOException {
     Path filePath = sourceControlManager.getBasePath().resolve(applicationName);
 
     sourceControlManager.switchToCleanBranch(branchName);
@@ -64,7 +84,10 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
     String fileHash = sourceControlManager.getFileHash(filePath);
     String applicationSpecString = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 
-    return new PullAppResponse(applicationName, fileHash, applicationSpecString);
+    SettableFuture<PullAppResponse> result = SettableFuture.create();
+    result.set(new PullAppResponse(applicationName, fileHash, applicationSpecString));
+    
+    return result;
   }
 
   @Override

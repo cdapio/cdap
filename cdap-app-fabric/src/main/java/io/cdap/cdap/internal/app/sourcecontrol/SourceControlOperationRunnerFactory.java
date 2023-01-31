@@ -14,14 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol.SourceControlOperationRunner;
+package io.cdap.cdap.internal.app.sourcecontrol;
 
-public class PushAppResponse {
-  String applicationName;
-  String applicationFileHash;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 
-  public PushAppResponse(String applicationName, String applicationFileHash) {
-    this.applicationName = applicationName;
-    this.applicationFileHash = applicationFileHash;
-  }
+/**
+ * SourceControlOperatorFactory interface which is used by Guice during runtime.
+ */
+public interface SourceControlOperationRunnerFactory {
+  SourceControlOperationRunner create(RepositoryConfig repositoryConfig);
 }

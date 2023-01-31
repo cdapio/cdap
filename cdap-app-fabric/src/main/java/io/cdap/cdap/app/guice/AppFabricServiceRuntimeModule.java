@@ -113,6 +113,10 @@ import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
+import io.cdap.cdap.internal.app.sourcecontrol.InMemorySourceControlOperationRunner;
+import io.cdap.cdap.internal.app.sourcecontrol.RemoteSourceControlOperationRunner;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationFactoryProvider;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
@@ -144,6 +148,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -342,11 +347,27 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           .build(Key.get(ConfiguratorFactory.class,
                          Names.named(AppFabric.FACTORY_IMPLEMENTATION_REMOTE)))
       );
+
+      install(
+        new FactoryModuleBuilder()
+          .implement(SourceControlOperationRunner.class, InMemorySourceControlOperationRunner.class)
+          .build(Key.get(SourceControlOperationRunnerFactory.class,
+                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_LOCAL)))
+      );
+      install(
+        new FactoryModuleBuilder()
+          .implement(SourceControlOperationRunner.class, RemoteSourceControlOperationRunner.class)
+          .build(Key.get(SourceControlOperationRunnerFactory.class,
+                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_REMOTE)))
+      );
+
       // Used in InMemoryProgramRunDispatcher, TetheringClientHandler
       install(RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
                                                           Constants.Tethering.CLIENT_AUTHENTICATOR_NAME));
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
+
+      bind(SourceControlOperationRunnerFactory.class).toProvider(SourceControlOperationFactoryProvider.class);
 
       bind(InMemoryProgramRunDispatcher.class).in(Scopes.SINGLETON);
 

@@ -257,6 +257,12 @@
       <artifactId>spark-core_2.11</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-source-control</artifactId>
+      <version>6.9.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 
   <build>
