@@ -191,7 +191,6 @@ public class KafkaTester extends ExternalResource {
 
   private Properties generateKafkaConfig() throws IOException {
     Properties properties = new Properties();
-    properties.setProperty("broker.id", "1");
     properties.setProperty("host.name", InetAddress.getLoopbackAddress().getHostAddress());
     properties.setProperty("port", "0");
     properties.setProperty("num.network.threads", "2");

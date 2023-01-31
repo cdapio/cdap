@@ -18,7 +18,6 @@ package io.cdap.cdap.kafka.run;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -111,12 +110,6 @@ public class KafkaServerMain extends DaemonMain {
       }
     }
 
-    if (kafkaProperties.getProperty("broker.id") == null) {
-      int brokerId = generateBrokerId(address);
-      LOG.info(String.format("Initializing server with broker id %d", brokerId));
-      kafkaProperties.setProperty("broker.id", Integer.toString(brokerId));
-    }
-
     if (kafkaProperties.getProperty("zookeeper.connect") == null) {
       kafkaProperties.setProperty("zookeeper.connect", zkConnectStr);
     }
@@ -161,14 +154,5 @@ public class KafkaServerMain extends DaemonMain {
       prop.setProperty(trimmedKey, value);
     }
     return prop;
-  }
-
-  private static int generateBrokerId(InetAddress address) {
-    LOG.info("Generating broker ID with address {}", address);
-    try {
-      return Math.abs(InetAddresses.coerceToInteger(address));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 }
