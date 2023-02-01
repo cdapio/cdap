@@ -96,6 +96,7 @@ public final class StoreDefinition {
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String NAMESPACE_METADATA_FIELD = "namespace_metadata";
     public static final String REPOSITORY_CONFIGURATION_FIELD = "config";
+    public static final String UPDATE_TIME = "updatedtimemillis";
 
     public static final StructuredTableSpecification NAMESPACE_TABLE_SPEC =
       new StructuredTableSpecification.Builder()
@@ -109,7 +110,8 @@ public final class StoreDefinition {
       new StructuredTableSpecification.Builder()
         .withId(REPOSITORIES)
         .withFields(Fields.stringType(NAMESPACE_FIELD),
-                    Fields.stringType(REPOSITORY_CONFIGURATION_FIELD))
+                    Fields.stringType(REPOSITORY_CONFIGURATION_FIELD),
+                    Fields.longType(UPDATE_TIME))
         .withPrimaryKeys(NAMESPACE_FIELD)
         .build();
 

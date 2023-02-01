@@ -27,8 +27,8 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.InvalidRepositoryConfigException;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -61,23 +61,23 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     NamespaceId namespace = validateNamespaceId(namespaceId);
     RepositoryConfigRequest repoRequest = getRepositoryConfigRequest(request);
 
-    if (repoRequest == null || repoRequest.getRepository() == null) {
+    if (repoRequest == null || repoRequest.getConfig() == null) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                         GSON.toJson(new SetRepositoryResponse("Repository configuration cannot be null.")));
+                         GSON.toJson(new SetRepositoryResponse("Repository configuration must be specified.")));
+    }
+
+    try {
+      repoRequest.getConfig().validate();
+    } catch (InvalidRepositoryConfigException e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
+      return;
     }
 
     if (repoRequest.shouldTest()) {
       // TODO: CDAP-20252, add the validate logic once the SourceControlManager module is ready
     }
 
-    try {
-      repoRequest.getRepository().validate();
-    } catch (InvalidRepositoryConfigException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
-      return;
-    }
-
-    sourceControlService.setRepository(namespace, repoRequest.getRepository());
+    sourceControlService.setRepository(namespace, repoRequest.getConfig());
     responder.sendJson(HttpResponseStatus.OK,
                        GSON.toJson(
                          new SetRepositoryResponse(
@@ -89,8 +89,8 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   public void getRepository(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace = validateNamespaceId(namespaceId);
-    RepositoryConfig repository = sourceControlService.getRepository(namespace);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(repository));
+    RepositoryMeta repoMeta = sourceControlService.getRepositoryMeta(namespace);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(repoMeta));
   }
 
   @DELETE

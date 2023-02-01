@@ -26,12 +26,13 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- *
+ * Tests for SourceControlManagementService
  */
 public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private static CConfiguration cConf;
@@ -45,7 +46,6 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     sourceControlService = getInjector().getInstance(SourceControlManagementService.class);
   }
-
 
   @Test
   public void testSetRepoConfig() throws Exception {
@@ -66,7 +66,10 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Create namespace and repository should succeed
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     sourceControlService.setRepository(namespaceId, namespaceRepo);
-    Assert.assertEquals(namespaceRepo, sourceControlService.getRepository(namespaceId));
+
+    RepositoryMeta repoMeta = sourceControlService.getRepositoryMeta(namespaceId);
+    Assert.assertEquals(namespaceRepo, repoMeta.getConfig());
+    Assert.assertNotEquals(0, repoMeta.getUpdatedTimeMillis());
 
     RepositoryConfig newRepositoryConfig = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink("another.example.com").setDefaultBranch("master").setAuthType(AuthType.PAT)
@@ -74,13 +77,15 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, newRepositoryConfig);
 
     // Verify repository updated
-    Assert.assertEquals(newRepositoryConfig, sourceControlService.getRepository(namespaceId));
+    repoMeta = sourceControlService.getRepositoryMeta(namespaceId);
+    Assert.assertEquals(newRepositoryConfig, repoMeta.getConfig());
+    Assert.assertNotEquals(0, repoMeta.getUpdatedTimeMillis());
 
     //clean up
     namespaceAdmin.delete(namespaceId);
 
     try {
-      sourceControlService.getRepository(namespaceId);
+      sourceControlService.getRepositoryMeta(namespaceId);
       Assert.fail();
     } catch (RepositoryNotFoundException e) {
       // no-op
@@ -105,14 +110,16 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Create namespace and repository should succeed
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     sourceControlService.setRepository(namespaceId, namespaceRepo);
-    
-    Assert.assertEquals(namespaceRepo, sourceControlService.getRepository(namespaceId));
+
+    RepositoryMeta repoMeta = sourceControlService.getRepositoryMeta(namespaceId);
+    Assert.assertEquals(namespaceRepo, repoMeta.getConfig());
+    Assert.assertNotNull(repoMeta.getUpdatedTimeMillis());
 
     // Delete repository and verify it's deleted
     sourceControlService.deleteRepository(namespaceId);
     
     try {
-      sourceControlService.getRepository(namespaceId);
+      sourceControlService.getRepositoryMeta(namespaceId);
       Assert.fail();
     } catch (RepositoryNotFoundException e) {
       // no-op

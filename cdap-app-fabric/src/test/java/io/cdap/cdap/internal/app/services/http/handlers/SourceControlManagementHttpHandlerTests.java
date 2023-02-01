@@ -25,6 +25,7 @@ import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,8 +52,8 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     Assert.assertEquals(expected, response.getResponseCode());
   }
 
-  private RepositoryConfig readGetRepositoryResponse(HttpResponse response) {
-    return readResponse(response, RepositoryConfig.class);
+  private RepositoryMeta readGetRepositoryMeta(HttpResponse response) {
+    return readResponse(response, RepositoryMeta.class);
   }
 
   @Test
@@ -78,8 +79,9 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     assertResponseCode(200, response);
 
     response = getRepository(NAME);
-    RepositoryConfig repository = readGetRepositoryResponse(response);
-    Assert.assertEquals(namespaceRepo, repository);
+    RepositoryMeta repository = readGetRepositoryMeta(response);
+    Assert.assertEquals(namespaceRepo, repository.getConfig());
+    Assert.assertNotEquals(0, repository.getUpdatedTimeMillis());
 
     RepositoryConfig newRepoConfig = new RepositoryConfig.Builder(namespaceRepo)
       .setTokenName("a new token name")
@@ -88,10 +90,11 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     response = setRepository(NAME, createRepoRequestString(newRepoConfig));
     assertResponseCode(200, response);
     response = getRepository(NAME);
-    repository = readGetRepositoryResponse(response);
+    repository = readGetRepositoryMeta(response);
 
     // verify that the repo config has been updated
-    Assert.assertEquals(newRepoConfig, repository);
+    Assert.assertEquals(newRepoConfig, repository.getConfig());
+    Assert.assertNotEquals(0, repository.getUpdatedTimeMillis());
 
     // Delete the repository
     assertResponseCode(200, deleteRepository(NAME));
