@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
@@ -35,14 +34,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Map;
-
 /**
  *
  */
-public class OAuthMacroEvaluatorTest {
+public class OAuthAccessTokenMacroEvaluatorTest {
 
-  private static final Gson GSON = new Gson();
   private static final String PROVIDER = "test";
   private static final String CREDENTIAL_ID = "testcredential";
 
@@ -54,7 +50,7 @@ public class OAuthMacroEvaluatorTest {
     httpService = NettyHttpService.builder("OAuthTest")
       .setHttpHandlers(new MockOauthHandler(
         ImmutableMap.of(
-          PROVIDER, ImmutableMap.of(CREDENTIAL_ID, new MockOauthHandler.OAuthInfo("accessToken", "bearer"))
+          PROVIDER, ImmutableMap.of(CREDENTIAL_ID, new MockOauthHandler.OAuthInfo("foobar", "bearer"))
         )))
       .build();
 
@@ -81,17 +77,11 @@ public class OAuthMacroEvaluatorTest {
   }
 
   @Test
-  public void testOAuthMacro() {
-    MacroEvaluator macroEvaluator = new OAuthMacroEvaluator(serviceDiscoverer);
-    Map<String, String> oauthToken = macroEvaluator.evaluateMap(OAuthMacroEvaluator.FUNCTION_NAME,
+  public void testOAuthAccessTokenMacro() {
+    MacroEvaluator macroEvaluator = new OAuthAccessTokenMacroEvaluator(serviceDiscoverer);
+    String accessToken = macroEvaluator.evaluate(OAuthAccessTokenMacroEvaluator.FUNCTION_NAME,
                                                                 PROVIDER, CREDENTIAL_ID);
     // assert contain all properties
-    Assert.assertEquals("accessToken", oauthToken.get("accessToken"));
-    Assert.assertEquals("bearer", oauthToken.get("tokenType"));
-
-    MockOauthHandler.OAuthInfo oAuthInfo = GSON.fromJson(GSON.toJson(oauthToken), MockOauthHandler.OAuthInfo.class);
-
-    Assert.assertEquals("accessToken", oAuthInfo.accessToken);
-    Assert.assertEquals("bearer", oAuthInfo.tokenType);
+    Assert.assertEquals("foobar", accessToken);
   }
 }

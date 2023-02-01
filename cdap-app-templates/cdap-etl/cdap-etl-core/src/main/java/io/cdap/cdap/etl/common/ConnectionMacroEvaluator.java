@@ -76,4 +76,12 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
     return connection.getPlugin().getProperties();
   }
+
+  @Override
+  String evaluateMacro(String macroFunction, String... args)
+      throws InvalidMacroException, RetryableException {
+    throw new UnsupportedOperationException(
+        String.format("This function %s can only be evaluated as map, use evaluateMacroMap instead",
+            macroFunction));
+  }
 }
