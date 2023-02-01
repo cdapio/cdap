@@ -21,7 +21,6 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.proto.sourcecontrol.InvalidRepositoryConfigException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -60,8 +59,7 @@ public class SourceControlManagementService {
     return new NamespaceTable(context);
   }
 
-  public void setRepository(NamespaceId namespace, RepositoryConfig repository)
-    throws NamespaceNotFoundException, InvalidRepositoryConfigException {
+  public void setRepository(NamespaceId namespace, RepositoryConfig repository) throws NamespaceNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     TransactionRunners.run(transactionRunner, context -> {

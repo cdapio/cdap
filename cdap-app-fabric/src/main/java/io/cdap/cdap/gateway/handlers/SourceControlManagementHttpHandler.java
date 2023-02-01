@@ -19,10 +19,15 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ForbiddenException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -46,11 +51,14 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/repository")
 public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHandler {
   private final SourceControlManagementService sourceControlService;
+  private final FeatureFlagsProvider featureFlagsProvider;
   private static final Gson GSON = new Gson();
 
   @Inject
-  SourceControlManagementHttpHandler(SourceControlManagementService sourceControlService) {
+  SourceControlManagementHttpHandler(CConfiguration configuration,
+                                     SourceControlManagementService sourceControlService) {
     this.sourceControlService = sourceControlService;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
   }
 
   @PUT
@@ -58,36 +66,35 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setRepository(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
     NamespaceId namespace = validateNamespaceId(namespaceId);
     RepositoryConfigRequest repoRequest = getRepositoryConfigRequest(request);
 
-    if (repoRequest == null || repoRequest.getConfig() == null) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                         GSON.toJson(new SetRepositoryResponse("Repository configuration must be specified.")));
-    }
-
     try {
+      if (repoRequest == null || repoRequest.getConfig() == null) {
+        throw new InvalidRepositoryConfigException("Repository configuration must be specified.");
+      }
+      
       repoRequest.getConfig().validate();
+      if (repoRequest.shouldTest()) {
+        // TODO: CDAP-20252, add the validate logic once the SourceControlManager module is ready
+      }
+
+      sourceControlService.setRepository(namespace, repoRequest.getConfig());
+      responder.sendJson(HttpResponseStatus.OK,
+                         GSON.toJson(
+                           new SetRepositoryResponse(
+                             String.format("Updated repository configuration for namespace '%s'.", namespaceId))));
     } catch (InvalidRepositoryConfigException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
-      return;
     }
-
-    if (repoRequest.shouldTest()) {
-      // TODO: CDAP-20252, add the validate logic once the SourceControlManager module is ready
-    }
-
-    sourceControlService.setRepository(namespace, repoRequest.getConfig());
-    responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(
-                         new SetRepositoryResponse(
-                           String.format("Updated repository configuration for namespace '%s'.", namespaceId))));
   }
 
   @GET
   @Path("/")
   public void getRepository(FullHttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
     NamespaceId namespace = validateNamespaceId(namespaceId);
     RepositoryMeta repoMeta = sourceControlService.getRepositoryMeta(namespace);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(repoMeta));
@@ -97,9 +104,20 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   @Path("/")
   public void deleteRepository(FullHttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
     sourceControlService.deleteRepository(validateNamespaceId(namespaceId));
     responder.sendString(HttpResponseStatus.OK, String.format("Deleted repository configuration for namespace '%s'.",
                                                               namespaceId));
+  }
+
+  /**
+   *
+   * throws {@link ForbiddenException} if the feature is disabled
+   */
+  private void checkSourceControlFeatureFlag() throws ForbiddenException {
+    if (!Feature.SOURCE_CONTROL_MANAGEMENT_GIT.isEnabled(featureFlagsProvider)) {
+      throw new ForbiddenException("Source Control Management feature is not enabled.");
+    }
   }
 
   private NamespaceId validateNamespaceId(String namespaceId) throws BadRequestException {

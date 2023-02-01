@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
@@ -28,6 +30,8 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Map;
@@ -37,7 +41,9 @@ import javax.annotation.Nullable;
  * Tests for {@link SourceControlManagementHttpHandler}
  */
 public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
-  
+  private static CConfiguration cConf;
+  private static final String FEATURE_FLAG_PREFIX = "feature.";
+
   private static final String NAME = "testNamespace";
   private static final String LINK = "example.com";
   private static final String DEFAULT_BRANCH = "develop";
@@ -48,6 +54,21 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   private static final String REPO_FIELD = "repository";
   private static final Gson GSON = new Gson();
 
+  @BeforeClass
+  public static void beforeClass() throws Throwable {
+    cConf = createBasicCConf();
+    initializeAndStartServices(cConf);
+  }
+
+  @Before
+  public void before() {
+    setSCMFeatureFlag(true);
+  }
+
+  private static void setSCMFeatureFlag(boolean flag) {
+    cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.SOURCE_CONTROL_MANAGEMENT_GIT.getFeatureFlagString(), flag);
+  }
+  
   private void assertResponseCode(int expected, HttpResponse response) {
     Assert.assertEquals(expected, response.getResponseCode());
   }
@@ -114,6 +135,10 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     HttpResponse response = getRepository(NAME);
     assertResponseCode(404, response);
 
+    // Set the invalid repository that's missing the whole configuration object
+    assertResponseCode(400, setRepository(NAME, GSON.toJson(ImmutableMap.of(TEST_FIELD, "false"))));
+    assertResponseCode(404, getRepository(NAME));
+
     // Set the invalid repository that's missing provider
     String configMissingProvider = buildRepoRequestString(null, LINK, DEFAULT_BRANCH,
                                                           new AuthConfig(AuthType.PAT, TOKEN_NAME, USERNAME),
@@ -138,6 +163,21 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     // cleanup
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
+  }
+
+  @Test
+  public void testFeatureFlagDisabledEndpoint() throws Exception {
+    setSCMFeatureFlag(false);
+
+    // Set repository config
+    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AuthType.PAT)
+      .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+
+    // Assert the namespace does not exist
+    assertResponseCode(403, setRepository(NAME, createRepoRequestString(namespaceRepo)));
+    assertResponseCode(403, getRepository(NAME));
+    assertResponseCode(403, deleteRepository(NAME));
   }
 
   private String buildRepoRequestString(Provider provider, String link, String defaultBranch,
