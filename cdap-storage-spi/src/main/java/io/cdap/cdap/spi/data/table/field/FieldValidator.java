@@ -148,4 +148,21 @@ public final class FieldValidator {
       }
     }
   }
+
+  /**
+   * Validate if the given fields are not part of the primary key.
+   *
+   * @param fields the fields to validate
+   * @throws InvalidFieldException if any of the given fields are in the primary key.
+   */
+  public void validateNotPrimaryKeys(Collection<Field<?>> fields) throws InvalidFieldException {
+    Set<String> primaryKeys = new HashSet<>(tableSchema.getPrimaryKeys());
+    for (Field<?> field : fields) {
+      validateField(field);
+      if (primaryKeys.contains(field.getName())) {
+        throw new InvalidFieldException(
+          tableSchema.getTableId(), String.format("Given field %s is a primary key which shouldn't be updated", field));
+      }
+    }
+  }
 }

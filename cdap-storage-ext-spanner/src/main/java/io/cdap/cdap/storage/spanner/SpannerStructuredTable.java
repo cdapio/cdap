@@ -368,6 +368,32 @@ public class SpannerStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException {
+    // validate that the range is strictly a primary key prefix
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    // validate that we cannot update the primary key
+    fieldValidator.validateNotPrimaryKeys(fields);
+
+    Map<String, Value> parameters = new HashMap<>();
+    String condition = getRangeWhereClause(keyRange, parameters);
+
+
+    String sql = "UPDATE " + escapeName(schema.getTableId().getName())
+      + " SET " + fields.stream().map(this::fieldToParam).collect(Collectors.joining(", "))
+      + " WHERE " + (condition.isEmpty() ? "true" : condition);
+
+    LOG.trace("Updating rows: {}", sql);
+
+    Statement.Builder stmtBuilder = fields.stream().reduce(Statement.newBuilder(sql),
+                                                      (builder, field) -> builder.bind(field.getName())
+                                                        .to(getValue(field)),
+                                                      (builder1, builder2) -> builder1);
+    parameters.forEach((name, value) -> stmtBuilder.bind(name).to(value));
+    transactionContext.executeUpdate(stmtBuilder.build());
+  }
+
+  @Override
   public long count(Collection<Range> keyRanges) {
     try (ResultSet resultSet = transactionContext.executeQuery(getCountStatement(keyRanges))) {
       if (!resultSet.next()) {

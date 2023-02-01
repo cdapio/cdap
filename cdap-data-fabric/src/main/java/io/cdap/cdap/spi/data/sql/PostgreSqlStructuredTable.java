@@ -543,6 +543,17 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Update fields {} in range {}", tableSchema.getTableId(), fields, keyRange);
+    // validate that the range is strictly a primary key prefix
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    // validate that we cannot update the primary key
+    fieldValidator.validateNotPrimaryKeys(fields);
+    updateRangeInternal(keyRange, fields);
+  }
+
+  @Override
   public long count(Collection<Range> keyRanges) throws IOException {
     LOG.trace("Table {}: count with ranges {}", tableSchema.getTableId(), keyRanges);
     String sql = getCountStatement(keyRanges);
@@ -587,6 +598,24 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to write to table %s with fields %s",
                                           tableSchema.getTableId().getName(), fields), e);
+    }
+  }
+
+  private void updateRangeInternal(Range keyRange, Collection<Field<?>> fields) throws IOException {
+    String sqlQuery = getUpdateRangeSqlQuery(keyRange, fields);
+    try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+      int index = 1;
+      // set field values to update
+      for (Field<?> field : fields) {
+        setField(statement, field, index);
+        index++;
+      }
+      setStatementFieldByRange(keyRange, statement, index);
+      LOG.trace("SQL statement: {}", statement);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to update table %s with range %s and fields %s",
+                                          tableSchema.getTableId().getName(), keyRange, fields), e);
     }
   }
 
@@ -814,6 +843,21 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       } else {
         updatePart.add(field.getName() + "=?");
       }
+    }
+    return tablePart + updatePart + conditionPart;
+  }
+
+  private String getUpdateRangeSqlQuery(Range keyRange, Collection<Field<?>> fields) {
+    String tablePart = "UPDATE " + tableSchema.getTableId().getName();
+    StringJoiner updatePart = new StringJoiner(", ", " SET ", "");
+    StringBuilder conditionPart = new StringBuilder();
+    for (Field<?> field : fields) {
+        updatePart.add(field.getName() + "=?");
+    }
+
+    if (!keyRange.getBegin().isEmpty() || !keyRange.getEnd().isEmpty()) {
+      conditionPart.append(" WHERE ");
+      appendRange(conditionPart, keyRange);
     }
     return tablePart + updatePart + conditionPart;
   }

@@ -304,6 +304,24 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException, IOException {
+    try {
+      if (!emitTimeMetrics) {
+        structuredTable.updateAll(keyRange, fields);
+      } else {
+        long curTime = System.nanoTime();
+        structuredTable.updateAll(keyRange, fields);
+        long duration = System.nanoTime() - curTime;
+        metricsCollector.increment(metricPrefix + "updateAll.time", duration);
+      }
+      metricsCollector.increment(metricPrefix + "updateAll.count", 1L);
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + "updateAll.error", 1L);
+      throw e;
+    }
+  }
+
+  @Override
   public long count(Collection<Range> keyRanges) throws IOException {
     try {
       long count = 0;

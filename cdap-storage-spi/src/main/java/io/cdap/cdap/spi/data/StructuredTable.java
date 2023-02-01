@@ -274,6 +274,17 @@ public interface StructuredTable extends Closeable {
   void deleteAll(Range keyRange) throws InvalidFieldException, IOException;
 
   /**
+   * Updates the specific fields in a range of rows from the table
+   *
+   * @param keyRange key range of the rows to update: cab only be a primary key prefix
+   * @param fields the fields to write to
+   * @throws InvalidFieldException if any of the keys are not part of table schema,
+   *                               or their types do not match the schema
+   * @throws IOException if there is an error reading from or updating the table
+   */
+  void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException, IOException;
+
+  /**
    * Get the number of records in the table.
    * @param keyRanges key ranges of the rows to count
    * @return number of records in the table
