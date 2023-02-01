@@ -24,15 +24,19 @@ import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
-import com.google.cloud.dataproc.v1beta2.GetJobRequest;
-import com.google.cloud.dataproc.v1beta2.HadoopJob;
-import com.google.cloud.dataproc.v1beta2.Job;
-import com.google.cloud.dataproc.v1beta2.JobControllerClient;
-import com.google.cloud.dataproc.v1beta2.JobControllerSettings;
-import com.google.cloud.dataproc.v1beta2.JobPlacement;
-import com.google.cloud.dataproc.v1beta2.JobReference;
-import com.google.cloud.dataproc.v1beta2.JobStatus;
-import com.google.cloud.dataproc.v1beta2.SubmitJobRequest;
+import com.google.cloud.dataproc.v1.ClusterControllerClient;
+import com.google.cloud.dataproc.v1.ClusterControllerSettings;
+import com.google.cloud.dataproc.v1.DriverSchedulingConfig;
+import com.google.cloud.dataproc.v1.GetClusterRequest;
+import com.google.cloud.dataproc.v1.GetJobRequest;
+import com.google.cloud.dataproc.v1.HadoopJob;
+import com.google.cloud.dataproc.v1.Job;
+import com.google.cloud.dataproc.v1.JobControllerClient;
+import com.google.cloud.dataproc.v1.JobControllerSettings;
+import com.google.cloud.dataproc.v1.JobPlacement;
+import com.google.cloud.dataproc.v1.JobReference;
+import com.google.cloud.dataproc.v1.JobStatus;
+import com.google.cloud.dataproc.v1.SubmitJobRequest;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -123,6 +127,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   private volatile Storage storageClient;
   private volatile JobControllerClient jobControllerClient;
+  private volatile ClusterControllerClient clusterControllerClient;
   // CDAP specific artifacts which will be cached in GCS.
   private static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
     Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR, Constants.Files.APPLICATION_JAR)
@@ -196,7 +201,30 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
       this.jobControllerClient = client = JobControllerClient.create(
         JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
-          .setEndpoint(region + "-" + endpoint).build());
+          .setEndpoint(String.format("%s-%s", region, endpoint)).build());
+    }
+    return client;
+  }
+
+  private ClusterControllerClient getClusterControllerClient() throws IOException {
+    ClusterControllerClient client = clusterControllerClient;
+    if (client != null) {
+      return client;
+    }
+
+    synchronized (this) {
+      client = clusterControllerClient;
+      if (client != null) {
+        return client;
+      }
+
+      // instantiate a dataproc cluster controller client
+      CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
+      ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
+        .setCredentialsProvider(credentialsProvider)
+        .setEndpoint(String.format("%s-%s", region, endpoint))
+        .build();
+      this.clusterControllerClient = client = ClusterControllerClient.create(controllerSettings);
     }
     return client;
   }
@@ -371,6 +399,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     JobControllerClient client = this.jobControllerClient;
     if (client != null) {
       client.close();
+    }
+    ClusterControllerClient clusterControllerClient = this.clusterControllerClient;
+    if (clusterControllerClient != null) {
+      clusterControllerClient.close();
     }
   }
 
@@ -597,7 +629,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Creates and returns dataproc job submit request.
    */
-  private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo, List<LocalFile> localFiles) {
+  private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
+                                               List<LocalFile> localFiles) throws IOException {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     String runId = runInfo.getRun();
 
@@ -638,23 +671,41 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
     }
 
+    Job.Builder dataprocJobBuilder = Job.newBuilder()
+      // use program run uuid as hadoop job id on dataproc
+      .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
+      // place the job on provisioned cluster
+      .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build())
+      // add same labels as provisioned cluster
+      .putAllLabels(labels)
+      // Job label values must match the pattern '[\p{Ll}\p{Lo}\p{N}_-]{0,63}'
+      // Since program name and type are class names they should follow that pattern once we remove all
+      // capitals
+      .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
+      .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
+      .setHadoopJob(hadoopJobBuilder.build());
+
+    GetClusterRequest getClusterRequest = GetClusterRequest.newBuilder()
+      .setClusterName(clusterName).setProjectId(projectId).setRegion(region).build();
+
+    // if the dataproc cluster has driver pools enabled add the driver scheduling config i.e.
+    // the resources required by Runtime Job (io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob).
+    // Other quotas like GetJobRequestsPerMinutePerProjectPerRegion is counted independently of
+    // RequestsPerMinutePerProjectPerRegion so this check should not exceed the quota under high load.
+    if (getClusterControllerClient().getCluster(getClusterRequest).getConfig().getAuxiliaryNodeGroupsCount() > 0) {
+      dataprocJobBuilder.setDriverSchedulingConfig(
+        DriverSchedulingConfig.newBuilder()
+          .setMemoryMb(Integer.parseInt(provisionerProperties.getOrDefault(DataprocUtils.DRIVER_MEMORY_MB,
+                                                                           DataprocUtils.DRIVER_MEMORY_MB_DEFAULT)))
+          .setVcores(Integer.parseInt(provisionerProperties.getOrDefault(DataprocUtils.DRIVER_VCORES,
+                                                                         DataprocUtils.DRIVER_VCORES_DEFAULT)))
+          .build());
+    }
+
     return SubmitJobRequest.newBuilder()
       .setRegion(region)
       .setProjectId(projectId)
-      .setJob(Job.newBuilder()
-                // use program run uuid as hadoop job id on dataproc
-                .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
-                // place the job on provisioned cluster
-                .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build())
-                // add same labels as provisioned cluster
-                .putAllLabels(labels)
-                // Job label values must match the pattern '[\p{Ll}\p{Lo}\p{N}_-]{0,63}'
-                // Since program name and type are class names they should follow that pattern once we remove all
-                // capitals
-                .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
-                .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
-                .setHadoopJob(hadoopJobBuilder.build())
-                .build())
+      .setJob(dataprocJobBuilder.build())
       .build();
   }
 
