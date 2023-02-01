@@ -23,9 +23,9 @@ public class RepositoryConfigRequest {
   private final boolean test;
   private final RepositoryConfig repository;
 
-  public RepositoryConfigRequest(RepositoryConfig repository, boolean validate) {
+  public RepositoryConfigRequest(RepositoryConfig repository, boolean test) {
     this.repository = repository;
-    this.test = validate;
+    this.test = test;
   }
 
   public RepositoryConfigRequest(RepositoryConfig repository) {

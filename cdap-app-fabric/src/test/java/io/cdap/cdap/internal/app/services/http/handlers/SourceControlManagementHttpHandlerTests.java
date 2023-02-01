@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -27,12 +29,22 @@ import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Map;
+import javax.annotation.Nullable;
+
 /**
  * Tests for {@link SourceControlManagementHttpHandler}
  */
 public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   
-  private static final String NAME = "test";
+  private static final String NAME = "testNamespace";
+  private static final String LINK = "example.com";
+  private static final String DEFAULT_BRANCH = "develop";
+  private static final String TOKEN_NAME = "test_token_name";
+  private static final String USERNAME = "test_user";
+
+  private static final String TEST_FIELD = "test";
+  private static final String REPO_FIELD = "repository";
   private static final Gson GSON = new Gson();
 
   private void assertResponseCode(int expected, HttpResponse response) {
@@ -51,8 +63,8 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
 
     // Set repository config
     RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
+      .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AuthType.PAT)
+      .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
 
     // Assert the namespace does not exist
     response = setRepository(NAME, createRepoRequestString(namespaceRepo));
@@ -88,6 +100,54 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     // cleanup
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
+  }
+
+  @Test
+  public void testInvalidRepoConfig() throws Exception  {
+    // Create the NS
+    assertResponseCode(200, createNamespace(NAME));
+    
+    // verify the repository does not exist at the beginning
+    HttpResponse response = getRepository(NAME);
+    assertResponseCode(404, response);
+
+    // Set the invalid repository that's missing provider
+    String configMissingProvider = buildRepoRequestString(null, LINK, DEFAULT_BRANCH,
+                                                          new AuthConfig(AuthType.PAT, TOKEN_NAME, USERNAME),
+                                                          null);
+    assertResponseCode(400, setRepository(NAME, configMissingProvider));
+    assertResponseCode(404, getRepository(NAME));
+
+    // Set the invalid repository that's missing link
+    String configMissingLink = buildRepoRequestString(Provider.GITHUB, null, DEFAULT_BRANCH,
+                                                          new AuthConfig(AuthType.PAT, TOKEN_NAME, USERNAME),
+                                                          null);
+    assertResponseCode(400, setRepository(NAME, configMissingLink));
+    assertResponseCode(404, getRepository(NAME));
+
+    // Set the invalid repository that's missing auth token name
+    String configMissingTokenName = buildRepoRequestString(Provider.GITHUB, LINK, "",
+                                                          new AuthConfig(AuthType.PAT, "", USERNAME),
+                                                          null);
+    assertResponseCode(400, setRepository(NAME, configMissingTokenName));
+    assertResponseCode(404, getRepository(NAME));
+
+    // cleanup
+    response = deleteNamespace(NAME);
+    assertResponseCode(200, response);
+  }
+
+  private String buildRepoRequestString(Provider provider, String link, String defaultBranch,
+                                        AuthConfig authConfig, @Nullable String pathPrefix) {
+    Map<String, Object> authJsonMap = ImmutableMap.of("type", authConfig.getType().toString(),
+                                                      "tokenName", authConfig.getTokenName(),
+                                                      "username", authConfig.getUsername());
+    Map<String, Object> repoString = ImmutableMap.of("provider", provider == null ? "" : provider.toString(),
+                                                     "link", link == null ? "" : link,
+                                                     "defaultBranch", defaultBranch,
+                                                     "pathPrefix", pathPrefix == null ? "" : pathPrefix,
+                                                     "auth", authJsonMap);
+    return GSON.toJson(ImmutableMap.of(TEST_FIELD, "false", REPO_FIELD, repoString));
   }
 
   private String createRepoRequestString(RepositoryConfig namespaceRepo) {

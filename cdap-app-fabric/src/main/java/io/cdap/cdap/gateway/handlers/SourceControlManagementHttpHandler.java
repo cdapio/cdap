@@ -74,6 +74,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
       repoRequest.getRepository().validate();
     } catch (InvalidRepositoryConfigException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
+      return;
     }
 
     sourceControlService.setRepository(namespace, repoRequest.getRepository());
