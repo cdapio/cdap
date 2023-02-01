@@ -2005,7 +2005,7 @@ public final class Constants {
   /**
    * Constants for Source Control Management
    */
-  public static final class SourceControl {
+  public static final class SourceControlManagement {
     public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
     public static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH =
       "source.control.git.repositories.clone.directory.path";

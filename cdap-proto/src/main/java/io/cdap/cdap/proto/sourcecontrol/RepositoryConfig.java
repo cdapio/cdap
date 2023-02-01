@@ -48,6 +48,7 @@ public class RepositoryConfig {
     return link;
   }
 
+  @Nullable
   public String getDefaultBranch() {
     return defaultBranch;
   }

@@ -17,9 +17,11 @@
 package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.base.Strings;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryValidationFailure;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -35,12 +37,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * A Source Control Manager that is responsible for handling interfacing with git. It fetches credentials
@@ -59,20 +60,9 @@ public class SourceControlManager implements AutoCloseable {
   public SourceControlManager(SourceControlContext context) throws AuthStrategyNotFoundException {
     this.context = context;
     this.authStrategy = getAuthStrategy();
-    this.localRepoDirectory = context.getRepoBasePath().toFile();
+    this.localRepoDirectory = context.getRepoBasePath().resolve("real").toFile();
+    this.validationRepoDirectory = context.getRepoBasePath().resolve("validation").toFile();
     this.gitCommandTimeoutSeconds = context.getGitCommandTimeoutSeconds();
-    this.validationRepoDirectory = new File("/tmp/" + UUID.randomUUID());
-  }
-
-  // Deletes a directory by recursively deleting its contents.
-  private boolean deleteDirectory(File dir) {
-    File[] allContents = dir.listFiles();
-    if (allContents != null) {
-      for (File file : allContents) {
-        deleteDirectory(file);
-      }
-    }
-    return dir.delete();
   }
 
   private <C extends TransportCommand> C getAuthenticatedCommandWithTimeout(C command) throws AuthenticationException {
@@ -95,18 +85,25 @@ public class SourceControlManager implements AutoCloseable {
       return;
     }
     // Clean up the directory if it already exists.
-    if (localRepoDirectory.exists() && !deleteDirectory(localRepoDirectory)) {
-      throw new IOException("Failed to clean up local repository directory " + context.getRepoBasePath());
-    }
-    String branch = "refs/heads/" + context.getRepositoryConfig().getDefaultBranch();
-    CloneCommand command = Git.cloneRepository()
-      .setURI(context.getRepositoryConfig().getDefaultBranch())
-      .setDirectory(localRepoDirectory)
-      .setBranchesToClone(Collections.singleton((branch)))
-      .setBranch(branch);
+    deleteIfRequired(localRepoDirectory);
+    CloneCommand command =
+      Git.cloneRepository().setURI(context.getRepositoryConfig().getDefaultBranch()).setDirectory(localRepoDirectory);
 
+    String branch = getBranchRefName(context.getRepositoryConfig().getDefaultBranch());
+    if (branch != null) {
+      command.setBranchesToClone(Collections.singleton((branch))).setBranch(branch);
+    }
     command = getAuthenticatedCommandWithTimeout(command);
     command.call();
+  }
+
+  // Returns the ref name for the branch or Null if the branch name is null.
+  @Nullable
+  private String getBranchRefName(@Nullable String branch) {
+    if (Strings.isNullOrEmpty(branch)) {
+      return null;
+    }
+    return "refs/heads/" + branch;
   }
 
   /**
@@ -119,7 +116,7 @@ public class SourceControlManager implements AutoCloseable {
     RepositoryConfig config = this.context.getRepositoryConfig();
     if (config.getProvider() == Provider.GITHUB) {
       if (config.getAuth().getType() == AuthType.PAT) {
-        return new GitPATAuthStrategy(this.context.getStore());
+        return new GitPATAuthStrategy();
       }
     }
     throw new AuthStrategyNotFoundException(String.format("No strategy found for provider %s and type %s.",
@@ -127,72 +124,73 @@ public class SourceControlManager implements AutoCloseable {
                                                           config.getAuth().getType()));
   }
 
+  @Nullable
+  private RepositoryValidationFailure validateDefaultBranch(Collection<Ref> refs) {
+    // If refs are null, i.e. couldn't be fetched or
+    if (refs == null) {
+      return new RepositoryValidationFailure("No branched found in remote repository");
+    }
+
+    String defaultBranchRefName = getBranchRefName(context.getRepositoryConfig().getDefaultBranch());
+    // If default branch is not provided, skip validation.
+    if (defaultBranchRefName == null) {
+      return null;
+    }
+    // Check if default branch exists.
+    String foundDefaultBranch =
+      refs.stream().map(Ref::getName).filter(defaultBranchRefName::equals).findAny().orElse(null);
+    if (foundDefaultBranch != null) {
+      return null;
+    }
+    return new RepositoryValidationFailure(String.format(
+      "Default branch not found in remote repository. Ensure ref '%s' already exists.",
+      defaultBranchRefName));
+  }
+
   /**
    * Validated the configuration provided to this manager.
    *
-   * @return a {@link List} of {@link  Exception}s occurred during validation.
+   * @return a {@link List} of {@link  RepositoryValidationFailure}s occurred during validation.
    */
-  public List<Exception> validateConfig() {
-    ArrayList<Exception> validationErrors = new ArrayList<>();
+  public RepositoryValidationFailure validateConfig() throws IOException {
     // Validate existence of secret in Secure Store.
     RepositoryConfig config = context.getRepositoryConfig();
     LOG.info("Checking existence of secret in secure store: " + config.getAuth().getTokenName());
     try {
       context.getStore().get(context.getNamespaceId().getNamespace(), config.getAuth().getTokenName()).get();
     } catch (Exception e) {
-      validationErrors.add(new Exception("Failed to get password/token from secure store", e));
-      return validationErrors;
+      LOG.error("Failed to get auth credentials from secure store.", e);
+      return new RepositoryValidationFailure("Failed to get password/token from secure store.");
     }
 
     // Try fetching heads in the remote repository.
     FileRepository localRepo = null;
-    if (validationRepoDirectory.exists() && !deleteDirectory(validationRepoDirectory)) {
-      validationErrors.add(new Exception(String.format("Failed to clean up local directory '%s' for temp repository",
-                                                       validationRepoDirectory.getAbsolutePath())));
-      return validationErrors;
-    }
+    deleteIfRequired(validationRepoDirectory);
     try {
       localRepo = new FileRepository(validationRepoDirectory);
     } catch (IOException e) {
-      validationErrors.add(new Exception(String.format("Failed to create local git repository at path '%s'",
-                                                       validationRepoDirectory.getAbsolutePath()), e));
+      throw new IOException(String.format("Failed to create local git repository at path '%s'",
+                                          validationRepoDirectory.getAbsolutePath()), e);
     }
 
-    if (localRepo == null) {
-      return validationErrors;
-    }
-
-    Collection<Ref> refs = null;
     LOG.info("Created local repo in directory for validation: " + localRepoDirectory.getAbsolutePath());
     try (Git git = new Git(localRepo)) {
       LsRemoteCommand cmd = git.lsRemote().setRemote(config.getLink()).setHeads(true).setTags(false);
       cmd = getAuthenticatedCommandWithTimeout(cmd);
-      refs = cmd.call();
+      RepositoryValidationFailure failure = validateDefaultBranch(cmd.call());
+      if (failure != null) {
+        return failure;
+      }
     } catch (TransportException e) {
-      validationErrors.add(new Exception("Failed to connect with remote repository. " +
-                                           "Authentication credentials may be invalid or the repository may not exist.",
-                                         e));
+      LOG.error("Failed to list remotes in remote repository.", e);
+      return new RepositoryValidationFailure(
+        "Failed to connect with repository. Authentication credentials invalid or" + "the repository may not exist.");
     } catch (Exception e) {
-      validationErrors.add(e);
+      LOG.error("Failed to list remotes in remote repository.", e);
+      return new RepositoryValidationFailure(e.getMessage());
     }
-
-    // Check if default branch exists.
-    if (refs != null && !Strings.isNullOrEmpty(config.getDefaultBranch())) {
-      String defaultBranchRefName = "refs/heads/" + config.getDefaultBranch();
-      boolean foundDefaultBranch = false;
-      for (Ref ref : refs) {
-        if (defaultBranchRefName.equals(ref.getName())) {
-          foundDefaultBranch = true;
-        }
-      }
-      if (!foundDefaultBranch) {
-        validationErrors.add(new IllegalArgumentException(String.format(
-          "Default branch not found in remote repository. Ensure '%s' already exists.",
-          config.getDefaultBranch())));
-      }
-    }
-    deleteDirectory(validationRepoDirectory);
-    return validationErrors;
+    deleteIfRequired(validationRepoDirectory);
+    return null;
   }
 
   // Validated whether git is initialised.
@@ -225,7 +223,16 @@ public class SourceControlManager implements AutoCloseable {
   }
 
   public Path getBasePath() {
+    if (context.getRepositoryConfig().getPathPrefix() == null) {
+      return localRepoDirectory.toPath();
+    }
     return localRepoDirectory.toPath().resolve(context.getRepositoryConfig().getPathPrefix());
+  }
+
+  private void deleteIfRequired(File directory) throws IOException {
+    if (directory.exists()) {
+      DirUtils.deleteDirectoryContents(directory);
+    }
   }
 
   public String getFileHash(Path filePath) {
@@ -235,10 +242,10 @@ public class SourceControlManager implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
-    deleteDirectory(this.localRepoDirectory);
+  public void close() throws IOException {
     if (this.git != null) {
       this.git.close();
     }
+    deleteIfRequired(this.localRepoDirectory);
   }
 }

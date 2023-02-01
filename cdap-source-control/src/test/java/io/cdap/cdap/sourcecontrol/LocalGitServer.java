@@ -75,7 +75,6 @@ public class LocalGitServer {
     // Git requests try to authenticate as admin by default, so set that as the required
     // security role for all paths.
     Set<String> constraintRoles = Collections.singleton("admin");
-
     String[] roles = {"admin"};
     Constraint constraint = new Constraint();
     constraint.setRoles(roles);
@@ -88,6 +87,7 @@ public class LocalGitServer {
 
     List<ConstraintMapping> constraintMappings = Collections.singletonList(constraintMapping);
 
+    // Setup authentication for a single user whose username and password is provided in the constructor.
     ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
     securityHandler.setConstraintMappings(constraintMappings, constraintRoles);
     securityHandler.setAuthenticator(new BasicAuthenticator());
@@ -98,6 +98,8 @@ public class LocalGitServer {
     securityHandler.setLoginService(loginService);
 
     ServletHandler servletHandler = new ServletHandler();
+    // Add the git servlet behind the authentication servlet handler so that only authenticated requests can access
+    // the git repository.
     servletHandler.addServletWithMapping(new ServletHolder(gitServlet), "/*");
     securityHandler.setHandler(servletHandler);
     server.setHandler(securityHandler);

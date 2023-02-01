@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.sourcecontrol;
 
-import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -28,27 +26,23 @@ import java.util.Optional;
  * An {@link AuthStrategy} to use with GitHub and Personal Access Tokens.
  */
 public class GitPATAuthStrategy implements AuthStrategy {
-  private final SecureStore store;
-  private String token;
 
-  public GitPATAuthStrategy(SecureStore store) {
-    this.store = store;
+  public GitPATAuthStrategy() {
   }
 
   private String getToken(SourceControlContext context) throws Exception {
-    byte[] bytes = store.get(context.getNamespaceId().getNamespace(), context.getRepositoryConfig().getAuth().getTokenName()).get();
-    token = new String(bytes);
-    return token;
+    byte[] bytes = context.getStore()
+      .get(context.getNamespaceId().getNamespace(), context.getRepositoryConfig().getAuth().getTokenName())
+      .get();
+    return new String(bytes);
   }
 
   public CredentialsProvider getCredentialProvider(SourceControlContext context) throws AuthenticationException {
-    String token = "";
     try {
-      token = getToken(context);
+      return new UsernamePasswordCredentialsProvider(getToken(context), "");
     } catch (Exception e) {
       throw new AuthenticationException("Failed to get auth token from secure store", e);
     }
-    return new UsernamePasswordCredentialsProvider(token, "");
   }
 
   public Optional<TransportConfigCallback> getTransportConfigCallback(SourceControlContext context) {

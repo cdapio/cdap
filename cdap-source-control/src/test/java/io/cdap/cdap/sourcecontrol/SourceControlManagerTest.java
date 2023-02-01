@@ -21,10 +21,10 @@ import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryValidationFailure;
 import org.eclipse.jgit.api.Git;
 import org.junit.After;
 import org.junit.Assert;
@@ -39,11 +39,14 @@ import org.mockito.MockitoAnnotations;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.List;
+import java.util.UUID;
 
+/**
+ * Tests for {@link  SourceControlManager}.
+ */
 public class SourceControlManagerTest {
   private static final String DEFAULT_BRANCH_NAME = "develop";
-  private static final String MOCK_TOKEN = "abc123456";
+  private static final String MOCK_TOKEN = UUID.randomUUID().toString();
   private static final String NAMESPACE = "namespace1";
   private static final String GITHUB_TOKEN_NAME = "github-pat";
   @Rule
@@ -76,8 +79,8 @@ public class SourceControlManagerTest {
 
     testGit.push().setPushAll().setRemote(bareRepoDir.toPath().toString()).call();
     cConf = CConfiguration.create();
-    cConf.setInt(Constants.SourceControl.GIT_COMMAND_TIMEOUT_SECONDS, 2);
-    cConf.set(Constants.SourceControl.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
+    cConf.setInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS, 2);
+    cConf.set(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
               tempFolder.newFolder("repository").getAbsolutePath());
   }
 
@@ -89,8 +92,6 @@ public class SourceControlManagerTest {
 
   @Test
   public void testValidate() throws Exception {
-    File localRepoDir = tempFolder.newFolder("local_repo");
-
     // For GitHub + PAT, the username is the token and password is empty.
     LocalGitServer gitServer = new LocalGitServer(MOCK_TOKEN, "", 0, bareGit.getRepository());
     gitServer.start();
@@ -99,26 +100,33 @@ public class SourceControlManagerTest {
 
     // Test Failure cases.
     // Provide incorrect token key name.
-    AuthConfig authConfig = new AuthConfig(AuthType.PAT, GITHUB_TOKEN_NAME + "invalid", null);
-    RepositoryConfig config = new RepositoryConfig(Provider.GITHUB, serverURL + "ignored", "develop", authConfig, "");
-    SourceControlContext context =
-      new SourceControlContext(secureStore, config, new NamespaceId(NAMESPACE), cConf);
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME + "invalid")
+      .build();
+    SourceControlContext context = new SourceControlContext(secureStore, config, new NamespaceId(NAMESPACE), cConf);
     SourceControlManager manager = new SourceControlManager(context);
-    List<Exception> errors = manager.validateConfig();
-    Assert.assertEquals(1, errors.size());
-    Assert.assertTrue(errors.get(0).getMessage().contains("Failed to get password"));
+    RepositoryValidationFailure failure = manager.validateConfig();
+    Assert.assertNotNull(failure);
+    Assert.assertTrue(failure.getMessage().contains("Failed to get password"));
     manager.close();
 
     // Provide invalid token from secure store.
-    authConfig = new AuthConfig(AuthType.PAT, GITHUB_TOKEN_NAME, null);
-    config = new RepositoryConfig(Provider.GITHUB, serverURL + "ignored", "develop", authConfig, "");
+    config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
     context = new SourceControlContext(secureStore, config, new NamespaceId(NAMESPACE), cConf);
     manager = new SourceControlManager(context);
     Mockito.when(secureStore.get(NAMESPACE, GITHUB_TOKEN_NAME))
       .thenReturn(new SecureStoreData(null, "invalid-token".getBytes(StandardCharsets.UTF_8)));
-    errors = manager.validateConfig();
-    Assert.assertEquals(1, errors.size());
-    Assert.assertTrue(errors.get(0).getMessage().contains("Authentication credentials may be invalid"));
+    failure = manager.validateConfig();
+    Assert.assertNotNull(failure);
+    Assert.assertTrue(failure.getMessage().contains("Authentication credentials invalid"));
     manager.close();
 
     // return correct token from secure store.
@@ -126,23 +134,42 @@ public class SourceControlManagerTest {
       .thenReturn(new SecureStoreData(null, MOCK_TOKEN.getBytes(StandardCharsets.UTF_8)));
 
     // Provide non-existent branch name.
-    authConfig = new AuthConfig(AuthType.PAT, GITHUB_TOKEN_NAME, null);
-    config = new RepositoryConfig(Provider.GITHUB, serverURL + "ignored", "invalid-branch", authConfig, "");
-    context = new SourceControlContext(secureStore,  config, new NamespaceId(NAMESPACE), cConf);
+    config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop-invalid")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
+    context = new SourceControlContext(secureStore, config, new NamespaceId(NAMESPACE), cConf);
     manager = new SourceControlManager(context);
-    errors = manager.validateConfig();
-    Assert.assertEquals(1, errors.size());
-    Assert.assertTrue(errors.get(0) instanceof IllegalArgumentException);
-    Assert.assertTrue(errors.get(0).getMessage().contains("Default branch not found in remote repository"));
+    failure = manager.validateConfig();
+    Assert.assertNotNull(failure);
+    Assert.assertTrue(failure.getMessage().contains("Default branch not found in remote repository"));
+    manager.close();
+
+    // Provide null branch name.
+    config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
+    context = new SourceControlContext(secureStore, config, new NamespaceId(NAMESPACE), cConf);
+    manager = new SourceControlManager(context);
+    failure = manager.validateConfig();
+    Assert.assertNull(failure);
     manager.close();
 
     // Provide correct details
-    authConfig = new AuthConfig(AuthType.PAT, GITHUB_TOKEN_NAME, null);
-    config = new RepositoryConfig(Provider.GITHUB, serverURL + "ignored", "develop", authConfig, "");
+    config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
     context = new SourceControlContext(secureStore, config, new NamespaceId(NAMESPACE), cConf);
     manager = new SourceControlManager(context);
-    errors = manager.validateConfig();
-    Assert.assertEquals(0, errors.size());
+    failure = manager.validateConfig();
+    Assert.assertNull(failure);
     manager.close();
 
     gitServer.stop();

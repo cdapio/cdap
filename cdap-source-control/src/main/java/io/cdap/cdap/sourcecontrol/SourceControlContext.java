@@ -32,7 +32,6 @@ public class SourceControlContext {
   private static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH_DEFAULT = "/tmp/source-control/";
   private final SecureStore store;
   private final Path repoBasePath;
-  private final Path validationRepoPath;
   private final RepositoryConfig repositoryConfig;
 
   private final int gitCommandTimeoutSeconds;
@@ -46,12 +45,10 @@ public class SourceControlContext {
     this.repositoryConfig = repositoryConfig;
     this.namespaceId = namespaceId;
     this.gitCommandTimeoutSeconds =
-      cConf.getInt(Constants.SourceControl.GIT_COMMAND_TIMEOUT_SECONDS, GIT_COMMAND_TIMEOUT_SECONDS_DEFAULT);
-    String gitCloneDirectory = cConf.get(Constants.SourceControl.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
+      cConf.getInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS, GIT_COMMAND_TIMEOUT_SECONDS_DEFAULT);
+    String gitCloneDirectory = cConf.get(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
                                          GIT_REPOSITORIES_CLONE_DIRECTORY_PATH_DEFAULT);
-    Path commonPath = new File(gitCloneDirectory).toPath().resolve("namespace").resolve(namespaceId.getNamespace());
-    this.repoBasePath = commonPath.resolve("actual");
-    this.validationRepoPath = commonPath.resolve("validate");
+    this.repoBasePath = new File(gitCloneDirectory).toPath().resolve("namespace").resolve(namespaceId.getNamespace());
   }
 
   public SecureStore getStore() {
@@ -68,10 +65,6 @@ public class SourceControlContext {
 
   public NamespaceId getNamespaceId() {
     return namespaceId;
-  }
-
-  public Path getValidationRepoPath() {
-    return validationRepoPath;
   }
 
   public int getGitCommandTimeoutSeconds() {
