@@ -264,6 +264,11 @@
       <groupId>org.slf4j</groupId>
       <artifactId>log4j-over-slf4j</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-source-control</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

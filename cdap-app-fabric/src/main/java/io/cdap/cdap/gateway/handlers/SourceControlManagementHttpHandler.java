@@ -64,10 +64,18 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     if (repoRequest == null || repoRequest.getConfig() == null) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST,
                          GSON.toJson(new SetRepositoryResponse("Repository configuration must be specified.")));
+      return;
     }
 
     try {
       repoRequest.getConfig().validate();
+      if (repoRequest.shouldTest()) {
+        sourceControlService.testRepositoryConfig(repoRequest.getConfig(), namespace);
+        responder.sendJson(HttpResponseStatus.OK,
+                           GSON.toJson(
+                             new SetRepositoryResponse("Successfully validated the repository configuration.")));
+        return;
+      }
     } catch (InvalidRepositoryConfigException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
       return;

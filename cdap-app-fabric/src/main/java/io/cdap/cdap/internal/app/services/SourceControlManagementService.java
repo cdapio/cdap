@@ -17,21 +17,30 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.InvalidRepositoryConfigException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryValidationFailure;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.sourcecontrol.AuthStrategyNotFoundException;
+import io.cdap.cdap.sourcecontrol.SourceControlContext;
+import io.cdap.cdap.sourcecontrol.SourceControlManager;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
+
+import java.io.IOException;
+import java.util.Collections;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -42,11 +51,17 @@ public class SourceControlManagementService {
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final TransactionRunner transactionRunner;
+  private final CConfiguration cConf;
+  private final SecureStore secureStore;
 
   @Inject
-  public SourceControlManagementService(TransactionRunner transactionRunner,
+  public SourceControlManagementService(CConfiguration cConf,
+                                        TransactionRunner transactionRunner,
                                         AccessEnforcer accessEnforcer,
-                                        AuthenticationContext authenticationContext) {
+                                        AuthenticationContext authenticationContext,
+                                        SecureStore secureStore) {
+    this.cConf = cConf;
+    this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
@@ -96,5 +111,15 @@ public class SourceControlManagementService {
 
       return repoMeta;
     }, RepositoryNotFoundException.class);
+  }
+
+  public void testRepositoryConfig(RepositoryConfig config, NamespaceId namespaceId)
+    throws AuthStrategyNotFoundException, IOException {
+    SourceControlContext context = new SourceControlContext(secureStore, config, namespaceId, cConf);
+    SourceControlManager manager = new SourceControlManager(context);
+    RepositoryValidationFailure failure = manager.validateConfig();
+    if (failure != null) {
+      throw new InvalidRepositoryConfigException(Collections.singleton(failure));
+    }
   }
 }
