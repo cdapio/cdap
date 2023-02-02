@@ -355,6 +355,11 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-source-control</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -478,7 +483,8 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.kafka,org.scala-lang,commons-logging</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.kafka,org.scala-lang,commons-logging
+                  </excludeGroupIds>
                   <excludeArtifactIds>zkclient,servlet-api,cdap-cli</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
@@ -576,13 +582,13 @@
                     </resource>
                     <!-- Copy cdap-ui -->
                     <resource>
-                     <directory>${project.parent.basedir}/cdap-ui/target/stage-packaging/opt/cdap/ui</directory>
-                     <targetPath>ui</targetPath>
-                     <excludes>
-                      <exclude>**LICENSE**</exclude>
-                      <exclude>bin/node</exclude>
-                     </excludes>
-                   </resource>
+                      <directory>${project.parent.basedir}/cdap-ui/target/stage-packaging/opt/cdap/ui</directory>
+                      <targetPath>ui</targetPath>
+                      <excludes>
+                        <exclude>**LICENSE**</exclude>
+                        <exclude>bin/node</exclude>
+                      </excludes>
+                    </resource>
                     <!-- Copy runtime extensions. Currently only has Spark -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core3_2.12/target/libexec</directory>
@@ -780,8 +786,10 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${project.version}.jar"
+                          tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${project.version}.jar"/>
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${project.version}.jar"
+                          tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${project.version}.jar"/>
                   </target>
                 </configuration>
               </execution>

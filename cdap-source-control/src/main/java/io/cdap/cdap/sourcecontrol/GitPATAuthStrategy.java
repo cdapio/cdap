@@ -39,7 +39,7 @@ public class GitPATAuthStrategy implements AuthStrategy {
 
   public CredentialsProvider getCredentialProvider(SourceControlContext context) throws AuthenticationException {
     try {
-      return new UsernamePasswordCredentialsProvider(getToken(context), "");
+      return new UsernamePasswordCredentialsProvider("oauth2", getToken(context));
     } catch (Exception e) {
       throw new AuthenticationException("Failed to get auth token from secure store", e);
     }
