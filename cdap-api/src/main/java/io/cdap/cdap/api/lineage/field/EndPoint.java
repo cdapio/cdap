@@ -29,7 +29,9 @@ import javax.annotation.Nullable;
  * program runs.
  */
 public class EndPoint {
+  @Nullable
   private final String namespace;
+  @Nullable
   private final String name;
   private final Map<String, String> properties;
 
@@ -49,7 +51,9 @@ public class EndPoint {
 
   /**
    * @return the namespace name if it is explicitly provided while creating this EndPoint,
-   * otherwise {@code null} is returned
+   * otherwise {@code null} is returned. Also, in the case where in a pipeline
+   * a field is dropped, the dropped EndPointField is mapped to a blank EndPointField with
+   * namespace set to null.
    */
   @Nullable
   public String getNamespace() {
@@ -58,7 +62,10 @@ public class EndPoint {
 
   /**
    * @return the name of the {@link EndPoint}
+   * Name can be null in the case where in a pipeline a field is dropped,
+   * and the dropped EndPointField is mapped to a blank EndPointField with name set to null.
    */
+  @Nullable
   public String getName() {
     return name;
   }

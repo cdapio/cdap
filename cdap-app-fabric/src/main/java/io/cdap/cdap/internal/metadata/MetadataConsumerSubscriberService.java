@@ -286,15 +286,13 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     }
 
     private LineageInfo getLineageInfoForConsumer(FieldLineageInfo lineage, long startTimeMs, long endTimeMs) {
-      Map<EndPointField, Set<EndPointField>> incomingSummary = lineage.getIncomingSummary();
-      Map<EndPointField, Set<EndPointField>> outgoingSummary = lineage.getOutgoingSummary();
       return LineageInfo.builder()
         .setStartTimeMs(startTimeMs)
         .setEndTimeMs(endTimeMs)
         .setSources(lineage.getSources().stream().map(this::getAssetForEndpoint).collect(Collectors.toSet()))
         .setTargets(lineage.getDestinations().stream().map(this::getAssetForEndpoint).collect(Collectors.toSet()))
-        .setTargetToSources(getAssetsMapFromEndpointFieldsMap(incomingSummary))
-        .setSourceToTargets(getAssetsMapFromEndpointFieldsMap(outgoingSummary))
+        .setTargetToSources(getAssetsMapFromEndpointFieldsMap(lineage.getIncomingSummary()))
+        .setSourceToTargets(getAssetsMapFromEndpointFieldsMap(lineage.getOutgoingSummary()))
         .build();
     }
 
@@ -313,6 +311,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
       return endPointFieldSetMap.entrySet().stream()
         .collect(Collectors.toMap(entry -> getAssetForEndpoint(entry.getKey().getEndPoint()),
                                   entry -> entry.getValue().stream()
+                                    .filter(EndPointField::isValid)
                                     .map(endPointField ->
                                            getAssetForEndpoint(endPointField.getEndPoint()))
                                     .collect(Collectors.toSet()),
