@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Nosql structured table implementation. This table will prepend the table name as the prefix for each row key.
@@ -427,6 +428,28 @@ public final class NoSqlStructuredTable implements StructuredTable {
     try (CloseableIterator<StructuredRow> iterator = getFilterByRangeIterator(keyRange)) {
       while (iterator.hasNext()) {
         table.delete(convertKeyToBytes(iterator.next().getPrimaryKeys(), false));
+      }
+    }
+  }
+
+  @Override
+  public void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException {
+    LOG.trace("Table {}: Update fields {} in range {}", schema.getTableId(), fields, keyRange);
+    // validate that the range is strictly a primary key prefix
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    // validate that we cannot update the primary key
+    fieldValidator.validateNotPrimaryKeys(fields);
+    try (CloseableIterator<StructuredRow> iterator = getFilterByRangeIterator(keyRange)) {
+      while (iterator.hasNext()) {
+        Collection<Field<?>> primaryKeys = iterator.next().getPrimaryKeys();
+        List<Field<?>> fieldsToUpdate = Stream.concat(primaryKeys.stream(), fields.stream())
+          .collect(Collectors.toList());
+        Put put = updateFieldsToBytes(fieldsToUpdate);
+        // Put will not have values if a row is not being updated
+        if (!put.getValues().isEmpty()) {
+          table.put(put);
+        }
       }
     }
   }

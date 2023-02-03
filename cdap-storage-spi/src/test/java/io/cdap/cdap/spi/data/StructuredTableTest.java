@@ -1590,6 +1590,146 @@ public abstract class StructuredTableTest {
     Assert.assertEquals(new HashSet<>(updatedFields), new HashSet<>(expectedFields));
   }
 
+  @Test
+  public void testUpdateAll() throws Exception {
+    int max = 10;
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    List<Collection<Field<?>>> beforeUpdateSublist = expected.subList(6, 8);
+
+    List<Field<?>> expectedFields1 = Arrays.asList(Fields.intField(KEY, 6),
+                                                  Fields.longField(KEY2, 6L),
+                                                  Fields.stringField(KEY3, "key3"),
+                                                  Fields.stringField(STRING_COL, "val6"),
+                                                  Fields.doubleField(DOUBLE_COL, (double) 6.0),
+                                                  Fields.floatField(FLOAT_COL, (float) 6.0),
+                                                  Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-6")));
+    List<Field<?>> expectedFields2 = Arrays.asList(Fields.intField(KEY, 7),
+                                                   Fields.longField(KEY2, 7L),
+                                                   Fields.stringField(KEY3, "key3"),
+                                                   Fields.stringField(STRING_COL, "val7"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) 7.0),
+                                                   Fields.floatField(FLOAT_COL, (float) 7.0),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-7")));
+    Assert.assertEquals(new HashSet<>(beforeUpdateSublist.get(0)), new HashSet<>(expectedFields1));
+    Assert.assertEquals(new HashSet<>(beforeUpdateSublist.get(1)), new HashSet<>(expectedFields2));
+
+    List<Field<?>> updates = Arrays.asList(Fields.stringField(STRING_COL, "val0"),
+                                           Fields.floatField(FLOAT_COL, (float) 0.0));
+    Range range = Range.create(Arrays.asList(Fields.intField(KEY, 6), Fields.longField(KEY2, 6L)),
+                               Range.Bound.INCLUSIVE,
+                               Arrays.asList(Fields.intField(KEY, 8), Fields.longField(KEY2, 8L)),
+                               Range.Bound.EXCLUSIVE);
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.updateAll(range, updates);
+    });
+
+
+    expectedFields1 = Arrays.asList(Fields.intField(KEY, 6),
+                                    Fields.longField(KEY2, 6L),
+                                    Fields.stringField(KEY3, "key3"),
+                                    Fields.stringField(STRING_COL, "val0"),
+                                    Fields.doubleField(DOUBLE_COL, (double) 6.0),
+                                    Fields.floatField(FLOAT_COL, (float) 0.0),
+                                    Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-6")));
+
+    expectedFields2 = Arrays.asList(Fields.intField(KEY, 7),
+                                                   Fields.longField(KEY2, 7L),
+                                                   Fields.stringField(KEY3, "key3"),
+                                                   Fields.stringField(STRING_COL, "val0"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) 7.0),
+                                                   Fields.floatField(FLOAT_COL, (float) 0.0),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-7")));
+
+    List<Field<?>> expectedFields3 = Arrays.asList(Fields.intField(KEY, 2),
+                                                   Fields.longField(KEY2, 2L),
+                                                   Fields.stringField(KEY3, "key3"),
+                                                   Fields.stringField(STRING_COL, "val2"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) 2.0),
+                                                   Fields.floatField(FLOAT_COL, (float) 2.0),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-2")));
+
+    // Verify the updated rows
+    List<Collection<Field<?>>> actualRows = scanSimpleStructuredRows(Range.all(), max);
+    List<Collection<Field<?>>> updatedRows = actualRows.subList(6, 8);
+    Assert.assertEquals(new HashSet<>(expectedFields1), new HashSet<>(updatedRows.get(0)));
+    Assert.assertEquals(new HashSet<>(expectedFields2), new HashSet<>(updatedRows.get(1)));
+    // Verify other rows are not updated
+    Assert.assertEquals(new HashSet<>(expectedFields3), new HashSet<>(actualRows.get(2)));
+  }
+
+  @Test(expected = TransactionException.class)
+  public void testUpdateAllUpdatePrimaryKey() throws Exception {
+    int max = 10;
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    List<Collection<Field<?>>> beforeUpdateSublist = expected.subList(6, 8);
+
+    List<Field<?>> expectedFields1 = Arrays.asList(Fields.intField(KEY, 6),
+                                                   Fields.longField(KEY2, 6L),
+                                                   Fields.stringField(KEY3, "key3"),
+                                                   Fields.stringField(STRING_COL, "val6"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) 6.0),
+                                                   Fields.floatField(FLOAT_COL, (float) 6.0),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-6")));
+    List<Field<?>> expectedFields2 = Arrays.asList(Fields.intField(KEY, 7),
+                                                   Fields.longField(KEY2, 7L),
+                                                   Fields.stringField(KEY3, "key3"),
+                                                   Fields.stringField(STRING_COL, "val7"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) 7.0),
+                                                   Fields.floatField(FLOAT_COL, (float) 7.0),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-7")));
+    Assert.assertEquals(new HashSet<>(beforeUpdateSublist.get(0)), new HashSet<>(expectedFields1));
+    Assert.assertEquals(new HashSet<>(beforeUpdateSublist.get(1)), new HashSet<>(expectedFields2));
+
+    List<Field<?>> updates = Arrays.asList(Fields.stringField(KEY3, "key0"),
+                                           Fields.stringField(STRING_COL, "val0"),
+                                           Fields.floatField(FLOAT_COL, (float) 0.0));
+    Range range = Range.create(Arrays.asList(Fields.intField(KEY, 6), Fields.longField(KEY2, 6L)),
+                               Range.Bound.INCLUSIVE,
+                               Arrays.asList(Fields.intField(KEY, 8), Fields.longField(KEY2, 8L)),
+                               Range.Bound.EXCLUSIVE);
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.updateAll(range, updates);
+    });
+  }
+
+  @Test(expected = TransactionException.class)
+  public void testUpdateAllRangeIsNotPrimaryKeyPrefix() throws Exception {
+    int max = 10;
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    List<Collection<Field<?>>> beforeUpdateSublist = expected.subList(6, 8);
+
+    List<Field<?>> expectedFields1 = Arrays.asList(Fields.intField(KEY, 6),
+                                                   Fields.longField(KEY2, 6L),
+                                                   Fields.stringField(KEY3, "key3"),
+                                                   Fields.stringField(STRING_COL, "val6"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) 6.0),
+                                                   Fields.floatField(FLOAT_COL, (float) 6.0),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-6")));
+    List<Field<?>> expectedFields2 = Arrays.asList(Fields.intField(KEY, 7),
+                                                   Fields.longField(KEY2, 7L),
+                                                   Fields.stringField(KEY3, "key3"),
+                                                   Fields.stringField(STRING_COL, "val7"),
+                                                   Fields.doubleField(DOUBLE_COL, (double) 7.0),
+                                                   Fields.floatField(FLOAT_COL, (float) 7.0),
+                                                   Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-7")));
+    Assert.assertEquals(new HashSet<>(beforeUpdateSublist.get(0)), new HashSet<>(expectedFields1));
+    Assert.assertEquals(new HashSet<>(beforeUpdateSublist.get(1)), new HashSet<>(expectedFields2));
+
+    List<Field<?>> updates = Arrays.asList(Fields.stringField(KEY3, "key0"),
+                                           Fields.stringField(STRING_COL, "val0"),
+                                           Fields.floatField(FLOAT_COL, (float) 0.0));
+    Range range = Range.create(Arrays.asList(Fields.intField(KEY, 6), Fields.doubleField(DOUBLE_COL, 6.0)),
+                               Range.Bound.INCLUSIVE,
+                               Arrays.asList(Fields.intField(KEY, 8), Fields.doubleField(DOUBLE_COL, 8.0)),
+                               Range.Bound.EXCLUSIVE);
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.updateAll(range, updates);
+    });
+  }
+
   @Test(expected = TransactionException.class)
   public void testUpdatePrimaryKeyNotSpecified() throws Exception {
     List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, 1),
