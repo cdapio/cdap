@@ -28,6 +28,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.deploy.AppDeletionSubscriberService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
@@ -146,6 +147,7 @@ public class StandaloneMain {
   private final OperationalStatsService operationalStatsService;
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
+  private final AppDeletionSubscriberService appDeletionSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final SecureStoreService secureStoreService;
   private final SupportBundleInternalService supportBundleInternalService;
@@ -179,6 +181,7 @@ public class StandaloneMain {
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
                                                                      Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    appDeletionSubscriberService = injector.getInstance(AppDeletionSubscriberService.class);
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
@@ -256,6 +259,7 @@ public class StandaloneMain {
 
     remoteExecutionTwillRunnerService.start();
     metadataSubscriberService.startAndWait();
+    appDeletionSubscriberService.startAndWait();
 
     // Validate the logging pipeline configuration.
     // Do it explicitly as Standalone doesn't have a separate master check phase as the distributed does.
@@ -326,6 +330,7 @@ public class StandaloneMain {
 
       // Stop all services that requires tx service
       metadataSubscriberService.stopAndWait();
+      appDeletionSubscriberService.stopAndWait();
       metadataService.stopAndWait();
       remoteExecutionTwillRunnerService.stop();
       serviceStore.stopAndWait();

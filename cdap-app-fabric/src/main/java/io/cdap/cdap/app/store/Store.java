@@ -483,6 +483,13 @@ public interface Store {
   void removeApplication(ApplicationId id);
 
   /**
+   * Marks all the versions of the application to be deleted
+   *
+   * @param id Application id
+   */
+  void markDeleteApplication(ApplicationId id);
+
+  /**
    * Remove all metadata associated with the given namespace.
    *
    * @param id namespace id whose items to remove

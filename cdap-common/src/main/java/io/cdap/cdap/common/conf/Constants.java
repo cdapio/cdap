@@ -356,6 +356,13 @@ public final class Constants {
     public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
 
     /**
+     * Topic name for publishing application deletion events to the messaging system
+     */
+    public static final String APP_DELETION_EVENT_TOPIC = "app.delete.event.topic";
+    public static final String APP_DELETE_EVENT_FETCH_SIZE = "app.delete.event.fetch.size";
+    public static final String APP_DELETE_EVENT_POLL_DELAY_MILLIS = "app.delete.event.poll.delay.millis";
+
+    /**
      * Interval at which system programs are monitored
      */
     public static final String SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS = "system.program.scan.interval.seconds";

@@ -45,6 +45,7 @@ import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.app.deploy.AppDeletionSubscriberService;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.client.DatasetClient;
@@ -216,6 +217,7 @@ public abstract class AppFabricTestBase {
   private static MetadataService metadataService;
   private static DefaultMetadataServiceClient metadataServiceClient;
   private static MetadataSubscriberService metadataSubscriberService;
+  private static AppDeletionSubscriberService appDeletionSubscriberService;
   private static LocationFactory locationFactory;
   private static DatasetClient datasetClient;
   private static MetadataClient metadataClient;
@@ -282,6 +284,8 @@ public abstract class AppFabricTestBase {
     metadataService.startAndWait();
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataSubscriberService.startAndWait();
+    appDeletionSubscriberService = injector.getInstance(AppDeletionSubscriberService.class);
+    appDeletionSubscriberService.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
@@ -316,6 +320,7 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
     logQueryService.stopAndWait();
+    appDeletionSubscriberService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }

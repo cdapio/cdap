@@ -642,6 +642,15 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void markDeleteApplication(ApplicationId id) {
+    LOG.trace("Marking application {} as deleted", id.getApplication());
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = getAppMetadataStore(context);
+      metaStore.markDeleteApplication(id.getAppReference());
+    });
+  }
+
+  @Override
   public void removeAll(NamespaceId id) {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 

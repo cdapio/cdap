@@ -47,6 +47,7 @@ import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.app.deploy.AppDeletionPublisher;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.ApplicationFilter;
@@ -173,6 +174,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final int batchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final AppDeletionPublisher appDeletionPublisher;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice injection.
@@ -208,6 +210,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.adminEventPublisher = new AdminEventPublisher(cConf, new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.appDeletionPublisher = new AppDeletionPublisher(cConf,
+                                                         new MultiThreadMessagingContext(messagingService));
   }
 
   @Override
@@ -1231,7 +1235,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param spec the {@link ApplicationSpecification} of the application to be removed
    * @throws Exception
    */
-  private void deleteApp(ApplicationId appId, ApplicationSpecification spec) throws IOException {
+  private void deleteApp(ApplicationId appId, ApplicationSpecification spec) throws IOException, RuntimeException {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
@@ -1242,8 +1246,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
     deletePreferences(appId, spec);
+
+    store.markDeleteApplication(appId);
+    // TODO : remove this in CDAP-20333 to test end to end delete
     store.removeApplication(appId);
-    
+    try {
+      appDeletionPublisher.publishAppDeletionEvent(appId);
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Failed to publish app deletion request for entity id %s", appId), e);
+    }
+    adminEventPublisher.publishAppDeletion(appId, spec);
     try {
       // delete the owner as it has already been determined that this is the only version of the app
       ownerAdmin.delete(appId);

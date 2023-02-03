@@ -401,6 +401,7 @@ public final class StoreDefinition {
     public static final String WORKFLOW_DATA = "workflow_data";
     public static final String COUNT_TYPE = "count_type";
     public static final String COUNTS = "counts";
+    public static final String STATUS_FIELD = "status";
     public static final String SUBSCRIBER_TOPIC = "subscriber_topic";
     public static final String SUBSCRIBER_MESSAGE = "subscriber_message";
     public static final String SUBSCRIBER = "subscriber";
@@ -417,9 +418,10 @@ public final class StoreDefinition {
                     Fields.stringType(AUTHOR_FIELD),
                     Fields.stringType(CHANGE_SUMMARY_FIELD),
                     Fields.booleanType(LATEST_FIELD),
-                    Fields.stringType(SOURCE_CONTROL_META))
+                    Fields.stringType(SOURCE_CONTROL_META),
+                    Fields.stringType(STATUS_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
-        .withIndexes(LATEST_FIELD, CREATION_TIME_FIELD)
+        .withIndexes(LATEST_FIELD, CREATION_TIME_FIELD, STATUS_FIELD)
         .build();
 
     // The table that stores the edit# of an application. It provides:
