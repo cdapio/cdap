@@ -257,6 +257,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
         long endTimeMs = System.currentTimeMillis();
         run = getProgramRunForConsumer(programRunId, startTimeMs, endTimeMs);
         info = getLineageInfoForConsumer(fieldLineageInfo, startTimeMs, endTimeMs);
+        LOG.info("Lineage info - {}", info);
       } catch (IllegalArgumentException e) {
         LOG.warn("Error while processing field-lineage information received from TMS. Ignoring : {}", message, e);
         return;
@@ -286,13 +287,17 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     }
 
     private LineageInfo getLineageInfoForConsumer(FieldLineageInfo lineage, long startTimeMs, long endTimeMs) {
+      Map<Asset, Set<Asset>> t2s = getAssetsMapFromEndpointFieldsMap(lineage.getIncomingSummary());
+      LOG.info("t2s - {}", t2s);
+      Map<Asset, Set<Asset>> s2t = getAssetsMapFromEndpointFieldsMap(lineage.getOutgoingSummary());
+      LOG.info("s2t - {}", s2t);
       return LineageInfo.builder()
         .setStartTimeMs(startTimeMs)
         .setEndTimeMs(endTimeMs)
         .setSources(lineage.getSources().stream().map(this::getAssetForEndpoint).collect(Collectors.toSet()))
         .setTargets(lineage.getDestinations().stream().map(this::getAssetForEndpoint).collect(Collectors.toSet()))
-        .setTargetToSources(getAssetsMapFromEndpointFieldsMap(lineage.getIncomingSummary()))
-        .setSourceToTargets(getAssetsMapFromEndpointFieldsMap(lineage.getOutgoingSummary()))
+        .setTargetToSources(t2s)
+        .setSourceToTargets(s2t)
         .build();
     }
 
@@ -308,6 +313,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
 
     private Map<Asset, Set<Asset>> getAssetsMapFromEndpointFieldsMap(Map<EndPointField, Set<EndPointField>>
                                                                        endPointFieldSetMap) {
+      LOG.info("endPointFieldSetMap - {}", endPointFieldSetMap);
       return endPointFieldSetMap.entrySet().stream()
         .collect(Collectors.toMap(entry -> getAssetForEndpoint(entry.getKey().getEndPoint()),
                                   entry -> entry.getValue().stream()
