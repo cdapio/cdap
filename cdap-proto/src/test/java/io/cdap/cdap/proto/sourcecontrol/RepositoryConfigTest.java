@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for RepositoryConfig class
+ * Tests for {@link RepositoryConfig} class
  */
 public class RepositoryConfigTest {
   private static final Provider PROVIDER = Provider.GITHUB;

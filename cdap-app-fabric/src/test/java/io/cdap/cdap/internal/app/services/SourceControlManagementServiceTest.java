@@ -32,7 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Tests for SourceControlManagementService
+ * Tests for {@link SourceControlManagementService}
  */
 public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private static CConfiguration cConf;
