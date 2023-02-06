@@ -17,11 +17,13 @@ package io.cdap.cdap.security.spi.authentication;
 
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.SecurityContext;
 
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * RequestContext that maintains a ThreadLocal {@link #userId} and {@link #userIP} of the authenticated user.
+ * RequestContext that maintains a ThreadLocal {@link SecurityContext} of the authenticated user.
  */
 public final class SecurityRequestContext {
   /**
@@ -31,9 +33,13 @@ public final class SecurityRequestContext {
    *                 pools which may cause the SecurityRequestContext to be reused between tasks. See CDAP-20146 for
    *                 details.
    */
-  private static final ThreadLocal<String> userId = new ThreadLocal<>();
-  private static final ThreadLocal<Credential> userCredential = new ThreadLocal<>();
-  private static final ThreadLocal<String> userIP = new ThreadLocal<>();
+  private static final ThreadLocal<SecurityContext> securityContext = ThreadLocal.withInitial(
+    new Supplier<SecurityContext>() {
+    @Override
+    public SecurityContext get() {
+      return new SecurityContext();
+    }
+  });
 
   private SecurityRequestContext() {
   }
@@ -43,7 +49,7 @@ public final class SecurityRequestContext {
    */
   @Nullable
   public static String getUserId() {
-    return userId.get();
+    return securityContext.get().getUserID();
   }
 
   /**
@@ -51,7 +57,7 @@ public final class SecurityRequestContext {
    */
   @Nullable
   public static Credential getUserCredential() {
-    return userCredential.get();
+    return securityContext.get().getUserCredential();
   }
 
   /**
@@ -59,7 +65,14 @@ public final class SecurityRequestContext {
    */
   @Nullable
   public static String getUserIP() {
-    return userIP.get();
+    return securityContext.get().getUserIP();
+  }
+
+  /**
+   * @return the entire {@link SecurityContext} of the current thread.
+   */
+  public static SecurityContext get() {
+    return securityContext.get();
   }
 
   /**
@@ -68,7 +81,7 @@ public final class SecurityRequestContext {
    * @param userIdParam userId to be set
    */
   public static void setUserId(String userIdParam) {
-    userId.set(userIdParam);
+    securityContext.get().setUserID(userIdParam);
   }
 
   /**
@@ -77,7 +90,7 @@ public final class SecurityRequestContext {
    * @param userCredentialParam user credential to be set
    */
   public static void setUserCredential(@Nullable Credential userCredentialParam) {
-    userCredential.set(userCredentialParam);
+    securityContext.get().setUserCredential(userCredentialParam);
   }
 
   /**
@@ -86,22 +99,34 @@ public final class SecurityRequestContext {
    * @param userIPParam userIP to be set
    */
   public static void setUserIP(String userIPParam) {
-    userIP.set(userIPParam);
+    securityContext.get().setUserIP(userIPParam);
+  }
+
+  /**
+   * Sets the entire {@link SecurityContext} of the current thread.
+   */
+  public static void set(@Nullable SecurityContext context) {
+    securityContext.set(new SecurityContext());
+
+    if (context != null) {
+      securityContext.get().setUserID(context.getUserID());
+      securityContext.get().setUserCredential(context.getUserCredential());
+      securityContext.get().setUserIP(context.getUserIP());
+    }
   }
 
   /**
    * Returns a {@link Principal} for the user set on the current thread
    */
   public static Principal toPrincipal() {
-    return new Principal(userId.get(), Principal.PrincipalType.USER, userCredential.get());
+    return new Principal(securityContext.get().getUserID(), Principal.PrincipalType.USER,
+                         securityContext.get().getUserCredential());
   }
 
   /**
    * Clears security state for this thread
    */
   public static void reset() {
-    userId.remove();
-    userIP.remove();
-    userCredential.remove();
+    securityContext.set(new SecurityContext());
   }
 }
