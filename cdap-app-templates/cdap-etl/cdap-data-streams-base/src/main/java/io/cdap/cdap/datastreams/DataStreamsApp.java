@@ -19,6 +19,8 @@ package io.cdap.cdap.datastreams;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
+import io.cdap.cdap.api.app.ApplicationUpdateResult;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkSink;
@@ -51,5 +53,26 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
                         e.getFailures().iterator().next().getFullMessage()), e);
     }
     addSpark(new DataStreamsSparkLauncher(spec));
+  }
+
+  @Override
+  public boolean isUpdateSupported() {
+    return true;
+  }
+
+  @Override
+  public ApplicationUpdateResult<DataStreamsConfig> updateConfig
+    (ApplicationUpdateContext applicationUpdateContext) throws Exception {
+    DataStreamsPipelineSpec spec = DataStreamsPipelineSpecGenerator.getDataStreamsPipelineSpec(
+      applicationUpdateContext.getApplicationSpecification());
+    if (!spec.getStateSpec().getMode().equals(DataStreamsStateSpec.Mode.STATE_STORE)) {
+      throw new UnsupportedOperationException(
+        String.format("App %s does not support upgrade with state handling mode %s .",
+                      applicationUpdateContext.getApplicationSpecification().getName(),
+                      spec.getStateSpec().getMode()));
+    }
+
+    DataStreamsConfig currentConfig = applicationUpdateContext.getConfig(DataStreamsConfig.class);
+    return new ApplicationUpdateResult<>(currentConfig.updateConfig(applicationUpdateContext));
   }
 }
