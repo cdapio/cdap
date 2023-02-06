@@ -68,13 +68,18 @@ public class ProgramRunDispatcherTask implements RunnableTask {
     ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(
       GSON.fromJson(context.getParam(), ProgramRunDispatcherContext.class));
     context.setCleanupTask(dispatcherContext::executeCleanupTasks);
+    ProgramRunId programRunId =
+      dispatcherContext.getProgramDescriptor().getProgramId().run(dispatcherContext.getRunId());
 
     ProgramRunDispatcher dispatcher = injector.getInstance(InMemoryProgramRunDispatcher.class);
-    ProgramController programController = dispatcher.dispatchProgram(dispatcherContext);
+    ProgramController programController;
+    try {
+      programController = dispatcher.dispatchProgram(dispatcherContext);
+    } catch (Exception e) {
+      throw new Exception(String.format("Failed to dispatch program run %s", programRunId), e);
+    }
 
     if (programController == null) {
-      ProgramRunId programRunId =
-        dispatcherContext.getProgramDescriptor().getProgramId().run(dispatcherContext.getRunId());
       throw new IllegalStateException("Failed to dispatch program run " + programRunId);
     }
     // Result doesn't matter since we just need to return with 200 status or throw an exception
