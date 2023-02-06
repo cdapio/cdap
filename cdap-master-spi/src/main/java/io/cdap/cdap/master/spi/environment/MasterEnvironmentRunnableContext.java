@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.master.spi.environment;
 
-import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -35,12 +34,4 @@ public interface MasterEnvironmentRunnableContext {
    * Opens a {@link HttpURLConnection} for the given resource path.
    */
   HttpURLConnection openHttpURLConnection(String resource) throws IOException;
-
-
-  /**
-   * Instantiates a {@link TwillRunnable} from a provided class name.
-   *
-   * @return the twill runnable instance
-   */
-   TwillRunnable instantiateTwillRunnable(String className);
 }

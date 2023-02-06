@@ -36,6 +36,7 @@ import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.RunIds;
 import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
+import org.apache.twill.internal.utils.Instances;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +105,12 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       RunId runId = twillRuntimeSpec.getTwillAppRunId();
 
       String runnableClassName = runtimeSpec.getRunnableSpecification().getClassName();
-      twillRunnable = context.instantiateTwillRunnable(runnableClassName);
+      Class<?> runnableClass = context.getClass().getClassLoader().loadClass(runnableClassName);
+      if (!TwillRunnable.class.isAssignableFrom(runnableClass)) {
+        throw new IllegalArgumentException("Class " + runnableClass + " is not an instance of " + TwillRunnable.class);
+      }
+
+      twillRunnable = (TwillRunnable) Instances.newInstance(runnableClass);
 
       try (KubeTwillContext twillContext = new KubeTwillContext(runtimeSpec, runId,
                                                                 RunIds.fromString(runId.getId() + "-0"),
