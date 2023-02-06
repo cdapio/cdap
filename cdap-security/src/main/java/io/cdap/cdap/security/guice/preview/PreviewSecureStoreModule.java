@@ -35,5 +35,6 @@ public class PreviewSecureStoreModule extends AbstractModule {
     PreviewSecureStore previewSecureStore = new PreviewSecureStore(secureStore);
     bind(SecureStore.class).toInstance(previewSecureStore);
     bind(SecureStoreManager.class).toInstance(previewSecureStore);
+    bind(PreviewSecureStore.class).toInstance(previewSecureStore);
   }
 }

@@ -42,7 +42,9 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.data2.dataset2.preview.PreviewDatasetFramework;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
@@ -60,6 +62,8 @@ import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.guice.preview.PreviewSecureStore;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.twill.common.Threads;
@@ -115,6 +119,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final StructuredTableAdmin structuredTableAdmin;
   private final Path previewIdDirPath;
   private final PreferencesFetcher preferencesFetcher;
+  private final PreviewSecureStore previewSecureStore;
+  private final PreviewDatasetFramework previewDatasetFramework;
 
   @Inject
   DefaultPreviewRunner(MessagingService messagingService,
@@ -133,7 +139,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
                        CConfiguration cConf,
-                       PreferencesFetcher preferencesFetcher) {
+                       PreferencesFetcher preferencesFetcher,
+                       PreviewSecureStore previewSecureStore,
+                       DatasetFramework previewDatasetFramework) {
     this.messagingService = messagingService;
     this.dsOpExecService = dsOpExecService;
     this.datasetService = datasetService;
@@ -151,10 +159,16 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.structuredTableAdmin = structuredTableAdmin;
     this.previewIdDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "previewid").toAbsolutePath();
     this.preferencesFetcher = preferencesFetcher;
+    this.previewSecureStore = previewSecureStore;
+    // Need a cast due to provider in Guice modules.
+    this.previewDatasetFramework = (PreviewDatasetFramework) previewDatasetFramework;
   }
 
   @Override
   public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception {
+    // Set security contexts for runtime executors which need it.
+    previewSecureStore.setSecurityContext(SecurityRequestContext.get());
+    previewDatasetFramework.setSecurityContext(SecurityRequestContext.get());
     ProgramId programId = previewRequest.getProgram();
     long submitTimeMillis = RunIds.getTime(programId.getApplication(), TimeUnit.MILLISECONDS);
     previewStarted(programId);
