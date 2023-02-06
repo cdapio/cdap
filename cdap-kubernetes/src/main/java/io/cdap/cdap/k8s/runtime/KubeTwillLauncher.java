@@ -19,7 +19,6 @@ package io.cdap.cdap.k8s.runtime;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -29,6 +28,7 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.openapi.models.V1Preconditions;
+import io.kubernetes.client.util.Config;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillRunnable;
@@ -60,7 +60,6 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
   private final MasterEnvironmentRunnableContext context;
   private final KubeMasterEnvironment masterEnv;
-  private final ApiClientFactory apiClientFactory;
 
   private volatile boolean stopped;
   private TwillRunnable twillRunnable;
@@ -72,7 +71,6 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       throw new IllegalArgumentException("Expected a KubeMasterEnvironment");
     }
     this.masterEnv = (KubeMasterEnvironment) masterEnv;
-    this.apiClientFactory = this.masterEnv.getApiClientFactory();
   }
 
   @Override
@@ -150,7 +148,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
   private void deletePod(PodInfo podInfo) {
     try {
-      ApiClient apiClient = apiClientFactory.create();
+      ApiClient apiClient = Config.defaultClient();
       CoreV1Api api = new CoreV1Api(apiClient);
       V1DeleteOptions delOptions = new V1DeleteOptions()
         .preconditions(new V1Preconditions().uid(podInfo.getUid()))

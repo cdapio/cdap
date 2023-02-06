@@ -19,6 +19,7 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.DefaultLocalFileProvider;
 import io.cdap.cdap.k8s.common.LocalFileProvider;
@@ -35,9 +36,9 @@ import io.cdap.cdap.master.spi.environment.spark.SparkDriverWatcher;
 import io.cdap.cdap.master.spi.environment.spark.SparkLocalizeResource;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.cdap.cdap.master.spi.namespace.NamespaceDetail;
-import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
 import io.kubernetes.client.openapi.models.V1ConfigMapVolumeSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -55,6 +56,7 @@ import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
+import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Yaml;
 import io.kubernetes.client.util.generic.options.ListOptions;
 import org.apache.twill.api.TwillRunnerService;
@@ -204,16 +206,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String CDAP_CONTAINER_LABEL = "cdap.container";
   private static final String TWILL_RUNNER_SERVICE_MONITOR_DISABLE = "twill.runner.service.monitor.disable";
 
-  private static final String CONNECT_TIMEOUT = "master.environment.k8s.connect.timeout.sec";
-  private static final String CONNECT_TIMEOUT_DEFAULT = "120";
-  private static final String READ_TIMEOUT = "master.environment.k8s.read.timeout.sec";
-  private static final String READ_TIMEOUT_DEFAULT = "300";
-
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
   private KubeTwillRunnerService twillRunner;
   private PodInfo podInfo;
-  private ApiClientFactory apiClientFactory;
   private Map<String, String> additionalSparkConfs;
   private File podInfoDir;
   private File podLabelsFile;
@@ -223,26 +219,26 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // In memory state for holding configmap name. Used to delete this configmap upon master environment destroy.
   private String configMapName;
   private CoreV1Api coreV1Api;
+  private RbacAuthorizationV1Api rbacV1Api;
   private KubeMasterPathProvider kubeMasterPathProvider;
   private LocalFileProvider localFileProvider;
+  private final Gson gson;
   private boolean workloadIdentityEnabled;
   private String workloadIdentityPool;
   private long workloadIdentityServiceAccountTokenTTLSeconds;
   private String programCpuMultiplier;
   private String cdapInstallNamespace;
 
+  public KubeMasterEnvironment() {
+    gson = new Gson();
+  }
+
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, IllegalArgumentException, ApiException {
     LOG.info("Initializing Kubernetes environment");
 
     Map<String, String> conf = context.getConfigurations();
-
-    int connectTimeoutSec = Integer.parseInt(conf.getOrDefault(CONNECT_TIMEOUT, CONNECT_TIMEOUT_DEFAULT));
-    int readTimeoutSec = Integer.parseInt(conf.getOrDefault(READ_TIMEOUT, READ_TIMEOUT_DEFAULT));
-    apiClientFactory = new DefaultApiClientFactory(connectTimeoutSec, readTimeoutSec);
-    ApiClient apiClient = apiClientFactory.create();
-
-    kubeMasterPathProvider = new DefaultKubeMasterPathProvider(apiClient);
+    kubeMasterPathProvider = new DefaultKubeMasterPathProvider();
     localFileProvider = new DefaultLocalFileProvider();
     podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
     podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
@@ -281,7 +277,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // No TX in K8s
     conf.put(DATA_TX_ENABLED, Boolean.toString(false));
 
-    coreV1Api = new CoreV1Api(apiClient);
+    coreV1Api = new CoreV1Api(Config.defaultClient());
+    rbacV1Api = new RbacAuthorizationV1Api(Config.defaultClient());
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
     Map<String, String> podLabels = podInfo.getLabels();
@@ -306,7 +303,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Services are publish to K8s with a prefix
     String resourcePrefix = "cdap-" + instanceName + "-";
     discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-", podLabels,
-                                                podInfo.getOwnerReferences(), apiClientFactory);
+                                                podInfo.getOwnerReferences());
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
@@ -327,7 +324,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         }
       }
 
-      podKillerTask = new PodKillerTask(namespace, podKillerSelector, delayMillis, apiClientFactory);
+      podKillerTask = new PodKillerTask(namespace, podKillerSelector, delayMillis);
       LOG.info("Created pod killer task on namespace {}, with selector {} and delay {}",
                namespace, podKillerSelector, delayMillis);
     }
@@ -342,7 +339,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         }
       }
     }
-    twillRunner = new KubeTwillRunnerService(context, apiClientFactory, namespace, discoveryService,
+    twillRunner = new KubeTwillRunnerService(context, namespace, discoveryService,
                                              podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName),
                                              Integer.parseInt(conf.getOrDefault(JOB_CLEANUP_INTERVAL, "60")),
@@ -462,10 +459,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   public void onNamespaceDeletion(String cdapNamespace, Map<String, String> properties) throws Exception {
     NamespaceDetail namespaceDetail = new NamespaceDetail(cdapNamespace, properties);
     twillRunner.onNamespaceDeletion(namespaceDetail);
-  }
-
-  public ApiClientFactory getApiClientFactory() {
-    return apiClientFactory;
   }
 
   /**
@@ -874,15 +867,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String labelSelector = labels.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue())
       .collect(Collectors.joining(","));
 
-    return new PodWatcherThread(podInfo.getNamespace(), labelSelector, apiClientFactory);
+    return new PodWatcherThread(podInfo.getNamespace(), labelSelector);
   }
 
   private static class PodWatcherThread extends AbstractWatcherThread<V1Pod> implements SparkDriverWatcher {
     private final CompletableFuture<Boolean> podStatusFuture;
     private final String labelSelector;
 
-    PodWatcherThread(String namespace, String labelSelector, ApiClientFactory apiClientFactory) {
-      super("kube-pod-watcher", namespace, "", "v1", "pods", apiClientFactory);
+    PodWatcherThread(String namespace, String labelSelector) {
+      super("kube-pod-watcher", namespace, "", "v1", "pods");
       this.podStatusFuture = new CompletableFuture<>();
       this.labelSelector = labelSelector;
     }

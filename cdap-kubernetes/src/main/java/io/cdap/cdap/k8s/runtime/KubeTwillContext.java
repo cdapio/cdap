@@ -22,7 +22,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
-import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
@@ -111,8 +110,7 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
     this.instancesFuture = new CompletableFuture<>();
     this.instanceIdFuture = new CompletableFuture<>();
-    this.instanceWatcherCancellable = startInstanceWatcher(podInfo, instancesFuture, instanceIdFuture,
-                                                           masterEnv.getApiClientFactory());
+    this.instanceWatcherCancellable = startInstanceWatcher(podInfo, instancesFuture, instanceIdFuture);
     this.uid = new String(Files.readAllBytes(Paths.get(podInfo.getPodInfoDir(), podInfo.getUidFile())),
                           StandardCharsets.UTF_8);
   }
@@ -234,8 +232,7 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
    */
   private static Cancellable startInstanceWatcher(PodInfo podInfo,
                                                   CompletableFuture<AtomicInteger> instancesFuture,
-                                                  CompletableFuture<AtomicInteger> instanceIdFuture,
-                                                  ApiClientFactory apiClientFactory) {
+                                                  CompletableFuture<AtomicInteger> instanceIdFuture) {
 
     List<V1OwnerReference> ownerReferences = podInfo.getOwnerReferences();
 
@@ -269,8 +266,7 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
     // Watch for the changes in number of instances.
     InstanceWatcherThread watcherThread = new InstanceWatcherThread(group, version, plural,
                                                                     podInfo, ownerRef,
-                                                                    instancesFuture, instanceIdFuture,
-                                                                    apiClientFactory);
+                                                                    instancesFuture, instanceIdFuture);
     watcherThread.start();
 
     return watcherThread::close;
@@ -293,8 +289,8 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
     InstanceWatcherThread(String group, String version, String plural, PodInfo podInfo,
                           V1OwnerReference ownerRef, CompletableFuture<AtomicInteger> instancesFuture,
-                          CompletableFuture<AtomicInteger> instanceIdFuture, ApiClientFactory apiClientFactory) {
-      super("twill-instance-watch", podInfo.getNamespace(), group, version, plural, apiClientFactory);
+                          CompletableFuture<AtomicInteger> instanceIdFuture) {
+      super("twill-instance-watch", podInfo.getNamespace(), group, version, plural);
       this.podInfo = podInfo;
       this.ownerRef = ownerRef;
       this.instances = new AtomicInteger();
