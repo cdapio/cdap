@@ -23,6 +23,7 @@ import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +59,7 @@ public final class ScheduleTaskPublisher {
     properties.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemOverrides));
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userOverrides));
 
-    Notification notification = new Notification(notificationType, properties);
+    Notification notification = new Notification(notificationType, properties, SecurityRequestContext.get());
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayload(GSON.toJson(notification)).build());
   }
 }

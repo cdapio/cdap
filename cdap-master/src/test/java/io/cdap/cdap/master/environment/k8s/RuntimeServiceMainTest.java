@@ -50,6 +50,7 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.SecurityContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.junit.BeforeClass;
@@ -151,7 +152,7 @@ public class RuntimeServiceMainTest extends MasterServiceMainTestBase {
                                                             RetryStrategies.fixDelay(200, TimeUnit.MILLISECONDS));
 
     return new MessagingProgramStateWriter((notificationType, properties) -> {
-      Notification notification = new Notification(notificationType, properties);
+      Notification notification = new Notification(notificationType, properties, new SecurityContext());
       try {
         Retries.callWithRetries((Retries.Callable<Void, Exception>) () -> {
           runtimeClient.sendMessages(programRunId, topicId,

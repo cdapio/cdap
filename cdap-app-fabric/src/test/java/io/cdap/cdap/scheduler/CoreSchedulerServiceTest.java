@@ -87,6 +87,7 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.security.SecurityContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.test.XSlowTests;
@@ -620,7 +621,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private void publishNotification(TopicId topicId, NamespaceId namespaceId, String dataset) throws Exception {
     DatasetId datasetId = namespaceId.dataset(dataset);
     PartitionKey partitionKey = PartitionKey.builder().addIntField("part1", 1).build();
-    Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey));
+    Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey),
+                                                           new SecurityContext());
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayload(GSON.toJson(notification)).build());
   }
 

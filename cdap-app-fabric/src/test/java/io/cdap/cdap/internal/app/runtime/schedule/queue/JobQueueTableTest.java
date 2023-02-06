@@ -38,6 +38,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.security.SecurityContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.junit.After;
@@ -277,7 +278,7 @@ public abstract class JobQueueTableTest {
       Assert.assertEquals(0, getAllJobs(jobQueue, false).size());
 
       // Construct a partition notification with DATASET_ID
-      Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.of());
+      Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.of(), new SecurityContext());
 
       Assert.assertNull(jobQueue.getJob(SCHED1_JOB.getJobKey()));
 
@@ -314,7 +315,7 @@ public abstract class JobQueueTableTest {
 
     List<Notification> expectedNotifications = new ArrayList<>();
     for (int i = 0; i < numThreads; i++) {
-      expectedNotifications.add(Notification.forPartitions(DATASET_ID, ImmutableList.of()));
+      expectedNotifications.add(Notification.forPartitions(DATASET_ID, ImmutableList.of(), new SecurityContext()));
     }
     Job expectedJob = new SimpleJob(SCHED3, 0, actualJobs.iterator().next().getCreationTime(),
                                     expectedNotifications,
@@ -326,7 +327,7 @@ public abstract class JobQueueTableTest {
     TransactionRunners.run(transactionRunner, context -> {
       JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, getCConf());
       // Construct a partition notification with DATASET_ID
-      Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.of());
+      Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.of(), new SecurityContext());
       jobQueue.addNotification(
         new ProgramScheduleRecord(programSchedule, new ProgramScheduleMeta(ProgramScheduleStatus.SCHEDULED, 0L)),
         notification);
@@ -419,7 +420,7 @@ public abstract class JobQueueTableTest {
         Assert.assertEquals(0, getAllJobs(jobQueue, false).size());
 
         // Construct a partition notification with DATASET_ID
-        Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.of());
+        Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.of(), new SecurityContext());
 
         Assert.assertNull(jobQueue.getJob(SCHED1_JOB.getJobKey()));
 

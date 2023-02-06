@@ -40,6 +40,7 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +103,8 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
 
   public void publish(Notification.Type notificationType, Map<String, String> properties) {
     // ProgramRunId is always required in a notification
-    Notification programStatusNotification = new Notification(notificationType, properties);
+    Notification programStatusNotification = new Notification(notificationType, properties,
+                                                              SecurityRequestContext.get());
 
     int failureCount = 0;
     long startTime = -1L;

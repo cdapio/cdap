@@ -93,6 +93,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
@@ -191,7 +192,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
   private final ProgramLifecycleService programLifecycleService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
-  private final Queue<Runnable> tasks;
+  private final Queue<ContextRunnable> tasks;
   private final MetricsCollectionService metricsCollectionService;
   private Set<ProgramCompletionNotifier> programCompletionNotifiers;
   private final CConfiguration cConf;
@@ -284,13 +285,19 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
     ProgramHeartbeatTable heartbeatDataset = new ProgramHeartbeatTable(structuredTableContext);
-    List<Runnable> tasks = new LinkedList<>();
+    List<ContextRunnable> tasks = new LinkedList<>();
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
+      // Set SecurityContext for this particular notification.
+      SecurityRequestContext.set(messagePair.getSecond().getSecurityContext());
       List<Runnable> runnables = processNotification(heartbeatDataset,
                                                      messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
                                                      messagePair.getSecond(), structuredTableContext);
-      tasks.addAll(runnables);
+      // Reset SecurityContext for the next notification.
+
+      tasks.addAll(runnables.stream().map(r -> new ContextRunnable(r, SecurityRequestContext.get()))
+                     .collect(Collectors.toList()));
+      SecurityRequestContext.reset();
     }
 
     // Only add post processing tasks if all messages are processed. If there is exception in the processNotifiation,
@@ -300,9 +307,11 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
 
   @Override
   protected void postProcess() {
-    Runnable task = tasks.poll();
+    ContextRunnable task = tasks.poll();
     while (task != null) {
-      task.run();
+      SecurityRequestContext.set(task.getSecurityContext());
+      task.getRunnable().run();
+      SecurityRequestContext.reset();
       task = tasks.poll();
     }
   }
@@ -663,7 +672,8 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runRecord.getProgramRunId()));
 
         innerProgramNotifications.put(runRecord.getProgramRunId(),
-                                      new Notification(Notification.Type.PROGRAM_STATUS, notificationProps));
+                                      new Notification(Notification.Type.PROGRAM_STATUS, notificationProps,
+                                                       SecurityRequestContext.get()));
       });
 
       for (Map.Entry<ProgramRunId, Notification> entry : innerProgramNotifications.entrySet()) {
@@ -790,8 +800,8 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     notificationProperties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
     notificationProperties.put(ProgramOptionConstants.PROGRAM_STATUS, status.name());
     notificationProperties.put(CDAP_VERSION, ProjectInfo.getVersion().toString());
-    Notification programStatusNotification =
-      new Notification(Notification.Type.PROGRAM_STATUS, notificationProperties);
+    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, notificationProperties,
+                                                              SecurityRequestContext.get());
     getMessagingContext().getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(),
                                                         recordedProgramStatusPublishTopic,
                                                         GSON.toJson(programStatusNotification));

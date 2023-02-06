@@ -110,6 +110,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
@@ -821,7 +822,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         TopicId dataEventTopic = NamespaceId.SYSTEM.topic(topic);
         MessagePublisher publisher = getMessagingContext().getMessagePublisher();
 
-        byte[] payload = Bytes.toBytes(GSON.toJson(Notification.forPartitions(datasetId, partitionKeys)));
+        byte[] payload = Bytes.toBytes(GSON.toJson(Notification.forPartitions(datasetId, partitionKeys,
+                                                                              SecurityRequestContext.get())));
         int failure = 0;
         long startTime = System.currentTimeMillis();
         while (true) {

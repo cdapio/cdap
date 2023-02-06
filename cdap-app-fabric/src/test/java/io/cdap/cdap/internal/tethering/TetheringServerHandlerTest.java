@@ -74,6 +74,7 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.SecurityContext;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
@@ -388,7 +389,7 @@ public class TetheringServerHandlerTest {
     ProgramRunId programRunId = new ProgramRunId("system", "app", ProgramType.SPARK, "program", "run");
     Notification programUpdate = new Notification(Notification.Type.PROGRAM_STATUS,
                                                   ImmutableMap.of(ProgramOptionConstants.PROGRAM_RUN_ID,
-                                                                  GSON.toJson(programRunId)));
+                                                                  GSON.toJson(programRunId)), new SecurityContext());
     TetheringControlChannelRequest content = new TetheringControlChannelRequest(null, ImmutableList.of(programUpdate));
     builder.withBody(GSON.toJson(content));
     HttpResponse response = HttpRequests.execute(builder.build());

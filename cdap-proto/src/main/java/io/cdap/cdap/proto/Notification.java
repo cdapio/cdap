@@ -21,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.security.SecurityContext;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,19 +52,22 @@ public class Notification {
 
   private final Type notificationType;
   private final Map<String, String> properties;
+  private final SecurityContext securityContext;
 
-  public Notification(Type notificationType, Map<String, String> properties) {
+  public Notification(Type notificationType, Map<String, String> properties, SecurityContext securityContext) {
     this.notificationType = notificationType;
     this.properties = properties;
+    this.securityContext = securityContext;
   }
 
   public static Notification forPartitions(DatasetId datasetId,
-                                           Collection<? extends PartitionKey> partitionKeys) {
+                                           Collection<? extends PartitionKey> partitionKeys,
+                                           SecurityContext securityContext) {
     Map<String, String> properties = new HashMap<>();
     properties.put(DATASET_ID, datasetId.toString());
     properties.put(NUM_PARTITIONS, Integer.toString(partitionKeys.size()));
     properties.put(PARTITION_KEYS, GSON.toJson(partitionKeys));
-    return new Notification(Notification.Type.PARTITION, properties);
+    return new Notification(Notification.Type.PARTITION, properties, securityContext);
   }
 
   public Type getNotificationType() {
@@ -72,6 +76,10 @@ public class Notification {
 
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  public SecurityContext getSecurityContext() {
+    return securityContext;
   }
 
   @Override
