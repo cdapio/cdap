@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -88,10 +89,7 @@ public class DataStreamsPipelineSpecGenerator
 
     String pipelineId = UUID.randomUUID().toString();
     if (runtimeConfigurer != null && runtimeConfigurer.getDeployedApplicationSpec() != null) {
-      SparkSpecification sparkSpec =
-        runtimeConfigurer.getDeployedApplicationSpec().getSpark().get(DataStreamsSparkLauncher.NAME);
-      DataStreamsPipelineSpec spec = GSON.fromJson(sparkSpec.getProperty(Constants.PIPELINEID),
-                                                   DataStreamsPipelineSpec.class);
+      DataStreamsPipelineSpec spec = getDataStreamsPipelineSpec(runtimeConfigurer.getDeployedApplicationSpec());
       pipelineId = spec.getPipelineId();
     }
 
@@ -106,6 +104,17 @@ public class DataStreamsPipelineSpecGenerator
     //Configure retries
     configureRetries(specBuilder);
     return specBuilder.build();
+  }
+
+  /**
+   * Extract and return {@link DataStreamsPipelineSpec} from the {@link ApplicationSpecification}.
+   * @param deployedApplicationSpec
+   * @return {@link DataStreamsPipelineSpec}
+   */
+  static DataStreamsPipelineSpec getDataStreamsPipelineSpec(ApplicationSpecification deployedApplicationSpec) {
+    SparkSpecification sparkSpec =
+      deployedApplicationSpec.getSpark().get(DataStreamsSparkLauncher.NAME);
+    return GSON.fromJson(sparkSpec.getProperty(Constants.PIPELINEID), DataStreamsPipelineSpec.class);
   }
 
   @VisibleForTesting

@@ -77,5 +77,11 @@ public interface ApplicationUpdateContext {
   List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName,
                                       @Nullable ArtifactVersionRange pluginRange, int limit) throws Exception;
 
+  /**
+   * Returns the current app spec.
+   *
+   * @return {@link ApplicationSpecification}
+   */
+  ApplicationSpecification getApplicationSpecification();
 }
 

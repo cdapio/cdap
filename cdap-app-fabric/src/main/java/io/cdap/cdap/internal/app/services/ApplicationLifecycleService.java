@@ -694,7 +694,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     DefaultApplicationUpdateContext updateContext =
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
                                           artifactRepository, appSpec.getConfiguration(), updateActions,
-                                          allowedArtifactScopes, allowSnapshot);
+                                          allowedArtifactScopes, allowSnapshot, appSpec);
 
     try (CloseableClassLoader artifactClassLoader =
       artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor(),
