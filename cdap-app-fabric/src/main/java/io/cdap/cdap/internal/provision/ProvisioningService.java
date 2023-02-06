@@ -70,6 +70,8 @@ import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.security.executor.ContextInheritingScheduledThreadPoolExecutor;
+import io.cdap.cdap.security.executor.ContextInheritingThreadPoolExecutor;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -96,10 +98,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -519,12 +519,12 @@ public class ProvisioningService extends AbstractIdleService {
    * will be removed. Loaded provisioners will be initialized.
    */
   public void initializeProvisionersAndExecutors() {
-    this.taskExecutor = new KeyedExecutor<>(
-        Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
-            Threads.createDaemonThreadFactory("provisioning-task-%d")));
+    this.taskExecutor = new KeyedExecutor<>(new ContextInheritingScheduledThreadPoolExecutor(
+      cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
+      Threads.createDaemonThreadFactory("provisioning-task-%d")));
 
     int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
-    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
+    ContextInheritingThreadPoolExecutor contextExecutor = new ContextInheritingThreadPoolExecutor(
         maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
         Threads.createDaemonThreadFactory("provisioning-context-%d"));
     contextExecutor.allowCoreThreadTimeOut(true);
@@ -690,7 +690,6 @@ public class ProvisioningService extends AbstractIdleService {
     DeprovisionTask task = new DeprovisionTask(taskInfo, transactionRunner, 300,
                                                provisioner, context, provisionerNotifier, locationFactory);
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION);
-
     return () -> taskExecutor.submit(taskKey, () -> callWithProgramLogging(programRunId, systemArgs, () -> {
       try {
         long delay = task.executeOnce();

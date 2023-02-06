@@ -31,6 +31,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.security.executor.ContextInheritingThreadPoolExecutor;
 import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
@@ -67,10 +68,14 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
     // Spark submit is called from this executor
     // Use an executor to simplify logic that is needed to interrupt the running thread on stopping
-    ExecutorService executor = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder()
-        .setNameFormat("spark-submitter-" + spec.getName() + "-" + runtimeContext.getRunId())
-        .build());
+    ExecutorService executor = new ContextInheritingThreadPoolExecutor(1, 1, 0,
+                                                                       TimeUnit.MILLISECONDS,
+                                                                       new LinkedBlockingQueue<Runnable>(),
+                                                                       new ThreadFactoryBuilder()
+                                                                         .setNameFormat("spark-submitter-"
+                                                                                          + spec.getName() + "-"
+                                                                                          + runtimeContext.getRunId())
+                                                                         .build());
 
     // Latch for the Spark job completion
     CountDownLatch completion = new CountDownLatch(1);

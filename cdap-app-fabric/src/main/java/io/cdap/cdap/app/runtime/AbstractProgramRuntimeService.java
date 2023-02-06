@@ -39,6 +39,7 @@ import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.executor.ContextInheritingThreadPoolExecutor;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -57,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -234,10 +234,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // Limits to at max poolSize number of concurrent program launch.
     // Also don't keep a thread around if it is idle for more than 60 seconds.
     int poolSize = cConf.getInt(Constants.AppFabric.PROGRAM_LAUNCH_THREADS);
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(poolSize, poolSize, 60, TimeUnit.SECONDS,
-                                                         new LinkedBlockingQueue<>(),
-                                                         new ThreadFactoryBuilder()
-                                                           .setNameFormat("program-start-%d").build());
+    ContextInheritingThreadPoolExecutor executor = new ContextInheritingThreadPoolExecutor(poolSize, poolSize,
+                                                                          60, TimeUnit.SECONDS,
+                                                                          new LinkedBlockingQueue<>(),
+                                                                          new ThreadFactoryBuilder()
+                                                                            .setNameFormat("program-start-%d").build());
     executor.allowCoreThreadTimeOut(true);
     this.executor = executor;
   }

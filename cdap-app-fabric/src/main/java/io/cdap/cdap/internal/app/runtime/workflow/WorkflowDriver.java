@@ -88,6 +88,7 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.executor.ContextInheritingThreadPoolExecutor;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -107,7 +108,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -686,13 +686,8 @@ final class WorkflowDriver extends AbstractContextInheritingExecutionThreadServi
    * @return a new {@link ExecutorService}.
    */
   private ExecutorService createExecutor(int threads, final CountDownLatch terminationLatch, String threadNameFormat) {
-    return new ThreadPoolExecutor(
+    return new ContextInheritingThreadPoolExecutor(
       threads, threads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
-      new ThreadFactoryBuilder().setNameFormat(threadNameFormat).build()) {
-      @Override
-      protected void terminated() {
-        terminationLatch.countDown();
-      }
-    };
+      new ThreadFactoryBuilder().setNameFormat(threadNameFormat).build(), () -> terminationLatch.countDown());
   }
 }

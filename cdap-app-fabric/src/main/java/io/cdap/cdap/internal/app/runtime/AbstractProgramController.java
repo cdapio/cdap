@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.executor.ContextInheritingThreadPoolExecutor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
@@ -38,7 +39,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -71,10 +71,10 @@ public abstract class AbstractProgramController implements ProgramController {
     // is no pending task. In this way, we don't need to shutdown the executor since there will be no thread
     // hanging around when it is idle.
     String name = programRunId.getParent() + "-" + programRunId.getRun();
-    this.executor = new ThreadPoolExecutor(0, 1, 0, TimeUnit.SECONDS,
-                                           new LinkedBlockingQueue<>(),
-                                           new ThreadFactoryBuilder()
-                                             .setNameFormat("pcontroller-" + name + "-%d").build());
+    this.executor = new ContextInheritingThreadPoolExecutor(0, 1, 0, TimeUnit.SECONDS,
+                                                            new LinkedBlockingQueue<>(),
+                                                            new ThreadFactoryBuilder()
+                                                              .setNameFormat("pcontroller-" + name + "-%d").build());
   }
 
   @Override
