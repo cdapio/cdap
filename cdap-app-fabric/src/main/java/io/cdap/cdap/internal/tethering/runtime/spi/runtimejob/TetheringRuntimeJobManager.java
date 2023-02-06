@@ -55,7 +55,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
@@ -104,17 +106,16 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     publishToControlChannel(message);
   }
 
-  /**
-   * This method should be used carefully as currently it always returns UNKNOWN as RuntimeJobStatus.
-   * For the tethering case, in case of a successful program run, a call is made to
-   * kill(programRunInfo), for any status other than UNKNOWN or TERMINATING, a kill() is issued on the control
-   * channel. Returning UNKNOWN from this method makes sure, an unnecessary kill() is not issued
-   * In the future, if it were possible to get the actual job status from the tethered instance,
-   * this method should be changed to reflect the same.
-  * */
   @Override
   public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) {
-    return Optional.of(new RuntimeJobDetail(programRunInfo, RuntimeJobStatus.UNKNOWN));
+    // TODO: CDAP-18739 - pull job status instead of always treating it as RUNNING
+    return Optional.of(new RuntimeJobDetail(programRunInfo, RuntimeJobStatus.RUNNING));
+  }
+
+  @Override
+  public List<RuntimeJobDetail> list() throws Exception {
+    // TODO: CDAP-18739 - pull list of all running jobs in tethered instance. This method is unused
+    return new ArrayList<>();
   }
 
   @Override
@@ -135,23 +136,16 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     publishToControlChannel(message);
   }
 
-  /**
-   * Unless RuntimeJobStatus is explicitly set as RUNNING, this method gets jobDetail from
-   * getDetails() which is equivalent to using RuntimeJobStatus.UNKNOWN
-   * */
   @Override
-  public void kill(RuntimeJobDetail jobDetail) throws Exception {
+  public void kill(ProgramRunInfo programRunInfo) throws Exception {
+    RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
     if (jobDetail == null) {
       return;
     }
-
     RuntimeJobStatus status = jobDetail.getStatus();
-    ProgramRunInfo programRunInfo = jobDetail.getRunInfo();
-
-    if (status.isTerminated() || status == RuntimeJobStatus.UNKNOWN) {
+    if (status.isTerminated()) {
       return;
     }
-
     LOG.debug("Killing program run {} with following configurations: tethered instance name {}, tethered namespace {}.",
               programRunInfo, tetheredInstanceName, tetheredNamespace);
     TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
