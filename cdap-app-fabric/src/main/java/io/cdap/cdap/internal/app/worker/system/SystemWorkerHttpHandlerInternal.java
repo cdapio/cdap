@@ -97,7 +97,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       if (e instanceof ClassNotFoundException || e instanceof ClassCastException) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
       } else {
-        LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), e);
+        LOG.error("Failed to run task", e);
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
       }
 
