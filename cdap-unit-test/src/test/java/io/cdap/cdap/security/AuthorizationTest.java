@@ -137,6 +137,7 @@ public class AuthorizationTest extends TestBase {
 
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
+
   private static final NamespaceId AUTH_NAMESPACE = new NamespaceId("authorization");
   private static final NamespaceMeta AUTH_NAMESPACE_META =
     new NamespaceMeta.Builder().setName(AUTH_NAMESPACE.getNamespace()).build();
@@ -807,8 +808,14 @@ public class AuthorizationTest extends TestBase {
     // Verify nothing write to the output dataset
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "table2");
 
-    // give privilege to BOB on the input dataset
+    // Give privilege to BOB on the input dataset
     grantAndAssertSuccess(inputDatasetNS.getNamespaceId().dataset("table1"), BOB, EnumSet.of(StandardPermission.GET));
+    // Grant privileges to master on input dataset. Master is used to run the Hadoop jobs.
+    Principal master = new Principal(UserGroupInformation.getCurrentUser().getUserName(),
+                                     Principal.PrincipalType.USER);
+    grantAndAssertSuccess(inputDatasetNS.getNamespaceId().dataset("table1"), master,
+                          EnumSet.of(StandardPermission.GET));
+
 
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
     // dataset
@@ -820,8 +827,10 @@ public class AuthorizationTest extends TestBase {
     // Verify nothing write to the output dataset
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "table2");
 
-    // give privilege to BOB on the output dataset
+    // Give privilege to BOB and master on the output dataset
     grantAndAssertSuccess(outputDatasetNS.getNamespaceId().dataset("table2"), BOB,
+                          EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+    grantAndAssertSuccess(outputDatasetNS.getNamespaceId().dataset("table2"), master,
                           EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
 
     // switch back to BOB and run MR again. this should work
@@ -1105,8 +1114,13 @@ public class AuthorizationTest extends TestBase {
     // Verify nothing write to the output dataset
     assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
-    // give privilege to BOB on the input dataset
+    // Give privilege to BOB on the input dataset
     grantAndAssertSuccess(inputDatasetNSMeta.getNamespaceId().dataset("input"), BOB,
+                          EnumSet.of(StandardPermission.GET));
+    // Grant privileges to master on input dataset. Master is used to run the Spark jobs.
+    Principal master = new Principal(UserGroupInformation.getCurrentUser().getUserName(),
+                                     Principal.PrincipalType.USER);
+    grantAndAssertSuccess(inputDatasetNSMeta.getNamespaceId().dataset("input"), master,
                           EnumSet.of(StandardPermission.GET));
 
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
@@ -1119,8 +1133,10 @@ public class AuthorizationTest extends TestBase {
     // Verify nothing write to the output dataset
     assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
-    // give privilege to BOB on the output dataset
+    // give privilege to BOB and master on the output dataset
     grantAndAssertSuccess(outputDatasetNSMeta.getNamespaceId().dataset("output"), BOB,
+                          EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+    grantAndAssertSuccess(outputDatasetNSMeta.getNamespaceId().dataset("output"), master,
                           EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
 
     // switch back to BOB and run spark again. this should work
