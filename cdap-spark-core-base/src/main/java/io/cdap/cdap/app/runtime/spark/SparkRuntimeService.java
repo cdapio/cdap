@@ -27,7 +27,6 @@ import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramState;
@@ -54,6 +53,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.runtime.AbstractContextInheritingExecutionThreadService;
 import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
 import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -125,7 +125,7 @@ import javax.annotation.Nullable;
  * Service triggerStop -> kill job
  * Service stop -> Commit/invalidate transaction, destroy, cleanup
  */
-final class SparkRuntimeService extends AbstractExecutionThreadService {
+final class SparkRuntimeService extends AbstractContextInheritingExecutionThreadService {
 
   private static final String CDAP_LAUNCHER_JAR = "cdap-spark-launcher.jar";
   private static final String CDAP_SPARK_JAR = "cdap-spark.jar";
@@ -193,7 +193,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUpInternal() throws Exception {
     // additional spark job initialization at run-time
     // This context is for calling initialize and destroy on the Spark program
 

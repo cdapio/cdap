@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.worker;
 
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.worker.Worker;
@@ -28,6 +27,7 @@ import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.runtime.AbstractContextInheritingExecutionThreadService;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.lang.Reflections;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ import java.util.concurrent.Executor;
 /**
  * A {@link Service} for executing {@link Worker}s.
  */
-public class WorkerDriver extends AbstractExecutionThreadService {
+public class WorkerDriver extends AbstractContextInheritingExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(WorkerDriver.class);
 
   private final Program program;
@@ -54,7 +54,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUpInternal() throws Exception {
     LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
     // Instantiate worker instance

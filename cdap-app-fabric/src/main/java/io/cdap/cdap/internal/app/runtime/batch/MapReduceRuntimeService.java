@@ -24,7 +24,6 @@ import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import io.cdap.cdap.api.ProgramLifecycle;
@@ -53,6 +52,7 @@ import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.internal.app.runtime.AbstractContextInheritingExecutionThreadService;
 import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -131,7 +131,7 @@ import javax.ws.rs.Path;
  * Service triggerStop -> kill job
  * Service stop -> destroy, cleanup
  */
-final class MapReduceRuntimeService extends AbstractExecutionThreadService {
+final class MapReduceRuntimeService extends AbstractContextInheritingExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceRuntimeService.class);
   private static final String HADOOP_UMASK_PROPERTY = FsPermission.UMASK_LABEL; // fs.permissions.umask-mode
@@ -202,7 +202,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUpInternal() throws Exception {
     // Creates a temporary directory locally for storing all generated files.
     File tempDir = createTempDirectory();
     cleanupTask = createCleanupTask(tempDir, context);

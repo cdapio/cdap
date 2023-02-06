@@ -21,7 +21,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.ProgramLifecycle;
@@ -70,6 +69,7 @@ import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.AbstractContextInheritingExecutionThreadService;
 import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -116,7 +116,7 @@ import javax.annotation.Nullable;
 /**
  * Core of Workflow engine that drives the execution of Workflow.
  */
-final class WorkflowDriver extends AbstractExecutionThreadService {
+final class WorkflowDriver extends AbstractContextInheritingExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
   private static final String ACTION_SCOPE = "action";
@@ -203,7 +203,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected void startUp() throws Exception {
+  protected void startUpInternal() throws Exception {
     LoggingContextAccessor.setLoggingContext(
       LoggingContextHelper.getLoggingContextWithRunId(workflowRunId, programOptions.getArguments().asMap()));
     runningThread = Thread.currentThread();
