@@ -127,7 +127,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_KUBERNETES_DRIVER_LABEL_PREFIX = "spark.kubernetes.driver.label.";
   private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
   private static final String SPARK_KUBERNETES_NAMESPACE = "spark.kubernetes.namespace";
-  private static final String SPARK_KUBERNETES_WAIT_IN_SUBMIT = "spark.kubernetes.submission.waitAppCompletion";
   @VisibleForTesting
   static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
   @VisibleForTesting
@@ -409,10 +408,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String master = kubeMasterPathProvider.getMasterPath();
 
     Map<String, String> sparkConfMap = new HashMap<>(additionalSparkConfs);
-
-    // CDAP-19468 -- Spark seems to have a bug where it can wait forever for the driver to complete even after the
-    // driver has already completed.
-    sparkConfMap.put(SPARK_KUBERNETES_WAIT_IN_SUBMIT, "false");
     // Create pod template with config maps and add to spark conf.
     sparkConfMap.put(SPARK_KUBERNETES_DRIVER_POD_TEMPLATE,
                      getDriverPodTemplate(podInfo, sparkSubmitContext).getAbsolutePath());
