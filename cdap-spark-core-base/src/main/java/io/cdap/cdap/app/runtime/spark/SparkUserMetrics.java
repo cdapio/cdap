@@ -63,6 +63,11 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
   }
 
   @Override
+  public void event(String metricName, long value) {
+    delegate.event(metricName, value);
+  }
+
+  @Override
   public Metrics child(Map<String, String> tags) {
     return delegate.child(tags);
   }

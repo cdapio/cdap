@@ -83,6 +83,17 @@ public class DefaultStageMetrics implements StageMetrics, Externalizable {
   }
 
   @Override
+  public void event(final String metricName, final long value) {
+    caller.callUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        metrics.event(prefix + metricName, value);
+        return null;
+      }
+    });
+  }
+
+  @Override
   public Metrics child(Map<String, String> tags) {
     return metrics.child(tags);
   }

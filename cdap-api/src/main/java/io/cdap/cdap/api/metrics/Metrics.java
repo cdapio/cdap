@@ -51,6 +51,13 @@ public interface Metrics {
   void gauge(String metricName, long value);
 
   /**
+   * Sets the specific metric to the provided value.
+   * @param metricName Name of the counter. Use alphanumeric characters in metric names.
+   * @param value The value to be set.
+   */
+  void event(String metricName, long value);
+
+  /**
    * Get the child {@link Metrics} by adding specified tags to the current metrics context.
    * @param tags to be added to the current metrics context
    * @return an instance of {@link Metrics} which can be used to collect metrics with new child context.
