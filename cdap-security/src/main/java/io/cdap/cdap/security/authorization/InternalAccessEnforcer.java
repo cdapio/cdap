@@ -19,6 +19,7 @@ package io.cdap.cdap.security.authorization;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
@@ -33,12 +34,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class InternalAccessEnforcer extends AbstractAccessEnforcer {
   private static final Logger LOG = LoggerFactory.getLogger(InternalAccessEnforcer.class);
+
+  private static final Set<String> invalidUserIDs = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+    Constants.Security.PLACEHOLDER_USER, Constants.Security.PLACEHOLDER_WORKER_USER)));
 
   private final TokenManager tokenManager;
   private final Codec<AccessToken> accessTokenCodec;
@@ -79,6 +85,9 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
     }
     if (!credential.getType().equals(Credential.CredentialType.INTERNAL)) {
       throw new IllegalStateException("Attempted to internally enforce access on non-internal credential type");
+    }
+    if (invalidUserIDs.contains(principalName)) {
+      throw new IllegalStateException("Invalid user ID for enforcement: '" + principalName + "'");
     }
     AccessToken accessToken;
     try {

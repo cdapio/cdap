@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
-  private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
   private static final Credential EMPTY_USER_CREDENTIAL = new Credential("CDAP-empty-user-credential",
                                                                          Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
@@ -70,7 +69,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
         // associated with them, for instance, end user credential for user originated ones and
         // internal system credential for system originated requests. If there is none, set
         // default empty user id and credential.
-        currentUserID = EMPTY_USER_ID;
+        currentUserID = Constants.Security.PLACEHOLDER_USER;
         currentUserCredential = EMPTY_USER_CREDENTIAL;
         currentUserIP = EMPTY_USER_IP;
       }

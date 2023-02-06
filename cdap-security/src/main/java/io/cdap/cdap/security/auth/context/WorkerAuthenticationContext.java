@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.auth.context;
 
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -25,9 +26,9 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
  * Authentication context for workers.
  */
 public class WorkerAuthenticationContext implements AuthenticationContext {
-  private static final Principal EMPTY_PRINCIPAL = new Principal("empty-worker-user-id",
-                                                                 Principal.PrincipalType.USER,
-                                                                 new Credential("empty-worker-user-credential",
+  public static final Principal EMPTY_PRINCIPAL = new Principal(Constants.Security.PLACEHOLDER_WORKER_USER,
+                                                                Principal.PrincipalType.USER,
+                                                                new Credential("empty-worker-user-credential",
                                                                                 Credential.CredentialType.INTERNAL));
   /**
    * Return {@link Principal} associated with current request stored in {@link SecurityRequestContext}.

@@ -1370,6 +1370,10 @@ public final class Constants {
     public static final String RUNTIME_IDENTITY_COMPATIBILITY_ENABLED =
       "security.runtime.identity.compatibility.enabled";
 
+    /** These are invalid placeholder users. */
+    public static final String PLACEHOLDER_USER = "CDAP-empty-user-id";
+    public static final String PLACEHOLDER_WORKER_USER = "CDAP-empty-worker-user-id";
+
     /**
      * App Fabric
      */
