@@ -390,6 +390,7 @@ public final class StoreDefinition {
     public static final String CHANGE_SUMMARY_FIELD = "change_summary";
     public static final String AUTHOR_FIELD = "author";
     public static final String LATEST_FIELD = "latest";
+    public static final String SOURCE_CONTROL_META = "source_control_metadata";
     public static final String PROGRAM_TYPE_FIELD = "program_type";
     public static final String PROGRAM_FIELD = "program";
     public static final String RUN_FIELD = "run";
@@ -416,7 +417,8 @@ public final class StoreDefinition {
                     Fields.longType(CREATION_TIME_FIELD),
                     Fields.stringType(AUTHOR_FIELD),
                     Fields.stringType(CHANGE_SUMMARY_FIELD),
-                    Fields.booleanType(LATEST_FIELD))
+                    Fields.booleanType(LATEST_FIELD),
+                    Fields.stringType(SOURCE_CONTROL_META))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
         .withIndexes(LATEST_FIELD, CREATION_TIME_FIELD)
         .build();

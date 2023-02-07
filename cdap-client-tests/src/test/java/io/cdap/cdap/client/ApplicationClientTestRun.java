@@ -313,16 +313,19 @@ public class ApplicationClientTestRun extends ClientTestBase {
       Set<ApplicationRecord> apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", null));
       Set<ApplicationRecord> expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getApplication(),
-                              fakeAppDetail2.getAppVersion(), "", null, fakeAppDetail2.getChange()),
+                              fakeAppDetail2.getAppVersion(), "", null,
+                              fakeAppDetail2.getChange(), appId3Detail.getSourceControlMeta()),
         new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getApplication(),
-                              appId2Detail.getAppVersion(), "", null, appId2Detail.getChange())
+                              appId2Detail.getAppVersion(), "", null,
+                              appId2Detail.getChange(), appId2Detail.getSourceControlMeta())
       );
       Assert.assertEquals(expected, apps);
 
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "otherfake", null));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getApplication(),
-                              appId3Detail.getAppVersion(), "", null, appId3Detail.getChange())
+                              appId3Detail.getAppVersion(), "", null,
+                              appId3Detail.getChange(), appId3Detail.getSourceControlMeta())
       );
       Assert.assertEquals(expected, apps);
 
@@ -330,11 +333,14 @@ public class ApplicationClientTestRun extends ClientTestBase {
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, ImmutableSet.of("fake", "otherfake"), null));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getApplication(),
-                              fakeAppDetail2.getAppVersion(), "", null, fakeAppDetail2.getChange()),
+                              fakeAppDetail2.getAppVersion(), "", null,
+                              fakeAppDetail2.getChange(), fakeAppDetail2.getSourceControlMeta()),
         new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getApplication(),
-                              appId2Detail.getAppVersion(), "", null, appId2Detail.getChange()),
+                              appId2Detail.getAppVersion(), "", null,
+                              appId2Detail.getChange(), appId2Detail.getSourceControlMeta()),
         new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getApplication(),
-                              appId3Detail.getAppVersion(), "", null, appId3Detail.getChange())
+                              appId3Detail.getAppVersion(), "", null,
+                              appId3Detail.getChange(), appId3Detail.getSourceControlMeta())
       );
       Assert.assertEquals(expected, apps);
 
@@ -342,16 +348,19 @@ public class ApplicationClientTestRun extends ClientTestBase {
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"),
                                                        appId2.getApplication(), appId2Detail.getAppVersion(),
-                                                       "", null, appId2Detail.getChange())
+                                                       "", null,
+                                                       appId2Detail.getChange(), appId2Detail.getSourceControlMeta())
       );
       Assert.assertEquals(expected, apps);
 
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, (String) null, "1.0.0-SNAPSHOT"));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getApplication(),
-                              fakeAppDetail2.getAppVersion(), "", null, fakeAppDetail2.getChange()),
+                              fakeAppDetail2.getAppVersion(), "", null,
+                              fakeAppDetail2.getChange(), fakeAppDetail2.getSourceControlMeta()),
         new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getApplication(),
-                              appId3Detail.getAppVersion(), "", null, appId3Detail.getChange())
+                              appId3Detail.getAppVersion(), "", null,
+                              appId3Detail.getChange(), appId3Detail.getSourceControlMeta())
       );
       Assert.assertEquals(expected, apps);
 
@@ -359,7 +368,8 @@ public class ApplicationClientTestRun extends ClientTestBase {
       apps = Sets.newHashSet(appClient.list(NamespaceId.DEFAULT, "fake", "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"),
                                                        appId2.getApplication(), appId2Detail.getAppVersion(),
-                                                       "", null, appId2Detail.getChange()));
+                                                       "", null,
+                                                       appId2Detail.getChange(), appId2Detail.getSourceControlMeta()));
       Assert.assertEquals(expected, apps);
     } finally {
       //appClient.deleteAll(NamespaceId.DEFAULT);

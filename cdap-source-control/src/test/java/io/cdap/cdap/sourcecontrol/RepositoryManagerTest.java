@@ -29,6 +29,7 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,7 +46,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Tests for {@link  RepositoryManager}.
@@ -254,9 +258,7 @@ public class RepositoryManagerTest {
     addSymbolicLinkToGit(symlinkPath2, symlinkPath1);
 
     RepositoryConfig repositoryConfig = getRepositoryConfigBuilder().setPathPrefix("cdap/applications").build();
-    SourceControlConfig sourceControlConfig =
-      new SourceControlConfig(new NamespaceId(NAMESPACE), repositoryConfig, cConf);
-    RepositoryManager manager = new RepositoryManager(secureStore, sourceControlConfig);
+    RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), repositoryConfig);
     String commitID = manager.cloneRemote();
     String expectedHash = getGitStyleHash(contents);
     // The hash of the original file, and both the symlinks should be equal.
@@ -288,7 +290,7 @@ public class RepositoryManagerTest {
    * @return the {@link RepositoryManager}.
    */
   private RepositoryManager getRepositoryManager() {
-    return new RepositoryManager(secureStore, getSourceControlConfig());
+    return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), getRepositoryConfigBuilder().build());
   }
 
   /**
@@ -371,4 +373,102 @@ public class RepositoryManagerTest {
       .hashString("blob " + fileContents.length() + "\0" + fileContents, StandardCharsets.UTF_8)
       .toString();
   }
+
+  @Test
+  public void testCommitAndPushSuccess() throws Exception {
+    String serverURL = gitServer.getServerURL();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
+
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
+                                                           new NamespaceId(NAMESPACE), config)) {
+      manager.cloneRemote();
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      Path filePath = manager.getBasePath().resolve("file1");
+      String fileContent = "content";
+
+      Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
+      manager.commitAndPush(commitMeta, manager.getBasePath().relativize(filePath));
+      verifyCommit(filePath, fileContent, commitMeta);
+    }
+  }
+
+  @Test(expected = NoChangesToPushException.class)
+  public void testCommitAndPushNoChangeSuccess() throws Exception {
+    String pathPrefix = "prefix";
+    String serverURL = gitServer.getServerURL();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop")
+      .setPathPrefix(pathPrefix)
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
+
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
+      manager.cloneRemote();
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      manager.commitAndPush(commitMeta, Paths.get(pathPrefix));
+
+      verifyNoCommit();
+    }
+  }
+
+  @Test(expected = GitAPIException.class)
+  public void testCommitAndPushFails() throws Exception {
+    String serverURL = gitServer.getServerURL();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
+
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
+                                                           new NamespaceId(NAMESPACE), config)) {
+      manager.cloneRemote();
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      Path filePath = manager.getBasePath().resolve("file1");
+      String fileContent = "content";
+
+      Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
+      gitServer.after();
+      manager.commitAndPush(commitMeta, manager.getBasePath().relativize(filePath));
+    }
+  }
+
+  private void verifyNoCommit() throws GitAPIException, IOException {
+    Path tempDirPath = tempFolder.newFolder("temp-local-git-verify").toPath();
+    Git localGit = getClonedGit(tempDirPath);
+    List<RevCommit> commits = StreamSupport.stream(localGit.log().all().call().spliterator(), false).
+      collect(Collectors.toList());
+    Assert.assertEquals(1, commits.size());
+  }
+
+  private void verifyCommit(Path pathFromRepoRoot, String expectedContent, CommitMeta commitMeta)
+    throws GitAPIException, IOException {
+    Path tempDirPath = tempFolder.newFolder("temp-local-git-verify").toPath();
+    Git localGit = getClonedGit(tempDirPath);
+    Path filePath = tempDirPath.resolve(pathFromRepoRoot);
+
+    String actualContent = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+    Assert.assertEquals(expectedContent, actualContent);
+
+    List<RevCommit> commits = StreamSupport.stream(localGit.log().all().call().spliterator(), false)
+      .collect(Collectors.toList());
+    Assert.assertEquals(2, commits.size());
+    RevCommit latestCommit = commits.get(0);
+
+    Assert.assertEquals(latestCommit.getFullMessage(), commitMeta.getMessage());
+    Assert.assertEquals(commitMeta.getAuthor(), latestCommit.getAuthorIdent().getName());
+    Assert.assertEquals(commitMeta.getCommitter(), latestCommit.getCommitterIdent().getName());
+
+    localGit.close();
+    DirUtils.deleteDirectoryContents(tempDirPath.toFile());
+  }
+
 }

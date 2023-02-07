@@ -144,6 +144,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
+import io.cdap.cdap.sourcecontrol.SourceControlModule;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -180,6 +181,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new CapabilityModule(),
                            new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule(),
+                           new SourceControlModule(),
                            new EntityVerifierModule(),
                            BootstrapModules.getInMemoryModule(),
                            new AbstractModule() {
@@ -219,6 +221,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new CapabilityModule(),
                            new NamespaceAdminModule().getStandaloneModules(),
                            new ConfigStoreModule(),
+                           new SourceControlModule(),
                            new EntityVerifierModule(),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),
@@ -271,6 +274,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new CapabilityModule(),
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule(),
+                           new SourceControlModule(),
                            new EntityVerifierModule(),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),

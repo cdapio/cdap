@@ -54,6 +54,8 @@ public class ApplicationDeployable {
   @Nullable
   private final ChangeDetail changeDetail;
 
+  //TODO: CDAP-20248, add SourceControlMeta when we do pull and deploy
+
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,

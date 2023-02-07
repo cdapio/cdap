@@ -784,7 +784,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       deployedApp.getApplicationId().getVersion(),
       deployedApp.getSpecification().getDescription(),
       Optional.ofNullable(deployedApp.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
-      deployedApp.getChangeDetail());
+      deployedApp.getChangeDetail(), null);
   }
 
   private BodyConsumer deployApplication(final HttpResponder responder,

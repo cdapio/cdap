@@ -30,18 +30,25 @@ import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
+import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
+import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -53,15 +60,20 @@ import javax.ws.rs.PathParam;
 public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHandler {
   private final SourceControlManagementService sourceControlService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final CConfiguration cConf;
   private static final Gson GSON = new Gson();
 
   @Inject
-  SourceControlManagementHttpHandler(CConfiguration configuration,
+  SourceControlManagementHttpHandler(CConfiguration cConf,
                                      SourceControlManagementService sourceControlService) {
+    this.cConf = cConf;
     this.sourceControlService = sourceControlService;
-    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
+  /**
+   * Updates or validates a repository configuration.
+   */
   @PUT
   @Path("/")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -69,7 +81,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     checkSourceControlFeatureFlag();
     NamespaceId namespace = validateNamespaceId(namespaceId);
-    
+
     try {
       RepositoryConfigRequest repoRequest = validateAndGetRepoConfig(request);
       if (repoRequest.shouldTest()) {
@@ -88,6 +100,9 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     }
   }
 
+  /**
+   * Gets a repository configuration that has last update time.
+   */
   @GET
   @Path("/")
   public void getRepository(FullHttpRequest request, HttpResponder responder,
@@ -98,6 +113,9 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(repoMeta));
   }
 
+  /**
+   * Deletes a repository configuration.
+   */
   @DELETE
   @Path("/")
   public void deleteRepository(FullHttpRequest request, HttpResponder responder,
@@ -106,6 +124,51 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     sourceControlService.deleteRepository(validateNamespaceId(namespaceId));
     responder.sendString(HttpResponseStatus.OK, String.format("Deleted repository configuration for namespace '%s'.",
                                                               namespaceId));
+  }
+
+  /**
+   * Pushes an application configs of the latest version to linked repository in Json format. It expects a post body
+   * that has an optional commit message
+   * E.g.
+   *
+   * <pre>
+   * {@code
+   * {
+   *   "commitMessage": "pushed application XYZ"
+   * }
+   * }
+   *
+   * </pre>
+   * The response will a {@link PushAppResponse} object, which encapsulates the application name,
+   * version and fileHash.
+   */
+  @POST
+  @Path("/apps/{app-id}/push")
+  public void pushApp(FullHttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
+                      @PathParam("app-id") String appId) throws Exception {
+    checkSourceControlFeatureFlag();
+    ApplicationReference appRef = validateAppReference(namespaceId, appId);
+    PushAppRequest appsRequest = validateAndGetAppsRequest(request);
+
+    try {
+      PushAppResponse pushResponse = sourceControlService.pushApp(appRef, appsRequest.getCommitMessage());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pushResponse));
+    } catch (AuthenticationConfigException e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (NoChangesToPushException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (PushFailureException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  private PushAppRequest validateAndGetAppsRequest(FullHttpRequest request) throws BadRequestException {
+    try {
+      return parseBody(request, PushAppRequest.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid request body: " + e.getMessage());
+    }
   }
 
   /**
@@ -121,6 +184,14 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   private NamespaceId validateNamespaceId(String namespaceId) throws BadRequestException {
     try {
       return new NamespaceId(namespaceId);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+  }
+
+  private ApplicationReference validateAppReference(String namespaceId, String appName) throws BadRequestException {
+    try {
+      return new NamespaceId(namespaceId).appReference(appName);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
