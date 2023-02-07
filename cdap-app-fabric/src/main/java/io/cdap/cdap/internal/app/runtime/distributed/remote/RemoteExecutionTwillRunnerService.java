@@ -66,6 +66,7 @@ import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
+import io.cdap.cdap.security.executor.ContextExecutors;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -116,6 +117,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -205,8 +207,13 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       throw new RuntimeException(e);
     }
 
-    scheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
-                                                 Threads.createDaemonThreadFactory("runtime-scheduler-%d"));
+    int schedulerThreads = cConf.getInt(Constants.RuntimeMonitor.THREADS);
+    ThreadFactory schedulerThreadFactory = Threads.createDaemonThreadFactory("runtime-scheduler-%d");
+    if (cConf.getBoolean(Constants.Security.EXPLICIT_CONTEXT_PROPAGATION_ENABLED)) {
+      scheduler = ContextExecutors.newScheduledThreadPool(schedulerThreads, schedulerThreadFactory);
+    } else {
+      scheduler = Executors.newScheduledThreadPool(schedulerThreads, schedulerThreadFactory);
+    }
   }
 
   @Override
