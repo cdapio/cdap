@@ -82,6 +82,10 @@ public interface ApplicationUpdateContext {
    *
    * @return {@link ApplicationSpecification}
    */
-  ApplicationSpecification getApplicationSpecification();
+  default ApplicationSpecification getApplicationSpecification() {
+    // this is here in case any downstream projects are implementing this interface.
+    // It will always be properly implemented in CDAP implementations.
+    throw new UnsupportedOperationException("Method not supported");
+  }
 }
 
