@@ -645,26 +645,26 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
 
       Map<ProgramRunId, Notification> innerProgramNotifications = new LinkedHashMap<>();
 
-      appMetadataStore.scanActiveRuns(innerProgramId, runRecord -> {
-        Map<String, String> systemArgs = runRecord.getSystemArgs();
-        String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
-        String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
-
-        if (workflowName == null || workflowRun == null) {
-          return;
-        }
-
-        ProgramRunId workflowRunId = appId.program(ProgramType.WORKFLOW, workflowName).run(workflowRun);
-        if (!programRunId.equals(workflowRunId)) {
-          return;
-        }
-
-        Map<String, String> notificationProps = new HashMap<>(notification.getProperties());
-        notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runRecord.getProgramRunId()));
-
-        innerProgramNotifications.put(runRecord.getProgramRunId(),
-                                      new Notification(Notification.Type.PROGRAM_STATUS, notificationProps));
-      });
+//      appMetadataStore.scanActiveRuns(innerProgramId, runRecord -> {
+//        Map<String, String> systemArgs = runRecord.getSystemArgs();
+//        String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
+//        String workflowRun = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
+//
+//        if (workflowName == null || workflowRun == null) {
+//          return;
+//        }
+//
+//        ProgramRunId workflowRunId = appId.program(ProgramType.WORKFLOW, workflowName).run(workflowRun);
+//        if (!programRunId.equals(workflowRunId)) {
+//          return;
+//        }
+//
+//        Map<String, String> notificationProps = new HashMap<>(notification.getProperties());
+//        notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runRecord.getProgramRunId()));
+//
+//        innerProgramNotifications.put(runRecord.getProgramRunId(),
+//                                      new Notification(Notification.Type.PROGRAM_STATUS, notificationProps));
+//      });
 
       for (Map.Entry<ProgramRunId, Notification> entry : innerProgramNotifications.entrySet()) {
         handleProgramEvent(entry.getKey(), programRunStatus, entry.getValue(),
