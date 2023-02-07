@@ -21,11 +21,14 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
@@ -38,6 +41,8 @@ import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 
 import java.io.IOException;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -118,5 +123,11 @@ public class SourceControlManagementService {
       // TODO: CDAP-20354, throw correct non-400 validation errors
       throw new RepositoryConfigValidationException("Internal error: " + e.getMessage(), e);
     }
+  }
+
+  public Map<ApplicationId, SourceControlMeta> pushApps(NamespaceId namespace,
+                                                        Map<ApplicationId, ApplicationDetail>  details,
+                                                        @Nullable String commitMessage) {
+    return null;
   }
 }

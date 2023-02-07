@@ -106,6 +106,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -300,7 +301,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       for (Map.Entry<ApplicationId, ApplicationMeta> entry : list) {
         ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue().getSpec(),
                                                                          owners.get(entry.getKey()),
-                                                                         entry.getValue().getChange());
+                                                                         entry.getValue().getChange(),
+                                                                         entry.getValue().getSourceControlMeta());
 
         try {
           capabilityReader.checkAllEnabled(entry.getValue().getSpec());
@@ -333,7 +335,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
-                                                                            appMeta.getChange()));
+                                                                            appMeta.getChange(),
+                                                                            appMeta.getSourceControlMeta()));
   }
 
   /**
@@ -351,7 +354,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ApplicationId appId = appRef.app(appMeta.getSpec().getAppVersion());
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return enforceApplicationDetailAccess(appId, ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
-                                                                            appMeta.getChange()));
+                                                                            appMeta.getChange(),
+                                                                            appMeta.getSourceControlMeta()));
   }
 
   /**
@@ -368,14 +372,23 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Set<ApplicationId> filterIds = appIds.stream().filter(visibleIds::contains).collect(Collectors.toSet());
     Map<ApplicationId, ApplicationMeta> appMetas = store.getApplications(filterIds);
     Map<ApplicationId, String> principals = ownerAdmin.getOwnerPrincipals(filterIds);
-
+    
     return appMetas.entrySet().stream()
              .collect(Collectors.toMap(
                Entry::getKey,
                entry -> ApplicationDetail.fromSpec(entry.getValue().getSpec(),
                                                    principals.get(entry.getKey()),
-                                                   entry.getValue().getChange())
+                                                   entry.getValue().getChange(),
+                                                   entry.getValue().getSourceControlMeta())
              ));
+  }
+
+  /**
+   * Set source control metadata for a batch of applications in one transaction.
+   * @param sourceControlMap The map that provides applications to update with source control metadata
+   */
+  public void setAppSourceControlMetas(final Map<ApplicationId, SourceControlMeta> sourceControlMap) {
+    store.setAppSourceControlMetas(sourceControlMap);
   }
 
   /**
@@ -401,7 +414,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       }
       try {
         ApplicationDetail applicationDetail = enforceApplicationDetailAccess(
-          appId, ApplicationDetail.fromSpec(appMeta.getSpec(), null, appMeta.getChange()));
+          appId, ApplicationDetail.fromSpec(appMeta.getSpec(), null,
+                                            appMeta.getChange(), appMeta.getSourceControlMeta()));
         // Add a directory for the namespace
         if (namespaces.add(appId.getParent())) {
           ZipEntry entry = new ZipEntry(appId.getNamespace() + "/");
@@ -1256,7 +1270,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Enforces nessesary access on {@link ApplicationDetail}.
+   * Enforces necessary access on {@link ApplicationDetail}.
    */
   private ApplicationDetail enforceApplicationDetailAccess(ApplicationId appId,
                                                            ApplicationDetail applicationDetail) throws AccessException {

@@ -23,6 +23,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,8 @@ public class ApplicationDetail {
   private final String description;
   @Nullable
   private final ChangeDetail change;
+  @Nullable
+  private final SourceControlMeta sourceControl;
   private final String configuration;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
@@ -50,6 +53,7 @@ public class ApplicationDetail {
                            String appVersion,
                            String description,
                            @Nullable ChangeDetail change,
+                           @Nullable SourceControlMeta sourceControl,
                            String configuration,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
@@ -60,6 +64,7 @@ public class ApplicationDetail {
     this.appVersion = appVersion;
     this.description = description;
     this.change = change;
+    this.sourceControl = sourceControl;
     this.configuration = configuration;
     this.datasets = datasets;
     this.programs = programs;
@@ -88,6 +93,11 @@ public class ApplicationDetail {
     return change;
   }
 
+  @Nullable
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControl;
+  }
+
   public List<DatasetDetail> getDatasets() {
     return datasets;
   }
@@ -110,7 +120,7 @@ public class ApplicationDetail {
   }
 
   public static ApplicationDetail fromSpec(ApplicationSpecification spec, @Nullable String ownerPrincipal,
-                                           @Nullable ChangeDetail change) {
+                                           @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControl) {
     // Adding owner, creation time and change summary description fields to the app detail
 
     List<ProgramRecord> programs = new ArrayList<>();
@@ -141,17 +151,17 @@ public class ApplicationDetail {
     }
 
     List<PluginDetail> plugins = new ArrayList<>();
-    for (Map.Entry<String, Plugin> pluginEnty : spec.getPlugins().entrySet()) {
-      plugins.add(new PluginDetail(pluginEnty.getKey(),
-                                   pluginEnty.getValue().getPluginClass().getName(),
-                                   pluginEnty.getValue().getPluginClass().getType()));
+    for (Map.Entry<String, Plugin> pluginEntry : spec.getPlugins().entrySet()) {
+      plugins.add(new PluginDetail(pluginEntry.getKey(),
+                                   pluginEntry.getValue().getPluginClass().getName(),
+                                   pluginEntry.getValue().getPluginClass().getType()));
     }
     // this is only required if there are old apps lying around that failed to get upgrading during
     // the upgrade to v3.2 for some reason. In those cases artifact id will be null until they re-deploy the app.
     // in the meantime, we don't want this api call to null pointer exception.
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
-    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), change,
+    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), change, sourceControl,
                                  spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
   }
 }

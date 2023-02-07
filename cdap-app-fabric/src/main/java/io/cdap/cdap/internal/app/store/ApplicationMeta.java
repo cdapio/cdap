@@ -20,6 +20,7 @@ import com.google.common.base.Objects;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 
 import javax.annotation.Nullable;
 
@@ -33,11 +34,19 @@ public class ApplicationMeta {
   private final ApplicationSpecification spec;
   @Nullable
   private final ChangeDetail change;
+  @Nullable
+  private final SourceControlMeta sourceControlMeta;
 
-  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable ChangeDetail change) {
+  public ApplicationMeta(String id, ApplicationSpecification spec,
+                         @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControlMeta) {
     this.id = id;
     this.spec = spec;
     this.change = change;
+    this.sourceControlMeta = sourceControlMeta;
+  }
+
+  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable ChangeDetail change) {
+    this(id, spec, change, null);
   }
 
   public String getId() {
@@ -53,12 +62,18 @@ public class ApplicationMeta {
     return change;
   }
 
+  @Nullable
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControlMeta;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("id", id)
-      .add("spec", ADAPTER.toJson(spec))
-      .add("change", change)
-      .toString();
+             .add("id", id)
+             .add("spec", ADAPTER.toJson(spec))
+             .add("change", change)
+             .add("sourceControlMeta", sourceControlMeta)
+             .toString();
   }
 }

@@ -48,6 +48,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import org.apache.twill.api.RunId;
 
 import java.io.IOException;
@@ -412,6 +413,12 @@ public interface Store {
    * @return collection of application metas. For applications that don't exist, there will be no entry in the result.
    */
   Map<ApplicationId, ApplicationMeta> getApplications(Collection<ApplicationId> ids);
+
+  /**
+   * Update a map of applications with provided SourceControlMeta.
+   * @param sourceControlMap the source control metadata map for the applications synced with linked repository.
+   */
+  void setAppSourceControlMetas(Map<ApplicationId, SourceControlMeta> sourceControlMap);
 
   /**
    * Returns a map of latest programIds given programReferences

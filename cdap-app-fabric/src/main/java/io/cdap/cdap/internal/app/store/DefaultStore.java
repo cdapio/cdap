@@ -63,6 +63,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -784,6 +785,13 @@ public class DefaultStore implements Store {
   public Map<ApplicationId, ApplicationMeta> getApplications(Collection<ApplicationId> ids) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getApplicationsForAppIds(ids);
+    });
+  }
+
+  @Override
+  public void setAppSourceControlMetas(Map<ApplicationId, SourceControlMeta> sourceControlMap) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppMetadataStore(context).setAppSourceControlMetas(sourceControlMap);
     });
   }
 
