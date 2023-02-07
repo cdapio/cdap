@@ -4593,6 +4593,14 @@
     </description>
   </property>
 
+  <property>
+    <name>security.explicit.context.propagation.enabled</name>
+    <value>true</value>
+    <description>
+      A feature flag for explicitly propagating security context into executors intended to fix CDAP-20146.
+    </description>
+  </property>
+
   <!-- Authorization Metrics -->
 
   <property>
