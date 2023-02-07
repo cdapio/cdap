@@ -17,8 +17,10 @@
 package io.cdap.cdap.etl.proto.v2;
 
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.etl.proto.Connection;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -125,6 +127,25 @@ public final class DataStreamsConfig extends ETLConfig {
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  /**
+   * Updates the configuration for all stages using the provided ApplicationUpdateContext
+   * @param applicationUpdateContext
+   * @return The updated {@link DataStreamsConfig}
+   * @throws Exception
+   */
+  public DataStreamsConfig updateConfig(ApplicationUpdateContext applicationUpdateContext) throws Exception {
+    Set<ETLStage> updatedStages = new HashSet<>();
+    // Upgrade all stages.
+    for (ETLStage stage : getStages()) {
+      updatedStages.add(stage.updateStage(applicationUpdateContext));
+    }
+
+    return new DataStreamsConfig(updatedStages, connections, resources, driverResources, clientResources,
+                                 stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
+                                 disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGracefully,
+                                 properties);
   }
 
   /**

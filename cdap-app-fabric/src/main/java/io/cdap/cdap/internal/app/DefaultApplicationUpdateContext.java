@@ -40,6 +40,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -86,12 +87,13 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
   private final NamespaceId namespaceId;
   private final Set<ArtifactScope> allowedArtifactScopes;
   private final boolean allowSnapshot;
+  private final ApplicationSpecification appSpec;
 
   public DefaultApplicationUpdateContext(NamespaceId namespaceId, ApplicationId applicationId,
                                          ArtifactId applicationArtifactId, ArtifactRepository artifactRepository,
                                          String configString, List<ApplicationConfigUpdateAction> updateActions,
                                          Set<ArtifactScope> allowedArtifactScopes,
-                                         boolean allowSnapshot) {
+                                         boolean allowSnapshot, ApplicationSpecification appSpec) {
     this.namespaceId = namespaceId;
     this.applicationId = applicationId;
     this.artifactRepository = artifactRepository;
@@ -100,6 +102,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     this.updateActions = Collections.unmodifiableList(new ArrayList<>(updateActions));
     this.allowedArtifactScopes = Collections.unmodifiableSet(allowedArtifactScopes);
     this.allowSnapshot = allowSnapshot;
+    this.appSpec = appSpec;
   }
 
   @Override
@@ -143,6 +146,11 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
       candidates.addAll(getScopedPluginArtifacts(pluginType, pluginName, scope, pluginRange, limit));
     }
     return candidates;
+  }
+
+  @Override
+  public ApplicationSpecification getApplicationSpecification() {
+    return appSpec;
   }
 
   private List<ArtifactId> getScopedPluginArtifacts(String pluginType, String pluginName,
