@@ -17,8 +17,6 @@
 package io.cdap.cdap.k8s.runtime;
 
 import com.google.common.collect.ImmutableSet;
-import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
-import io.cdap.cdap.master.environment.k8s.DefaultApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -78,9 +76,7 @@ public class KubeTwillRunnerServiceTest {
                                   "test-pod-image-pull-policy");
     MasterEnvironmentContext context = mock(MasterEnvironmentContext.class);
     DiscoveryServiceClient discoveryServiceClient = mock(DiscoveryServiceClient.class);
-    ApiClientFactory apiClientFactory = new DefaultApiClientFactory(10, 300);
-    twillRunnerService = new KubeTwillRunnerService(context, apiClientFactory,
-                                                    KUBE_NAMESPACE, discoveryServiceClient, podInfo,
+    twillRunnerService = new KubeTwillRunnerService(context, KUBE_NAMESPACE, discoveryServiceClient, podInfo,
                                                     "", Collections.emptyMap(), 1, 1,
                                                     true, false,
                                                     null, null,

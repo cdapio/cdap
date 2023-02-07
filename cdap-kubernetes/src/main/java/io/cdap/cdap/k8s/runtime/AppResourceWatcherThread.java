@@ -18,7 +18,6 @@ package io.cdap.cdap.k8s.runtime;
 
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
-import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
@@ -39,36 +38,29 @@ abstract class AppResourceWatcherThread<T extends KubernetesObject> extends Abst
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Deployment} events.
    */
-  static AppResourceWatcherThread<V1Deployment> createDeploymentWatcher(String namespace, String selector,
-                                                                        ApiClientFactory apiClientFactory) {
-    return new AppResourceWatcherThread<V1Deployment>("apps", "v1", "deployments",
-                                                      namespace, selector, apiClientFactory) { };
+  static AppResourceWatcherThread<V1Deployment> createDeploymentWatcher(String namespace, String selector) {
+    return new AppResourceWatcherThread<V1Deployment>("apps", "v1", "deployments", namespace, selector) { };
   }
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1StatefulSet} events.
    */
-  static AppResourceWatcherThread<V1StatefulSet> createStatefulSetWatcher(String namespace, String selector,
-                                                                          ApiClientFactory apiClientFactory) {
-    return new AppResourceWatcherThread<V1StatefulSet>("apps", "v1", "statefulsets",
-                                                       namespace, selector, apiClientFactory) { };
+  static AppResourceWatcherThread<V1StatefulSet> createStatefulSetWatcher(String namespace, String selector) {
+    return new AppResourceWatcherThread<V1StatefulSet>("apps", "v1", "statefulsets", namespace, selector) { };
   }
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Job} events.
    */
-  static AppResourceWatcherThread<V1Job> createJobWatcher(String namespace, String selector,
-                                                          ApiClientFactory apiClientFactory) {
-    return new AppResourceWatcherThread<V1Job>("batch", "v1", "jobs",
-                                               namespace, selector, apiClientFactory) { };
+  static AppResourceWatcherThread<V1Job> createJobWatcher(String namespace, String selector) {
+    return new AppResourceWatcherThread<V1Job>("batch", "v1", "jobs", namespace, selector) { };
   }
 
   private final String selector;
   private final Queue<ResourceChangeListener<T>> listeners;
 
-  private AppResourceWatcherThread(String group, String version, String plural, String namespace, String selector,
-                                   ApiClientFactory apiClientFactory) {
-    super("kube-" + plural + "-watch", namespace, group, version, plural, apiClientFactory);
+  private AppResourceWatcherThread(String group, String version, String plural, String namespace, String selector) {
+    super("kube-" + plural + "-watch", namespace, group, version, plural);
     setDaemon(true);
     this.selector = selector;
     this.listeners = new ConcurrentLinkedQueue<>();

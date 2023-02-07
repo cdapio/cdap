@@ -27,7 +27,6 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
-import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
 import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import org.slf4j.Logger;
@@ -90,11 +89,6 @@ final class SSHRemoteProcessController implements RemoteProcessController {
   }
 
   @Override
-  public RuntimeJobStatus getStatus() throws Exception {
-    return isRunning() ? RuntimeJobStatus.RUNNING : RuntimeJobStatus.UNKNOWN;
-  }
-
-  @Override
   public void terminate() throws Exception {
     // SIGTERM
     LOG.debug("Stopping program run {}", programRunId);
@@ -102,7 +96,7 @@ final class SSHRemoteProcessController implements RemoteProcessController {
   }
 
   @Override
-  public void kill(RuntimeJobStatus runtimeJobStatus) throws Exception {
+  public void kill() throws Exception {
     // SIGKILL
     LOG.debug("Force stopping program run {}", programRunId);
     killProcess(9);

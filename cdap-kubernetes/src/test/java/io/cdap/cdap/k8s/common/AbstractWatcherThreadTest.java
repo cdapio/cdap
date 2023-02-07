@@ -17,7 +17,6 @@
 package io.cdap.cdap.k8s.common;
 
 import com.google.common.collect.ImmutableMap;
-import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -61,7 +60,6 @@ public class AbstractWatcherThreadTest {
 
   private static final String LABEL_KEY = "test.configmap";
 
-  private static ApiClientFactory apiClientFactory;
   private static ApiClient apiClient;
   private static String namespace;
 
@@ -79,8 +77,6 @@ public class AbstractWatcherThreadTest {
       apiClient = Config.fromConfig(is);
     }
 
-    apiClientFactory = () -> apiClient;
-
     namespace = System.getProperty("kube.namespace", "default");
   }
 
@@ -95,7 +91,7 @@ public class AbstractWatcherThreadTest {
     Map<String, V1ConfigMap> configMapNames = new ConcurrentHashMap<>();
 
     AbstractWatcherThread<V1ConfigMap> watcherThread = cleanupRule.register(new AbstractWatcherThread<V1ConfigMap>(
-      "test", namespace, "", "v1", "configmaps", apiClientFactory) {
+      "test", namespace, "", "v1", "configmaps") {
 
       @Override
       protected void updateListOptions(ListOptions options) {
@@ -150,7 +146,7 @@ public class AbstractWatcherThreadTest {
     Map<String, V1ConfigMap> configMapNames = new ConcurrentHashMap<>();
 
     AbstractWatcherThread<V1ConfigMap> watcherThread = cleanupRule.register(new AbstractWatcherThread<V1ConfigMap>(
-      "test", namespace, "", "v1", "configmaps", apiClientFactory) {
+      "test", namespace, "", "v1", "configmaps") {
 
       @Override
       protected void updateListOptions(ListOptions options) {

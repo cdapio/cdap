@@ -129,7 +129,7 @@ public class MasterEnvironmentMain {
           getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
 
         MasterEnvironmentRunnableContext runnableContext =
-          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory, cConf);
+          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory);
         @SuppressWarnings("unchecked")
         MasterEnvironmentRunnable runnable = masterEnv.createRunnable(runnableContext,
                                                                       (Class<? extends MasterEnvironmentRunnable>) cls);

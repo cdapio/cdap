@@ -18,10 +18,9 @@ package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
-import io.cdap.cdap.master.environment.k8s.DefaultApiClientFactory;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
+import io.kubernetes.client.util.Config;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Assert;
@@ -47,15 +46,13 @@ import java.util.stream.StreamSupport;
  */
 @Ignore
 public class KubeDiscoveryServiceTest {
-  private static final ApiClientFactory API_CLIENT_FACTORY = new DefaultApiClientFactory(10, 300);
 
   @Test
   public void testDiscoveryService() throws Exception {
     String namespace = "default";
     Map<String, String> podLabels = ImmutableMap.of("cdap.container", "test");
     try (KubeDiscoveryService service = new KubeDiscoveryService(namespace, "cdap-test-",
-                                                                 podLabels, Collections.emptyList(),
-                                                                 API_CLIENT_FACTORY)) {
+                                                                 podLabels, Collections.emptyList())) {
       // Watch for changes
       ServiceDiscovered serviceDiscovered = service.discover("test.service");
 
@@ -127,7 +124,7 @@ public class KubeDiscoveryServiceTest {
 
     } finally {
       // Cleanup the created service
-      CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
+      CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
       api.deleteNamespacedService("cdap-test-test-service", namespace, null, null, null, null, null, deleteOptions);
       api.deleteNamespacedService("cdap-test-test-service2", namespace, null, null, null, null, null, deleteOptions);
@@ -140,7 +137,7 @@ public class KubeDiscoveryServiceTest {
     String prefix = "cdap-test-";
     try (KubeDiscoveryService service = new KubeDiscoveryService(namespace, prefix,
                                                                  ImmutableMap.of("cdap.container", "test"),
-                                                                 Collections.emptyList(), API_CLIENT_FACTORY)) {
+                                                                 Collections.emptyList())) {
       // Register two services first
       service.register(new Discoverable("test1", new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234)));
       service.register(new Discoverable("test2", new InetSocketAddress(InetAddress.getLoopbackAddress(), 5678)));
@@ -169,7 +166,7 @@ public class KubeDiscoveryServiceTest {
       Assert.assertNotNull(discoverable);
       Assert.assertEquals(prefix + "test2." + namespace, discoverable.getSocketAddress().getHostName());
     } finally {
-      CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
+      CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
       api.deleteNamespacedService(prefix + "test1", namespace, null, null, null, null, null, deleteOptions);
       api.deleteNamespacedService(prefix + "test2", namespace, null, null, null, null, null, deleteOptions);
@@ -182,7 +179,7 @@ public class KubeDiscoveryServiceTest {
     String prefix = "cdap-test-";
     try (KubeDiscoveryService service = new KubeDiscoveryService(namespace, prefix,
                                                                  ImmutableMap.of("cdap.container", "test"),
-                                                                 Collections.emptyList(), API_CLIENT_FACTORY)) {
+                                                                 Collections.emptyList())) {
       // Register two services first
       service.register(new Discoverable("test1", new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234)));
       service.register(new Discoverable("test2", new InetSocketAddress(InetAddress.getLoopbackAddress(), 5678)));
@@ -213,7 +210,7 @@ public class KubeDiscoveryServiceTest {
       Assert.assertNotNull(discoverable);
       Assert.assertEquals(prefix + "test2." + namespace, discoverable.getSocketAddress().getHostName());
     } finally {
-      CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
+      CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
       api.deleteNamespacedService(prefix + "test1", namespace, null, null, null, null, null, deleteOptions);
       api.deleteNamespacedService(prefix + "test2", namespace, null, null, null, null, null, deleteOptions);

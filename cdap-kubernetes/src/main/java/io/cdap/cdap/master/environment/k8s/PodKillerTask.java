@@ -20,6 +20,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.util.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +36,12 @@ final class PodKillerTask implements MasterEnvironmentTask {
   private final String namespace;
   private final String podSelector;
   private final long delayMillis;
-  private final ApiClientFactory apiClientFactory;
   private volatile CoreV1Api coreApi;
 
-  PodKillerTask(String namespace, String podSelector, long delayMillis, ApiClientFactory apiClientFactory) {
+  PodKillerTask(String namespace, String podSelector, long delayMillis) {
     this.namespace = namespace;
     this.podSelector = podSelector;
     this.delayMillis = delayMillis;
-    this.apiClientFactory = apiClientFactory;
   }
 
   @Override
@@ -80,7 +79,7 @@ final class PodKillerTask implements MasterEnvironmentTask {
       if (api != null) {
         return api;
       }
-      coreApi = api = new CoreV1Api(apiClientFactory.create());
+      coreApi = api = new CoreV1Api(Config.defaultClient());
       return api;
     }
   }

@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
-
 /**
  * Interface that exposes methods for controlling remote execution process.
  */
@@ -32,22 +30,14 @@ public interface RemoteProcessController {
   boolean isRunning() throws Exception;
 
   /**
-   * Returns the runtime status {@link RuntimeJobStatus} of the remote process for the program execution.
-   *
-   * @throws Exception if not able to determine the status of the remote process
-   */
-  RuntimeJobStatus getStatus() throws Exception;
-
-  /**
    * Graceful shutdown of the remote process
    * @throws Exception if not able to terminate the remote process
    */
   void terminate() throws Exception;
 
   /**
-   * Kills the remote process depending on the ProgramStatus
+   * Forcefully kills the remote process
    * @throws Exception if not able to kill the remote process
-   * @param runtimeJobStatus
    */
-  void kill(RuntimeJobStatus runtimeJobStatus) throws Exception;
+  void kill() throws Exception;
 }

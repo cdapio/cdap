@@ -60,7 +60,6 @@ import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
-import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
@@ -614,7 +613,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
               startupTaskFuture.cancel(true);
               try {
                 // Attempt to force kill the remote process. If there is no such process found, it won't throw.
-                processController.kill(RuntimeJobStatus.RUNNING);
+                processController.kill();
               } catch (Exception e) {
                 LOG.warn("Force termination of remote process for {} failed", programRunId, e);
               }
