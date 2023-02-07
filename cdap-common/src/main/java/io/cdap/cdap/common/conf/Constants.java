@@ -1328,6 +1328,9 @@ public final class Constants {
     public static final String RUNTIME_IDENTITY_COMPATIBILITY_ENABLED =
       "security.runtime.identity.compatibility.enabled";
 
+    /** Explicitly propagate the SecurityRequestContext to tasks submitted to executor thread pools. */
+    public static final String EXPLICIT_CONTEXT_PROPAGATION_ENABLED = "security.explicit.context.propagation.enabled";
+
     /**
      * App Fabric
      */
