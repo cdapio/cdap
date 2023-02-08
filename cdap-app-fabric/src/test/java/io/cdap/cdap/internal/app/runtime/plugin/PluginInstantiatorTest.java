@@ -16,9 +16,17 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -34,6 +42,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PluginInstantiatorTest {
   @ClassRule
@@ -65,5 +75,44 @@ public class PluginInstantiatorTest {
     PluginClassLoader loader = pluginInstantiator.getPluginClassLoader(artifactId, Collections.emptyList());
     Assert.assertEquals("pluginData", IOUtils.toString(loader.getResource("test.class")));
     pluginInstantiator.close();
+  }
+
+  @Test
+  public void testSubstituteMacros() throws Exception {
+    File appDir = TMP_FOLDER.newFolder();
+    File pluginsDir = TMP_FOLDER.newFolder();
+    ArtifactId artifactId = new ArtifactId("dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+
+    ProgramClassLoader programClassLoader = new ProgramClassLoader(cConf, appDir, this.getClass().getClassLoader());
+    PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf,
+                                                                   programClassLoader,
+                                                                   pluginsDir);
+
+    PluginClass pluginClass = PluginClass.builder().setClassName("").setName("").setCategory("").setConfigFieldName("")
+      .setRequirements(Requirements.EMPTY).setType("").setDescription("")
+      .add("key1", new PluginPropertyField("key1", "", "string", false, true))
+      .add("key2", new PluginPropertyField("key2", "", "Connection", false, true, false,
+                                           ImmutableSet.of("child1", "child2")))
+      .add("child1", new PluginPropertyField("child1", "", "string", false, true))
+      .add("child2", new PluginPropertyField("child2", "", "string", false, true))
+      .build();
+    Gson gson = new Gson();
+
+    // test macro with additional fields can be evaluated successfully
+    Map<String, String> childProperties =
+      ImmutableMap.of("child1", "childVal1", "child2", "${secure(acc)}", "child3", "val3");
+    Map<String, String> properties = ImmutableMap.of("key2", gson.toJson(childProperties), "key1", "val1");
+
+    Plugin plugin = new Plugin(Collections.emptyList(), artifactId, pluginClass,
+                               PluginProperties.builder().addAll(properties).build());
+
+    PluginProperties pluginProperties = pluginInstantiator.substituteMacros(plugin, null, null);
+    Map<String, String> expectedChildProperties = new HashMap<>();
+    expectedChildProperties.put("child1", "childVal1");
+    expectedChildProperties.put("child2", null);
+    Assert.assertEquals(PluginProperties.builder().addAll(
+      ImmutableMap.of("key1", "val1", "key2", gson.toJson(expectedChildProperties))).build(), pluginProperties);
   }
 }
