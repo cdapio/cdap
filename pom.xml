@@ -180,6 +180,7 @@
     <jacoco.version>0.8.6</jacoco.version>
     <!-- Overwrite Apache Ivy version to 2.5.1 for remediating CVE-2022-37866-->
     <ivy.version>2.5.1</ivy.version>
+    <jgit.version>5.9.0.202009080501-r</jgit.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -1597,6 +1598,19 @@
         <artifactId>ivy</artifactId>
         <version>${ivy.version}</version>
       </dependency>
+      <!-- Git dependencies for Source Control Management start -->
+      <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit</artifactId>
+        <version>${jgit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit.http.server</artifactId>
+        <version>${jgit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <!-- Git dependencies for Source Control Management end -->
     </dependencies>
   </dependencyManagement>
 
@@ -2728,6 +2742,7 @@
         <module>cdap-ui</module>
         <module>cdap-event-writer-spi</module>
         <module>cdap-authenticator-ext-gcp</module>
+        <module>cdap-source-control</module>
       </modules>
     </profile>
     <profile>

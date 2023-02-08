@@ -75,7 +75,7 @@ public class SourceControlManagementService {
 
   public void deleteRepository(NamespaceId namespace) {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.DELETE);
-    
+
     TransactionRunners.run(transactionRunner, context -> {
       RepositoryTable repoTable = getRepositoryTable(context);
       repoTable.delete(namespace);
@@ -84,7 +84,7 @@ public class SourceControlManagementService {
 
   public RepositoryMeta getRepositoryMeta(NamespaceId namespace) throws RepositoryNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
-    
+
     return TransactionRunners.run(transactionRunner, context -> {
       RepositoryTable table = getRepositoryTable(context);
       RepositoryMeta repoMeta = table.get(namespace);

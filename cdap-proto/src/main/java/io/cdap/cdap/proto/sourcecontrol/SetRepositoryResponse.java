@@ -27,7 +27,7 @@ public class SetRepositoryResponse {
   private final Collection<RepositoryValidationFailure> errors;
   private final String message;
 
-  public SetRepositoryResponse(InvalidRepositoryConfigException e) {
+  public SetRepositoryResponse(RepositoryConfigValidationException e) {
     this.errors = Collections.unmodifiableList(new ArrayList<>(e.getFailures()));
     this.message = e.getMessage();
   }

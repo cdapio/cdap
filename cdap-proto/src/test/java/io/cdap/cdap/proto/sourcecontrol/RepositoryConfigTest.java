@@ -51,7 +51,7 @@ public class RepositoryConfigTest {
         .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
         .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
       Assert.fail();
-    } catch (InvalidRepositoryConfigException e) {
+    } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
       Assert.assertEquals("'provider' field must be specified.",
                           e.getFailures().get(0).getMessage());
@@ -65,7 +65,7 @@ public class RepositoryConfigTest {
         .setLink(null).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
         .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
       Assert.fail();
-    } catch (InvalidRepositoryConfigException e) {
+    } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
       Assert.assertEquals("'link' field must be specified.",
                           e.getFailures().get(0).getMessage());
@@ -79,7 +79,7 @@ public class RepositoryConfigTest {
         .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(null)
         .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
       Assert.fail();
-    } catch (InvalidRepositoryConfigException e) {
+    } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
       Assert.assertEquals("'type' and 'tokenName' fields must be specified.",
                           e.getFailures().get(0).getMessage());
@@ -93,7 +93,7 @@ public class RepositoryConfigTest {
         .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
         .setTokenName(null).setUsername(USERNAME).build();
       Assert.fail();
-    } catch (InvalidRepositoryConfigException e) {
+    } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
       Assert.assertEquals("'type' and 'tokenName' fields must be specified.",
                           e.getFailures().get(0).getMessage());
@@ -107,7 +107,7 @@ public class RepositoryConfigTest {
         .setLink(null).setDefaultBranch(DEFAULT_BRANCH).setAuthType(null)
         .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
       Assert.fail();
-    } catch (InvalidRepositoryConfigException e) {
+    } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(3, e.getFailures().size());
     }
   }

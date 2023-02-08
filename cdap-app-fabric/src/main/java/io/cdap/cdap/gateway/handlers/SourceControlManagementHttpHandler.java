@@ -31,8 +31,8 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.InvalidRepositoryConfigException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
 import io.cdap.http.HttpResponder;
@@ -72,9 +72,9 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
 
     try {
       if (repoRequest == null || repoRequest.getConfig() == null) {
-        throw new InvalidRepositoryConfigException("Repository configuration must be specified.");
+        throw new RepositoryConfigValidationException("Repository configuration must be specified.");
       }
-      
+
       repoRequest.getConfig().validate();
       if (repoRequest.shouldTest()) {
         // TODO: CDAP-20252, add the validate logic once the SourceControlManager module is ready
@@ -85,7 +85,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
                          GSON.toJson(
                            new SetRepositoryResponse(
                              String.format("Updated repository configuration for namespace '%s'.", namespaceId))));
-    } catch (InvalidRepositoryConfigException e) {
+    } catch (RepositoryConfigValidationException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
     }
   }
