@@ -333,7 +333,11 @@ public class PluginInstantiator implements Closeable {
               trackingMacroEvaluator.reset();
               Map<String, String> substitutedChildMap = new HashMap<>();
               childMap.forEach((name, value) -> {
+                if (!pluginPropertyFieldMap.containsKey(name)) {
+                  return;
+                }
                 macroParser.parse(value);
+
                 substitutedChildMap.put(name, getOriginalOrDefaultValue(
                   value, name, pluginPropertyFieldMap.get(name).getType(), trackingMacroEvaluator));
               });
