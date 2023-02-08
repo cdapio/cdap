@@ -472,6 +472,15 @@ public final class Constants {
     public static final String CONTAINER_DISK_READONLY = "task.worker.container.disk.readonly";
     public static final String CONTAINER_JVM_OPTS = "task.worker.container.jvm.opts";
 
+    public static final String CONFIGURATOR_HTTP_CLIENT_READ_TIMEOUT_MS =
+      "task.worker.configurator.http.client.read.timeout.ms";
+    public static final String CONFIGURATOR_HTTP_CLIENT_CONNECTION_TIMEOUT_MS =
+      "task.worker.configurator.http.client.connection.timeout.ms";
+    public static final String SYSTEMAPP_HTTP_CLIENT_READ_TIMEOUT_MS =
+      "task.worker.systemapp.http.client.read.timeout.ms";
+    public static final String SYSTEMAPP_HTTP_CLIENT_CONNECTION_TIMEOUT_MS =
+      "task.worker.systemapp.http.client.connection.timeout.ms";
+
     /**
      * Task worker http handler configuration
      */
