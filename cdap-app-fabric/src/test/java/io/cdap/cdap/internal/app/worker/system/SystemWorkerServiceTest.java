@@ -37,8 +37,10 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.worker.RunnableTaskModule;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.cdap.security.auth.FileBasedKeyManager;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -106,11 +108,12 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     SystemWorkerService service = new SystemWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
                                                           metricsCollectionService, new CommonNettyHttpServiceFactory(
                                                             cConf, metricsCollectionService),
-                                                          injector.getInstance(FileBasedKeyManager.class),
+                                                          injector.getInstance(TokenManager.class),
                                                           new NoopTwillRunnerService(),
                                                           new NoopTwillRunnerService(),
                                                           getInjector().getInstance(ProvisioningService.class),
-                                                          Guice.createInjector(new RunnableTaskModule(cConf)));
+                                                          Guice.createInjector(new RunnableTaskModule(cConf)),
+                                                          new AuthenticationTestContext(), new NoOpAccessController());
     service.startAndWait();
     this.systemWorkerService = service;
   }
