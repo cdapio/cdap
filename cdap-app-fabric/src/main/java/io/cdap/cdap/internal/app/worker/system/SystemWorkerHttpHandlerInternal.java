@@ -29,6 +29,11 @@ import io.cdap.cdap.internal.app.worker.RunnableTaskLauncher;
 import io.cdap.cdap.internal.app.worker.TaskDetails;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
@@ -69,17 +74,28 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
 
   private final MetricsCollectionService metricsCollectionService;
+  private final AuthenticationContext authenticationContext;
+  private final AccessEnforcer internalAccessEnforcer;
 
   public SystemWorkerHttpHandlerInternal(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                                         Injector injector) {
+                                         Injector injector, AuthenticationContext authenticationContext,
+                                         AccessEnforcer internalAccessEnforcer) {
     this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
     this.metricsCollectionService = metricsCollectionService;
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
+    this.authenticationContext = authenticationContext;
+    this.internalAccessEnforcer = internalAccessEnforcer;
   }
 
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
+    // Perform a permission check to ensure the caller is part of the system, then unset the SecurityRequestContext to
+    // force the system worker to use its system context.
+    internalAccessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
+                                   ApplicationPermission.EXECUTE);
+    SecurityRequestContext.reset();
+
     if (requestProcessedCount.incrementAndGet() > requestLimit) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
