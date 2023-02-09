@@ -19,11 +19,13 @@ package io.cdap.cdap.internal.app;
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.retry.RetryCountProvider;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -128,10 +130,10 @@ public class RemoteTaskExecutor {
           }
           if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
             BasicThrowable basicThrowable = GSON
-              .fromJson(new String(getResponseBody(httpResponse)), BasicThrowable.class);
+              .fromJson(httpResponse.getResponseBodyAsString(), BasicThrowable.class);
             throw RemoteExecutionException.fromBasicThrowable(basicThrowable);
           }
-          byte[] result = getResponseBody(httpResponse);
+          byte[] result = httpResponse.getUncompressedResponseBody();
           //emit metrics with successful result
           emitMetrics(startTime, true, runnableTaskRequest, retryContext.getRetryAttempt());
           return result;
@@ -140,10 +142,29 @@ public class RemoteTaskExecutor {
             String.format("Received exception %s for %s", e.getMessage(), runnableTaskRequest.getClassName()));
         }
       }, retryStrategy, Retries.DEFAULT_PREDICATE);
+    } catch (ServiceException se) {
+      Exception ex = getTaskException(se);
+      //emit metrics with failed result
+      emitMetrics(startTime, false, runnableTaskRequest, getAttempts(ex));
+      throw ex;
     } catch (Exception e) {
       //emit metrics with failed result
       emitMetrics(startTime, false, runnableTaskRequest, getAttempts(e));
       throw e;
+    }
+  }
+
+  private Exception getTaskException(ServiceException e) {
+    if (e.getJsonDetails() == null) {
+      // This is not an application-level exception, might be a timeout or similar failure
+      return e;
+    }
+    try {
+      BasicThrowable basicThrowable = GSON.fromJson(e.getJsonDetails(), BasicThrowable.class);
+      return RemoteExecutionException.fromBasicThrowable(basicThrowable);
+    } catch (JsonSyntaxException jse) {
+      e.addSuppressed(jse);
+      return e;
     }
   }
 
