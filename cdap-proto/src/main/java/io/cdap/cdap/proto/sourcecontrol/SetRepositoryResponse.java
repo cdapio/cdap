@@ -19,6 +19,7 @@ package io.cdap.cdap.proto.sourcecontrol;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * The HTTP Response class for setting repository configuration.
@@ -28,20 +29,30 @@ public class SetRepositoryResponse {
   private final String message;
 
   public SetRepositoryResponse(RepositoryConfigValidationException e) {
-    this.errors = Collections.unmodifiableList(new ArrayList<>(e.getFailures()));
+    this.errors = e.getFailures().isEmpty() ? null : Collections.unmodifiableList(new ArrayList<>(e.getFailures()));
     this.message = e.getMessage();
   }
 
   public SetRepositoryResponse(String message) {
-    this.errors = Collections.unmodifiableList(new ArrayList<>());
+    this.errors = null;
     this.message = message;
   }
 
-  public String getMessage() {
-    return message;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SetRepositoryResponse that = (SetRepositoryResponse) o;
+
+    return Objects.equals(message, that.message) && Objects.equals(errors, that.errors);
   }
 
-  public Collection<RepositoryValidationFailure> getErrors() {
-    return errors;
+  @Override
+  public int hashCode() {
+    return Objects.hash(message, errors);
   }
 }

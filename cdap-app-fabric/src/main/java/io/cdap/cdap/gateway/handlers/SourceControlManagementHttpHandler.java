@@ -68,23 +68,17 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     checkSourceControlFeatureFlag();
     NamespaceId namespace = validateNamespaceId(namespaceId);
-    RepositoryConfigRequest repoRequest = getRepositoryConfigRequest(request);
-
+    
     try {
-      if (repoRequest == null || repoRequest.getConfig() == null) {
-        throw new RepositoryConfigValidationException("Repository configuration must be specified.");
-      }
-
-      repoRequest.getConfig().validate();
+      RepositoryConfigRequest repoRequest = validateAndGetRepoConfig(request);
       if (repoRequest.shouldTest()) {
-        // TODO: CDAP-20252, add the validate logic once the SourceControlManager module is ready
+        sourceControlService.validateRepository(namespace, repoRequest.getConfig());
+        responder.sendStatus(HttpResponseStatus.OK);
+        return;
       }
 
-      sourceControlService.setRepository(namespace, repoRequest.getConfig());
-      responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(
-                           new SetRepositoryResponse(
-                             String.format("Updated repository configuration for namespace '%s'.", namespaceId))));
+      RepositoryMeta repoMeta = sourceControlService.setRepository(namespace, repoRequest.getConfig());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(repoMeta));
     } catch (RepositoryConfigValidationException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
     }
@@ -128,9 +122,14 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     }
   }
 
-  private RepositoryConfigRequest getRepositoryConfigRequest(FullHttpRequest request) throws BadRequestException {
+  private RepositoryConfigRequest validateAndGetRepoConfig(FullHttpRequest request) throws BadRequestException {
     try {
-      return parseBody(request, RepositoryConfigRequest.class);
+      RepositoryConfigRequest repoRequest = parseBody(request, RepositoryConfigRequest.class);
+      if (repoRequest == null || repoRequest.getConfig() == null) {
+        throw new RepositoryConfigValidationException("Repository configuration must be specified.");
+      }
+      repoRequest.getConfig().validate();
+      return repoRequest;
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid request body: " + e.getMessage(), e);
     }

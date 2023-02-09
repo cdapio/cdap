@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.proto.sourcecontrol;
 
+import java.util.Objects;
+
 /**
  * Class that handles Repository Configuration validation failure.
  */
@@ -28,5 +30,23 @@ public class RepositoryValidationFailure {
 
   public String getMessage() {
     return message;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    RepositoryValidationFailure that = (RepositoryValidationFailure) o;
+
+    return Objects.equals(message, that.message);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(message);
   }
 }
