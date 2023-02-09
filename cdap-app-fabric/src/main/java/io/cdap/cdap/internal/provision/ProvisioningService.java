@@ -800,9 +800,10 @@ public class ProvisioningService extends AbstractIdleService {
       .map(ProfileId::getEntityName).orElse(null);
     VersionInfo appCDAPVersion = getAppCDAPVersion(programOptions);
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, systemArgs);
     return new DefaultProvisionerContext(programRunId, provisionerName, evaluated, sparkCompat, sshContext,
                                          appCDAPVersion, locationFactory, runtimeMonitorType,
-                                         metricsCollectionService, profileName, contextExecutor);
+                                         metricsCollectionService, profileName, contextExecutor, loggingContext);
   }
 
   /**
