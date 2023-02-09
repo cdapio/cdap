@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.provision;
 
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -29,6 +31,7 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Collections;
@@ -58,13 +61,15 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final MetricsCollectionService metricsCollectionService;
   private final String provisionerName;
   private final String profileName;
+  private final LoggingContext loggingContext;
   private final Executor executor;
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
                             SparkCompat sparkCompat, @Nullable SSHContext sshContext,
                             @Nullable VersionInfo appCDAPVersion, LocationFactory locationFactory,
                             RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
-                            @Nullable String profileName, Executor executor) {
+                            @Nullable String profileName, Executor executor,
+                            LoggingContext loggingContext) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -81,6 +86,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.appCDAPVersion = appCDAPVersion;
     this.locationFactory = locationFactory;
     this.profileName = profileName;
+    this.loggingContext = loggingContext;
     this.cdapVersion = ProjectInfo.getVersion();
     this.runtimeMonitorType = runtimeMonitorType;
     this.metricsCollectionService = metricsCollectionService;
@@ -155,10 +161,13 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     CompletableFuture<T> result = new CompletableFuture<>();
 
     executor.execute(() -> {
+      Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
       try {
         result.complete(callable.call());
       } catch (Throwable t) {
         result.completeExceptionally(t);
+      } finally {
+        cancellable.cancel();
       }
     });
     return result;
