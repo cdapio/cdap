@@ -253,6 +253,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     startCoreServices(coreServices);
 
     // regenerate app spec
+    long appSpecGenStart = System.currentTimeMillis();
     ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
 
     try {
@@ -304,6 +305,9 @@ public class DefaultRuntimeJob implements RuntimeJob {
           programId, e);
     }
 
+    long appSpecRegenTime = System.currentTimeMillis() - appSpecGenStart;
+    LOG.error("ashau - took {} ms to regenerate app spec", appSpecRegenTime);
+
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
@@ -311,9 +315,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
           .create(programId.getType());
 
       // Create and run the program. The program files should be present in current working directory.
+      LOG.error("ashau - creating Program...");
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
+        LOG.error("ashau - creating ProgramController...");
         ProgramController controller = programRunner.run(program, programOpts);
+        LOG.error("ashau - created ProgramController, completing future...");
         controllerFuture.complete(controller);
+        LOG.error("ashau - ProgramController future completed");
         runtimeClientService.onProgramStopRequested(terminateTs -> {
           long timeout = TimeUnit.SECONDS.toMillis(terminateTs - STOP_PROPAGATION_DELAY_SECS)
               - System.currentTimeMillis();
