@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app;
 import com.google.common.collect.Iterators;
 import io.cdap.cdap.api.metrics.MetricValue;
 import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
@@ -117,8 +118,9 @@ public class RemoteTaskExecutorTest {
       withParam("param").build();
     try {
       remoteTaskExecutor.runTask(runnableTaskRequest);
-    } catch (Exception e) {
-      // expected
+    } catch (RemoteExecutionException e) {
+      // Exception thrown in the task executor should be in the exception message in the caller
+      Assert.assertEquals("Invalid", e.getMessage());
     }
     mockMetricsCollector.stopAndWait();
     Assert.assertSame(1, published.size());
