@@ -65,7 +65,6 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.client.ClientMessagingService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
-import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
@@ -148,15 +147,9 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private List<Module> getCoreModules() {
     Arguments systemArgs = programOpts.getArguments();
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOpts);
-    boolean isLocal =
-      Boolean.parseBoolean(programOpts.getUserArguments().getOption("workflow.local", "false"));
     List<Module> modules = new ArrayList<>();
 
-    if (isLocal) {
-      modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
-    } else {
-      modules.add(new MessagingClientModule());
-    }
+    modules.add(new MessagingClientModule());
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());

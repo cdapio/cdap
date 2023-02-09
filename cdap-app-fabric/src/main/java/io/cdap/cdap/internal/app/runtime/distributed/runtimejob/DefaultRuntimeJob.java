@@ -33,16 +33,16 @@ import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.guice.AppStateModule;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
-import io.cdap.cdap.app.guice.DistributedProgramContainerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionDiscoveryModule;
-import io.cdap.cdap.app.guice.UnsupportedPluginFinder;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.program.Programs;
@@ -65,17 +65,20 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
+import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
-import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -99,7 +102,9 @@ import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
+import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
@@ -108,6 +113,7 @@ import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
+import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -119,7 +125,10 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -146,8 +155,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -243,7 +253,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     startCoreServices(coreServices);
 
     // regenerate app spec
-    /*ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
+    ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
 
     try {
       Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
@@ -292,7 +302,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     } catch (Exception e) {
       LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
           programId, e);
-    }*/
+    }
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
@@ -510,63 +520,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     List<Module> modules = new ArrayList<>();
 
-    boolean isLocalWorkflow =
-      Boolean.parseBoolean(programOpts.getUserArguments().getOption("workflow.local", "false"));
-    LOG.info("ashau - creating guice modules -- isDistributed = {}", isLocalWorkflow);
-
     ProgramRuntimeProvider.Mode runtimeMode = ProgramRuntimeProvider.Mode.valueOf(
       programOpts.getUserArguments().getOption("program.runtime.mode", ProgramRuntimeProvider.Mode.DISTRIBUTED.name()));
-
-    // hack for workflow
-    if (isLocalWorkflow) {
-      Configuration hConf = new Configuration();
-
-      modules.add(new DistributedProgramContainerModule(cConf, hConf, programRunId, programOpts, null));
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
-        }
-      });
-
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
-          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-          // Bindings from the environment
-          bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-            .toInstance(runtimeJobEnv.getTwillRunner());
-
-          // Bind ProgramRunner for MR, which is used by Workflow.
-          // The ProgramRunner for Spark is provided by the DefaultProgramRunnerFactory through the extension mechanism
-          MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
-            MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
-          runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
-          runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
-
-          // It uses local mode factory because for Workflow we launch the job from the Workflow container directly.
-          // The actual execution mode of the job is governed by the framework configuration
-          // For mapreduce, it's in the mapred-site.xml
-          // for spark, it's in the hConf we shipped from DistributedWorkflowProgramRunner
-          bind(ProgramRuntimeProvider.Mode.class).toInstance(runtimeMode);
-          bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-            .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-          bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-
-          install(
-            new FactoryModuleBuilder()
-              .implement(Configurator.class, InMemoryConfigurator.class)
-              .build(ConfiguratorFactory.class)
-          );
-
-          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
-          bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
-        }
-      });
-
-      return modules;
-    }
 
     modules.add(new ConfigModule(cConf));
     RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
@@ -578,6 +533,22 @@ public class DefaultRuntimeJob implements RuntimeJob {
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+
+    if (runtimeMode == ProgramRuntimeProvider.Mode.LOCAL) {
+      modules.add(new NamespaceQueryAdminModule());
+      modules.add(new DataSetServiceModules().getStandaloneModules());
+      modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Use the ConstantTransactionSystemClient in isolated mode, basically there is no transaction.
+          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
+        }
+      }));
+      modules.add(new DataSetsModules().getDistributedModules());
+      modules.add(new MetadataReaderWriterModules().getDistributedModules());
+      modules.add(new SecureStoreClientModule());
+      modules.add(new AppStateModule());
+    }
 
     modules.add(new AbstractModule() {
       @Override
@@ -595,9 +566,16 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
         bind(ProgramRuntimeProvider.Mode.class).toInstance(runtimeMode);
 
-        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+        if (runtimeMode == ProgramRuntimeProvider.Mode.LOCAL) {
+          defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
+          defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
+          bind(WorkflowStateWriter.class).to(MessagingWorkflowStateWriter.class);
+          bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+        } else {
+          defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
+          defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
+          defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+        }
 
         bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
           .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);

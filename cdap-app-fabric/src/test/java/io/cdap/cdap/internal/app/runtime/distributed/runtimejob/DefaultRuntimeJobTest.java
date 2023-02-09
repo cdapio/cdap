@@ -66,10 +66,9 @@ public class DefaultRuntimeJobTest {
     Node node = new Node("test", Node.Type.MASTER, "127.0.0.1", System.currentTimeMillis(), Collections.emptyMap());
     Cluster cluster = new Cluster("test", ClusterStatus.RUNNING, Collections.singleton(node), Collections.emptyMap());
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    Arguments userArgs = new BasicArguments(Collections.singletonMap("workflow.local", "true"));
-    Arguments sysArgs = new BasicArguments(Collections.singletonMap("program.spark.distributed", "false"));
+    Arguments userArgs = new BasicArguments(Collections.singletonMap("program.runtime.mode", "LOCAL"));
     //Arguments userArgs = new BasicArguments();
-    SimpleProgramOptions programOpts = new SimpleProgramOptions(programRunId.getParent(), sysArgs,
+    SimpleProgramOptions programOpts = new SimpleProgramOptions(programRunId.getParent(), systemArgs,
                                                                 userArgs);
 
     RuntimeJobEnvironment runtimeJobEnvironment = new RuntimeJobEnvironment() {
