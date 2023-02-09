@@ -43,7 +43,6 @@ import javax.annotation.Nullable;
 public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   private static CConfiguration cConf;
   private static final String FEATURE_FLAG_PREFIX = "feature.";
-
   private static final String NAME = "testNamespace";
   private static final String LINK = "example.com";
   private static final String DEFAULT_BRANCH = "develop";
