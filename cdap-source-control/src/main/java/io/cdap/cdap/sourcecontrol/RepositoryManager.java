@@ -19,22 +19,28 @@ package io.cdap.cdap.sourcecontrol;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -82,8 +88,8 @@ public class RepositoryManager extends AbstractIdleService {
     // Try fetching heads in the remote repository.
     try (Git git = Git.wrap(new InMemoryRepository.Builder().build())) {
       LsRemoteCommand cmd = createCommand(git::lsRemote, sourceControlConfig, secureStore).setRemote(config.getLink())
-                                                                                          .setHeads(true)
-                                                                                          .setTags(false);
+        .setHeads(true)
+        .setTags(false);
       validateDefaultBranch(cmd.callAsMap(), config.getDefaultBranch());
     } catch (TransportException e) {
       throw new RepositoryConfigValidationException(
@@ -97,6 +103,52 @@ public class RepositoryManager extends AbstractIdleService {
       throw new RepositoryConfigValidationException("Failed to list remotes in remote repository.", e);
     }
   }
+
+  public String getFileHash(Path filePath) throws IOException, NotFoundException {
+    return "";
+  }
+
+  /**
+   * Commits and pushes all changes under the repositiry base path
+   * @param commitMeta Details for the commit including author, committer and commit message
+   * @throws UnexpectedRepositoryChangesException when there are changes outside the repository base path
+   * @throws GitAPIException when the underlying git commands fail
+   * @throws AuthenticationConfigException when correct authentication credentials are not available.
+   */
+  public void commitAndPush(CommitMeta commitMeta) throws UnexpectedRepositoryChangesException,
+    GitAPIException, AuthenticationConfigException {
+    validateInitialized();
+
+    // if the status is clean skip
+    Status preStageStatus = git.status().call();
+    if (preStageStatus.isClean()) {
+      return;
+    }
+
+    // We should only add files inside the base path. There should not be any change outside the base path.
+    git.add().addFilepattern(getBasePath().toString()).call();
+
+    // Fail if the status is not clean i.e. there are changes outside base path.
+    Status postStageStatus = git.status().call();
+    if (!postStageStatus.isClean()) {
+      throw new UnexpectedRepositoryChangesException(String.format("Unexpected file changes outside base dir %s",getBasePath()));
+    }
+
+    getCommitCommand(commitMeta).call();
+    PushCommand pushCommand = createCommand(git::push, sourceControlConfig, secureStore);
+    pushCommand.call();
+  }
+
+  private CommitCommand getCommitCommand(CommitMeta commitMeta){
+    // We only set email
+    PersonIdent author = new PersonIdent("", commitMeta.getAuthor());
+    PersonIdent authorWithDate = new PersonIdent(author, new Date(commitMeta.getTimestampMillis()));
+
+    PersonIdent committer = new PersonIdent("", commitMeta.getCommiter());
+
+    return git.commit().setAuthor(authorWithDate).setCommitter(committer).setMessage(commitMeta.getMessage());
+  }
+
 
   /**
    * Initializes the Git repository by cloning remote.
@@ -114,8 +166,8 @@ public class RepositoryManager extends AbstractIdleService {
     deletePathIfExists(sourceControlConfig.getLocalRepoPath());
     RepositoryConfig repositoryConfig = sourceControlConfig.getRepositoryConfig();
     CloneCommand command = createCommand(Git::cloneRepository).setURI(repositoryConfig.getLink())
-                                                              .setDirectory(sourceControlConfig.getLocalRepoPath()
-                                                                                               .toFile());
+      .setDirectory(sourceControlConfig.getLocalRepoPath()
+                      .toFile());
 
     String branch = getBranchRefName(repositoryConfig.getDefaultBranch());
     if (branch != null) {
@@ -143,9 +195,9 @@ public class RepositoryManager extends AbstractIdleService {
     AuthenticationConfigException {
     C command = creator.get();
     command.setCredentialsProvider(sourceControlConfig.getAuthenticationStrategy()
-                                                      .getCredentialsProvider(secureStore,
-                                                                              sourceControlConfig.getRepositoryConfig(),
-                                                                              sourceControlConfig.getNamespaceID()));
+                                     .getCredentialsProvider(secureStore,
+                                                             sourceControlConfig.getRepositoryConfig(),
+                                                             sourceControlConfig.getNamespaceID()));
     command.setTimeout(sourceControlConfig.getGitCommandTimeoutSeconds());
     return command;
   }

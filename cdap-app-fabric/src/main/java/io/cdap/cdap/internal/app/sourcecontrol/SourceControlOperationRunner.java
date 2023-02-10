@@ -16,17 +16,19 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 
-import java.io.IOException;
 import java.util.List;
 
+/**
+ * An interface encapsulating all operations needed for source control management
+ */
 public interface SourceControlOperationRunner {
-  ListenableFuture<PushAppsResponse> push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails,
-                                          String branchName) throws PushFailureException;
-
-  ListenableFuture<PullAppResponse> pull(String applicationName, String branchName) throws IOException;
-
-  List<ListAppResponse> list();
+  /**
+   * @param appsToPush List of app names and configs to be pushed
+   * @param commitDetails Details of commit author, committer and message
+   * @return file-paths and file-hashes for the updated configs.
+   * @throws PushFailureException when the push operation fails for any reason.
+   */
+  PushAppsResponse push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException;
 }

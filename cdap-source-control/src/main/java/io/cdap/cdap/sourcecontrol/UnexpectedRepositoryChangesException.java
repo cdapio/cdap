@@ -14,22 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
+package io.cdap.cdap.sourcecontrol;
 
-public class ListAppResponse {
-  private final String applicationName;
-  private final String applicationFileHash;
-
-  public ListAppResponse(String applicationName, String applicationFileHash) {
-    this.applicationName = applicationName;
-    this.applicationFileHash = applicationFileHash;
-  }
-
-  public String getApplicationName() {
-    return applicationName;
-  }
-
-  public String getApplicationFileHash() {
-    return applicationFileHash;
+/**
+ * Exception thrown when we find changes in file not under repository base path
+ */
+public class UnexpectedRepositoryChangesException extends Exception {
+  public UnexpectedRepositoryChangesException(String message){
+    super(message);
   }
 }

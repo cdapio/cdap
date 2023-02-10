@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
@@ -31,9 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 public class InMemorySourceControlOperationRunner implements SourceControlOperationRunner {
   private final RepositoryManager repositoryManager;
@@ -47,63 +42,29 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
     this.repositoryManager = repositoryManager;
   }
 
+
   @Override
-  public ListenableFuture<PushAppsResponse> push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails,
-                                                 @Nullable String branchName) throws PushFailureException {
-
-    try {
-      repositoryManager.startAndWait();
-      repositoryManager.switchToCleanBranch(branchName);
-    } catch (Exception e) {
-      LOG.debug("Failed to initialise repository: %s", e.getCause());
-      throw new PushFailureException("Failed to initialise repository", e);
+  public PushAppsResponse push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException {
+    try{
+      return pushInternal(appsToPush, commitDetails);
+    } finally {
+      repositoryManager.stopAndWait();
     }
+  }
 
-    Path repoBasePath = repositoryManager.getBasePath();
+  private PushAppsResponse pushInternal(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException {
 
     //TODO: handle if appsToPush is too large
     LOG.info("Pushing application configs for : {}", appsToPush.stream().map(AppDetailsToPush::getApplicationName));
 
-    Map<String, Path> applicationPathMap =
-      appsToPush.stream().collect(Collectors.toMap(AppDetailsToPush::getApplicationName,
-                                                   appDetail -> repoBasePath.resolve(appDetail.getApplicationName())));
-
-
-    try {
-      // Create base dir if not exist.
-      // This already handles cases where one of the path prefix is not a directory
-      Files.createDirectories(repoBasePath);
-
-      for (AppDetailsToPush appDetail : appsToPush) {
-        Path configFilePath = applicationPathMap.get(appDetail.getApplicationName());
-        byte[] configData = appDetail.getApplicationSpecString().getBytes(StandardCharsets.UTF_8);
-
-        // Opens the file for writing, creating the file if it doesn't exist,
-        // or truncating an existing regular-file to a size of 0
-        // Symlinks will be followed but if the path points to a directory it will fail
-        Files.write(configFilePath, configData);
-
-        LOG.debug("Written application configs for {} in file {}", appDetail.getApplicationName(),
-                  applicationPathMap.get(appDetail.getApplicationName()));
-      }
-    } catch (IOException e) {
-      LOG.debug("Failed to write configs: %s", e.getCause());
-      throw new PushFailureException("Failed to write configs", e);
-    }
-
-    try {
-      repositoryManager.push(commitDetails);
-      LOG.info("Pushed application configs for : {}", appsToPush.stream().map(AppDetailsToPush::getApplicationName));
-    } catch (Exception e) {
-      LOG.debug("Failed to push to git", e.getCause());
-      throw new PushFailureException("Failed to push to git", e);
-    }
+    // TODO: Add retry logic here in case the head at remote moved while we are doing push
+    modifyApplicationConfigAndPush(appsToPush, commitDetails);
 
     List<PushAppResponse> responses = new ArrayList<>();
 
     try {
       for (AppDetailsToPush details : appsToPush) {
-        Path filePath = applicationPathMap.get(details.getApplicationName());
+        Path filePath = getApplicationConfigPath(details.getApplicationName());
         String gitFileHash = repositoryManager.getFileHash(filePath);
         responses.add(new PushAppResponse(details.getApplicationName(), gitFileHash));
       }
@@ -112,21 +73,42 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
       throw new PushFailureException("Failed to fetch push details", e);
     }
 
-    SettableFuture<PushAppsResponse> result = SettableFuture.create();
-    result.set(new PushAppsResponse(responses));
-    return result;
+    return new PushAppsResponse(responses);
   }
 
-  @Override
-  public ListenableFuture<PullAppResponse> pull(String applicationName, String branchName) throws IOException {
-    // TODO (CDAP-20325) : Implement pull operation
-    return null;
-  }
+  private void modifyApplicationConfigAndPush(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException{
+    try {
+      // Create base dir if not exist.
+      // This already handles cases where one of the path prefix is not a directory
+      Files.createDirectories(repositoryManager.getBasePath());
 
-  @Override
-  public List<ListAppResponse> list() {
-    // TODO (CDAP-20326) Implement list operation
-    return null;
-  }
+      for (AppDetailsToPush appDetail : appsToPush) {
+        String appName = appDetail.getApplicationName();
+        Path configFilePath = getApplicationConfigPath(appName);
+        byte[] configData = appDetail.getApplicationSpecString().getBytes(StandardCharsets.UTF_8);
 
+        // Opens the file for writing, creating the file if it doesn't exist,
+        // or truncating an existing regular-file to a size of 0
+        // Symlinks will be followed but if the path points to a directory it will fail
+        Files.write(configFilePath, configData);
+
+        LOG.debug("Written application configs for {} in file {}", appName, configFilePath);
+      }
+    } catch (IOException e) {
+      LOG.debug("Failed to write configs: %s", e.getCause());
+      throw new PushFailureException("Failed to write configs", e);
+    }
+
+    try {
+      repositoryManager.commitAndPush(commitDetails);
+      LOG.info("Pushed application configs for : {}", appsToPush.stream().map(AppDetailsToPush::getApplicationName));
+    } catch (Exception e) {
+      LOG.debug("Failed to push to git", e.getCause());
+      throw new PushFailureException("Failed to push to git", e);
+    }
+  }
+  private Path getApplicationConfigPath(String applicationName){
+    return repositoryManager.getBasePath().resolve(applicationName);
+  }
 }
+
