@@ -55,6 +55,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TxRunnable;
+import io.cdap.common.http.HttpRequestConfig;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -108,8 +109,11 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     this.preferencesFetcher = preferencesFetcher;
     this.cConf = cConf;
     this.contextAccessEnforcer = contextAccessEnforcer;
+    int connectTimeout = cConf.getInt(Constants.TaskWorker.SYSTEMAPP_HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
+    int readTimeout = cConf.getInt(Constants.TaskWorker.SYSTEMAPP_HTTP_CLIENT_READ_TIMEOUT_MS);
+    HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory,
-        RemoteTaskExecutor.Type.TASK_WORKER);
+        RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 

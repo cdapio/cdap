@@ -4870,6 +4870,54 @@
     </description>
   </property>
 
+  <property>
+    <name>task.worker.http.client.read.timeout.ms</name>
+    <value>120000</value>
+    <description>
+      Read timeout default in milliseconds for task worker HTTP requests.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.http.client.connection.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Connection timeout default in milliseconds for task worker HTTP requests.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.configurator.http.client.read.timeout.ms</name>
+    <value>${task.worker.http.client.read.timeout.ms}</value>
+    <description>
+      Read timeout in milliseconds for configurator task HTTP requests.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.configurator.http.client.connection.timeout.ms</name>
+    <value>${task.worker.http.client.connection.timeout.ms}</value>
+    <description>
+      Connection timeout in milliseconds for configurator task HTTP requests.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.systemapp.http.client.read.timeout.ms</name>
+    <value>${task.worker.http.client.read.timeout.ms}</value>
+    <description>
+      Read timeout in milliseconds for system app tasks HTTP requests.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.systemapp.http.client.connection.timeout.ms</name>
+    <value>${task.worker.http.client.connection.timeout.ms}</value>
+    <description>
+      Connection timeout in milliseconds for system app tasks HTTP requests.
+    </description>
+  </property>
+
   <!-- System pods Configuration  -->
   <property>
     <name>system.worker.program.twill.controller.start.seconds</name>
