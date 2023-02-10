@@ -18,7 +18,8 @@ package io.cdap.cdap.internal.app.sourcecontrol;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
-import io.cdap.cdap.sourcecontrol.SourceControlManager;
+import io.cdap.cdap.sourcecontrol.RepositoryManager;
+import io.cdap.cdap.sourcecontrol.UnexpectedRepositoryChangesException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -26,7 +27,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -45,13 +45,14 @@ public class InMemorySourceControlOperationRunnerTest {
   ;
 
   private InMemorySourceControlOperationRunner operationRunner;
-  private SourceControlManager mockSourceControlManager;
+  private RepositoryManager mockRepositoryManager;
 
   @Before
   public void setUp() throws Exception {
-    this.mockSourceControlManager = Mockito.mock(SourceControlManager.class);
+//    this.mockRepositoryManager = Mockito.mock(new RepositoryManager(null, null));
+    this.mockRepositoryManager = Mockito.spy(new RepositoryManager(null, null));
     CConfiguration cConf = CConfiguration.create();
-    this.operationRunner = new InMemorySourceControlOperationRunner(cConf, mockSourceControlManager);
+    this.operationRunner = new InMemorySourceControlOperationRunner(cConf, mockRepositoryManager);
   }
 
   private boolean verifyConfigFileContent(Path repoDirPath) throws IOException {
@@ -69,43 +70,23 @@ public class InMemorySourceControlOperationRunnerTest {
   public void testPushSuccess() throws Exception {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
 
-    Mockito.when(mockSourceControlManager.getBasePath()).thenReturn(tmpRepoDirPath);
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
+    Mockito.doNothing().when(mockRepositoryManager).commitAndPush(Mockito.anyObject());
 
-    operationRunner.push(testAppDetails, testCommit, "testBranch");
+    operationRunner.push(testAppDetails, testCommit);
 
-    Mockito.verify(mockSourceControlManager, Mockito.times(1)).initialise();
-    Mockito.verify(mockSourceControlManager, Mockito.times(1)).switchToCleanBranch("testBranch");
-    Mockito.verify(mockSourceControlManager).push(testCommit);
+    Mockito.verify(mockRepositoryManager).commitAndPush(testCommit);
     Assert.assertTrue(verifyConfigFileContent(tmpRepoDirPath));
-  }
-
-  @Test(expected = PushFailureException.class)
-  public void testPushFailedToInitializeRepo() throws Exception {
-    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
-
-    Mockito.when(mockSourceControlManager.getBasePath()).thenReturn(tmpRepoDirPath);
-    Mockito.doThrow(new IOException()).when(mockSourceControlManager).initialise();
-
-    operationRunner.push(testAppDetails, testCommit, "testBranch");
-  }
-
-  @Test(expected = PushFailureException.class)
-  public void testPushFailedToSwitchBranch() throws Exception {
-    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
-    Mockito.when(mockSourceControlManager.getBasePath()).thenReturn(tmpRepoDirPath);
-    Mockito.doThrow(IOException.class).when(mockSourceControlManager).switchToCleanBranch("testBranch");
-
-    operationRunner.push(testAppDetails, testCommit, "testBranch");
   }
 
   @Test(expected = PushFailureException.class)
   public void testPushFailedToCreateDirectory() throws Exception {
     // Setting the repo dir as file causing failure in Files.createDirectories
-    File tmpRepoDir = TMP_FOLDER.newFile();
+    Path tmpRepoDirPath = TMP_FOLDER.newFile().toPath();
 
-    Mockito.when(mockSourceControlManager.getBasePath()).thenReturn(tmpRepoDir.toPath());
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
 
-    operationRunner.push(testAppDetails, testCommit, "testBranch");
+    operationRunner.push(testAppDetails, testCommit);
   }
 
   @Test(expected = PushFailureException.class)
@@ -114,19 +95,29 @@ public class InMemorySourceControlOperationRunnerTest {
     // creating a directory where config file should be causing failure in Files.write
     Files.createDirectories(tmpRepoDirPath.resolve(testAppDetails.get(1).getApplicationName()));
 
-    Mockito.when(mockSourceControlManager.getBasePath()).thenReturn(tmpRepoDirPath);
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
 
-    operationRunner.push(testAppDetails, testCommit, "testBranch");
+    operationRunner.push(testAppDetails, testCommit);
+  }
+
+  @Test(expected = PushFailureException.class)
+  public void testPushFailedToCommit() throws Exception {
+    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
+
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
+    Mockito.doThrow(new UnexpectedRepositoryChangesException("")).when(mockRepositoryManager).commitAndPush(testCommit);
+
+    operationRunner.push(testAppDetails, testCommit);
   }
 
   @Test(expected = PushFailureException.class)
   public void testPushFailedToReadHash() throws Exception {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
 
-    Mockito.when(mockSourceControlManager.getBasePath()).thenReturn(tmpRepoDirPath);
-    Mockito.when(mockSourceControlManager.getFileHash(Mockito.any(Path.class))).thenThrow(new IOException());
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
+    Mockito.doThrow(new IOException()).when(mockRepositoryManager).getFileHash(Mockito.any(Path.class));
 
-    operationRunner.push(testAppDetails, testCommit, "testBranch");
+    operationRunner.push(testAppDetails, testCommit);
   }
 
 

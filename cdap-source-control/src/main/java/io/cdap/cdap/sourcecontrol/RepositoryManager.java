@@ -25,14 +25,18 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -46,6 +50,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -134,6 +139,48 @@ public class RepositoryManager implements AutoCloseable {
       throw new RepositoryConfigValidationException("Failed to list remotes in remote repository.", e);
     }
   }
+
+  /**
+   * Commits and pushes all changes under the repositiry base path
+   * @param commitMeta Details for the commit including author, committer and commit message
+   * @throws UnexpectedRepositoryChangesException when there are changes outside the repository base path
+   * @throws GitAPIException when the underlying git commands fail
+   * @throws AuthenticationConfigException when correct authentication credentials are not available.
+   */
+  public void commitAndPush(CommitMeta commitMeta) throws UnexpectedRepositoryChangesException,
+    GitAPIException, AuthenticationConfigException {
+    validateInitialized();
+
+    // if the status is clean skip
+    Status preStageStatus = git.status().call();
+    if (preStageStatus.isClean()) {
+      return;
+    }
+
+    // We should only add files inside the base path. There should not be any change outside the base path.
+    git.add().addFilepattern(getBasePath().toString()).call();
+
+    // Fail if the status is not clean i.e. there are changes outside base path.
+    Status postStageStatus = git.status().call();
+    if (!postStageStatus.isClean()) {
+      throw new UnexpectedRepositoryChangesException(String.format("Unexpected file changes outside base dir %s",getBasePath()));
+    }
+
+    getCommitCommand(commitMeta).call();
+    PushCommand pushCommand = createCommand(git::push, sourceControlConfig, credentialsProvider);
+    pushCommand.call();
+  }
+
+  private CommitCommand getCommitCommand(CommitMeta commitMeta){
+    // We only set email
+    PersonIdent author = new PersonIdent("", commitMeta.getAuthor());
+    PersonIdent authorWithDate = new PersonIdent(author, new Date(commitMeta.getTimestampMillis()));
+
+    PersonIdent committer = new PersonIdent("", commitMeta.getCommiter());
+
+    return git.commit().setAuthor(authorWithDate).setCommitter(committer).setMessage(commitMeta.getMessage());
+  }
+
 
   /**
    * Returns the <a href="https://git-scm.com/docs/git-hash-object">Git Hash</a>

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
+/**
+ * Exception thrown when push operation fails in operation runner. Encapsulates all underlying exceptions.
+ */
 public class PushFailureException extends Exception {
   public PushFailureException(String message, Exception cause) {
     super(message, cause);
