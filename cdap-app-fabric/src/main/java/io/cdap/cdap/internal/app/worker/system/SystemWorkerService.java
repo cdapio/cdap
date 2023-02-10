@@ -30,7 +30,10 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.security.auth.KeyManager;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.authorization.DefaultAccessEnforcer;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -43,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 
 /**
  * Launches an HTTP server for receiving and handling {@link RunnableTask}
@@ -53,7 +57,7 @@ public class SystemWorkerService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
-  private final KeyManager keyManager;
+  private final TokenManager tokenManager;
   private final TwillRunnerService twillRunnerService;
   private final TwillRunnerService remoteTwillRunnerService;
   private final ProvisioningService provisioningService;
@@ -66,11 +70,13 @@ public class SystemWorkerService extends AbstractIdleService {
                       DiscoveryService discoveryService,
                       MetricsCollectionService metricsCollectionService,
                       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-                      KeyManager keyManager, TwillRunnerService twillRunnerService,
+                      TokenManager tokenManager, TwillRunnerService twillRunnerService,
                       @Constants.AppFabric.RemoteExecution TwillRunnerService remoteTwillRunnerService,
-                      ProvisioningService provisioningService, Injector injector) {
+                      ProvisioningService provisioningService, Injector injector,
+                      AuthenticationContext authenticationContext,
+                      @Named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer) {
     this.discoveryService = discoveryService;
-    this.keyManager = keyManager;
+    this.tokenManager = tokenManager;
     this.twillRunnerService = twillRunnerService;
     this.remoteTwillRunnerService = remoteTwillRunnerService;
     this.provisioningService = provisioningService;
@@ -87,7 +93,8 @@ public class SystemWorkerService extends AbstractIdleService {
             pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           }
         })
-        .setHttpHandlers(new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector));
+        .setHttpHandlers(new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector,
+                                                             authenticationContext, internalAccessEnforcer));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -98,7 +105,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting SystemWorkerService");
-    keyManager.startAndWait();
+    tokenManager.startAndWait();
     provisioningService.initializeProvisionersAndExecutors();
     twillRunnerService.start();
     remoteTwillRunnerService.start();
@@ -112,7 +119,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down SystemWorkerService");
-    keyManager.stop();
+    tokenManager.stop();
     twillRunnerService.stop();
     remoteTwillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);
