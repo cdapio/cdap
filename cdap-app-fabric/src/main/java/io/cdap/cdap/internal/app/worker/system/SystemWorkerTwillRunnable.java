@@ -153,7 +153,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
       new DataSetsModules().getStandaloneModules(),
       new MessagingClientModule(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getMasterModule(),
       Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
         .with(new AbstractModule() {
           // To enable localisation of artifacts
