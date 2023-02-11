@@ -33,6 +33,9 @@ import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppResponse;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
@@ -52,6 +55,7 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
+import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
@@ -299,7 +303,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     HttpResponse response = pushApps(Id.Namespace.DEFAULT.getId(), appVersions, commitMessage);
     assertResponseCode(200, response);
     PushAppsResponse result = readResponse(response, PushAppsResponse.class);
-    
+
     Assert.assertEquals(result.getApps(), expectedPushResult.getApps());
   }
 
@@ -385,7 +389,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     Collection<ImmutablePair<String, String>> appVersions = IntStream.range(10, 30)
       .mapToObj(i -> new ImmutablePair<>(String.format("app%s", i), String.format("version%s", i)))
       .collect(Collectors.toList());
-    
+
 
     // Push two applications to linked repository
     String commitMessage = "push one invalid app";

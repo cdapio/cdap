@@ -31,6 +31,8 @@ import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppResponse;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.PushAppsRequest;
@@ -38,6 +40,7 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
+import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
@@ -169,14 +172,14 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
 
   private ImmutablePair<List<ApplicationId>, String> validateAndGetAppsRequest(
     FullHttpRequest request, NamespaceId namespace) throws BadRequestException {
-    
+
     PushAppsRequest appsRequest;
     try {
       appsRequest = parseBody(request, PushAppsRequest.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid request body: " + e.getMessage());
     }
-    
+
     if (appsRequest == null || appsRequest.getApps() == null || appsRequest.getApps().isEmpty()) {
       throw new BadRequestException("Please specify a list of applications.");
     }

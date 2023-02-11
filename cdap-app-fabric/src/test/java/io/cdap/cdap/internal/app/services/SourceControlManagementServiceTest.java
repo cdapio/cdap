@@ -31,6 +31,14 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppResponse;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
+import io.cdap.cdap.internal.app.sourcecontrol.PushFailureException;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunner;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
+import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -46,6 +54,9 @@ import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -72,6 +83,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public static void beforeClass() throws Exception {
     cConf = createBasicCConf();
     initializeAndStartServices(cConf);
+    Mockito.doReturn(mockSourceControlOperationRunner).when(mockSourceControlFactory).create(Mockito.any());
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     sourceControlService = getInjector().getInstance(SourceControlManagementService.class);
   }
@@ -193,11 +205,11 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
       .setTokenName("token").setUsername("user").build();
     sourceControlService.setRepository(namespaceId, namespaceRepo);
-    
+
     List<ApplicationId> appIds = appVersions.stream()
       .map(app -> namespaceId.app(app.getFirst(), app.getSecond()))
       .collect(Collectors.toList());
-    
+
     List<PushAppResponse> expectedAppsResponse = appIds.stream()
       .map(appId -> new PushAppResponse(appId.getApplication(), appId.getVersion(),
                                         appId.getApplication() + " hash"))
@@ -264,7 +276,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     } catch (RepositoryNotFoundException e) {
       // no-op
     }
-    
+
     // Cleanup
     deleteApp(appId1, 200);
     deleteArtifact(artifactId, 200);
