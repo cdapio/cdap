@@ -435,31 +435,14 @@ public class AppMetadataStore {
    */
   public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds)
     throws IOException {
-    List<Range> multiRanges = new ArrayList<>();
-
-    // multiScan for all apps
-    for (ApplicationId appId: appIds) {
-      // For -SNAPSHOT version, ignore the version in the key and fetch with latest = true instead
-      if (ApplicationId.DEFAULT_VERSION.equals(appId.getVersion())) {
-        multiRanges.add(Range.singleton(getLatestApplicationKeys(appId.getNamespaceId().getNamespace(),
-                                                                 appId.getApplication())));
-      } else {
-        multiRanges.add(Range.singleton(getApplicationPrimaryKeys(appId)));
-      }
-    }
-
-    Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
-    try (CloseableIterator<StructuredRow> iterator =
-           getApplicationSpecificationTable().multiScan(multiRanges, appIds.size())) {
-      while (iterator.hasNext()) {
-        StructuredRow row = iterator.next();
-        ApplicationId appId = getApplicationIdFromRow(row);
-        result.put(appId, GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
-                                        ApplicationMeta.class));
-      }
-    }
-
-    return result;
+    List<List<Field<?>>> multiKeys = appIds.stream()
+                                       .map(this::getApplicationPrimaryKeys)
+                                       .collect(Collectors.toList());
+    return getApplicationSpecificationTable().multiRead(multiKeys)
+             .stream()
+             .collect(Collectors.toMap(
+               AppMetadataStore::getApplicationIdFromRow,
+               this::decodeRow));
   }
 
   /**

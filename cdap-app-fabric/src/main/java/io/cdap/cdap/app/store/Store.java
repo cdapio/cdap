@@ -406,12 +406,12 @@ public interface Store {
                            BiConsumer<ApplicationId, ApplicationMeta> consumer);
 
   /**
-   * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.
+   * Returns a Map of {@link ApplicationMeta} for the given set of {@link ApplicationId}.
    *
    * @param ids the list of application ids to get the specs
-   * @return collection of application specs. For applications that don't exist, there will be no entry in the result.
+   * @return collection of application metas. For applications that don't exist, there will be no entry in the result.
    */
-  Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids);
+  Map<ApplicationId, ApplicationMeta> getApplications(Collection<ApplicationId> ids);
 
   /**
    * Returns a map of latest programIds given programReferences
