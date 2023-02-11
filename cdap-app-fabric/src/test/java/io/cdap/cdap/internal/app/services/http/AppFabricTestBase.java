@@ -107,6 +107,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.sourcecontrol.PushAppsRequest;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -1463,6 +1464,17 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse deleteRepository(String name) throws Exception {
     return doDelete(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse pushApps(String id, Collection<ImmutablePair<String, String>> appVersions,
+                                  String commitMessage) throws Exception {
+    PushAppsRequest request =
+      new PushAppsRequest(commitMessage, appVersions.stream()
+                                           .map(app -> new PushAppsRequest.App(app.getFirst(), app.getSecond()))
+                                           .collect(Collectors.toList()));
+    return doPost(String.format("%s/namespaces/%s/repository/push",
+                                Constants.Gateway.API_VERSION_3,
+                                id), GSON.toJson(request));
   }
 
   protected String getPreferenceURI() {

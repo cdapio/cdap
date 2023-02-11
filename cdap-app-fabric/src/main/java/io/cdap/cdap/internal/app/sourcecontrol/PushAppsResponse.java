@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
+ * Container for a batch push operation response
  */
 public class PushAppsResponse {
   private final List<PushAppResponse> apps;

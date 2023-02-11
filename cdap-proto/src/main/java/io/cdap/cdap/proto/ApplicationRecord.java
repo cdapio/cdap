@@ -38,7 +38,7 @@ public class ApplicationRecord {
   @Nullable
   private final ChangeDetail change;
   @Nullable
-  private final SourceControlMeta sourceControl;
+  private final SourceControlMeta sourceControlMeta;
 
   public ApplicationRecord(ApplicationDetail detail) {
     this(detail.getArtifact(), detail.getName(),
@@ -49,7 +49,7 @@ public class ApplicationRecord {
 
   public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
                            @Nullable String ownerPrincipal, @Nullable ChangeDetail change,
-                           @Nullable SourceControlMeta sourceControl) {
+                           @Nullable SourceControlMeta sourceControlMeta) {
     this.type = "App";
     this.artifact = artifact;
     this.name = name;
@@ -57,7 +57,7 @@ public class ApplicationRecord {
     this.version = version;
     this.ownerPrincipal = ownerPrincipal;
     this.change = change;
-    this.sourceControl = sourceControl;
+    this.sourceControlMeta = sourceControlMeta;
   }
 
   public ArtifactSummary getArtifact() {
@@ -91,8 +91,8 @@ public class ApplicationRecord {
   }
 
   @Nullable
-  public SourceControlMeta getSourceControl() {
-    return sourceControl;
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControlMeta;
   }
 
   @Override
@@ -113,12 +113,12 @@ public class ApplicationRecord {
       Objects.equals(artifact, that.artifact) &&
       Objects.equals(ownerPrincipal, that.ownerPrincipal) &&
       Objects.equals(change, that.change) &&
-      Objects.equals(sourceControl, that.sourceControl);
+      Objects.equals(sourceControlMeta, that.sourceControlMeta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, change, sourceControl);
+    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, change, sourceControlMeta);
   }
 
   @Override
@@ -131,7 +131,7 @@ public class ApplicationRecord {
       ", artifact=" + artifact +
       ", ownerPrincipal=" + ownerPrincipal + '\'' +
       ", change=" + change +
-      ", sourceControl=" + sourceControl +
+      ", sourceControlMeta=" + sourceControlMeta +
       '}';
   }
 }

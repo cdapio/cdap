@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
-import io.cdap.cdap.common.conf.CConfiguration;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.UnexpectedRepositoryChangesException;
@@ -31,35 +33,37 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class InMemorySourceControlOperationRunnerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
-  private static final List<AppDetailsToPush> testAppDetails = Arrays.asList(
-    new AppDetailsToPush("spec1", "app1", "author1"),
-    new AppDetailsToPush("spec2", "app2", "author2")
+  private static final List<ApplicationDetail> testAppDetails = Arrays.asList(
+    new ApplicationDetail("app1", "v1", "description1", null, null, "conf1", new ArrayList<>(),
+                          new ArrayList<>(), new ArrayList<>(), null, null),
+    new ApplicationDetail("app2", "v1", "description2", null, null, "conf2", new ArrayList<>(),
+                          new ArrayList<>(), new ArrayList<>(), null, null)
   );
-  private static final CommitMeta testCommit = new CommitMeta("author1", "commiter1", 123, "message1");
-  ;
+  private static final CommitMeta testCommit = new CommitMeta("author1", "committer1", 123, "message1");
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
   private InMemorySourceControlOperationRunner operationRunner;
   private RepositoryManager mockRepositoryManager;
 
   @Before
   public void setUp() throws Exception {
-//    this.mockRepositoryManager = Mockito.mock(new RepositoryManager(null, null));
-    this.mockRepositoryManager = Mockito.spy(new RepositoryManager(null, null));
-    CConfiguration cConf = CConfiguration.create();
-    this.operationRunner = new InMemorySourceControlOperationRunner(cConf, mockRepositoryManager);
+    this.mockRepositoryManager = Mockito.mock(RepositoryManager.class);
+    Mockito.doReturn("commit hash").when(mockRepositoryManager).cloneRemote();
+    this.operationRunner = new InMemorySourceControlOperationRunner(mockRepositoryManager);
   }
 
   private boolean verifyConfigFileContent(Path repoDirPath) throws IOException {
-    for (AppDetailsToPush details : testAppDetails) {
-      String fileData = new String(Files.readAllBytes(repoDirPath.resolve(details.getApplicationName())),
+    for (ApplicationDetail details : testAppDetails) {
+      String fileData = new String(Files.readAllBytes(repoDirPath.resolve(String.format("%s.json", details.getName()))),
                                    StandardCharsets.UTF_8);
-      if (!fileData.equals(details.getApplicationSpecString())) {
+      if (!fileData.equals(GSON.toJson(details))) {
         return false;
       }
     }
@@ -71,11 +75,17 @@ public class InMemorySourceControlOperationRunnerTest {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
-    Mockito.doNothing().when(mockRepositoryManager).commitAndPush(Mockito.anyObject());
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
+    Mockito.doReturn("file Hash").when(mockRepositoryManager).getFileHash(Mockito.any(Path.class),
+                                                                             Mockito.any(String.class));
+    Mockito.doReturn("file Hash").when(mockRepositoryManager).commitAndPush(Mockito.anyObject(),
+                                                                            Mockito.anyList());
 
+    Path target = tmpRepoDirPath.resolve("target");
+    Files.createFile(target);
+    Files.createLink(tmpRepoDirPath.resolve("app1.json"), target);
     operationRunner.push(testAppDetails, testCommit);
 
-    Mockito.verify(mockRepositoryManager).commitAndPush(testCommit);
     Assert.assertTrue(verifyConfigFileContent(tmpRepoDirPath));
   }
 
@@ -93,7 +103,19 @@ public class InMemorySourceControlOperationRunnerTest {
   public void testPushFailedToWriteFile() throws Exception {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
     // creating a directory where config file should be causing failure in Files.write
-    Files.createDirectories(tmpRepoDirPath.resolve(testAppDetails.get(1).getApplicationName()));
+    Files.createDirectories(tmpRepoDirPath.resolve(testAppDetails.get(1).getName()));
+
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
+
+    operationRunner.push(testAppDetails, testCommit);
+  }
+
+  @Test(expected = PushFailureException.class)
+  public void testPushFailedInvalidPath() throws Exception {
+    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
+    Path target = tmpRepoDirPath.getParent().resolve("target");
+    Files.createFile(target);
+    Files.createLink(tmpRepoDirPath.resolve("app1.json"), target);
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
 
@@ -105,7 +127,8 @@ public class InMemorySourceControlOperationRunnerTest {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
-    Mockito.doThrow(new UnexpectedRepositoryChangesException("")).when(mockRepositoryManager).commitAndPush(testCommit);
+    Mockito.doThrow(new UnexpectedRepositoryChangesException("")).when(mockRepositoryManager)
+      .commitAndPush(Mockito.anyObject(), Mockito.anyList());
 
     operationRunner.push(testAppDetails, testCommit);
   }
@@ -115,10 +138,9 @@ public class InMemorySourceControlOperationRunnerTest {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
-    Mockito.doThrow(new IOException()).when(mockRepositoryManager).getFileHash(Mockito.any(Path.class));
+    Mockito.doThrow(new IOException()).when(mockRepositoryManager).getFileHash(Mockito.any(Path.class),
+                                                                               Mockito.any(String.class));
 
     operationRunner.push(testAppDetails, testCommit);
   }
-
-
 }

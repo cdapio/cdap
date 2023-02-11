@@ -41,16 +41,16 @@ public class PushAppsRequest {
   }
 
   public static class App {
-    private final String application;
+    private final String name;
     private final String version;
 
-    public App(String application, String version) {
-      this.application = application;
+    public App(String name, String version) {
+      this.name = name;
       this.version = version;
     }
 
-    public String getApplication() {
-      return application;
+    public String getName() {
+      return name;
     }
     
     public String getVersion() {

@@ -70,10 +70,10 @@ public class ApplicationMeta {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-             .add("id", id)
-             .add("spec", ADAPTER.toJson(spec))
-             .add("change", change)
-             .add("sourceControlMeta", sourceControlMeta)
-             .toString();
+      .add("id", id)
+      .add("spec", ADAPTER.toJson(spec))
+      .add("change", change)
+      .add("sourceControlMeta", sourceControlMeta)
+      .toString();
   }
 }

@@ -40,7 +40,7 @@ public class ApplicationDetail {
   @Nullable
   private final ChangeDetail change;
   @Nullable
-  private final SourceControlMeta sourceControl;
+  private final SourceControlMeta sourceControlMeta;
   private final String configuration;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
@@ -53,7 +53,7 @@ public class ApplicationDetail {
                            String appVersion,
                            String description,
                            @Nullable ChangeDetail change,
-                           @Nullable SourceControlMeta sourceControl,
+                           @Nullable SourceControlMeta sourceControlMeta,
                            String configuration,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
@@ -64,7 +64,7 @@ public class ApplicationDetail {
     this.appVersion = appVersion;
     this.description = description;
     this.change = change;
-    this.sourceControl = sourceControl;
+    this.sourceControlMeta = sourceControlMeta;
     this.configuration = configuration;
     this.datasets = datasets;
     this.programs = programs;
@@ -95,7 +95,7 @@ public class ApplicationDetail {
 
   @Nullable
   public SourceControlMeta getSourceControlMeta() {
-    return sourceControl;
+    return sourceControlMeta;
   }
 
   public List<DatasetDetail> getDatasets() {
@@ -120,7 +120,8 @@ public class ApplicationDetail {
   }
 
   public static ApplicationDetail fromSpec(ApplicationSpecification spec, @Nullable String ownerPrincipal,
-                                           @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControl) {
+                                           @Nullable ChangeDetail change,
+                                           @Nullable SourceControlMeta sourceControlMeta) {
     // Adding owner, creation time and change summary description fields to the app detail
 
     List<ProgramRecord> programs = new ArrayList<>();
@@ -161,7 +162,7 @@ public class ApplicationDetail {
     // in the meantime, we don't want this api call to null pointer exception.
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
-    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), change, sourceControl,
+    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), change, sourceControlMeta,
                                  spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
   }
 }

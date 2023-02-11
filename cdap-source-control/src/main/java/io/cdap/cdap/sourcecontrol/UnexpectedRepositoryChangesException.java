@@ -17,10 +17,10 @@
 package io.cdap.cdap.sourcecontrol;
 
 /**
- * Exception thrown when we find changes in file not under repository base path
+ * Exception thrown when we find changes other than added files
  */
 public class UnexpectedRepositoryChangesException extends Exception {
-  public UnexpectedRepositoryChangesException(String message){
+  public UnexpectedRepositoryChangesException(String message) {
     super(message);
   }
 }

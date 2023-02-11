@@ -106,7 +106,6 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -366,29 +365,21 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * that don't exist.
    * @throws Exception if failed to get details.
    */
-  public Map<ApplicationId, ApplicationDetail> getAppDetails(Collection<ApplicationId> appIds) throws Exception {
+  public Map<ApplicationId, ApplicationDetail> getAppDetails(Collection<ApplicationId> appIds,
+                                                             boolean getSourceControlMeta) throws Exception {
     Set<? extends EntityId> visibleIds = accessEnforcer.isVisible(new HashSet<>(appIds),
                                                                   authenticationContext.getPrincipal());
     Set<ApplicationId> filterIds = appIds.stream().filter(visibleIds::contains).collect(Collectors.toSet());
     Map<ApplicationId, ApplicationMeta> appMetas = store.getApplications(filterIds);
     Map<ApplicationId, String> principals = ownerAdmin.getOwnerPrincipals(filterIds);
     
-    return appMetas.entrySet().stream()
-             .collect(Collectors.toMap(
-               Entry::getKey,
-               entry -> ApplicationDetail.fromSpec(entry.getValue().getSpec(),
-                                                   principals.get(entry.getKey()),
-                                                   entry.getValue().getChange(),
-                                                   entry.getValue().getSourceControlMeta())
-             ));
-  }
-
-  /**
-   * Set source control metadata for a batch of applications in one transaction.
-   * @param sourceControlMap The map that provides applications to update with source control metadata
-   */
-  public void setAppSourceControlMetas(final Map<ApplicationId, SourceControlMeta> sourceControlMap) {
-    store.setAppSourceControlMetas(sourceControlMap);
+    return appMetas.entrySet().stream().collect(Collectors.toMap(
+      Entry::getKey,
+      entry -> ApplicationDetail.fromSpec(entry.getValue().getSpec(),
+                                          principals.get(entry.getKey()),
+                                          entry.getValue().getChange(),
+                                          getSourceControlMeta ? entry.getValue().getSourceControlMeta() : null)
+    ));
   }
 
   /**

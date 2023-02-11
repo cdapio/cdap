@@ -16,26 +16,16 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
-public class AppDetailsToPush {
-  private final String applicationSpecString;
-  private final String applicationName;
-  private final String author;
-
-  public AppDetailsToPush(String applicationSpecString, String applicationName, String author) {
-    this.applicationSpecString = applicationSpecString;
-    this.applicationName = applicationName;
-    this.author = author;
+/**
+ * Exception thrown when config file path in git is resolving to an invalid path
+ * i.e. path outside repository root
+ */
+public class InvalidPathInSourceControl extends Exception {
+  public InvalidPathInSourceControl(String message, Exception cause) {
+    super(message, cause);
   }
 
-  public String getAuthor() {
-    return author;
-  }
-
-  public String getApplicationSpecString() {
-    return applicationSpecString;
-  }
-
-  public String getApplicationName() {
-    return applicationName;
+  public InvalidPathInSourceControl(String message) {
+    super(message);
   }
 }

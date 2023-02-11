@@ -14,13 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
-
-import io.cdap.cdap.sourcecontrol.RepositoryManager;
+package io.cdap.cdap.sourcecontrol;
 
 /**
- * SourceControlOperatorFactory interface which is used by Guice during runtime.
+ * Exception thrown when there's no changes needed to push to linked repository
  */
-public interface SourceControlOperationRunnerFactory {
-  SourceControlOperationRunner create(RepositoryManager repositoryManager);
+public class NoChangesToPushException extends Exception {
+  public NoChangesToPushException(String message) {
+    super(message);
+  }
 }

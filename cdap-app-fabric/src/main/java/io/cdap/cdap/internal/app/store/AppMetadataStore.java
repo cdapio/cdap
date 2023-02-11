@@ -453,7 +453,7 @@ public class AppMetadataStore {
   public void setAppSourceControlMetas(Map<ApplicationId, SourceControlMeta> sourceControlMap) throws IOException {
     StructuredTable appSpecTable = getApplicationSpecificationTable();
     for (Map.Entry<ApplicationId, SourceControlMeta> entry : sourceControlMap.entrySet()) {
-      appSpecTable.update(getSourceControlMetaFields(entry.getKey(), entry.getValue()));
+      appSpecTable.upsert(getSourceControlMetaFields(entry.getKey(), entry.getValue()));
     }
   }
 

@@ -631,7 +631,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("namespace-id") String namespace) throws Exception {
 
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
-    Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.getAppDetails(appIds);
+    Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.getAppDetails(appIds, true);
 
     List<BatchApplicationDetail> result = new ArrayList<>();
     for (ApplicationId appId : appIds) {

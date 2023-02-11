@@ -23,13 +23,13 @@ import java.util.Objects;
  */
 public class CommitMeta {
   private final String author;
-  private final String commiter;
+  private final String committer;
   private final long timestampMillis;
   private final String message;
 
-  public CommitMeta(String author, String commiter, long timestampMillis, String message) {
+  public CommitMeta(String author, String committer, long timestampMillis, String message) {
     this.author = author;
-    this.commiter = commiter;
+    this.committer = committer;
     this.timestampMillis = timestampMillis;
     this.message = message;
   }
@@ -38,8 +38,8 @@ public class CommitMeta {
     return author;
   }
 
-  public String getCommiter() {
-    return commiter;
+  public String getCommitter() {
+    return committer;
   }
 
   public long getTimestampMillis() {
@@ -59,12 +59,12 @@ public class CommitMeta {
       return false;
     }
     CommitMeta that = (CommitMeta) o;
-    return timestampMillis == that.timestampMillis && author.equals(that.author) && commiter.equals(that.commiter) &&
+    return timestampMillis == that.timestampMillis && author.equals(that.author) && committer.equals(that.committer) &&
       message.equals(that.message);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(author, commiter, timestampMillis, message);
+    return Objects.hash(author, committer, timestampMillis, message);
   }
 }

@@ -16,99 +16,123 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import io.cdap.cdap.common.conf.CConfiguration;
+import com.google.inject.assistedinject.Assisted;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
+import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
+import io.cdap.cdap.sourcecontrol.UnexpectedRepositoryChangesException;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * In-Memory implementation for {@link SourceControlOperationRunner}.
+ * Runs all git operation inside calling service.
+ */
 public class InMemorySourceControlOperationRunner implements SourceControlOperationRunner {
   private final RepositoryManager repositoryManager;
-  private final CConfiguration cConf;
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemorySourceControlOperationRunner.class);
 
   @Inject
-  public InMemorySourceControlOperationRunner(CConfiguration cConf, RepositoryManager repositoryManager) {
-    this.cConf = cConf;
+  public InMemorySourceControlOperationRunner(@Assisted RepositoryManager repositoryManager) {
     this.repositoryManager = repositoryManager;
   }
 
-
   @Override
-  public PushAppsResponse push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException {
-    try{
-      return pushInternal(appsToPush, commitDetails);
-    } finally {
-      repositoryManager.stopAndWait();
+  public PushAppsResponse push(List<ApplicationDetail> appsToPush, CommitMeta commitDetails)
+    throws PushFailureException, NoChangesToPushException {
+    try {
+      repositoryManager.cloneRemote();
+    } catch (Exception e) {
+      throw new PushFailureException("Failed to clone remote repository", e);
     }
-  }
+    //TODO CDAP-20371: handle if appsToPush is too large
+    LOG.info("Pushing application configs for : {}", appsToPush.stream().map(ApplicationDetail::getName));
 
-  private PushAppsResponse pushInternal(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException {
-
-    //TODO: handle if appsToPush is too large
-    LOG.info("Pushing application configs for : {}", appsToPush.stream().map(AppDetailsToPush::getApplicationName));
-
-    // TODO: Add retry logic here in case the head at remote moved while we are doing push
-    modifyApplicationConfigAndPush(appsToPush, commitDetails);
+    //TODO CDAP-20371: Add retry logic here in case the head at remote moved while we are doing push
+    String pushedCommit = modifyApplicationConfigAndPush(appsToPush, commitDetails);
 
     List<PushAppResponse> responses = new ArrayList<>();
 
     try {
-      for (AppDetailsToPush details : appsToPush) {
-        Path filePath = getApplicationConfigPath(details.getApplicationName());
-        String gitFileHash = repositoryManager.getFileHash(filePath);
-        responses.add(new PushAppResponse(details.getApplicationName(), gitFileHash));
+      for (ApplicationDetail detail : appsToPush) {
+        Path relativeFilePath = getAndValidateAppConfigRelativePath(detail.getName());
+        // In the case that the app config is unchanged, we can still get the fileHash from pushedCommit
+        String gitFileHash = repositoryManager.getFileHash(relativeFilePath, pushedCommit);
+        responses.add(new PushAppResponse(detail.getName(), detail.getAppVersion(), gitFileHash));
       }
     } catch (Exception e) {
-      LOG.debug("Failed to fetch push details: %s", e.getCause());
       throw new PushFailureException("Failed to fetch push details", e);
     }
 
     return new PushAppsResponse(responses);
   }
 
-  private void modifyApplicationConfigAndPush(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException{
+  private String modifyApplicationConfigAndPush(List<ApplicationDetail> appsToPush, CommitMeta commitDetails)
+    throws PushFailureException, NoChangesToPushException {
+    List<Path> modifiedPaths = new ArrayList<>();
     try {
-      // Create base dir if not exist.
-      // This already handles cases where one of the path prefix is not a directory
-      Files.createDirectories(repositoryManager.getBasePath());
-
-      for (AppDetailsToPush appDetail : appsToPush) {
-        String appName = appDetail.getApplicationName();
-        Path configFilePath = getApplicationConfigPath(appName);
-        byte[] configData = appDetail.getApplicationSpecString().getBytes(StandardCharsets.UTF_8);
-
+      for (ApplicationDetail appDetail : appsToPush) {
+        String appName = appDetail.getName();
+        // Symlinks will be followed but if the path points to an outside directory it will fail
+        Path appRelativePath = getAndValidateAppConfigRelativePath(appName);
         // Opens the file for writing, creating the file if it doesn't exist,
         // or truncating an existing regular-file to a size of 0
-        // Symlinks will be followed but if the path points to a directory it will fail
-        Files.write(configFilePath, configData);
-
-        LOG.debug("Written application configs for {} in file {}", appName, configFilePath);
+        Path filePathToWrite = repositoryManager.getRepositoryRoot().resolve(appRelativePath);
+        try (FileWriter writer = new FileWriter(filePathToWrite.toString())) {
+          GSON.toJson(appDetail, writer);
+        }
+        
+        modifiedPaths.add(appRelativePath);
+        LOG.debug("Written application configs for {} in file {}", appName, appRelativePath);
       }
-    } catch (IOException e) {
-      LOG.debug("Failed to write configs: %s", e.getCause());
-      throw new PushFailureException("Failed to write configs", e);
+    } catch (Exception e) {
+      throw new PushFailureException("Failed to write app configs", e);
     }
 
     try {
-      repositoryManager.commitAndPush(commitDetails);
-      LOG.info("Pushed application configs for : {}", appsToPush.stream().map(AppDetailsToPush::getApplicationName));
-    } catch (Exception e) {
-      LOG.debug("Failed to push to git", e.getCause());
+      String pushedCommit = repositoryManager.commitAndPush(commitDetails, modifiedPaths);
+      LOG.info("Pushed application configs for : {}", appsToPush.stream().map(ApplicationDetail::getName));
+      return pushedCommit;
+    } catch (UnexpectedRepositoryChangesException | GitAPIException e) {
       throw new PushFailureException("Failed to push to git", e);
     }
   }
-  private Path getApplicationConfigPath(String applicationName){
-    return repositoryManager.getBasePath().resolve(applicationName);
+
+  /**
+   * Generates the config file relative path in git root directory based on application name.
+   * It also validates if the resolved path ( considering symlinks) exists outside git repository
+   * or not.
+   *
+   * @param applicationName the name of this application
+   * @return A valid application config file path
+   */
+  private Path getAndValidateAppConfigRelativePath(String applicationName) throws InvalidPathInSourceControl,
+                                                                                  IOException {
+    String fileName = String.format("%s.json", applicationName);
+    Path filePath = repositoryManager.getBasePath().resolve(fileName);
+    if (Files.exists(filePath)) {
+      Path resolvedPath = filePath.toRealPath();
+      Path resolvedRepoRootPath = repositoryManager.getRepositoryRoot().toRealPath();
+      if (!resolvedPath.startsWith(resolvedRepoRootPath)) {
+        throw new InvalidPathInSourceControl(String.format("Config file %s pointing to invalid path %s", filePath,
+                                                           resolvedPath));
+      }
+    }
+    return repositoryManager.getRepositoryRoot().relativize(filePath);
   }
 }
 

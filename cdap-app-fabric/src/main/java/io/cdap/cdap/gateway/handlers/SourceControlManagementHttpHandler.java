@@ -22,35 +22,32 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
-import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppResponse;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
+import io.cdap.cdap.internal.app.sourcecontrol.PushFailureException;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.BatchApplicationPushResult;
 import io.cdap.cdap.proto.sourcecontrol.PushAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
-import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -64,17 +61,16 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/repository")
 public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHandler {
   private final SourceControlManagementService sourceControlService;
-  private final ApplicationLifecycleService appLifecycleService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final CConfiguration cConf;
   private static final Gson GSON = new Gson();
 
   @Inject
-  SourceControlManagementHttpHandler(CConfiguration configuration,
-                                     SourceControlManagementService sourceControlService,
-                                     ApplicationLifecycleService applicationLifecycleService) {
-    this.appLifecycleService = applicationLifecycleService;
+  SourceControlManagementHttpHandler(CConfiguration cConf,
+                                     SourceControlManagementService sourceControlService) {
+    this.cConf = cConf;
     this.sourceControlService = sourceControlService;
-    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   /**
@@ -130,9 +126,9 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   }
 
   /**
-   * Pushes a set of the latest versions of applications configs to linked repository in Json format. It expects a post
-   * body that has an optional commit message and an array of objects, with each object specifying the application and
-   * version.
+   * Pushes a set of applications configs to linked repository in Json format. It expects a post body that has an
+   * optional commit message and an array of objects, with each object specifying the application and version. The
+   * size of applications list should not be more than 10.
    * E.g.
    *
    * <pre>
@@ -148,8 +144,8 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
    * }
    *
    * </pre>
-   * The response will be an array of {@link BatchApplicationPushResult} object, which either indicates a success (200)
-   * or failure for each of the requested application in the same order as the request.
+   * The response will be an array of {@link PushAppResponse} object, which encapsulates the application name,
+   * version and fileHash.
    */
   @POST
   @Path("/push")
@@ -157,53 +153,50 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
                        @PathParam("namespace-id") String namespaceId) throws Exception {
     checkSourceControlFeatureFlag();
     NamespaceId namespace = validateNamespaceId(namespaceId);
-    PushAppsRequest appsRequest = validateAndGetAppsRequest(request);
+    ImmutablePair<List<ApplicationId>, String> appsRequest = validateAndGetAppsRequest(request, namespace);
 
-    List<ApplicationId> appIds = appsRequest.getApps().stream()
-                                           .map(app -> namespace.app(app.getApplication(), app.getVersion()))
-                                           .collect(Collectors.toList());
-    Map<ApplicationId, ApplicationDetail> details = appLifecycleService.getAppDetails(appIds);
-
-    Map<ApplicationId, SourceControlMeta> sourceControlMetas =
-      sourceControlService.pushApps(namespace, details, appsRequest.getCommitMessage());
-
-    appLifecycleService.setAppSourceControlMetas(sourceControlMetas);
-    
-    List<BatchApplicationPushResult> result = new ArrayList<>();
-    for (ApplicationId appId : appIds) {
-      if (!details.containsKey(appId) || !sourceControlMetas.containsKey(appId)) {
-        result.add(new BatchApplicationPushResult(new NotFoundException(appId)));
-      } else {
-        result.add(new BatchApplicationPushResult(sourceControlMetas.get(appId)));
-      }
+    try {
+      PushAppsResponse pushResponse = sourceControlService.pushApps(namespace, appsRequest.getFirst(),
+                                                                    appsRequest.getSecond());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pushResponse));
+    } catch (NoChangesToPushException e) {
+      // TODO: CDAP-20383 define the case that the applications to push do not have any changes
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (PushFailureException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
-  private PushAppsRequest validateAndGetAppsRequest(FullHttpRequest request) throws BadRequestException {
+  private ImmutablePair<List<ApplicationId>, String> validateAndGetAppsRequest(
+    FullHttpRequest request, NamespaceId namespace) throws BadRequestException {
+    
+    PushAppsRequest appsRequest;
     try {
-      PushAppsRequest appsRequest = parseBody(request, PushAppsRequest.class);
-      if (appsRequest == null || appsRequest.getApps() == null || appsRequest.getApps().isEmpty()) {
-        throw new BadRequestException("Please specify a list of applications.");
-      }
-
-      for (PushAppsRequest.App app : appsRequest.getApps()) {
-        if (app.getApplication() == null) {
-          throw new BadRequestException("Application cannot be empty");
-        }
-        if (app.getVersion() == null) {
-          throw new BadRequestException("Application version cannot be empty");
-        }
-        if (!EntityId.isValidId(app.getApplication())) {
-          throw new BadRequestException(String.format("Invalid app name '%s'", app.getApplication()));
-        }
-      }
-
-      return appsRequest;
+      appsRequest = parseBody(request, PushAppsRequest.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid request body: " + e.getMessage());
     }
+    
+    if (appsRequest == null || appsRequest.getApps() == null || appsRequest.getApps().isEmpty()) {
+      throw new BadRequestException("Please specify a list of applications.");
+    }
+
+    if (appsRequest.getApps().size() >
+      cConf.getInt(Constants.SourceControlManagement.GIT_REPOSITORIES_PUSH_APPS_COUNT_LIMIT)) {
+      throw new BadRequestException("Please push no more than 10 applications at one time.");
+    }
+
+    List<ApplicationId> appIds = new ArrayList<>();
+
+    for (PushAppsRequest.App app : appsRequest.getApps()) {
+      try {
+        appIds.add(namespace.app(app.getName(), app.getVersion()));
+      } catch (Exception e) {
+        throw new BadRequestException("Invalid application name or version", e);
+      }
+    }
+
+    return new ImmutablePair<> (appIds, appsRequest.getCommitMessage());
   }
 
   /**

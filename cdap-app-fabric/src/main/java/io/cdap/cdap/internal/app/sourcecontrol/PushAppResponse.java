@@ -16,20 +16,50 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
+import java.util.Objects;
+
+/**
+ * Encapsulates the information generated from a single application push
+ */
 public class PushAppResponse {
-  private final String applicationName;
-  private final String applicationFileHash;
+  private final String name;
+  private final String version;
+  private final String fileHash;
 
-  public PushAppResponse(String applicationName, String applicationFileHash) {
-    this.applicationName = applicationName;
-    this.applicationFileHash = applicationFileHash;
+  public PushAppResponse(String name, String version, String fileHash) {
+    this.name = name;
+    this.version = version;
+    this.fileHash = fileHash;
   }
 
-  public String getApplicationName() {
-    return applicationName;
+  public String getName() {
+    return name;
   }
 
-  public String getApplicationFileHash() {
-    return applicationFileHash;
+  public String getFileHash() {
+    return fileHash;
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PushAppResponse that = (PushAppResponse) o;
+    return Objects.equals(name, that.name) &&
+      Objects.equals(version, that.version) &&
+      Objects.equals(fileHash, that.fileHash);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, version, fileHash);
   }
 }

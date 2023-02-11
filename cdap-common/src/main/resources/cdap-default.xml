@@ -5580,5 +5580,12 @@
       Path where git repositories will be cloned for source control operations.
     </description>
   </property>
+  <property>
+    <name>source.control.git.repositories.push.apps.count.limit</name>
+    <value>10</value>
+    <description>
+      Count limit of applications that can be pushed to linked git repositories at one time.
+    </description>
+  </property>
 
 </configuration>

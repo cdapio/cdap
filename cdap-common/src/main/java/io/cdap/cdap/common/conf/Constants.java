@@ -2022,5 +2022,7 @@ public final class Constants {
     public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
     public static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH =
       "source.control.git.repositories.clone.directory.path";
+    public static final String GIT_REPOSITORIES_PUSH_APPS_COUNT_LIMIT =
+      "source.control.git.repositories.push.apps.count.limit";
   }
 }

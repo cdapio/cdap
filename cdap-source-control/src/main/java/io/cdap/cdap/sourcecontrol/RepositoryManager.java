@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -141,42 +142,50 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Commits and pushes all changes under the repositiry base path
+   * Commits and pushes all changes under the repository root path
+   *
    * @param commitMeta Details for the commit including author, committer and commit message
+   * @param filesChanged List of relative path to repository root where the files are updated
    * @throws UnexpectedRepositoryChangesException when there are changes outside the repository base path
-   * @throws GitAPIException when the underlying git commands fail
-   * @throws AuthenticationConfigException when correct authentication credentials are not available.
+   * @throws GitAPIException                      when the underlying git commands fail
+   * @throws NoChangesToPushException             when there's no file changes for the commit
+   * @return the pushed commit ID
    */
-  public void commitAndPush(CommitMeta commitMeta) throws UnexpectedRepositoryChangesException,
-    GitAPIException, AuthenticationConfigException {
+  public String commitAndPush(CommitMeta commitMeta, List<Path> filesChanged)
+    throws UnexpectedRepositoryChangesException, NoChangesToPushException, GitAPIException {
     validateInitialized();
 
     // if the status is clean skip
     Status preStageStatus = git.status().call();
     if (preStageStatus.isClean()) {
-      return;
+      throw new NoChangesToPushException("No changes have been maid for the applications to push.");
     }
 
-    // We should only add files inside the base path. There should not be any change outside the base path.
-    git.add().addFilepattern(getBasePath().toString()).call();
-
-    // Fail if the status is not clean i.e. there are changes outside base path.
-    Status postStageStatus = git.status().call();
-    if (!postStageStatus.isClean()) {
-      throw new UnexpectedRepositoryChangesException(String.format("Unexpected file changes outside base dir %s",getBasePath()));
+    for (Path path : filesChanged) {
+      git.add().addFilepattern(path.toString()).call();
     }
 
-    getCommitCommand(commitMeta).call();
+    RevCommit commit = getCommitCommand(commitMeta).call();
+
+    // Fail if the status is not clean i.e. there are unexpected changes.
+    Status postCommitStatus = git.status().call();
+    if (!postCommitStatus.isClean()) {
+      throw new UnexpectedRepositoryChangesException(String.format("Unexpected changes other than changed files %s",
+                                                                   filesChanged));
+    }
+
     PushCommand pushCommand = createCommand(git::push, sourceControlConfig, credentialsProvider);
     pushCommand.call();
+
+    return commit.getId().getName();
   }
 
-  private CommitCommand getCommitCommand(CommitMeta commitMeta){
+  private CommitCommand getCommitCommand(CommitMeta commitMeta) {
     // We only set email
-    PersonIdent author = new PersonIdent("", commitMeta.getAuthor());
+    PersonIdent author = new PersonIdent(commitMeta.getAuthor(), "");
     PersonIdent authorWithDate = new PersonIdent(author, new Date(commitMeta.getTimestampMillis()));
 
-    PersonIdent committer = new PersonIdent("", commitMeta.getCommiter());
+    PersonIdent committer = new PersonIdent(commitMeta.getCommitter(), "");
 
     return git.commit().setAuthor(authorWithDate).setCommitter(committer).setMessage(commitMeta.getMessage());
   }
@@ -224,7 +233,7 @@ public class RepositoryManager implements AutoCloseable {
         throw new IllegalArgumentException(String.format("Path %s doesn't refer to a regular file.",
                                                          realPath.toAbsolutePath()));
       }
-      Path realRelativePath = getRepositoryRoot().relativize(realPath);
+      Path realRelativePath = getRepositoryRoot().toRealPath().relativize(realPath);
       // Find the node representing the exact file path in the tree.
       TreeWalk walk = TreeWalk.forPath(git.getRepository(), realRelativePath.toString(), commit.getTree());
       if (walk == null) {

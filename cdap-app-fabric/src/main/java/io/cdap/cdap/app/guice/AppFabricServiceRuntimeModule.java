@@ -113,6 +113,9 @@ import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
+import io.cdap.cdap.internal.app.sourcecontrol.InMemorySourceControlOperationRunner;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunner;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
@@ -345,6 +348,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       // Used in InMemoryProgramRunDispatcher, TetheringClientHandler
       install(RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
                                                           Constants.Tethering.CLIENT_AUTHENTICATOR_NAME));
+      // TODO: CDAP-20322 add the remoteSourceControlOperationRunner
+      install(
+        new FactoryModuleBuilder()
+          .implement(SourceControlOperationRunner.class, InMemorySourceControlOperationRunner.class)
+          .build(SourceControlOperationRunnerFactory.class)
+      );
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
 

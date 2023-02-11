@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 
 import java.util.List;
@@ -30,5 +31,5 @@ public interface SourceControlOperationRunner {
    * @return file-paths and file-hashes for the updated configs.
    * @throws PushFailureException when the push operation fails for any reason.
    */
-  PushAppsResponse push(List<AppDetailsToPush> appsToPush, CommitMeta commitDetails) throws PushFailureException;
+  PushAppsResponse push(List<ApplicationDetail> appsToPush, CommitMeta commitDetails) throws Exception;
 }
