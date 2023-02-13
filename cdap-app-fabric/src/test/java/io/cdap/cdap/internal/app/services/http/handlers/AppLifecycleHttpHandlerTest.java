@@ -41,6 +41,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
@@ -58,6 +59,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
@@ -478,6 +480,28 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
 
+    // get and verify app details in default namespace using the batch GET /appDetail api
+    List<String> versionsInOrder = new ArrayList<>(versions);
+
+    List<BatchApplicationDetail> batchAppDetails =
+      getAppDetails(Id.Namespace.DEFAULT.getId(),
+                    versionsInOrder.stream()
+                      .map(version -> ImmutablePair.of(appId.getApplication(), version))
+                      .collect(Collectors.toList()));
+    
+    Assert.assertEquals(4, batchAppDetails.size());
+    Assert.assertTrue(batchAppDetails.stream().allMatch(d -> d.getStatusCode() == 200));
+
+    ApplicationDetail appDetail = batchAppDetails.get(0).getDetail();
+    Assert.assertNotNull(appDetail);
+    Assert.assertEquals(appId.getApplication(), appDetail.getName());
+    Assert.assertEquals(versionsInOrder.get(0), appDetail.getAppVersion());
+
+    appDetail = batchAppDetails.get(2).getDetail();
+    Assert.assertNotNull(appDetail);
+    Assert.assertEquals(appId.getApplication(), appDetail.getName());
+    Assert.assertEquals(versionsInOrder.get(2), appDetail.getAppVersion());
+
     List<JsonObject> appList = getAppList(appId.getNamespace());
     Set<String> receivedVersions = new HashSet<>();
     for (JsonObject appRecord : appList) {
@@ -515,6 +539,73 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationDetail appDetailsDefault2WithVersion = getAppDetails(appIdDefault.getNamespaceId(),
                                                                     appIdDefault.getId());
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2WithVersion.getConfiguration());
+
+    Id.Application appIdDelete = Id.Application.from(appId.getNamespace(), appId.getApplication());
+    deleteApp(appIdDelete, 200);
+    setLCMFlag(false);
+  }
+
+  @Test
+  public void testListAndGetLCMFlagEnabledInstanceUpgradeScenario() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "configapp", "1.0.0");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+    Set<String> versions = new HashSet<>();
+    ApplicationId appId = new ApplicationId(Id.Namespace.DEFAULT.getId(), "cfgAppWithVersion", "1.0.0");
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
+
+    // Deploy app with default versionId by non-versioned API
+    Id.Application appIdDefault = Id.Application.from(Id.Namespace.DEFAULT, appId.getApplication());
+    ConfigTestApp.ConfigClass configDefault = new ConfigTestApp.ConfigClass("uvw", "xyz");
+    AppRequest<ConfigTestApp.ConfigClass> requestDefault = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault);
+    Assert.assertEquals(200, deploy(appIdDefault, requestDefault).getResponseCode());
+    // When there is only one app, -SNAPSHOT is returned to the response
+    ApplicationDetail appDetail = getAppDetails(Id.Namespace.DEFAULT.getId(), appId.getApplication());
+
+    Assert.assertEquals("-SNAPSHOT", appDetail.getAppVersion());
+    versions.add(appDetail.getAppVersion());
+    Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
+
+    setLCMFlag(true);
+    Assert.assertEquals(200, deploy(appIdDefault, requestDefault).getResponseCode());
+    appDetail = getAppDetails(Id.Namespace.DEFAULT.getId(), appId.getApplication());
+
+    String version = appDetail.getAppVersion();
+    Assert.assertNotEquals("-SNAPSHOT", version);
+    versions.add(version);
+
+    Assert.assertEquals(200, deploy(appIdDefault, requestDefault).getResponseCode());
+    appDetail = getAppDetails(Id.Namespace.DEFAULT.getId(), appId.getApplication());
+
+    version = appDetail.getAppVersion();
+    Assert.assertNotEquals("-SNAPSHOT", version);
+    versions.add(version);
+
+    // get and verify app details in default namespace using the batch GET /appDetail api
+    List<String> versionsInOrder = new ArrayList<>(versions);
+
+    List<BatchApplicationDetail> batchAppDetails =
+      getAppDetails(Id.Namespace.DEFAULT.getId(),
+                    versionsInOrder.stream()
+                      .map(v -> ImmutablePair.of(appId.getApplication(), v))
+                      .collect(Collectors.toList()));
+
+    Assert.assertEquals(3, batchAppDetails.size());
+
+    // Verify that the "SNAPSHOT" version is not mapped to get the "latest" version and should be found in the response
+    Assert.assertTrue(batchAppDetails.stream().allMatch(d -> d.getStatusCode() == 200));
+
+    appDetail = batchAppDetails.get(0).getDetail();
+    Assert.assertNotNull(appDetail);
+    Assert.assertEquals(appId.getApplication(), appDetail.getName());
+    Assert.assertEquals(versionsInOrder.get(0), appDetail.getAppVersion());
+
+    appDetail = batchAppDetails.get(2).getDetail();
+    Assert.assertNotNull(appDetail);
+    Assert.assertEquals(appId.getApplication(), appDetail.getName());
+    Assert.assertEquals(versionsInOrder.get(2), appDetail.getAppVersion());
 
     Id.Application appIdDelete = Id.Application.from(appId.getNamespace(), appId.getApplication());
     deleteApp(appIdDelete, 200);

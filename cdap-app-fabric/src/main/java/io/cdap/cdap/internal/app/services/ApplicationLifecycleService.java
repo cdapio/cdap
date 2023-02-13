@@ -128,7 +128,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -367,17 +366,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Set<? extends EntityId> visibleIds = accessEnforcer.isVisible(new HashSet<>(appIds),
                                                                   authenticationContext.getPrincipal());
     Set<ApplicationId> filterIds = appIds.stream().filter(visibleIds::contains).collect(Collectors.toSet());
-    Map<ApplicationId, ApplicationSpecification> appSpecs = store.getApplications(filterIds);
+    Map<ApplicationId, ApplicationMeta> appMetas = store.getApplications(filterIds);
     Map<ApplicationId, String> principals = ownerAdmin.getOwnerPrincipals(filterIds);
 
-    Map<ApplicationId, ApplicationDetail> result = new HashMap<>();
-    for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
-      ApplicationId appId = entry.getKey();
-      result.put(appId, enforceApplicationDetailAccess(
-        // TODO : change-summary to be fetched from ApplicationMeta for CDAP-19528
-        appId, ApplicationDetail.fromSpec(entry.getValue(), principals.get(appId), null)));
-    }
-    return result;
+    return appMetas.entrySet().stream()
+             .collect(Collectors.toMap(
+               Entry::getKey,
+               entry -> ApplicationDetail.fromSpec(entry.getValue().getSpec(),
+                                                   principals.get(entry.getKey()),
+                                                   entry.getValue().getChange())
+             ));
   }
 
   /**
