@@ -163,7 +163,7 @@ public class RepositoryManager implements AutoCloseable {
   private static void validateDefaultBranch(Map<String, Ref> refs, @Nullable String defaultBranchName) throws
     RepositoryConfigValidationException {
     // If default branch is not provided, skip validation.
-    if (defaultBranchName == null) {
+    if (getBranchRefName(defaultBranchName) == null) {
       return;
     }
     // Check if default branch exists.
