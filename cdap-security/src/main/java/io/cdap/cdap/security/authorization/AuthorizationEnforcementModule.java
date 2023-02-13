@@ -17,18 +17,23 @@
 package io.cdap.cdap.security.authorization;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * A module that contains bindings for {@link AccessEnforcer}.
@@ -85,7 +90,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       protected void configure() {
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
         bind(AccessEnforcer.class).annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
-          .to(InternalAccessEnforcer.class).in(Scopes.SINGLETON);
+          .toProvider(InternalAccessEnforcerProvider.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
       }
     };
@@ -118,5 +123,28 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
         });
       }
     };
+  }
+
+  /**
+   * A {@link Provider} for internally-used {@link AccessEnforcer} which returns {@link InternalAccessEnforcer} when
+   * internal auth is enabled, but returns {@link NoOpAccessController} otherwise.
+   */
+  private static final class InternalAccessEnforcerProvider implements Provider<AccessEnforcer> {
+    private final CConfiguration cConf;
+    private final Injector injector;
+
+    @Inject
+    InternalAccessEnforcerProvider(CConfiguration cConf, Injector injector) {
+      this.cConf = cConf;
+      this.injector = injector;
+    }
+
+    @Override
+    public AccessEnforcer get() {
+      if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+        return injector.getInstance(InternalAccessEnforcer.class);
+      }
+      return new NoOpAccessController();
+    }
   }
 }
