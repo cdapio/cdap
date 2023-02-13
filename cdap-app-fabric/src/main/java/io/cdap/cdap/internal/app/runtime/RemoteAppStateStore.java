@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime;
 
 import io.cdap.cdap.api.app.AppStateStore;
+import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -72,7 +73,7 @@ public class RemoteAppStateStore implements AppStateStore {
         HttpRequest.Builder requestBuilder =
           remoteClient.requestBuilder(HttpMethod.GET,
                                       String.format(REMOTE_END_POINT, namespace, appName, encodedKey));
-        HttpResponse httpResponse = remoteClient.execute(requestBuilder.build());
+        HttpResponse httpResponse = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
         int responseCode = httpResponse.getResponseCode();
         if (responseCode == 200) {
           byte[] responseBody = httpResponse.getResponseBody();
@@ -106,7 +107,7 @@ public class RemoteAppStateStore implements AppStateStore {
         HttpRequest.Builder requestBuilder =
           remoteClient.requestBuilder(HttpMethod.PUT, String.format(REMOTE_END_POINT, namespace, appName, encodedKey))
             .withBody(ByteBuffer.wrap(value));
-        HttpResponse httpResponse = remoteClient.execute(requestBuilder.build());
+        HttpResponse httpResponse = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
         int responseCode = httpResponse.getResponseCode();
         if (responseCode != 200) {
           String notFoundExceptionMessage = String.format("Namespace %s or application %s not found.", namespace,

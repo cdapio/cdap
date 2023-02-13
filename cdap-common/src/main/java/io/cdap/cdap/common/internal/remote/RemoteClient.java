@@ -123,9 +123,18 @@ public class RemoteClient {
         throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
       }
       if (HttpCodes.isRetryable(responseCode)) {
-        String message = String.format("Service %s is not available: %s",
-                                       discoverableServiceName, response.getResponseBodyAsString());
-        throw new ServiceException(message, null, HttpResponseStatus.valueOf(responseCode));
+        String contentType = response.getHeaders().get(HttpHeaders.CONTENT_TYPE).stream().findFirst().orElse(null);
+        String message;
+        String jsonDetails = null;
+        if ("application/json".equals(contentType)) {
+          message = String.format("Service %s is not available (%d)", discoverableServiceName, responseCode);
+          jsonDetails = response.getResponseBodyAsString();
+        } else {
+          message = String.format("Service %s is not available: %s", discoverableServiceName,
+                                  response.getResponseBodyAsString());
+        }
+        throw new ServiceException(message, null,
+                                   jsonDetails, HttpResponseStatus.valueOf(responseCode));
       }
       if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
         throw new UnauthorizedException(response.getResponseBodyAsString());
