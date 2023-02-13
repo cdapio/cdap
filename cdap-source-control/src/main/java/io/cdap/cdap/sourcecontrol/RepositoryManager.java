@@ -17,7 +17,6 @@
 package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -44,7 +43,7 @@ import javax.annotation.Nullable;
  * from a {@link io.cdap.cdap.api.security.store.SecureStore}, builds an {@link AuthenticationStrategy} for different
  * Git hosting services and provides version control operations.
  */
-public class RepositoryManager extends AbstractIdleService {
+public class RepositoryManager implements AutoCloseable {
   private final SecureStore secureStore;
   private final SourceControlConfig sourceControlConfig;
   private Git git;
@@ -82,8 +81,8 @@ public class RepositoryManager extends AbstractIdleService {
     // Try fetching heads in the remote repository.
     try (Git git = Git.wrap(new InMemoryRepository.Builder().build())) {
       LsRemoteCommand cmd = createCommand(git::lsRemote, sourceControlConfig, secureStore).setRemote(config.getLink())
-                                                                                          .setHeads(true)
-                                                                                          .setTags(false);
+        .setHeads(true)
+        .setTags(false);
       validateDefaultBranch(cmd.callAsMap(), config.getDefaultBranch());
     } catch (TransportException e) {
       throw new RepositoryConfigValidationException(
@@ -105,8 +104,7 @@ public class RepositoryManager extends AbstractIdleService {
    * @throws AuthenticationConfigException when correct authentication credentials are not available.
    * @throws IOException                   when file or network I/O fails.
    */
-  @Override
-  protected void startUp() throws Exception {
+  public void cloneRemote() throws Exception {
     if (git != null) {
       return;
     }
@@ -114,9 +112,7 @@ public class RepositoryManager extends AbstractIdleService {
     deletePathIfExists(sourceControlConfig.getLocalRepoPath());
     RepositoryConfig repositoryConfig = sourceControlConfig.getRepositoryConfig();
     CloneCommand command = createCommand(Git::cloneRepository).setURI(repositoryConfig.getLink())
-                                                              .setDirectory(sourceControlConfig.getLocalRepoPath()
-                                                                                               .toFile());
-
+      .setDirectory(sourceControlConfig.getLocalRepoPath().toFile());
     String branch = getBranchRefName(repositoryConfig.getDefaultBranch());
     if (branch != null) {
       command.setBranchesToClone(Collections.singleton((branch))).setBranch(branch);
@@ -125,7 +121,7 @@ public class RepositoryManager extends AbstractIdleService {
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  public void close() throws Exception {
     if (git != null) {
       git.close();
     }
@@ -143,9 +139,9 @@ public class RepositoryManager extends AbstractIdleService {
     AuthenticationConfigException {
     C command = creator.get();
     command.setCredentialsProvider(sourceControlConfig.getAuthenticationStrategy()
-                                                      .getCredentialsProvider(secureStore,
-                                                                              sourceControlConfig.getRepositoryConfig(),
-                                                                              sourceControlConfig.getNamespaceID()));
+                                     .getCredentialsProvider(secureStore,
+                                                             sourceControlConfig.getRepositoryConfig(),
+                                                             sourceControlConfig.getNamespaceID()));
     command.setTimeout(sourceControlConfig.getGitCommandTimeoutSeconds());
     return command;
   }
