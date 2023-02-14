@@ -391,12 +391,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           .create();
 
         info = message.getPayload(gson, FieldLineageInfo.class);
-        LOG.info("inc sum - {}", info.getIncomingSummary());
-        LOG.info("out sum - {}", info.getOutgoingSummary());
-        LOG.info("sources - {}", info.getSources());
-        LOG.info("dests - {}", info.getDestinations());
-        LOG.info("oprns - {}", info.getOperations());
-        LOG.info("dest fields - {}", info.getDestinationFields());
       } catch (Throwable t) {
         LOG.warn("Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
                  message, t);
@@ -404,7 +398,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       }
       FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
       fieldLineageTable.addFieldLineageInfo(programRunId, info);
-      LOG.info("wrote to fll table");
     }
   }
 

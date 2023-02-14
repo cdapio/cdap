@@ -90,6 +90,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
   private final int maxRetriesOnConflict;
   private final CConfiguration cConf;
   private final MetadataConsumerExtensionLoader provider;
+  private final MetricsCollectionService metricsCollectionService;
 
   private String conflictMessageId;
   private int conflictCount;
@@ -117,6 +118,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
     this.cConf = cConf;
     this.provider = provider;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -183,7 +185,8 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
       MetadataMessage message = next.getSecond();
       MetadataMessageProcessor processor = processors.computeIfAbsent(message.getType(), type -> {
         if (type == MetadataMessage.Type.FIELD_LINEAGE) {
-          return new FieldLineageProcessor(this.cConf, this.provider.loadMetadataConsumers());
+          return new FieldLineageProcessor(this.cConf, this.provider.loadMetadataConsumers(),
+                                           this.metricsCollectionService);
         }
         return null;
       });
@@ -220,10 +223,13 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
 
     private final CConfiguration cConf;
     private final Map<String, MetadataConsumer> consumers;
+    private final MetricsCollectionService metricsCollectionService;
 
-    FieldLineageProcessor(CConfiguration cConf, Map<String, MetadataConsumer> consumers) {
+    FieldLineageProcessor(CConfiguration cConf, Map<String, MetadataConsumer> consumers,
+                          MetricsCollectionService metricsCollectionService) {
       this.cConf = cConf;
       this.consumers = consumers;
+      this.metricsCollectionService = metricsCollectionService;
     }
 
     @Override
@@ -265,7 +271,9 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
       this.consumers.forEach((key, consumer) -> {
         try {
           DefaultMetadataConsumerContext metadataConsumerContext =
-            new DefaultMetadataConsumerContext(cConf, consumer.getName());
+            new DefaultMetadataConsumerContext(cConf, consumer.getName(), this.metricsCollectionService,
+                                               run.getNamespace());
+          LOG.debug("Metrics collection service is {}", this.metricsCollectionService);
           // if there is any error from the implementation, log and continue here
           // as we are already retrying at the service level
           consumer.consumeLineage(metadataConsumerContext, run, info);
