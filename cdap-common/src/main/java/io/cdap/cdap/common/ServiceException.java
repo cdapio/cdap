@@ -27,19 +27,36 @@ import javax.annotation.Nullable;
 public class ServiceException extends RuntimeException implements HttpErrorStatusProvider {
 
   private final HttpResponseStatus status;
+  private final String jsonDetails;
 
   public ServiceException(String message, @Nullable Throwable cause, HttpResponseStatus status) {
-    super(message, cause);
-    this.status = status;
+    this(message, cause, null, status);
   }
 
   public ServiceException(@Nullable Throwable cause, HttpResponseStatus status) {
+    this(cause, null, status);
+  }
+
+  public ServiceException(String message, @Nullable Throwable cause, @Nullable String jsonDetails,
+                          HttpResponseStatus status) {
+    super(message, cause);
+    this.status = status;
+    this.jsonDetails = jsonDetails;
+  }
+
+  public ServiceException(@Nullable Throwable cause, @Nullable String jsonDetails, HttpResponseStatus status) {
     super(cause);
     this.status = status;
+    this.jsonDetails = jsonDetails;
   }
 
   @Override
   public int getStatusCode() {
     return status.code();
+  }
+
+  @Nullable
+  public String getJsonDetails() {
+    return jsonDetails;
   }
 }

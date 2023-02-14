@@ -174,14 +174,16 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
                               new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
                                                            MediaType.APPLICATION_OCTET_STREAM));
       } catch (ClassNotFoundException | ClassCastException ex) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex),
+                             new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
         // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
         taskCompletionConsumer.accept(false, new TaskDetails(metricsCollectionService,
                                                              startTime, false, runnableTaskRequest));
       }
     } catch (Exception ex) {
       LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex),
+                           new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
       // Potentially ran user code, hence terminate the runner.
       taskCompletionConsumer.accept(false, new TaskDetails(metricsCollectionService, startTime, true, null));
     }
@@ -203,7 +205,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       responder.sendByteArray(HttpResponseStatus.OK, tokenResponse.getResponseBody(), EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
       LOG.warn("Failed to fetch token from metadata service", ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex), EmptyHttpHeaders.INSTANCE);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex),
+                           new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
     }
   }
 
