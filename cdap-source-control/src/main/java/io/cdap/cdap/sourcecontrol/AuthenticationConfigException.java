@@ -24,4 +24,8 @@ public class AuthenticationConfigException extends Exception {
   public AuthenticationConfigException(String message, Exception cause) {
     super(message, cause);
   }
+
+  public AuthenticationConfigException(String message) {
+    super(message);
+  }
 }

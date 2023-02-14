@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.sourcecontrol;
 
-import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
-import org.eclipse.jgit.transport.CredentialsProvider;
-
 /**
  * Interface to provide authentication objects used by JGit for different
  * {@link io.cdap.cdap.proto.sourcecontrol.Provider}s and {@link io.cdap.cdap.proto.sourcecontrol.AuthType}s.
@@ -28,13 +24,7 @@ public interface AuthenticationStrategy {
   /**
    * Returns a credential provider for authenticating with a remote git repository.
    *
-   * @param store       a {@link SecureStore} to fetch credentials
-   * @param config      Configuration for the remote repository.
-   * @param namespaceId The namespace information for fetching credentials from secure store.
    * @return a Credential provider to be used with all git commands.
-   * @throws AuthenticationConfigException when there are problems creating the credential provider for the provided
-   *                                       config.
    */
-  CredentialsProvider getCredentialsProvider(SecureStore store, RepositoryConfig config, String namespaceId) throws
-    AuthenticationConfigException;
+  RefreshableCredentialsProvider getCredentialsProvider();
 }

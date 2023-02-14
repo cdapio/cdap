@@ -19,8 +19,6 @@ package io.cdap.cdap.sourcecontrol;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.AuthType;
-import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 import java.nio.file.Path;
@@ -32,7 +30,6 @@ import java.util.Objects;
  */
 public class SourceControlConfig {
   private final String namespaceID;
-  private final AuthenticationStrategy authenticationStrategy;
   // Path where local git repository is stored.
   private final Path localRepoPath;
   private final int gitCommandTimeoutSeconds;
@@ -44,20 +41,10 @@ public class SourceControlConfig {
     String gitCloneDirectory = cConf.get(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH);
     this.gitCommandTimeoutSeconds = cConf.getInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS);
     this.localRepoPath = Paths.get(gitCloneDirectory, "namespace", this.namespaceID);
-    try {
-      this.authenticationStrategy = getAuthStrategy();
-    } catch (AuthenticationStrategyNotFoundException e) {
-      //  This exception isn't expected as the API handlers only store auth config after validations,
-      throw new RuntimeException(e);
-    }
   }
 
   public String getNamespaceID() {
     return namespaceID;
-  }
-
-  public AuthenticationStrategy getAuthenticationStrategy() {
-    return authenticationStrategy;
   }
 
   public Path getLocalRepoPath() {
@@ -70,24 +57,6 @@ public class SourceControlConfig {
 
   public RepositoryConfig getRepositoryConfig() {
     return repositoryConfig;
-  }
-
-  /**
-   * Returns an {@link AuthenticationStrategy} for the given Git repository provider and auth type.
-   *
-   * @return an instance of {@link  AuthenticationStrategy}.
-   * @throws AuthenticationStrategyNotFoundException when the corresponding {@link AuthenticationStrategy} is not found.
-   */
-  private AuthenticationStrategy getAuthStrategy() throws AuthenticationStrategyNotFoundException {
-    RepositoryConfig config = this.repositoryConfig;
-    if (config.getProvider() == Provider.GITHUB) {
-      if (config.getAuth().getType() == AuthType.PAT) {
-        return new GitPATAuthenticationStrategy();
-      }
-    }
-    throw new AuthenticationStrategyNotFoundException(String.format("No strategy found for provider %s and type %s.",
-                                                                    config.getProvider(),
-                                                                    config.getAuth().getType()));
   }
 
   @Override
