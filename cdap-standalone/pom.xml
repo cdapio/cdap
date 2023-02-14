@@ -445,6 +445,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+	<dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-securestore-ext-gcp-secretstore</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
         <!-- dependencies on system apps to be built before standalone -->
         <dependency>
           <groupId>io.cdap.cdap</groupId>
@@ -649,6 +655,13 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec</directory>
                       <targetPath>ext/securestores/gcp-cloudkms</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+		    <resource>
+                      <directory>${project.parent.basedir}/cdap-securestore-ext-gcp-secretstore/target/libexec</directory>
+                      <targetPath>ext/securestores/gcp-secretstore</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>

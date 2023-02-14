@@ -346,6 +346,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+	<dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-securestore-ext-gcp-secretstore</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-authenticator-ext-gcp</artifactId>
@@ -663,6 +669,27 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+	      <execution>
+                <id>copy-securestore-ext-gcp-secretstore</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.securestores.ext.dir}/gcp-secretstore</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-securestore-ext-gcp-secretstore/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>
