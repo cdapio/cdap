@@ -17,6 +17,7 @@
 package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -29,6 +30,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.transport.CredentialsProvider;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,18 +41,25 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * A git repository manager that is responsible for handling interfacing with git. It fetches credentials
- * from a {@link io.cdap.cdap.api.security.store.SecureStore}, builds an {@link AuthenticationStrategy} for different
- * Git hosting services and provides version control operations.
+ * A git repository manager that is responsible for handling interfacing with git. It provides version control
+ * operations.
  */
 public class RepositoryManager implements AutoCloseable {
-  private final SecureStore secureStore;
   private final SourceControlConfig sourceControlConfig;
+  private final RefreshableCredentialsProvider credentialsProvider;
   private Git git;
 
   public RepositoryManager(SecureStore secureStore, SourceControlConfig sourceControlConfig) {
-    this.secureStore = secureStore;
     this.sourceControlConfig = sourceControlConfig;
+    try {
+      this.credentialsProvider = new AuthenticationStrategyProvider(sourceControlConfig.getNamespaceID(),
+                                                                    secureStore)
+        .get(sourceControlConfig.getRepositoryConfig())
+        .getCredentialsProvider();
+    } catch (AuthenticationStrategyNotFoundException e) {
+      // This is not expected as only valid auth configs will be stored.
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -74,25 +83,40 @@ public class RepositoryManager implements AutoCloseable {
    * @param secureStore         A secure store for fetching credentials if required.
    * @param sourceControlConfig Configuration for source control operations.
    * @throws RepositoryConfigValidationException when provided repository configuration is invalid.
+   * @throws IOException                         when there are internal errors while performing network operations
+   *                                             such as fetching secrets from Secure stores.
    */
   public static void validateConfig(SecureStore secureStore, SourceControlConfig sourceControlConfig) throws
-    RepositoryConfigValidationException {
+    RepositoryConfigValidationException, IOException {
     RepositoryConfig config = sourceControlConfig.getRepositoryConfig();
+    RefreshableCredentialsProvider credentialsProvider;
+    try {
+      credentialsProvider = new AuthenticationStrategyProvider(sourceControlConfig.getNamespaceID(),
+                                                               secureStore)
+        .get(sourceControlConfig.getRepositoryConfig())
+        .getCredentialsProvider();
+    } catch (AuthenticationStrategyNotFoundException e) {
+      throw new RepositoryConfigValidationException(e.getMessage(), e);
+    }
+    try {
+      credentialsProvider.refresh();
+    } catch (AuthenticationConfigException e) {
+      throw new RepositoryConfigValidationException("Failed to get authentication credentials: " + e.getMessage(), e);
+    }
     // Try fetching heads in the remote repository.
     try (Git git = Git.wrap(new InMemoryRepository.Builder().build())) {
-      LsRemoteCommand cmd = createCommand(git::lsRemote, sourceControlConfig, secureStore).setRemote(config.getLink())
-        .setHeads(true)
-        .setTags(false);
+      LsRemoteCommand cmd =
+        createCommand(git::lsRemote, sourceControlConfig, credentialsProvider).setRemote(config.getLink())
+          .setHeads(true)
+          .setTags(false);
       validateDefaultBranch(cmd.callAsMap(), config.getDefaultBranch());
     } catch (TransportException e) {
-      throw new RepositoryConfigValidationException(
-        "Failed to connect with repository. Authentication credentials invalid or the repository may not exist.",
-        e);
-    } catch (RepositoryConfigValidationException e) {
-      throw e;
-    } catch (AuthenticationConfigException e) {
-      throw new RepositoryConfigValidationException(e.getMessage(), e);
+      throw new RepositoryConfigValidationException("Failed to connect with remote repository: " + e.getMessage(), e);
+    } catch (GitAPIException e) {
+      throw new RepositoryConfigValidationException("Failed to list remotes in remote repository: " + e.getMessage(),
+                                                    e);
     } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, RepositoryConfigValidationException.class);
       throw new RepositoryConfigValidationException("Failed to list remotes in remote repository.", e);
     }
   }
@@ -101,8 +125,8 @@ public class RepositoryManager implements AutoCloseable {
    * Initializes the Git repository by cloning remote.
    *
    * @throws GitAPIException               when a Git operation fails.
-   * @throws AuthenticationConfigException when correct authentication credentials are not available.
    * @throws IOException                   when file or network I/O fails.
+   * @throws AuthenticationConfigException when there is a failure while fetching authentication credentials for Git.
    */
   public void cloneRemote() throws Exception {
     if (git != null) {
@@ -111,6 +135,7 @@ public class RepositoryManager implements AutoCloseable {
     // Clean up the directory if it already exists.
     deletePathIfExists(sourceControlConfig.getLocalRepoPath());
     RepositoryConfig repositoryConfig = sourceControlConfig.getRepositoryConfig();
+    credentialsProvider.refresh();
     CloneCommand command = createCommand(Git::cloneRepository).setURI(repositoryConfig.getLink())
       .setDirectory(sourceControlConfig.getLocalRepoPath().toFile());
     String branch = getBranchRefName(repositoryConfig.getDefaultBranch());
@@ -129,19 +154,15 @@ public class RepositoryManager implements AutoCloseable {
     deletePathIfExists(sourceControlConfig.getLocalRepoPath());
   }
 
-  private <C extends TransportCommand> C createCommand(Supplier<C> creator) throws AuthenticationConfigException {
-    return createCommand(creator, sourceControlConfig, secureStore);
+  private <C extends TransportCommand> C createCommand(Supplier<C> creator) {
+    return createCommand(creator, sourceControlConfig, credentialsProvider);
   }
 
   private static <C extends TransportCommand> C createCommand(Supplier<C> creator,
                                                               SourceControlConfig sourceControlConfig,
-                                                              SecureStore secureStore) throws
-    AuthenticationConfigException {
+                                                              CredentialsProvider credentialsProvider) {
     C command = creator.get();
-    command.setCredentialsProvider(sourceControlConfig.getAuthenticationStrategy()
-                                     .getCredentialsProvider(secureStore,
-                                                             sourceControlConfig.getRepositoryConfig(),
-                                                             sourceControlConfig.getNamespaceID()));
+    command.setCredentialsProvider(credentialsProvider);
     command.setTimeout(sourceControlConfig.getGitCommandTimeoutSeconds());
     return command;
   }

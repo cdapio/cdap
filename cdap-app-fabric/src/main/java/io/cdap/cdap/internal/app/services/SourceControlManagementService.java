@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -35,6 +36,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
+
+import java.io.IOException;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -109,7 +112,11 @@ public class SourceControlManagementService {
   }
 
   public void validateRepository(NamespaceId namespace, RepositoryConfig repoConfig) {
-    // TODO: CDAP-20354, throw correct non-400 validation errors
-    RepositoryManager.validateConfig(secureStore, new SourceControlConfig(namespace, repoConfig, cConf));
+    try {
+      RepositoryManager.validateConfig(secureStore, new SourceControlConfig(namespace, repoConfig, cConf));
+    } catch (IOException e) {
+      // TODO: CDAP-20354, throw correct non-400 validation errors
+      throw new RepositoryConfigValidationException("Internal error: " + e.getMessage(), e);
+    }
   }
 }
