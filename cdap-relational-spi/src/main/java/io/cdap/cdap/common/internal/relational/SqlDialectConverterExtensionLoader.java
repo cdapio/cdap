@@ -14,13 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.common.internal.relational;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 
 import java.io.IOException;

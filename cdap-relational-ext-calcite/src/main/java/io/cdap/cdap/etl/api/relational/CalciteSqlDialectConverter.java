@@ -18,6 +18,9 @@ package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.etl.spi.relational.SqlDialect;
+import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
+import io.cdap.cdap.etl.spi.relational.SqlDialectException;
 import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.SqlNode;

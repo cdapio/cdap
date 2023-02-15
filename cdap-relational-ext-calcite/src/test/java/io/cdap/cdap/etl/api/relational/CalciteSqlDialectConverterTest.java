@@ -17,6 +17,8 @@
 package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.spi.relational.SqlDialect;
+import io.cdap.cdap.etl.spi.relational.SqlDialectException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

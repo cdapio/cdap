@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.etl.spi.relational;
 
 /**
  * Defines a list of SQL dialects that are supported by the SQL dialect conversion framework.

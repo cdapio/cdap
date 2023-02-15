@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.etl.spi.relational;
 
 public class SqlDialectException extends Exception {
     public SqlDialectException(String message) {

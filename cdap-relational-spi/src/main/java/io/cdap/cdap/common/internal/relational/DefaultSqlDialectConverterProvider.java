@@ -14,13 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.common.internal.relational;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
 
 import javax.annotation.Nullable;
 

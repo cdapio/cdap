@@ -14,10 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.etl.spi.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.engine.sql.StandardSQLCapabilities;
+import io.cdap.cdap.etl.api.relational.Capability;
+import io.cdap.cdap.etl.api.relational.Expression;
+import io.cdap.cdap.etl.api.relational.ExpressionFactory;
+import io.cdap.cdap.etl.api.relational.ExpressionFactoryType;
+import io.cdap.cdap.etl.api.relational.InvalidExtractableExpression;
+import io.cdap.cdap.etl.api.relational.StringExpression;
+import io.cdap.cdap.etl.api.relational.StringExpressionFactoryType;
 
 import java.util.Collections;
 import java.util.HashSet;

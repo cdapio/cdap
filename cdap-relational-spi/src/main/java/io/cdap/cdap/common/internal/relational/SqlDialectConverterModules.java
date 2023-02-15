@@ -14,12 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.common.internal.relational;
 
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
+import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
 
 /**
  * Provides Guice bindings for {@link SqlDialectConverter}.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.api.relational;
+package io.cdap.cdap.etl.spi.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
 
