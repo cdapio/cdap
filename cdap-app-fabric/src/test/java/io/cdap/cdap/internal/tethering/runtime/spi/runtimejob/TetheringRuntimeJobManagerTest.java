@@ -103,7 +103,7 @@ public class TetheringRuntimeJobManagerTest {
   @BeforeClass
   public static void setUp() throws IOException, TopicAlreadyExistsException, PeerAlreadyExistsException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Tethering.TOPIC_PREFIX, "prefix-");
+    cConf.set(Constants.Tethering.CLIENT_TOPIC_PREFIX, "prefix-");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -139,7 +139,7 @@ public class TetheringRuntimeJobManagerTest {
     tetheringStore.addPeer(peerInfo);
     TetheringConf conf = TetheringConf.fromProperties(PROPERTIES);
     topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                          cConf.get(Constants.Tethering.TOPIC_PREFIX) + TETHERED_INSTANCE_NAME);
+                          cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX) + TETHERED_INSTANCE_NAME);
     messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
     messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
     runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore,

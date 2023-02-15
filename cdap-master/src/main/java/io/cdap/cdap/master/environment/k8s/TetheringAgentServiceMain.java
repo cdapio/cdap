@@ -35,6 +35,7 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher;
 import io.cdap.cdap.internal.tethering.TetheringAgentService;
+import io.cdap.cdap.internal.tethering.TetheringProgramEventPublisher;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -80,6 +81,8 @@ public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOp
         protected void configure() {
           bind(TetheringAgentService.class).in(Scopes.SINGLETON);
           expose(TetheringAgentService.class);
+          bind(TetheringProgramEventPublisher.class).in(Scopes.SINGLETON);
+          expose(TetheringProgramEventPublisher.class);
           bind(ProgramRunRecordFetcher.class).to(StoreProgramRunRecordFetcher.class).in(Scopes.SINGLETON);
           expose(ProgramRunRecordFetcher.class);
         }
@@ -96,6 +99,7 @@ public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOp
       services.add(zkBinding.getProvider().get());
     }
     services.add(injector.getInstance(TetheringAgentService.class));
+    services.add(injector.getInstance(TetheringProgramEventPublisher.class));
   }
 
   @Nullable

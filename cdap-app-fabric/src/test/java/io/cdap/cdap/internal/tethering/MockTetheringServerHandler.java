@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.tethering;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -26,6 +27,7 @@ import org.junit.Assert;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Objects;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -39,6 +41,7 @@ public class MockTetheringServerHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
   private HttpResponseStatus responseStatus = HttpResponseStatus.OK;
   private TetheringStatus tetheringStatus = TetheringStatus.PENDING;
+  private String programStatus;
 
   @POST
   @Path("/tethering/channels/{peer}")
@@ -65,6 +68,13 @@ public class MockTetheringServerHandler extends AbstractHttpHandler {
                                                                          new byte[0]);
     TetheringControlMessageWithId controlMessageWithId = new TetheringControlMessageWithId(controlMessage,
                                                                                            "1");
+    String content = request.content().toString(StandardCharsets.UTF_8);
+    TetheringControlChannelRequest controlChannelRequest = GSON.fromJson(content, TetheringControlChannelRequest.class);
+    programStatus = controlChannelRequest.getNotificationList().stream()
+      .map(n -> n.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS))
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
+
     TetheringControlResponseV2 controlResponse = new TetheringControlResponseV2(
       Collections.singletonList(controlMessageWithId), tetheringStatus);
     responder.sendJson(responseStatus, GSON.toJson(controlResponse, TetheringControlResponseV2.class));
@@ -86,5 +96,9 @@ public class MockTetheringServerHandler extends AbstractHttpHandler {
 
   public void setTetheringStatus(TetheringStatus tetheringStatus) {
     this.tetheringStatus = tetheringStatus;
+  }
+
+  public String getProgramStatus() {
+    return programStatus;
   }
 }

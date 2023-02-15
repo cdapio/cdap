@@ -2070,6 +2070,16 @@ public class AppMetadataStore {
     getSubscriberStateTable().upsert(keys);
   }
 
+  /**
+   * Deletes the topic's last fetched message id for the given subscriber.
+   *
+   * @param topic the topic name
+   * @param subscriber the subscriber name
+   */
+  public void deleteSubscriberState(String topic, String subscriber) throws IOException {
+    getSubscriberStateTable().delete(getSubscriberKeys(topic, subscriber));
+  }
+
   @VisibleForTesting
   Set<RunId> getRunningInRangeForStatus(String statusKey, long startTimeInSecs,
                                         long endTimeInSecs) throws IOException {

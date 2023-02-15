@@ -145,7 +145,7 @@ public class TetheringServerHandlerTest {
   public static void setup() throws IOException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    topicPrefix = cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX);
     injector = Guice.createInjector(
       new ConfigModule(cConf),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
@@ -208,7 +208,8 @@ public class TetheringServerHandlerTest {
       .setHttpHandlers(
         new TetheringServerHandler(cConf, tetheringStore, messagingService, contextAccessEnforcer,
                                    messagingProgramStatePublisher),
-        new TetheringHandler(cConf, tetheringStore, messagingService, profileService)).build();
+        new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
+      .build();
     service.start();
     config = ClientConfig.builder()
       .setConnectionConfig(
@@ -417,7 +418,7 @@ public class TetheringServerHandlerTest {
 
     // Queue up a couple of messages for the peer
     MessagePublisher publisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
-    String topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    String topicPrefix = cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX);
     String topic = topicPrefix + "xyz";
     TetheringLaunchMessage launchMessage = new TetheringLaunchMessage.Builder()
       .addFileNames(DistributedProgramRunner.LOGBACK_FILE_NAME)
@@ -479,7 +480,7 @@ public class TetheringServerHandlerTest {
     TetheringControlMessage controlMessage = new TetheringControlMessage(TetheringControlMessage.Type.KEEPALIVE,
                                                                          new byte[0]);
     MessagePublisher publisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
-    String topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    String topicPrefix = cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX);
     String topic = topicPrefix + "xyz";
     publisher.publish(NamespaceId.SYSTEM.getNamespace(), topic, GSON.toJson(controlMessage));
 
