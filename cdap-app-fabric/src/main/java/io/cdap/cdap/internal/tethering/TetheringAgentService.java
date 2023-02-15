@@ -25,12 +25,12 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -44,25 +44,19 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
-import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
-import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -92,33 +86,24 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
-  private static final String SUBSCRIBER = "tether.agent";
-  private static final String PEER_TOPIC_PREFIX = "tethering.peer.message.state.";
-
   public static final String REMOTE_TETHERING_AUTHENTICATOR = "remoteTetheringAuthenticator";
 
   private final CConfiguration cConf;
   private final long connectionInterval;
   private final TetheringStore store;
-  private final TransactionRunner transactionRunner;
-  // Tracks id of the last control message received from each tethered peer.
-  private final Map<String, String> peerToLastControlMessageIds;
   private final ProgramStateWriter programStateWriter;
   private final MessageFetcher messageFetcher;
-  private final ProgramRunRecordFetcher runRecordFetcher;
   private final LocationFactory locationFactory;
   private final ProvisionerNotifier provisionerNotifier;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final String programUpdateTopic;
   private final int programUpdateFetchSize;
   private final TetheringClient tetheringClient;
-  // Tracks id of last program status update message that was processed.
-  private String lastProgramUpdateMessageId;
+  private final String programStateTopicPrefix;
+  private SubscriberState subscriberState;
 
   @Inject
-  TetheringAgentService(CConfiguration cConf, TransactionRunner transactionRunner, TetheringStore store,
+  TetheringAgentService(CConfiguration cConf, TetheringStore store,
                         ProgramStateWriter programStateWriter, MessagingService messagingService,
-                        ProgramRunRecordFetcher programRunRecordFetcher,
                         @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator,
                         LocationFactory locationFactory,
                         ProvisionerNotifier provisionerNotifier,
@@ -126,18 +111,16 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
     this.cConf = cConf;
-    this.transactionRunner = transactionRunner;
+    this.programStateTopicPrefix = cConf.get(Constants.Tethering.PROGRAM_STATE_TOPIC_PREFIX);
     this.store = store;
-    this.peerToLastControlMessageIds = new HashMap<>();
     this.programStateWriter = programStateWriter;
     this.messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
-    this.runRecordFetcher = programRunRecordFetcher;
     this.locationFactory = locationFactory;
     this.provisionerNotifier = provisionerNotifier;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.programUpdateTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.tetheringClient = new TetheringClient(remoteAuthenticator, cConf);
     this.programUpdateFetchSize = cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE);
+    this.subscriberState = new SubscriberState();
   }
 
   @Override
@@ -156,15 +139,14 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       .filter(p -> p.getTetheringStatus() != TetheringStatus.REJECTED)
       .collect(Collectors.toList());
 
-    PeerProgramUpdates peerProgramUpdates = getPeerProgramUpdates(lastProgramUpdateMessageId);
     for (PeerInfo peer : peers) {
       // Endpoint should never be null here. Endpoint is only null on the server side.
       Preconditions.checkArgument(peer.getEndpoint() != null,
                                   "Peer %s doesn't have an endpoint", peer.getName());
-      String lastControlMessageId = peerToLastControlMessageIds.get(peer.getName());
-      List<Notification> notificationList = peerProgramUpdates.peerToNotifications.get(peer.getName());
+      String lastControlMessageId = subscriberState.getLastMessageIdReceived(peer.getName());
+      ProgramStateUpdates p = getProgramStateUpdates(peer.getName());
       TetheringControlChannelRequest channelRequest = new TetheringControlChannelRequest(lastControlMessageId,
-                                                                                         notificationList);
+                                                                                         p.notifications);
       TetheringControlResponseV2 response;
       try {
         response = tetheringClient.pollControlChannel(peer, channelRequest);
@@ -172,6 +154,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
         LOG.debug("Failed to create control channel to {}", peer.getName(), e);
         continue;
       }
+      subscriberState.setLastMessageIdSent(peer.getName(), p.lastMessageId);
 
       switch (response.getTetheringStatus()) {
         case PENDING:
@@ -181,7 +164,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
           store.updatePeerStatusAndTimestamp(peer.getName(), TetheringStatus.ACCEPTED);
           String lastMessageId = processTetheringControlResponse(response, peer);
           if (lastMessageId != null) {
-            peerToLastControlMessageIds.put(peer.getName(), lastMessageId);
+            subscriberState.setLastMessageIdReceived(peer.getName(), lastMessageId);
           }
           break;
         case REJECTED:
@@ -193,16 +176,9 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
                     response.getTetheringStatus(), peer.getName());
       }
     }
-    lastProgramUpdateMessageId = peerProgramUpdates.lastMessageId;
 
     // Update last message ids in the store for all peers
-    TransactionRunners.run(transactionRunner, context -> {
-      AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-      for (Map.Entry<String, String> entry : peerToLastControlMessageIds.entrySet()) {
-        appMetadataStore.persistSubscriberState(PEER_TOPIC_PREFIX + entry.getKey(), SUBSCRIBER, entry.getValue());
-      }
-      appMetadataStore.persistSubscriberState(programUpdateTopic, SUBSCRIBER, lastProgramUpdateMessageId);
-    });
+    store.updateSubscriberState(subscriberState);
 
     return connectionInterval;
   }
@@ -218,22 +194,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       return;
     }
 
-    TransactionRunners.run(transactionRunner, context -> {
-      AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-      for (String peer : peers) {
-        String messageId = appMetadataStore.retrieveSubscriberState(PEER_TOPIC_PREFIX + peer, SUBSCRIBER);
-        peerToLastControlMessageIds.put(peer, messageId);
-      }
-      // Initialize subscriber based on last message fetched by RuntimeProgramStatusSubscriberService.
-      // This is to avoid fetching existing program history from before TetheringAgent was added
-      lastProgramUpdateMessageId = appMetadataStore.retrieveSubscriberState(programUpdateTopic, SUBSCRIBER);
-      if (lastProgramUpdateMessageId == null) {
-        String messageId = appMetadataStore.retrieveSubscriberState(programUpdateTopic,
-                                                                    RuntimeProgramStatusSubscriberService.SUBSCRIBER);
-        appMetadataStore.persistSubscriberState(programUpdateTopic, SUBSCRIBER, messageId);
-        lastProgramUpdateMessageId = messageId;
-      }
-    });
+    subscriberState = store.initializeSubscriberState(peers);
   }
 
   /**
@@ -377,52 +338,41 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   }
 
   /**
-   * Returns program status updates for tethered peers.
+   * Reads from per-peer topic and returns program status updates for the given tethered peer.
    */
-  private PeerProgramUpdates getPeerProgramUpdates(String afterMessageId) {
-    Map<String, List<Notification>> peerToNotifications = new HashMap<>();
-    String lastMessageId = afterMessageId;
+  private ProgramStateUpdates getProgramStateUpdates(String peerName) {
+    String topic = programStateTopicPrefix + peerName;
+    String lastMessageId = subscriberState.getLastMessageIdSent(peerName);
+    List<Notification> notifications = new ArrayList<>();
     try (CloseableIterator<Message> iterator = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                                                                    programUpdateTopic,
+                                                                    topic,
                                                                     programUpdateFetchSize,
-                                                                    afterMessageId)) {
+                                                                    subscriberState.getLastMessageIdSent(peerName))) {
       while (iterator.hasNext()) {
         Message message = iterator.next();
-        Notification notification = message.decodePayload(r -> GSON.fromJson(r, Notification.class));
-        if (notification.getNotificationType() == Notification.Type.PROGRAM_STATUS) {
-          Map<String, String> properties = notification.getProperties();
-          String programRunId = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
-          try {
-            RunRecord runRecord = runRecordFetcher.getRunRecordMeta(GSON.fromJson(programRunId, ProgramRunId.class));
-            if (runRecord.getPeerName() != null) {
-              String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
-              LOG.debug("Notifying peer {} about program run {} in state {}",
-                       runRecord.getPeerName(), programRunId, programStatus);
-              peerToNotifications.computeIfAbsent(runRecord.getPeerName(), n -> new ArrayList<>()).add(notification);
-            }
-          } catch (NotFoundException | IOException e) {
-            LOG.error("Unable to fetch runRecord for programRunId {}", programRunId, e);
-          }
-        }
+        notifications.add(message.decodePayload(r -> GSON.fromJson(r, Notification.class)));
         lastMessageId = message.getId();
       }
-    } catch (Exception e) {
-      LOG.error("Exception when fetching program updates. Will retry again during next poll", e);
+    } catch (TopicNotFoundException e) {
+      LOG.error("Topic {} does not exist", topic);
+    } catch (IOException e) {
+      LOG.error("Exception when fetching program updates from per-peer topic at message id {}",
+                subscriberState.getLastMessageIdSent(peerName), e);
     }
-    return new PeerProgramUpdates(peerToNotifications, lastMessageId);
+    return new ProgramStateUpdates(notifications, lastMessageId);
   }
 
   /**
    * Program status notifications for tethered peers.
    */
-  private class PeerProgramUpdates {
-    // List of notifications for each tethered peer
-    private Map<String, List<Notification>> peerToNotifications;
+  private static class ProgramStateUpdates {
+    // List of notifications
+    private final List<Notification> notifications;
     // Last message id read from TMS
-    private String lastMessageId;
+    private final String lastMessageId;
 
-    private PeerProgramUpdates(Map<String, List<Notification>> peerToNotifications, String lastMessageId) {
-      this.peerToNotifications = peerToNotifications;
+    private ProgramStateUpdates(List<Notification> notifications, String lastMessageId) {
+      this.notifications = notifications;
       this.lastMessageId = lastMessageId;
     }
   }

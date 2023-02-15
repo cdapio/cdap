@@ -1956,7 +1956,11 @@ public final class Constants {
     /**
      * Prefix of per-client TMS topic used on the tethering server.
      */
-    public static final String TOPIC_PREFIX = "tethering.topic.prefix";
+    public static final String CLIENT_TOPIC_PREFIX = "tethering.topic.prefix";
+    /**
+     * Prefix of program state TMS topic used on the tethering client.
+     */
+    public static final String PROGRAM_STATE_TOPIC_PREFIX = "tethering.program.state.topic.prefix";
     /**
      * Interval for connecting to the server.
      */

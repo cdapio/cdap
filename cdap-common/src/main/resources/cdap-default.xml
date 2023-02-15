@@ -5358,6 +5358,14 @@
   </property>
 
   <property>
+    <name>tethering.program.state.topic.prefix</name>
+    <value>tether_program_state_</value>
+    <description>
+      TMS topic prefix used on tethering client that contains program status updates for the peer
+    </description>
+  </property>
+
+  <property>
     <name>tethering.client.connection.timeout.ms</name>
     <value>${http.client.connection.timeout.ms}</value>
     <description>

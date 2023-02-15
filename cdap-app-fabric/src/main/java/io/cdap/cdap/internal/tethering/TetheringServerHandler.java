@@ -88,7 +88,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     this.store = store;
     this.messagingService = messagingService;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
-    this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    this.topicPrefix = cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX);
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.programStatePublisher = programStatePublisher;
   }
@@ -217,6 +217,10 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                                     topicPrefix + peer);
       createTopicIfNeeded(topicId);
+    } else {
+      // Recreate topic if the client deletes and recreates tethering.
+      LOG.debug("Peer {} exists, recreating tethering topic", peer);
+      deleteTopicForPeer(peer);
     }
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -289,6 +293,10 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     } catch (PeerNotFoundException e) {
       // Peer doesn't exist, nothing to do here
     }
+    deleteTopicForPeer(peer);
+  }
+
+  private void deleteTopicForPeer(String peer) throws IOException {
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                                 topicPrefix + peer);
     try {

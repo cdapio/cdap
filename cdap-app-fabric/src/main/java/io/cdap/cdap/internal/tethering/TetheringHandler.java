@@ -60,7 +60,10 @@ public class TetheringHandler extends AbstractHttpHandler {
   private final CConfiguration cConf;
   private final TetheringStore store;
   private final MessagingService messagingService;
-  private final String topicPrefix;
+  // Prefix of per-client TMS topic used on the tethering server.
+  private final String clientTopicPrefix;
+  // Prefix of program state TMS topic used on the tethering client.
+  private final String programStateTopicPrefix;
   private final ProfileService profileService;
 
   // Connection timeout in seconds.
@@ -72,7 +75,8 @@ public class TetheringHandler extends AbstractHttpHandler {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
-    this.topicPrefix = cConf.get(Constants.Tethering.TOPIC_PREFIX);
+    this.clientTopicPrefix = cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX);
+    this.programStateTopicPrefix = cConf.get(Constants.Tethering.PROGRAM_STATE_TOPIC_PREFIX);
     this.profileService = profileService;
   }
 
@@ -127,17 +131,18 @@ public class TetheringHandler extends AbstractHttpHandler {
       }
     }
 
-    store.deletePeer(peer);
-    // Remove per-peer tethering topic if we're running on the server
-    if (tetheringServerEnabled) {
-      TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                                  topicPrefix + peer);
-      try {
-        messagingService.deleteTopic(topic);
-      } catch (TopicNotFoundException e) {
-        LOG.info("Topic {} was not found", topic.getTopic());
-      }
+    // We need to delete subscriber state in addition to peer entry in tethering table on the client side.
+    store.deletePeer(peer, !tetheringServerEnabled);
+    // Remove per-tethering client topic if we're running on the server
+    // If we're running on the client, remove per-tethering server program status update topic
+    TopicId topic = tetheringServerEnabled ? new TopicId(NamespaceId.SYSTEM.getNamespace(), clientTopicPrefix + peer) :
+      new TopicId(NamespaceId.SYSTEM.getNamespace(), programStateTopicPrefix + peer);
+    try {
+      messagingService.deleteTopic(topic);
+    } catch (TopicNotFoundException e) {
+      LOG.info("Topic {} was not found", topic.getTopic());
     }
+
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
