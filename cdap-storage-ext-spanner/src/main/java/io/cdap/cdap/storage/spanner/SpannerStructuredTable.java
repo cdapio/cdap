@@ -355,8 +355,7 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public void deleteAll(Range range) throws InvalidFieldException {
-    fieldValidator.validatePrimaryKeys(range.getBegin(), true);
-    fieldValidator.validatePrimaryKeys(range.getEnd(), true);
+    fieldValidator.validateScanRange(range);
 
     Map<String, Value> parameters = new HashMap<>();
     String condition = getRangeWhereClause(range, parameters);
