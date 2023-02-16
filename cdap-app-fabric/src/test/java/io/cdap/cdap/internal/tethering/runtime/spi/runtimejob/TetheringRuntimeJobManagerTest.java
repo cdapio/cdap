@@ -217,4 +217,14 @@ public class TetheringRuntimeJobManagerTest {
     // Validation should fail because the tethering status is not yet accepted
     runtimeJobManager.checkTetheredConnection(TETHERED_INSTANCE_NAME, TETHERED_INSTANCE_NAME);
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testTetheringProfileWithInvalidPeerName() {
+    Map<String, String> properties = ImmutableMap.of(TetheringConf.TETHERED_INSTANCE_PROPERTY,
+                                                     // invalid space character in instance name
+                                                     " myinstance",
+                                                     TetheringConf.TETHERED_NAMESPACE_PROPERTY,
+                                                     TETHERED_NAMESPACE_NAME);
+    TetheringConf.fromProperties(properties);
+  }
 }
