@@ -92,7 +92,7 @@ public class LocalGitServer extends ExternalResource {
     testGit = Git.init().setDirectory(testRepoDir).call();
 
     // We need to initialize history by committing before switching branches.
-    Files.write(testGit.getRepository().getDirectory().toPath().resolve("abc.txt"), "content".getBytes());
+    Files.write(testRepoDir.toPath().resolve("abc.txt"), "content".getBytes());
     testGit.add().addFilepattern(".").call();
     testGit.commit().setMessage("main_message").call();
     testGit.checkout().setCreateBranch(true).setName(branchName).call();
