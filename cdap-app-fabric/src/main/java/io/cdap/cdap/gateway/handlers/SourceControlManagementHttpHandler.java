@@ -20,8 +20,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.ForbiddenException;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
@@ -33,13 +37,16 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppResponse;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.PushAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
@@ -48,7 +55,10 @@ import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.DELETE;
@@ -67,6 +77,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   private final FeatureFlagsProvider featureFlagsProvider;
   private final CConfiguration cConf;
   private static final Gson GSON = new Gson();
+  private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementHttpHandler.class);
 
   @Inject
   SourceControlManagementHttpHandler(CConfiguration cConf,
@@ -168,6 +179,43 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     } catch (PushFailureException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  /**
+   * Pull application configs from linked repository and deploy in the namespace.
+   */
+  @POST
+  @Path("/pull/apps/{app-id}")
+  public void pullApp(FullHttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
+                      @PathParam("app-id") final String appId) throws Exception {
+    checkSourceControlFeatureFlag();
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+    if (!EntityId.isValidId(appId)) {
+      throw new BadRequestException(String.format("Invalid app name '%s'", appId));
+    }
+    ApplicationId applicationId = namespace.app(appId, RunIds.generate().getId());
+
+    try {
+      ApplicationRecord appRecord = sourceControlService.pullAndDeploy(namespace, applicationId);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appRecord));
+    } catch (ArtifactNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (ConflictException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (UnauthorizedException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (InvalidArtifactException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (IOException e) {
+      LOG.error("Error reading request body for creating app {}.", appId);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
+        "Error while reading json request body for app %s.", appId));
+    } catch (Exception e) {
+      LOG.error("Deploy failure", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
+
   }
 
   private ImmutablePair<List<ApplicationId>, String> validateAndGetAppsRequest(

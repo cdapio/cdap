@@ -25,6 +25,7 @@ import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.apache.twill.filesystem.Location;
 
@@ -53,8 +54,8 @@ public class ApplicationDeployable {
   private final boolean updateSchedules;
   @Nullable
   private final ChangeDetail changeDetail;
-
-  //TODO: CDAP-20248, add SourceControlMeta when we do pull and deploy
+  @Nullable
+  private final SourceControlMeta sourceControlMeta;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
@@ -63,7 +64,7 @@ public class ApplicationDeployable {
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
          applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
-         null);
+         null, null);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -74,7 +75,8 @@ public class ApplicationDeployable {
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables,
-                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail) {
+                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail,
+                               @Nullable SourceControlMeta sourceControlMeta) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -87,6 +89,7 @@ public class ApplicationDeployable {
     this.applicationClass = applicationClass;
     this.metadata = metadata;
     this.changeDetail = changeDetail;
+    this.sourceControlMeta = sourceControlMeta;
   }
 
   /**
@@ -173,5 +176,10 @@ public class ApplicationDeployable {
   @Nullable
   public ChangeDetail getChangeDetail() {
     return changeDetail;
+  }
+
+  @Nullable
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControlMeta;
   }
 }

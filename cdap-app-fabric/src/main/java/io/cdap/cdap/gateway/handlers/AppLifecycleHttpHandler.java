@@ -741,7 +741,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           try {
             ApplicationWithPrograms app = applicationLifecycleService.deployApp(
               appId.getParent(), appId.getApplication(), appId.getVersion(), artifactSummary, configString,
-              changeSummary, createProgramTerminator(), ownerPrincipalId, appRequest.canUpdateSchedules(),
+              changeSummary, null, createProgramTerminator(), ownerPrincipalId, appRequest.canUpdateSchedules(),
               false, Collections.emptyMap());
 
             LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +

@@ -129,7 +129,7 @@ public class ApplicationRecord {
       ", version='" + version + '\'' +
       ", description='" + description + '\'' +
       ", artifact=" + artifact +
-      ", ownerPrincipal=" + ownerPrincipal + '\'' +
+      ", ownerPrincipal='" + ownerPrincipal + '\'' +
       ", change=" + change +
       ", sourceControlMeta=" + sourceControlMeta +
       '}';

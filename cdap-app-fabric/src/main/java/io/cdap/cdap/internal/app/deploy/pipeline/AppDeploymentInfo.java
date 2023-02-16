@@ -26,9 +26,11 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import org.apache.twill.filesystem.Location;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 
 /**
  * Information required by application deployment pipeline {@link LocalApplicationManager}.
@@ -55,6 +57,8 @@ public class AppDeploymentInfo {
   @Nullable
   private final ChangeDetail changeDetail;
   @Nullable
+  private final SourceControlMeta sourceControlMeta;
+  @Nullable
   private final ApplicationSpecification deployedApplicationSpec;
 
   /**
@@ -80,6 +84,7 @@ public class AppDeploymentInfo {
       .setUpdateSchedules(other.updateSchedules)
       .setRuntimeInfo(other.runtimeInfo)
       .setChangeDetail(other.changeDetail)
+      .setSourceControlMeta(other.sourceControlMeta)
       .setDeployedApplicationSpec(other.deployedApplicationSpec);
   }
 
@@ -87,7 +92,7 @@ public class AppDeploymentInfo {
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable ChangeDetail changeDetail,
+                            @Nullable ChangeDetail changeDetail, @Nullable SourceControlMeta sourceControlMeta,
                             @Nullable ApplicationSpecification deployedApplicationSpec) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
@@ -100,6 +105,7 @@ public class AppDeploymentInfo {
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
     this.changeDetail = changeDetail;
+    this.sourceControlMeta = sourceControlMeta;
     this.deployedApplicationSpec = deployedApplicationSpec;
   }
 
@@ -190,6 +196,11 @@ public class AppDeploymentInfo {
     return changeDetail;
   }
 
+  @Null
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControlMeta;
+  }
+
   /**
    * Returns the previously deployed Application Specification. Will be null for the 1st deployment
    */
@@ -216,6 +227,7 @@ public class AppDeploymentInfo {
     private AppDeploymentRuntimeInfo runtimeInfo;
     @Nullable
     private ChangeDetail changeDetail;
+    @Nullable SourceControlMeta sourceControlMeta;
     @Nullable
     private ApplicationSpecification deployedApplicationSpec;
 
@@ -285,6 +297,11 @@ public class AppDeploymentInfo {
       return this;
     }
 
+    public Builder setSourceControlMeta(@Nullable SourceControlMeta sourceControlMeta) {
+      this.sourceControlMeta = sourceControlMeta;
+      return this;
+    }
+
     public Builder setDeployedApplicationSpec(@Nullable ApplicationSpecification deployedApplicationSpec) {
       this.deployedApplicationSpec = deployedApplicationSpec;
       return this;
@@ -305,7 +322,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
                                    appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeDetail, deployedApplicationSpec);
+                                   changeDetail, sourceControlMeta, deployedApplicationSpec);
     }
   }
 }

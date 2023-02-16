@@ -17,8 +17,6 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 
 import java.util.List;
@@ -36,4 +34,11 @@ public interface SourceControlOperationRunner {
   PushAppsResponse push(NamespaceId namespace, RepositoryConfig repoConfig,
                         List<ApplicationDetail> appsToPush, CommitMeta commitDetails)
     throws Exception;
+
+  /**
+   * @param appId List of app names and configs to be pushed
+   * @return {@link PullAppResponse} which contains the application config details and source control metadata.
+   * @throws Exception when the pull operation fails for any reason.
+   */
+  PullAppResponse pull(ApplicationId appId) throws Exception;
 }

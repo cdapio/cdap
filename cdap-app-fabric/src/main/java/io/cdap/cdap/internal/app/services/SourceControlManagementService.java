@@ -17,19 +17,29 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.sourcecontrol.PullAppResponse;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
 import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunner;
 import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.ChangeSummary;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -49,12 +59,16 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -72,6 +86,13 @@ public class SourceControlManagementService {
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
+  // Gson for writing response
+  private static final Gson GSON = new Gson();
+  // Gson for decoding request
+  private static final Gson DECODE_GSON = new GsonBuilder()
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .create();
+  private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
   @Inject
@@ -190,5 +211,48 @@ public class SourceControlManagementService {
     }
 
     return details;
+  }
+
+  private RepositoryManager createRepositoryManager(NamespaceId namespace) throws RepositoryNotFoundException {
+    RepositoryMeta repoMeta = getRepositoryMeta(namespace);
+    SourceControlConfig config = new SourceControlConfig(namespace, repoMeta.getConfig(), cConf);
+    return new RepositoryManager(secureStore, config);
+  }
+
+  public ApplicationRecord pullAndDeploy(NamespaceId namespace, ApplicationId appId) throws Exception {
+    try (RepositoryManager repoManager = createRepositoryManager(namespace)) {
+      SourceControlOperationRunner sourceControlRunner = sourceControlFactory.create(repoManager);
+      PullAppResponse appToDeploy = sourceControlRunner.pull(appId);
+
+      AppRequest<?> appRequest = DECODE_GSON.fromJson(appToDeploy.getAppDetailString(), AppRequest.class);
+
+      KerberosPrincipalId ownerPrincipalId =
+        appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
+
+      // if we don't null check, it gets serialized to "null"
+      Object config = appRequest.getConfig();
+      String configString = config == null ? null : config instanceof String ? (String) config : GSON.toJson(config);
+      ChangeSummary changeSummary = appRequest.getChange();
+      SourceControlMeta sourceControlMeta = new SourceControlMeta(appToDeploy.getFileHash());
+
+      ApplicationWithPrograms app = appLifecycleService.deployApp(
+        appId.getParent(), appId.getApplication(), appId.getVersion(), appRequest.getArtifact(), configString,
+        changeSummary, sourceControlMeta, x -> { }, ownerPrincipalId, appRequest.canUpdateSchedules(),
+        false, Collections.emptyMap()
+      );
+
+      LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
+                 "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
+               app.getArtifactId(), configString, app.getOwnerPrincipal()
+      );
+
+      return new ApplicationRecord(
+        ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
+        app.getApplicationId().getApplication(),
+        app.getApplicationId().getVersion(),
+        app.getSpecification().getDescription(),
+        Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
+        app.getChangeDetail(), app.getSourceControlMeta());
+    }
   }
 }
