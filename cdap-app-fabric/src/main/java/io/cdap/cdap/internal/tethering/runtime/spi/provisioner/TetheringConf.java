@@ -42,6 +42,7 @@ public class TetheringConf {
     String tetheredInstanceName = getString(properties, TETHERED_INSTANCE_PROPERTY);
     String tetheredNamespace = getString(properties, TETHERED_NAMESPACE_PROPERTY);
     EntityId.ensureValidNamespace(tetheredNamespace);
+    EntityId.ensureValidId("tetheredInstanceName", tetheredInstanceName);
     return new TetheringConf(tetheredInstanceName, tetheredNamespace);
   }
 
