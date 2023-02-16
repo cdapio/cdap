@@ -30,8 +30,8 @@ import java.util.Objects;
  */
 public class SourceControlConfig {
   private final String namespaceID;
-  // Path where local git repository is stored.
-  private final Path localRepoPath;
+  // Path where local git repositories are stored.
+  private final Path localReposClonePath;
   private final int gitCommandTimeoutSeconds;
   private final RepositoryConfig repositoryConfig;
 
@@ -40,15 +40,15 @@ public class SourceControlConfig {
     this.repositoryConfig = repositoryConfig;
     String gitCloneDirectory = cConf.get(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH);
     this.gitCommandTimeoutSeconds = cConf.getInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS);
-    this.localRepoPath = Paths.get(gitCloneDirectory, "namespace", this.namespaceID);
+    this.localReposClonePath = Paths.get(gitCloneDirectory, "namespace", this.namespaceID);
   }
 
   public String getNamespaceID() {
     return namespaceID;
   }
 
-  public Path getLocalRepoPath() {
-    return localRepoPath;
+  public Path getLocalReposClonePath() {
+    return localReposClonePath;
   }
 
   public int getGitCommandTimeoutSeconds() {
@@ -69,11 +69,11 @@ public class SourceControlConfig {
     }
     SourceControlConfig that = (SourceControlConfig) o;
     return gitCommandTimeoutSeconds == that.gitCommandTimeoutSeconds && namespaceID.equals(that.namespaceID) &&
-      localRepoPath.equals(that.localRepoPath) && repositoryConfig.equals(that.repositoryConfig);
+      localReposClonePath.equals(that.localReposClonePath) && repositoryConfig.equals(that.repositoryConfig);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceID, localRepoPath, gitCommandTimeoutSeconds, repositoryConfig);
+    return Objects.hash(namespaceID, localReposClonePath, gitCommandTimeoutSeconds, repositoryConfig);
   }
 }
