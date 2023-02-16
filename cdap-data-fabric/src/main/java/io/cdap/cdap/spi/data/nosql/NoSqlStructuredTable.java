@@ -445,11 +445,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
         Collection<Field<?>> primaryKeys = iterator.next().getPrimaryKeys();
         List<Field<?>> fieldsToUpdate = Stream.concat(primaryKeys.stream(), fields.stream())
           .collect(Collectors.toList());
-        Put put = updateFieldsToBytes(fieldsToUpdate);
-        // Put will not have values if a row is not being updated
-        if (!put.getValues().isEmpty()) {
-          table.put(put);
-        }
+        table.put(convertFieldsToBytes(fieldsToUpdate));
       }
     }
   }
