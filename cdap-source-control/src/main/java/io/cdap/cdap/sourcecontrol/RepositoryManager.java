@@ -19,9 +19,12 @@ package io.cdap.cdap.sourcecontrol;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import org.eclipse.jgit.api.CloneCommand;
@@ -56,6 +59,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 /**
  * A git repository manager that is responsible for handling interfacing with git. It provides version control
@@ -70,11 +74,13 @@ public class RepositoryManager implements AutoCloseable {
   // same namespace from interfering with each other.
   private final String randomDirectoryName;
 
-  public RepositoryManager(SecureStore secureStore, SourceControlConfig sourceControlConfig) {
-    this.sourceControlConfig = sourceControlConfig;
+  @Inject
+  public RepositoryManager(SecureStore secureStore, CConfiguration cConf, @Assisted NamespaceId namespace,
+                           @Assisted RepositoryConfig repoConfig) {
+    this.sourceControlConfig = new SourceControlConfig(namespace, repoConfig, cConf);
     try {
-      this.credentialsProvider = new AuthenticationStrategyProvider(sourceControlConfig.getNamespaceID(), secureStore)
-        .get(sourceControlConfig.getRepositoryConfig())
+      this.credentialsProvider = new AuthenticationStrategyProvider(namespace.getNamespace(), secureStore)
+        .get(repoConfig)
         .getCredentialsProvider();
     } catch (AuthenticationStrategyNotFoundException e) {
       // This is not expected as only valid auth configs will be stored.

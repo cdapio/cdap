@@ -32,7 +32,6 @@ import io.cdap.cdap.internal.app.sourcecontrol.PushAppResponse;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
 import io.cdap.cdap.internal.app.sourcecontrol.PushFailureException;
 import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunner;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
@@ -66,8 +65,6 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private static CConfiguration cConf;
   private static NamespaceAdmin namespaceAdmin;
   private static SourceControlManagementService sourceControlService;
-  private static final SourceControlOperationRunnerFactory mockSourceControlFactory =
-    Mockito.mock(SourceControlOperationRunnerFactory.class);
   private static final SourceControlOperationRunner mockSourceControlOperationRunner =
     Mockito.mock(SourceControlOperationRunner.class);
 
@@ -75,7 +72,6 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public static void beforeClass() throws Exception {
     cConf = createBasicCConf();
     initializeAndStartServices(cConf);
-    Mockito.doReturn(mockSourceControlOperationRunner).when(mockSourceControlFactory).create(Mockito.any());
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     sourceControlService = getInjector().getInstance(SourceControlManagementService.class);
   }
@@ -86,7 +82,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       protected void configure() {
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-        bind(SourceControlOperationRunnerFactory.class).toInstance(mockSourceControlFactory);
+        bind(SourceControlOperationRunner.class).toInstance(mockSourceControlOperationRunner);
       }
     });
   }
@@ -208,7 +204,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .collect(Collectors.toList());
 
     Mockito.doReturn(new PushAppsResponse(expectedAppsResponse))
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
     // Assert the result is as expected
     PushAppsResponse result = sourceControlService.pushApps(namespaceId, appIds, "some commit");
@@ -259,7 +255,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .collect(Collectors.toList());
 
     Mockito.doReturn(new PushAppsResponse(expectedAppsResponse))
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
     // Assert the result is as expected
     try {
@@ -310,7 +306,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .collect(Collectors.toList());
 
     Mockito.doThrow(new PushFailureException("push apps failed", new Exception()))
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
     // Assert the result is as expected
     try {

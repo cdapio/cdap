@@ -266,9 +266,7 @@ public class RepositoryManagerTest {
     addSymbolicLinkToGit(symlinkPath2, symlinkPath1);
 
     RepositoryConfig repositoryConfig = getRepositoryConfigBuilder().setPathPrefix("cdap/applications").build();
-    SourceControlConfig sourceControlConfig =
-      new SourceControlConfig(new NamespaceId(NAMESPACE), repositoryConfig, cConf);
-    RepositoryManager manager = new RepositoryManager(secureStore, sourceControlConfig);
+    RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), repositoryConfig);
     String commitID = manager.cloneRemote();
     String expectedHash = getGitStyleHash(contents);
     // The hash of the original file, and both the symlinks should be equal.
@@ -300,7 +298,7 @@ public class RepositoryManagerTest {
    * @return the {@link RepositoryManager}.
    */
   private RepositoryManager getRepositoryManager() {
-    return new RepositoryManager(secureStore, getSourceControlConfig());
+    return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), getRepositoryConfigBuilder().build());
   }
 
   /**
@@ -393,9 +391,9 @@ public class RepositoryManagerTest {
       .setAuthType(AuthType.PAT)
       .setTokenName(GITHUB_TOKEN_NAME)
       .build();
-    SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, sourceControlConfig)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
+                                                           new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
       Path filePath = manager.getBasePath().resolve("file1");
@@ -422,7 +420,8 @@ public class RepositoryManagerTest {
       .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, sourceControlConfig)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE),
+                                                           config)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
 
@@ -451,9 +450,8 @@ public class RepositoryManagerTest {
       .setAuthType(AuthType.PAT)
       .setTokenName(GITHUB_TOKEN_NAME)
       .build();
-    SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, sourceControlConfig)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
       manager.commitAndPush(commitMeta, Collections.emptyList());

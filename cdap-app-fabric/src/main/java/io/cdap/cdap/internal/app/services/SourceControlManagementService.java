@@ -26,7 +26,6 @@ import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
 import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunner;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -67,7 +66,7 @@ public class SourceControlManagementService {
   private final TransactionRunner transactionRunner;
   private final CConfiguration cConf;
   private final SecureStore secureStore;
-  private final SourceControlOperationRunnerFactory sourceControlFactory;
+  private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
 
@@ -78,7 +77,7 @@ public class SourceControlManagementService {
                                         TransactionRunner transactionRunner,
                                         AccessEnforcer accessEnforcer,
                                         AuthenticationContext authenticationContext,
-                                        SourceControlOperationRunnerFactory sourceControlFactory,
+                                        SourceControlOperationRunner sourceControlOperationRunner,
                                         ApplicationLifecycleService applicationLifecycleService,
                                         Store store) {
     this.cConf = cConf;
@@ -86,7 +85,7 @@ public class SourceControlManagementService {
     this.transactionRunner = transactionRunner;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
-    this.sourceControlFactory = sourceControlFactory;
+    this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
   }
@@ -149,21 +148,20 @@ public class SourceControlManagementService {
 
   public PushAppsResponse pushApps(NamespaceId namespace, List<ApplicationId> appIds, @Nullable String commitMessage)
     throws Exception {
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
     Map<ApplicationId, ApplicationDetail> details = getAndValidateAppDetails(appIds);
 
     String committer = authenticationContext.getPrincipal().getName();
-    try (RepositoryManager repoManager = createRepositoryManager(namespace)) {
-      SourceControlOperationRunner sourceControlRunner = sourceControlFactory.create(repoManager);
+    List<ApplicationDetail> appsToPush = new ArrayList<>(details.values());
 
-      List<ApplicationDetail> appsToPush = new ArrayList<>(details.values());
+    // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
+    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
 
-      // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
-      CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
-      PushAppsResponse pushResponse = sourceControlRunner.push(appsToPush, commitMeta);
-      updateSourceControlMeta(namespace, pushResponse);
+    // TODO: CDAP-20360, add namespace in RepositoryConfig so that we don't need to further pass it in OperationRunner
+    PushAppsResponse pushResponse = sourceControlOperationRunner.push(namespace, repoConfig, appsToPush, commitMeta);
+    updateSourceControlMeta(namespace, pushResponse);
 
-      return pushResponse;
-    }
+    return pushResponse;
   }
 
   private void updateSourceControlMeta(NamespaceId namespace, PushAppsResponse pushResponse) {
@@ -189,11 +187,5 @@ public class SourceControlManagementService {
     }
     
     return details;
-  }
-
-  private RepositoryManager createRepositoryManager(NamespaceId namespace) throws RepositoryNotFoundException {
-    RepositoryMeta repoMeta = getRepositoryMeta(namespace);
-    SourceControlConfig config = new SourceControlConfig(namespace, repoMeta.getConfig(), cConf);
-    return new RepositoryManager(secureStore, config);
   }
 }

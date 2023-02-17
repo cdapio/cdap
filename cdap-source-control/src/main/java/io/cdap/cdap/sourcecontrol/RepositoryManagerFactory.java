@@ -14,13 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
+package io.cdap.cdap.sourcecontrol;
 
-import io.cdap.cdap.sourcecontrol.RepositoryManager;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 /**
- * SourceControlOperatorFactory interface which is used by Guice during runtime.
+ * RepositoryManagerFactory interface which is used by Guice during runtime to create a RepositoryManager.
  */
-public interface SourceControlOperationRunnerFactory {
-  SourceControlOperationRunner create(RepositoryManager repositoryManager);
+public interface RepositoryManagerFactory {
+  RepositoryManager create(NamespaceId namespace, RepositoryConfig repoConfig);
 }
