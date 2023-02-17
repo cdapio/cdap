@@ -29,7 +29,9 @@ import io.cdap.cdap.spi.data.transaction.TxCallable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -46,7 +48,13 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   private final int txTimeoutSeconds;
 
   /**
-   * Constructor.
+   * Specifies tx size for processing fetched messages.
+   * If txSize and fetchSize are identical, then all fetched messages are processed in one transaction.
+   */
+  private final int txSize;
+
+  /**
+   * Constructor with txSize being identical to fetchSize.
    *
    * @param topicId the topic to consume from
    * @param fetchSize number of messages to fetch in each batch
@@ -58,8 +66,17 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   protected AbstractMessagingSubscriberService(TopicId topicId, int fetchSize,
                                                int txTimeoutSeconds, long emptyFetchDelayMillis,
                                                RetryStrategy retryStrategy, MetricsContext metricsContext) {
+    this(topicId, fetchSize, txTimeoutSeconds, emptyFetchDelayMillis, retryStrategy, metricsContext, fetchSize);
+
+  }
+
+  protected AbstractMessagingSubscriberService(TopicId topicId, int fetchSize,
+                                               int txTimeoutSeconds, long emptyFetchDelayMillis,
+                                               RetryStrategy retryStrategy, MetricsContext metricsContext,
+                                               int txSize) {
     super(topicId, metricsContext, fetchSize, emptyFetchDelayMillis, retryStrategy);
     this.txTimeoutSeconds = txTimeoutSeconds;
+    this.txSize = txSize;
   }
 
   /**
@@ -134,15 +151,33 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   @Nullable
   @Override
   protected String processMessages(Iterable<ImmutablePair<String, T>> messages) throws Exception {
-    MessageTrackingIterator iterator;
 
     // Process the notifications and record the message id of where the processing is up to.
     // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
     long timeBoundMillis = 900L * txTimeoutSeconds;
-    iterator = TransactionRunners.run(getTransactionRunner(), context -> {
-      TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(),
-                                                                                              timeBoundMillis);
-      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
+    TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(),
+                                                                                            timeBoundMillis);
+
+    BatchIterator batchIterator = new BatchIterator(new MessageTrackingIterator(timeBoundMessages), this.txSize);
+    String lastMessageId = null;
+    while (batchIterator.hasNext()) {
+      try {
+        lastMessageId = batchProcessMessages(batchIterator.next());
+      } catch (Exception ex) {
+        if (lastMessageId != null) {
+          return lastMessageId;
+        }
+        throw ex;
+      }
+    }
+
+    return lastMessageId;
+  }
+
+  @Nullable
+  private String batchProcessMessages(Iterable<ImmutablePair<String, T>> batch) throws Exception {
+    MessageTrackingIterator iterator = TransactionRunners.run(getTransactionRunner(), context -> {
+      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(batch.iterator());
       processMessages(context, trackingIterator);
       String lastMessageId = trackingIterator.getLastMessageId();
 
@@ -153,7 +188,32 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
       return trackingIterator;
     }, Exception.class);
 
-    return iterator.getLastMessageId();
+    return iterator.lastMessageId;
+  }
+
+  private final class BatchIterator extends AbstractIterator<List> {
+    private final MessageTrackingIterator delegate;
+    private final int batchSize;
+
+    private List<ImmutablePair<String, T>> currentBatch;
+
+    BatchIterator(MessageTrackingIterator delegate, int batchSize) {
+      this.delegate = delegate;
+      this.batchSize = batchSize;
+    }
+
+    @Override
+    protected List computeNext() {
+      currentBatch = new ArrayList<>();
+      while (delegate.hasNext() && currentBatch.size() < batchSize) {
+        ImmutablePair<String, T> ip = delegate.next();
+        currentBatch.add(ip);
+      }
+      if (currentBatch.size() == 0) {
+        return endOfData();
+      }
+      return currentBatch;
+    }
   }
 
   /**

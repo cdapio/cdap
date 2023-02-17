@@ -211,7 +211,8 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     super(name, cConf, topicName,
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
-          messagingService, metricsCollectionService, transactionRunner);
+          messagingService, metricsCollectionService, transactionRunner,
+          cConf.getInt(Constants.AppFabric.STATUS_EVENT_TX_SIZE));
     this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.provisionerNotifier = provisionerNotifier;
     this.programLifecycleService = programLifecycleService;

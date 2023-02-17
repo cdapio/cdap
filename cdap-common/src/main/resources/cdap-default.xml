@@ -693,6 +693,15 @@
   </property>
 
   <property>
+    <name>app.program.status.event.tx.size</name>
+    <value>${app.program.status.event.fetch.size}</value>
+    <description>
+      Maximum number of events to process in one transaction when messages are fetched from the messaging system
+      in each processing cycle for program status update events
+    </description>
+  </property>
+
+  <property>
     <name>app.program.status.event.poll.delay.millis</name>
     <value>2000</value>
     <description>
