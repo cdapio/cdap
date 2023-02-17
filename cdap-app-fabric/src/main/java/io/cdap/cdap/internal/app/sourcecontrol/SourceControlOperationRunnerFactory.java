@@ -16,11 +16,12 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
-import io.cdap.cdap.sourcecontrol.RepositoryManager;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 /**
  * SourceControlOperatorFactory interface which is used by Guice during runtime.
  */
 public interface SourceControlOperationRunnerFactory {
-  SourceControlOperationRunner create(RepositoryManager repositoryManager);
+  SourceControlOperationRunner create(NamespaceId namespace, RepositoryConfig repositoryConfig) throws Exception;
 }

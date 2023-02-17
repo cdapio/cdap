@@ -18,8 +18,6 @@ package io.cdap.cdap.internal.app.sourcecontrol;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
@@ -46,8 +44,7 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemorySourceControlOperationRunner.class);
 
-  @Inject
-  public InMemorySourceControlOperationRunner(@Assisted RepositoryManager repositoryManager) {
+  public InMemorySourceControlOperationRunner(RepositoryManager repositoryManager) {
     this.repositoryManager = repositoryManager;
   }
 

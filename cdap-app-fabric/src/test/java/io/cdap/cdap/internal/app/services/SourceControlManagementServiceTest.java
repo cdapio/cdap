@@ -75,7 +75,8 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public static void beforeClass() throws Exception {
     cConf = createBasicCConf();
     initializeAndStartServices(cConf);
-    Mockito.doReturn(mockSourceControlOperationRunner).when(mockSourceControlFactory).create(Mockito.any());
+    Mockito.doReturn(mockSourceControlOperationRunner).when(mockSourceControlFactory).create(Mockito.any(),
+                                                                                             Mockito.any());
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     sourceControlService = getInjector().getInstance(SourceControlManagementService.class);
   }

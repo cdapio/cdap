@@ -149,21 +149,20 @@ public class SourceControlManagementService {
 
   public PushAppsResponse pushApps(NamespaceId namespace, List<ApplicationId> appIds, @Nullable String commitMessage)
     throws Exception {
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
     Map<ApplicationId, ApplicationDetail> details = getAndValidateAppDetails(appIds);
 
     String committer = authenticationContext.getPrincipal().getName();
-    try (RepositoryManager repoManager = createRepositoryManager(namespace)) {
-      SourceControlOperationRunner sourceControlRunner = sourceControlFactory.create(repoManager);
+    SourceControlOperationRunner sourceControlRunner = sourceControlFactory.create(namespace, repoConfig);
 
-      List<ApplicationDetail> appsToPush = new ArrayList<>(details.values());
+    List<ApplicationDetail> appsToPush = new ArrayList<>(details.values());
 
-      // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
-      CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
-      PushAppsResponse pushResponse = sourceControlRunner.push(appsToPush, commitMeta);
-      updateSourceControlMeta(namespace, pushResponse);
+    // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
+    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
+    PushAppsResponse pushResponse = sourceControlRunner.push(appsToPush, commitMeta);
+    updateSourceControlMeta(namespace, pushResponse);
 
-      return pushResponse;
-    }
+    return pushResponse;
   }
 
   private void updateSourceControlMeta(NamespaceId namespace, PushAppsResponse pushResponse) {
@@ -189,11 +188,5 @@ public class SourceControlManagementService {
     }
     
     return details;
-  }
-
-  private RepositoryManager createRepositoryManager(NamespaceId namespace) throws RepositoryNotFoundException {
-    RepositoryMeta repoMeta = getRepositoryMeta(namespace);
-    SourceControlConfig config = new SourceControlConfig(namespace, repoMeta.getConfig(), cConf);
-    return new RepositoryManager(secureStore, config);
   }
 }
