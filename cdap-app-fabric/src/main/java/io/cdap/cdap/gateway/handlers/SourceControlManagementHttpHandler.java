@@ -181,9 +181,9 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
       throw new BadRequestException("Please specify a list of applications.");
     }
 
-    if (appsRequest.getApps().size() >
-      cConf.getInt(Constants.SourceControlManagement.GIT_REPOSITORIES_PUSH_APPS_COUNT_LIMIT)) {
-      throw new BadRequestException("Please push no more than 10 applications at one time.");
+    int appsLimit = cConf.getInt(Constants.SourceControlManagement.GIT_REPOSITORIES_PUSH_APPS_COUNT_LIMIT);
+    if (appsRequest.getApps().size() > appsLimit) {
+      throw new BadRequestException(String.format("Please push no more than %s applications at one time.", appsLimit));
     }
 
     List<ApplicationId> appIds = new ArrayList<>();
