@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
+package io.cdap.cdap.sourcecontrol;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,10 +23,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
-import io.cdap.cdap.sourcecontrol.CommitMeta;
-import io.cdap.cdap.sourcecontrol.RepositoryManager;
-import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
-import io.cdap.cdap.sourcecontrol.UnexpectedRepositoryChangesException;
+import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;

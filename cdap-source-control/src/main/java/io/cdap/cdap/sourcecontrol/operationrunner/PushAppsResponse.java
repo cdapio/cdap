@@ -14,18 +14,23 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
+package io.cdap.cdap.sourcecontrol.operationrunner;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Exception thrown when config file path in git is resolving to an invalid path
- * i.e. path outside repository root
+ * Container for a batch push operation response
  */
-public class InvalidPathInSourceControl extends Exception {
-  public InvalidPathInSourceControl(String message, Exception cause) {
-    super(message, cause);
+public class PushAppsResponse {
+  private final List<PushAppResponse> apps;
+
+  public PushAppsResponse(List<PushAppResponse> apps) {
+    this.apps = Collections.unmodifiableList(new ArrayList<>(apps));
   }
 
-  public InvalidPathInSourceControl(String message) {
-    super(message);
+  public List<PushAppResponse> getApps() {
+    return apps;
   }
 }

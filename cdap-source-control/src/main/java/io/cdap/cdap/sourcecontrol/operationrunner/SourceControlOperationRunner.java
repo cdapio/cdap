@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
+package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
