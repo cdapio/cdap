@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
+package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

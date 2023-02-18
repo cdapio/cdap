@@ -23,5 +23,7 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
  * RepositoryManagerFactory interface which is used by Guice during runtime to create a RepositoryManager.
  */
 public interface RepositoryManagerFactory {
+  // TODO: RepositoryConfig is currently only accessible from the service layer
+  //  Need to fix it and avoid passing it in RepositoryManagerFactory
   RepositoryManager create(NamespaceId namespace, RepositoryConfig repoConfig);
 }
