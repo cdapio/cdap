@@ -204,7 +204,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .collect(Collectors.toList());
 
     Mockito.doReturn(new PushAppsResponse(expectedAppsResponse))
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any());
 
     // Assert the result is as expected
     PushAppsResponse result = sourceControlService.pushApps(namespaceId, appIds, "some commit");
@@ -255,7 +255,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .collect(Collectors.toList());
 
     Mockito.doReturn(new PushAppsResponse(expectedAppsResponse))
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any());
 
     // Assert the result is as expected
     try {
@@ -306,7 +306,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .collect(Collectors.toList());
 
     Mockito.doThrow(new PushFailureException("push apps failed", new Exception()))
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any());
 
     // Assert the result is as expected
     try {

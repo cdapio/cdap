@@ -18,7 +18,6 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 
 import java.util.List;
@@ -33,7 +32,6 @@ public interface SourceControlOperationRunner {
    * @return file-paths and file-hashes for the updated configs.
    * @throws PushFailureException when the push operation fails for any reason.
    */
-  PushAppsResponse push(NamespaceId namespace, RepositoryConfig repoConfig,
-                        List<ApplicationDetail> appsToPush, CommitMeta commitDetails)
+  PushAppsResponse push(NamespaceId namespace, List<ApplicationDetail> appsToPush, CommitMeta commitDetails)
     throws Exception;
 }

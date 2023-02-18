@@ -52,7 +52,7 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.store.RepositoryStore;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Before;
@@ -110,16 +110,16 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
       public SourceControlManagementService provideSourceControlManagementService(
         CConfiguration cConf,
         SecureStore secureStore,
-        TransactionRunner transactionRunner,
         AccessEnforcer accessEnforcer,
         AuthenticationContext authenticationContext,
         SourceControlOperationRunner sourceControlRunner,
         ApplicationLifecycleService applicationLifecycleService,
-        Store store) {
-        return Mockito.spy(new SourceControlManagementService(cConf, secureStore, transactionRunner,
+        Store store,
+        RepositoryStore repoStore) {
+        return Mockito.spy(new SourceControlManagementService(cConf, secureStore,
                                                               accessEnforcer, authenticationContext,
                                                               sourceControlRunner, applicationLifecycleService,
-                                                              store));
+                                                              store, repoStore));
       }
     });
   }

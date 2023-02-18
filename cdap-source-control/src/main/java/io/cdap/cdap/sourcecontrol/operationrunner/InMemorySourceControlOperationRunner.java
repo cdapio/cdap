@@ -21,7 +21,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
@@ -53,10 +52,9 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   }
 
   @Override
-  public PushAppsResponse push(NamespaceId namespace, RepositoryConfig repoConfig,
-                               List<ApplicationDetail> appsToPush, CommitMeta commitDetails)
+  public PushAppsResponse push(NamespaceId namespace, List<ApplicationDetail> appsToPush, CommitMeta commitDetails)
     throws Exception {
-    try (RepositoryManager repositoryManager = repoManagerFactory.create(namespace, repoConfig)) {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(namespace)) {
       try {
         repositoryManager.cloneRemote();
       } catch (Exception e) {

@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.sourcecontrol;
 
+import com.google.inject.ImplementedBy;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 /**
  * RepositoryManagerFactory interface which is used by Guice during runtime to create a RepositoryManager.
  */
+@ImplementedBy(DefaultRepositoryManagerFactory.class)
 public interface RepositoryManagerFactory {
-  RepositoryManager create(NamespaceId namespace, RepositoryConfig repoConfig);
+  RepositoryManager create(NamespaceId namespace) throws RepositoryNotFoundException;
 }

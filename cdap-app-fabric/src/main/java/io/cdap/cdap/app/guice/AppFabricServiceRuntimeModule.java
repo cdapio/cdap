@@ -144,8 +144,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
-import io.cdap.cdap.sourcecontrol.RepositoryManager;
-import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.http.HttpHandler;
@@ -351,10 +349,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Constants.Tethering.CLIENT_AUTHENTICATOR_NAME));
       // TODO: CDAP-20322 add the remoteSourceControlOperationRunner
       bind(SourceControlOperationRunner.class).to(InMemorySourceControlOperationRunner.class).in(Scopes.SINGLETON);
-      install(
-        new FactoryModuleBuilder().implement(RepositoryManager.class, RepositoryManager.class)
-          .build(RepositoryManagerFactory.class)
-      );
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
 

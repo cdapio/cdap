@@ -19,7 +19,6 @@ package io.cdap.cdap.sourcecontrol;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -59,7 +58,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 
 /**
  * A git repository manager that is responsible for handling interfacing with git. It provides version control
@@ -74,9 +72,8 @@ public class RepositoryManager implements AutoCloseable {
   // same namespace from interfering with each other.
   private final String randomDirectoryName;
 
-  @Inject
-  public RepositoryManager(SecureStore secureStore, CConfiguration cConf, @Assisted NamespaceId namespace,
-                           @Assisted RepositoryConfig repoConfig) {
+  public RepositoryManager(SecureStore secureStore, CConfiguration cConf, NamespaceId namespace,
+                           RepositoryConfig repoConfig) {
     this.sourceControlConfig = new SourceControlConfig(namespace, repoConfig, cConf);
     try {
       this.credentialsProvider = new AuthenticationStrategyProvider(namespace.getNamespace(), secureStore)
