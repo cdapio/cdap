@@ -21,22 +21,22 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
+import io.cdap.cdap.etl.spi.relational.SQLDialectConverter;
 
 import javax.annotation.Nullable;
 
-public class DefaultSqlDialectConverterProvider implements Provider<SqlDialectConverter> {
+public class DefaultSQLDialectConverterProvider implements Provider<SQLDialectConverter> {
 
     public static final String CONVERTER_NAME_KEY = "ConverterNameKey";
 
     @Nullable
     private final String defaultConverterName;
-    private final SqlDialectConverterExtensionLoader extensionLoader;
+    private final SQLDialectConverterExtensionLoader extensionLoader;
 
     @Inject
-    DefaultSqlDialectConverterProvider(CConfiguration cconf,
+    DefaultSQLDialectConverterProvider(CConfiguration cconf,
                                        @Named(CONVERTER_NAME_KEY) String sqlDialectConverterNameKey,
-                                       SqlDialectConverterExtensionLoader extensionLoader) {
+                                       SQLDialectConverterExtensionLoader extensionLoader) {
         String converterName = cconf.get(sqlDialectConverterNameKey);
         defaultConverterName = converterName == null ?
                 cconf.get(Constants.SqlDialectConversion.DEFAULT_IMPL_NAME) :
@@ -45,13 +45,13 @@ public class DefaultSqlDialectConverterProvider implements Provider<SqlDialectCo
     }
 
     /**
-     * Retrieves the current {@link SqlDialectConverter} from the extension loader using the converter name or
+     * Retrieves the current {@link SQLDialectConverter} from the extension loader using the converter name or
      * {@code null} if there is no current converter available.
      */
     @Override
-    public SqlDialectConverter get() {
+    public SQLDialectConverter get() {
         if (defaultConverterName != null) {
-            SqlDialectConverter sqlDialectConverter = extensionLoader.get(defaultConverterName);
+            SQLDialectConverter sqlDialectConverter = extensionLoader.get(defaultConverterName);
             return sqlDialectConverter;
         }
         return null;

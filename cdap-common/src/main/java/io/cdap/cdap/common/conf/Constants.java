@@ -2063,7 +2063,6 @@ public final class Constants {
    */
   public static final class SqlDialectConversion {
     public static final String EXTENSION_DIR = "sqldialect.extensions.dir";
-    public static final String CALCITE_IMPL_NAME = "calcite";
-    public static final String DEFAULT_IMPL_NAME = CALCITE_IMPL_NAME;
+    public static final String DEFAULT_IMPL_NAME = "calcite";
   }
 }

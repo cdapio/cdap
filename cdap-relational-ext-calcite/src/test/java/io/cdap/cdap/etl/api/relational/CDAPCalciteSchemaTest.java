@@ -55,7 +55,7 @@ public class CDAPCalciteSchemaTest {
                 "[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]}]}";
 
         Schema schema = Schema.parseJson(jsonSchema);
-        CDAPCalciteSchema calciteSchema = CDAPCalciteSchema.fromCdapSchema(schema);
+        CDAPCalciteSchema calciteSchema = CDAPCalciteSchema.fromCDAPSchema(schema);
         Table table = calciteSchema.getTable("etlSchemaBody");
         RelDataType recordDataType = table.getRowType(new SqlTypeFactoryImpl(RelDataTypeSystem.DEFAULT));
 

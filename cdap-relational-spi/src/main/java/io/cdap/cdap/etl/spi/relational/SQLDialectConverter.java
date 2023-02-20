@@ -22,9 +22,9 @@ import javax.annotation.Nullable;
 
 /**
  * An SPI that declares a service for conversion of a SQL expression from one SQL dialect to another.
- * The {@link SqlDialectConversionExpressionFactory} uses this service to perform the conversion.
+ * The {@link SQLDialectConversionExpressionFactory} uses this service to perform the conversion.
  */
-public interface SqlDialectConverter {
+public interface SQLDialectConverter {
 
     /**
      * Returns the name of this SQL dialect converter. The name needs to match with the configuration provided through
@@ -38,10 +38,10 @@ public interface SqlDialectConverter {
      * @param expression A SQL expression in the form of a full statement in the SQL dialect specified
      * @param srcDialect The SQL dialect in which the SQL statement is specified
      * @param schema The schema for the table being used in the SQL expression
-     * @throws SqlDialectException in case the SQL expression is invalid, or any other error related to the SQL
+     * @throws SQLDialectException in case the SQL expression is invalid, or any other error related to the SQL
      * dialect validation is encountered
      */
-    void validate(String expression, SqlDialect srcDialect, @Nullable Schema schema) throws SqlDialectException;
+    void validate(String expression, SQLDialect srcDialect, @Nullable Schema schema) throws SQLDialectException;
 
     /**
      * Converts the specified SQL expression using the schema given from the specified source SQL dialect to the
@@ -52,8 +52,8 @@ public interface SqlDialectConverter {
      * @param destDialect The SQL dialect to which the SQL statement is to be converted
      * @param schema The schema for the table being used in the SQL expression
      * @return An String containing the converted SQL expression
-     * @throws SqlDialectException in case an error is encountered during SQL dialect conversion is encountered
+     * @throws SQLDialectException in case an error is encountered during SQL dialect conversion is encountered
      */
-    String convert(String expression, SqlDialect srcDialect, SqlDialect destDialect, @Nullable Schema schema)
-            throws SqlDialectException;
+    String convert(String expression, SQLDialect srcDialect, SQLDialect destDialect, @Nullable Schema schema)
+            throws SQLDialectException;
 }

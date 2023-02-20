@@ -16,12 +16,15 @@
 
 package io.cdap.cdap.etl.spi.relational;
 
-public class SqlDialectException extends Exception {
-    public SqlDialectException(String message) {
+/**
+ * This exception is thrown when a problem is encountered by the SQL dialect conversion process.
+ */
+public class SQLDialectException extends Exception {
+    public SQLDialectException(String message) {
         super(message);
     }
 
-    public SqlDialectException(String message, Throwable exception) {
+    public SQLDialectException(String message, Throwable exception) {
         super(message, exception);
     }
 }

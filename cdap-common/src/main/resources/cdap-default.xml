@@ -5941,11 +5941,17 @@
   <property>
     <name>sqldialect.extensions.dir</name>
     <value>/opt/cdap/master/ext/sqldialectconverters</value>
+    <description>
+      Directory where extensions for SQL dialect conversion are stored.
+    </description>
   </property>
 
   <property>
     <name>sqldialect.implementation</name>
     <value>calcite</value>
+    <description>
+      The name of the SQL dialect conversion implementation which CDAP will use.
+    </description>
   </property>
 
 </configuration>

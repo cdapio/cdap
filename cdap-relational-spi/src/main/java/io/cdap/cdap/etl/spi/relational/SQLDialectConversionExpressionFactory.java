@@ -34,12 +34,12 @@ import javax.annotation.Nullable;
 /**
  * An expression factory which converts a SQL {@link Expression} from one SQL dialect to another on compiling it.
  */
-public class SqlDialectConversionExpressionFactory implements ExpressionFactory<String> {
+public class SQLDialectConversionExpressionFactory implements ExpressionFactory<String> {
 
-    SqlDialect sourceDialect;
-    SqlDialect destinationDialect;
+    SQLDialect sourceDialect;
+    SQLDialect destinationDialect;
     @Nullable Schema schema;
-    SqlDialectConverter converter;
+    SQLDialectConverter converter;
 
     private static final Set<Capability> CAPABILITIES = Collections.unmodifiableSet(
             new HashSet<Capability>() {{
@@ -49,14 +49,14 @@ public class SqlDialectConversionExpressionFactory implements ExpressionFactory<
             }}
     );
 
-    public SqlDialectConversionExpressionFactory(SqlDialect src, SqlDialect dest, SqlDialectConverter converter) {
+    public SQLDialectConversionExpressionFactory(SQLDialect src, SQLDialect dest, SQLDialectConverter converter) {
         this(src, dest, null, converter);
     }
 
-    public SqlDialectConversionExpressionFactory(SqlDialect src,
-                                                 SqlDialect dest,
+    public SQLDialectConversionExpressionFactory(SQLDialect src,
+                                                 SQLDialect dest,
                                                  @Nullable Schema schema,
-                                                 SqlDialectConverter converter) {
+                                                 SQLDialectConverter converter) {
         sourceDialect = src;
         destinationDialect = dest;
         this.schema = schema;
@@ -84,7 +84,7 @@ public class SqlDialectConversionExpressionFactory implements ExpressionFactory<
         String compiledSql;
         try {
             compiledSql = converter.convert(expression, sourceDialect, destinationDialect, schema);
-        } catch (SqlDialectException exception) {
+        } catch (SQLDialectException exception) {
             return new InvalidExtractableExpression<String>(exception.getMessage());
         }
         

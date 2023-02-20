@@ -21,14 +21,14 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
-import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
+import io.cdap.cdap.etl.spi.relational.SQLDialectConverter;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
-public class SqlDialectConverterExtensionLoader extends AbstractExtensionLoader<String, SqlDialectConverter> {
+public class SQLDialectConverterExtensionLoader extends AbstractExtensionLoader<String, SQLDialectConverter> {
 
     private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
     private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
@@ -37,8 +37,8 @@ public class SqlDialectConverterExtensionLoader extends AbstractExtensionLoader<
         // Only allow SQL dialect converter classes.
         try {
             return ClassPathResources.getResourcesWithDependencies(
-                    SqlDialectConverterExtensionLoader.class.getClassLoader(),
-                    SqlDialectConverter.class);
+                    SQLDialectConverterExtensionLoader.class.getClassLoader(),
+                    SQLDialectConverter.class);
         } catch (IOException e) {
             throw new RuntimeException("Failed to trace dependencies for SQL dialect converter extension. " +
                     "Usage of SQL dialect converter might fail.", e);
@@ -46,12 +46,12 @@ public class SqlDialectConverterExtensionLoader extends AbstractExtensionLoader<
     }
 
     @Inject
-    public SqlDialectConverterExtensionLoader(CConfiguration cConf) {
+    public SQLDialectConverterExtensionLoader(CConfiguration cConf) {
         super(cConf.get(Constants.SqlDialectConversion.EXTENSION_DIR));
     }
 
     @Override
-    protected Set<String> getSupportedTypesForProvider(SqlDialectConverter sqlDialectConverter) {
+    protected Set<String> getSupportedTypesForProvider(SQLDialectConverter sqlDialectConverter) {
         return Collections.singleton(sqlDialectConverter.getName());
     }
 

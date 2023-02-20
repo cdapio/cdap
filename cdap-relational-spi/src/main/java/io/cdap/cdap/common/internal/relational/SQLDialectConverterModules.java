@@ -20,18 +20,18 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
-import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
+import io.cdap.cdap.etl.spi.relational.SQLDialectConverter;
 
 /**
- * Provides Guice bindings for {@link SqlDialectConverter}.
+ * Provides Guice bindings for {@link SQLDialectConverter}.
  */
-public final class SqlDialectConverterModules {
+public final class SQLDialectConverterModules {
 
-    private SqlDialectConverterModules() {}
+    private SQLDialectConverterModules() {}
 
     /**
-     * Returns the default bindings for the {@link SqlDialectConverter}.
-     * @return A module with {@link SqlDialectConverter} bindings.
+     * Returns the default bindings for the {@link SQLDialectConverter}.
+     * @return A module with {@link SQLDialectConverter} bindings.
      */
     public static Module getDefaultModule() {
         return getDefaultModule();
@@ -42,11 +42,11 @@ public final class SqlDialectConverterModules {
             @Override
             protected void configure() {
                 bind(String.class)
-                        .annotatedWith(Names.named(DefaultSqlDialectConverterProvider.CONVERTER_NAME_KEY))
+                        .annotatedWith(Names.named(DefaultSQLDialectConverterProvider.CONVERTER_NAME_KEY))
                         .toInstance(sqlDialectConverterNameKey);
-                bind(SqlDialectConverterExtensionLoader.class).in(Scopes.SINGLETON);
-                bind(SqlDialectConverter.class).toProvider(DefaultSqlDialectConverterProvider.class);
-                expose(SqlDialectConverter.class);
+                bind(SQLDialectConverterExtensionLoader.class).in(Scopes.SINGLETON);
+                bind(SQLDialectConverter.class).toProvider(DefaultSQLDialectConverterProvider.class);
+                expose(SQLDialectConverter.class);
             }
         };
     }

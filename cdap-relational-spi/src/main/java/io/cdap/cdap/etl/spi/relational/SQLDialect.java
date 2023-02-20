@@ -19,7 +19,7 @@ package io.cdap.cdap.etl.spi.relational;
 /**
  * Defines a list of SQL dialects that are supported by the SQL dialect conversion framework.
  */
-public enum SqlDialect {
+public enum SQLDialect {
     POSTGRESQL,
     BIGQUERYSQL,
     SPARKSQL

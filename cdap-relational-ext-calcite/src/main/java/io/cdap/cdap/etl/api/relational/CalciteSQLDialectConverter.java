@@ -17,10 +17,9 @@
 package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.etl.spi.relational.SqlDialect;
-import io.cdap.cdap.etl.spi.relational.SqlDialectConverter;
-import io.cdap.cdap.etl.spi.relational.SqlDialectException;
+import io.cdap.cdap.etl.spi.relational.SQLDialect;
+import io.cdap.cdap.etl.spi.relational.SQLDialectConverter;
+import io.cdap.cdap.etl.spi.relational.SQLDialectException;
 import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.SqlNode;
@@ -38,44 +37,45 @@ import org.apache.calcite.tools.ValidationException;
 
 import javax.annotation.Nullable;
 
-public class CalciteSqlDialectConverter implements SqlDialectConverter {
+public class CalciteSQLDialectConverter implements SQLDialectConverter {
+    public static final String CALCITE_IMPL_NAME = "calcite";
 
     @Override
     public String getName() {
-        return Constants.SqlDialectConversion.CALCITE_IMPL_NAME;
+        return CALCITE_IMPL_NAME;
     }
 
     @Override
-    public void validate(String expression, SqlDialect srcDialect, @Nullable Schema schema) throws SqlDialectException {
+    public void validate(String expression, SQLDialect srcDialect, @Nullable Schema schema) throws SQLDialectException {
         PlannerImpl planner = getPlanner(srcDialect, schema);
 
         try {
             planner.validate(planner.parse(expression));
         } catch (SqlParseException | ValidationException exception) {
-            throw new SqlDialectException(exception.getMessage(), exception);
+            throw new SQLDialectException(exception.getMessage(), exception);
         }
     }
 
     @Override
-    public String convert(String expression, SqlDialect srcDialect, SqlDialect destDialect, @Nullable Schema schema)
-            throws SqlDialectException {
+    public String convert(String expression, SQLDialect srcDialect, SQLDialect destDialect, @Nullable Schema schema)
+            throws SQLDialectException {
         PlannerImpl planner = getPlanner(srcDialect, schema);
 
         SqlNode node;
         try {
             node = planner.parse(expression);
         } catch (SqlParseException exception) {
-            throw new SqlDialectException(exception.getMessage(), exception);
+            throw new SQLDialectException(exception.getMessage(), exception);
         }
         return node.toSqlString(getDialectObject(destDialect)).getSql();
     }
 
-    private PlannerImpl getPlanner(SqlDialect srcDialect, @Nullable Schema schema) throws SqlDialectException {
+    private PlannerImpl getPlanner(SQLDialect srcDialect, @Nullable Schema schema) throws SQLDialectException {
         if (schema == null) {
-            throw new SqlDialectException("Calcite-based Sql parser / validator requires an input schema, none found");
+            throw new SQLDialectException("Calcite-based Sql parser / validator requires an input schema, none found");
         }
 
-        CDAPCalciteSchema calciteSchema = CDAPCalciteSchema.fromCdapSchema(schema);
+        CDAPCalciteSchema calciteSchema = CDAPCalciteSchema.fromCDAPSchema(schema);
         SchemaPlus schemaPlus = Frameworks.createRootSchema(true);
         schemaPlus = schemaPlus.add(schema.getRecordName(), calciteSchema);
 
@@ -96,7 +96,7 @@ public class CalciteSqlDialectConverter implements SqlDialectConverter {
         return planner;
     }
 
-    private SqlConformance getConformanceFromDialect(SqlDialect dialect) throws SqlDialectException {
+    private SqlConformance getConformanceFromDialect(SQLDialect dialect) throws SQLDialectException {
         switch (dialect) {
             case BIGQUERYSQL:
                 return SqlConformanceEnum.BIG_QUERY;
@@ -107,11 +107,11 @@ public class CalciteSqlDialectConverter implements SqlDialectConverter {
                 // And a SPARK enum doesn't exist
                 return SqlConformanceEnum.DEFAULT;
             default:
-                throw new SqlDialectException("SQL dialect " + dialect + " not found");
+                throw new SQLDialectException("SQL dialect " + dialect + " not found");
         }
     }
 
-    private org.apache.calcite.sql.SqlDialect getDialectObject(SqlDialect dialect) throws SqlDialectException {
+    private org.apache.calcite.sql.SqlDialect getDialectObject(SQLDialect dialect) throws SQLDialectException {
         switch (dialect) {
             case BIGQUERYSQL:
                 return new BigQuerySqlDialect(BigQuerySqlDialect.DEFAULT_CONTEXT);
@@ -120,7 +120,7 @@ public class CalciteSqlDialectConverter implements SqlDialectConverter {
             case SPARKSQL:
                 return new SparkSqlDialect(SparkSqlDialect.DEFAULT_CONTEXT);
             default:
-                throw new SqlDialectException("SQL dialect " + dialect + " not found");
+                throw new SQLDialectException("SQL dialect " + dialect + " not found");
         }
     }
 }

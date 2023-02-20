@@ -14,4 +14,4 @@
 # the License.
 #
 
-io.cdap.cdap.etl.api.relational.CalciteSqlDialectConverter
+io.cdap.cdap.etl.api.relational.CalciteSQLDialectConverter

@@ -17,16 +17,15 @@
 package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.spi.relational.SqlDialect;
-import io.cdap.cdap.etl.spi.relational.SqlDialectException;
+import io.cdap.cdap.etl.spi.relational.SQLDialect;
+import io.cdap.cdap.etl.spi.relational.SQLDialectException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-// TODO: Change this to use the interface after SPI loader is created
-public class CalciteSqlDialectConverterTest {
+public class CalciteSQLDialectConverterTest {
 
     private static Schema schema = null;
-    private static CalciteSqlDialectConverter converter = null;
+    private static CalciteSQLDialectConverter converter = null;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -53,30 +52,30 @@ public class CalciteSqlDialectConverterTest {
                 "[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]}]}";
 
         schema = Schema.parseJson(jsonSchema);
-        converter = new CalciteSqlDialectConverter();
+        converter = new CalciteSQLDialectConverter();
     }
 
     @Test
-    public void testCharLiteralAliasBQ() throws SqlDialectException {
+    public void testCharLiteralAliasBQ() throws SQLDialectException {
         String query = "SELECT 'abc' AS 'a' FROM etlSchemaBody";
-        converter.validate(query, SqlDialect.BIGQUERYSQL, schema);
+        converter.validate(query, SQLDialect.BIGQUERYSQL, schema);
     }
 
-    @Test(expected = SqlDialectException.class)
-    public void testCharLiteralAliasPostgres() throws SqlDialectException {
+    @Test(expected = SQLDialectException.class)
+    public void testCharLiteralAliasPostgres() throws SQLDialectException {
         String query = "SELECT 'abc' AS 'a' FROM etlSchemaBody";
-        converter.validate(query, SqlDialect.POSTGRESQL, schema);
+        converter.validate(query, SQLDialect.POSTGRESQL, schema);
     }
 
     @Test
-    public void testGroupByAliasBQ() throws SqlDialectException {
+    public void testGroupByAliasBQ() throws SQLDialectException {
         String query = "SELECT avg(salary), level AS designation FROM etlSchemaBody GROUP BY designation";
-        converter.validate(query, SqlDialect.BIGQUERYSQL, schema);
+        converter.validate(query, SQLDialect.BIGQUERYSQL, schema);
     }
 
-    @Test(expected = SqlDialectException.class)
-    public void testGroupByAliasPostgres() throws SqlDialectException {
+    @Test(expected = SQLDialectException.class)
+    public void testGroupByAliasPostgres() throws SQLDialectException {
         String query = "SELECT avg(salary), level AS designation FROM etlSchemaBody GROUP BY designation";
-        converter.validate(query, SqlDialect.POSTGRESQL, schema);
+        converter.validate(query, SQLDialect.POSTGRESQL, schema);
     }
 }

@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * It is the responsibility of the factory creating {@link StringExpression} objects to enforce correctness of
  * the expression.
  */
-public class StringExpression implements ExtractableExpression<String> {
+public final class StringExpression implements ExtractableExpression<String> {
     private final String expression;
 
     /**

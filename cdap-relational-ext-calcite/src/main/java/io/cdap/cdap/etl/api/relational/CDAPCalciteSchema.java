@@ -51,7 +51,7 @@ public class CDAPCalciteSchema extends AbstractSchema {
         return table;
     }
 
-    public static CDAPCalciteSchema fromCdapSchema(Schema cdapSchema) {
+    public static CDAPCalciteSchema fromCDAPSchema(Schema cdapSchema) {
         // Get list of fields
         List<Schema.Field> cdapFields = cdapSchema.getFields();
         List<RelDataTypeField> calciteFields = getListOfFields(cdapFields);
@@ -65,7 +65,7 @@ public class CDAPCalciteSchema extends AbstractSchema {
         int index = 0;
 
         for (Schema.Field cdapField: cdapFields) {
-            RelDataTypeFieldImpl calciteField = fromCdapField(cdapField, index);
+            RelDataTypeFieldImpl calciteField = fromCDAPField(cdapField, index);
             calciteFields.add(calciteField);
             index++;
         }
@@ -73,7 +73,7 @@ public class CDAPCalciteSchema extends AbstractSchema {
         return calciteFields;
     }
 
-    private static RelDataTypeFieldImpl fromCdapField(Schema.Field cdapField, int index) {
+    private static RelDataTypeFieldImpl fromCDAPField(Schema.Field cdapField, int index) {
         Schema cdapSchema = cdapField.getSchema();
         String fieldName = cdapField.getName().toUpperCase();
 

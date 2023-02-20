@@ -22,15 +22,15 @@ import io.cdap.cdap.api.data.schema.Schema;
 import javax.annotation.Nullable;
 
 /**
- * A class that provides a Context object to facilitate working with {@link SqlDialectConversionExpressionFactory}
+ * A class that provides a Context object to facilitate working with {@link SQLDialectConversionExpressionFactory}
  * objects with specific SQL dialects
  */
 public class ExpressionConversionContext {
 
-    SqlDialectConverter converter;
+    SQLDialectConverter converter;
 
     @Inject
-    public ExpressionConversionContext(SqlDialectConverter converter) {
+    public ExpressionConversionContext(SQLDialectConverter converter) {
         this.converter = converter;
     }
 
@@ -43,8 +43,8 @@ public class ExpressionConversionContext {
      * @return An expression factory that will accept SQL expressions in the source dialect and convert them into
      * expressions in the destination dialect after validation, taking the schema into account
      */
-    public SqlDialectConversionExpressionFactory getConversionFactory(
-            SqlDialect src, SqlDialect dest, @Nullable Schema schema) {
-        return new SqlDialectConversionExpressionFactory(src, dest, schema, converter);
+    public SQLDialectConversionExpressionFactory getConversionFactory(
+            SQLDialect src, SQLDialect dest, @Nullable Schema schema) {
+        return new SQLDialectConversionExpressionFactory(src, dest, schema, converter);
     }
 }
