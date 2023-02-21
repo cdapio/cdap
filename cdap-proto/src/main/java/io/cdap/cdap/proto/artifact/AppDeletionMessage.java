@@ -15,61 +15,36 @@
  */
 package io.cdap.cdap.proto.artifact;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
  * A container for messages in the app deletion topic.
- * It carries the payload as {@link JsonElement} which consists of the app-id.
+ * It carries the app-id of the app to be deleted
  */
 public final class AppDeletionMessage {
-    private final EntityId entityId;
-    private final JsonElement payload;
+  private final ApplicationId applicationId;
 
-    /**
-     * Creates an instance for an entity.
-     *
-     * @param entityId the {@link EntityId} of the entity emitting this message
-     * @param payload the payload
-     */
-    public AppDeletionMessage(EntityId entityId, JsonElement payload) {
-      this.entityId = entityId;
-      this.payload = payload;
-    }
+  /**
+   * Creates an instance for an entity.
+   *
+   * @param applicationId  the applicationId of the app to be deleted
+   */
+  public AppDeletionMessage(ApplicationId applicationId) {
+    this.applicationId = applicationId;
+  }
 
-    /**
-     * Returns the {@link EntityId} of the entity who emit this message.
-     */
-    public EntityId getEntityId() {
-      return entityId;
-    }
+  /**
+   * Returns the applicationId of the app to be deleted
+   */
+  public ApplicationId getApplicationId() {
+    return applicationId;
+  }
 
-    /**
-     * Returns the payload by decoding the json to the given type.
-     *
-     * @param gson the {@link Gson} for decoding the json element
-     * @param objType the resulting object type
-     * @param <T> the resulting object type
-     * @return the decode object
-     */
-    public <T> T getPayload(Gson gson, java.lang.reflect.Type objType) {
-      return gson.fromJson(payload, objType);
-    }
-
-    /**
-     * Returns the payload as the raw {@link JsonElement}.
-     */
-    public JsonElement getRawPayload() {
-      return payload;
-    }
-
-    @Override
-    public String toString() {
-      return "AppDeletionMessage{" +
-        "entityId=" + entityId +
-        ", payload=" + payload +
-        '}';
-    }
+  @Override
+  public String toString() {
+    return "AppDeletionMessage{" +
+      "applicationId=" + applicationId +
+      '}';
+  }
 }
 

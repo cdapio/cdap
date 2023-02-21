@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class for publishing the app deletion request to tms
@@ -56,9 +55,7 @@ public class AppDeletionPublisher {
 
   public AppDeletionPublisher(CConfiguration cConf, MessagingContext messagingContext) {
     this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.APP_DELETION_EVENT_TOPIC));
-    this.retryStrategy = RetryStrategies.timeLimit(
-      20, TimeUnit.SECONDS,
-      RetryStrategies.exponentialDelay(10, 200, TimeUnit.MILLISECONDS));
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "app.delete.event.");
     this.messagingContext = messagingContext;
   }
 
@@ -70,8 +67,8 @@ public class AppDeletionPublisher {
    * @param appId entity id who emits the message
    */
   public void publishAppDeletionEvent(ApplicationId appId) {
-    AppDeletionMessage message = new AppDeletionMessage(appId, GSON.toJsonTree(appId));
-    LOG.trace("Deleting message: {}", message);
+    AppDeletionMessage message = new AppDeletionMessage(appId);
+    LOG.trace("Publishing app delete message: {}", message);
     Retries.supplyWithRetries(
       () -> {
         try {
@@ -85,5 +82,16 @@ public class AppDeletionPublisher {
         return null;
         },
       retryStrategy);
+      Retries.supplyWithRetries(() -> {
+        try {
+          messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), topic.getTopic(),
+                                                         GSON.toJson(message));
+        } catch (TopicNotFoundException | ServiceUnavailableException e) {
+          throw new RetryableException(e);
+        } catch (IOException | AccessException e) {
+          throw Throwables.propagate(e);
+        }
+        return null;
+        }, retryStrategy, t -> t instanceof RetryableException);
   }
 }

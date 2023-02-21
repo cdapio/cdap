@@ -3036,7 +3036,7 @@
 
   <property>
     <name>app.delete.event.topic</name>
-    <value>appdeleteevent</value>
+    <value>appdeletes</value>
     <description>
       Topic name used to publish app deletion events to the messaging system.
     </description>
@@ -3059,7 +3059,7 @@
   </property>
 
   <property>
-    <name>system.appdelete.retry.policy.base.delay.ms</name>
+    <name>app.delete.event.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>
       The base delay between retries in milliseconds
@@ -3067,7 +3067,7 @@
   </property>
 
   <property>
-    <name>system.appdelete.retry.policy.max.delay.ms</name>
+    <name>app.delete.event.retry.policy.max.delay.ms</name>
     <value>2000</value>
     <description>
       The maximum delay between retries in milliseconds
@@ -3075,7 +3075,7 @@
   </property>
 
   <property>
-    <name>system.appdelete.retry.policy.max.retries</name>
+    <name>app.delete.event.retry.policy.max.retries</name>
     <value>1000</value>
     <description>
       The maximum number of retries to attempt before aborting
@@ -3083,7 +3083,7 @@
   </property>
 
   <property>
-    <name>system.appdelete.retry.policy.max.time.secs</name>
+    <name>app.delete.event.retry.policy.max.time.secs</name>
     <value>2147483647</value>
     <description>
       The maximum elapsed time in seconds before retries are aborted
@@ -3091,10 +3091,10 @@
   </property>
 
   <property>
-    <name>system.appdelete.retry.policy.type</name>
+    <name>app.delete.event.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for workers. Allowed options: "none",
+      The type of retry policy for app deletion. Allowed options: "none",
       "fixed.delay", or "exponential.backoff".
     </description>
   </property>

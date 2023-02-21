@@ -1250,11 +1250,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     store.markDeleteApplication(appId);
     // TODO : remove this in CDAP-20333 to test end to end delete
     store.removeApplication(appId);
-    try {
-      appDeletionPublisher.publishAppDeletionEvent(appId);
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Failed to publish app deletion request for entity id %s", appId), e);
-    }
+    // to delete the app asynchronously
+    appDeletionPublisher.publishAppDeletionEvent(appId);
+
     adminEventPublisher.publishAppDeletion(appId, spec);
     try {
       // delete the owner as it has already been determined that this is the only version of the app

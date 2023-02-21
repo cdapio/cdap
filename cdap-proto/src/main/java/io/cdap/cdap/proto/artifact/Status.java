@@ -19,5 +19,5 @@ package io.cdap.cdap.proto.artifact;
  * Status of the application
  */
 public enum Status {
- DELETED
+  DELETED
 }

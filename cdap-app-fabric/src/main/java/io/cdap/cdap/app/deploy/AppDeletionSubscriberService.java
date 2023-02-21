@@ -30,7 +30,7 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.state.AppStateTable;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
-import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
+import io.cdap.cdap.messaging.subscriber.AbstractEventSubscriberService;
 import io.cdap.cdap.proto.artifact.AppDeletionMessage;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -39,18 +39,18 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.tephra.TxConstants;
 
 import java.io.IOException;
 import java.util.Iterator;
-import javax.annotation.Nullable;
 
 /**
  * A TMS Subscriber Service responsible for consuming app deletion messages from TMS and executes removal from
  * the app spec table. Subscribes to the Constants.AppFabric.APP_DELETION_EVENT_TOPIC topic.
  */
-public class AppDeletionSubscriberService extends AbstractMessagingSubscriberService<AppDeletionMessage> {
-  private static final String SUBSCRIBER = "appdelete.writer";
+public class AppDeletionSubscriberService extends AbstractEventSubscriberService<AppDeletionMessage> {
+  private static final String SUBSCRIBER = "appdelete.";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
@@ -71,7 +71,7 @@ public class AppDeletionSubscriberService extends AbstractMessagingSubscriberSer
       cConf.getInt(Constants.AppFabric.APP_DELETE_EVENT_FETCH_SIZE),
       cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
       cConf.getLong(Constants.AppFabric.APP_DELETE_EVENT_POLL_DELAY_MILLIS),
-      RetryStrategies.fromConfiguration(cConf, "system.appdelete."),
+      RetryStrategies.fromConfiguration(cConf, "app.delete.event."),
       metricsCollectionService.getContext(ImmutableMap.of(
         Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
         Constants.Metrics.Tag.INSTANCE_ID, "0",
@@ -92,36 +92,24 @@ public class AppDeletionSubscriberService extends AbstractMessagingSubscriberSer
     return transactionRunner;
   }
 
-  @Nullable
   @Override
-  protected String loadMessageId(StructuredTableContext context) throws Exception {
-    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), SUBSCRIBER);
-  }
-
-  @Override
-  protected void storeMessageId(StructuredTableContext context, String messageId) throws Exception {
-    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    appMetadataStore.persistSubscriberState(getTopicId().getTopic(), SUBSCRIBER, messageId);
-  }
-
-  @Override
-  protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, AppDeletionMessage>> messages) throws Exception {
+  protected void processMessages(Iterator<ImmutablePair<String, AppDeletionMessage>> messages) throws Exception {
     while (messages.hasNext()) {
       ImmutablePair<String, AppDeletionMessage> pair = messages.next();
       AppDeletionMessage message = pair.getSecond();
-      ApplicationId appId = message.getPayload(GSON, ApplicationId.class);
-      removeApp(structuredTableContext, appId);
+      ApplicationId appId = message.getApplicationId();
+      removeApp(appId);
     }
   }
 
-  private void removeApp(StructuredTableContext context, ApplicationId id) throws IOException {
-    getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
-    AppMetadataStore metaStore = getAppMetadataStore(context);
-    metaStore.deleteApplication(id.getAppReference());
-    metaStore.deleteApplicationEditRecord(id.getAppReference());
-    metaStore.deleteProgramHistory(id.getAppReference());
+  private void removeApp(ApplicationId id) throws IOException {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
+      AppMetadataStore metaStore = getAppMetadataStore(context);
+      metaStore.deleteApplication(id.getAppReference());
+      metaStore.deleteApplicationEditRecord(id.getAppReference());
+      metaStore.deleteProgramHistory(id.getAppReference());
+    });
   }
 
   private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {

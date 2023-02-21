@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.deploy.AppDeletionSubscriberService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -74,6 +75,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final ProgramStopSubscriberService programStopSubscriberService;
+  private final AppDeletionSubscriberService appDeletionSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
@@ -107,6 +109,7 @@ public class AppFabricServer extends AbstractIdleService {
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
                          ProgramStopSubscriberService programStopSubscriberService,
+                         AppDeletionSubscriberService appDeletionSubscriberService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          CoreSchedulerService coreSchedulerService,
@@ -129,6 +132,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.programStopSubscriberService = programStopSubscriberService;
+    this.appDeletionSubscriberService = appDeletionSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
@@ -158,6 +162,7 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
         programStopSubscriberService.start(),
+        appDeletionSubscriberService.start(),
         runRecordCorrectorService.start(),
         programRunStatusMonitorService.start(),
         coreSchedulerService.start(),
@@ -212,6 +217,7 @@ public class AppFabricServer extends AbstractIdleService {
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     programStopSubscriberService.stopAndWait();
+    appDeletionSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();

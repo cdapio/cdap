@@ -59,7 +59,7 @@ public class AppDeletionSubscriberServiceTest extends AppFabricTestBase {
     cConf = createBasicCConf();
     initializeAndStartServices(cConf);
     // use a fast retry strategy with not too many retries, to speed up the test
-    String prefix = "system.appdelete.";
+    String prefix = "app.delete.event.";
     cConf.set(prefix + Constants.Retry.TYPE, RetryStrategyType.FIXED_DELAY.toString());
     cConf.set(prefix + Constants.Retry.MAX_RETRIES, "100");
     cConf.set(prefix + Constants.Retry.MAX_TIME_SECS, "10");
