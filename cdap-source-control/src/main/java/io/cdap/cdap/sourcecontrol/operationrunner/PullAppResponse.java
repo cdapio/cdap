@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.sourcecontrol;
+package io.cdap.cdap.sourcecontrol.operationrunner;
 
 /**
  * Encapsulates the information generated from a single application pull

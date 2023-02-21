@@ -29,10 +29,6 @@ import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import io.cdap.cdap.internal.app.sourcecontrol.PullAppResponse;
-import io.cdap.cdap.internal.app.sourcecontrol.PushAppsResponse;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunner;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlOperationRunnerFactory;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -51,6 +47,7 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -213,46 +210,39 @@ public class SourceControlManagementService {
     return details;
   }
 
-  private RepositoryManager createRepositoryManager(NamespaceId namespace) throws RepositoryNotFoundException {
-    RepositoryMeta repoMeta = getRepositoryMeta(namespace);
-    SourceControlConfig config = new SourceControlConfig(namespace, repoMeta.getConfig(), cConf);
-    return new RepositoryManager(secureStore, config);
-  }
-
   public ApplicationRecord pullAndDeploy(NamespaceId namespace, ApplicationId appId) throws Exception {
-    try (RepositoryManager repoManager = createRepositoryManager(namespace)) {
-      SourceControlOperationRunner sourceControlRunner = sourceControlFactory.create(repoManager);
-      PullAppResponse appToDeploy = sourceControlRunner.pull(appId);
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
 
-      AppRequest<?> appRequest = DECODE_GSON.fromJson(appToDeploy.getAppDetailString(), AppRequest.class);
+    PullAppResponse appToDeploy = sourceControlOperationRunner.pull(appId.getEntityName(), namespace, repoConfig);
+    AppRequest<?> appRequest = DECODE_GSON.fromJson(appToDeploy.getAppDetailString(), AppRequest.class);
 
-      KerberosPrincipalId ownerPrincipalId =
-        appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
+    KerberosPrincipalId ownerPrincipalId =
+      appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
 
-      // if we don't null check, it gets serialized to "null"
-      Object config = appRequest.getConfig();
-      String configString = config == null ? null : config instanceof String ? (String) config : GSON.toJson(config);
-      ChangeSummary changeSummary = appRequest.getChange();
-      SourceControlMeta sourceControlMeta = new SourceControlMeta(appToDeploy.getFileHash());
+    // if we don't null check, it gets serialized to "null"
+    Object config = appRequest.getConfig();
+    String configString = config == null ? null : config instanceof String ? (String) config : GSON.toJson(config);
+    ChangeSummary changeSummary = appRequest.getChange();
+    SourceControlMeta sourceControlMeta = new SourceControlMeta(appToDeploy.getFileHash());
 
-      ApplicationWithPrograms app = appLifecycleService.deployApp(
-        appId.getParent(), appId.getApplication(), appId.getVersion(), appRequest.getArtifact(), configString,
-        changeSummary, sourceControlMeta, x -> { }, ownerPrincipalId, appRequest.canUpdateSchedules(),
-        false, Collections.emptyMap()
-      );
+    ApplicationWithPrograms app = appLifecycleService.deployApp(
+      appId.getParent(), appId.getApplication(), appId.getVersion(), appRequest.getArtifact(), configString,
+      changeSummary, sourceControlMeta, x -> {
+      }, ownerPrincipalId, appRequest.canUpdateSchedules(),
+      false, Collections.emptyMap()
+    );
 
-      LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
-                 "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
-               app.getArtifactId(), configString, app.getOwnerPrincipal()
-      );
+    LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
+               "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
+             app.getArtifactId(), configString, app.getOwnerPrincipal()
+    );
 
-      return new ApplicationRecord(
-        ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
-        app.getApplicationId().getApplication(),
-        app.getApplicationId().getVersion(),
-        app.getSpecification().getDescription(),
-        Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
-        app.getChangeDetail(), app.getSourceControlMeta());
-    }
+    return new ApplicationRecord(
+      ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
+      app.getApplicationId().getApplication(),
+      app.getApplicationId().getVersion(),
+      app.getSpecification().getDescription(),
+      Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
+      app.getChangeDetail(), app.getSourceControlMeta());
   }
 }

@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -85,6 +88,26 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
     }
   }
 
+  @Override
+  public PullAppResponse pull(String applicationName, NamespaceId namespace, RepositoryConfig repoConfig) throws Exception {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(namespace, repoConfig)) {
+      String currentCommitId = repositoryManager.cloneRemote();
+      Path appConfigRelativePath = getAndValidateAppConfigRelativePath(repositoryManager, applicationName);
+      Path filePathToRead = repositoryManager.getRepositoryRoot().resolve(appConfigRelativePath);
+      if (!Files.exists(filePathToRead)) {
+        throw new NotFoundException(String.format("App with name %s not found in git repository", applicationName));
+      }
+      String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
+      String fileHash = repositoryManager.getFileHash(appConfigRelativePath, currentCommitId);
+      return new PullAppResponse(contents, fileHash);
+    } catch (IOException e) {
+      throw new PullFailureException("Failed to pull application.", e);
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, NotFoundException.class);
+      throw new PullFailureException("Failed to pull application: " + e.getMessage(), e);
+    }
+  }
+
   private String modifyApplicationConfigAndPush(RepositoryManager repositoryManager,
                                                 List<ApplicationDetail> appsToPush,
                                                 CommitMeta commitDetails)
@@ -124,7 +147,7 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
    * or not.
    *
    * @param repositoryManager the RepositoryManager
-   * @param applicationName the name of this application
+   * @param applicationName   the name of this application
    * @return A valid application config file path
    */
   private Path getAndValidateAppConfigRelativePath(RepositoryManager repositoryManager,

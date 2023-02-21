@@ -18,12 +18,15 @@ package io.cdap.cdap.sourcecontrol;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,6 +63,9 @@ public class InMemorySourceControlOperationRunnerTest {
   private static final CommitMeta testCommit = new CommitMeta("author1", "committer1", 123, "message1");
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final NamespaceId NAMESPACE = NamespaceId.DEFAULT;
+  private static final String FAKE_APP_NAME = "app1";
+  private static final String FAKE_APP_SPEC = "{appname: app1}";
+  private static final String FAKE_FILE_HASH = "5905258bb958ceda80b6a37938050ad876920f09";
 
   private InMemorySourceControlOperationRunner operationRunner;
   private RepositoryManager mockRepositoryManager;
@@ -71,6 +77,7 @@ public class InMemorySourceControlOperationRunnerTest {
     this.mockRepositoryManager = Mockito.mock(RepositoryManager.class);
     Mockito.doReturn(mockRepositoryManager).when(mockRepositoryManagerFactory).create(Mockito.any(), Mockito.any());
     Mockito.doReturn("commit hash").when(mockRepositoryManager).cloneRemote();
+    Mockito.doNothing().when(mockRepositoryManager).close();
     this.operationRunner = new InMemorySourceControlOperationRunner(mockRepositoryManagerFactory);
   }
 
@@ -92,7 +99,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn("file Hash").when(mockRepositoryManager).getFileHash(Mockito.any(Path.class),
-                                                                             Mockito.any(String.class));
+                                                                          Mockito.any(String.class));
     Mockito.doReturn("file Hash").when(mockRepositoryManager).commitAndPush(Mockito.anyObject(),
                                                                             Mockito.anyList());
 
@@ -157,5 +164,63 @@ public class InMemorySourceControlOperationRunnerTest {
                                                                                Mockito.any(String.class));
 
     operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+  }
+
+  @Test
+  public void testPullSuccess() throws Exception {
+    setupPullTest();
+    PullAppResponse response = operationRunner.pull(FAKE_APP_NAME, NAMESPACE, testRepoConfig);
+    Assert.assertEquals(response.getFileHash(), FAKE_FILE_HASH);
+    Assert.assertEquals(response.getAppDetailString(), FAKE_APP_SPEC);
+    Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+    Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testPullFailedToReadHash() throws Exception {
+    setupPullTest();
+    Mockito.doThrow(new NotFoundException("object not found"))
+      .when(mockRepositoryManager)
+      .getFileHash(Mockito.any(Path.class), Mockito.any(String.class));
+    try {
+      operationRunner.pull(FAKE_APP_NAME, NAMESPACE, testRepoConfig);
+      ;
+    } finally {
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+    }
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testPullFileNotFound() throws Exception {
+    setupPullTest();
+    try {
+      operationRunner.pull("app2", NAMESPACE, testRepoConfig);
+    } finally {
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+    }
+  }
+
+  @Test(expected = PullFailureException.class)
+  public void testPullCloneFailure() throws Exception {
+    setupPullTest();
+    Mockito.doThrow(new IOException("secure store failure")).when(mockRepositoryManager).cloneRemote();
+    try {
+      operationRunner.pull(FAKE_APP_NAME, NAMESPACE, testRepoConfig);
+      ;
+    } finally {
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+    }
+  }
+
+  private void setupPullTest() throws Exception {
+    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
+    Mockito.doReturn(FAKE_FILE_HASH).when(mockRepositoryManager).getFileHash(Mockito.any(Path.class),
+                                                                             Mockito.any(String.class));
+    Files.write(tmpRepoDirPath.resolve(FAKE_APP_NAME + ".json"), FAKE_APP_SPEC.getBytes(StandardCharsets.UTF_8));
   }
 }

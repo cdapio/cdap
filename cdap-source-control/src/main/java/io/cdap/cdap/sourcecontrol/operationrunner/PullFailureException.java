@@ -14,13 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol;
+package io.cdap.cdap.sourcecontrol.operationrunner;
 
 /**
- * Exception thrown when there's no changes needed to push to linked repository
+ * Exception thrown when push operation fails in operation runner. Encapsulates all underlying exceptions.
  */
-public class NoChangesToPushException extends Exception {
-  public NoChangesToPushException(String message) {
-    super(message);
+public class PullFailureException extends Exception {
+  public PullFailureException(String message, Exception cause) {
+    super(message, cause);
   }
 }
