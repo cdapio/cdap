@@ -31,6 +31,7 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
@@ -81,6 +82,9 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(repoMeta));
     } catch (RepositoryConfigValidationException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, GSON.toJson(new SetRepositoryResponse(e)));
+    } catch (RemoteRepositoryValidationException e) {
+      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                         GSON.toJson(new SetRepositoryResponse(e.getMessage())));
     }
   }
 

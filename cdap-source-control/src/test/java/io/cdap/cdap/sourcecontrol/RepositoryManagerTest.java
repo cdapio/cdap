@@ -78,7 +78,7 @@ public class RepositoryManagerTest {
   }
 
   @Test
-  public void testValidateIncorrectKeyName() throws IOException {
+  public void testValidateIncorrectKeyName() throws Exception {
     String serverURL = gitServer.getServerURL();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink(serverURL + "ignored")
@@ -87,14 +87,12 @@ public class RepositoryManagerTest {
       .setTokenName(GITHUB_TOKEN_NAME + "invalid")
       .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
-    boolean exceptionCaught = false;
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
+      Assert.fail();
     } catch (RepositoryConfigValidationException e) {
-      exceptionCaught = true;
       Assert.assertTrue(e.getMessage().contains("Failed to get authentication credentials"));
     }
-    Assert.assertTrue(exceptionCaught);
   }
 
   @Test
@@ -102,18 +100,16 @@ public class RepositoryManagerTest {
     SourceControlConfig sourceControlConfig = getSourceControlConfig();
     Mockito.when(secureStore.get(NAMESPACE, GITHUB_TOKEN_NAME))
       .thenReturn(new SecureStoreData(null, "invalid-token".getBytes(StandardCharsets.UTF_8)));
-    boolean exceptionCaught = false;
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
+      Assert.fail();
     } catch (RepositoryConfigValidationException e) {
-      exceptionCaught = true;
       Assert.assertTrue(e.getMessage().contains("not authorized"));
     }
-    Assert.assertTrue(exceptionCaught);
   }
 
   @Test
-  public void testValidateInvalidBranchName() throws IOException {
+  public void testValidateInvalidBranchName() throws Exception {
     String serverURL = gitServer.getServerURL();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink(serverURL + "ignored")
@@ -122,18 +118,16 @@ public class RepositoryManagerTest {
       .setTokenName(GITHUB_TOKEN_NAME)
       .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
-    boolean exceptionCaught = false;
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
+      Assert.fail();
     } catch (RepositoryConfigValidationException e) {
-      exceptionCaught = true;
       Assert.assertTrue(e.getMessage().contains("Default branch not found in remote repository"));
     }
-    Assert.assertTrue(exceptionCaught);
   }
 
   @Test
-  public void testValidateNullBranchName() throws IOException {
+  public void testValidateNullBranchName() throws Exception {
     String serverURL = gitServer.getServerURL();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink(serverURL + "ignored")
@@ -145,7 +139,7 @@ public class RepositoryManagerTest {
   }
 
   @Test
-  public void testValidateSuccess() throws IOException {
+  public void testValidateSuccess() throws Exception {
     RepositoryManager.validateConfig(secureStore, getSourceControlConfig());
   }
 

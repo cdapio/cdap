@@ -22,6 +22,7 @@ import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import org.eclipse.jgit.api.CloneCommand;
@@ -98,11 +99,9 @@ public class RepositoryManager implements AutoCloseable {
    * @param secureStore         A secure store for fetching credentials if required.
    * @param sourceControlConfig Configuration for source control operations.
    * @throws RepositoryConfigValidationException when provided repository configuration is invalid.
-   * @throws IOException                         when there are internal errors while performing network operations
-   *                                             such as fetching secrets from Secure stores.
    */
-  public static void validateConfig(SecureStore secureStore, SourceControlConfig sourceControlConfig) throws
-    RepositoryConfigValidationException, IOException {
+  public static void validateConfig(SecureStore secureStore, SourceControlConfig sourceControlConfig)
+    throws RemoteRepositoryValidationException {
     RepositoryConfig config = sourceControlConfig.getRepositoryConfig();
     RefreshableCredentialsProvider credentialsProvider;
     try {
@@ -116,6 +115,8 @@ public class RepositoryManager implements AutoCloseable {
       credentialsProvider.refresh();
     } catch (AuthenticationConfigException e) {
       throw new RepositoryConfigValidationException("Failed to get authentication credentials: " + e.getMessage(), e);
+    } catch (IOException e) {
+      throw new RemoteRepositoryValidationException("Internal error: " + e.getMessage(), e);
     }
     // Try fetching heads in the remote repository.
     try (Git git = Git.wrap(new InMemoryRepository.Builder().build())) {
@@ -131,7 +132,7 @@ public class RepositoryManager implements AutoCloseable {
                                                     e);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, RepositoryConfigValidationException.class);
-      throw new RepositoryConfigValidationException("Failed to list remotes in remote repository.", e);
+      throw new RemoteRepositoryValidationException("Failed to list remotes in remote repository.", e);
     }
   }
 
