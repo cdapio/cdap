@@ -124,6 +124,9 @@ public class MetricsQueryHelper {
 
       // put schedule job related tag
       .put(Constants.Metrics.Tag.SCHEDULE, "schedule")
+
+      // put directives related tag
+      .put(Constants.Metrics.Tag.DIRECTIVE, "directive")
       .build();
 
     tagNameToHuman = mapping;

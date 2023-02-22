@@ -977,6 +977,9 @@ public final class Constants {
 
       //For scheduler
       public static final String SCHEDULE = "sch";
+
+      // For wrangler directives
+      public static final String DIRECTIVE = "dir";
     }
 
     /**
