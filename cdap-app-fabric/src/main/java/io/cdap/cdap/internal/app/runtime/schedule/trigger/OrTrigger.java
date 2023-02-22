@@ -19,7 +19,7 @@ package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.proto.Notification;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,17 +56,17 @@ public class OrTrigger extends AbstractSatisfiableCompositeTrigger {
 
   @Nullable
   @Override
-  public SatisfiableTrigger getTriggerWithDeletedProgram(ProgramId programId) {
+  public SatisfiableTrigger getTriggerWithDeletedProgram(ProgramReference programReference) {
     List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
     for (SatisfiableTrigger trigger : getTriggers()) {
       if (trigger instanceof ProgramStatusTrigger &&
-        programId.isSameProgramExceptVersion(((ProgramStatusTrigger) trigger).getProgramId())) {
+        programReference.equals(((ProgramStatusTrigger) trigger).getProgramReference())) {
         // this program status trigger will never be satisfied, skip adding it to updatedTriggers
         continue;
       }
       if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
         SatisfiableTrigger updatedTrigger =
-          ((AbstractSatisfiableCompositeTrigger) trigger).getTriggerWithDeletedProgram(programId);
+          ((AbstractSatisfiableCompositeTrigger) trigger).getTriggerWithDeletedProgram(programReference);
         if (updatedTrigger != null) {
           // add the updated composite trigger into updatedTriggers
           updatedTriggers.add(updatedTrigger);

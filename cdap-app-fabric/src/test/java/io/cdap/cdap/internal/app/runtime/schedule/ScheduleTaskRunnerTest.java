@@ -57,8 +57,8 @@ public class ScheduleTaskRunnerTest {
 
     ApplicationId appId = NamespaceId.DEFAULT.app("app");
     ProgramSchedule programSchedule = new ProgramSchedule(
-      "schedule", "desc", appId.workflow("wf2"),
-      Collections.singletonMap("key", "val"), new ProgramStatusTrigger(appId.workflow("wf1")),
+      "schedule", "desc", appId.workflow("wf2").getProgramReference(),
+      Collections.singletonMap("key", "val"), new ProgramStatusTrigger(appId.workflow("wf1").getProgramReference()),
       Collections.emptyList());
     Map<String, String> userArgs = ScheduleTaskRunner.getUserArgs(programSchedule, propertiesResolver);
     Assert.assertEquals("val", userArgs.get("key"));

@@ -35,7 +35,8 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
+import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.TopicId;
 import org.apache.twill.common.Threads;
 import org.quartz.CronScheduleBuilder;
@@ -158,9 +159,9 @@ public final class TimeScheduler {
       for (TriggerKey triggerKey : cronTriggerKeyMap.values()) {
         assertTriggerDoesNotExist(triggerKey);
       }
-      ProgramId program = schedule.getProgramId();
-      SchedulableProgramType programType = program.getType().getSchedulableType();
-      JobDetail job = addJob(program, programType);
+      ProgramReference programReference = schedule.getProgramReference();
+      SchedulableProgramType programType = programReference.getType().getSchedulableType();
+      JobDetail job = addJob(programReference, programType);
       for (Map.Entry<String, TriggerKey> entry : cronTriggerKeyMap.entrySet()) {
         scheduleJob(entry.getValue(), schedule.getName(), entry.getKey(), job);
       }
@@ -177,7 +178,7 @@ public final class TimeScheduler {
           continue;
         }
         try {
-          Trigger trigger = getTrigger(triggerKey, schedule.getProgramId(), schedule.getName());
+          Trigger trigger = getTrigger(triggerKey, schedule.getProgramReference(), schedule.getName());
           scheduler.unscheduleJob(trigger.getKey());
 
           JobKey jobKey = trigger.getJobKey();
@@ -257,11 +258,12 @@ public final class TimeScheduler {
   }
 
   /**
-   * Construct a {@link JobDetail} from the given {@link ProgramId} and {@link SchedulableProgramType}.
+   * Construct a {@link JobDetail} from the given {@link ProgramReference} and {@link SchedulableProgramType}.
    * Add the {@link JobDetail} the scheduler and return it
    */
-  private JobDetail addJob(ProgramId program, SchedulableProgramType programType) throws SchedulerException {
-    String jobKey = jobKeyFor(program, programType).getName();
+  private JobDetail addJob(ProgramReference programReference, SchedulableProgramType programType)
+    throws SchedulerException {
+    String jobKey = jobKeyFor(programReference, programType).getName();
     JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
       .withIdentity(jobKey)
       .storeDurably(true)
@@ -292,12 +294,14 @@ public final class TimeScheduler {
     }
   }
 
-  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program) throws SchedulerException {
-    return getScheduledRuntime(program, true);
+  public List<ScheduledRuntime> previousScheduledRuntime(ProgramReference programReference)
+    throws SchedulerException {
+    return getScheduledRuntime(programReference, true);
   }
 
-  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program) throws SchedulerException {
-    return getScheduledRuntime(program, false);
+  public List<ScheduledRuntime> nextScheduledRuntime(ProgramReference programReference)
+    throws SchedulerException {
+    return getScheduledRuntime(programReference, false);
   }
 
   /**
@@ -317,7 +321,7 @@ public final class TimeScheduler {
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
+  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramReference program, SchedulableProgramType programType,
                                                         long startTimeSecs, long endTimeSecs)
     throws SchedulerException {
     // decrease the start time by one second to include the next fire time that is equal to the start time
@@ -344,7 +348,7 @@ public final class TimeScheduler {
     return scheduledRuntimes;
   }
 
-  private List<ScheduledRuntime> getScheduledRuntime(ProgramId program,
+  private List<ScheduledRuntime> getScheduledRuntime(ProgramReference program,
                                                      boolean previousRuntimeRequested) throws SchedulerException {
     List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
     SchedulableProgramType schedulableType = program.getType().getSchedulableType();
@@ -378,8 +382,8 @@ public final class TimeScheduler {
     return scheduledRuntimes;
   }
 
-  private static JobKey jobKeyFor(ProgramId program, SchedulableProgramType programType) {
-    return new JobKey(AbstractTimeSchedulerService.programIdFor(program, programType));
+  private static JobKey jobKeyFor(ProgramReference programReference, SchedulableProgramType programType) {
+    return new JobKey(AbstractTimeSchedulerService.programIdFor(programReference, programType));
   }
 
   private JobFactory createJobFactory() {
@@ -421,8 +425,8 @@ public final class TimeScheduler {
    */
   private Map<String, TriggerKey> getCronTriggerKeyMap(ProgramSchedule schedule)
     throws org.quartz.SchedulerException {
-    ProgramId program = schedule.getProgramId();
-    SchedulableProgramType programType = program.getType().getSchedulableType();
+    ProgramReference programReference = schedule.getProgramReference();
+    SchedulableProgramType programType = programReference.getType().getSchedulableType();
     io.cdap.cdap.api.schedule.Trigger trigger = schedule.getTrigger();
     Map<String, TriggerKey> cronTriggerKeyMap = new HashMap<>();
     // Get a set of TimeTrigger if the schedule's trigger is a composite trigger
@@ -435,13 +439,13 @@ public final class TimeScheduler {
       for (SatisfiableTrigger timeTrigger : triggerSet) {
         String cron = ((TimeTrigger) timeTrigger).getCronExpression();
         String triggerName =
-          AbstractTimeSchedulerService.getTriggerName(program, programType, schedule.getName(), cron);
+          AbstractTimeSchedulerService.getTriggerName(programReference, programType, schedule.getName(), cron);
         cronTriggerKeyMap.put(cron, triggerKeyForName(triggerName));
       }
       return cronTriggerKeyMap;
     }
     // No need to include cron expression in trigger key if the trigger is not composite trigger
-    String triggerName = AbstractTimeSchedulerService.scheduleIdFor(program, programType, schedule.getName());
+    String triggerName = AbstractTimeSchedulerService.scheduleIdFor(programReference, programType, schedule.getName());
     cronTriggerKeyMap.put(((TimeTrigger) schedule.getTrigger()).getCronExpression(), triggerKeyForName(triggerName));
     return cronTriggerKeyMap;
   }
@@ -463,12 +467,14 @@ public final class TimeScheduler {
   /**
    * Gets a {@link Trigger} associated with this program name, type and schedule name
    */
-  private synchronized Trigger getTrigger(TriggerKey key, ProgramId program, String scheduleName)
+  private synchronized Trigger getTrigger(TriggerKey key, ProgramReference programReference, String scheduleName)
     throws org.quartz.SchedulerException, NotFoundException {
     Trigger trigger = scheduler.getTrigger(key);
+    ScheduleId scheduleId = new ScheduleId(programReference.getNamespace(), programReference.getApplication(),
+                                           scheduleName);
     if (trigger == null) {
       throw new NotFoundException(String.format("Time trigger with trigger key '%s' in schedule '%s' was not found",
-                                                key.getName(), program.getParent().schedule(scheduleName).toString()));
+                                                key.getName(), scheduleId));
     }
     return trigger;
   }

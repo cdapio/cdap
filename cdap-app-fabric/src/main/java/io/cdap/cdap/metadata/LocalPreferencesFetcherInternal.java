@@ -20,9 +20,11 @@ import com.google.inject.Inject;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 /**
  * Fetch preferences locally via {@link PreferencesService}
@@ -54,9 +56,17 @@ public class LocalPreferencesFetcherInternal implements PreferencesFetcher {
         ApplicationId appId = (ApplicationId) entityId;
         detail = resolved ? service.getResolvedPreferences(appId) : service.getPreferences(appId);
         break;
+      case APPLICATIONREFERENCE:
+        ApplicationReference applicationRef = (ApplicationReference) entityId;
+        detail = resolved ? service.getResolvedPreferences(applicationRef) : service.getPreferences(applicationRef);
+        break;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         detail = resolved ? service.getResolvedPreferences(programId) : service.getPreferences(programId);
+        break;
+      case PROGRAMREFERENCE:
+        ProgramReference programRef = (ProgramReference) entityId;
+        detail = resolved ? service.getResolvedPreferences(programRef) : service.getPreferences(programRef);
         break;
       default:
         throw new UnsupportedOperationException(

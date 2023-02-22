@@ -25,7 +25,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCom
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,35 +108,38 @@ public abstract class AbstractTimeSchedulerService extends AbstractIdleService i
   }
 
   @Override
-  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program)
+  public List<ScheduledRuntime> previousScheduledRuntime(ProgramReference programReference)
     throws SchedulerException {
-    return timeScheduler.previousScheduledRuntime(program);
+    return timeScheduler.previousScheduledRuntime(programReference);
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program)
+  public List<ScheduledRuntime> nextScheduledRuntime(ProgramReference programReference)
     throws SchedulerException {
-    return timeScheduler.nextScheduledRuntime(program);
+    return timeScheduler.nextScheduledRuntime(programReference);
   }
 
   @Override
-  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
+  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramReference programReference,
+                                                        SchedulableProgramType programType,
                                                         long startTimeSecs, long endTimeSecs)
     throws SchedulerException {
-    return timeScheduler.getAllScheduledRunTimes(program, programType, startTimeSecs, endTimeSecs);
+    return timeScheduler.getAllScheduledRunTimes(programReference, programType, startTimeSecs, endTimeSecs);
   }
 
-  public static String scheduleIdFor(ProgramId program, SchedulableProgramType programType, String scheduleName) {
-    return String.format("%s:%s", programIdFor(program, programType), scheduleName);
+  public static String scheduleIdFor(ProgramReference programReference, SchedulableProgramType programType,
+                                     String scheduleName) {
+    return String.format("%s:%s", programIdFor(programReference, programType), scheduleName);
   }
 
-  public static String getTriggerName(ProgramId program, SchedulableProgramType programType, String scheduleName,
+  public static String getTriggerName(ProgramReference programReference, SchedulableProgramType programType,
+                                      String scheduleName,
                                       String cronEntry) {
-    return String.format("%s:%s:%s", programIdFor(program, programType), scheduleName, cronEntry);
+    return String.format("%s:%s:%s", programIdFor(programReference, programType), scheduleName, cronEntry);
   }
 
-  public static String programIdFor(ProgramId program, SchedulableProgramType programType) {
-    return String.format("%s:%s:%s:%s:%s", program.getNamespace(), program.getApplication(),
-                         ApplicationId.DEFAULT_VERSION, programType.name(), program.getProgram());
+  public static String programIdFor(ProgramReference programReference, SchedulableProgramType programType) {
+    return String.format("%s:%s:%s:%s:%s", programReference.getNamespace(), programReference.getApplication(),
+                         ApplicationId.DEFAULT_VERSION, programType.name(), programReference.getProgram());
   }
 }

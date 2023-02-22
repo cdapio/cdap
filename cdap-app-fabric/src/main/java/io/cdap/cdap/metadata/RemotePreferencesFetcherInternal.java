@@ -26,9 +26,11 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -84,11 +86,22 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
         uri = String.format("namespaces/%s/apps/%s/preferences",
                             appId.getNamespace(), appId.getApplication());
         break;
+      case APPLICATIONREFERENCE:
+        ApplicationReference applicationRef = (ApplicationReference) entityId;
+        uri = String.format("namespaces/%s/apps/%s/preferences",
+                            applicationRef.getNamespace(), applicationRef.getApplication());
+        break;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         uri = String.format("namespaces/%s/apps/%s/%s/%s/preferences",
                             programId.getNamespace(), programId.getApplication(), programId.getType().getCategoryName(),
                             programId.getProgram());
+        break;
+      case PROGRAMREFERENCE:
+        ProgramReference programRef = (ProgramReference) entityId;
+        uri = String.format("namespaces/%s/apps/%s/%s/%s/preferences",
+                            programRef.getNamespace(), programRef.getApplication(),
+                            programRef.getType().getCategoryName(), programRef.getProgram());
         break;
       default:
         throw new UnsupportedOperationException(

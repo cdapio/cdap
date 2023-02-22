@@ -29,6 +29,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.io.IOException;
 import java.util.Map;
@@ -115,6 +116,9 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
     // recursively once we have a use-case for it.
     if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
       entityId = ((ProgramId) entityId).getParent();
+    }
+    if (entityId.getEntityType().equals(EntityType.PROGRAMREFERENCE)) {
+      entityId = ((ProgramReference) entityId).getParent();
     }
     return entityId;
   }

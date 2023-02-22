@@ -145,27 +145,16 @@ public interface ScheduleBuilder {
   ScheduleCreationSpec triggerOnPartitions(String datasetNamespace, String datasetName, int numPartitions);
 
   /**
-   * Create a schedule which is triggered when the given program in the given namespace, application, and
-   * application version transitions to any one of the given program statuses.
+   * Create a schedule which is triggered when the given program in the given namespace and application
+   * transitions to any one of the given program statuses.
    *
    * @param programNamespace the namespace where this program is defined
    * @param application the name of the application where this program is defined
-   * @param appVersion the version of the application
    * @param programType the type of the program, as supported by the system
    * @param program the name of the program
    * @param programStatuses the set of statuses to trigger the schedule. The schedule will be triggered if the status of
    *                        the specific program transitioned to one of these statuses.
    * @return a {@link ScheduleCreationSpec}
-   */
-  ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application, String appVersion,
-                                              ProgramType programType, String program,
-                                              ProgramStatus... programStatuses);
-
-  /**
-   * Create a schedule which is triggered when the given program in the given namespace
-   * and application with default version transitions to any one of the given program statuses.
-   *
-   * @see #triggerOnProgramStatus(String, String, String, ProgramType, String, ProgramStatus...)
    */
   ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application, ProgramType programType,
                                               String program, ProgramStatus... programStatuses);

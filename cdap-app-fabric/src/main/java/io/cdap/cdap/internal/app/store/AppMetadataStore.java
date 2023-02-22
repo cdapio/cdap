@@ -1461,6 +1461,18 @@ public class AppMetadataStore {
    * Get active runs in the given program, active runs means program run with status STARTING, PENDING,
    * RUNNING or SUSPENDED.
    *
+   * @param programReference versionless reference of the program
+   * @return map of run id to run record meta
+   */
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramReference programReference) throws IOException {
+    List<Field<?>> prefix = getRunRecordProgramRefPrefix(TYPE_RUN_RECORD_ACTIVE, programReference);
+    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
+  }
+
+  /**
+   * Get active runs in the given program, active runs means program run with status STARTING, PENDING,
+   * RUNNING or SUSPENDED.
+   *
    * @param programId given program
    * @return map of run id to run record meta
    */

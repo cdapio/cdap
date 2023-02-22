@@ -19,7 +19,7 @@ package io.cdap.cdap.metadata;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.proto.ScheduleDetail;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
@@ -44,10 +44,11 @@ public interface ScheduleFetcher {
    */
   /**
    * Get the list of schedules for the given program id
-   * @param programId the id of the program to get the list of schedules for
+   * @param programRef the reference of the program to get the list of schedules for
    * @return a list of schedules set on the program
    * @throws IOException if failed to get the list of schedules for the given program
    * @throws ProgramNotFoundException if the given program id doesn't exist
    */
-  List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthorizedException;
+  List<ScheduleDetail> list(ProgramReference programRef) throws IOException, ProgramNotFoundException,
+    UnauthorizedException;
 }

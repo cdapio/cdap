@@ -34,10 +34,11 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.OrTriggerBuilder;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.junit.After;
@@ -71,15 +72,16 @@ public abstract class JobQueueTableTest {
 
   private static final NamespaceId TEST_NS = new NamespaceId("jobQueueTest");
   private static final ApplicationId APP_ID = TEST_NS.app("app1");
-  private static final WorkflowId WORKFLOW_ID = APP_ID.workflow("wf1");
+  private static final ProgramReference WORKFLOW_REF = APP_ID.getAppReference().program(ProgramType.WORKFLOW,
+                                                                                        "wf1");
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
   private static final DatasetId DATASET2_ID = TEST_NS.dataset("pfs2");
 
-  private static final ProgramSchedule SCHED1 = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
+  private static final ProgramSchedule SCHED1 = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_REF,
                                                                     ImmutableMap.of("prop3", "abc"),
                                                                     new PartitionTrigger(DATASET_ID, 1),
                                                                     ImmutableList.of());
-  private static final ProgramSchedule SCHED2 = new ProgramSchedule("SCHED2", "time schedule", WORKFLOW_ID,
+  private static final ProgramSchedule SCHED2 = new ProgramSchedule("SCHED2", "time schedule", WORKFLOW_REF,
                                                                     ImmutableMap.of("prop3", "abc"),
                                                                     new TimeTrigger("* * * * *"),
                                                                     ImmutableList.of());
@@ -87,7 +89,7 @@ public abstract class JobQueueTableTest {
     new OrTriggerBuilder(new PartitionTrigger(DATASET_ID, 6),
                          new PartitionTrigger(DATASET2_ID, 1))
       .build(APP_ID.getNamespace(), APP_ID.getApplication(), APP_ID.getVersion());
-  private static final ProgramSchedule SCHED3 = new ProgramSchedule("SCHED3", "three partitions schedule", WORKFLOW_ID,
+  private static final ProgramSchedule SCHED3 = new ProgramSchedule("SCHED3", "three partitions schedule", WORKFLOW_REF,
                                                                     ImmutableMap.of("prop1", "abc1"),
                                                                     TRIGGER,
                                                                     ImmutableList.of());
@@ -232,7 +234,7 @@ public abstract class JobQueueTableTest {
       Multimap<Integer, Job> jobsByPartition = HashMultimap.create();
       long now = 1494353984967L;
       for (int i = 0; i < 100; i++) {
-        ProgramSchedule schedule = new ProgramSchedule("sched" + i, "one partition schedule", WORKFLOW_ID,
+        ProgramSchedule schedule = new ProgramSchedule("sched" + i, "one partition schedule", WORKFLOW_REF,
                                                        ImmutableMap.of(),
                                                        new PartitionTrigger(DATASET_ID, 1),
                                                        ImmutableList.of());
@@ -423,7 +425,7 @@ public abstract class JobQueueTableTest {
 
         Assert.assertNull(jobQueue.getJob(SCHED1_JOB.getJobKey()));
 
-        ProgramSchedule scheduleWithTimeout = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
+        ProgramSchedule scheduleWithTimeout = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_REF,
                                                                   ImmutableMap.of("prop3", "abc"),
                                                                   new PartitionTrigger(DATASET_ID, 1),
                                                                   ImmutableList.of());

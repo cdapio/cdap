@@ -19,8 +19,7 @@ package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 
 import java.util.EnumSet;
 
@@ -51,8 +50,7 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   @Override
   public ProgramStatusTrigger build(String namespace, String applicationName, String applicationVersion) {
     // Inherit environment attributes from the deployed application
-    ProgramId programId = new ApplicationId(namespace, applicationName, applicationVersion).program(programType,
-                                                                                                    programName);
-    return new ProgramStatusTrigger(programId, programStatuses);
+    ProgramReference programRef = new ProgramReference(namespace, applicationName, programType, programName);
+    return new ProgramStatusTrigger(programRef, programStatuses);
   }
 }

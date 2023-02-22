@@ -251,7 +251,7 @@ class ConstraintCheckerService extends AbstractIdleService {
           }, TransactionException.class);
         } catch (TransactionException e) {
           LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
-                   job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
+                   job.getSchedule().getProgramReference(), job.getSchedule().getName(), e);
         }
         readyJobsIter.remove();
       }
@@ -287,7 +287,7 @@ class ConstraintCheckerService extends AbstractIdleService {
                                      job.getSchedule().getName());
       } catch (Exception e) {
         LOG.error("Skip launching job {} because the program {} encountered an exception while launching.",
-                  job.getJobKey(), job.getSchedule().getProgramId(), e);
+                  job.getJobKey(), job.getSchedule().getProgramReference(), e);
         emitScheduleJobFailureMetric(job.getSchedule().getScheduleId().getApplication(),
                                      job.getSchedule().getName());
       }

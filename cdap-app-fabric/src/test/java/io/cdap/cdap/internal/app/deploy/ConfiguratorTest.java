@@ -208,6 +208,6 @@ public class ConfiguratorTest {
 
     ProgramStatusTrigger trigger = (ProgramStatusTrigger) specification.getProgramSchedules()
                                                                        .get(ConfigTestApp.SCHEDULE_NAME).getTrigger();
-    Assert.assertEquals(trigger.getProgramId().getProgram(), ConfigTestApp.WORKFLOW_NAME);
+    Assert.assertEquals(trigger.getProgramReference().getProgram(), ConfigTestApp.WORKFLOW_NAME);
   }
 }

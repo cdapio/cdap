@@ -25,7 +25,7 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -130,12 +130,11 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
     ApplicationDetail appDetails = getAppDetails(namespace, appName);
 
     // Get and validate the schedule
-    ProgramId programId = new ProgramId(namespace,
-                                        appName,
-                                        appDetails.getAppVersion(),
-                                        ProgramType.WORKFLOW,
-                                        AppWithSchedule.WORKFLOW_NAME);
-    List<ScheduleDetail> scheduleList = fetcher.list(programId);
+    ProgramReference programRef = new ProgramReference(namespace,
+                                                appName,
+                                                ProgramType.WORKFLOW,
+                                                AppWithSchedule.WORKFLOW_NAME);
+    List<ScheduleDetail> scheduleList = fetcher.list(programRef);
     Assert.assertEquals(2, scheduleList.size());
     Assert.assertEquals(AppWithSchedule.SCHEDULE, scheduleList.get(0).getName());
     Assert.assertEquals(AppWithSchedule.SCHEDULE_2, scheduleList.get(1).getName());

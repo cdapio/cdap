@@ -35,8 +35,9 @@ import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.ops.DashboardProgramRunRecord;
 import io.cdap.cdap.reporting.ProgramHeartbeatService;
@@ -207,11 +208,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   private List<DashboardProgramRunRecord> getScheduledDashboardRecords(ProgramSchedule schedule,
                                                                        long startTimeSecs, long endTimeSecs)
     throws Exception {
-    ProgramId programId = schedule.getProgramId();
+    ProgramReference programReference = schedule.getProgramReference();
     // get all the scheduled run times within the given time range of the given program
     List<ScheduledRuntime> scheduledRuntimes =
-      timeSchedulerService.getAllScheduledRunTimes(programId, programId.getType().getSchedulableType(), startTimeSecs,
-                                                   endTimeSecs);
+      timeSchedulerService.getAllScheduledRunTimes(programReference, programReference.getType().getSchedulableType(),
+                                                   startTimeSecs, endTimeSecs);
     String userId = schedule.getProperties().get(ProgramOptionConstants.USER_ID);
     String artifactId = schedule.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
     ArtifactSummary artifactSummary =
@@ -219,10 +220,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     // for each scheduled runtime, construct a dashboard record for it with the scheduled time as start time
     return scheduledRuntimes.stream()
       .map(scheduledRuntime ->
-             new DashboardProgramRunRecord(programId.getNamespace(), artifactSummary,
+             new DashboardProgramRunRecord(programReference.getNamespace(), artifactSummary,
                                            new DashboardProgramRunRecord.ApplicationNameVersion(
-                                             programId.getApplication(), programId.getVersion()),
-                                           programId.getType().name(), programId.getProgram(), null, userId, SCHEDULED,
+                                             programReference.getApplication(), ApplicationId.DEFAULT_VERSION),
+                                           programReference.getType().name(), programReference.getProgram(),
+                                           null, userId, SCHEDULED,
                                            // convert the scheduled time from millis to seconds as start time
                                            TimeUnit.MILLISECONDS.toSeconds(scheduledRuntime.getTime()),
                                            null, null, null, null, null))

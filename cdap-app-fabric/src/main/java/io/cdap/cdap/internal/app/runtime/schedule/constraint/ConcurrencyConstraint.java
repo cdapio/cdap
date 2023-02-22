@@ -38,10 +38,10 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    Map<ProgramRunId, RunRecordDetail> activeRuns = context.getActiveRuns(schedule.getProgramId());
+    Map<ProgramRunId, RunRecordDetail> activeRuns = context.getActiveRuns(schedule.getProgramReference());
     if (activeRuns.size() >= maxConcurrency) {
       LOG.debug("Skipping run of program {} from schedule {} because there are {} active runs.",
-                schedule.getProgramId(), schedule.getName(), activeRuns.size());
+                schedule.getProgramReference(), schedule.getName(), activeRuns.size());
       return notSatisfied(context);
     }
     return ConstraintResult.SATISFIED;

@@ -28,6 +28,7 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProgramTypes;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.slf4j.Logger;
@@ -80,9 +81,10 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
       ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
+      ProgramReference programRef = programId.getProgramReference();
       programTerminator.stop(programId);
-      programScheduler.deleteSchedules(programId);
-      programScheduler.modifySchedulesTriggeredByDeletedProgram(programId);
+      programScheduler.deleteSchedules(programRef);
+      programScheduler.modifySchedulesTriggeredByDeletedProgram(programRef);
 
       // Remove metadata for the deleted program
       metadataServiceClient.drop(new MetadataMutation.Drop(programId.toMetadataEntity()));

@@ -32,8 +32,10 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -61,11 +63,19 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
   private static final ApplicationId APP1_ID = NS1_ID.app("app1", "1");
   private static final ApplicationId APP2_ID = NS1_ID.app("app2");
   private static final ApplicationId APP3_ID = NS2_ID.app("app3", "1");
+  private static final ApplicationReference APP1_REFERENCE = APP1_ID.getAppReference();
+  private static final ApplicationReference APP2_REFERENCE = APP2_ID.getAppReference();
+  private static final ApplicationReference APP3_REFERENCE = APP3_ID.getAppReference();
   private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
   private static final WorkflowId PROG2_ID = APP2_ID.workflow("wf2");
   private static final WorkflowId PROG3_ID = APP2_ID.workflow("wf3");
   private static final WorkflowId PROG4_ID = APP3_ID.workflow("wf4");
   private static final WorkflowId PROG5_ID = APP3_ID.workflow("wf5");
+  private static final ProgramReference PROG1_REFERENCE = PROG1_ID.getProgramReference();
+  private static final ProgramReference PROG2_REFERENCE = PROG2_ID.getProgramReference();
+  private static final ProgramReference PROG3_REFERENCE = PROG3_ID.getProgramReference();
+  private static final ProgramReference PROG4_REFERENCE = PROG4_ID.getProgramReference();
+  private static final ProgramReference PROG5_REFERENCE = PROG5_ID.getProgramReference();
   private static final DatasetId DS1_ID = NS1_ID.dataset("pfs1");
   private static final DatasetId DS2_ID = NS1_ID.dataset("pfs2");
 
@@ -88,14 +98,19 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
   public void testListSchedules() {
     TransactionRunner transactionRunner = getTransactionRunner();
 
-    final ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule", PROG1_ID,
-      Collections.emptyMap(), new PartitionTrigger(DS1_ID, 1), Collections.emptyList());
-    final ProgramSchedule sched2 = new ProgramSchedule("sched2", "time schedule", PROG2_ID,
-      Collections.emptyMap(), new TimeTrigger("* * * 1 1"), Collections.emptyList());
-    final ProgramSchedule sched3 = new ProgramSchedule("sched3", "two partitions schedule", PROG4_ID,
-      Collections.emptyMap(), new PartitionTrigger(DS1_ID, 2), Collections.emptyList());
-    final ProgramSchedule sched4 = new ProgramSchedule("sched4", "time schedule", PROG5_ID,
-      Collections.emptyMap(), new TimeTrigger("* * * 2 1"), Collections.emptyList());
+    final ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule",
+                                                       PROG1_REFERENCE, Collections.emptyMap(),
+                                                       new PartitionTrigger(DS1_ID, 1),
+                                                       Collections.emptyList());
+    final ProgramSchedule sched2 = new ProgramSchedule("sched2", "time schedule", PROG2_REFERENCE,
+                                                       Collections.emptyMap(), new TimeTrigger("* * * 1 1"),
+                                                       Collections.emptyList());
+    final ProgramSchedule sched3 = new ProgramSchedule("sched3", "two partitions schedule", PROG4_REFERENCE,
+                                                       Collections.emptyMap(), new PartitionTrigger(DS1_ID, 2),
+                                                       Collections.emptyList());
+    final ProgramSchedule sched4 = new ProgramSchedule("sched4", "time schedule", PROG5_REFERENCE,
+                                                       Collections.emptyMap(), new TimeTrigger("* * * 2 1"),
+                                                       Collections.emptyList());
 
     // assert no schedules exists before adding schedules
     TransactionRunners.run(
@@ -104,13 +119,13 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
         ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
         Assert.assertTrue(store.listSchedules(NS1_ID, schedule -> true).isEmpty());
         Assert.assertTrue(store.listSchedules(NS2_ID, schedule -> true).isEmpty());
-        Assert.assertTrue(store.listScheduleRecords(APP1_ID).isEmpty());
-        Assert.assertTrue(store.listScheduleRecords(APP2_ID).isEmpty());
-        Assert.assertTrue(store.listScheduleRecords(APP3_ID).isEmpty());
-        Assert.assertTrue(store.listScheduleRecords(PROG1_ID).isEmpty());
-        Assert.assertTrue(store.listScheduleRecords(PROG2_ID).isEmpty());
-        Assert.assertTrue(store.listScheduleRecords(PROG3_ID).isEmpty());
-        Assert.assertTrue(store.listScheduleRecords(PROG4_ID).isEmpty());
+        Assert.assertTrue(store.listScheduleRecords(APP1_REFERENCE).isEmpty());
+        Assert.assertTrue(store.listScheduleRecords(APP2_REFERENCE).isEmpty());
+        Assert.assertTrue(store.listScheduleRecords(APP3_REFERENCE).isEmpty());
+        Assert.assertTrue(store.listScheduleRecords(PROG1_REFERENCE).isEmpty());
+        Assert.assertTrue(store.listScheduleRecords(PROG2_REFERENCE).isEmpty());
+        Assert.assertTrue(store.listScheduleRecords(PROG3_REFERENCE).isEmpty());
+        Assert.assertTrue(store.listScheduleRecords(PROG4_REFERENCE).isEmpty());
       }
     );
 
@@ -134,20 +149,20 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
                             new HashSet<>(store.listSchedules(NS2_ID, schedule -> true)));
         // list schedules by app
         Assert.assertEquals(ImmutableSet.of(sched1),
-                            toScheduleSet(store.listScheduleRecords(APP1_ID)));
+                            toScheduleSet(store.listScheduleRecords(APP1_REFERENCE)));
         Assert.assertEquals(ImmutableSet.of(sched2),
-                            toScheduleSet(store.listScheduleRecords(APP2_ID)));
+                            toScheduleSet(store.listScheduleRecords(APP2_REFERENCE)));
         Assert.assertEquals(ImmutableSet.of(sched3, sched4),
-                            toScheduleSet(store.listScheduleRecords(APP3_ID)));
+                            toScheduleSet(store.listScheduleRecords(APP3_REFERENCE)));
         // list schedules by program
         Assert.assertEquals(ImmutableSet.of(sched1),
-                            toScheduleSet(store.listScheduleRecords(PROG1_ID)));
+                            toScheduleSet(store.listScheduleRecords(PROG1_REFERENCE)));
         Assert.assertEquals(ImmutableSet.of(sched2),
-                            toScheduleSet(store.listScheduleRecords(PROG2_ID)));
+                            toScheduleSet(store.listScheduleRecords(PROG2_REFERENCE)));
         Assert.assertEquals(ImmutableSet.of(sched3),
-                            toScheduleSet(store.listScheduleRecords(PROG4_ID)));
+                            toScheduleSet(store.listScheduleRecords(PROG4_REFERENCE)));
         Assert.assertEquals(ImmutableSet.of(sched4),
-                            toScheduleSet(store.listScheduleRecords(PROG5_ID)));
+                            toScheduleSet(store.listScheduleRecords(PROG5_REFERENCE)));
       }
     );
 
@@ -177,15 +192,15 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
       transactionRunner,
       context -> {
         ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
-        store.deleteSchedules(APP1_ID, System.currentTimeMillis());
+        store.deleteSchedules(APP1_REFERENCE, System.currentTimeMillis());
         Assert.assertEquals(ImmutableSet.of(),
-                            toScheduleSet(store.listScheduleRecords(APP1_ID)));
-        store.deleteSchedules(PROG2_ID, System.currentTimeMillis());
+                            toScheduleSet(store.listScheduleRecords(APP1_REFERENCE)));
+        store.deleteSchedules(PROG2_REFERENCE, System.currentTimeMillis());
         Assert.assertEquals(ImmutableSet.of(),
-                            toScheduleSet(store.listScheduleRecords(PROG2_ID)));
-        store.deleteSchedules(APP3_ID, System.currentTimeMillis());
+                            toScheduleSet(store.listScheduleRecords(PROG2_REFERENCE)));
+        store.deleteSchedules(APP3_REFERENCE, System.currentTimeMillis());
         Assert.assertEquals(ImmutableSet.of(),
-                            toScheduleSet(store.listScheduleRecords(APP3_ID)));
+                            toScheduleSet(store.listScheduleRecords(APP3_REFERENCE)));
       }
     );
   }
@@ -194,21 +209,22 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
   public void testFindSchedulesByEventAndUpdateSchedule() {
     TransactionRunner transactionRunner = getTransactionRunner();
 
-    final ProgramSchedule sched11 = new ProgramSchedule("sched11", "one partition schedule", PROG1_ID,
-                                                        ImmutableMap.of("prop3", "abc"),
+    final ProgramSchedule sched11 = new ProgramSchedule("sched11", "one partition schedule",
+                                                        PROG1_REFERENCE, ImmutableMap.of("prop3", "abc"),
                                                         new PartitionTrigger(DS1_ID, 1),
                                                         ImmutableList.<Constraint>of());
-    final ProgramSchedule sched12 = new ProgramSchedule("sched12", "two partition schedule", PROG1_ID,
-                                                        ImmutableMap.of("propper", "popper"),
+    final ProgramSchedule sched12 = new ProgramSchedule("sched12", "two partition schedule",
+                                                        PROG1_REFERENCE, ImmutableMap.of("propper", "popper"),
                                                         new PartitionTrigger(DS2_ID, 2),
                                                         ImmutableList.<Constraint>of());
-    final ProgramSchedule sched22 = new ProgramSchedule("sched22", "twentytwo partition schedule", PROG2_ID,
-                                                        ImmutableMap.of("nn", "4"),
+    final ProgramSchedule sched22 = new ProgramSchedule("sched22", "twentytwo partition schedule",
+                                                        PROG2_REFERENCE, ImmutableMap.of("nn", "4"),
                                                         new PartitionTrigger(DS2_ID, 22),
                                                         ImmutableList.<Constraint>of());
-    final ProgramSchedule sched31 = new ProgramSchedule("sched31", "a program status trigger", PROG3_ID,
-                                                        ImmutableMap.of("propper", "popper"),
-                                                        new ProgramStatusTrigger(PROG1_ID, ProgramStatus.COMPLETED,
+    final ProgramSchedule sched31 = new ProgramSchedule("sched31", "a program status trigger",
+                                                        PROG3_REFERENCE, ImmutableMap.of("propper", "popper"),
+                                                        new ProgramStatusTrigger(PROG1_REFERENCE,
+                                                                                 ProgramStatus.COMPLETED,
                                                                                  ProgramStatus.FAILED,
                                                                                  ProgramStatus.KILLED),
                                                         ImmutableList.<Constraint>of());
@@ -221,11 +237,14 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
         Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID)).isEmpty());
         Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID)).isEmpty());
         // event for PROG1 should trigger nothing. it should also return an empty collection
-        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))
+        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE,
+                                                                                    ProgramStatus.COMPLETED))
                             .isEmpty());
-        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))
+        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE,
+                                                                                    ProgramStatus.FAILED))
                             .isEmpty());
-        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))
+        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE,
+                                                                                    ProgramStatus.KILLED))
                             .isEmpty());
       }
     );
@@ -243,15 +262,15 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
         // event for ProgramStatus should trigger only sched31
         Assert.assertEquals(ImmutableSet.of(sched31),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.COMPLETED))));
 
         Assert.assertEquals(ImmutableSet.of(sched31),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.FAILED))));
 
         Assert.assertEquals(ImmutableSet.of(sched31),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.KILLED))));
 
         // event for DS1 should trigger only sched11
         Assert.assertEquals(ImmutableSet.of(sched11),
@@ -262,21 +281,23 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
       }
     );
 
-    final ProgramSchedule sched11New = new ProgramSchedule(sched11.getName(), "time schedule", PROG1_ID,
-                                                           ImmutableMap.of("timeprop", "time"),
+    final ProgramSchedule sched11New = new ProgramSchedule(sched11.getName(), "time schedule",
+                                                           PROG1_REFERENCE, ImmutableMap.of("timeprop", "time"),
                                                            new TimeTrigger("* * * * *"),
                                                            ImmutableList.<Constraint>of());
-    final ProgramSchedule sched12New = new ProgramSchedule(sched12.getName(), "one partition schedule", PROG1_ID,
-                                                           ImmutableMap.of("pp", "p"),
+    final ProgramSchedule sched12New = new ProgramSchedule(sched12.getName(), "one partition schedule",
+                                                           PROG1_REFERENCE, ImmutableMap.of("pp", "p"),
                                                            new PartitionTrigger(DS1_ID, 2),
                                                            ImmutableList.<Constraint>of());
-    final ProgramSchedule sched22New = new ProgramSchedule(sched22.getName(), "program3 failed schedule", PROG2_ID,
-                                                           ImmutableMap.of("ss", "s"),
-                                                           new ProgramStatusTrigger(PROG3_ID, ProgramStatus.FAILED),
+    final ProgramSchedule sched22New = new ProgramSchedule(sched22.getName(), "program3 failed schedule",
+                                                           PROG2_REFERENCE, ImmutableMap.of("ss", "s"),
+                                                           new ProgramStatusTrigger(PROG3_REFERENCE,
+                                                                                    ProgramStatus.FAILED),
                                                            ImmutableList.<Constraint>of());
-    final ProgramSchedule sched31New = new ProgramSchedule(sched31.getName(), "program1 failed schedule", PROG3_ID,
-                                                           ImmutableMap.of("abcd", "efgh"),
-                                                           new ProgramStatusTrigger(PROG1_ID, ProgramStatus.FAILED),
+    final ProgramSchedule sched31New = new ProgramSchedule(sched31.getName(), "program1 failed schedule",
+                                                           PROG3_REFERENCE, ImmutableMap.of("abcd", "efgh"),
+                                                           new ProgramStatusTrigger(PROG1_REFERENCE,
+                                                                                    ProgramStatus.FAILED),
                                                            ImmutableList.<Constraint>of());
 
     TransactionRunners.run(
@@ -303,13 +324,13 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
         // event for PS triggers only for failed program statuses, not completed nor killed
         Assert.assertEquals(ImmutableSet.of(sched31New),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.FAILED))));
         Assert.assertEquals(ImmutableSet.of(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.COMPLETED))));
         Assert.assertEquals(ImmutableSet.of(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.KILLED))));
       }
     );
   }
@@ -322,29 +343,31 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
   public void testDeleteScheduleByTriggeringProgram() {
     TransactionRunner transactionRunner = getTransactionRunner();
 
-    SatisfiableTrigger prog1Trigger = new ProgramStatusTrigger(PROG1_ID, ProgramStatus.COMPLETED, ProgramStatus.FAILED,
-                                                                ProgramStatus.KILLED);
-    SatisfiableTrigger prog2Trigger = new ProgramStatusTrigger(PROG2_ID, ProgramStatus.COMPLETED, ProgramStatus.FAILED,
-                                                    ProgramStatus.KILLED);
-    final ProgramSchedule sched1 = new ProgramSchedule("sched1", "a program status trigger", PROG3_ID,
-                                                        ImmutableMap.of("propper", "popper"),
-                                                        prog1Trigger, ImmutableList.<Constraint>of());
-    final ProgramSchedule sched2 = new ProgramSchedule("sched2", "a program status trigger", PROG3_ID,
-                                                        ImmutableMap.of("propper", "popper"),
-                                                        prog2Trigger, ImmutableList.<Constraint>of());
+    SatisfiableTrigger prog1Trigger = new ProgramStatusTrigger(PROG1_REFERENCE, ProgramStatus.COMPLETED,
+                                                               ProgramStatus.FAILED, ProgramStatus.KILLED);
+    SatisfiableTrigger prog2Trigger = new ProgramStatusTrigger(PROG2_REFERENCE, ProgramStatus.COMPLETED,
+                                                               ProgramStatus.FAILED, ProgramStatus.KILLED);
+    final ProgramSchedule sched1 = new ProgramSchedule("sched1", "a program status trigger",
+                                                       PROG3_REFERENCE, ImmutableMap.of("propper", "popper"),
+                                                       prog1Trigger, ImmutableList.<Constraint>of());
+    final ProgramSchedule sched2 = new ProgramSchedule("sched2", "a program status trigger",
+                                                       PROG3_REFERENCE, ImmutableMap.of("propper", "popper"),
+                                                       prog2Trigger, ImmutableList.<Constraint>of());
 
-    final ProgramSchedule schedOr = new ProgramSchedule("schedOr", "an OR trigger", PROG3_ID,
+    final ProgramSchedule schedOr = new ProgramSchedule("schedOr", "an OR trigger", PROG3_REFERENCE,
                                                         ImmutableMap.of("propper", "popper"),
-                                                        new OrTrigger(new PartitionTrigger(DS1_ID, 1), prog1Trigger,
+                                                        new OrTrigger(new PartitionTrigger(DS1_ID, 1),
+                                                                      prog1Trigger,
                                                                       new AndTrigger(new OrTrigger(prog1Trigger,
                                                                                                    prog2Trigger),
                                                                                      new PartitionTrigger(DS2_ID, 1)),
                                                                       new OrTrigger(prog2Trigger)),
                                                         ImmutableList.<Constraint>of());
 
-    final ProgramSchedule schedAnd = new ProgramSchedule("schedAnd", "an AND trigger", PROG3_ID,
+    final ProgramSchedule schedAnd = new ProgramSchedule("schedAnd", "an AND trigger", PROG3_REFERENCE,
                                                         ImmutableMap.of("propper", "popper"),
-                                                        new AndTrigger(new PartitionTrigger(DS1_ID, 1), prog2Trigger,
+                                                        new AndTrigger(new PartitionTrigger(DS1_ID, 1),
+                                                                       prog2Trigger,
                                                                        new AndTrigger(prog1Trigger,
                                                                                       new PartitionTrigger(DS2_ID, 1))),
                                                          ImmutableList.<Constraint>of());
@@ -363,11 +386,11 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
         // ProgramStatus event for PROG1_ID should trigger only sched1, schedOr, schedAnd
         Assert.assertEquals(ImmutableSet.of(sched1, schedOr, schedAnd),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.COMPLETED))));
         // ProgramStatus event for PROG2_ID should trigger only sched2, schedOr, schedAnd
         Assert.assertEquals(ImmutableSet.of(sched2, schedOr, schedAnd),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.FAILED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG2_REFERENCE, ProgramStatus.FAILED))));
       }
     );
     // update or delete all schedules triggered by PROG1_ID
@@ -375,10 +398,10 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
       transactionRunner,
       context -> {
         ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
-        store.modifySchedulesTriggeredByDeletedProgram(PROG1_ID);
+        store.modifySchedulesTriggeredByDeletedProgram(PROG1_REFERENCE);
       }
     );
-    final ProgramSchedule schedOrNew = new ProgramSchedule("schedOr", "an OR trigger", PROG3_ID,
+    final ProgramSchedule schedOrNew = new ProgramSchedule("schedOr", "an OR trigger", PROG3_REFERENCE,
                                                            ImmutableMap.of("propper", "popper"),
                                                            new OrTrigger(new PartitionTrigger(DS1_ID, 1),
                                                                          new AndTrigger(prog2Trigger,
@@ -393,17 +416,17 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
         // ProgramStatus event for PROG1_ID should trigger no schedules after modifying schedules triggered by it
         Assert.assertEquals(Collections.emptySet(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.COMPLETED))));
         Assert.assertEquals(Collections.emptySet(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.FAILED))));
         Assert.assertEquals(Collections.emptySet(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG1_REFERENCE, ProgramStatus.KILLED))));
         // ProgramStatus event for PROG2_ID should trigger only sched2 and schedOrNew
         Assert.assertEquals(ImmutableSet.of(sched2, schedOrNew),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.FAILED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG2_REFERENCE, ProgramStatus.FAILED))));
       }
     );
     // update or delete all schedules triggered by PROG2_ID
@@ -411,10 +434,10 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
       transactionRunner,
       context -> {
         ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
-        store.modifySchedulesTriggeredByDeletedProgram(PROG2_ID);
+        store.modifySchedulesTriggeredByDeletedProgram(PROG2_REFERENCE);
       }
     );
-    final ProgramSchedule schedOrNew1 = new ProgramSchedule("schedOr", "an OR trigger", PROG3_ID,
+    final ProgramSchedule schedOrNew1 = new ProgramSchedule("schedOr", "an OR trigger", PROG3_REFERENCE,
                                                            ImmutableMap.of("propper", "popper"),
                                                            new PartitionTrigger(DS1_ID, 1),
                                                            ImmutableList.of());
@@ -426,13 +449,13 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
         // ProgramStatus event for PROG2_ID should trigger no schedules after modifying schedules triggered by it
         Assert.assertEquals(Collections.emptySet(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.COMPLETED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG2_REFERENCE, ProgramStatus.COMPLETED))));
         Assert.assertEquals(Collections.emptySet(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.FAILED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG2_REFERENCE, ProgramStatus.FAILED))));
         Assert.assertEquals(Collections.emptySet(),
                             toScheduleSet(store.findSchedules(
-                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.KILLED))));
+                              Schedulers.triggerKeyForProgramStatus(PROG2_REFERENCE, ProgramStatus.KILLED))));
         // event for DS1 should trigger only schedOrNew1 since all other schedules are deleted
         ds1Schedules.addAll(toScheduleSet(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID))));
       }

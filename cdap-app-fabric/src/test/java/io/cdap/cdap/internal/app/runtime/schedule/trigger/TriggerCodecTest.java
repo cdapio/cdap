@@ -28,8 +28,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ProtoTriggerCodec;
 import io.cdap.cdap.proto.id.DatasetId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -103,10 +102,10 @@ public class TriggerCodecTest {
     testSerDeserYieldsTrigger(protoTime, timeTrigger);
 
     ProtoTrigger.ProgramStatusTrigger protoProgramStatus =
-      new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.SERVICE, "myprog"),
+      new ProtoTrigger.ProgramStatusTrigger(new ProgramReference("test", "myapp", ProgramType.SERVICE, "myprog"),
                                             ImmutableSet.of(ProgramStatus.COMPLETED));
     ProgramStatusTrigger programStatusTrigger =
-      new ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.SERVICE, "myprog"),
+      new ProgramStatusTrigger(new ProgramReference("test", "myapp", ProgramType.SERVICE, "myprog"),
                              ImmutableSet.of(ProgramStatus.COMPLETED));
     testSerDeserYieldsTrigger(protoProgramStatus, programStatusTrigger);
 
@@ -156,10 +155,10 @@ public class TriggerCodecTest {
     testContainingTrigger(new ProtoTrigger.TimeTrigger("* * * 1 1"),
                           new TimeTrigger("* * * 1 1"));
 
-    testContainingTrigger(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
+    testContainingTrigger(new ProtoTrigger.ProgramStatusTrigger(new ProgramReference("test", "myapp",
                                                                               ProgramType.SERVICE, "myprog"),
                                                                 ImmutableSet.of(ProgramStatus.FAILED)),
-                          new ProgramStatusTrigger(new ProgramId("test", "myapp",
+                          new ProgramStatusTrigger(new ProgramReference("test", "myapp",
                                                    ProgramType.SERVICE, "myprog"),
                                                    ImmutableSet.of(ProgramStatus.FAILED)));
 
@@ -167,12 +166,12 @@ public class TriggerCodecTest {
 
   private void testContainingTrigger(ProtoTrigger proto, Trigger trigger) {
     ProgramSchedule proto1 = new ProgramSchedule("sched1", "one partition schedule",
-                                                 new NamespaceId("test").app("a").worker("ww"),
+                                                 new ProgramReference("test", "a", ProgramType.WORKER, "ww"),
                                                  ImmutableMap.of("prop3", "abc"), proto,
                                                  ImmutableList.of());
 
     ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule",
-                                                 new NamespaceId("test").app("a").worker("ww"),
+                                                 new ProgramReference("test", "a", ProgramType.WORKER, "ww"),
                                                  ImmutableMap.of("prop3", "abc"), trigger,
                                                  ImmutableList.of());
 

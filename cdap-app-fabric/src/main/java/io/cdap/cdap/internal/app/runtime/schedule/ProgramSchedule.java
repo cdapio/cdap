@@ -23,7 +23,9 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.List;
@@ -43,17 +45,19 @@ public class ProgramSchedule {
   private final long timeoutMillis;
 
   public ProgramSchedule(String name, String description,
-                         ProgramId programId, Map<String, String> properties,
+                         ProgramReference programReference, Map<String, String> properties,
                          Trigger trigger, List<? extends Constraint> constraints) {
-    this(name, description, programId, properties, trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+    this(name, description, programReference, properties, trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
   }
 
-  public ProgramSchedule(String name, String description,
-                         ProgramId programId, Map<String, String> properties,
-                         Trigger trigger, List<? extends Constraint> constraints, long timeoutMillis) {
+  public ProgramSchedule(String name, String description, ProgramReference programReference,
+                         Map<String, String> properties, Trigger trigger, List<? extends Constraint> constraints,
+                         long timeoutMillis) {
     this.description = description;
-    this.programId = programId;
-    this.scheduleId = programId.getParent().schedule(name);
+    // CDAP-19989: this attribute should be programRef instead of programId, keep it as is by adding the default version
+    // to maintain backward compatibility when loading existing ProgramSchedule
+    this.programId = programReference.id(ApplicationId.DEFAULT_VERSION);
+    this.scheduleId = new ScheduleId(programId.getNamespace(), programId.getApplication(), name);
     this.properties = properties;
     this.trigger = trigger;
     this.constraints = constraints;
@@ -68,8 +72,8 @@ public class ProgramSchedule {
     return description;
   }
 
-  public ProgramId getProgramId() {
-    return programId;
+  public ProgramReference getProgramReference() {
+    return programId.getProgramReference();
   }
 
   public Map<String, String> getProperties() {
@@ -120,7 +124,7 @@ public class ProgramSchedule {
   public String toString() {
     return "ProgramSchedule{" +
       "scheduleId=" + scheduleId +
-      ", programId=" + programId +
+      ", programRef=" + getProgramReference() +
       ", description='" + description + '\'' +
       ", properties=" + properties +
       ", trigger=" + trigger +
@@ -139,10 +143,10 @@ public class ProgramSchedule {
 
   public static ProgramSchedule fromScheduleDetail(ScheduleDetail schedule) throws IllegalArgumentException {
     ProgramType programType = ProgramType.valueOfSchedulableType(schedule.getProgram().getProgramType());
-    ProgramId programId = new ProgramId(
+    ProgramReference programReference = new ProgramReference(
       schedule.getNamespace(), schedule.getApplication(), programType, schedule.getProgram().getProgramName());
     ProgramSchedule programSchedule = new ProgramSchedule(
-      schedule.getName(), schedule.getDescription(), programId, schedule.getProperties(),
+      schedule.getName(), schedule.getDescription(), programReference, schedule.getProperties(),
       schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
     return programSchedule;
   }

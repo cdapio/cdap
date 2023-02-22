@@ -459,8 +459,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
     // add a schedule to schedule store
     ProgramScheduleService scheduleService = injector.getInstance(ProgramScheduleService.class);
-    scheduleService.add(new ProgramSchedule("tsched1", "one time schedule", workflowId,
-                                            Collections.emptyMap(),
+    scheduleService.add(new ProgramSchedule("tsched1", "one time schedule",
+                                            workflowId.getProgramReference(), Collections.emptyMap(),
                                             new TimeTrigger("* * ? * 1"), ImmutableList.of()));
 
     // add a new profile in default namespace

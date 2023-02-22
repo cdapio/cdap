@@ -758,9 +758,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     e);
     }
 
-    ProgramId triggerProgramId = new NamespaceId(triggerNamespaceId)
-      .app(triggerAppName, triggerAppVersion)
-      .program(programType, triggerProgramName);
+    ProgramReference triggerProgramReference = new ProgramReference(triggerNamespaceId, triggerAppName, programType,
+                                                                    triggerProgramName);
 
     Set<io.cdap.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
     if (triggerProgramStatuses != null) {
@@ -778,7 +777,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Collections.addAll(queryProgramStatuses, io.cdap.cdap.api.ProgramStatus.values());
     }
 
-    List<ScheduleDetail> details = programScheduleService.findTriggeredBy(triggerProgramId, queryProgramStatuses)
+    List<ScheduleDetail> details = programScheduleService.findTriggeredBy(triggerProgramReference, queryProgramStatuses)
       .stream()
       .filter(record -> programScheduleStatus == null || record.getMeta().getStatus().equals(programScheduleStatus))
       .map(ProgramScheduleRecord::toScheduleDetail)
@@ -823,7 +822,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("app-name") String appName,
                               @QueryParam("trigger-type") String triggerType,
                               @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    doGetSchedules(responder, new NamespaceId(namespaceId).app(appName), null, triggerType, scheduleStatus);
+    doGetSchedules(responder, new ApplicationReference(namespaceId, appName), null, triggerType, scheduleStatus);
   }
 
   /**
@@ -845,7 +844,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        @PathParam("app-version") String appVersion,
                                        @QueryParam("trigger-type") String triggerType,
                                        @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    doGetSchedules(responder, new NamespaceId(namespaceId).app(appName), null, triggerType, scheduleStatus);
+    doGetSchedules(responder, new ApplicationReference(namespaceId, appName), null, triggerType, scheduleStatus);
   }
 
   /**
@@ -882,19 +881,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Program type " + programType + " cannot have schedule");
     }
 
-    ProgramId programId = new ApplicationId(namespace, application).program(programType, program);
-    doGetSchedules(responder, new NamespaceId(namespace).app(application), programId,
+    ProgramReference programReference = new ProgramReference(namespace, application, programType, program);
+    doGetSchedules(responder, new ApplicationReference(namespace, application), programReference,
                    triggerType, scheduleStatus);
   }
 
-  private void doGetSchedules(HttpResponder responder, ApplicationId applicationId,
-                              @Nullable ProgramId programId, @Nullable String triggerTypeStr,
+  private void doGetSchedules(HttpResponder responder, ApplicationReference appReference,
+                              @Nullable ProgramReference programReference, @Nullable String triggerTypeStr,
                               @Nullable String statusStr) throws Exception {
-    ApplicationSpecification appSpec = Optional.ofNullable(store.getLatest(applicationId.getAppReference()))
+    ApplicationSpecification appSpec = Optional.ofNullable(store.getLatest(appReference))
       .map(ApplicationMeta::getSpec)
       .orElse(null);
     if (appSpec == null) {
-      throw new NotFoundException(applicationId);
+      throw new NotFoundException(appReference);
     }
     ProgramScheduleStatus status;
     try {
@@ -920,13 +919,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     Collection<ProgramScheduleRecord> schedules;
-    if (programId != null) {
-      if (!appSpec.getProgramsByType(programId.getType().getApiProgramType()).contains(programId.getProgram())) {
-        throw new NotFoundException(programId);
+    if (programReference != null) {
+      if (!appSpec.getProgramsByType(programReference.getType().getApiProgramType())
+        .contains(programReference.getProgram())) {
+        throw new NotFoundException(programReference);
       }
-      schedules = programScheduleService.list(programId, predicate);
+      schedules = programScheduleService.list(programReference, predicate);
     } else {
-      schedules = programScheduleService.list(applicationId, predicate);
+      schedules = programScheduleService.list(appReference, predicate);
     }
 
     List<ScheduleDetail> details = schedules.stream()
@@ -947,9 +947,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                           @PathParam("program-name") String program) throws Exception {
     ProgramType programType = getProgramType(type);
     String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
-    handleScheduleRunTime(responder,
-                          new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
-                          true);
+    handleScheduleRunTime(responder, new ProgramReference(namespaceId, appId, programType, program), true);
   }
 
   /**
@@ -963,17 +961,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("program-type") String type,
                                       @PathParam("program-name") String program) throws Exception {
     ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
-    handleScheduleRunTime(responder,
-                          new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
-                          false);
+    handleScheduleRunTime(responder, new ProgramReference(namespaceId, appId, programType, program), false);
   }
 
-  private void handleScheduleRunTime(HttpResponder responder, ProgramId programId,
+  private void handleScheduleRunTime(HttpResponder responder, ProgramReference programReference,
                                      boolean previousRuntimeRequested) throws Exception {
     try {
-      lifecycleService.ensureProgramExists(programId);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getScheduledRunTimes(programId, previousRuntimeRequested)));
+      lifecycleService.ensureLatestProgramExists(programReference);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getScheduledRunTimes(programReference,
+                                                                                 previousRuntimeRequested)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -1056,7 +1052,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (programMap.containsKey(programReference)) {
         ProgramId programId = programMap.get(programReference);
         result.add(new BatchProgramSchedule(programId, HttpResponseStatus.OK.code(), null,
-                                            getScheduledRunTimes(programId, previous)));
+                                            getScheduledRunTimes(programReference, previous)));
       } else {
         result.add(new BatchProgramSchedule(programReference, HttpResponseStatus.NOT_FOUND.code(),
                                             new NotFoundException(programReference).getMessage(), null));
@@ -1068,21 +1064,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Returns a list of {@link ScheduledRuntime} for the given program.
    *
-   * @param programId the program to fetch schedules for
+   * @param programReference the program to fetch schedules for
    * @param previous  {@code true} to get the previous scheduled times; {@code false} to get the next scheduled times
    * @return a list of {@link ScheduledRuntime}
    * @throws SchedulerException if failed to fetch the schedule
    */
-  private List<ScheduledRuntime> getScheduledRunTimes(ProgramId programId,
+  private List<ScheduledRuntime> getScheduledRunTimes(ProgramReference programReference,
                                                       boolean previous) throws Exception {
-    if (programId.getType().getSchedulableType() == null) {
-      throw new BadRequestException("Program " + programId + " cannot have schedule");
+    if (programReference.getType().getSchedulableType() == null) {
+      throw new BadRequestException("Program " + programReference + " cannot have schedule");
     }
 
     if (previous) {
-      return programScheduleService.getPreviousScheduledRuntimes(programId);
+      return programScheduleService.getPreviousScheduledRuntimes(programReference);
     } else {
-      return programScheduleService.getNextScheduledRuntimes(programId);
+      return programScheduleService.getNextScheduledRuntimes(programReference);
     }
   }
 
@@ -1113,7 +1109,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void doAddSchedule(FullHttpRequest request, HttpResponder responder, String namespace, String appName,
                              String scheduleName) throws Exception {
 
-    final ApplicationId applicationId = new ApplicationId(namespace, appName);
+    final ApplicationReference applicationRef = new ApplicationReference(namespace, appName);
     ScheduleDetail scheduleFromRequest = readScheduleDetailBody(request, scheduleName);
 
     if (scheduleFromRequest.getProgram() == null) {
@@ -1130,17 +1126,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     ProgramType programType = ProgramType.valueOfSchedulableType(scheduleFromRequest.getProgram().getProgramType());
     String programName = scheduleFromRequest.getProgram().getProgramName();
-    ProgramId programId = applicationId.program(programType, programName);
+    ProgramReference programRef = applicationRef.program(programType, programName);
 
     // Schedules are versionless
-    lifecycleService.ensureLatestProgramExists(programId.getProgramReference());
+    lifecycleService.ensureLatestProgramExists(programRef);
 
     String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
     Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(), Collections.emptyMap());
     List<? extends Constraint> constraints = Objects.firstNonNull(scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
     long timeoutMillis =
       Objects.firstNonNull(scheduleFromRequest.getTimeoutMillis(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
-    ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programId, properties,
+    ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programRef, properties,
                                                    scheduleFromRequest.getTrigger(), constraints, timeoutMillis);
     programScheduleService.add(schedule);
     responder.sendStatus(HttpResponseStatus.OK);

@@ -30,7 +30,7 @@ import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.security.impersonation.ImpersonationInfo;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -62,24 +62,24 @@ public class PropertiesResolver {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
-  public Map<String, String> getUserProperties(ProgramId id)
+  public Map<String, String> getUserProperties(ProgramReference programRef)
     throws IOException, NotFoundException, UnauthorizedException {
-    PreferencesDetail preferencesDetail = preferencesFetcher.get(id, true);
+    PreferencesDetail preferencesDetail = preferencesFetcher.get(programRef, true);
     Map<String, String> userArgs = new HashMap<>(preferencesDetail.getProperties());
     userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(System.currentTimeMillis()));
     return userArgs;
   }
 
-  public Map<String, String> getSystemProperties(ProgramId id)
+  public Map<String, String> getSystemProperties(ProgramReference programRef)
     throws IOException, NamespaceNotFoundException, AccessException {
     Map<String, String> systemArgs = new HashMap<>();
     systemArgs.put(Constants.CLUSTER_NAME, cConf.get(Constants.CLUSTER_NAME, ""));
-    addNamespaceConfigs(systemArgs, id.getNamespaceId());
+    addNamespaceConfigs(systemArgs, programRef.getNamespaceId());
     if (SecurityUtil.isKerberosEnabled(cConf)) {
-      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id);
+      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, programRef);
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
       systemArgs.put(ProgramOptionConstants.APP_PRINCIPAL_EXISTS,
-                     String.valueOf(ownerAdmin.exists(id.getParent())));
+                     String.valueOf(ownerAdmin.exists(programRef.getParent())));
     }
     return systemArgs;
   }
