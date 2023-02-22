@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.proto.security;
 
+import java.util.Objects;
+
 /**
  * Encapsulating class for credentials passing through CDAP.
  */
@@ -101,5 +103,19 @@ public class Credential {
       "type=" + type +
       ", length=" + value.length() +
       "}";
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof Credential)) {
+      return false;
+    }
+    Credential credentialObj = (Credential) obj;
+    return type == credentialObj.type && value.equals(credentialObj.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, value);
   }
 }
