@@ -299,8 +299,8 @@ public class DatasetInstanceService {
       throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
     }
 
-    LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
-             namespaceId, name, props.getTypeName(), props.getProperties());
+    LOG.info("Creating dataset {}.{}, type name: {}",
+             namespaceId, name, props.getTypeName());
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     // Store the owner principal first if one was provided since it will be used to impersonate while creating
