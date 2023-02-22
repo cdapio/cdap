@@ -388,6 +388,8 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
     RunRecordDetail recordedRunRecord;
+    long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
+            ProgramOptionConstants.LOGICAL_START_TIME);
     switch (programRunStatus) {
       case STARTING:
         try {
@@ -446,8 +448,6 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
 
         break;
       case RUNNING:
-        long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
-                                                   ProgramOptionConstants.LOGICAL_START_TIME);
         if (logicalStartTimeSecs == -1) {
           LOG.warn("Ignore program running notification for program {} without {} specified, {}",
                    programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
@@ -458,7 +458,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
         runRecordMonitorService.removeRequest(programRunId, true);
         long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
-        emitStartingTimeMetric(programRunId, startDelayTime, recordedRunRecord);
+        emitStartingTimeMetric(programRunId, startDelayTime, programRunStatus, recordedRunRecord);
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
@@ -488,6 +488,12 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTsSecs,
                                                                    terminateTsSecs);
         writeToHeartBeatTable(recordedRunRecord, stoppingTsSecs, programHeartbeatTable);
+        if (logicalStartTimeSecs == -1) {
+          LOG.warn("Ignore program running notification for program {} without {} specified, {}",
+                  programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
+          return;
+        }
+        emitStartingTimeMetric(programRunId, logicalStartTimeSecs, programRunStatus, recordedRunRecord);
         break;
       case COMPLETED:
       case KILLED:
@@ -495,6 +501,12 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         recordedRunRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
                                                     programRunId, programRunStatus, notification,
                                                     messageIdBytes, runnables);
+        if (logicalStartTimeSecs == -1) {
+          LOG.warn("Ignore program running notification for program {} without {} specified, {}",
+                  programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
+          return;
+        }
+        emitStartingTimeMetric(programRunId, logicalStartTimeSecs, programRunStatus, recordedRunRecord);
         break;
       case REJECTED:
         ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
@@ -909,13 +921,15 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
                          runRecord.getStopTs() - runRecord.getStoppingTs());
   }
 
-  private void emitStartingTimeMetric(ProgramRunId programRunId, long startDelayTime,
-                                      @Nullable RunRecordDetail runRecord) {
+  private void emitStartingTimeMetric(ProgramRunId programRunId, long logicalStartTimeSecs,
+                                      ProgramRunStatus programRunStatus, @Nullable RunRecordDetail runRecord) {
+    long startDelayTime = logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
     Map<String, String> tags = ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
-      .putAll(getAdditionalTagsForProfileMetrics(runRecord, programRunId))
-      .putAll(getAdditionalTagsForProgramMetrics(runRecord, null))
-      .build();
+            .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+            .put(Constants.Metrics.Tag.STATUS, programRunStatus.name())
+            .putAll(getAdditionalTagsForProfileMetrics(runRecord, programRunId))
+            .putAll(getAdditionalTagsForProgramMetrics(runRecord, null))
+            .build();
     MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
                                                                                metricsCollectionService);
     metricsContext.gauge(Constants.Metrics.Program.PROGRAM_STARTING_DELAY_SECONDS, startDelayTime);
