@@ -34,7 +34,6 @@ import io.cdap.cdap.proto.profile.Profile;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -58,8 +57,6 @@ public class ProfileMetadataTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore
-  // TODO: (CDAP-19777) ignoring this test until the schedule bug is fixed
   public void testProfileMetadata() throws Exception {
     // create my profile
     ProfileId myProfile = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile");
@@ -196,7 +193,7 @@ public class ProfileMetadataTest extends AppFabricTestBase {
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       deletePreferences(getPreferenceURI(), 200);
-      deleteApp(defaultAppId, 200);
+      deleteApp(new Id.Application(new Id.Namespace(defaultAppId.getNamespace()), defaultAppId.getApplication()), 200);
 
       // Verify the workflow, schedule, mapreduce, spark, worker metadata has been deleted
       Tasks.waitFor(false, () -> getMetadataProperties(programId).containsKey("profile"),
