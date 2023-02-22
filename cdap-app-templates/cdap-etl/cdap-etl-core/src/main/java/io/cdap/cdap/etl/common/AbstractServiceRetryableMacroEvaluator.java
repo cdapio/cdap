@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.etl.common;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.api.macro.InvalidMacroException;
@@ -30,19 +29,12 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class which contains common logic about retry logic
  */
 abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator {
-  private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(600);
-  private static final long RETRY_BASE_DELAY_MILLIS = 200L;
-  private static final long RETRY_MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(5);
-  private static final double RETRY_DELAY_MULTIPLIER = 1.2d;
-  private static final double RETRY_RANDOMIZE_FACTOR = 0.1d;
 
   private final String functionName;
 
@@ -64,33 +56,15 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
       throw new IllegalArgumentException("Invalid function name " + macroFunction + ". Expecting " + functionName);
     }
 
-    long delay = RETRY_BASE_DELAY_MILLIS;
-    double minMultiplier =
-            RETRY_DELAY_MULTIPLIER - RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
-    double maxMultiplier =
-            RETRY_DELAY_MULTIPLIER + RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
-    Stopwatch stopWatch = new Stopwatch().start();
-    try {
-      while (stopWatch.elapsedTime(TimeUnit.MILLISECONDS) < TIMEOUT_MILLIS) {
-        try {
-          return evaluateMacro(macroFunction, args);
-        } catch (RetryableException e) {
-          TimeUnit.MILLISECONDS.sleep(delay);
-          delay =
-                  (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier + 1)));
-          delay = Math.min(delay, RETRY_MAX_DELAY_MILLIS);
-        } catch (IOException e) {
-          throw new InvalidMacroException(e);
-        }
+    RetryableBiFunction<String, String[], String> retryingEvaluateStringFunc =
+      new RetryableBiFunction<String, String[], String>() {
+      @Override
+      public String apply(String macroFunction, String[] args) throws Throwable {
+        return evaluateMacro(macroFunction, args);
       }
-    } catch (InterruptedException e) {
-      throw new RuntimeException("Thread interrupted while trying evaluate " +
-              "the value for '" + functionName + "' with" +
-              " args " + Arrays.asList(args), e);
-    }
-    throw new IllegalStateException("Timed out when trying to evaluate the " +
-            "value for '" + functionName + "' with " +
-            "args " + Arrays.asList(args));
+    };
+
+    return retryingEvaluateStringFunc.applyWithRetries(macroFunction, macroFunction, args);
   }
 
   @Override
@@ -101,29 +75,15 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
                                            + ". Expecting " + functionName);
     }
 
-    // Make call with exponential delay on failure retry.
-    long delay = RETRY_BASE_DELAY_MILLIS;
-    double minMultiplier = RETRY_DELAY_MULTIPLIER - RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
-    double maxMultiplier = RETRY_DELAY_MULTIPLIER + RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
-    Stopwatch stopWatch = new Stopwatch().start();
-    try {
-      while (stopWatch.elapsedTime(TimeUnit.MILLISECONDS) < TIMEOUT_MILLIS) {
-        try {
-          return evaluateMacroMap(macroFunction, args);
-        } catch (RetryableException e) {
-          TimeUnit.MILLISECONDS.sleep(delay);
-          delay = (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier + 1)));
-          delay = Math.min(delay, RETRY_MAX_DELAY_MILLIS);
-        } catch (IOException e) {
-          throw new InvalidMacroException(e);
-        }
+    RetryableBiFunction<String, String[], Map<String, String>> retryingEvaluateMapFunc =
+      new RetryableBiFunction<String, String[], Map<String, String>>() {
+      @Override
+      public Map<String, String> apply(String macroFunction, String[] args) throws Throwable {
+        return evaluateMacroMap(macroFunction, args);
       }
-    } catch (InterruptedException e) {
-      throw new RuntimeException("Thread interrupted while trying to evaluate the value for '" + functionName
-                                   + "' with args " + Arrays.asList(args), e);
-    }
-    throw new IllegalStateException("Timed out when trying to evaluate the value for '" + functionName
-                                      + "' with args " + Arrays.asList(args));
+    };
+
+    return retryingEvaluateMapFunc.applyWithRetries(macroFunction, macroFunction, args);
   }
 
   protected String validateAndRetrieveContent(String serviceName,
