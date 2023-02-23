@@ -21,23 +21,32 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +54,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -65,11 +76,12 @@ public class RepositoryManager implements AutoCloseable {
   // same namespace from interfering with each other.
   private final String randomDirectoryName;
 
-  public RepositoryManager(SecureStore secureStore, SourceControlConfig sourceControlConfig) {
-    this.sourceControlConfig = sourceControlConfig;
+  public RepositoryManager(SecureStore secureStore, CConfiguration cConf, NamespaceId namespace,
+                           RepositoryConfig repoConfig) {
+    this.sourceControlConfig = new SourceControlConfig(namespace, repoConfig, cConf);
     try {
-      this.credentialsProvider = new AuthenticationStrategyProvider(sourceControlConfig.getNamespaceID(), secureStore)
-        .get(sourceControlConfig.getRepositoryConfig())
+      this.credentialsProvider = new AuthenticationStrategyProvider(namespace.getNamespace(), secureStore)
+        .get(repoConfig)
         .getCredentialsProvider();
     } catch (AuthenticationStrategyNotFoundException e) {
       // This is not expected as only valid auth configs will be stored.
@@ -87,10 +99,23 @@ public class RepositoryManager implements AutoCloseable {
   public Path getBasePath() {
     Path localRepoPath = getRepositoryRoot();
     String pathPrefix = sourceControlConfig.getRepositoryConfig().getPathPrefix();
-    if (pathPrefix == null) {
+    if (Strings.isNullOrEmpty(pathPrefix)) {
       return localRepoPath;
     }
     return localRepoPath.resolve(pathPrefix);
+  }
+
+  /**
+   * Gets the relative path of a file in git repository based on the user configured path prefix.
+   * @param fileName The filename
+   * @return the relative {@link Path}
+   */
+  public Path getFileRelativePath(String fileName) {
+    String pathPrefix = sourceControlConfig.getRepositoryConfig().getPathPrefix();
+    if (Strings.isNullOrEmpty(pathPrefix)) {
+      return Paths.get(fileName);
+    }
+    return Paths.get(pathPrefix, fileName);
   }
 
   /**
@@ -137,6 +162,62 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
+   * Commits and pushes the changes of a given file under the repository root path.
+   *
+   * @param commitMeta Details for the commit including author, committer and commit message
+   * @param fileChanged The relative path to repository root where the file is updated
+   * @throws GitAPIException                      when the underlying git commands fail
+   * @throws NoChangesToPushException             when there's no file changes for the commit
+   * @return the hash of the written file. It returns null if the push succeeds but failed to get the fileHash from
+   * pushed {@link RevCommit}
+   */
+  @Nullable
+  public String commitAndPush(CommitMeta commitMeta, Path fileChanged)
+    throws NoChangesToPushException, GitAPIException, PushFailureException {
+    validateInitialized();
+
+    // if the status is clean skip
+    Status preStageStatus = git.status().call();
+    if (preStageStatus.isClean()) {
+      throw new NoChangesToPushException("No changes have been maid for the applications to push.");
+    }
+
+    git.add().addFilepattern(fileChanged.toString()).call();
+
+    RevCommit commit = getCommitCommand(commitMeta).call();
+
+    PushCommand pushCommand = createCommand(git::push, sourceControlConfig, credentialsProvider);
+    Iterable<PushResult> pushResults = pushCommand.call();
+    
+    for (PushResult result : pushResults) {
+      for (RemoteRefUpdate rru : result.getRemoteUpdates()) {
+        if (rru.getStatus() != RemoteRefUpdate.Status.OK && rru.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+          throw new PushFailureException(String.format("Push failed for %s: %s", fileChanged, rru.getStatus()));
+        }
+      }
+    }
+
+    try {
+      TreeWalk walk = TreeWalk.forPath(git.getRepository(), fileChanged.toString(), commit.getTree());
+      return walk.getObjectId(0).getName();
+    } catch (IOException e) {
+      LOG.warn(String.format("Failed to get the fileHash for file: %s", fileChanged), e);
+      return null;
+    }
+  }
+
+  private CommitCommand getCommitCommand(CommitMeta commitMeta) {
+    // We only set email
+    PersonIdent author = new PersonIdent(commitMeta.getAuthor(), "");
+    PersonIdent authorWithDate = new PersonIdent(author, new Date(commitMeta.getTimestampMillis()));
+
+    PersonIdent committer = new PersonIdent(commitMeta.getCommitter(), "");
+
+    return git.commit().setAuthor(authorWithDate).setCommitter(committer).setMessage(commitMeta.getMessage());
+  }
+
+
+  /**
    * Returns the <a href="https://git-scm.com/docs/git-hash-object">Git Hash</a>
    * of the requested file path in the provided commit. For symlinks, it returns the hash of
    * the target file. This ensures that the file hash of a symlink is equal to the hash of the target file. It
@@ -178,7 +259,7 @@ public class RepositoryManager implements AutoCloseable {
         throw new IllegalArgumentException(String.format("Path %s doesn't refer to a regular file.",
                                                          realPath.toAbsolutePath()));
       }
-      Path realRelativePath = getRepositoryRoot().relativize(realPath);
+      Path realRelativePath = getRepositoryRoot().toRealPath().relativize(realPath);
       // Find the node representing the exact file path in the tree.
       TreeWalk walk = TreeWalk.forPath(git.getRepository(), realRelativePath.toString(), commit.getTree());
       if (walk == null) {
@@ -201,7 +282,7 @@ public class RepositoryManager implements AutoCloseable {
    * @throws IOException                   when file or network I/O fails.
    * @throws AuthenticationConfigException when there is a failure while fetching authentication credentials for Git.
    */
-  public String cloneRemote() throws Exception {
+  public String cloneRemote() throws IOException, AuthenticationConfigException, GitAPIException {
     if (git != null) {
       return resolveHead().getName();
     }
@@ -220,7 +301,7 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     if (git != null) {
       git.close();
     }

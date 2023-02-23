@@ -100,6 +100,7 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -107,6 +108,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -1463,6 +1465,13 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse deleteRepository(String name) throws Exception {
     return doDelete(String.format("%s/namespaces/%s/repository", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse pushApplication(ApplicationReference appRef, String commitMessage) throws Exception {
+    PushAppRequest request = new PushAppRequest(commitMessage);
+    return doPost(String.format("%s/namespaces/%s/repository/apps/%s/push",
+                                Constants.Gateway.API_VERSION_3,
+                                appRef.getNamespace(), appRef.getApplication()), GSON.toJson(request));
   }
 
   protected String getPreferenceURI() {

@@ -57,6 +57,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -443,6 +444,25 @@ public class AppMetadataStore {
              .collect(Collectors.toMap(
                AppMetadataStore::getApplicationIdFromRow,
                this::decodeRow));
+  }
+
+  /**
+   * Update an applications with provided application Source Control Metadata.
+   * @param appId the applications ID.
+   * @param sourceControlMeta the applications' SourceControlMeta synced with linked repository.
+   */
+  public void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta) throws IOException {
+    StructuredTable appSpecTable = getApplicationSpecificationTable();
+    if (appSpecTable.read(getApplicationPrimaryKeys(appId)).isPresent()) {
+      appSpecTable.upsert(getSourceControlMetaFields(appId, sourceControlMeta));
+    }
+  }
+
+  private Collection<Field<?>> getSourceControlMetaFields(ApplicationId appId, SourceControlMeta sourceControlMeta) {
+    List<Field<?>> fields = getApplicationPrimaryKeys(appId);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META,
+                                  GSON.toJson(sourceControlMeta)));
+    return fields;
   }
 
   /**
@@ -2240,6 +2260,9 @@ public class AppMetadataStore {
     Boolean latest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
     ApplicationMeta meta = GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
                                          ApplicationMeta.class);
+    SourceControlMeta sourceControl = GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
+                                                    SourceControlMeta.class);
+    
     ApplicationSpecification spec = meta.getSpec();
     String id = meta.getId();
     ChangeDetail changeDetail;
@@ -2248,7 +2271,7 @@ public class AppMetadataStore {
     } else {
       changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
     }
-    return new ApplicationMeta(id, spec, changeDetail);
+    return new ApplicationMeta(id, spec, changeDetail, sourceControl);
   }
 
   private void writeToStructuredTableWithPrimaryKeys(
@@ -2433,6 +2456,8 @@ public class AppMetadataStore {
     private volatile ApplicationMeta appMeta;
     @Nullable
     private final ChangeDetail changeDetail;
+    @Nullable
+    private final SourceControlMeta sourceControlMeta;
 
     private AppScanEntry(StructuredRow row) {
       this.appId = getApplicationIdFromRow(row);
@@ -2446,6 +2471,8 @@ public class AppMetadataStore {
       } else {
         this.changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
       }
+      this.sourceControlMeta = GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
+                                             SourceControlMeta.class);
     }
 
     @Override
@@ -2461,7 +2488,7 @@ public class AppMetadataStore {
         return meta;
       }
       ApplicationMeta tempMeta = GSON.fromJson(rawAppMeta, ApplicationMeta.class);
-      appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail);
+      appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail, sourceControlMeta);
       return meta;
     }
 

@@ -19,6 +19,7 @@ package io.cdap.cdap.proto;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -36,14 +37,19 @@ public class ApplicationRecord {
   private final String ownerPrincipal;
   @Nullable
   private final ChangeDetail change;
+  @Nullable
+  private final SourceControlMeta sourceControlMeta;
 
   public ApplicationRecord(ApplicationDetail detail) {
     this(detail.getArtifact(), detail.getName(),
-         detail.getAppVersion(), detail.getDescription(), detail.getOwnerPrincipal(), detail.getChange());
+         detail.getAppVersion(), detail.getDescription(),
+         detail.getOwnerPrincipal(), detail.getChange(),
+         detail.getSourceControlMeta());
   }
 
   public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
-                           @Nullable String ownerPrincipal, @Nullable ChangeDetail change) {
+                           @Nullable String ownerPrincipal, @Nullable ChangeDetail change,
+                           @Nullable SourceControlMeta sourceControlMeta) {
     this.type = "App";
     this.artifact = artifact;
     this.name = name;
@@ -51,6 +57,7 @@ public class ApplicationRecord {
     this.version = version;
     this.ownerPrincipal = ownerPrincipal;
     this.change = change;
+    this.sourceControlMeta = sourceControlMeta;
   }
 
   public ArtifactSummary getArtifact() {
@@ -83,6 +90,11 @@ public class ApplicationRecord {
     return change;
   }
 
+  @Nullable
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControlMeta;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -100,12 +112,13 @@ public class ApplicationRecord {
       Objects.equals(description, that.description) &&
       Objects.equals(artifact, that.artifact) &&
       Objects.equals(ownerPrincipal, that.ownerPrincipal) &&
-      Objects.equals(change, that.change);
+      Objects.equals(change, that.change) &&
+      Objects.equals(sourceControlMeta, that.sourceControlMeta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, change);
+    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, change, sourceControlMeta);
   }
 
   @Override
@@ -118,6 +131,7 @@ public class ApplicationRecord {
       ", artifact=" + artifact +
       ", ownerPrincipal=" + ownerPrincipal + '\'' +
       ", change=" + change +
+      ", sourceControlMeta=" + sourceControlMeta +
       '}';
   }
 }
