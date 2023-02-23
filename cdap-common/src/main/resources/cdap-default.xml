@@ -639,6 +639,16 @@
   </property>
 
   <property>
+    <name>app.program.terminate.tethered.time.buffer.secs</name>
+    <value>3600</value>
+    <description>
+      Interval in seconds of how much buffer time is given to tethered programs
+      running on another CDAP instace to allow them to stop on their own before
+      issuing a hard kill
+    </description>
+  </property>
+
+  <property>
     <name>app.program.terminator.tx.batch.size</name>
     <value>1000</value>
     <description>

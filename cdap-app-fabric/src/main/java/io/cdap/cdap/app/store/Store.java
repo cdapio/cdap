@@ -109,6 +109,7 @@ public interface Store {
    *
    * @param id run id of the program
    * @param twillRunId Twill run id
+   * @param runTime start timestamp in seconds
    * @param sourceId id of the source of program run status, which is proportional to the timestamp of
    *                 when the current program run status is reached
    */
