@@ -747,6 +747,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setChangeDetail(new ChangeDetail(null, appId.getVersion(), requestingUser == null ? null :
         requestingUser.getName(), System.currentTimeMillis()))
       .setDeployedApplicationSpec(appSpec)
+      .setIsUpgrade(true)
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);

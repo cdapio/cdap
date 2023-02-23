@@ -1143,6 +1143,15 @@ public final class Constants {
       public static final String STATE_STORE_GET_LATENCY_MS = "state.store.get.latency.millis";
       public static final String STATE_STORE_SAVE_LATENCY_MS = "state.store.save.latency.millis";
     }
+
+    /**
+     * Deploy event metrics
+     */
+    public static final class AppMetadataStore {
+      public static final String DEPLOY_NEW_COUNT = "event.app.create.count";
+      public static final String DEPLOY_EDIT_COUNT = "event.app.edit.count";
+      public static final String DEPLOY_UPGRADE_COUNT = "event.app.upgrade.count";
+    }
   }
 
   /**

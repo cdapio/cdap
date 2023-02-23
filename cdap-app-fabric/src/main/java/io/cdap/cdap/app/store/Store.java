@@ -342,10 +342,11 @@ public interface Store {
    * Creates new application if it doesn't exist. Updates existing one otherwise.
    * @param id            application id
    * @param meta          application metadata to store
+   * @return              the number of edits to the application. A new application will return 0.
    * @throws ConflictException if the app cannot be deployed when the user provided parent-version doesn't match the
    * current latest version
    */
-  void addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException;
+  int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException;
 
   /**
    * Return a list of program specifications that are deleted comparing the specification in the store with the

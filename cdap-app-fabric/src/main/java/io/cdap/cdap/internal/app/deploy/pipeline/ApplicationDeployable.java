@@ -53,6 +53,7 @@ public class ApplicationDeployable {
   private final boolean updateSchedules;
   @Nullable
   private final ChangeDetail changeDetail;
+  private final boolean isUpgrade;
 
   //TODO: CDAP-20248, add SourceControlMeta when we do pull and deploy
 
@@ -63,7 +64,7 @@ public class ApplicationDeployable {
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
          applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
-         null);
+         null, false);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -74,7 +75,8 @@ public class ApplicationDeployable {
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables,
-                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail) {
+                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail,
+                               boolean isUpgrade) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -87,6 +89,7 @@ public class ApplicationDeployable {
     this.applicationClass = applicationClass;
     this.metadata = metadata;
     this.changeDetail = changeDetail;
+    this.isUpgrade = isUpgrade;
   }
 
   /**
@@ -173,5 +176,12 @@ public class ApplicationDeployable {
   @Nullable
   public ChangeDetail getChangeDetail() {
     return changeDetail;
+  }
+
+  /**
+   * Returns true if the deploy event type is an upgrade.
+   */
+  public boolean isUpgrade() {
+    return isUpgrade;
   }
 }
