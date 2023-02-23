@@ -26,10 +26,13 @@ import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
 import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -52,6 +55,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.cdap.cdap.proto.profile.Profile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -119,11 +123,13 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
+      = new ProgramRunStatusMonitorService(cConf, store, testService,
+                                           metricsCollectionService, new NoOpProgramStateWriter(),
+                                           5, 3, 2, 2);
     programRunStatusMonitorService.startAndWait();
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
-    latch.await(10, TimeUnit.SECONDS);
+    Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
     MetricStore metricStore = getInjector().getInstance(MetricStore.class);
     ProfileId myProfile = NamespaceId.SYSTEM.profile("native");
     Tasks.waitFor(true, () -> getMetric(metricStore, wfId, myProfile, new HashMap<>(),
@@ -153,6 +159,97 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       return 0;
     }
     return timeValues.get(0).getValue();
+  }
+
+  @Test
+  public void testStoppingLocalTetheredProgramsBeyondTerminateTimeAreKilled() throws Exception {
+    AtomicInteger sourceId = new AtomicInteger(0);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    // Set up a workflow for a tethered program in Stopping state. This program is run in tethered mode on
+    // behalf of a remote instance.
+    Map<String, String> wfSystemArg = ImmutableMap.of(
+      ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
+      SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+      SystemArguments.PROFILE_PROVISIONER, Profile.NATIVE.getProvisioner().getName(),
+      ProgramOptionConstants.PEER_NAME, "peer");
+    ProgramRunId wfId = NamespaceId.DEFAULT.app("test").workflow("testWF").run(randomRunId());
+    store.setProvisioning(wfId, Collections.emptyMap(), wfSystemArg,
+                          Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
+    store.setProvisioned(wfId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setStart(wfId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(wfId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), null,
+                     Bytes.toBytes(sourceId.getAndIncrement()));
+    long currentTimeInSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), currentTimeInSecs, currentTimeInSecs);
+    CountDownLatch latch = new CountDownLatch(1);
+    ProgramRuntimeService testService = new AbstractProgramRuntimeService(
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
+
+      @Nullable
+      public RuntimeInfo lookup(ProgramId programId, RunId runId) {
+        return getRuntimeInfo(programId, latch);
+      }
+    };
+    ProgramRunStatusMonitorService programRunStatusMonitorService
+      = new ProgramRunStatusMonitorService(cConf, store, testService,
+                                           metricsCollectionService, new NoOpProgramStateWriter(),
+                                           5, 3, 2, 2);
+    programRunStatusMonitorService.startAndWait();
+    Assert.assertEquals(1, latch.getCount());
+    programRunStatusMonitorService.terminatePrograms();
+    Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
+    MetricStore metricStore = getInjector().getInstance(MetricStore.class);
+    ProfileId myProfile = NamespaceId.SYSTEM.profile("native");
+    Tasks.waitFor(true, () -> getMetric(metricStore, wfId, myProfile, new HashMap<>(),
+                                        SYSTEM_METRIC_PREFIX +
+                                          Constants.Metrics.Program.PROGRAM_FORCE_TERMINATED_RUNS) > 0,
+                  10, TimeUnit.SECONDS);
+    metricStore.deleteAll();
+  }
+
+  @Test
+  public void testStoppingRemoteTetheredProgramsBeyondTerminateTimeAreKilled() throws Exception {
+    AtomicInteger sourceId = new AtomicInteger(0);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    // Set up a workflow for a tethered program in Stopping state. This program is run on a remote instance.
+    Map<String, String> wfSystemArg = ImmutableMap.of(
+      ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
+      SystemArguments.PROFILE_NAME, NamespaceId.SYSTEM.profile("tethering-profile").getScopedName(),
+      SystemArguments.PROFILE_PROVISIONER, TetheringProvisioner.TETHERING_NAME);
+    ProgramRunId wfId = NamespaceId.DEFAULT.app("test").workflow("testWF").run(randomRunId());
+    store.setProvisioning(wfId, Collections.emptyMap(), wfSystemArg,
+                          Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
+    store.setProvisioned(wfId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setStart(wfId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
+    long currentTimeInSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    long runningTimeInSecs = currentTimeInSecs - 100;
+    long stoppingTimeInSecs = currentTimeInSecs - 50;
+    long terminateTimeInSecs = currentTimeInSecs - 10;
+    store.setRunning(wfId, runningTimeInSecs, null,
+                     Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), stoppingTimeInSecs, terminateTimeInSecs);
+    CountDownLatch latch = new CountDownLatch(1);
+    ProgramRuntimeService testService = getInjector().getInstance(ProgramRuntimeService.class);
+    ProgramStateWriter psw = getProgramStateWriter(latch);
+    ProgramRunStatusMonitorService programRunStatusMonitorService
+      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, psw,
+                                           5, 3, 2, 2);
+    programRunStatusMonitorService.startAndWait();
+    Assert.assertEquals(1, latch.getCount());
+    programRunStatusMonitorService.terminatePrograms();
+    Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
+    MetricStore metricStore = getInjector().getInstance(MetricStore.class);
+    ProfileId myProfile = NamespaceId.SYSTEM.profile("tethering-profile");
+    Tasks.waitFor(true, () -> getMetric(metricStore, wfId, myProfile, new HashMap<>(),
+                                        SYSTEM_METRIC_PREFIX +
+                                          Constants.Metrics.Program.PROGRAM_FORCE_TERMINATED_RUNS) > 0,
+                  10, TimeUnit.SECONDS);
+    metricStore.deleteAll();
   }
 
   @Test
@@ -189,7 +286,9 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
+      = new ProgramRunStatusMonitorService(cConf, store, testService,
+                                           metricsCollectionService, new NoOpProgramStateWriter(),
+                                           5, 3, 2, 2);
     Assert.assertEquals(1, latch.getCount());
     Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }
@@ -225,44 +324,9 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       }
     };
     ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
-    Assert.assertEquals(1, latch.getCount());
-    Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
-  }
-
-  @Test
-  public void testTetheredRunsAreSkipped() {
-    AtomicInteger sourceId = new AtomicInteger(0);
-    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
-    // set up a workflow for a program in Stopping state
-    Map<String, String> wfSystemArg = ImmutableMap.of(
-      ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
-      SystemArguments.PROFILE_PROVISIONER, TetheringProvisioner.TETHERING_NAME);
-    ProgramRunId wfId = NamespaceId.DEFAULT.app("test").workflow("testWF").run(randomRunId());
-    store.setProvisioning(wfId, Collections.emptyMap(), wfSystemArg,
-                          Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
-    store.setProvisioned(wfId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setStart(wfId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
-    store.setRunning(wfId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), null,
-                     Bytes.toBytes(sourceId.getAndIncrement()));
-    long currentTimeInSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), currentTimeInSecs, currentTimeInSecs);
-    CountDownLatch latch = new CountDownLatch(1);
-    ProgramRuntimeService testService = new AbstractProgramRuntimeService(
-      cConf, null, new NoOpProgramStateWriter(), null) {
-
-      @Override
-      protected boolean isDistributed() {
-        return false;
-      }
-
-      @Nullable
-      public RuntimeInfo lookup(ProgramId programId, RunId runId) {
-        return getRuntimeInfo(programId, latch);
-      }
-    };
-    ProgramRunStatusMonitorService programRunStatusMonitorService
-      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, 5, 3, 2);
+      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService,
+                                           new NoOpProgramStateWriter(),
+                                           5, 3, 2, 2);
     Assert.assertEquals(1, latch.getCount());
     Assert.assertTrue(programRunStatusMonitorService.terminatePrograms().isEmpty());
   }
@@ -345,6 +409,57 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       @Override
       public ListenableFuture<ProgramController> command(String name, Object value) {
         return null;
+      }
+    };
+  }
+
+  private ProgramStateWriter getProgramStateWriter(CountDownLatch latch) {
+    return new ProgramStateWriter() {
+      @Override
+      public void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
+                        ProgramDescriptor programDescriptor) {
+        // no-op
+      }
+
+      @Override
+      public void running(ProgramRunId programRunId, @Nullable String twillRunId) {
+        // no-op
+      }
+
+      @Override
+      public void stop(ProgramRunId programRunId, int gracefulShutdownSecs) {
+        // no-op
+      }
+
+      @Override
+      public void completed(ProgramRunId programRunId) {
+        // no-op
+      }
+
+      @Override
+      public void killed(ProgramRunId programRunId) {
+        latch.countDown();
+      }
+
+      @Override
+      public void error(ProgramRunId programRunId, Throwable failureCause) {
+        // no-op
+      }
+
+      @Override
+      public void suspend(ProgramRunId programRunId) {
+        // no-op
+      }
+
+      @Override
+      public void resume(ProgramRunId programRunId) {
+        // no-op
+      }
+
+      @Override
+      public void reject(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
+                         String userId, Throwable cause) {
+        // no-op
       }
     };
   }

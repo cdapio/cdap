@@ -26,7 +26,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.messaging.MessagingService;
@@ -49,7 +48,7 @@ import javax.annotation.Nullable;
  */
 public class ProgramStopSubscriberService extends AbstractNotificationSubscriberService {
   private static final String SUBSCRIBER = "program.stopper";
-  private static final Logger LOG = LoggerFactory.getLogger(RuntimeProgramStatusSubscriberService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramStopSubscriberService.class);
   private static final Gson GSON = new Gson();
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramStateWriter programStateWriter;
