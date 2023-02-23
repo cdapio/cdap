@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
@@ -33,7 +33,6 @@ public interface SourceControlOperationRunner {
    * @return file-paths and file-hashes for the updated configs.
    * @throws PushFailureException when the push operation fails for any reason.
    */
-  PushAppResponse push(NamespaceId namespace, RepositoryConfig repoConfig,
-                       ApplicationDetail appToPush, CommitMeta commitDetails)
-    throws PushFailureException, NoChangesToPushException, AuthenticationConfigException;
+  PushAppResponse push(NamespaceId namespace, ApplicationDetail appToPush, CommitMeta commitDetails)
+    throws PushFailureException, NoChangesToPushException, AuthenticationConfigException, RepositoryNotFoundException;
 }

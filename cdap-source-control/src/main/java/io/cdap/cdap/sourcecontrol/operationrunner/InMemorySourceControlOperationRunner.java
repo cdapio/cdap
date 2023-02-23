@@ -19,9 +19,9 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
@@ -51,10 +51,9 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   }
 
   @Override
-  public PushAppResponse push(NamespaceId namespace, RepositoryConfig repoConfig,
-                              ApplicationDetail appToPush, CommitMeta commitDetails)
-    throws PushFailureException, NoChangesToPushException, AuthenticationConfigException {
-    RepositoryManager repositoryManager = repoManagerFactory.create(namespace, repoConfig);
+  public PushAppResponse push(NamespaceId namespace, ApplicationDetail appToPush, CommitMeta commitDetails)
+    throws PushFailureException, NoChangesToPushException, AuthenticationConfigException, RepositoryNotFoundException {
+    RepositoryManager repositoryManager = repoManagerFactory.create(namespace);
     try {
       try {
         repositoryManager.cloneRemote();

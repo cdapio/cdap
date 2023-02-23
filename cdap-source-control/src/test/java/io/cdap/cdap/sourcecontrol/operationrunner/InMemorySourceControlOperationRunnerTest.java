@@ -20,9 +20,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.AuthType;
-import io.cdap.cdap.proto.sourcecontrol.Provider;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
@@ -49,18 +46,9 @@ public class InMemorySourceControlOperationRunnerTest {
     "app1", "v1", "description1", null, null, "conf1", new ArrayList<>(),
     new ArrayList<>(), new ArrayList<>(), null, null);
   private static final String pathPrefix = "pathPrefix";
-  private static final RepositoryConfig testRepoConfig = new RepositoryConfig.Builder()
-    .setProvider(Provider.GITHUB)
-    .setLink("ignored")
-    .setDefaultBranch("develop")
-    .setPathPrefix(pathPrefix)
-    .setAuthType(AuthType.PAT)
-    .setTokenName("GITHUB_TOKEN_NAME")
-    .build();
   private static final CommitMeta testCommit = new CommitMeta("author1", "committer1", 123, "message1");
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final NamespaceId NAMESPACE = NamespaceId.DEFAULT;
-
   private InMemorySourceControlOperationRunner operationRunner;
   private RepositoryManager mockRepositoryManager;
 
@@ -68,7 +56,7 @@ public class InMemorySourceControlOperationRunnerTest {
   public void setUp() throws Exception {
     RepositoryManagerFactory mockRepositoryManagerFactory = Mockito.mock(RepositoryManagerFactory.class);
     this.mockRepositoryManager = Mockito.mock(RepositoryManager.class);
-    Mockito.doReturn(mockRepositoryManager).when(mockRepositoryManagerFactory).create(Mockito.any(), Mockito.any());
+    Mockito.doReturn(mockRepositoryManager).when(mockRepositoryManagerFactory).create(Mockito.any());
     Mockito.doReturn("commit hash").when(mockRepositoryManager).cloneRemote();
     this.operationRunner = new InMemorySourceControlOperationRunner(mockRepositoryManagerFactory);
     Path appRelativePath = Paths.get(pathPrefix, testAppDetails.getName() + ".json");
@@ -91,7 +79,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn("file Hash").when(mockRepositoryManager).commitAndPush(Mockito.anyObject(),
                                                                             Mockito.any());
 
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(NAMESPACE, testAppDetails, testCommit);
 
     Assert.assertTrue(verifyConfigFileContent(baseRepoDirPath));
   }
@@ -105,7 +93,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
 
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(NAMESPACE, testAppDetails, testCommit);
   }
 
   @Test(expected = PushFailureException.class)
@@ -118,7 +106,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
 
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(NAMESPACE, testAppDetails, testCommit);
   }
 
   @Test(expected = PushFailureException.class)
@@ -135,13 +123,13 @@ public class InMemorySourceControlOperationRunnerTest {
     Files.createDirectories(baseRepoDirPath);
     Files.createFile(target);
     Files.createSymbolicLink(baseRepoDirPath.resolve("app1.json"), target);
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(NAMESPACE, testAppDetails, testCommit);
   }
 
   @Test(expected = AuthenticationConfigException.class)
   public void testPushFailedToClone() throws Exception {
     Mockito.doThrow(new AuthenticationConfigException("config not exists")).when(mockRepositoryManager).cloneRemote();
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(NAMESPACE, testAppDetails, testCommit);
   }
 
   @Test(expected = NoChangesToPushException.class)
@@ -153,6 +141,6 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
     Mockito.doThrow(new NoChangesToPushException("no changes to push"))
       .when(mockRepositoryManager).commitAndPush(Mockito.any(), Mockito.any());
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(NAMESPACE, testAppDetails, testCommit);
   }
 }

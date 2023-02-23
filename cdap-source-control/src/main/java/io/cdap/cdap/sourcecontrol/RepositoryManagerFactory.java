@@ -18,9 +18,11 @@ package io.cdap.cdap.sourcecontrol;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
+import io.cdap.cdap.store.RepositoryStore;
 
 /**
  * The default implementation for RepositoryManagerFactory
@@ -29,14 +31,17 @@ public class RepositoryManagerFactory {
 
   private final SecureStore secureStore;
   private final CConfiguration cConf;
+  private final RepositoryStore repoStore;
 
   @Inject
-  RepositoryManagerFactory(SecureStore secureStore, CConfiguration cConf) {
+  RepositoryManagerFactory(SecureStore secureStore, CConfiguration cConf, RepositoryStore repoStore) {
     this.secureStore = secureStore;
     this.cConf = cConf;
+    this.repoStore = repoStore;
   }
 
-  public RepositoryManager create(NamespaceId namespace, RepositoryConfig repoConfig) {
-    return new RepositoryManager(secureStore, cConf, namespace, repoConfig);
+  public RepositoryManager create(NamespaceId namespace) throws RepositoryNotFoundException {
+    RepositoryMeta repositoryMeta = repoStore.getRepositoryMeta(namespace);
+    return new RepositoryManager(secureStore, cConf, namespace, repositoryMeta.getConfig());
   }
 }
