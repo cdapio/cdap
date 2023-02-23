@@ -796,6 +796,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  @Nullable
+  public SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getAppSourceControlMeta(appRef);
+    });
+  }
+
+  @Override
   public Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).filterProgramsExistence(references).stream()

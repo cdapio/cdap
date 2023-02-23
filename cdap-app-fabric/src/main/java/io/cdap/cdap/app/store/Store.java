@@ -423,6 +423,13 @@ public interface Store {
   void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta);
 
   /**
+   * Get source control metadata of provided application.
+   * @param appRef the application reference
+   * @return {@link SourceControlMeta}
+   */
+  SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef);
+
+  /**
    * Returns a map of latest programIds given programReferences
    *
    * @param references the list of programReferences to get the latest programIds

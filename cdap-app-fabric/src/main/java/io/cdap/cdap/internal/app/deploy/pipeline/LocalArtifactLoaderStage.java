@@ -123,6 +123,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                    ApplicationDeployScope.USER, deploymentInfo.getApplicationClass(),
                                    deploymentInfo.getOwnerPrincipal(), deploymentInfo.canUpdateSchedules(),
                                    appSpecInfo.getSystemTables(), metadatas, deploymentInfo.getChangeDetail(),
-                                   deploymentInfo.isUpgrade()));
+                                   deploymentInfo.getSourceControlMeta(), deploymentInfo.isUpgrade()));
   }
 }

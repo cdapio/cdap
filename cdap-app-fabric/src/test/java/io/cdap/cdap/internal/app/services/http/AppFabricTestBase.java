@@ -1474,6 +1474,12 @@ public abstract class AppFabricTestBase {
                                 appRef.getNamespace(), appRef.getApplication()), GSON.toJson(request));
   }
 
+  protected HttpResponse pullApplication(ApplicationReference appRef) throws Exception {
+    return doPost(String.format("%s/namespaces/%s/repository/apps/%s/pull",
+                                Constants.Gateway.API_VERSION_3,
+                                appRef.getNamespace(), appRef.getApplication()));
+  }
+
   protected String getPreferenceURI() {
     return "";
   }

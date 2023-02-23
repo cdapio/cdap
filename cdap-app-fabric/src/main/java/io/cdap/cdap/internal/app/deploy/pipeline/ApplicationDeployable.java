@@ -25,6 +25,7 @@ import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.apache.twill.filesystem.Location;
 
@@ -53,9 +54,9 @@ public class ApplicationDeployable {
   private final boolean updateSchedules;
   @Nullable
   private final ChangeDetail changeDetail;
+  @Nullable
+  private final SourceControlMeta sourceControlMeta;
   private final boolean isUpgrade;
-
-  //TODO: CDAP-20248, add SourceControlMeta when we do pull and deploy
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
@@ -64,7 +65,7 @@ public class ApplicationDeployable {
                                ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
          applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
-         null, false);
+         null, null, false);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -76,7 +77,7 @@ public class ApplicationDeployable {
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables,
                                Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail,
-                               boolean isUpgrade) {
+                               @Nullable SourceControlMeta sourceControlMeta, boolean isUpgrade) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -89,6 +90,7 @@ public class ApplicationDeployable {
     this.applicationClass = applicationClass;
     this.metadata = metadata;
     this.changeDetail = changeDetail;
+    this.sourceControlMeta = sourceControlMeta;
     this.isUpgrade = isUpgrade;
   }
 
@@ -183,5 +185,13 @@ public class ApplicationDeployable {
    */
   public boolean isUpgrade() {
     return isUpgrade;
+  }
+
+  /**
+   * Returns the source control metadata
+   */
+  @Nullable
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControlMeta;
   }
 }

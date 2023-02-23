@@ -937,9 +937,9 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
         store.writeApplication(NamespaceId.SYSTEM.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
     }
     TransactionRunners.run(transactionRunner, context -> {
@@ -976,7 +976,7 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
     }
 
@@ -1006,7 +1006,7 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
     }
 
@@ -1129,7 +1129,7 @@ public abstract class AppMetadataStoreTest {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
                                defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
 
       String cdapAppName = "test" + (2 * i + 1);
@@ -1137,7 +1137,7 @@ public abstract class AppMetadataStoreTest {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.CDAP.getNamespace(),
                                cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
     }
 
@@ -1167,7 +1167,7 @@ public abstract class AppMetadataStoreTest {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(),
             defaultAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
 
       String cdapAppName = "test" + (2 * i + 1);
@@ -1175,7 +1175,7 @@ public abstract class AppMetadataStoreTest {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.CDAP.getNamespace(),
             cdapAppName, ApplicationId.DEFAULT_VERSION, appSpec,
-                               new ChangeDetail(null, null, null, creationTimeMillis));
+                               new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
     }
 
