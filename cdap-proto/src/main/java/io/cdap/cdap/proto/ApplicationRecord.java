@@ -47,6 +47,36 @@ public class ApplicationRecord {
          detail.getSourceControlMeta());
   }
 
+  /**
+   * Constructor for backwards compatibility, please do not remove.
+   */
+  public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
+                           @Nullable String ownerPrincipal) {
+    this.type = "App";
+    this.artifact = artifact;
+    this.name = name;
+    this.description = description;
+    this.version = version;
+    this.ownerPrincipal = ownerPrincipal;
+    this.change = null;
+    this.sourceControlMeta = null;
+  }
+
+  /**
+   * Constructor for backwards compatibility, please do not remove.
+   */
+  public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
+                           @Nullable String ownerPrincipal, @Nullable ChangeDetail change) {
+    this.type = "App";
+    this.artifact = artifact;
+    this.name = name;
+    this.description = description;
+    this.version = version;
+    this.ownerPrincipal = ownerPrincipal;
+    this.change = change;
+    this.sourceControlMeta = null;
+  }
+
   public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
                            @Nullable String ownerPrincipal, @Nullable ChangeDetail change,
                            @Nullable SourceControlMeta sourceControlMeta) {

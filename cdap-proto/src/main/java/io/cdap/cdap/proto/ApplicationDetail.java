@@ -73,6 +73,40 @@ public class ApplicationDetail {
     this.ownerPrincipal = ownerPrincipal;
   }
 
+
+  /**
+   * Constructor for backwards compatibility, please do not remove.
+   */
+  public ApplicationDetail(String name,
+                           String appVersion,
+                           String description,
+                           String configuration,
+                           List<DatasetDetail> datasets,
+                           List<ProgramRecord> programs,
+                           List<PluginDetail> plugins,
+                           ArtifactSummary artifact,
+                           @Nullable String ownerPrincipal) {
+    this(name, appVersion, description, null, null,
+         configuration, datasets, programs, plugins, artifact, ownerPrincipal);
+  }
+
+  /**
+   * Constructor for backwards compatibility, please do not remove.
+   */
+  public ApplicationDetail(String name,
+                           String appVersion,
+                           String description,
+                           @Nullable ChangeDetail change,
+                           String configuration,
+                           List<DatasetDetail> datasets,
+                           List<ProgramRecord> programs,
+                           List<PluginDetail> plugins,
+                           ArtifactSummary artifact,
+                           @Nullable String ownerPrincipal) {
+    this(name, appVersion, description, change, null,
+         configuration, datasets, programs, plugins, artifact, ownerPrincipal);
+  }
+
   public String getName() {
     return name;
   }
