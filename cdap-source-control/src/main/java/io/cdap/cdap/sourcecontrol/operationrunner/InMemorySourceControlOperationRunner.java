@@ -53,8 +53,7 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   @Override
   public PushAppResponse push(NamespaceId namespace, ApplicationDetail appToPush, CommitMeta commitDetails)
     throws PushFailureException, NoChangesToPushException, AuthenticationConfigException, RepositoryNotFoundException {
-    RepositoryManager repositoryManager = repoManagerFactory.create(namespace);
-    try {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(namespace)) {
       try {
         repositoryManager.cloneRemote();
       } catch (GitAPIException | IOException e) {
@@ -65,12 +64,6 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
 
       //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
       return writeAppDetailAndPush(repositoryManager, appToPush, commitDetails);
-    } finally {
-      try {
-        repositoryManager.close();
-      } catch (IOException e) {
-        LOG.warn("Failed to close the RepositoryManager, there may be leftover files", e);
-      }
     }
   }
 

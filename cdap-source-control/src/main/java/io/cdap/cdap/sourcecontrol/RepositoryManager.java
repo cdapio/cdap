@@ -301,12 +301,17 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     if (git != null) {
       git.close();
     }
     git = null;
-    deletePathIfExists(getRepositoryRoot());
+    
+    try {
+      deletePathIfExists(getRepositoryRoot());
+    } catch (IOException e) {
+      LOG.warn("Failed to close the RepositoryManager, there may be leftover files", e);
+    }
   }
 
   /**
