@@ -25,6 +25,10 @@ public class PushFailureException extends Exception {
     super(message, cause);
   }
 
+  public PushFailureException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
   public PushFailureException(String message) {
     super(message);
   }

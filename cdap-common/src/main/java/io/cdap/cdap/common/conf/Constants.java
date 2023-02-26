@@ -473,6 +473,10 @@ public final class Constants {
       "task.worker.configurator.http.client.read.timeout.ms";
     public static final String CONFIGURATOR_HTTP_CLIENT_CONNECTION_TIMEOUT_MS =
       "task.worker.configurator.http.client.connection.timeout.ms";
+    public static final String SOURCE_CONTROL_HTTP_CLIENT_READ_TIMEOUT_MS =
+      "task.worker.source.control.http.client.read.timeout.ms";
+    public static final String SOURCE_CONTROL_HTTP_CLIENT_CONNECTION_TIMEOUT_MS =
+      "task.worker.source.control.http.client.connection.timeout.ms";
     public static final String SYSTEMAPP_HTTP_CLIENT_READ_TIMEOUT_MS =
       "task.worker.systemapp.http.client.read.timeout.ms";
     public static final String SYSTEMAPP_HTTP_CLIENT_CONNECTION_TIMEOUT_MS =

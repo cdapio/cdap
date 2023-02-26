@@ -14,21 +14,18 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol;
+package io.cdap.cdap.sourcecontrol.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
-import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 
 /**
  *  Guice module for source control management classes.
  */
 public class SourceControlModule extends AbstractModule {
-
+  
   @Override
   protected void configure() {
-    // TODO: CDAP-20322 add the remoteSourceControlOperationRunner
-    bind(SourceControlOperationRunner.class).to(InMemorySourceControlOperationRunner.class).in(Scopes.SINGLETON);
+    bind(SourceControlOperationRunner.class).toProvider(SourceControlOperationRunnerProvider.class);
   }
 }

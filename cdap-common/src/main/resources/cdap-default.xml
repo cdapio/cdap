@@ -4965,6 +4965,22 @@
   </property>
 
   <property>
+    <name>task.worker.source.control.http.client.read.timeout.ms</name>
+    <value>${task.worker.http.client.read.timeout.ms}</value>
+    <description>
+      Read timeout in milliseconds for source control management task HTTP requests.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.source.control.http.client.connection.timeout.ms</name>
+    <value>${task.worker.http.client.connection.timeout.ms}</value>
+    <description>
+      Connection timeout in milliseconds for source control management task HTTP requests.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.systemapp.http.client.read.timeout.ms</name>
     <value>${task.worker.http.client.read.timeout.ms}</value>
     <description>

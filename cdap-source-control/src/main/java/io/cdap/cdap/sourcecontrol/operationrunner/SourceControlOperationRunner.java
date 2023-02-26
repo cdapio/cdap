@@ -17,12 +17,9 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationReference;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
-import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 
 /**
@@ -30,14 +27,14 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
  */
 public interface SourceControlOperationRunner {
   /**
-   * @param appToPush     {@link ApplicationDetail} to be pushed
-   * @param commitDetails Details of commit author, committer and message
-   * @return file-paths and file-hashes for the updated configs.
-   * @throws PushFailureException when the push operation fails for any reason.
+   * @param pushAppContext {@link PushAppContext} pf the application to be pushed
+   * @return {@link PushAppResponse} file-paths and file-hashes for the updated configs.
+   * @throws PushFailureException when the push operation fails for any unexpected reason.
+   * @throws NoChangesToPushException when the there's no change for the application to push.
+   * @throws AuthenticationConfigException when the repository configuration is invalid.
    */
-  PushAppResponse push(NamespaceId namespace, RepositoryConfig repoConfig,
-                       ApplicationDetail appToPush, CommitMeta commitDetails)
-    throws PushFailureException, NoChangesToPushException, AuthenticationConfigException;
+  PushAppResponse push(PushAppContext pushAppContext) throws PushFailureException, NoChangesToPushException,
+    AuthenticationConfigException;
 
   /**
    * Gets an application spec from a Git repository.

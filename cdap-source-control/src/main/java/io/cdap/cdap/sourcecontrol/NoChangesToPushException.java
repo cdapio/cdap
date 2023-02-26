@@ -23,4 +23,8 @@ public class NoChangesToPushException extends Exception {
   public NoChangesToPushException(String message) {
     super(message);
   }
+
+  public NoChangesToPushException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

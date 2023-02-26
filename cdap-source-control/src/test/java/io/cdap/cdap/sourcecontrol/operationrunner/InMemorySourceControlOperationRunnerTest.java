@@ -88,6 +88,8 @@ public class InMemorySourceControlOperationRunnerTest {
   private static final CommitMeta testCommit = new CommitMeta("author1", "committer1", 123, "message1");
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final NamespaceId NAMESPACE = NamespaceId.DEFAULT;
+  private static final PushAppContext pushContext = new PushAppContext(NAMESPACE, testRepoConfig, testAppDetails,
+                                                                       testCommit);
 
   private InMemorySourceControlOperationRunner operationRunner;
   private RepositoryManager mockRepositoryManager;
@@ -119,7 +121,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn("file Hash").when(mockRepositoryManager).commitAndPush(Mockito.anyObject(),
                                                                             Mockito.any());
 
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(pushContext);
 
     Assert.assertTrue(verifyConfigFileContent(baseRepoDirPath));
   }
@@ -133,7 +135,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
 
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(pushContext);
   }
 
   @Test(expected = PushFailureException.class)
@@ -146,7 +148,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
 
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(pushContext);
   }
 
   @Test(expected = PushFailureException.class)
@@ -163,13 +165,13 @@ public class InMemorySourceControlOperationRunnerTest {
     Files.createDirectories(baseRepoDirPath);
     Files.createFile(target);
     Files.createSymbolicLink(baseRepoDirPath.resolve("app1.json"), target);
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(pushContext);
   }
 
   @Test(expected = AuthenticationConfigException.class)
   public void testPushFailedToClone() throws Exception {
     Mockito.doThrow(new AuthenticationConfigException("config not exists")).when(mockRepositoryManager).cloneRemote();
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(pushContext);
   }
 
   @Test(expected = NoChangesToPushException.class)
@@ -181,7 +183,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
     Mockito.doThrow(new NoChangesToPushException("no changes to push"))
       .when(mockRepositoryManager).commitAndPush(Mockito.any(), Mockito.any());
-    operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+    operationRunner.push(pushContext);
   }
 
   @Test

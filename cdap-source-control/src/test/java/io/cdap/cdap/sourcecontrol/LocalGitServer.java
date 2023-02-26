@@ -161,7 +161,7 @@ public class LocalGitServer extends ExternalResource {
   }
 
   @Override
-  protected void after() {
+  public void after() {
     try {
       stop();
     } catch (Exception e) {

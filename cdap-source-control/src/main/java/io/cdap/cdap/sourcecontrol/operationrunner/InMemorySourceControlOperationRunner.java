@@ -25,7 +25,6 @@ import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
@@ -59,22 +58,20 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   }
 
   @Override
-  public PushAppResponse push(NamespaceId namespace,
-                              RepositoryConfig repoConfig,
-                              ApplicationDetail appToPush,
-                              CommitMeta commitDetails) throws PushFailureException, NoChangesToPushException,
+  public PushAppResponse push(PushAppContext pushContext) throws PushFailureException, NoChangesToPushException,
     AuthenticationConfigException {
-    try (RepositoryManager repositoryManager = repoManagerFactory.create(namespace, repoConfig)) {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(pushContext.getNamespaceId(),
+                                                                         pushContext.getRepositoryConfig())) {
       try {
         repositoryManager.cloneRemote();
       } catch (GitAPIException | IOException e) {
         throw new PushFailureException(String.format("Failed to clone remote repository: %s", e.getMessage()), e);
       }
 
-      LOG.info("Pushing application configs for : {}", appToPush);
+      LOG.info("Pushing application configs for : {}", pushContext.getAppToPush().getName());
 
       //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
-      return writeAppDetailAndPush(repositoryManager, appToPush, commitDetails);
+      return writeAppDetailAndPush(repositoryManager, pushContext.getAppToPush(), pushContext.getCommitDetails());
     }
   }
 
