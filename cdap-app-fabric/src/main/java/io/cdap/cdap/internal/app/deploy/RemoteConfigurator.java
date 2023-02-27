@@ -30,8 +30,8 @@ import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
-import io.cdap.cdap.internal.app.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
@@ -64,7 +64,7 @@ public class RemoteConfigurator implements Configurator {
     int readTimeout = cConf.getInt(Constants.TaskWorker.CONFIGURATOR_HTTP_CLIENT_READ_TIMEOUT_MS);
     HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory,
-        RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig);
+                                                     RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig);
   }
 
   @Override

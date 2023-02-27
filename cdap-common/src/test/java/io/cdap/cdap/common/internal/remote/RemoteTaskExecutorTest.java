@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021-2022 Cask Data, Inc.
+ * Copyright © 2021-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app;
+package io.cdap.cdap.common.internal.remote;
 
-import com.google.common.collect.Iterators;
-import io.cdap.cdap.api.metrics.MetricValue;
-import io.cdap.cdap.api.metrics.MetricValues;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -27,12 +27,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
-import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
-import io.cdap.cdap.internal.app.worker.TaskWorkerHttpHandlerInternal;
-import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
-import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -47,9 +42,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executor;
 
 /**
  * Tests for RemoteTaskExecutor
@@ -60,17 +56,15 @@ public class RemoteTaskExecutorTest {
   private static CConfiguration cConf;
   private static NettyHttpService httpService;
   private static InMemoryDiscoveryService discoveryService;
-
-  private List<MetricValues> published;
-  private AggregatedMetricsCollectionService mockMetricsCollector;
+  Map<Map<String, String>, Map<String, Long>> metricCollectors;
+  private MetricsCollectionService mockMetricsCollector;
   private Cancellable registered;
 
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();
     discoveryService = new InMemoryDiscoveryService();
-    remoteClientFactory = new RemoteClientFactory(discoveryService,
-                                                  new DefaultInternalAuthenticator(new AuthenticationTestContext()));
+    remoteClientFactory = new RemoteClientFactory(discoveryService, new NoOpInternalAuthenticator());
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, className -> {
@@ -88,16 +82,85 @@ public class RemoteTaskExecutorTest {
 
   @Before
   public void beforeTest() {
-    published = new ArrayList<>();
-    mockMetricsCollector = new AggregatedMetricsCollectionService(1000L) {
+    metricCollectors = new HashMap<>();
+    mockMetricsCollector = createMockMetricsCollectionService();
+    mockMetricsCollector.startAndWait();
+    registered = discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
+  }
+
+  private MetricsCollectionService createMockMetricsCollectionService() {
+    return new MetricsCollectionService() {
+
       @Override
-      protected void publish(Iterator<MetricValues> metrics) {
-        Iterators.addAll(published, metrics);
+      public ListenableFuture<State> start() {
+        return null;
+      }
+
+      @Override
+      public State startAndWait() {
+        return null;
+      }
+
+      @Override
+      public boolean isRunning() {
+        return false;
+      }
+
+      @Override
+      public State state() {
+        return null;
+      }
+
+      @Override
+      public ListenableFuture<State> stop() {
+        return null;
+      }
+
+      @Override
+      public State stopAndWait() {
+        return null;
+      }
+
+      @Override
+      public void addListener(final Listener listener, final Executor executor) {}
+
+      @Override
+      public MetricsContext getContext(Map<String, String> context) {
+        return new MetricsContext() {
+          @Override
+          public void increment(String metricName, long value) {
+            metricCollectors.putIfAbsent(context, new HashMap<>());
+            metricCollectors.get(context).merge(metricName, value, Long::sum);
+          }
+
+          @Override
+          public void gauge(String metricName, long value) {
+            metricCollectors.putIfAbsent(context, new HashMap<>());
+            metricCollectors.get(context).put(metricName, value);
+          }
+
+          @Override
+          public void event(String metricName, long value) {
+            // no-op
+          }
+
+          @Override
+          public MetricsContext childContext(Map<String, String> tags) {
+            return this;
+          }
+
+          @Override
+          public MetricsContext childContext(String tagName, String tagValue) {
+            return this;
+          }
+
+          @Override
+          public Map<String, String> getTags() {
+            return Collections.emptyMap();
+          }
+        };
       }
     };
-    mockMetricsCollector.startAndWait();
-    registered = discoveryService
-      .register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
   }
 
   @After
@@ -113,7 +176,7 @@ public class RemoteTaskExecutorTest {
   @Test
   public void testFailedMetrics() throws Exception {
     RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
-        RemoteTaskExecutor.Type.TASK_WORKER);
+                                                                   RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(InValidRunnableClass.class.getName()).
       withParam("param").build();
     try {
@@ -123,14 +186,15 @@ public class RemoteTaskExecutorTest {
       Assert.assertEquals("Invalid", e.getMessage());
     }
     mockMetricsCollector.stopAndWait();
-    Assert.assertSame(1, published.size());
+    Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
-    MetricValues metricValues = published.get(0);
+    Map<String, String> metricKeys = metricCollectors.keySet().iterator().next();
+    Map<String, Long> metricValues = metricCollectors.get(metricKeys);
     Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.CLIENT_REQUEST_LATENCY_MS));
     Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.CLIENT_REQUEST_COUNT));
     //check the clz tag is set correctly
-    Assert.assertEquals(InValidRunnableClass.class.getName(), metricValues.getTags().get("clz"));
+    Assert.assertEquals(InValidRunnableClass.class.getName(), metricKeys.get("clz"));
   }
 
   @Test
@@ -141,14 +205,15 @@ public class RemoteTaskExecutorTest {
       withParam("param").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
     mockMetricsCollector.stopAndWait();
-    Assert.assertSame(1, published.size());
+    Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
-    MetricValues metricValues = published.get(0);
-    Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.CLIENT_REQUEST_LATENCY_MS));
-    Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.CLIENT_REQUEST_COUNT));
+    Map<String, String> metricsKey = metricCollectors.keySet().iterator().next();
+    Map<String, Long> metricsValue = metricCollectors.get(metricsKey);
+    Assert.assertTrue(hasMetric(metricsValue, Constants.Metrics.TaskWorker.CLIENT_REQUEST_LATENCY_MS));
+    Assert.assertTrue(hasMetric(metricsValue, Constants.Metrics.TaskWorker.CLIENT_REQUEST_COUNT));
     //check the clz tag is set correctly
-    Assert.assertEquals(ValidRunnableClass.class.getName(), metricValues.getTags().get("clz"));
+    Assert.assertEquals(ValidRunnableClass.class.getName(), metricsKey.get("clz"));
   }
 
   @Test
@@ -165,20 +230,21 @@ public class RemoteTaskExecutorTest {
       // expected
     }
     mockMetricsCollector.stopAndWait();
-    Assert.assertSame(1, published.size());
+    Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
-    MetricValues metricValues = published.get(0);
-    Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.CLIENT_REQUEST_COUNT));
-    Assert.assertTrue(hasMetric(metricValues, Constants.Metrics.TaskWorker.CLIENT_REQUEST_LATENCY_MS));
-    Assert.assertEquals("failure", metricValues.getTags().get(Constants.Metrics.Tag.STATUS));
-    int retryCount = Integer.parseInt(metricValues.getTags().get(Constants.Metrics.Tag.TRIES));
+    Map<String, String> metricsKey = metricCollectors.keySet().iterator().next();
+    Map<String, Long> metricsValue = metricCollectors.get(metricsKey);
+    Assert.assertTrue(hasMetric(metricsValue, Constants.Metrics.TaskWorker.CLIENT_REQUEST_LATENCY_MS));
+    Assert.assertTrue(hasMetric(metricsValue, Constants.Metrics.TaskWorker.CLIENT_REQUEST_COUNT));
+    Assert.assertEquals("failure", metricsKey.get(Constants.Metrics.Tag.STATUS));
+    int retryCount = Integer.parseInt(metricsKey.get(Constants.Metrics.Tag.TRIES));
     Assert.assertTrue(retryCount > 1);
   }
 
-  private boolean hasMetric(MetricValues metricValues, String metricName) {
-    for (MetricValue metricValue : metricValues.getMetrics()) {
-      if (metricValue.getName().equals(metricName)) {
+  private boolean hasMetric(Map<String, Long> metricValues, String metricName) {
+    for (String metricValue : metricValues.keySet()) {
+      if (metricValue.equals(metricName)) {
         return true;
       }
     }
