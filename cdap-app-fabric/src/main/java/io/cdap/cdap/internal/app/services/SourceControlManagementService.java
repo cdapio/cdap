@@ -42,12 +42,7 @@ import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
-import io.cdap.cdap.spi.data.StructuredTableContext;
-import io.cdap.cdap.spi.data.TableNotFoundException;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import io.cdap.cdap.store.NamespaceTable;
-import io.cdap.cdap.store.RepositoryTable;
+import io.cdap.cdap.store.RepositoryStore;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -59,78 +54,47 @@ import javax.annotation.Nullable;
 public class SourceControlManagementService {
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final TransactionRunner transactionRunner;
   private final CConfiguration cConf;
   private final SecureStore secureStore;
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
+  private final RepositoryStore repoStore;
 
 
   @Inject
   public SourceControlManagementService(CConfiguration cConf,
                                         SecureStore secureStore,
-                                        TransactionRunner transactionRunner,
                                         AccessEnforcer accessEnforcer,
                                         AuthenticationContext authenticationContext,
                                         SourceControlOperationRunner sourceControlOperationRunner,
                                         ApplicationLifecycleService applicationLifecycleService,
-                                        Store store) {
+                                        Store store,
+                                        RepositoryStore repoStore) {
     this.cConf = cConf;
     this.secureStore = secureStore;
-    this.transactionRunner = transactionRunner;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
-  }
-
-  private RepositoryTable getRepositoryTable(StructuredTableContext context) throws TableNotFoundException {
-    return new RepositoryTable(context);
-  }
-
-  private NamespaceTable getNamespaceTable(StructuredTableContext context) throws TableNotFoundException {
-    return new NamespaceTable(context);
+    this.repoStore = repoStore;
   }
 
   public RepositoryMeta setRepository(NamespaceId namespace, RepositoryConfig repository)
     throws NamespaceNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
-
-    return TransactionRunners.run(transactionRunner, context -> {
-      NamespaceTable nsTable = getNamespaceTable(context);
-      if (nsTable.get(namespace) == null) {
-        throw new NamespaceNotFoundException(namespace);
-      }
-
-      RepositoryTable repoTable = getRepositoryTable(context);
-      repoTable.create(namespace, repository);
-      return repoTable.get(namespace);
-    }, NamespaceNotFoundException.class);
+    return repoStore.setRepository(namespace, repository);
   }
 
   public void deleteRepository(NamespaceId namespace) {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.DELETE);
-
-    TransactionRunners.run(transactionRunner, context -> {
-      RepositoryTable repoTable = getRepositoryTable(context);
-      repoTable.delete(namespace);
-    });
+    repoStore.deleteRepository(namespace);
   }
 
   public RepositoryMeta getRepositoryMeta(NamespaceId namespace) throws RepositoryNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
-
-    return TransactionRunners.run(transactionRunner, context -> {
-      RepositoryTable table = getRepositoryTable(context);
-      RepositoryMeta repoMeta = table.get(namespace);
-      if (repoMeta == null) {
-        throw new RepositoryNotFoundException(namespace);
-      }
-
-      return repoMeta;
-    }, RepositoryNotFoundException.class);
+    return repoStore.getRepositoryMeta(namespace);
   }
 
   public void validateRepository(NamespaceId namespace, RepositoryConfig repoConfig)
@@ -151,18 +115,13 @@ public class SourceControlManagementService {
   public PushAppResponse pushApp(ApplicationReference appRef, @Nullable String commitMessage)
     throws NotFoundException, IOException, PushFailureException,
            NoChangesToPushException, AuthenticationConfigException {
-    // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
-    //  Need to fix it and avoid passing it in RepositoryManagerFactory
-    RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
-
     String committer = authenticationContext.getPrincipal().getName();
 
     // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
     CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
 
-    PushAppResponse pushResponse = sourceControlOperationRunner.push(appRef.getParent(), repoConfig,
-                                                                     appDetail, commitMeta);
+    PushAppResponse pushResponse = sourceControlOperationRunner.push(appRef.getParent(), appDetail, commitMeta);
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
