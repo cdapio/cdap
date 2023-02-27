@@ -53,6 +53,11 @@ public class MockMetrics implements Metrics {
   }
 
   @Override
+  public void event(String s, long l) {
+    // TODO
+  }
+
+  @Override
   public Metrics child(Map<String, String> tags) {
     return this;
   }

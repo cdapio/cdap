@@ -134,6 +134,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   }
 
   @Override
+  public void event(String metricName, long value) {
+    getMetrics().event(metricName, value);
+  }
+
+  @Override
   public Metrics child(Map<String, String> tags) {
     return getMetrics().child(tags);
   }

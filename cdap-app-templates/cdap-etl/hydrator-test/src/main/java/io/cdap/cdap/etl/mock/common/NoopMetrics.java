@@ -45,6 +45,11 @@ public class NoopMetrics implements StageMetrics {
   }
 
   @Override
+  public void event(String s, long l) {
+    // no-op
+  }
+
+  @Override
   public Metrics child(Map<String, String> tags) {
     return this;
   }

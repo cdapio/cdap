@@ -49,6 +49,11 @@ public class MockStageMetrics implements StageMetrics {
   }
 
   @Override
+  public void event(String s, long l) {
+    mockMetrics.event(stageName + "." + s, l);
+  }
+
+  @Override
   public Metrics child(Map<String, String> tags) {
     return mockMetrics.child(tags);
   }

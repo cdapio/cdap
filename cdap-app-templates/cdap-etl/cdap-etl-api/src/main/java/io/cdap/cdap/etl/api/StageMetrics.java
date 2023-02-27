@@ -60,6 +60,16 @@ public interface StageMetrics extends Metrics {
   void gauge(String metricName, long value);
 
   /**
+   * Sets the specific metric to the provided value. Metrics name will be prefixed by the
+   * stage id, hence it will be aggregated for the current stage.
+   *
+   * @param metricName Name of the counter. Use alphanumeric characters in metric names.
+   * @param value The value to be set.
+   */
+  @Override
+  void event(String metricName, long value);
+
+  /**
    * Increases the value of the specific metric by delta. Metrics emitted will be aggregated
    * for the whole ETL pipeline.
    *

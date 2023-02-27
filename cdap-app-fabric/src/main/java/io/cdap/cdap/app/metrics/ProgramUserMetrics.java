@@ -60,6 +60,11 @@ public class ProgramUserMetrics implements Metrics {
   }
 
   @Override
+  public void event(String metricName, long value) {
+    metricsContext.event(metricName, value);
+  }
+
+  @Override
   public Metrics child(Map<String, String> tags) {
     Sets.SetView<String> intersection = Sets.intersection(getTags().keySet(), tags.keySet());
     if (!intersection.isEmpty()) {

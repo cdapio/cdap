@@ -48,6 +48,11 @@ public abstract class BatchSQLEngineMetrics implements Metrics {
   }
 
   @Override
+  public void event(String metricName, long value) {
+    metrics.event(getMetricName(metricName), value);
+  }
+
+  @Override
   public abstract Metrics child(Map<String, String> tags);
 
   @Override

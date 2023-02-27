@@ -51,6 +51,11 @@ public class BatchSQLEngineAdapterTest {
       }
 
       @Override
+      public void event(String metricName, long value) {
+        throw new UnsupportedOperationException("not implemented");
+      }
+
+      @Override
       public void pipelineCount(String metricName, int delta) {
         throw new UnsupportedOperationException("not implemented");
       }
