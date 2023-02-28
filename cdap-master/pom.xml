@@ -276,7 +276,6 @@
         <stage.authenticators.ext.dir>${stage.opt.dir}/ext/authenticators</stage.authenticators.ext.dir>
         <stage.metricswriters.ext.dir>${stage.opt.dir}/ext/metricswriters/google_cloud_monitoring_writer
         </stage.metricswriters.ext.dir>
-        <stage.sqldialect.ext.dir>${stage.opt.dir}/ext/sqldialectconverters</stage.sqldialect.ext.dir>
         <stage.eventwriters.ext.dir>${stage.opt.dir}/ext/eventwriters/google_cloud_pubsub_writer
         </stage.eventwriters.ext.dir>
         <stage.metadataconsumers.ext.dir>${stage.opt.dir}/ext/metadataconsumers/data-catalog-consumer
@@ -735,28 +734,6 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-authenticator-ext-gcp/target/libexec/
-                      </directory>
-                      <includes>
-                        <include>*.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
-              <!-- Copy SQL dialect conversion extensions -->
-              <execution>
-                <id>copy-sqldialect-ext-calcite</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.sqldialect.ext.dir}/calcite</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-relational-ext-calcite/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>

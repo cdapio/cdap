@@ -2055,14 +2055,6 @@ public final class Constants {
   public static final class SourceControlManagement {
     public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
     public static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH =
-            "source.control.git.repositories.clone.directory.path";
-  }
-
-  /**
-   * Constants for SQL dialect conversion service SPI
-   */
-  public static final class SqlDialectConversion {
-    public static final String EXTENSION_DIR = "sqldialect.extensions.dir";
-    public static final String DEFAULT_IMPL_NAME = "calcite";
+      "source.control.git.repositories.clone.directory.path";
   }
 }
