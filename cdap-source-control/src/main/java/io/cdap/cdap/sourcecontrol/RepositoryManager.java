@@ -55,7 +55,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -76,7 +75,9 @@ public class RepositoryManager implements AutoCloseable {
   // same namespace from interfering with each other.
   private final String randomDirectoryName;
 
-  public RepositoryManager(SecureStore secureStore, CConfiguration cConf, NamespaceId namespace,
+  public RepositoryManager(SecureStore secureStore,
+                           CConfiguration cConf,
+                           NamespaceId namespace,
                            RepositoryConfig repoConfig) {
     this.sourceControlConfig = new SourceControlConfig(namespace, repoConfig, cConf);
     try {
@@ -107,6 +108,7 @@ public class RepositoryManager implements AutoCloseable {
 
   /**
    * Gets the relative path of a file in git repository based on the user configured path prefix.
+   *
    * @param fileName The filename
    * @return the relative {@link Path}
    */
@@ -164,12 +166,12 @@ public class RepositoryManager implements AutoCloseable {
   /**
    * Commits and pushes the changes of a given file under the repository root path.
    *
-   * @param commitMeta Details for the commit including author, committer and commit message
+   * @param commitMeta  Details for the commit including author, committer and commit message
    * @param fileChanged The relative path to repository root where the file is updated
-   * @throws GitAPIException                      when the underlying git commands fail
-   * @throws NoChangesToPushException             when there's no file changes for the commit
    * @return the hash of the written file. It returns null if the push succeeds but failed to get the fileHash from
    * pushed {@link RevCommit}
+   * @throws GitAPIException          when the underlying git commands fail
+   * @throws NoChangesToPushException when there's no file changes for the commit
    */
   @Nullable
   public String commitAndPush(CommitMeta commitMeta, Path fileChanged)
@@ -188,7 +190,7 @@ public class RepositoryManager implements AutoCloseable {
 
     PushCommand pushCommand = createCommand(git::push, sourceControlConfig, credentialsProvider);
     Iterable<PushResult> pushResults = pushCommand.call();
-    
+
     for (PushResult result : pushResults) {
       for (RemoteRefUpdate rru : result.getRemoteUpdates()) {
         if (rru.getStatus() != RemoteRefUpdate.Status.OK && rru.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
@@ -198,8 +200,7 @@ public class RepositoryManager implements AutoCloseable {
     }
 
     try {
-      TreeWalk walk = TreeWalk.forPath(git.getRepository(), fileChanged.toString(), commit.getTree());
-      return walk.getObjectId(0).getName();
+      return getFileHash(fileChanged, commit);
     } catch (IOException e) {
       LOG.warn(String.format("Failed to get the fileHash for file: %s", fileChanged), e);
       return null;
@@ -216,60 +217,33 @@ public class RepositoryManager implements AutoCloseable {
     return git.commit().setAuthor(authorWithDate).setCommitter(committer).setMessage(commitMeta.getMessage());
   }
 
-
   /**
    * Returns the <a href="https://git-scm.com/docs/git-hash-object">Git Hash</a>
-   * of the requested file path in the provided commit. For symlinks, it returns the hash of
-   * the target file. This ensures that the file hash of a symlink is equal to the hash of the target file. It
-   * doesn't return the hash for directories. If the directory contains symlinks, we can't depend on the
-   * directory hash to ensure the contents are unchanged.
+   * of the requested file path in the provided commit. It is the caller's responsibility to handle paths that refer
+   * to directories or symlinks.
    *
    * @param relativePath The path relative to the repository base path (returned by
    *                     {@link RepositoryManager#getRepositoryRoot()}) on the filesystem.
    * @param commitHash   The commit ID hash for which to get the file hash.
    * @return The git file hash of the requested file.
-   * @throws IOException              when file or commit isn't found, there are circular symlinks or other file IO
-   *                                  errors.
-   * @throws IllegalArgumentException when the provided file isn't a regular file, eg: directory.
-   * @throws NotFoundException        when the file isn't committed to Git.
-   * @throws IllegalStateException    when {@link RepositoryManager#cloneRemote()} isn't called before this.
+   * @throws IOException           when file or commit isn't found, there are circular symlinks or other file IO
+   *                               errors.
+   * @throws NotFoundException     when the file isn't committed to Git.
+   * @throws IllegalStateException when {@link RepositoryManager#cloneRemote()} isn't called before this.
    */
   public String getFileHash(Path relativePath, String commitHash) throws IOException, NotFoundException,
     GitAPIException {
     validateInitialized();
-    // Save changes before checking out the requested commit.
-    ObjectId previousCommit = resolveHead();
-    // Stash changes in current working directory. Stash ID will be null if working directory is clean.
-    RevCommit stashID = git.stashCreate().setIncludeUntracked(true).call();
+    ObjectId commitId = ObjectId.fromString(commitHash);
 
-    try {
-      ObjectId commitId = ObjectId.fromString(commitHash);
-      // Each commit points to a tree that contains the files/directories as nodes. The ObjectId (hashes) of the nodes
-      // represent the state of a file at that commit.
-      RevCommit commit = new RevWalk(git.getRepository()).parseCommit(commitId);
-      // Checkout the requested commit.
-      git.checkout().setName(commitHash).call();
-
-      // Git considers symlinks as separate files. So the hash of the symlink will be different from the target file.
-      // Resolve path in case of symlinks. This ensures the hash of the target file is returned.
-      Path realPath = getRepositoryRoot().resolve(relativePath).toRealPath();
-      // We should not be comparing hashes of directories. If the directory contains symlinks, we can't depend on the
-      // directory hash to ensure the contents are unchanged.
-      if (!Files.isRegularFile(realPath)) {
-        throw new IllegalArgumentException(String.format("Path %s doesn't refer to a regular file.",
-                                                         realPath.toAbsolutePath()));
-      }
-      Path realRelativePath = getRepositoryRoot().toRealPath().relativize(realPath);
-      // Find the node representing the exact file path in the tree.
-      TreeWalk walk = TreeWalk.forPath(git.getRepository(), realRelativePath.toString(), commit.getTree());
-      if (walk == null) {
+    // Each commit points to a tree that contains the files/directories as nodes. The ObjectId (hashes) of the nodes
+    // represent the state of a file at that commit.
+    try (RevWalk walk = new RevWalk(git.getRepository())) {
+      String hash = getFileHash(relativePath, walk.parseCommit(commitId));
+      if (hash == null) {
         throw new NotFoundException("File not found in Git revision tree.");
       }
-      return walk.getObjectId(0).getName();
-    } finally {
-      // Restore the changes to working directory.
-      git.checkout().setName(previousCommit.getName()).call();
-      popStash(stashID);
+      return hash;
     }
   }
 
@@ -301,12 +275,16 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     if (git != null) {
       git.close();
     }
     git = null;
-    deletePathIfExists(getRepositoryRoot());
+    try {
+      deletePathIfExists(getRepositoryRoot());
+    } catch (IOException e) {
+      LOG.warn("Failed to close the RepositoryManager, there may be leftover files", e);
+    }
   }
 
   /**
@@ -380,26 +358,15 @@ public class RepositoryManager implements AutoCloseable {
     return git.getRepository().resolve(Constants.HEAD);
   }
 
-  /**
-   * Pops the stash with the given rev commit.
-   */
-  private void popStash(@Nullable RevCommit stashID) throws GitAPIException {
-    if (stashID == null) {
-      LOG.debug("Pop stash called with null stashID, nothing will be popped.");
-      return;
-    }
-    // pop the stash.
-    git.stashApply().setStashRef(stashID.getName()).setRestoreUntracked(true).call();
-    Collection<RevCommit> stashes = git.stashList().call();
-    int stashIndex = 0;
-    for (RevCommit stash : stashes) {
-      if (stash.equals(stashID)) {
-        git.stashDrop().setStashRef(stashIndex).call();
-        return;
+  @Nullable
+  private String getFileHash(Path relativePath, RevCommit commit) throws IOException {
+    // Find the node representing the exact file path in the tree.
+    try (TreeWalk walk = TreeWalk.forPath(git.getRepository(), relativePath.toString(), commit.getTree())) {
+      if (walk == null) {
+        LOG.warn("Path {} not found in Git tree", relativePath);
+        return null;
       }
-      stashIndex++;
+      return walk.getObjectId(0).getName();
     }
-    LOG.warn("Couldn't find Git stash with ID {} to drop. Ignoring missing stash.", stashID.getName());
   }
-
 }

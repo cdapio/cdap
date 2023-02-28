@@ -19,6 +19,7 @@ package io.cdap.cdap.sourcecontrol;
 import com.google.common.hash.Hashing;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -167,9 +168,16 @@ public class RepositoryManagerTest {
     // Change the file contents and commit, the hash should also change.
     addFileToGit(path, "change 2");
     commitID = manager.cloneRemote();
-    fileHash = manager.getFileHash(path, commitID);
-    Assert.assertNotEquals(fileHash, expectedHash);
+    Assert.assertNotEquals(manager.getFileHash(path, commitID), expectedHash);
     manager.close();
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testGetFileHashInvlidPath() throws Exception {
+    try (RepositoryManager manager = getRepositoryManager();) {
+      String commitID = manager.cloneRemote();
+      manager.getFileHash(Paths.get("data-pipelines", "pipeline.json"), commitID);
+    }
   }
 
   @Test
@@ -177,53 +185,30 @@ public class RepositoryManagerTest {
     // Add two files to git.
     String fileName1 = "file1.json";
     String fileContents1 = "abc";
-    String fileName2 = "file2.json";
     String fileContents2 = "def";
-    addFileToGit(Paths.get(fileName1), fileContents1);
-    addFileToGit(Paths.get(fileName2), fileContents2);
-    // Add a symlink pointing to file1.
-    String symlinkFileName = "link.json";
-    Path symlinkPath = Paths.get(symlinkFileName);
-    addSymbolicLinkToGit(symlinkPath, Paths.get(fileName1));
+    Path path = Paths.get(fileName1);
+    addFileToGit(path, fileContents1);
     // check file hash of link.
     RepositoryManager manager = getRepositoryManager();
     manager.cloneRemote();
     String commitID = manager.resolveHead().getName();
-    String hash = manager.getFileHash(symlinkPath, commitID);
-    // Change the symlink to point to file 2, but don't commit.
-    Path absoluteLinkPath = manager.getRepositoryRoot().resolve(symlinkFileName);
-    Path absoluteTargetPath = manager.getRepositoryRoot().resolve(fileName2);
-    Files.delete(absoluteLinkPath);
-    Files.createSymbolicLink(absoluteLinkPath, absoluteLinkPath.getParent().relativize(absoluteTargetPath));
+    String hash = manager.getFileHash(path, commitID);
+    // Change file contents, but don't commit.
+    Path absoluteRepoPath = manager.getRepositoryRoot().resolve(path);
+    Files.write(absoluteRepoPath, fileContents2.getBytes(StandardCharsets.UTF_8));
     // Check the file hash of the link, it should be unchanged.
-    Assert.assertEquals(hash, manager.getFileHash(symlinkPath, commitID));
+    Assert.assertEquals(hash, manager.getFileHash(path, commitID));
     // Check that working directory changes are still present.
-    Assert.assertEquals(absoluteLinkPath.toRealPath(), absoluteTargetPath);
+    Assert.assertEquals(new String(Files.readAllBytes(absoluteRepoPath), StandardCharsets.UTF_8), fileContents2);
     manager.close();
     // Commit the symlink change.
-    addSymbolicLinkToGit(symlinkPath, Paths.get(fileName2));
+    addFileToGit(path, fileContents2);
     manager.cloneRemote();
     // Check the file hash at previous commit.
-    Assert.assertEquals(hash, manager.getFileHash(symlinkPath, commitID));
+    Assert.assertEquals(hash, manager.getFileHash(path, commitID));
     // Check the file hash at head.
-    Assert.assertNotEquals(hash, manager.getFileHash(symlinkPath, manager.resolveHead().getName()));
+    Assert.assertNotEquals(hash, manager.getFileHash(path, manager.resolveHead().getName()));
     manager.close();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testGetFileHashDirectory() throws Exception {
-    String fileName = "pipeline.json";
-    String dirName = "data-pipelines";
-    // Add a regular file inside a directory.
-    Path regularFilePath = Paths.get(dirName, fileName);
-    addFileToGit(regularFilePath, "{name: pipeline}");
-    RepositoryManager manager = getRepositoryManager();
-    String commitID = manager.cloneRemote();
-    try {
-      manager.getFileHash(Paths.get(dirName), commitID);
-    } finally {
-      manager.close();
-    }
   }
 
   @Test(expected = IOException.class)
@@ -238,33 +223,6 @@ public class RepositoryManagerTest {
     } finally {
       manager.close();
     }
-  }
-
-  @Test
-  public void testGetFileHashSymlinks() throws Exception {
-    String fileName = "pipeline.json";
-    // Add a regular file inside a directory.
-    Path regularFilePath = Paths.get(fileName);
-    String contents = "{name: pipeline}";
-    addFileToGit(regularFilePath, contents);
-    // Add a symbolic link.
-    Path symlinkDirectory = Paths.get("cdap", "applications");
-    String symLinkFileName1 = "pipeline-link-1.json";
-    String symLinkFileName2 = "pipeline-link-2.json";
-    Path symlinkPath1 = symlinkDirectory.resolve(symLinkFileName1);
-    addSymbolicLinkToGit(symlinkPath1, regularFilePath);
-    // Create a symbolic link to a symbolic link (a->b->c).
-    Path symlinkPath2 = symlinkDirectory.resolve(symLinkFileName2);
-    addSymbolicLinkToGit(symlinkPath2, symlinkPath1);
-
-    RepositoryConfig repositoryConfig = getRepositoryConfigBuilder().setPathPrefix("cdap/applications").build();
-    RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), repositoryConfig);
-    String commitID = manager.cloneRemote();
-    String expectedHash = getGitStyleHash(contents);
-    // The hash of the original file, and both the symlinks should be equal.
-    Assert.assertEquals(manager.getFileHash(symlinkPath1, commitID), expectedHash);
-    Assert.assertEquals(manager.getFileHash(symlinkPath2, commitID), expectedHash);
-    manager.close();
   }
 
   private RepositoryConfig.Builder getRepositoryConfigBuilder() {
@@ -333,36 +291,6 @@ public class RepositoryManagerTest {
   }
 
   /**
-   * Adds a symbolic link to the git repository hosted by the {@link LocalGitServer}. This overwrites the link file
-   * if it already exists.
-   *
-   * @param relativeLinkPath   relative path to create the symlink.
-   * @param relativeTargetPath relative path to an existing file in the Git repository.
-   */
-  private void addSymbolicLinkToGit(Path relativeLinkPath, Path relativeTargetPath) throws GitAPIException,
-    IOException {
-    Path tempDirPath = tempFolder.newFolder("temp-local-git").toPath();
-    Git localGit = getClonedGit(tempDirPath);
-    Path absoluteTargetPath = tempDirPath.resolve(relativeTargetPath);
-    Path absoluteLinkPath = tempDirPath.resolve(relativeLinkPath);
-    // Create parent directories for the link if they don't exist.
-    Files.createDirectories(absoluteLinkPath.getParent());
-    if (Files.exists(absoluteLinkPath)) {
-      Files.delete(absoluteLinkPath);
-    }
-    // Create a relative link so that it remains valid irrespective of where the repository is cloned.
-    Files.createSymbolicLink(absoluteLinkPath, absoluteLinkPath.getParent().relativize(absoluteTargetPath));
-    localGit.add().addFilepattern(".").call();
-    localGit.commit().setMessage("Adding Symbolic link: " + relativeTargetPath).call();
-    localGit.push()
-      .setTimeout(GIT_COMMAND_TIMEOUT)
-      .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME, MOCK_TOKEN))
-      .call();
-    localGit.close();
-    DirUtils.deleteDirectoryContents(tempDirPath.toFile());
-  }
-
-  /**
    * Calculates the hash for provided file contents in a similar way to Git.
    */
   private String getGitStyleHash(String fileContents) {
@@ -384,8 +312,7 @@ public class RepositoryManagerTest {
       .setTokenName(GITHUB_TOKEN_NAME)
       .build();
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
-                                                           new NamespaceId(NAMESPACE), config)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
       Path filePath = manager.getBasePath().resolve("file1");
@@ -428,8 +355,7 @@ public class RepositoryManagerTest {
       .setTokenName(GITHUB_TOKEN_NAME)
       .build();
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
-                                                           new NamespaceId(NAMESPACE), config)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
       Path filePath = manager.getBasePath().resolve("file1");
@@ -444,13 +370,13 @@ public class RepositoryManagerTest {
   private void verifyNoCommit() throws GitAPIException, IOException {
     Path tempDirPath = tempFolder.newFolder("temp-local-git-verify").toPath();
     Git localGit = getClonedGit(tempDirPath);
-    List<RevCommit> commits = StreamSupport.stream(localGit.log().all().call().spliterator(), false).
-      collect(Collectors.toList());
+    List<RevCommit> commits =
+      StreamSupport.stream(localGit.log().all().call().spliterator(), false).collect(Collectors.toList());
     Assert.assertEquals(1, commits.size());
   }
 
-  private void verifyCommit(Path pathFromRepoRoot, String expectedContent, CommitMeta commitMeta)
-    throws GitAPIException, IOException {
+  private void verifyCommit(Path pathFromRepoRoot, String expectedContent, CommitMeta commitMeta) throws
+    GitAPIException, IOException {
     Path tempDirPath = tempFolder.newFolder("temp-local-git-verify").toPath();
     Git localGit = getClonedGit(tempDirPath);
     Path filePath = tempDirPath.resolve(pathFromRepoRoot);
@@ -458,8 +384,8 @@ public class RepositoryManagerTest {
     String actualContent = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
     Assert.assertEquals(expectedContent, actualContent);
 
-    List<RevCommit> commits = StreamSupport.stream(localGit.log().all().call().spliterator(), false)
-      .collect(Collectors.toList());
+    List<RevCommit> commits =
+      StreamSupport.stream(localGit.log().all().call().spliterator(), false).collect(Collectors.toList());
     Assert.assertEquals(2, commits.size());
     RevCommit latestCommit = commits.get(0);
 
@@ -470,5 +396,4 @@ public class RepositoryManagerTest {
     localGit.close();
     DirUtils.deleteDirectoryContents(tempDirPath.toFile());
   }
-
 }

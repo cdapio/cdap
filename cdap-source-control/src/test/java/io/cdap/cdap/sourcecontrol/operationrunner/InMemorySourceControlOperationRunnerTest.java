@@ -18,7 +18,10 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
@@ -43,6 +46,32 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class InMemorySourceControlOperationRunnerTest {
+  private static final String FAKE_APP_NAME = "app1";
+  private static final String FAKE_APP_SPEC = "{\n" +
+      "  \"artifact\": {\n" +
+      "     \"name\": \"cdap-notifiable-workflow\",\n" +
+      "     \"version\": \"1.0.0\",\n" +
+      "     \"scope\": \"system\"\n" +
+      "  },\n" +
+      "  \"config\": {\n" +
+      "     \"plugin\": {\n" +
+      "        \"name\": \"WordCount\",\n" +
+      "        \"type\": \"sparkprogram\",\n" +
+      "        \"artifact\": {\n" +
+      "           \"name\": \"word-count-program\",\n" +
+      "           \"scope\": \"user\",\n" +
+      "           \"version\": \"1.0.0\"\n" +
+      "        }\n" +
+      "     }\n" +
+      "  },\n" +
+      "  \"preview\" : {\n" +
+      "    \"programName\" : \"WordCount\",\n" +
+      "    \"programType\" : \"spark\"\n" +
+      "    },\n" +
+      "  \"principal\" : \"test2\"\n" +
+      "}";
+  private static final String FAKE_FILE_HASH = "5905258bb958ceda80b6a37938050ad876920f09";
+  private static final String FAKE_COMMIT_HASH = "5905258bb958ceda80b6a37938050ad876920f10";
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   private static final ApplicationDetail testAppDetails = new ApplicationDetail(
@@ -69,7 +98,7 @@ public class InMemorySourceControlOperationRunnerTest {
     RepositoryManagerFactory mockRepositoryManagerFactory = Mockito.mock(RepositoryManagerFactory.class);
     this.mockRepositoryManager = Mockito.mock(RepositoryManager.class);
     Mockito.doReturn(mockRepositoryManager).when(mockRepositoryManagerFactory).create(Mockito.any(), Mockito.any());
-    Mockito.doReturn("commit hash").when(mockRepositoryManager).cloneRemote();
+    Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
     this.operationRunner = new InMemorySourceControlOperationRunner(mockRepositoryManagerFactory);
     Path appRelativePath = Paths.get(pathPrefix, testAppDetails.getName() + ".json");
     Mockito.doReturn(appRelativePath).when(mockRepositoryManager).getFileRelativePath(Mockito.any());
@@ -154,5 +183,76 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doThrow(new NoChangesToPushException("no changes to push"))
       .when(mockRepositoryManager).commitAndPush(Mockito.any(), Mockito.any());
     operationRunner.push(NAMESPACE, testRepoConfig, testAppDetails, testCommit);
+  }
+
+  @Test
+  public void testPullSuccess() throws Exception {
+    setupPullTest();
+    ApplicationReference appRef = new ApplicationReference(NAMESPACE, FAKE_APP_NAME);
+    PullAppResponse<?> response = operationRunner.pull(appRef, testRepoConfig);
+    Assert.assertEquals(response.getApplicationFileHash(), FAKE_FILE_HASH);
+    AppRequest<?> appRequest = response.getAppRequest();
+    Assert.assertNotNull(appRequest.getArtifact());
+    Assert.assertEquals("cdap-notifiable-workflow", appRequest.getArtifact().getName());
+    Assert.assertNotNull(appRequest.getPreview());
+    Assert.assertEquals("WordCount", appRequest.getPreview().getProgramName());
+    Assert.assertEquals(response.getApplicationName(), FAKE_APP_NAME);
+    Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+    Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testPullFailedToReadHash() throws Exception {
+    setupPullTest();
+    ApplicationReference appRef = new ApplicationReference(NAMESPACE, FAKE_APP_NAME);
+    Mockito.doThrow(new NotFoundException("object not found"))
+      .when(mockRepositoryManager)
+      .getFileHash(Mockito.any(Path.class), Mockito.any(String.class));
+    try {
+      operationRunner.pull(appRef, testRepoConfig);
+    } finally {
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+    }
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testPullFileNotFound() throws Exception {
+    setupPullTest();
+    ApplicationReference appRef = new ApplicationReference(NAMESPACE, FAKE_APP_NAME);
+    Mockito.doReturn(Paths.get(pathPrefix, "app2.json")).when(mockRepositoryManager).getFileRelativePath(Mockito.any());
+    try {
+      operationRunner.pull(appRef, testRepoConfig);
+    } finally {
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+    }
+  }
+
+  @Test(expected = PullFailureException.class)
+  public void testPullCloneFailure() throws Exception {
+    setupPullTest();
+    ApplicationReference appRef = new ApplicationReference(NAMESPACE, FAKE_APP_NAME);
+    Mockito.doThrow(new IOException("secure store failure")).when(mockRepositoryManager).cloneRemote();
+    try {
+      operationRunner.pull(appRef, testRepoConfig);
+    } finally {
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+      Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+    }
+  }
+
+  private void setupPullTest() throws Exception {
+    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
+    Path baseRepoDirPath = tmpRepoDirPath.resolve(pathPrefix);
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
+    Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
+    Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
+    Mockito.doReturn(FAKE_FILE_HASH)
+      .when(mockRepositoryManager)
+      .getFileHash(Mockito.eq(Paths.get(pathPrefix, FAKE_APP_NAME + ".json")), Mockito.eq(FAKE_COMMIT_HASH));
+    Files.createDirectories(baseRepoDirPath);
+    Files.write(baseRepoDirPath.resolve(FAKE_APP_NAME + ".json"), FAKE_APP_SPEC.getBytes(StandardCharsets.UTF_8));
+    Mockito.doNothing().when(mockRepositoryManager).close();
   }
 }
