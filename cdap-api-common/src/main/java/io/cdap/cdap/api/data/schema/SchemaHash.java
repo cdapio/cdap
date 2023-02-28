@@ -37,6 +37,8 @@ public final class SchemaHash implements Serializable {
   private static final Charset UTF_8 = Charset.forName("UTF-8");
   private static final long serialVersionUID = 3640799184470835328L;
 
+  private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+
   private final byte[] hash;
   private String hashStr;
 
@@ -82,18 +84,29 @@ public final class SchemaHash implements Serializable {
     return Arrays.hashCode(hash);
   }
 
+
   @Override
   public String toString() {
     String str = hashStr;
     if (str == null) {
       // hex encode the bytes
-      Formatter formatter = new Formatter(new StringBuilder(32));
+      /*      Formatter formatter = new Formatter(new StringBuilder(32));
       for (byte b : hash) {
         formatter.format("%02X", b);
-      }
-      str = hashStr = formatter.toString();
+      }*/
+      str = hashStr = bytesToHex(hash);
     }
     return str;
+  }
+
+  private static String bytesToHex(byte[] bytes) {
+    char[] hexChars = new char[bytes.length * 2];
+    for (int j = 0; j < bytes.length; j++) {
+      int v = bytes[j] & 0xFF;
+      hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+      hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+    }
+    return new String(hexChars);
   }
 
   private byte[] computeHash(Schema schema, boolean includeRecordName) {
