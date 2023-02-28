@@ -25,11 +25,10 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.io.IOException;
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Defines the HBase implementation of Table.

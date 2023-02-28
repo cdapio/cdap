@@ -28,7 +28,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.common.metadata.MetadataRecord;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.Set;
 import java.util.stream.Collectors;

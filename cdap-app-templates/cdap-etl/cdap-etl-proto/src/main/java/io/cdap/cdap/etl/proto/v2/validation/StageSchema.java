@@ -18,7 +18,6 @@
 package io.cdap.cdap.etl.proto.v2.validation;
 
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

@@ -16,7 +16,6 @@
 package io.cdap.cdap.cli.util.table;
 
 import com.google.common.base.Joiner;
-
 import java.io.PrintStream;
 import java.util.List;
 

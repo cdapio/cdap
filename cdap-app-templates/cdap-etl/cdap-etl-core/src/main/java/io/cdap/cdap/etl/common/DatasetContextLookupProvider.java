@@ -17,7 +17,6 @@ package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.etl.api.Lookup;
-
 import java.util.Map;
 
 /**

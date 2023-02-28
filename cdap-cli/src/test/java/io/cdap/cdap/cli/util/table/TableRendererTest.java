@@ -16,14 +16,13 @@
 package io.cdap.cdap.cli.util.table;
 
 import com.google.common.base.Strings;
+import java.io.PrintStream;
+import java.util.List;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-
-import java.io.PrintStream;
-import java.util.List;
 
 /**
  *

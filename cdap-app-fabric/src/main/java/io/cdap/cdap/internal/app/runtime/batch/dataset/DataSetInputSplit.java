@@ -20,12 +20,11 @@ import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.Splits;
 import io.cdap.cdap.api.dataset.Dataset;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.InputSplit;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapreduce.InputSplit;
 
 /**
  * Class for {@link InputSplit} of a {@link Dataset}.

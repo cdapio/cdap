@@ -17,9 +17,6 @@
 package io.cdap.cdap.common.async;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -28,6 +25,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for {@link KeyedExecutor}.

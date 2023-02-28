@@ -21,7 +21,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
-
 import java.util.Properties;
 import java.util.Set;
 import java.util.jar.Attributes;

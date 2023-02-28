@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.common.twill;
 
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;
@@ -26,15 +34,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.internal.AbstractExecutionServiceController;
 import org.apache.twill.internal.RunIds;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import javax.annotation.Nullable;
 
 /**
  * A no-op {@link TwillController}.

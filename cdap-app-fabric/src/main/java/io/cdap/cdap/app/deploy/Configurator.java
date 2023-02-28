@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.deploy;
 
 import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.concurrent.Callable;
 
 /**

@@ -28,13 +28,12 @@ import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.junit.rules.ExternalResource;
-
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.rules.ExternalResource;
 
 class RouterResource extends ExternalResource {
   private final String hostname;

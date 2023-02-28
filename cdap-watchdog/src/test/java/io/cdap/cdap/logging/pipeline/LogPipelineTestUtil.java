@@ -25,10 +25,6 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.logging.appender.ForwardingAppender;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
-
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
@@ -37,6 +33,9 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 
 /**
  * Util class for log pipeline unit test.

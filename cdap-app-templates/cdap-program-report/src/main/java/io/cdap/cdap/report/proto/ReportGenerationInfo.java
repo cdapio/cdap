@@ -17,7 +17,6 @@
 package io.cdap.cdap.report.proto;
 
 import io.cdap.cdap.report.proto.summary.ReportSummary;
-
 import javax.annotation.Nullable;
 
 /**

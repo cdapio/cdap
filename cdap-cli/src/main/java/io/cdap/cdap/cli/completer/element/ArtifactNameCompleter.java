@@ -22,7 +22,6 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.completer.StringsCompleter;
 import io.cdap.cdap.client.ArtifactClient;
-
 import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;

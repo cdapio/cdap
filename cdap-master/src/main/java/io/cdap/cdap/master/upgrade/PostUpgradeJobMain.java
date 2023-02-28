@@ -32,7 +32,6 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;

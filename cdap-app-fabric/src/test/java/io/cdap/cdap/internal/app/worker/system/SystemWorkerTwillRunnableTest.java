@@ -24,13 +24,12 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.distributed.MockMasterEnvironment;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.io.File;
+import java.io.FileOutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.FileOutputStream;
 
 public class SystemWorkerTwillRunnableTest {
   @Rule

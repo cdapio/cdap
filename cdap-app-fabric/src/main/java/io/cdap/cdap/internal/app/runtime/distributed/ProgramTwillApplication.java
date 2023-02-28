@@ -22,17 +22,16 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillApplication;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * The {@link TwillApplication} for running programs in distributed mode.

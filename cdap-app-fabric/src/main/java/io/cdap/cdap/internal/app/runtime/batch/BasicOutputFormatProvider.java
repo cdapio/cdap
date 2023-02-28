@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.batch;
 
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
-
 import java.util.Map;
 
 /**

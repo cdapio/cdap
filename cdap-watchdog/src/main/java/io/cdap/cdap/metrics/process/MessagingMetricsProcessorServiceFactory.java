@@ -16,7 +16,6 @@
 package io.cdap.cdap.metrics.process;
 
 import io.cdap.cdap.api.metrics.MetricsContext;
-
 import java.util.Set;
 
 /**

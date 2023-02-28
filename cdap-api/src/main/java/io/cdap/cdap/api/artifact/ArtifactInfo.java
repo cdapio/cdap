@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.artifact;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;

@@ -17,7 +17,6 @@ package io.cdap.cdap.internal.app.preview;
 
 import io.cdap.cdap.app.preview.DataTracerFactory;
 import io.cdap.cdap.proto.id.ApplicationId;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

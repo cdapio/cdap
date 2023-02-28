@@ -22,11 +22,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.meta.FileMetaDataWriter;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
@@ -39,6 +34,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class including logic for getting log file to write to. Used by {@link CDAPLogAppender}

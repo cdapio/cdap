@@ -17,15 +17,14 @@
 package io.cdap.cdap.data2.transaction;
 
 import com.google.common.util.concurrent.MoreExecutors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import org.apache.tephra.AbstractTransactionExecutor;
 import org.apache.tephra.RetryOnConflictStrategy;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.RetryStrategy;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Utility class that encapsulates the transaction life cycle over a given set of

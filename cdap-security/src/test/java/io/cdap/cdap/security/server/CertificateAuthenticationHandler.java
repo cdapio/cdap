@@ -17,13 +17,12 @@
 package io.cdap.cdap.security.server;
 
 import com.google.common.base.Strings;
+import javax.security.auth.login.Configuration;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.ClientCertAuthenticator;
-
-import javax.security.auth.login.Configuration;
 
 /**
  * An Authentication Handler that support mutual TLS based authentication. The

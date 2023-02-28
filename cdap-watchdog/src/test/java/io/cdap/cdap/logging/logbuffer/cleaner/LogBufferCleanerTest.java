@@ -30,15 +30,14 @@ import io.cdap.cdap.logging.logbuffer.LogBufferWriter;
 import io.cdap.cdap.logging.logbuffer.MockCheckpointManager;
 import io.cdap.cdap.logging.meta.Checkpoint;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests for {@link LogBufferCleaner}.

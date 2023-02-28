@@ -22,14 +22,13 @@ import com.google.inject.Injector;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Tests for {@link SystemPreferenceSetter}

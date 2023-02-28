@@ -27,11 +27,10 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ArtifactHttpHandlerInternalTest extends ArtifactHttpHandlerTestBase {
   @Test

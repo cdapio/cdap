@@ -24,9 +24,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Configuration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.ui.ConfigurationJsonTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
@@ -34,6 +31,8 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * UserInterfaceService is a basic Server wrapper that launches node.js and our

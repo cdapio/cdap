@@ -23,7 +23,6 @@ import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;

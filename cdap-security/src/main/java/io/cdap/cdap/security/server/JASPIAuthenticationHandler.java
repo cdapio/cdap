@@ -17,6 +17,14 @@
 package io.cdap.cdap.security.server;
 
 import io.cdap.cdap.common.conf.Constants;
+import java.util.Collections;
+import java.util.HashMap;
+import javax.security.auth.Subject;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.message.config.ServerAuthConfig;
+import javax.security.auth.message.config.ServerAuthContext;
+import javax.security.auth.message.module.ServerAuthModule;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthConfigImpl;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthContextImpl;
 import org.apache.geronimo.components.jaspi.model.AuthModuleType;
@@ -30,15 +38,6 @@ import org.eclipse.jetty.security.jaspi.JaspiAuthenticator;
 import org.eclipse.jetty.security.jaspi.JaspiAuthenticatorFactory;
 import org.eclipse.jetty.security.jaspi.ServletCallbackHandler;
 import org.eclipse.jetty.security.jaspi.modules.BasicAuthModule;
-
-import java.util.Collections;
-import java.util.HashMap;
-import javax.security.auth.Subject;
-import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.Configuration;
-import javax.security.auth.message.config.ServerAuthConfig;
-import javax.security.auth.message.config.ServerAuthContext;
-import javax.security.auth.message.module.ServerAuthModule;
 
 /**
  * An Authentication handler that supports JASPI plugins for External Authentication.

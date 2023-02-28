@@ -17,10 +17,9 @@
 package io.cdap.cdap.data2.util.hbase;
 
 
+import java.text.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.text.ParseException;
 
 /**
  *

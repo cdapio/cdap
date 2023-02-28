@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.tethering.proto.v1;
 
 import io.cdap.cdap.internal.tethering.TetheringControlMessage;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

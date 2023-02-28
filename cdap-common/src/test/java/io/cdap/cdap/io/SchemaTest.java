@@ -26,14 +26,6 @@ import io.cdap.cdap.api.data.schema.SchemaCache;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import org.apache.avro.LogicalType;
-import org.apache.avro.LogicalTypes;
-import org.apache.commons.lang.SerializationUtils;
-import org.codehaus.jackson.node.IntNode;
-import org.codehaus.jackson.node.TextNode;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,6 +36,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.apache.avro.LogicalType;
+import org.apache.avro.LogicalTypes;
+import org.apache.commons.lang.SerializationUtils;
+import org.codehaus.jackson.node.IntNode;
+import org.codehaus.jackson.node.TextNode;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test for schema generation.

@@ -25,11 +25,10 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.cli.CLI;
+import java.net.URI;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
-
-import java.net.URI;
 
 @Category(XSlowTests.class)
 public class CLIMainLinkTest extends CLITestBase {

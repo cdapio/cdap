@@ -18,12 +18,11 @@ package io.cdap.cdap.common.conf;
 
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Testing CConfiguration.

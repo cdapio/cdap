@@ -22,14 +22,13 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
+import java.util.Map;
+import java.util.function.Supplier;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
-
-import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * A mock implementation of {@link MasterEnvironment} to facilitate unit testing.

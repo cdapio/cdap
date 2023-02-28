@@ -20,9 +20,8 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.preview.DataTracer;
-import org.apache.twill.api.RunId;
-
 import java.util.Map;
+import org.apache.twill.api.RunId;
 
 /**
  * This interface represents a context for a processor or elements of a processor.

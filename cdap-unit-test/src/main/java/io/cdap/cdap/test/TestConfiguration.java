@@ -18,13 +18,12 @@ package io.cdap.cdap.test;
 
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.internal.AppFabricTestHelper;
-import org.junit.rules.ExternalResource;
-import org.junit.rules.TemporaryFolder;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * This class can be used to setup CDAP configuration for unit-test.

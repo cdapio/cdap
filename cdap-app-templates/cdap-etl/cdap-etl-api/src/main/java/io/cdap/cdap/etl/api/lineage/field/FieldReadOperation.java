@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.lineage.field;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.lineage.field.EndPoint;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

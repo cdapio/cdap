@@ -25,7 +25,6 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.report.util.ReportField;
-
 import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 

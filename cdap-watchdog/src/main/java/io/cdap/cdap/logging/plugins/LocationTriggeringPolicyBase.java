@@ -19,9 +19,8 @@ package io.cdap.cdap.logging.plugins;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.ContextAwareBase;
-import org.apache.twill.filesystem.Location;
-
 import java.io.File;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Location triggering policy base class

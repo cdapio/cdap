@@ -33,6 +33,10 @@ import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceTest;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.Collections;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.filesystem.Location;
@@ -43,11 +47,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.Collections;
 
 /**
  * Test for Artifact Cache service.

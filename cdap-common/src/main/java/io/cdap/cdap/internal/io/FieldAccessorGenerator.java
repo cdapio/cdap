@@ -20,6 +20,9 @@ import com.google.common.base.Throwables;
 import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.cdap.internal.asm.Methods;
 import io.cdap.cdap.internal.lang.Fields;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import javax.annotation.concurrent.NotThreadSafe;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -28,10 +31,6 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Generate a class bytecode that implements {@link FieldAccessor} for a given class field. The generated class

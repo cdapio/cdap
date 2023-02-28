@@ -17,16 +17,15 @@
 package io.cdap.cdap.security.server;
 
 import io.cdap.cdap.common.conf.Constants;
+import java.util.Map;
+import javax.security.auth.login.Configuration;
+import javax.ws.rs.Path;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.util.security.Constraint;
-
-import java.util.Map;
-import javax.security.auth.login.Configuration;
-import javax.ws.rs.Path;
 
 /**
  * An abstract authentication handler that provides basic functionality including

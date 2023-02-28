@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.capability;
 
 import com.google.gson.JsonObject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

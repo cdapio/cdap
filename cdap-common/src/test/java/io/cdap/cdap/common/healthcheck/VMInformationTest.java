@@ -25,11 +25,10 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.NettyHttpService;
+import java.util.Set;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Set;
 
 /**
  * Test for {@link VMInformation}.

@@ -17,7 +17,6 @@
 package io.cdap.cdap.test;
 
 import io.cdap.cdap.proto.id.ArtifactId;
-
 import java.util.Map;
 
 /**

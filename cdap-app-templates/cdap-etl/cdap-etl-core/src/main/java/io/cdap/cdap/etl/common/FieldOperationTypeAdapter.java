@@ -28,7 +28,6 @@ import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
 import io.cdap.cdap.etl.api.lineage.field.OperationType;
-
 import java.lang.reflect.Type;
 
 /**

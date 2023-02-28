@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;

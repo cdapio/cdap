@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.batch;
 
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

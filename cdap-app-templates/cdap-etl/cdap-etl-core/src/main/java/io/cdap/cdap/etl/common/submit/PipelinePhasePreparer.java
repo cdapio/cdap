@@ -48,8 +48,6 @@ import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
-import org.apache.tephra.TransactionFailureException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * For each stage, call prepareRun() in topological order. prepareRun will setup the input/output of the pipeline phase

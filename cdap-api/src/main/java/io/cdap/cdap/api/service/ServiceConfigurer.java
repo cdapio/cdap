@@ -20,7 +20,6 @@ import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
-
 import java.util.Map;
 
 /**

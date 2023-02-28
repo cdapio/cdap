@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.messaging.store;
 
-import org.apache.tephra.Transaction;
-
 import java.util.Arrays;
+import org.apache.tephra.Transaction;
 
 /**
  * A {@link MessageFilter} that filter {@link MessageTable.Entry} based on a given transaction.

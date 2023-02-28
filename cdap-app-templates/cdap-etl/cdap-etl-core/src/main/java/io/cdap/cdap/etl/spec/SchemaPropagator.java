@@ -27,7 +27,6 @@ import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;

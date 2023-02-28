@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.context;
 
 import io.cdap.cdap.api.worker.Worker;
-
 import javax.annotation.Nullable;
 
 /**

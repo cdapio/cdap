@@ -25,7 +25,6 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

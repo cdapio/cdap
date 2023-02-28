@@ -24,13 +24,12 @@ import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.filesystem.Location;
-
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * In memory {@link DatasetFramework} implementation that has fixed set of {@link DatasetModule}s.

@@ -21,6 +21,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
+import java.util.Map;
+import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
@@ -31,9 +33,6 @@ import org.apache.tephra.TxConstants;
 import org.apache.tephra.coprocessor.CacheSupplier;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.persist.TransactionVisibilityState;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Common state and utilities shared by the HBase version-specific {@code IncrementHandler} coprocessor

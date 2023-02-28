@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.common.io;
 
-import org.apache.twill.filesystem.Location;
-
 import java.nio.file.Path;
+import org.apache.twill.filesystem.Location;
 
 /**
  * A {@link Location} that supports local file link.

@@ -21,11 +21,10 @@ import io.cdap.cdap.api.dataset.lib.FileSetArguments;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.common.Constants;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 
 /**
  * Internal batch sink used as a connector between pipeline phases.

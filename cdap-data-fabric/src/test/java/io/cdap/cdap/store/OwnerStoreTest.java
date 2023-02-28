@@ -23,13 +23,12 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.security.impersonation.OwnerStore;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link OwnerStore}.

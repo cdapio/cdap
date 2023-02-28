@@ -25,7 +25,6 @@ import io.cdap.cdap.cli.util.AbstractCommand;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 
 /**

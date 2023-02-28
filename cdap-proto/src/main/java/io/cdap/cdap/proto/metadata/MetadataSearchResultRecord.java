@@ -21,7 +21,6 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

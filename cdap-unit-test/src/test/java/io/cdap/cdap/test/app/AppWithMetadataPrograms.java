@@ -32,7 +32,6 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

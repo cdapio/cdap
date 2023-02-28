@@ -21,7 +21,6 @@ import io.cdap.cdap.securestore.spi.SecretManagerContext;
 import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

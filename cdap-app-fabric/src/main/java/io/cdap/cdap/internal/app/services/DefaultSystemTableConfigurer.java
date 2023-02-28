@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.services;
 import io.cdap.cdap.api.SystemTableConfigurer;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

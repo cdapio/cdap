@@ -32,7 +32,6 @@ import io.cdap.cdap.etl.mock.common.MockArguments;
 import io.cdap.cdap.etl.mock.common.MockLookupProvider;
 import io.cdap.cdap.etl.mock.common.MockStageMetrics;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;

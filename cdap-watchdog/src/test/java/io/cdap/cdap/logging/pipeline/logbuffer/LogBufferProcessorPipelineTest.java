@@ -34,8 +34,6 @@ import io.cdap.cdap.logging.pipeline.LogPipelineTestUtil;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.MockAppender;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.junit.Test;
 
 /**
  * Tests for {@link LogBufferProcessorPipeline}.

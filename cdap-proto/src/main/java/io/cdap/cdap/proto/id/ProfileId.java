@@ -19,7 +19,6 @@ package io.cdap.cdap.proto.id;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.profile.Profile;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;

@@ -18,7 +18,6 @@ package io.cdap.cdap.spi.data.table.field;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.Bytes;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

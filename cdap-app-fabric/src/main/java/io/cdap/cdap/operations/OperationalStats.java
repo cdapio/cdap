@@ -17,7 +17,6 @@
 package io.cdap.cdap.operations;
 
 import com.google.inject.Injector;
-
 import javax.management.MBeanServer;
 import javax.management.MXBean;
 

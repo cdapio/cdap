@@ -19,7 +19,6 @@ package io.cdap.cdap.api.metrics;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

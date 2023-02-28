@@ -24,7 +24,6 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
 import io.cdap.cdap.api.dataset.table.Table;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;

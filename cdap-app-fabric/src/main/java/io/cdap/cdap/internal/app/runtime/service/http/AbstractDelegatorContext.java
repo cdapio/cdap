@@ -25,8 +25,6 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.http.HttpContentConsumer;
 import io.cdap.cdap.api.service.http.HttpContentProducer;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
-import org.apache.twill.common.Cancellable;
-
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +33,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.twill.common.Cancellable;
 
 /**
  * An abstract base implementation of {@link DelegatorContext} to provide context per thread implementation,

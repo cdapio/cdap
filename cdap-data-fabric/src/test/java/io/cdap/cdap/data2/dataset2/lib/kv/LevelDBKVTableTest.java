@@ -24,12 +24,11 @@ import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
 
 /**
  *

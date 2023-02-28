@@ -30,17 +30,16 @@ import io.cdap.cdap.api.workflow.NodeValue;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.app.runtime.batch.WordCount;
 import io.cdap.cdap.runtime.WorkflowTest;
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A workflow app used by {@link WorkflowTest} for testing.

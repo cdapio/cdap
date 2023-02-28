@@ -24,6 +24,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.DelegationTokensUpdater;
 import io.cdap.cdap.common.security.YarnTokenUtils;
 import io.cdap.cdap.data.security.HBaseTokenUtils;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
@@ -38,11 +42,6 @@ import org.apache.twill.internal.yarn.YarnUtils;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link SecureStoreRenewer} implementation that renew delegation tokens for

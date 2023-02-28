@@ -19,7 +19,6 @@ package io.cdap.cdap.proto.metadata.lineage;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -22,13 +22,12 @@ import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.Constants;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URI;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * When rolling over, renames files according to a fixed window algorithm.

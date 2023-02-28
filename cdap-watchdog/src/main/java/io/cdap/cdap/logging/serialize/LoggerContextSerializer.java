@@ -18,11 +18,10 @@ package io.cdap.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import io.cdap.cdap.logging.LoggingUtil;
+import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-
-import java.util.Map;
 
 /**
  * Class used to serialize/de-serialize LoggerContextVO.

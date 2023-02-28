@@ -26,13 +26,12 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPushDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 /**
  * Push Dataset implementation for unit test

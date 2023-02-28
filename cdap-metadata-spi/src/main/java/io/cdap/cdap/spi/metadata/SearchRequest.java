@@ -18,7 +18,6 @@ package io.cdap.cdap.spi.metadata;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.metadata.MetadataScope;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;

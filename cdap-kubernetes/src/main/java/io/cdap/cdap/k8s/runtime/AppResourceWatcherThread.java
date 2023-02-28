@@ -24,10 +24,9 @@ import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.generic.options.ListOptions;
-import org.apache.twill.common.Cancellable;
-
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.apache.twill.common.Cancellable;
 
 /**
  * A thread for monitoring Kubernetes application resource state change.

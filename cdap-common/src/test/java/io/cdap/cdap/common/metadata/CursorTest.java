@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.common.metadata;
 
-import com.google.common.collect.ImmutableSet;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.Set;
-
 import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
 import static io.cdap.cdap.api.metadata.MetadataScope.USER;
+
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CursorTest {
 

@@ -19,13 +19,12 @@ package io.cdap.cdap.common.logging;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
-import org.slf4j.Logger;
-
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
 
 /**
  * Redirected {@link PrintStream} to logger

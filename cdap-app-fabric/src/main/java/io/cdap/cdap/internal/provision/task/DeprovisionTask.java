@@ -25,14 +25,13 @@ import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Performs steps to deprovision a cluster for a program run. Before any operation is performed, state is persisted

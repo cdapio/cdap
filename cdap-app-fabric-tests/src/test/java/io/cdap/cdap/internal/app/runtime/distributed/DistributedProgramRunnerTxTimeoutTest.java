@@ -44,13 +44,12 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import java.util.Collections;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.filesystem.Location;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Collections;
 
 public class DistributedProgramRunnerTxTimeoutTest {
 

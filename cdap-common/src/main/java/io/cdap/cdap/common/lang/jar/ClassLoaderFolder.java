@@ -19,13 +19,12 @@ package io.cdap.cdap.common.lang.jar;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ThrowingSupplier;
 import io.cdap.cdap.common.utils.DirUtils;
-import org.apache.twill.filesystem.Location;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.jar.JarFile;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Represents a directory that is ready for ClassLoader to use. The {@link #close()} method is for cleaning up

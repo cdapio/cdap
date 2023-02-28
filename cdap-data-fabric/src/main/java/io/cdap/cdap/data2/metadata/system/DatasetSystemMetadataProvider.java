@@ -30,13 +30,12 @@ import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for a {@link DatasetId dataset}.

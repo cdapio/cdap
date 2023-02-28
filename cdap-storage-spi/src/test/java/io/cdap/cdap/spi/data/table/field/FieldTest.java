@@ -17,11 +17,10 @@
 package io.cdap.cdap.spi.data.table.field;
 
 import io.cdap.cdap.api.common.Bytes;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashSet;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

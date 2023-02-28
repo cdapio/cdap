@@ -17,7 +17,6 @@
 package io.cdap.cdap.cli;
 
 import io.cdap.cdap.client.config.ConnectionConfig;
-
 import javax.annotation.Nullable;
 
 /**

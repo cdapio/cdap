@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithPartitionedFileSet.PARTITIONED;
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithTimePartitionedFileSet.TIME_PARTITIONED;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
@@ -35,19 +38,15 @@ import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.test.XSlowTests;
+import java.text.DateFormat;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.text.DateFormat;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static io.cdap.cdap.internal.app.runtime.batch.AppWithPartitionedFileSet.PARTITIONED;
-import static io.cdap.cdap.internal.app.runtime.batch.AppWithTimePartitionedFileSet.TIME_PARTITIONED;
 
 /**
  * This tests that we can read and write time-partitioned file sets with map/reduce, using the partition

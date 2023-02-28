@@ -34,6 +34,9 @@ import io.cdap.cdap.logging.context.WorkerLoggingContext;
 import io.cdap.cdap.logging.read.KafkaLogReader;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import io.cdap.cdap.test.SlowTests;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -43,10 +46,6 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * Test for logging to Kafka via {@link KafkaLogAppender}.

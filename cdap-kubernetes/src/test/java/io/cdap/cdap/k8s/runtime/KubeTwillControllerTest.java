@@ -16,19 +16,18 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import static org.mockito.Mockito.mock;
+
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobStatus;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import org.apache.twill.api.ServiceController;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-
-import static org.mockito.Mockito.mock;
 
 public class KubeTwillControllerTest {
   @Test

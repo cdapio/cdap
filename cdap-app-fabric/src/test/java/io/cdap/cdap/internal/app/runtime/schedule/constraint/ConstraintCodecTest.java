@@ -21,11 +21,10 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProtoConstraint;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ConstraintCodecTest {
 

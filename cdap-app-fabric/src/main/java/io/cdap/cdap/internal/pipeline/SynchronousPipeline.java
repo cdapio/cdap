@@ -20,10 +20,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.Stage;
+import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ExecutionException;
 
 /**
  * Concrete implementation of synchronous {@link Pipeline}.

@@ -34,15 +34,14 @@ import io.cdap.cdap.internal.tethering.TetheringStatus;
 import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.util.Collections;
+import javax.annotation.Nullable;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Collections;
-import javax.annotation.Nullable;
 
 /**
  * Tests for {@link DefaultNamespaceAdmin}

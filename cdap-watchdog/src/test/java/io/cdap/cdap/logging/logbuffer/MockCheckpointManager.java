@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.logbuffer;
 
 import io.cdap.cdap.logging.meta.Checkpoint;
 import io.cdap.cdap.logging.meta.CheckpointManager;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;

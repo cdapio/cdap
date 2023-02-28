@@ -22,7 +22,6 @@ import io.cdap.cdap.etl.api.batch.BatchAggregatorContext;
 import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.common.TypeChecker;
-
 import java.util.concurrent.Callable;
 
 /**

@@ -16,11 +16,10 @@
 package io.cdap.cdap.common.runtime;
 
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A abstract base class for bridging standard main method to method invoked through

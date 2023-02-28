@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.k8s.common;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * An {@link ExternalResource} that can be used in conjunction with {@link Rule} or {@link ClassRule} for

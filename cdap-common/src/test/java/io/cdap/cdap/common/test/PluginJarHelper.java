@@ -19,10 +19,6 @@ package io.cdap.cdap.common.test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.common.lang.ClassLoaders;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ApplicationBundler;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,6 +27,9 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 
 /**
  * Helper class for building application template plugin jars.

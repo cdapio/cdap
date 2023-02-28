@@ -47,11 +47,10 @@ import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.TwillRunner;
-
 import java.io.File;
 import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillRunner;
 
 public class SupportBundleTestModule extends AbstractModule {
 

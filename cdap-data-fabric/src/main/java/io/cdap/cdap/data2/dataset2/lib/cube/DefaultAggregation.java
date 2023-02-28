@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.dataset2.lib.cube;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;

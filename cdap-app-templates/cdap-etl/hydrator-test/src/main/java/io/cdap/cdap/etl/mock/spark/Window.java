@@ -21,7 +21,6 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

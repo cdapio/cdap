@@ -34,7 +34,6 @@ import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
-
 import java.net.URI;
 
 /**

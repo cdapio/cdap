@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.etl.api.join.error.JoinError;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

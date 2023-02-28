@@ -23,13 +23,12 @@ import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionAware;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 
 /**
  * Implementation of {@link MessageFetcher} that implements {@link TransactionAware}. The active transaction will

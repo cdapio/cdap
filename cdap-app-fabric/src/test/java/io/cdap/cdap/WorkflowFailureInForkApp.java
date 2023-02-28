@@ -22,11 +22,10 @@ import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.app.runtime.batch.WordCount;
-import org.apache.hadoop.mapreduce.Job;
-
 import java.io.File;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.apache.hadoop.mapreduce.Job;
 
 /**
  * App to test failure in the Workflow fork.

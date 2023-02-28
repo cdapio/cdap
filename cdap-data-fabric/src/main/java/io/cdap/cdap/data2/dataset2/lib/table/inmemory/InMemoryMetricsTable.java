@@ -27,7 +27,6 @@ import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.Update;
 import io.cdap.cdap.data2.dataset2.lib.table.Updates;
-
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.SortedMap;

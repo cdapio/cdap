@@ -18,7 +18,6 @@ package io.cdap.cdap.format.utils;
 
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;

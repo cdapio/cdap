@@ -18,7 +18,6 @@ package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

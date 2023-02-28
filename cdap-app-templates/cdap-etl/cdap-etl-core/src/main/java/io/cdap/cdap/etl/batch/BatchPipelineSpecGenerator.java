@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
-
 import java.util.Set;
 import javax.annotation.Nullable;
 

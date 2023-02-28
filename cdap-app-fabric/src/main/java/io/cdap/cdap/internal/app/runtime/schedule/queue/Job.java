@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.schedule.queue;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.proto.Notification;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;

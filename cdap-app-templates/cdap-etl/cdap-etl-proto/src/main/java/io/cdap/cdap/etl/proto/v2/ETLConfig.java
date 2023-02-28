@@ -23,7 +23,6 @@ import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 import io.cdap.cdap.etl.proto.UpgradeableConfig;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

@@ -18,7 +18,6 @@ package io.cdap.cdap.security.auth;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
-
 import java.io.IOException;
 
 /**

@@ -27,7 +27,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
 import io.cdap.cdap.internal.asm.ClassDefinition;
-
 import java.util.Map;
 import javax.inject.Inject;
 

@@ -18,7 +18,6 @@ package io.cdap.cdap.cli.command.system;
 
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
-
 import java.io.PrintStream;
 
 /**

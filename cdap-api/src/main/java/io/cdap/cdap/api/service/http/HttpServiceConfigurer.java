@@ -18,7 +18,6 @@ package io.cdap.cdap.api.service.http;
 
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
-
 import java.util.Map;
 
 /**

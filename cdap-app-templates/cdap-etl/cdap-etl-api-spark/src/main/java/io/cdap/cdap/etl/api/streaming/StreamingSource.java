@@ -20,9 +20,8 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
-import org.apache.spark.streaming.api.java.JavaDStream;
-
 import java.io.Serializable;
+import org.apache.spark.streaming.api.java.JavaDStream;
 
 /**
  * Source for Spark Streaming pipelines.

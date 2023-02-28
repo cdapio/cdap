@@ -23,7 +23,6 @@ import io.cdap.cdap.config.Config;
 import io.cdap.cdap.config.ConfigNotFoundException;
 import io.cdap.cdap.config.ConfigStore;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.Collections;
 
 /**

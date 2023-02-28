@@ -34,13 +34,12 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import org.apache.hadoop.security.UserGroupInformation;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.hadoop.security.UserGroupInformation;
 
 /**
  * Exposes the right {@link AuthenticationContext} via an {@link AbstractModule} based on the context in which

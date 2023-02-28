@@ -28,16 +28,15 @@ import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.data2.dataset2.TableAssert;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionAware;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * unit-test

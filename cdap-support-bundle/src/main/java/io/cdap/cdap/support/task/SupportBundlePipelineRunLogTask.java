@@ -21,7 +21,6 @@ import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

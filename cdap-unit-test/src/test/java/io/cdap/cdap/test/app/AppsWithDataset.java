@@ -41,7 +41,6 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.common.utils.ImmutablePair;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;

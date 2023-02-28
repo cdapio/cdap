@@ -39,11 +39,6 @@ import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.api.dataset.table.TableSplit;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.common.conf.Constants;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionAware;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +50,10 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An abstract {@link TransactionAware} implementation of {@link io.cdap.cdap.api.dataset.table.Table} which

@@ -30,7 +30,6 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.cli.Arguments;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;

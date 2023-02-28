@@ -18,7 +18,6 @@ package io.cdap.cdap.common;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import javax.annotation.Nullable;
 
 /**

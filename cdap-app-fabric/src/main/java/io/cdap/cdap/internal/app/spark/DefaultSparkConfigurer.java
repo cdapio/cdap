@@ -31,7 +31,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

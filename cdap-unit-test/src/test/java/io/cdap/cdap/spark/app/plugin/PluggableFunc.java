@@ -24,7 +24,6 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.spark.app.Extensible;
-
 import java.util.function.ToIntFunction;
 
 /**

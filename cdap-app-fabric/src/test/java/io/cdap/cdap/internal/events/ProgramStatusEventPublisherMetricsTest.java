@@ -28,9 +28,6 @@ import io.cdap.cdap.internal.events.dummy.DummyEventWriter;
 import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,6 +36,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test for metrics published by ProgramStatusEventPublisher

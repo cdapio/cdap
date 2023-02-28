@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.workflow.condition;
 
 import io.cdap.cdap.api.workflow.ConditionSpecification;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

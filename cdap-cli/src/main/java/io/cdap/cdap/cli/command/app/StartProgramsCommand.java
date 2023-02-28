@@ -27,7 +27,6 @@ import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.proto.BatchProgramResult;
 import io.cdap.cdap.proto.BatchProgramStart;
 import io.cdap.cdap.proto.ProgramRecord;
-
 import java.io.PrintStream;
 import java.util.List;
 

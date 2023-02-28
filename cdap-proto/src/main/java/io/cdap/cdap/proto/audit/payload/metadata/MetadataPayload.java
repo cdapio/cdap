@@ -20,7 +20,6 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.proto.audit.AuditPayload;
-
 import java.util.Map;
 import java.util.Objects;
 

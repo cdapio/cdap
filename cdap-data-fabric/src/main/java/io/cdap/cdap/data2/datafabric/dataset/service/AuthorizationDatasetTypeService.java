@@ -30,7 +30,6 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.BodyConsumer;
-
 import java.util.List;
 import javax.inject.Inject;
 

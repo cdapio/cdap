@@ -27,7 +27,6 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataEntity.KeyValue;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.id.ApplicationId;
-
 import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.Map;

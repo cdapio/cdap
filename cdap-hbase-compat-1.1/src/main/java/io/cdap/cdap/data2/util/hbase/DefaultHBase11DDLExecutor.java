@@ -19,6 +19,10 @@ package io.cdap.cdap.data2.util.hbase;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.hbase.TableDescriptor;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -27,11 +31,6 @@ import org.apache.hadoop.hbase.security.access.AccessControlClient;
 import org.apache.hadoop.hbase.security.access.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link HBaseDDLExecutor} for HBase 1.1

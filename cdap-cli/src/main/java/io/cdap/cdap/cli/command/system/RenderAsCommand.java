@@ -24,7 +24,6 @@ import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.cli.util.table.TableRenderer;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
-
 import java.io.PrintStream;
 
 /**

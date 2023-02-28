@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common.record;
 
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;

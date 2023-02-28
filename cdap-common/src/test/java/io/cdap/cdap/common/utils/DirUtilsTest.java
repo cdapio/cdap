@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.common.utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 
 /**
  * Unit test for the {@link DirUtils} class.

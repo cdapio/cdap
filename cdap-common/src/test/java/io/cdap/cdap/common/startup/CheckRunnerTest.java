@@ -22,11 +22,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.startup.check.NoOpCheck;
 import io.cdap.cdap.common.startup.check.fail.AlwaysFailCheck;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  */

@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.proto.connection;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;

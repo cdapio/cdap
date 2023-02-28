@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.events;
 
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
-
 import javax.annotation.Nullable;
 
 /**

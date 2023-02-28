@@ -20,10 +20,6 @@ import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.common.app.RunIds;
-import org.apache.twill.api.RunId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,6 +28,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Base64;
 import java.util.Collections;
+import org.apache.twill.api.RunId;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class DefaultProgramStatusTriggerInfoTest {
 

@@ -33,8 +33,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableDatasetDefinition;
-import org.apache.twill.common.Cancellable;
-
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.EnumSet;
@@ -42,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
+import org.apache.twill.common.Cancellable;
 
 /**
  * The default implementation of {@link DatasetRuntimeContext}. It performs authorization, lineage and usage recording

@@ -23,7 +23,6 @@ import io.cdap.cdap.etl.api.Lookup;
 import io.cdap.cdap.etl.api.LookupProvider;
 import io.cdap.cdap.etl.api.lookup.KeyValueTableLookup;
 import io.cdap.cdap.etl.api.lookup.TableLookup;
-
 import javax.annotation.Nullable;
 
 /**

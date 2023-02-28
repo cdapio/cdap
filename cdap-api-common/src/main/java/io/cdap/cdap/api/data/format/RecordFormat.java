@@ -19,7 +19,6 @@ package io.cdap.cdap.api.data.format;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
-
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;

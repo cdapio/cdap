@@ -18,10 +18,9 @@ package io.cdap.cdap.internal;
 
 import com.google.common.base.Throwables;
 import io.cdap.cdap.common.utils.DirUtils;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.IOException;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Utility for creating temp folder in unit-tests.

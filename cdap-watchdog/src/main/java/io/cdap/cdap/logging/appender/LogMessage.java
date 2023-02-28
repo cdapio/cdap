@@ -22,9 +22,8 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import com.google.common.base.Objects;
 import io.cdap.cdap.common.logging.LoggingContext;
-import org.slf4j.Marker;
-
 import java.util.Map;
+import org.slf4j.Marker;
 
 /**
  * Represents an event to be logged along with the context.

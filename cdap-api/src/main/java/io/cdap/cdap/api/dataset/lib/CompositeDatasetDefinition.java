@@ -25,7 +25,6 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
 import io.cdap.cdap.api.dataset.Reconfigurable;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;

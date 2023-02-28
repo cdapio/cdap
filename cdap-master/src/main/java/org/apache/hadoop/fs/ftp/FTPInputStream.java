@@ -16,15 +16,14 @@
 
 package org.apache.hadoop.fs.ftp;
 
+import java.io.IOException;
+import java.io.InputStream;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * {@link FTPInputStream}, copied from Hadoop and modified, that doesn't throw an exception when seeks are attempted

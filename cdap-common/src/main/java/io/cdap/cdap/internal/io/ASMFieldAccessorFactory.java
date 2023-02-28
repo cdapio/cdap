@@ -22,7 +22,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.cdap.internal.lang.Fields;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 

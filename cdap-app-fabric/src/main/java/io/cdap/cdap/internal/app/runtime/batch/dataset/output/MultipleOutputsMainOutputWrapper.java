@@ -20,6 +20,11 @@ import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.internal.app.runtime.batch.BasicOutputFormatProvider;
 import io.cdap.cdap.internal.app.runtime.batch.MainOutputCommitter;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.Job;
@@ -29,12 +34,6 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * OutputFormat that wraps a root OutputFormat and provides an OutputFormatCommitter that delegates to multiple

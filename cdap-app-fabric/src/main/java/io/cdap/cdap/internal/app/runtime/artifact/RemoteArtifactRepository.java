@@ -35,8 +35,6 @@ import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
-import org.apache.twill.filesystem.Location;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * RemoteArtifactRepository provides a remote implementation of ArtifactRepository

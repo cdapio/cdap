@@ -25,7 +25,6 @@ import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.operations.OperationalStats;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.List;
 
 /**

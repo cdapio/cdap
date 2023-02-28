@@ -24,9 +24,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
@@ -36,6 +33,8 @@ import java.util.NavigableMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * tests metrics table.

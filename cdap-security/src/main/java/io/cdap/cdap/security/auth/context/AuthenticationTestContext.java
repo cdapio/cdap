@@ -19,7 +19,6 @@ package io.cdap.cdap.security.auth.context;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-
 import java.util.Properties;
 
 /**

@@ -20,13 +20,12 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKClientServices;
 import org.apache.twill.zookeeper.ZKClients;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Guice module for binding {@link ZKClient} and {@link ZKClientService}. Requires {@link ConfigModule}

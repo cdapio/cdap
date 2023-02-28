@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 /**
  * Unit test for {@link RuntimeJobTwillPreparer}.

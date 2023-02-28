@@ -27,9 +27,8 @@ import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
-import jline.console.ConsoleReader;
-
 import java.io.PrintStream;
+import jline.console.ConsoleReader;
 
 /**
  * {@link Command} to delete a namespace.

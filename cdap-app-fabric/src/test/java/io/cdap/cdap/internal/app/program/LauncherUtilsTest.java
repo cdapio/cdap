@@ -16,20 +16,19 @@
 
 package io.cdap.cdap.internal.app.program;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import org.apache.twill.api.TwillPreparer;
-import org.junit.Test;
-import org.mockito.Matchers;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.apache.twill.api.TwillPreparer;
+import org.junit.Test;
+import org.mockito.Matchers;
 
 /**
  * Tests for {@link LauncherUtils}.

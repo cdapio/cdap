@@ -21,9 +21,8 @@ import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import org.apache.hadoop.security.UserGroupInformation;
-
 import java.io.IOException;
+import org.apache.hadoop.security.UserGroupInformation;
 
 /**
  * An {@link AuthenticationContext} for HTTP requests in the Master. The authentication details in this context are

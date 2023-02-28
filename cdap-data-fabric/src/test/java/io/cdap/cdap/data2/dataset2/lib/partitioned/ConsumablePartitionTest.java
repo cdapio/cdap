@@ -19,10 +19,9 @@ package io.cdap.cdap.data2.dataset2.lib.partitioned;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.partitioned.ConsumablePartition;
 import io.cdap.cdap.api.dataset.lib.partitioned.DefaultConsumablePartition;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.UUID;
 
 /**
  * Tests for ConsumablePartition.

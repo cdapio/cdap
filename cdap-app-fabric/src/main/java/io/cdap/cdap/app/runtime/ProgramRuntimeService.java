@@ -21,11 +21,10 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.api.RunId;
-
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
 
 /**
  * Service for interacting with the runtime system.

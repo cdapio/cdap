@@ -24,7 +24,6 @@ import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;

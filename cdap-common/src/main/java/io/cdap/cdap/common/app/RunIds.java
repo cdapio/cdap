@@ -25,8 +25,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import org.apache.twill.api.RunId;
-
 import java.lang.reflect.Type;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -35,6 +33,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.twill.api.RunId;
 
 /**
  * Generates an unique ID for a running program using type 1 and variant 2 time-based {@link UUID}.

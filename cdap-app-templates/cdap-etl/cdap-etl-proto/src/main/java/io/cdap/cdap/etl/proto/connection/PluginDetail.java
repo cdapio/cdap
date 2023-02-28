@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.proto.connection;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
-
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;

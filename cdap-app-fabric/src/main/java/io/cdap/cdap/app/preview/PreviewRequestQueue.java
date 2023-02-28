@@ -17,10 +17,9 @@
 package io.cdap.cdap.app.preview;
 
 import io.cdap.cdap.proto.id.ApplicationId;
-import net.jcip.annotations.ThreadSafe;
-
 import java.util.Optional;
 import javax.annotation.Nullable;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Interface designed for holding {@link PreviewRequest}s that are in WAITING state.

@@ -22,7 +22,6 @@ import io.cdap.cdap.api.data.schema.SchemaWalker;
 import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
 import io.cdap.cdap.data2.metadata.dataset.SortInfo;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;

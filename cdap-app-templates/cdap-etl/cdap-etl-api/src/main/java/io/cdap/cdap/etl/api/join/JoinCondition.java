@@ -21,7 +21,6 @@ import io.cdap.cdap.etl.api.join.error.ExpressionConditionError;
 import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyFieldError;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

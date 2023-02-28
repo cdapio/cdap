@@ -20,11 +20,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import io.cdap.cdap.metrics.jmx.JMXMetricsCollector;
 import io.cdap.cdap.metrics.jmx.JMXMetricsCollectorFactory;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link SystemMetricsExporterServiceMain}.

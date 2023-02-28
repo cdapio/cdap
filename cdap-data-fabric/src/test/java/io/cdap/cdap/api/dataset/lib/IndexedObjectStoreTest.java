@@ -21,15 +21,14 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
+import java.lang.reflect.Type;
+import java.util.List;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.lang.reflect.Type;
-import java.util.List;
 
 /**
  * Test for {@link io.cdap.cdap.api.dataset.lib.IndexedObjectStore}.

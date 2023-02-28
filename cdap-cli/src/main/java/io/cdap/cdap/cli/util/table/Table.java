@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.cli.util.RowMaker;
-
 import java.util.List;
 import javax.annotation.Nullable;
 

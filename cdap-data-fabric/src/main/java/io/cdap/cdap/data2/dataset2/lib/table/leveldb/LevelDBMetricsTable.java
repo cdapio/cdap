@@ -25,7 +25,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;

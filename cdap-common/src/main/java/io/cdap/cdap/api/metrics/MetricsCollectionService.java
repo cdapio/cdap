@@ -16,7 +16,6 @@
 package io.cdap.cdap.api.metrics;
 
 import com.google.common.util.concurrent.Service;
-
 import java.util.Map;
 
 /**

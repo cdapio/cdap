@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.data.batch;
 
 import io.cdap.cdap.api.common.RuntimeArguments;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

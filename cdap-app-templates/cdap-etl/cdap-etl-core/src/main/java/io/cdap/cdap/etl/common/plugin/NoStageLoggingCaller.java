@@ -17,9 +17,8 @@
 package io.cdap.cdap.etl.common.plugin;
 
 import io.cdap.cdap.etl.common.Constants;
-import org.slf4j.MDC;
-
 import java.util.concurrent.Callable;
+import org.slf4j.MDC;
 
 /**
  * Clears the stage name from the Logging MDC before calling a callable and resets it when finished. This is useful

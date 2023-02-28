@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
+import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -28,19 +30,6 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.util.TableId;
-import org.apache.twill.common.Threads;
-import org.iq80.leveldb.CompressionType;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBComparator;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.WriteOptions;
-import org.iq80.leveldb.impl.DbImpl;
-import org.iq80.leveldb.impl.FileMetaData;
-import org.iq80.leveldb.impl.SnapshotImpl;
-import org.iq80.leveldb.util.Slice;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -55,8 +44,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-
-import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
+import org.apache.twill.common.Threads;
+import org.iq80.leveldb.CompressionType;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBComparator;
+import org.iq80.leveldb.Options;
+import org.iq80.leveldb.WriteOptions;
+import org.iq80.leveldb.impl.DbImpl;
+import org.iq80.leveldb.impl.FileMetaData;
+import org.iq80.leveldb.impl.SnapshotImpl;
+import org.iq80.leveldb.util.Slice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service maintaining all LevelDB tables.

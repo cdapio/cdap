@@ -22,13 +22,12 @@ import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableConcurrencyTest;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-
-import java.io.IOException;
 
 /**
  * Tests concurrent operations on {@link NoSqlStructuredTable}.

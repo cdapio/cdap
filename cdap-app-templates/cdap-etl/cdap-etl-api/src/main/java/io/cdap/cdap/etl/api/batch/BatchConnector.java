@@ -23,7 +23,6 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.ConnectorContext;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
-
 import java.io.IOException;
 
 /**

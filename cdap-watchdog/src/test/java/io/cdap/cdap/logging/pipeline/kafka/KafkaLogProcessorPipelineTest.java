@@ -63,15 +63,6 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import org.apache.tephra.runtime.TransactionModules;
-import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.kafka.client.Compression;
-import org.apache.twill.kafka.client.KafkaPublisher;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -86,6 +77,14 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.apache.tephra.runtime.TransactionModules;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.kafka.client.Compression;
+import org.apache.twill.kafka.client.KafkaPublisher;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Unit-test for {@link KafkaLogProcessorPipeline}.

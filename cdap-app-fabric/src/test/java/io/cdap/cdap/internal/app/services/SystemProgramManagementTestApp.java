@@ -20,7 +20,6 @@ import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-
 import java.util.concurrent.CountDownLatch;
 
 /**

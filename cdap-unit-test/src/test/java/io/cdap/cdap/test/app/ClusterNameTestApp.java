@@ -39,6 +39,9 @@ import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowInfo;
+import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -47,10 +50,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.tephra.TransactionFailureException;
-
-import java.io.IOException;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 
 /**
  *

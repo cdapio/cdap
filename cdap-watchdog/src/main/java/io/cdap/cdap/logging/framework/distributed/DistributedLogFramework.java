@@ -38,16 +38,15 @@ import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
 import io.cdap.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.kafka.client.BrokerService;
-import org.apache.twill.zookeeper.ZKClient;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.kafka.client.BrokerService;
+import org.apache.twill.zookeeper.ZKClient;
 
 /**
  * A {@link ResourceBalancerService} for log processing in distributed mode

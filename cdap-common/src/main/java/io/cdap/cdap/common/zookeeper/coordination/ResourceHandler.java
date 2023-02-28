@@ -15,9 +15,8 @@
  */
 package io.cdap.cdap.common.zookeeper.coordination;
 
-import org.apache.twill.discovery.Discoverable;
-
 import java.util.Collection;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * Handle changes in resource assignment. It takes resource assignment changes and invoke changes specific to

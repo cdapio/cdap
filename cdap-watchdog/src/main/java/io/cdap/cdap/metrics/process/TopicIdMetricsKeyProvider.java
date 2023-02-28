@@ -17,7 +17,6 @@
 package io.cdap.cdap.metrics.process;
 
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

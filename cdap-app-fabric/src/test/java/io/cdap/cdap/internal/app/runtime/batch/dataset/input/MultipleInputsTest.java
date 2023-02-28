@@ -18,14 +18,13 @@ package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import java.io.IOException;
+import java.util.Map;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * Tests for {@link MultipleInputs}.

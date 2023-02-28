@@ -18,10 +18,9 @@ package io.cdap.cdap.data2.util.hbase;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutorContext;
-import org.apache.hadoop.conf.Configuration;
-
 import java.util.Collections;
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Basic implementation of the {@link HBaseDDLExecutorContext}.

@@ -21,7 +21,6 @@ import io.cdap.cdap.api.workflow.Condition;
 import io.cdap.cdap.api.workflow.WorkflowConditionNode;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.api.workflow.WorkflowNode;
-
 import java.util.List;
 
 /**

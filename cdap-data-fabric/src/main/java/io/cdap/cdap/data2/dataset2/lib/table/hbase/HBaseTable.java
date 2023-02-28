@@ -48,6 +48,15 @@ import io.cdap.cdap.data2.util.hbase.IncrementBuilder;
 import io.cdap.cdap.data2.util.hbase.PutBuilder;
 import io.cdap.cdap.data2.util.hbase.ScanBuilder;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.BufferedMutator;
@@ -66,16 +75,6 @@ import org.apache.tephra.TxConstants;
 import org.apache.tephra.util.TxUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Dataset client for HBase tables.

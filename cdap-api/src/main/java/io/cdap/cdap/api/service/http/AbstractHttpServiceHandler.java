@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.service.http;
 
 import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
-
 import java.util.Map;
 
 /**

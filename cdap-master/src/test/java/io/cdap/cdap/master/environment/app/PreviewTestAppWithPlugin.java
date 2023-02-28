@@ -21,7 +21,6 @@ import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-
 import java.util.Map;
 import java.util.concurrent.Callable;
 

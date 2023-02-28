@@ -22,7 +22,6 @@ import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;

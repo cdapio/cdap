@@ -25,6 +25,8 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import org.apache.tephra.TransactionManager;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -34,9 +36,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 public class AppStateTableTest extends AppFabricTestBase {
 

@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.logbuffer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-
 import java.util.Objects;
 
 /**

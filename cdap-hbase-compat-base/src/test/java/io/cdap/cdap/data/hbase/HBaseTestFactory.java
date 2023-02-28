@@ -19,7 +19,6 @@ package io.cdap.cdap.data.hbase;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
-
 import java.util.Arrays;
 
 /**

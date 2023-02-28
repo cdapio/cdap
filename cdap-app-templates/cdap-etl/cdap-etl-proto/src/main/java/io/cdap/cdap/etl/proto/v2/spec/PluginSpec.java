@@ -22,7 +22,6 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;

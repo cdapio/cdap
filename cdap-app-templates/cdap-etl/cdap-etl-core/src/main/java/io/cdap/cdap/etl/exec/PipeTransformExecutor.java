@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.exec;
 import io.cdap.cdap.etl.api.Destroyable;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.RecordType;
-
 import java.util.Map;
 import java.util.Set;
 

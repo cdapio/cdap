@@ -33,14 +33,13 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.MRJobInfo;
 import io.cdap.cdap.proto.MRTaskInfo;
 import io.cdap.cdap.proto.ProgramType;
-import org.apache.hadoop.mapreduce.TaskCounter;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.mapreduce.TaskCounter;
 
 /**
  * Retrieves information/reports for a MapReduce run via the Metrics system.

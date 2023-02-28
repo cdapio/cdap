@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.common;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.InvalidEntry;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

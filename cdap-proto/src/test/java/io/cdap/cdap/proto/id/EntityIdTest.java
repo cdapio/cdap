@@ -22,15 +22,14 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Tests for {@link EntityId}.

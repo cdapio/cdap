@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.specification;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.internal.lang.FieldVisitor;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Set;

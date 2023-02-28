@@ -30,12 +30,11 @@ import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Application with workflow scheduling.

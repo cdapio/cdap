@@ -18,6 +18,9 @@ package io.cdap.cdap.common.security;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.SecurityUtil;
@@ -31,10 +34,6 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.twill.internal.yarn.YarnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Helper class for getting Yarn security delegation token.

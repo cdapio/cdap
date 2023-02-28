@@ -21,9 +21,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,6 +35,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of the ProvsionerConfigProvider. It expects a json file for from each module dir and

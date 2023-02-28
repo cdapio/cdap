@@ -26,9 +26,6 @@ import io.cdap.cdap.internal.asm.Classes;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.internal.PatternPathRouterWithGroups;
 import io.netty.handler.codec.http.HttpMethod;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -45,6 +42,8 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class to match the request path to the audit log content that needs to be logged.

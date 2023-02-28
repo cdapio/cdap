@@ -16,14 +16,13 @@
 package io.cdap.cdap.security.server;
 
 import com.google.common.base.Splitter;
-import org.eclipse.jetty.security.MappedLoginService.KnownUser;
-import org.eclipse.jetty.server.UserIdentity;
-import org.eclipse.jetty.util.security.Credential;
-
 import java.security.Principal;
 import java.util.Map;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
+import org.eclipse.jetty.security.MappedLoginService.KnownUser;
+import org.eclipse.jetty.server.UserIdentity;
+import org.eclipse.jetty.util.security.Credential;
 
 /**
  * An Implementation of User Identity. All Users that provide a client

@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.client.util;
 
+import static com.google.inject.matcher.Matchers.any;
+import static com.google.inject.matcher.Matchers.only;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -38,11 +41,6 @@ import io.cdap.http.NettyHttpService;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -57,9 +55,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.HttpHeaders;
-
-import static com.google.inject.matcher.Matchers.any;
-import static com.google.inject.matcher.Matchers.only;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 
 public class RESTClientTest {

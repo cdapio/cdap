@@ -18,9 +18,8 @@ package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
-import org.apache.hadoop.hbase.HTableDescriptor;
-
 import java.util.Map;
+import org.apache.hadoop.hbase.HTableDescriptor;
 
 /**
  * Utility to determine Metric System's HBase table.

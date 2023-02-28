@@ -17,13 +17,12 @@
 package io.cdap.cdap.data.security;
 
 import com.google.common.base.Throwables;
+import java.lang.reflect.Method;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
-
-import java.lang.reflect.Method;
 
 /**
  * Helper class for getting HBase security delegation token.

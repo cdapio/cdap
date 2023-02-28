@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.etl.batch.preview;
 
+import java.io.IOException;
+import java.util.Iterator;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
-import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * A record reader that limits the number of records read.

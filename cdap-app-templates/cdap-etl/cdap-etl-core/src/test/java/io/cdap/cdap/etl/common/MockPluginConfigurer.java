@@ -30,7 +30,6 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

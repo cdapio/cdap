@@ -25,7 +25,6 @@ import io.cdap.cdap.api.dataset.Reconfigurable;
 import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.IndexedTable;
 import io.cdap.cdap.api.metadata.MetadataScope;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;

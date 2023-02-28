@@ -18,7 +18,6 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.workflow.NodeStatus;
 import io.cdap.cdap.api.workflow.Workflow;
-
 import javax.annotation.Nullable;
 
 /**

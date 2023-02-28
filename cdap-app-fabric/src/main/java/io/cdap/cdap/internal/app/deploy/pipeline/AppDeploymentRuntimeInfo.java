@@ -18,7 +18,6 @@
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import io.cdap.cdap.api.app.ApplicationSpecification;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

@@ -17,10 +17,9 @@
 package io.cdap.cdap.cli.util;
 
 import com.google.common.collect.Maps;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 /**
  * Test for {@link ArgumentParser}.

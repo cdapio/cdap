@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.metadata.writer;
 
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-
 import java.util.List;
 
 /**

@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.gson.FieldNamingStrategy;
 import io.cdap.cdap.api.annotation.Name;
-
 import java.lang.reflect.Field;
 
 /**

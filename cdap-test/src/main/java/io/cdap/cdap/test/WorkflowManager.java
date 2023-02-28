@@ -23,7 +23,6 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;

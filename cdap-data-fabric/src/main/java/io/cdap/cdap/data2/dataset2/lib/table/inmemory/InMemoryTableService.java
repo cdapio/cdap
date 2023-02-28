@@ -27,8 +27,6 @@ import io.cdap.cdap.data2.dataset2.lib.table.IncrementValue;
 import io.cdap.cdap.data2.dataset2.lib.table.PutValue;
 import io.cdap.cdap.data2.dataset2.lib.table.Update;
 import io.cdap.cdap.data2.dataset2.lib.table.Updates;
-import org.apache.tephra.Transaction;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -38,6 +36,7 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
 
 /**
  * Holds all in-memory tables for {@link InMemoryTable}.

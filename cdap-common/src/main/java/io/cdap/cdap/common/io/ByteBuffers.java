@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.io;
 
 import io.cdap.cdap.api.common.Bytes;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;

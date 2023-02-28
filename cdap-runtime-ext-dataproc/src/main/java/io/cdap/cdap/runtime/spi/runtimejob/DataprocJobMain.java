@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
-import org.apache.twill.internal.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -40,6 +36,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.apache.twill.internal.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class that will be called from dataproc driver.

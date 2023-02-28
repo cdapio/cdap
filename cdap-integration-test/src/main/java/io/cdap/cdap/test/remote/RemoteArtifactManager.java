@@ -21,7 +21,6 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.test.ArtifactManager;
-
 import java.util.Map;
 
 /**

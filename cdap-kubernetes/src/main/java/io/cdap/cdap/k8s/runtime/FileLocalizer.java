@@ -21,14 +21,6 @@ import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
-import org.apache.twill.api.LocalFile;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.internal.Constants;
-import org.apache.twill.internal.TwillRuntimeSpecification;
-import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilterInputStream;
@@ -48,6 +40,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.apache.twill.api.LocalFile;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.internal.Constants;
+import org.apache.twill.internal.TwillRuntimeSpecification;
+import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link MasterEnvironmentRunnable} for localizing files to the current directory.

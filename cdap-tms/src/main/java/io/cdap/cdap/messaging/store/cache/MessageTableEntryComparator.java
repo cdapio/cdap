@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging.store.cache;
 
 import io.cdap.cdap.messaging.store.MessageTable;
-
 import java.util.Comparator;
 
 /**

@@ -19,7 +19,6 @@ package io.cdap.cdap.logging.appender;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Iterator;

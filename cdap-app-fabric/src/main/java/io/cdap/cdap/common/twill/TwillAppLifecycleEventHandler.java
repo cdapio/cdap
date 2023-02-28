@@ -38,18 +38,17 @@ import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.EventHandlerContext;
-import org.apache.twill.api.RunId;
-import org.apache.twill.zookeeper.ZKClientService;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.EventHandlerContext;
+import org.apache.twill.api.RunId;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * A Twill {@link EventHandler} that responds to Twill application lifecycle events and aborts the application if

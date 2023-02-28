@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
-import org.apache.hadoop.hbase.client.Put;
-
 import java.nio.ByteBuffer;
+import org.apache.hadoop.hbase.client.Put;
 
 /**
  * Default implementation of {@link PutBuilder}. Specific HBase compat module can extends and override methods.

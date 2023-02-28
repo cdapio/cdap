@@ -21,11 +21,10 @@ import com.google.inject.Scopes;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionAuthenticator;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionDiscoveryService;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionProxySelector;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.net.Authenticator;
 import java.net.ProxySelector;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A guice module to provide discovery service bindings for remote execution runtime.

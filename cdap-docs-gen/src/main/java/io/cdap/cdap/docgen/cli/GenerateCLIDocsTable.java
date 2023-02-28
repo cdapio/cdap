@@ -27,7 +27,6 @@ import io.cdap.cdap.cli.util.table.TableRenderer;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.common.cli.Command;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;

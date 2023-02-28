@@ -16,14 +16,10 @@
 
 package io.cdap.cdap.common.logging;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import com.google.common.base.Supplier;
 import io.cdap.cdap.common.utils.TimeProvider;
-import org.junit.Assert;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.spi.LocationAwareLogger;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,8 +27,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.spi.LocationAwareLogger;
 
 /**
  * Unit test for different {@link LogSampler} as created through {@link LogSamplers}.

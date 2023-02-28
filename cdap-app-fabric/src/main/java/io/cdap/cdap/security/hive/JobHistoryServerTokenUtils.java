@@ -19,6 +19,8 @@ package io.cdap.cdap.security.hive;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import io.cdap.cdap.common.security.YarnTokenUtils;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.ClientCache;
@@ -35,9 +37,6 @@ import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.twill.internal.yarn.YarnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
 
 /**
  * Helper class for getting JobHistoryServer security delegation token.

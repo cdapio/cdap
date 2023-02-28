@@ -28,13 +28,12 @@ import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableAdminTest;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
+import java.io.IOException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
 
 /**
  * Test for SQL structured table admin.

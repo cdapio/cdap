@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging.store;
 
 import io.cdap.cdap.proto.id.TopicId;
-
 import javax.annotation.Nullable;
 
 // class for publishing messages

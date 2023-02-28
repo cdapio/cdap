@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import java.io.IOException;
+import java.util.Map;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * HBase 1.1 specific implementation for {@link HTableDescriptorBuilder}.

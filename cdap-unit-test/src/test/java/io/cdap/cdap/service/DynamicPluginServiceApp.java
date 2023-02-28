@@ -34,7 +34,6 @@ import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;

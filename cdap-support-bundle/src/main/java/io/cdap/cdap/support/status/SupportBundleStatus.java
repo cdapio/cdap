@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.support.status;
 
-import org.jboss.netty.util.internal.ConcurrentHashMap;
-
 import java.util.Collections;
 import java.util.Set;
+import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 /**
  * Status when generating Support bundle.

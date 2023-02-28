@@ -17,7 +17,6 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;

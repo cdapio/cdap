@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import java.io.IOException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Table;
-
-import java.io.IOException;
 
 /**
  * Interface to obtain the configuration HBase table.

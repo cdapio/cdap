@@ -28,14 +28,13 @@ import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.Set;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
-
-import java.util.Set;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 
 /**
  * Tests that plugins whose requirements are marked as excluded through cdap-site.xml are excluded and is not visible

@@ -16,7 +16,6 @@
 package io.cdap.cdap.api;
 
 import io.cdap.cdap.api.plugin.Plugin;
-
 import java.util.Map;
 
 /**

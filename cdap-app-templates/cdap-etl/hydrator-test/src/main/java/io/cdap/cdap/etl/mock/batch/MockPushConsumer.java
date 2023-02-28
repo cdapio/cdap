@@ -23,10 +23,9 @@ import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetConsumer;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetDescription;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
 import io.cdap.cdap.etl.api.sql.engine.dataset.SparkRecordCollection;
+import java.nio.file.FileSystems;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-
-import java.nio.file.FileSystems;
 
 /**
  * Pull Dataset implementation for unit test

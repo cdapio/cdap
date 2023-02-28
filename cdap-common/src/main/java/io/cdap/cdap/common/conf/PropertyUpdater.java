@@ -17,7 +17,6 @@ package io.cdap.cdap.common.conf;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import javax.annotation.Nullable;
 
 /**

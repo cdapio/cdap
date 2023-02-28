@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.events;
 
 import io.cdap.cdap.spi.events.EventWriter;
-
 import java.util.Map;
 
 /**

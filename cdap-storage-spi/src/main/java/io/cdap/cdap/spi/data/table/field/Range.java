@@ -18,7 +18,6 @@ package io.cdap.cdap.spi.data.table.field;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.InvalidFieldException;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;

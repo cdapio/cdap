@@ -30,7 +30,6 @@ import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.List;
 

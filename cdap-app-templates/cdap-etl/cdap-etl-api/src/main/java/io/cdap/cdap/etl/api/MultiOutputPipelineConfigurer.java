@@ -20,7 +20,6 @@ import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
-
 import java.util.Map;
 
 /**

@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.meta;
 
 import io.cdap.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;

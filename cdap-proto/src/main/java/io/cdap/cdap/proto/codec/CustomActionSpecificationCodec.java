@@ -23,7 +23,6 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
 import io.cdap.cdap.internal.customaction.DefaultCustomActionSpecification;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;

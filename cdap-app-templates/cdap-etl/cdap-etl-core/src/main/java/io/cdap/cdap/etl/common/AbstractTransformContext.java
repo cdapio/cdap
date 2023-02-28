@@ -21,7 +21,6 @@ import io.cdap.cdap.etl.api.LookupProvider;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-
 import java.util.List;
 import java.util.Map;
 

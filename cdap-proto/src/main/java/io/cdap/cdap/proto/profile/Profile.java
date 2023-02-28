@@ -19,7 +19,6 @@ package io.cdap.cdap.proto.profile;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
-
 import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;

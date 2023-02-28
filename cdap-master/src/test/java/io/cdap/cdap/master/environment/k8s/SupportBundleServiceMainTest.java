@@ -20,11 +20,10 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for {@link SupportBundleServiceMain}.

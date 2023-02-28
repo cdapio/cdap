@@ -20,7 +20,6 @@ import io.cdap.cdap.api.AbstractProgramSpecification;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

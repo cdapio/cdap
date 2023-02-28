@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
 import io.cdap.cdap.api.schedule.TimeTriggerInfo;
-
 import java.io.Serializable;
 
 /**

@@ -26,7 +26,6 @@ import com.google.gson.JsonSerializer;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.proto.artifact.ArtifactRanges;
-
 import java.lang.reflect.Type;
 
 /**

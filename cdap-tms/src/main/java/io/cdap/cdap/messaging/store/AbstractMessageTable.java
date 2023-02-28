@@ -25,11 +25,10 @@ import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.id.TopicId;
-import org.apache.tephra.Transaction;
-
 import java.io.IOException;
 import java.util.Iterator;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
 
 /**
  * Contains common logic for implementation of {@link MessageTable}.

@@ -24,7 +24,6 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;

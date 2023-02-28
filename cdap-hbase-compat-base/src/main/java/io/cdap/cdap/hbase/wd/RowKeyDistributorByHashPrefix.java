@@ -15,9 +15,8 @@
  */
 package io.cdap.cdap.hbase.wd;
 
-import org.apache.hadoop.hbase.util.Bytes;
-
 import java.util.Arrays;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * Provides handy methods to distribute

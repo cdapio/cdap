@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.etl.api.InvalidEntry;
-
 import java.util.Collection;
 import java.util.Map;
 

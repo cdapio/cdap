@@ -17,7 +17,6 @@ package io.cdap.cdap.data2.queue;
 
 
 import com.google.common.collect.Iterators;
-
 import java.util.Iterator;
 
 

@@ -19,7 +19,6 @@ package io.cdap.cdap.common.service;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-
 import java.util.concurrent.TimeUnit;
 
 /**

@@ -18,7 +18,6 @@ package io.cdap.cdap.common.logging;
 
 import com.google.common.collect.ImmutableSet;
 import io.netty.handler.codec.http.HttpMethod;
-
 import java.util.Objects;
 import java.util.Set;
 

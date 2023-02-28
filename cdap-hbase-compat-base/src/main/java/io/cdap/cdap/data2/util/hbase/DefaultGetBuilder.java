@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.Filter;
-
-import java.io.IOException;
 
 /**
  * Default implementation of {@link GetBuilder}. Specific HBase compat module can extends and override methods.

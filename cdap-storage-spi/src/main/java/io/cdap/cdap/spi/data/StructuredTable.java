@@ -21,7 +21,6 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Range;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;

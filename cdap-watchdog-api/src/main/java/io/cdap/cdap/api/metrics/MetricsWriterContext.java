@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.metrics;
 
 import io.cdap.cdap.api.PlatformInfo;
-
 import java.util.Map;
 
 /**

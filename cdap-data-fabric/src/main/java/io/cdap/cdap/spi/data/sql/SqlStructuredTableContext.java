@@ -24,7 +24,6 @@ import io.cdap.cdap.spi.data.StructuredTableInstantiationException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.common.MetricStructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
-
 import java.io.IOException;
 import java.sql.Connection;
 

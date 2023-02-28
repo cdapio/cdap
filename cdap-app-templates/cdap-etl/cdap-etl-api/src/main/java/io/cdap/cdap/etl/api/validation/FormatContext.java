@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.validation;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
-
 import javax.annotation.Nullable;
 
 /**

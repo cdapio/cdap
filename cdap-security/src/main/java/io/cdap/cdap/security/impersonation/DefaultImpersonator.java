@@ -25,13 +25,12 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import java.io.IOException;
+import java.util.concurrent.Callable;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.concurrent.Callable;
 
 /**
  * Default implementation of {@link Impersonator} that impersonate using {@link UGIProvider}.

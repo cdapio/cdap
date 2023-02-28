@@ -48,18 +48,17 @@ import io.cdap.cdap.etl.common.submit.JoinerContextProvider;
 import io.cdap.cdap.etl.common.submit.PipelinePhasePreparer;
 import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.tephra.TransactionFailureException;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * For each stage, call prepareRun() in topological order. prepareRun will setup the input/output of the pipeline phase

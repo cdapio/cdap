@@ -21,12 +21,11 @@ import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Context for provisioner operations.

@@ -31,7 +31,6 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
-
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;

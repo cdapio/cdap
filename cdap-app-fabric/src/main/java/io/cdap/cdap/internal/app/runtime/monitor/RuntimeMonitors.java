@@ -31,9 +31,6 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.Authenticator;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -44,6 +41,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for runtime monitor.

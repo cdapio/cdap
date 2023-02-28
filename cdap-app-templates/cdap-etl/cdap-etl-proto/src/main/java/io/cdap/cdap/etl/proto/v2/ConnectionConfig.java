@@ -18,7 +18,6 @@
 package io.cdap.cdap.etl.proto.v2;
 
 import io.cdap.cdap.etl.proto.connection.PreconfiguredConnectionCreationRequest;
-
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;

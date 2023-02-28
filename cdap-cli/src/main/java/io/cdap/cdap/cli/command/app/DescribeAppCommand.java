@@ -30,7 +30,6 @@ import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.List;
 

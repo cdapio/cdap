@@ -18,12 +18,11 @@ package io.cdap.cdap.common.io;
 
 import com.google.gson.stream.JsonReader;
 import io.cdap.cdap.format.io.JsonDecoder;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class StringCachingDecoderTest {
 

@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.utils.TimeProvider;
 import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.messaging.TopicMetadata;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;

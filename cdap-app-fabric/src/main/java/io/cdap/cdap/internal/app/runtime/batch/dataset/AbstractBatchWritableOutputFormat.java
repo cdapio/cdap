@@ -19,16 +19,15 @@ package io.cdap.cdap.internal.app.runtime.batch.dataset;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.data.batch.BatchWritable;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.Map;
 
 /**
  * An abstract base implementation of {@link OutputFormat} for writing to {@link BatchWritable} from batch job.

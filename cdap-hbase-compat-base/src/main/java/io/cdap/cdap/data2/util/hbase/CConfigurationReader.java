@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.util.hbase;
 
 import io.cdap.cdap.common.conf.CConfiguration;
-
 import java.io.IOException;
 
 /**

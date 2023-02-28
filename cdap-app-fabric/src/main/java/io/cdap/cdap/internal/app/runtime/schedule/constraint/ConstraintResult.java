@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
 import com.google.common.base.Preconditions;
-
 import javax.annotation.Nullable;
 
 /**

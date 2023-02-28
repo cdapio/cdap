@@ -20,9 +20,8 @@ import com.google.inject.ImplementedBy;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import org.apache.hadoop.security.UserGroupInformation;
-
 import java.util.concurrent.Callable;
+import org.apache.hadoop.security.UserGroupInformation;
 
 /**
  * Interface to execute code by impersonating as a particular user.

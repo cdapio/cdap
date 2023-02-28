@@ -16,7 +16,6 @@
 package io.cdap.cdap.internal.lang;
 
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;

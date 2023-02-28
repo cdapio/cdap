@@ -20,7 +20,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

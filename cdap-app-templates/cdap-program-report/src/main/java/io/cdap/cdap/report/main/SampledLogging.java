@@ -15,9 +15,8 @@
  */
 package io.cdap.cdap.report.main;
 
-import org.slf4j.Logger;
-
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
 
 /**
  * log warning with interval count

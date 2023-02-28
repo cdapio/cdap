@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.service.worker;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
-
 import javax.annotation.Nullable;
 
 /**

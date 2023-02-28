@@ -15,10 +15,9 @@
  */
 package io.cdap.cdap.common.discovery;
 
-import org.apache.twill.discovery.Discoverable;
-
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * This class helps picking up an endpoint from a list of Discoverable.

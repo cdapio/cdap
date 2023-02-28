@@ -34,14 +34,13 @@ import io.cdap.cdap.proto.MRTaskInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.StoreDefinition;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.Map;
 
 public class LocalMRJobInfoFetcherTest {
   private static Injector injector;

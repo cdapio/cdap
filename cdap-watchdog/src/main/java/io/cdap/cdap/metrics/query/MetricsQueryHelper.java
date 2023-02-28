@@ -42,15 +42,14 @@ import io.cdap.cdap.common.utils.TimeMathParser;
 import io.cdap.cdap.proto.MetricQueryRequest;
 import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.cdap.proto.MetricTagValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *

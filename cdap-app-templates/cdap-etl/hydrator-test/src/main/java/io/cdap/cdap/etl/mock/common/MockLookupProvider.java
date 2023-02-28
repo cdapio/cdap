@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.mock.common;
 
 import io.cdap.cdap.etl.api.Lookup;
 import io.cdap.cdap.etl.api.LookupProvider;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

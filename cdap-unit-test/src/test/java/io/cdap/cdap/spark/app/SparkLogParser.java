@@ -28,6 +28,8 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.spark.app.SparkAppUsingGetDataset.LogKey;
 import io.cdap.cdap.spark.app.SparkAppUsingGetDataset.LogStats;
+import java.util.Iterator;
+import java.util.Map;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -36,9 +38,6 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
-
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  *

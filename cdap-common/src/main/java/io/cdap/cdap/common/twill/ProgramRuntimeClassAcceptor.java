@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.common.twill;
 
-import org.apache.twill.api.ClassAcceptor;
-
 import java.net.URL;
+import org.apache.twill.api.ClassAcceptor;
 
 /**
  * A {@link ClassAcceptor} for program execution.

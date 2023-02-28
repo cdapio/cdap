@@ -22,7 +22,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionConsumerResult;
 import io.cdap.cdap.api.dataset.lib.PartitionConsumerState;
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
-
 import java.util.List;
 import javax.annotation.Nullable;
 

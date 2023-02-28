@@ -19,6 +19,8 @@ package io.cdap.cdap.etl.batch.conversion;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.batch.StructuredRecordWritable;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;
@@ -27,9 +29,6 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Functions to convert common classes to their WritableComparable equivalent and vice versa.

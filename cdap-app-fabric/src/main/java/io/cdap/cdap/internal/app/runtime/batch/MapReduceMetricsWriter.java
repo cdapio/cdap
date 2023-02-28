@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.batch;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.app.metrics.MapReduceMetrics;
 import io.cdap.cdap.common.conf.Constants;
+import java.io.IOException;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobStatus;
@@ -27,8 +28,6 @@ import org.apache.hadoop.mapreduce.TaskReport;
 import org.apache.hadoop.mapreduce.TaskType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Gathers statistics from a running mapreduce job through its counters and writes the data to the metrics system.

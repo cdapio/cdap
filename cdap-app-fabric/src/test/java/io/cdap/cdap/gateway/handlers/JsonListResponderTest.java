@@ -24,13 +24,12 @@ import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.Assert;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 public class JsonListResponderTest {
 

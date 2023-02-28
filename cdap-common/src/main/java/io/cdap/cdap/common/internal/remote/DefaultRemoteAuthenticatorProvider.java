@@ -21,7 +21,6 @@ import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
-
 import javax.annotation.Nullable;
 import javax.inject.Named;
 

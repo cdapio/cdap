@@ -22,7 +22,6 @@ import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;

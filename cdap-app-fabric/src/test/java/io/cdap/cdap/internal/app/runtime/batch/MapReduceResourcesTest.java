@@ -19,13 +19,12 @@ package io.cdap.cdap.internal.app.runtime.batch;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.util.Collections;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.Configs;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Collections;
 
 /**
  * Tests for various configurations that can affect MR task container resources setting.

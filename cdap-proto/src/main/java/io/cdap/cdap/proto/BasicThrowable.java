@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
-
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;

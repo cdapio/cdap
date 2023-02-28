@@ -20,7 +20,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.SortOrder;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

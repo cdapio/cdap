@@ -24,7 +24,6 @@ import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.service.DynamicPluginServiceApp;
-
 import java.util.Map;
 import java.util.function.Function;
 

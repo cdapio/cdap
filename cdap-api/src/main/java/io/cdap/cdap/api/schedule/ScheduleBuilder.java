@@ -20,7 +20,6 @@ import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
-
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;

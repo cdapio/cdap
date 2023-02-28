@@ -16,7 +16,6 @@
 package io.cdap.cdap.metrics.query;
 
 import com.google.common.collect.ImmutableList;
-
 import java.util.List;
 
 /**

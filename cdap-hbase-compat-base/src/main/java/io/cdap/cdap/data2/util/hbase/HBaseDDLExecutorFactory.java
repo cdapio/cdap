@@ -20,9 +20,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutorContext;
-import org.apache.hadoop.conf.Configuration;
-
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Factory for providing {@link HBaseDDLExecutor}.

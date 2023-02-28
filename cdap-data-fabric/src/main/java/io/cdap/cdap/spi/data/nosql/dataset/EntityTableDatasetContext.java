@@ -19,12 +19,11 @@ package io.cdap.cdap.spi.data.nosql.dataset;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionContext;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionContext;
 
 /**
  * Dataset context for entity tables. The regular dataset context classes cannot be used due to cyclic dependency

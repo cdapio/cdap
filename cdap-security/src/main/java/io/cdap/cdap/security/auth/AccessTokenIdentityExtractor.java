@@ -20,11 +20,10 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.io.Codec;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The AccessTokenIdentityExtractor attempts to extract an {@link AccessToken} included in the Authorization header,

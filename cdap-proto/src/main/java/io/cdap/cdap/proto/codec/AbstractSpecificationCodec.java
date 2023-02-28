@@ -22,7 +22,6 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.internal.guava.reflect.TypeParameter;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;

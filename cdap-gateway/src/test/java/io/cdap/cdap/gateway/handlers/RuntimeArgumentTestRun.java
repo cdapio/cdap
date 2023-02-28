@@ -26,17 +26,16 @@ import io.cdap.cdap.gateway.GatewayFastTestsSuite;
 import io.cdap.cdap.gateway.GatewayTestBase;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests the runtime args - setting it through runtimearg API and Program start API

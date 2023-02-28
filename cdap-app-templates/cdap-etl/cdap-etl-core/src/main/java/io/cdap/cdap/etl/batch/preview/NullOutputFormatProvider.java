@@ -19,9 +19,8 @@ package io.cdap.cdap.etl.batch.preview;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-
 import java.util.Map;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 
 /**
  * An {@link OutputFormatProvider} which provides a {@link NullOutputFormat} which writes nothing.

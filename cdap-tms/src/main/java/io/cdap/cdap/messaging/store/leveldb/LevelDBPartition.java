@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
-import org.iq80.leveldb.DB;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import org.iq80.leveldb.DB;
 
 /**
  * One partition of a MessageTable, backed by a LevelDB table.

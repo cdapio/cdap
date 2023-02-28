@@ -17,10 +17,9 @@
 package io.cdap.cdap.spi.metadata;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 public class SortingTest {
 

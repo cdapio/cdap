@@ -29,9 +29,6 @@ import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.queue.ProcessedEventMetadata;
 import io.cdap.cdap.logging.pipeline.queue.ProcessorEvent;
 import io.cdap.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,6 +38,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Log processing pipeline to process log events from log buffer. Log events are pushed to this pipeline for further

@@ -28,7 +28,6 @@ import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

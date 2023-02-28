@@ -19,7 +19,6 @@ package io.cdap.cdap.proto.artifact;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
-
 import javax.annotation.Nullable;
 
 /**

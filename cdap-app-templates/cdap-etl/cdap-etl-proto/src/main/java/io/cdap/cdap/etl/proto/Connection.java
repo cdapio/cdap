@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.proto;
 
 import io.cdap.cdap.etl.proto.v2.ETLStage;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

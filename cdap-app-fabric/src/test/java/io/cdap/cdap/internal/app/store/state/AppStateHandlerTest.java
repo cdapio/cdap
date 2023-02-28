@@ -40,6 +40,8 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.apache.tephra.TransactionManager;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -49,9 +51,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class AppStateHandlerTest extends AppFabricTestBase {
   public static final String NAMESPACE_1 = "ns1";

@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.mock.common;
 
 import io.cdap.cdap.etl.api.action.SettableArguments;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

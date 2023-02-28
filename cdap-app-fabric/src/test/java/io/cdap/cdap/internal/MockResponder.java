@@ -26,7 +26,6 @@ import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;

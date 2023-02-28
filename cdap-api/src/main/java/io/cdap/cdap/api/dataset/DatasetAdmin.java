@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.dataset;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.io.Closeable;
 import java.io.IOException;
 

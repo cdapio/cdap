@@ -24,7 +24,6 @@ import com.google.gson.JsonSerializationContext;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
 import io.cdap.cdap.api.plugin.Plugin;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;

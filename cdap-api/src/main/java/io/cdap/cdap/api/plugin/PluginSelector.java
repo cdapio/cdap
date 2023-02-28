@@ -18,7 +18,6 @@ package io.cdap.cdap.api.plugin;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.artifact.ArtifactId;
-
 import java.util.Map;
 import java.util.SortedMap;
 import javax.annotation.Nullable;

@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.runtime.spi;
 
-import org.apache.twill.api.LocalFile;
-
 import java.net.URI;
 import javax.annotation.Nullable;
+import org.apache.twill.api.LocalFile;
 
 /**
  * LocalFile implementation that can be cached.

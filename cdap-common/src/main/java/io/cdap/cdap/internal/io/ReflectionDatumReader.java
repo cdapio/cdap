@@ -21,7 +21,6 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.DatumReader;
 import io.cdap.cdap.common.io.Decoder;
-
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;

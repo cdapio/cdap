@@ -22,7 +22,6 @@ import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;

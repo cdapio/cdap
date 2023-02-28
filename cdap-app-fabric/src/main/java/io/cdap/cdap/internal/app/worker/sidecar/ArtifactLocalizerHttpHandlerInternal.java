@@ -30,7 +30,6 @@ import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.io.File;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;

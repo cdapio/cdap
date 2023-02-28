@@ -26,7 +26,6 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.lineage.field.LineageRecorder;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

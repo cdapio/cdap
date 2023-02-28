@@ -20,7 +20,6 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ScheduleId;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

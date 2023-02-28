@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import static org.mockito.Mockito.mock;
+
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
@@ -27,17 +29,14 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-
-import static org.mockito.Mockito.mock;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class ConfigHandlerAuthorizationTest {
   private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);

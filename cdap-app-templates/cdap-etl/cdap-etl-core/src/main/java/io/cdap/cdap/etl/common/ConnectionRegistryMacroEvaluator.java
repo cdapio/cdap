@@ -20,7 +20,6 @@ package io.cdap.cdap.etl.common;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.etl.proto.connection.ConnectionId;
-
 import java.util.HashSet;
 import java.util.Set;
 

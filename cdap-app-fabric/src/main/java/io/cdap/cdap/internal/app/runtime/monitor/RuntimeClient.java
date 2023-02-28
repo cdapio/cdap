@@ -34,10 +34,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.common.http.HttpMethod;
-import org.apache.avro.Schema;
-import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +51,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.LongConsumer;
 import java.util.zip.GZIPOutputStream;
 import javax.ws.rs.core.MediaType;
+import org.apache.avro.Schema;
+import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 
 /**
  * The client for talking to the {@link RuntimeServer}.

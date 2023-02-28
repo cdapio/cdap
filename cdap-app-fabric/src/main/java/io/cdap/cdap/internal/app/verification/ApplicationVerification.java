@@ -22,7 +22,6 @@ import io.cdap.cdap.app.verification.AbstractVerifier;
 import io.cdap.cdap.app.verification.VerifyResult;
 import io.cdap.cdap.error.Err;
 import io.cdap.cdap.proto.id.ApplicationId;
-
 import java.util.Arrays;
 
 /**

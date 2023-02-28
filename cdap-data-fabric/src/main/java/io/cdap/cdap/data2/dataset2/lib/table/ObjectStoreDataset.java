@@ -39,7 +39,6 @@ import io.cdap.cdap.common.io.BinaryEncoder;
 import io.cdap.cdap.internal.io.ReflectionDatumReader;
 import io.cdap.cdap.internal.io.ReflectionDatumWriter;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

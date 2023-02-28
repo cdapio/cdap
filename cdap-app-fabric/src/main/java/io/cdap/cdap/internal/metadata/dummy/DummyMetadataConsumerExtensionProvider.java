@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.metadata.dummy;
 import com.google.inject.Inject;
 import io.cdap.cdap.internal.metadata.MetadataConsumerProvider;
 import io.cdap.cdap.spi.metadata.MetadataConsumer;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

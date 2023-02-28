@@ -18,6 +18,9 @@ package io.cdap.cdap.data2.transaction;
 
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Set;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
@@ -25,10 +28,6 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
-
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * Translates exceptions thrown by Tephra's TransactionServiceClient when the tx service is unavailable into

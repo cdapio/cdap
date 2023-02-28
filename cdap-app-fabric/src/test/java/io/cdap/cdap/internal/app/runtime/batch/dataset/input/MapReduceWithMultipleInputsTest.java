@@ -24,12 +24,11 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
+import java.io.PrintWriter;
+import java.util.List;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.PrintWriter;
-import java.util.List;
 
 /**
  * Test case that tests ability to perform join across two datasets, using multiple inputs of a MapReduce job.

@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.spi.data.transaction;
 
-import io.cdap.cdap.api.annotation.Beta;
+import static java.util.Objects.requireNonNull;
 
+import io.cdap.cdap.api.annotation.Beta;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Helper class for interacting with {@link TransactionRunner}.

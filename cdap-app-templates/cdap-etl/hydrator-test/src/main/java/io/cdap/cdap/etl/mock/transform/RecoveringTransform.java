@@ -23,7 +23,6 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 

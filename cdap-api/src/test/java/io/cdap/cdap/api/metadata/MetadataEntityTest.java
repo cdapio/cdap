@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.api.metadata;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test for  {@link MetadataEntity}

@@ -23,7 +23,6 @@ import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.messaging.TopicMetadata;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;

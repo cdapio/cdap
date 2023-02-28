@@ -18,7 +18,6 @@ package io.cdap.cdap.security.store.file;
 
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.common.io.Codec;
-
 import java.security.KeyStore;
 
 /**

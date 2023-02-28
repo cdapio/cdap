@@ -23,7 +23,6 @@ import io.cdap.cdap.api.dataset.table.ConflictDetection;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.lib.table.BufferingTableTest;
-
 import java.util.Map;
 
 /**

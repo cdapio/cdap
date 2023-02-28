@@ -24,7 +24,6 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.lang.reflect.Type;
 
 /**

@@ -41,13 +41,12 @@ import io.cdap.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.proto.ProgramType;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 /**
  * Guice more for binding {@link ProgramRunner} that runs program in the same process.

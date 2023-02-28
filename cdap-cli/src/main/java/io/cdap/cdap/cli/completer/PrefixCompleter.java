@@ -17,11 +17,10 @@
 package io.cdap.cdap.cli.completer;
 
 import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import jline.console.completer.Completer;
 
 /**
  * Completer that forwards completion to another completer only if a prefix is met.

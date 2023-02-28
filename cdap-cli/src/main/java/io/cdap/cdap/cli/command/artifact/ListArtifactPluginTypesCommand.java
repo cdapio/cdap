@@ -28,7 +28,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ArtifactClient;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.List;
 

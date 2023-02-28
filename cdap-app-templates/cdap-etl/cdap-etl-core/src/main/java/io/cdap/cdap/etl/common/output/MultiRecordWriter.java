@@ -18,13 +18,12 @@ package io.cdap.cdap.etl.common.output;
 
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.common.Constants;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.mapreduce.RecordWriter;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * Delegates to other record writers.

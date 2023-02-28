@@ -20,14 +20,13 @@ import io.cdap.cdap.common.io.BinaryDecoder;
 import io.cdap.cdap.common.io.BinaryEncoder;
 import io.cdap.cdap.common.io.Decoder;
 import io.cdap.cdap.common.io.Encoder;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

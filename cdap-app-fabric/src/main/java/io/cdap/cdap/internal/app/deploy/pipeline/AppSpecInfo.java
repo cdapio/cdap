@@ -20,7 +20,6 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-
 import java.util.Collection;
 import java.util.Map;
 

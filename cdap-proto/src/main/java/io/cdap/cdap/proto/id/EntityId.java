@@ -17,7 +17,6 @@ package io.cdap.cdap.proto.id;
 
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.element.EntityType;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;

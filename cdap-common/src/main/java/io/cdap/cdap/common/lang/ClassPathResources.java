@@ -23,11 +23,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.common.internal.guava.ClassPath;
 import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
-import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.internal.utils.Dependencies;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -38,6 +33,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.internal.utils.Dependencies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for {@link ClassPath} {@link ResourceInfo resources}.

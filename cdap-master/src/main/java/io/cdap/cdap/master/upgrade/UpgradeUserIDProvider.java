@@ -16,9 +16,8 @@
 package io.cdap.cdap.master.upgrade;
 
 import com.google.common.base.Throwables;
-import org.apache.hadoop.security.UserGroupInformation;
-
 import java.io.IOException;
+import org.apache.hadoop.security.UserGroupInformation;
 
 /**
  * Provides a user ID to use for upgrade and post-upgrade jobs based on the {@link UserGroupInformation}.

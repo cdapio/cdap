@@ -25,7 +25,6 @@ import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
-
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

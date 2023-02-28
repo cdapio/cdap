@@ -24,10 +24,9 @@ import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.util.Objects;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Objects;
 
 public class AuditMessageTypeAdapterTest {
 

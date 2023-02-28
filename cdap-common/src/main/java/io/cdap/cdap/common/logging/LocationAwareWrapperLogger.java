@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.common.logging;
 
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.spi.LocationAwareLogger;
-
-import javax.annotation.Nullable;
 
 /**
  * A {@link Logger} implementation that only emit logs that are accepted by {@link LogSampler}.

@@ -16,7 +16,6 @@
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
 import io.cdap.cdap.api.common.Bytes;
-
 import java.io.DataOutput;
 import java.io.IOException;
 import javax.annotation.Nullable;

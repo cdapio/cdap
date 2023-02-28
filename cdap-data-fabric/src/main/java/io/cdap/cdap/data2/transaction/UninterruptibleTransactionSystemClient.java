@@ -18,14 +18,6 @@ package io.cdap.cdap.data2.transaction;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.apache.tephra.InvalidTruncateTimeException;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionNotInProgressException;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.common.Threads;
-
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Set;
@@ -33,6 +25,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.tephra.InvalidTruncateTimeException;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionNotInProgressException;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.common.Threads;
 
 /**
  * A {@link TransactionSystemClient} that executes calls that can't be interrupted by {@link Thread#interrupt()}.

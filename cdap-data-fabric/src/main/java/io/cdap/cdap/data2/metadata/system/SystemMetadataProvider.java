@@ -21,7 +21,6 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;

@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;

@@ -25,6 +25,12 @@ import io.cdap.cdap.common.conf.KafkaConstants;
 import io.cdap.cdap.common.runtime.DaemonMain;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -32,13 +38,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Runs embedded Kafka server.

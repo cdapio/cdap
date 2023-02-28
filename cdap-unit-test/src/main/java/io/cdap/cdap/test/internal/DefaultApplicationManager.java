@@ -45,11 +45,10 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.WorkflowManager;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A default implementation of {@link ApplicationManager}.

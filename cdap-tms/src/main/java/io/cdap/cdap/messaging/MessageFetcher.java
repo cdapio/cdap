@@ -19,10 +19,9 @@ package io.cdap.cdap.messaging;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.data.RawMessage;
-import org.apache.tephra.Transaction;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
 
 /**
  * A builder to setup parameters for fetching messages from the messaging system.

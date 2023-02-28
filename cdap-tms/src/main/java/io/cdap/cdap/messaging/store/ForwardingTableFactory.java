@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging.store;
 
 import io.cdap.cdap.messaging.TopicMetadata;
-
 import java.io.IOException;
 
 /**

@@ -17,11 +17,10 @@
 package io.cdap.cdap.common.collect;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CollectorTest {
 

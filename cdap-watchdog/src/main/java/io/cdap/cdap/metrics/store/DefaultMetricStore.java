@@ -58,7 +58,6 @@ import io.cdap.cdap.metrics.process.TopicIdMetaKey;
 import io.cdap.cdap.metrics.process.TopicProcessMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

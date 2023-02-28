@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.k8s.common;
 
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Provides a file in a provided temporary directory for testing.

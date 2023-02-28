@@ -24,7 +24,6 @@ import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.http.HttpHandler;
-
 import java.util.Set;
 
 /**

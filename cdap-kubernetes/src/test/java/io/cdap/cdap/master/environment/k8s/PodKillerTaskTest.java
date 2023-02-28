@@ -18,12 +18,11 @@ package io.cdap.cdap.master.environment.k8s;
 
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import java.util.Collections;
+import java.util.Map;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Unit test for {@link PodKillerTask}. The test is disabled by default since it requires a running

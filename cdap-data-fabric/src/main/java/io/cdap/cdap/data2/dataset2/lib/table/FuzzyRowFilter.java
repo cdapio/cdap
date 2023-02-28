@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.dataset2.lib.table;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Filter;
 import io.cdap.cdap.common.utils.ImmutablePair;
-
 import java.util.Arrays;
 import java.util.List;
 

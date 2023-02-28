@@ -36,16 +36,6 @@ import io.cdap.cdap.api.spark.service.SparkHttpContentConsumer;
 import io.cdap.cdap.api.spark.service.SparkHttpServiceContext;
 import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler;
 import io.cdap.cdap.api.spark.service.SparkHttpServicePluginContext;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scala.Tuple2;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -60,6 +50,15 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFunction;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 /**
  * A spark program with {@link SparkHttpServiceHandler}.

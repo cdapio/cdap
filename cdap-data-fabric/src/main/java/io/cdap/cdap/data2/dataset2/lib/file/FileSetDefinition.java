@@ -28,12 +28,11 @@ import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Dataset definition for File datasets.

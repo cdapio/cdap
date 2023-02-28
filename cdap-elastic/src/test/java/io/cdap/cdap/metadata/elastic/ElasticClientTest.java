@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.metadata.elastic;
 
+import java.io.IOException;
+import java.util.Random;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -28,9 +30,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Random;
 
 /**
  * Tests the way Elasticsearch is set up for "integration" tests (mvn verify).

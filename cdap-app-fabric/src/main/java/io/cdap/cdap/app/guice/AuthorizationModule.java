@@ -45,10 +45,9 @@ import io.cdap.cdap.security.authorization.DelegatingPermissionManager;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
+import java.util.Properties;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionSystemClient;
-
-import java.util.Properties;
 
 /**
  * {@link PrivateModule} for authorization classes. This module is necessary and must be in app-fabric because classes

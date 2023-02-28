@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.framework;
 
 import ch.qos.logback.classic.LoggerContext;
 import io.cdap.cdap.common.conf.CConfiguration;
-
 import java.net.URL;
 
 /**

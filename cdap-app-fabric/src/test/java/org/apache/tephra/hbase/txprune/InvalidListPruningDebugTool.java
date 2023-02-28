@@ -19,17 +19,16 @@ package org.apache.tephra.hbase.txprune;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.tephra.txprune.RegionPruneInfo;
-import org.apache.tephra.txprune.hbase.InvalidListPruningDebug;
-import org.apache.tephra.txprune.hbase.RegionsAtTime;
-
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.txprune.RegionPruneInfo;
+import org.apache.tephra.txprune.hbase.InvalidListPruningDebug;
+import org.apache.tephra.txprune.hbase.RegionsAtTime;
 
 /**
  * A mock implementation of {@link InvalidListPruningDebug} for testing.

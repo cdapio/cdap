@@ -17,12 +17,11 @@
 package io.cdap.cdap.common.io;
 
 import com.google.common.io.Closeables;
+import java.io.Closeable;
+import java.io.IOException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Seekable;
 import org.apache.twill.filesystem.Location;
-
-import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Implementation of {@link SeekableInputStream} for {@link Location}.

@@ -36,7 +36,6 @@ import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;

@@ -18,7 +18,6 @@ package io.cdap.cdap.api.data.batch;
 
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
-
 import java.util.Set;
 
 /**

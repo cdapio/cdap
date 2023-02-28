@@ -22,10 +22,6 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.twill.ProgramRuntimeClassAcceptor;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillRunnable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillRunnable;
 
 /**
  * Configuration for launching Twill container for a program.

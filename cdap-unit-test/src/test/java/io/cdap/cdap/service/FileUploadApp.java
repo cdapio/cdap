@@ -33,9 +33,6 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpContentConsumer;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.twill.filesystem.Location;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
@@ -45,6 +42,8 @@ import java.security.MessageDigest;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.twill.filesystem.Location;
 
 /**
  * A app for testing file upload through service to partitioned file set.

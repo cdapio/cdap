@@ -22,10 +22,9 @@ import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.distributed.AbstractTwillProgramController;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
 
 /**
  * A listener that responds to state transitions and persists all state changes using a provided

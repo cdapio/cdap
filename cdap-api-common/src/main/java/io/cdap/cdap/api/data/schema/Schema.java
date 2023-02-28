@@ -20,7 +20,6 @@ import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.internal.io.SQLSchemaParser;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.io.Reader;

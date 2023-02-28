@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.cdap.cdap.proto.BasicThrowable;
-
 import java.lang.reflect.Type;
 
 /**

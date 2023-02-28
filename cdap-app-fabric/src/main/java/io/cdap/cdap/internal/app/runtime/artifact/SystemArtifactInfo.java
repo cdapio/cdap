@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import io.cdap.cdap.common.conf.ArtifactConfig;
 import io.cdap.cdap.common.id.Id;
-
 import java.io.File;
 
 /**

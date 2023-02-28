@@ -17,12 +17,11 @@
 package io.cdap.cdap.internal.asm;
 
 import com.google.common.reflect.TypeToken;
+import java.lang.reflect.ParameterizedType;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
-
-import java.lang.reflect.ParameterizedType;
 
 /**
  * Util class for generating class signature.

@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.data.schema;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;

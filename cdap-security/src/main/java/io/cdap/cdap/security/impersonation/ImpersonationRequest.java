@@ -17,7 +17,6 @@
 package io.cdap.cdap.security.impersonation;
 
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

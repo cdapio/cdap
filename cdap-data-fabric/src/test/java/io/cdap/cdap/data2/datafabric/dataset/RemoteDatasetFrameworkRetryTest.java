@@ -22,12 +22,11 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
-import org.mockito.Mockito;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import org.mockito.Mockito;
 
 public class RemoteDatasetFrameworkRetryTest extends RemoteDatasetFrameworkTest {
 

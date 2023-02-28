@@ -23,7 +23,6 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.Decoder;
 import io.cdap.cdap.format.utils.FormatUtils;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

@@ -20,15 +20,14 @@ import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.bridge.SLF4JBridgeHandler;
-
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 /**
  * The class launches MR container (AM or Task). The {@link #launch(String, String[])}} method is

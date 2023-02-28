@@ -20,7 +20,6 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ArtifactId;
-
 import java.util.Map;
 
 /**

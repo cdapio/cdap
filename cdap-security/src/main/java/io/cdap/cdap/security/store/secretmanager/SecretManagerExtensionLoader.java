@@ -19,7 +19,6 @@ package io.cdap.cdap.security.store.secretmanager;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.securestore.spi.SecretManager;
-
 import java.util.Collections;
 import java.util.Set;
 

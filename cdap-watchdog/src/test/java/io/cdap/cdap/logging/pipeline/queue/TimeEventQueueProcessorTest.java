@@ -28,13 +28,12 @@ import io.cdap.cdap.logging.meta.Checkpoint;
 import io.cdap.cdap.logging.pipeline.LogPipelineTestUtil;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.MockAppender;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link TimeEventQueueProcessor}.

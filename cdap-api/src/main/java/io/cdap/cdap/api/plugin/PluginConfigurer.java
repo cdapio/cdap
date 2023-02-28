@@ -19,7 +19,6 @@ package io.cdap.cdap.api.plugin;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

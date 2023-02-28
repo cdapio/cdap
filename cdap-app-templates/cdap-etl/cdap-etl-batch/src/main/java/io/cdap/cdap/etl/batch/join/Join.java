@@ -21,7 +21,6 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.JoinConfig;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.Joiner;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

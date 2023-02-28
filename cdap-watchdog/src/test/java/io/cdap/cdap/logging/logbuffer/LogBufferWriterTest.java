@@ -25,16 +25,15 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.context.WorkerLoggingContext;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests for {@link LogBufferWriter}.

@@ -31,14 +31,13 @@ import io.cdap.cdap.internal.io.ReflectionRowReader;
 import io.cdap.cdap.internal.io.ReflectionRowRecordReader;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.proto.id.DatasetId;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  *

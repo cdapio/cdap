@@ -21,7 +21,6 @@ import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

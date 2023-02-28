@@ -24,7 +24,6 @@ import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
-
 import java.util.Collections;
 import javax.annotation.Nullable;
 

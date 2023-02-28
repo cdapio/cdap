@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.util.hbase;
 
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

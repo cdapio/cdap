@@ -24,9 +24,6 @@ import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.service.SystemServiceConfigurer;
 import io.cdap.cdap.common.internal.guava.ClassPath;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -36,6 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.ws.rs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class to maintain list of resources that are visible to user programs.

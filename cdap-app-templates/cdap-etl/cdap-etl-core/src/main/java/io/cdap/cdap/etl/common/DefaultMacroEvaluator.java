@@ -24,7 +24,6 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroObjectType;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.etl.common.macro.LogicalStartTimeMacroEvaluator;
-
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;

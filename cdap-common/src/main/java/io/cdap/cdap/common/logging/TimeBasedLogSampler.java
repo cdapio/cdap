@@ -17,9 +17,8 @@
 package io.cdap.cdap.common.logging;
 
 import io.cdap.cdap.common.utils.TimeProvider;
-import org.slf4j.spi.LocationAwareLogger;
-
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.spi.LocationAwareLogger;
 
 /**
  * A {@link LogSampler} that tracks and sample log events based on time.

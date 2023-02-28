@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.common.logging;
 
+import java.io.PrintStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.PrintStream;
 
 /**
  * Redirects standard out and standard error to logger

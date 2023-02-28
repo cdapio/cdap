@@ -66,17 +66,6 @@ import io.cdap.cdap.internal.app.preview.NoopDataTracerFactory;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.twill.api.RunId;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.filesystem.Location;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -97,6 +86,16 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.filesystem.Location;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *

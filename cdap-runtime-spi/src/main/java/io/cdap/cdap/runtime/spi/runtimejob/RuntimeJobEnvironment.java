@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
+import java.util.Map;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.filesystem.LocationFactory;
-
-import java.util.Map;
 
 /**
  * Represents runtime job environment that provides information that is needed by the {@link RuntimeJob} to run the job.

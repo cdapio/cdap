@@ -21,7 +21,6 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 import io.cdap.cdap.etl.proto.UpgradeableConfig;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

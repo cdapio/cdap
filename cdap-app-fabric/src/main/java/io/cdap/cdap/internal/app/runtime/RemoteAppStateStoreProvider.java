@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime;
 import io.cdap.cdap.api.app.AppStateStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-
 import javax.inject.Inject;
 
 /**

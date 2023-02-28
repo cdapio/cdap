@@ -22,7 +22,6 @@ import io.cdap.cdap.api.dataset.table.Result;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;

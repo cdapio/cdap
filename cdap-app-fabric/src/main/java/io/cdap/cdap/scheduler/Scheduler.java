@@ -28,7 +28,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;

@@ -22,11 +22,10 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import org.apache.twill.internal.ServiceListenerAdapter;
-
 import java.io.Closeable;
 import java.io.File;
 import javax.annotation.Nullable;
+import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
  * Provides method to create {@link PluginInstantiator} for Program Runners

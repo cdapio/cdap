@@ -17,10 +17,9 @@
 package io.cdap.cdap.runtime.spi.provisioner.emr;
 
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.UUID;
 
 /**
  * Tests for Amazon EMR provisioner

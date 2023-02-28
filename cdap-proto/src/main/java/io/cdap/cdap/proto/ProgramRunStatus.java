@@ -18,7 +18,6 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.workflow.NodeStatus;
-
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;

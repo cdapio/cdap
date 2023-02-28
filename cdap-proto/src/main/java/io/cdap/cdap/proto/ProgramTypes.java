@@ -22,7 +22,6 @@ import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.api.worker.WorkerSpecification;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
-
 import java.util.IdentityHashMap;
 import java.util.Map;
 

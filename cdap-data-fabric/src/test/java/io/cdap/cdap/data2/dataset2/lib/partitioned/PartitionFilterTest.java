@@ -19,10 +19,9 @@ package io.cdap.cdap.data2.dataset2.lib.partitioned;
 import io.cdap.cdap.api.dataset.lib.PartitionFilter;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for partition filters.

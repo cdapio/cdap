@@ -23,13 +23,12 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.NettyHttpService;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for {@link TrafficRelayServer}.

@@ -29,15 +29,14 @@ import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.proto.codec.AbstractSpecificationCodec;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
-
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.RuntimeSpecification;
+import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 
 /**
  * Codec to serialize and deserialize {@link ServiceSpecification}

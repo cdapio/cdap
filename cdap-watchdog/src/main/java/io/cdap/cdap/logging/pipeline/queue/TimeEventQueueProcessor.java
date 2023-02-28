@@ -23,13 +23,12 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.logging.meta.Checkpoint;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@link TimeEventQueue} processor to enqueue the log events to {@link TimeEventQueue}, and process them.

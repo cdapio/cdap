@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.api;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
-
 import java.util.List;
 import javax.annotation.Nullable;
 

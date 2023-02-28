@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.data2.increment.hbase10cdh;
 
+import java.util.Map;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.hbase.coprocessor.TransactionVisibilityFilter;
-
-import java.util.Map;
 
 /**
  * {@link TransactionVisibilityFilter}'s default behavior is to give only latest valid version for the transactional

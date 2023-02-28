@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.tethering;
 
 import io.cdap.cdap.proto.Notification;
-
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;

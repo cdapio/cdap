@@ -17,7 +17,6 @@
 package io.cdap.cdap.metrics.collect;
 
 import io.cdap.cdap.api.metrics.MetricValue;
-
 import java.util.Arrays;
 
 /**

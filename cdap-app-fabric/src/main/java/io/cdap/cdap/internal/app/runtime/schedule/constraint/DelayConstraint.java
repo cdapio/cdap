@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.proto.ProtoConstraint;
-
 import java.util.concurrent.TimeUnit;
 
 /**

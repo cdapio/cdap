@@ -45,10 +45,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import org.junit.Assert;
-import org.junit.Test;
-import org.objectweb.asm.Type;
-
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.net.URL;
@@ -59,6 +55,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
+import org.junit.Assert;
+import org.junit.Test;
+import org.objectweb.asm.Type;
 
 /**
  * This test {@link DatasetClassRewriter} in cdap-common. It is here because it uses classes defined in

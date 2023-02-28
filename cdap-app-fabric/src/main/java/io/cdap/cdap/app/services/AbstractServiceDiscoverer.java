@@ -25,7 +25,6 @@ import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.common.http.HttpRequestConfig;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;

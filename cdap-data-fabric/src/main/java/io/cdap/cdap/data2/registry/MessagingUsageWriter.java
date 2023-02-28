@@ -33,7 +33,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.nio.charset.StandardCharsets;
 import java.util.stream.StreamSupport;
 

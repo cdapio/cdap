@@ -30,7 +30,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

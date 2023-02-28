@@ -18,7 +18,6 @@ package io.cdap.cdap.api.plugin;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.macro.Macros;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;

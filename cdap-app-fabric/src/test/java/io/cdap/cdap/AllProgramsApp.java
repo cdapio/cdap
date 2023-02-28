@@ -41,6 +41,9 @@ import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
+import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -50,10 +53,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 
 /**
  * App that contains all program types. Used to test Metadata store.

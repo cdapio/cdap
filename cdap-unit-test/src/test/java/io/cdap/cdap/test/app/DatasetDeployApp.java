@@ -39,7 +39,6 @@ import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
-
 import java.io.IOException;
 import java.util.Map;
 

@@ -18,14 +18,13 @@ package io.cdap.cdap.common.utils;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import io.cdap.cdap.runtime.spi.VersionInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Objects;
 import java.util.Properties;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Accessor class for providing project information.

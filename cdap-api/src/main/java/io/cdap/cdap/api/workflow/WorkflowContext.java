@@ -29,7 +29,6 @@ import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.security.store.SecureStore;
-
 import java.util.Map;
 
 /**

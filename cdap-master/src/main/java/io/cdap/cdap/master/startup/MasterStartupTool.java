@@ -36,14 +36,13 @@ import io.cdap.cdap.common.startup.ConfigurationLogger;
 import io.cdap.cdap.data.runtime.main.ClientVersions;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
+import java.io.IOException;
+import java.util.List;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Runs some sanity checks that indicate whether the CDAP master will be able to start right away.

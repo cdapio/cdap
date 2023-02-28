@@ -20,9 +20,8 @@ import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.rolling.helper.CompressionMode;
 import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.spi.ContextAwareBase;
-import org.apache.twill.filesystem.Location;
-
 import java.io.Closeable;
+import org.apache.twill.filesystem.Location;
 
 
 /**

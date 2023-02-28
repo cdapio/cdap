@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.internal.asm;
 
-import org.objectweb.asm.commons.Method;
-
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import org.objectweb.asm.commons.Method;
 
 /**
  * Util class containing helper functions to interact with ASM {@link Method}.

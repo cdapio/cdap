@@ -24,7 +24,6 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;

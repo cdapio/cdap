@@ -35,7 +35,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.HttpURLConnection;

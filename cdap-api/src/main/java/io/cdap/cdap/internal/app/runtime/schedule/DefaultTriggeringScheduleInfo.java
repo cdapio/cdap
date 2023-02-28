@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.schedule;
 
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;

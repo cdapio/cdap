@@ -16,18 +16,17 @@
 
 package io.cdap.cdap.cli.completer;
 
+import static jline.internal.Preconditions.checkNotNull;
+
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
-import jline.console.completer.Completer;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-
-import static jline.internal.Preconditions.checkNotNull;
+import jline.console.completer.Completer;
 
 /**
  * Completer for a set of strings.

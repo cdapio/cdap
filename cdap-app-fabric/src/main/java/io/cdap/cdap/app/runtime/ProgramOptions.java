@@ -24,7 +24,6 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Map;

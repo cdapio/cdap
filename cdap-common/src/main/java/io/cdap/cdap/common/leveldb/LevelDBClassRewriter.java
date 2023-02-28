@@ -17,6 +17,8 @@
 package io.cdap.cdap.common.leveldb;
 
 import io.cdap.cdap.common.lang.ClassRewriter;
+import java.io.IOException;
+import java.io.InputStream;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -25,9 +27,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.Method;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Current java LevelDB implementation has a memory accumulation problem during compaction.

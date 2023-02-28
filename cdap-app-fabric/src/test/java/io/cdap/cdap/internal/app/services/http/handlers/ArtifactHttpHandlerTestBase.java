@@ -43,13 +43,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.apache.commons.io.FileUtils;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -59,6 +52,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
+import org.apache.commons.io.FileUtils;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 
 /**
  * TestBase for {@link ArtifactHttpHandler}. Contains common setup and other common methods

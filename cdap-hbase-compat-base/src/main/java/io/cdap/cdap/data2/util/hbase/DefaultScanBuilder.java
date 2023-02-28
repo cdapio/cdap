@@ -16,15 +16,14 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.NavigableSet;
 import org.apache.hadoop.hbase.client.IsolationLevel;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.visibility.Authorizations;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.NavigableSet;
 
 /**
  * Default implementation for {@link ScanBuilder}. Specific HBase compat module can extends and override methods.

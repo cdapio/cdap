@@ -30,7 +30,6 @@ import io.cdap.cdap.client.ArtifactClient;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;

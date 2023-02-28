@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.aggregation;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.relational.Expression;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

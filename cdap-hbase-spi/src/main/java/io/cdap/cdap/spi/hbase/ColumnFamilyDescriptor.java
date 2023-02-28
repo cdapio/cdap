@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.hbase;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Collections;
 import java.util.Map;
 

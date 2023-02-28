@@ -19,7 +19,6 @@ package io.cdap.cdap.master.startup;
 import io.cdap.cdap.common.MasterUtils;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.startup.Check;
-
 import java.util.Set;
 
 /**

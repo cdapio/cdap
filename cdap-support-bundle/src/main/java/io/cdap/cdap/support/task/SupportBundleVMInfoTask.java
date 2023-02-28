@@ -24,9 +24,6 @@ import io.cdap.cdap.common.healthcheck.VMInformationFetcher;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.SystemServiceMeta;
 import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -35,6 +32,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link SupportBundleTask} that collects VM information across different services.

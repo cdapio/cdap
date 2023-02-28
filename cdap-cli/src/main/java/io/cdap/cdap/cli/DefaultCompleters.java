@@ -33,12 +33,11 @@ import io.cdap.cdap.cli.completer.element.ProgramIdCompleter;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.security.Principal;
+import java.util.Map;
+import javax.inject.Inject;
 import jline.console.completer.Completer;
 import jline.console.completer.EnumCompleter;
 import jline.console.completer.FileNameCompleter;
-
-import java.util.Map;
-import javax.inject.Inject;
 
 /**
  * Default set of completers.

@@ -25,7 +25,6 @@ import io.cdap.cdap.spi.data.StorageProvider;
 import io.cdap.cdap.spi.data.StorageProviderContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map;

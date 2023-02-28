@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.gson.JsonElement;
-
 import javax.annotation.Nullable;
 
 /**

@@ -33,7 +33,6 @@ import io.cdap.cdap.etl.api.condition.ConditionContext;
 import io.cdap.cdap.etl.api.condition.StageStatistics;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.DataSetManager;
-
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

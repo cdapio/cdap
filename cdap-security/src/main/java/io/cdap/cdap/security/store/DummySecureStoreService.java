@@ -19,7 +19,6 @@ package io.cdap.cdap.security.store;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

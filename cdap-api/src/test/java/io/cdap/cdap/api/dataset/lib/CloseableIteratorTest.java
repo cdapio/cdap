@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
+import java.util.NoSuchElementException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.NoSuchElementException;
 
 /**
  * Unit test for {@link CloseableIterator}.

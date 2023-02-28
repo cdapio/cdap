@@ -17,15 +17,14 @@
 package io.cdap.cdap.logging.pipeline.queue;
 
 import com.google.common.collect.ImmutableSet;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit-test for {@link TimeEventQueue}.

@@ -19,7 +19,6 @@ package io.cdap.cdap.proto.audit;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.Objects;
 
 /**

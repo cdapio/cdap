@@ -17,9 +17,8 @@
 package io.cdap.cdap.logging.plugins;
 
 import ch.qos.logback.core.rolling.RollingPolicy;
-import org.apache.twill.filesystem.Location;
-
 import java.io.Closeable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Location rolling policy

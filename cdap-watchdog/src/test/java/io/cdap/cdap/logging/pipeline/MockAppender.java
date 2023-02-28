@@ -19,7 +19,6 @@ package io.cdap.cdap.logging.pipeline;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import io.cdap.cdap.common.io.Syncable;
-
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.LinkedList;

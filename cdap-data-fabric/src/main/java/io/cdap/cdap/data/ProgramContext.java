@@ -18,7 +18,6 @@ package io.cdap.cdap.data;
 
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-
 import javax.annotation.Nullable;
 
 /**

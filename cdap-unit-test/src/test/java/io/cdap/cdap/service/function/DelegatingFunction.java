@@ -25,7 +25,6 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.service.DynamicPluginServiceApp;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.UUID;

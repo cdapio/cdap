@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.common.conf;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * CConfiguration is an extension of the Hadoop Configuration class. By default,

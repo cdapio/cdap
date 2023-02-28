@@ -41,13 +41,12 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.internal.io.ReflectionPutWriter;
 import io.cdap.cdap.internal.io.ReflectionRowReader;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation for {@link ObjectMappedTable}.

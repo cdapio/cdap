@@ -20,10 +20,9 @@ import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.logging.AuditLogConfig;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.netty.handler.codec.http.HttpMethod;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  * To test the {@link RouterAuditLookUp} scans all the handler classes that needs to be audit logged with more info.

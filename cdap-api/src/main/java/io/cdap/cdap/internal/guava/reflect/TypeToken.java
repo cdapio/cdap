@@ -19,7 +19,6 @@
 package io.cdap.cdap.internal.guava.reflect;
 
 import io.cdap.cdap.api.Predicate;
-
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;

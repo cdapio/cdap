@@ -16,17 +16,13 @@
 
 package io.cdap.cdap.security.server;
 
+import static org.junit.Assert.assertEquals;
+
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.utils.Networks;
-import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -35,8 +31,11 @@ import java.security.KeyStore;
 import java.util.Collections;
 import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
-
-import static org.junit.Assert.assertEquals;
+import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests for Mutual TLS a.k.a 2-way SSL Based Auth

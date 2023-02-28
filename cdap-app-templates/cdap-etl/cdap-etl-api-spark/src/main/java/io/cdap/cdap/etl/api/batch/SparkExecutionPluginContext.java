@@ -24,14 +24,13 @@ import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
 import io.cdap.cdap.etl.api.TransformContext;
-import org.apache.spark.Partition;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.spark.Partition;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 
 /**
  * Context passed to spark plugin types.

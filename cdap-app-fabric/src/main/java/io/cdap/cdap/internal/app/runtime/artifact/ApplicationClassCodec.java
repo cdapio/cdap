@@ -26,7 +26,6 @@ import com.google.gson.JsonSerializer;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.Requirements;
-
 import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 

@@ -20,10 +20,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.metadata.dummy.DummyMetadataConsumer;
 import io.cdap.cdap.spi.metadata.MetadataConsumer;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Set;
 
 /**
  * Tests for {@link MetadataConsumerProvider}

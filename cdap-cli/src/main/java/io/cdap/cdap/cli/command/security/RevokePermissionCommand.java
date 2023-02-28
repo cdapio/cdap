@@ -27,7 +27,6 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.Set;
 

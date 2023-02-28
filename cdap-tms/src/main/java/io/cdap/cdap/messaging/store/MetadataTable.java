@@ -21,7 +21,6 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;

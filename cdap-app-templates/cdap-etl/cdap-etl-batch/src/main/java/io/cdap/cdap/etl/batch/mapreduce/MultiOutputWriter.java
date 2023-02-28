@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.batch.mapreduce;
 
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
-
 import java.util.Map;
 
 /**

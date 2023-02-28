@@ -15,8 +15,6 @@
  */
 package io.cdap.cdap.api.common;
 
-import sun.misc.Unsafe;
-
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
@@ -36,6 +34,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import sun.misc.Unsafe;
 
 /**
  * Utility class that handles byte arrays, conversions to/from other types,

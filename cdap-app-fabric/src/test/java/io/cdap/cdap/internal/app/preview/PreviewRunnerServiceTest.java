@@ -27,8 +27,6 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.junit.Test;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -40,6 +38,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Test;
 
 /**
  * Unit test for {@link PreviewRunnerService}.

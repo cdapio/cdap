@@ -23,9 +23,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -41,6 +38,8 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides ComputeEngineCredentials either locally if no endpoint is provided, or remotely if endpoint is provided.

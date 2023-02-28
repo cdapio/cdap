@@ -18,10 +18,9 @@ package io.cdap.cdap.internal.app.runtime.batch;
 
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.app.metrics.MapReduceMetrics;
+import java.util.Map;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
-
-import java.util.Map;
 
 /**
  * Base class for gathering statistics from a running map/reduce task through its counters and for writing the data to

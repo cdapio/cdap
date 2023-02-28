@@ -20,9 +20,8 @@ import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scan;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.dataset.table.Table;
-import org.junit.Assert;
-
 import java.util.Map;
+import org.junit.Assert;
 
 /**
  * Data set table test helpers.

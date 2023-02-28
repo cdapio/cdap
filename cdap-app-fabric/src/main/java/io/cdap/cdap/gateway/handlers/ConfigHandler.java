@@ -29,7 +29,6 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.io.IOException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;

@@ -17,11 +17,10 @@
 package io.cdap.cdap.internal.app.worker;
 
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import java.net.URI;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
-
-import java.net.URI;
 
 /**
  * The {@link TwillApplication} for launching task workers along with artifact localizers as sidecar containers.

@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.api.batch;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.workflow.WorkflowNodeState;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-
 import java.util.Map;
 
 /**

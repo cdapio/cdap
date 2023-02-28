@@ -24,7 +24,6 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.worker.sidecar.AbstractArtifactLocalizer;
 import io.cdap.cdap.proto.id.ArtifactId;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;

@@ -63,13 +63,6 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.test.remote.RemoteApplicationManager;
 import io.cdap.cdap.test.remote.RemoteArtifactManager;
 import io.cdap.common.ContentProvider;
-import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -88,6 +81,12 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link TestManager} for integration tests.

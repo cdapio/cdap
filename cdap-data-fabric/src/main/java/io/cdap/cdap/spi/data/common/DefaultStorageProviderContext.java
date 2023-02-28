@@ -21,7 +21,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.spi.data.StorageProviderContext;
-
 import java.util.Collections;
 import java.util.Map;
 

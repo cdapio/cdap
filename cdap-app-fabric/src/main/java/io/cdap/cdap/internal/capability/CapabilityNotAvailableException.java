@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.capability;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
-
 import java.net.HttpURLConnection;
 
 /**

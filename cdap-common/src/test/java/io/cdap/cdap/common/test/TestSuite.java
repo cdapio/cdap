@@ -18,6 +18,7 @@ package io.cdap.cdap.common.test;
 
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.lang.ClassLoaders;
+import java.util.List;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runner.Runner;
@@ -26,8 +27,6 @@ import org.junit.runners.ParentRunner;
 import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
-
-import java.util.List;
 
 /**
  * A test suite similar to Junit {@link Suite} that can be used in the {@link RunWith} annotation to run multiple

@@ -31,10 +31,6 @@ import io.cdap.cdap.logging.clean.FileMetadataCleaner;
 import io.cdap.cdap.logging.clean.LogCleaner;
 import io.cdap.cdap.logging.meta.FileMetaDataWriter;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.common.Threads;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.Map;
@@ -42,6 +38,9 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Log Appender implementation for CDAP Log framework

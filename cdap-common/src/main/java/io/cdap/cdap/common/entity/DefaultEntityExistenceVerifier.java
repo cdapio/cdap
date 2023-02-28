@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
 import java.util.Map;
 
 /**

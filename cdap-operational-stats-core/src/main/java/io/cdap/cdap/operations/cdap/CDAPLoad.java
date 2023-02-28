@@ -22,7 +22,6 @@ import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.operations.OperationalStats;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;

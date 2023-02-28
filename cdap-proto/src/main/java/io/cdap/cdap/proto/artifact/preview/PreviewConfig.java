@@ -18,7 +18,6 @@ package io.cdap.cdap.proto.artifact.preview;
 
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
-
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

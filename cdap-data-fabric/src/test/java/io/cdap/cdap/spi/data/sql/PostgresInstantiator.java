@@ -19,7 +19,6 @@ package io.cdap.cdap.spi.data.sql;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
-
 import java.io.File;
 import java.io.IOException;
 

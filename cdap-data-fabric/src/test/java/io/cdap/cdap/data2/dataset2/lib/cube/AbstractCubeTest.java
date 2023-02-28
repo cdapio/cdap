@@ -31,9 +31,6 @@ import io.cdap.cdap.api.dataset.lib.cube.Interpolators;
 import io.cdap.cdap.api.dataset.lib.cube.MeasureType;
 import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

@@ -29,12 +29,11 @@ import io.cdap.cdap.proto.metadata.lineage.DataRecord;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRecord;
 import io.cdap.cdap.proto.metadata.lineage.RelationRecord;
-import org.apache.twill.api.RunId;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.apache.twill.api.RunId;
 
 /**
  * Serializes {@link Lineage} into a {@link LineageRecord}.

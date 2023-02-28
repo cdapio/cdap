@@ -28,7 +28,6 @@ import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

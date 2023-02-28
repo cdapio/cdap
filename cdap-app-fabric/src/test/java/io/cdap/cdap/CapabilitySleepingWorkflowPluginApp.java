@@ -24,11 +24,10 @@ import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple workflow, that sleeps inside a CustomAction

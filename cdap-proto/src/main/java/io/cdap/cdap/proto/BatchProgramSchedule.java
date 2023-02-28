@@ -18,7 +18,6 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
-
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;

@@ -19,6 +19,11 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import joptsimple.OptionSpec;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.LocalFile;
@@ -30,12 +35,6 @@ import org.apache.twill.internal.DefaultLocalFile;
 import org.apache.twill.internal.appmaster.ApplicationMasterMain;
 import org.apache.twill.internal.container.TwillContainerMain;
 import org.apache.twill.internal.utils.Dependencies;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 /**
  * Util class to build jar files needed by {@code DataprocRuntimeJobManager}.

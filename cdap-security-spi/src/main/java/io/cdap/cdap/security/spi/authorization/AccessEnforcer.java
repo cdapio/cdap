@@ -23,7 +23,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-
 import java.util.Collections;
 import java.util.Set;
 

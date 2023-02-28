@@ -34,7 +34,6 @@ import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;

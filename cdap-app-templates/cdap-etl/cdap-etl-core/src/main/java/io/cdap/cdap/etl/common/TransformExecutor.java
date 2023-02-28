@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.etl.api.Destroyable;
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.Transformation;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;

@@ -37,6 +37,15 @@ import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.TopicId;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Threads;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
@@ -55,16 +64,6 @@ import org.quartz.spi.TriggerFiredBundle;
 import org.quartz.utils.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend

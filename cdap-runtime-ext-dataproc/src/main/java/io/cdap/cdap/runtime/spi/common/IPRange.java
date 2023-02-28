@@ -17,7 +17,6 @@
 package io.cdap.cdap.runtime.spi.common;
 
 import com.google.common.net.InetAddresses;
-
 import java.net.InetAddress;
 
 /**

@@ -22,6 +22,11 @@ import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.serialize.LoggingEvent;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import java.io.Closeable;
+import java.io.Flushable;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -29,12 +34,6 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Closeable;
-import java.io.Flushable;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
 
 /**
  * Represents output stream for a log file.

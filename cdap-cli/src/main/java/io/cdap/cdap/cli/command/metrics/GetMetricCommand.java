@@ -28,7 +28,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.MetricsClient;
 import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;

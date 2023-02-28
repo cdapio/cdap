@@ -24,7 +24,6 @@ import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
-
 import java.util.Map;
 
 /**

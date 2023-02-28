@@ -19,7 +19,6 @@ package io.cdap.cdap.common.startup;
 import com.google.common.base.Predicate;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.internal.guava.ClassPath;
-
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URI;

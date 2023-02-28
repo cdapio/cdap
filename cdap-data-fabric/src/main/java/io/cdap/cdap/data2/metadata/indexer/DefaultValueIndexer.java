@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.metadata.indexer;
 import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
 import io.cdap.cdap.data2.metadata.dataset.SortInfo;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

@@ -29,7 +29,6 @@ import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.logging.context.ApplicationLoggingContext;
 import io.cdap.cdap.logging.serialize.DelegatingLoggingEvent;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

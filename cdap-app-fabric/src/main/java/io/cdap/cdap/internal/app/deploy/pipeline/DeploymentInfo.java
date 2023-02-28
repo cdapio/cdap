@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import org.apache.twill.filesystem.Location;
-
 import java.io.File;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Contains information about input and output locations for deployment.

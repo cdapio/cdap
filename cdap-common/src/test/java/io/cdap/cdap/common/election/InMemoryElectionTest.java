@@ -16,12 +16,6 @@
 
 package io.cdap.cdap.common.election;
 
-import org.apache.twill.api.ElectionHandler;
-import org.apache.twill.common.Cancellable;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -31,6 +25,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.twill.api.ElectionHandler;
+import org.apache.twill.common.Cancellable;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test for the {@link InMemoryElectionRegistry}.

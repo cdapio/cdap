@@ -20,7 +20,6 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.Map;
 
 /**

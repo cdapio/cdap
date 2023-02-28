@@ -20,7 +20,6 @@ import com.google.common.base.Defaults;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.internal.lang.FieldVisitor;
 import io.cdap.cdap.internal.lang.Reflections;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;

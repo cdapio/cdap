@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.test;
 
-import org.junit.rules.ExternalResource;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.rules.ExternalResource;
 
 /**
  * An {@link ExternalResource} that maintain a singleton to another {@link ExternalResource} so that

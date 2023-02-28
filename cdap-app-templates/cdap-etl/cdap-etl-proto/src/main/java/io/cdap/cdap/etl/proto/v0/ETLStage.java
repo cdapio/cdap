@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.proto.v0;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 import io.cdap.cdap.etl.proto.v1.Plugin;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

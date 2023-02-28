@@ -16,7 +16,6 @@
 package io.cdap.cdap.common.zookeeper.coordination;
 
 import com.google.common.base.Function;
-
 import javax.annotation.Nullable;
 
 /**

@@ -26,7 +26,6 @@ import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.SplitReader;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.table.Table;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

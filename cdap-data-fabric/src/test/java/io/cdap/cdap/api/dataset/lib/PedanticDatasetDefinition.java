@@ -22,7 +22,6 @@ import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

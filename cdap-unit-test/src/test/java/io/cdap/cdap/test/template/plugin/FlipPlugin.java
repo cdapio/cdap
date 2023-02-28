@@ -19,7 +19,6 @@ package io.cdap.cdap.test.template.plugin;
 import com.google.common.base.Function;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
-
 import javax.annotation.Nullable;
 
 /**

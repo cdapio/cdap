@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
+import java.io.IOException;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
-import java.io.IOException;
 
 /**
  * This is a delegating RecordReader, which delegates the functionality to the

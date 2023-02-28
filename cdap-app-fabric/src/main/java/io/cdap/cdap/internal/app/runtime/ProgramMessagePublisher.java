@@ -22,7 +22,6 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.messaging.context.AbstractMessagePublisher;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.io.IOException;
 import java.util.Iterator;
 

@@ -19,7 +19,6 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

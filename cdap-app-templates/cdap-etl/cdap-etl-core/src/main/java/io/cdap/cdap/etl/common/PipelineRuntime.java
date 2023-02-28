@@ -29,7 +29,6 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.etl.api.StageContext;
-
 import java.io.Serializable;
 import java.util.Optional;
 

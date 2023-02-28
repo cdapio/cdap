@@ -26,10 +26,9 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
-import org.apache.twill.filesystem.Location;
-
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Action that moves files from one fileset into another, optionally filtering files that match a regex.

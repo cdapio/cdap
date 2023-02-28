@@ -15,13 +15,12 @@
  */
 package io.cdap.cdap.common.discovery;
 
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.ServiceDiscovered;
-
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
  * Randomly picks endpoint from the list of available endpoints.

@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.data.table.field;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;

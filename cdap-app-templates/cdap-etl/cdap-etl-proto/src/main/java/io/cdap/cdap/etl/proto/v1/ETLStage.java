@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.proto.v1;
 
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
-
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;

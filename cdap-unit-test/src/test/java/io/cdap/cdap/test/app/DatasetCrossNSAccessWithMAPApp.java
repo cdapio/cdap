@@ -21,10 +21,9 @@ import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import java.io.IOException;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-
-import java.io.IOException;
 
 /**
  * App which copies data from one KVTable to another using a MapReduce program.

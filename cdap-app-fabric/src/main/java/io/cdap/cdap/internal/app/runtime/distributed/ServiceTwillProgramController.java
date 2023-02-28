@@ -18,11 +18,10 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import java.util.Map;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  *  A ProgramController for Services that are launched through Twill.

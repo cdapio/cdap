@@ -19,10 +19,9 @@ package io.cdap.cdap.internal.app.runtime.batch;
 import io.cdap.cdap.api.data.batch.BatchWritable;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.AbstractBatchWritableOutputFormat;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
+import java.util.Map;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
-import java.util.Map;
 
 /**
  * An {@link OutputFormat} for writing data from {@link BatchWritable} for MapReduce.

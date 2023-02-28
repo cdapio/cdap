@@ -22,12 +22,11 @@ import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.master.environment.k8s.MasterEnvironmentMain;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Default implementation of {@link MasterEnvironmentContext} that reflects the actual master runtime environment.

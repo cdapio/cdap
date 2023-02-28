@@ -20,12 +20,11 @@ import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.SystemServiceMeta;
 import io.cdap.cdap.test.XSlowTests;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.util.List;
 
 /**
  * Test for {@link MonitorClient}.

@@ -32,7 +32,6 @@ import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.tool.ETLVersion;
 import io.cdap.cdap.proto.artifact.AppRequest;
-
 import java.util.Set;
 
 /**

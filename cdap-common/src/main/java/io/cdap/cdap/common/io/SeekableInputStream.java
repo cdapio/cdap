@@ -15,11 +15,10 @@
  */
 package io.cdap.cdap.common.io;
 
-import org.apache.hadoop.fs.Seekable;
-
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.hadoop.fs.Seekable;
 
 /**
  * Abstract base class for {@link InputStream} that implements the {@link Seekable} interface.

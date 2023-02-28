@@ -19,13 +19,12 @@ package io.cdap.cdap.internal.app.runtime.distributed.remote;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
+import java.util.Map;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.util.Map;
 
 /**
  * Unit test for {@link RemoteExecutionJobMain}.

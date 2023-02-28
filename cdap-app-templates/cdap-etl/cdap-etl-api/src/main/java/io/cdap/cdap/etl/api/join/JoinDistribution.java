@@ -20,7 +20,6 @@ import io.cdap.cdap.etl.api.join.error.BroadcastError;
 import io.cdap.cdap.etl.api.join.error.DistributionSizeError;
 import io.cdap.cdap.etl.api.join.error.DistributionStageError;
 import io.cdap.cdap.etl.api.join.error.JoinError;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

@@ -18,7 +18,6 @@ package io.cdap.cdap.common.collect;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-
 import java.util.Collection;
 import java.util.List;
 

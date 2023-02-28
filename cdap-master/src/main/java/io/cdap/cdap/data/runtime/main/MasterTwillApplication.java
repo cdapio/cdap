@@ -27,14 +27,6 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.api.TwillSpecification.Builder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -48,6 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.api.TwillSpecification.Builder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TwillApplication wrapper for Master Services running in YARN.

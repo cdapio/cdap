@@ -24,16 +24,15 @@ import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import io.cdap.cdap.proto.id.DatasetId;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
-import org.junit.ClassRule;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.SortedMap;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.junit.ClassRule;
 
 /**
  *

@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.internal.app;
 
-import org.apache.twill.api.EventHandlerSpecification;
-import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillSpecification;
-
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.twill.api.EventHandlerSpecification;
+import org.apache.twill.api.RuntimeSpecification;
+import org.apache.twill.api.TwillSpecification;
 
 /**
  * Forwarding TwillSpecification implementation.

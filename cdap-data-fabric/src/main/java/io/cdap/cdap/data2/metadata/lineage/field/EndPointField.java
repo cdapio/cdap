@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.metadata.lineage.field;
 
 import io.cdap.cdap.api.lineage.field.EndPoint;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

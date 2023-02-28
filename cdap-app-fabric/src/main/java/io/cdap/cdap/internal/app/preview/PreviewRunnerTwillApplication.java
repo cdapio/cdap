@@ -17,12 +17,11 @@
 package io.cdap.cdap.internal.app.preview;
 
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import java.net.URI;
+import java.util.Optional;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
-
-import java.net.URI;
-import java.util.Optional;
 
 /**
  * The {@link TwillApplication} for launch preview runner.

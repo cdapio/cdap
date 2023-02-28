@@ -20,7 +20,6 @@ import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

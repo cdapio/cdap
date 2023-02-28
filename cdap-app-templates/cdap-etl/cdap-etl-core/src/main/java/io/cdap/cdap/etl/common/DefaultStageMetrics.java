@@ -20,7 +20,6 @@ import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.common.plugin.Caller;
 import io.cdap.cdap.etl.common.plugin.NoStageLoggingCaller;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;

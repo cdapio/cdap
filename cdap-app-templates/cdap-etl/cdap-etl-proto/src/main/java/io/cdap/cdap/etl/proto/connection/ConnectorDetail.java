@@ -18,7 +18,6 @@
 package io.cdap.cdap.etl.proto.connection;
 
 import io.cdap.cdap.etl.api.connector.SampleType;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;

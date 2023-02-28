@@ -29,15 +29,14 @@ import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.tephra.Transaction;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * App to test proper transaction handling in the map reduce service.

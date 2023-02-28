@@ -18,7 +18,6 @@ package io.cdap.cdap.cli;
 
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.net.URI;
 import java.util.Objects;
 import javax.annotation.Nullable;

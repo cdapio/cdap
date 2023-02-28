@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.Collections;
 import java.util.Set;
 

@@ -25,17 +25,16 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.report.ReportGenerationApp;
 import io.cdap.cdap.report.util.Constants;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 import javax.crypto.KeyGenerator;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * spark main class, starts and waits for the tms subscriber thread to read run record meta and write to files

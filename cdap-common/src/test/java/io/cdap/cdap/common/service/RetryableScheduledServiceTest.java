@@ -20,14 +20,13 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.retry.RetriesExhaustedException;
 import io.cdap.cdap.common.utils.Tasks;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test class for the {@link AbstractRetryableScheduledService}.

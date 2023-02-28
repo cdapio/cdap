@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.service.http;
 
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
-
 import java.util.concurrent.Callable;
 
 /**

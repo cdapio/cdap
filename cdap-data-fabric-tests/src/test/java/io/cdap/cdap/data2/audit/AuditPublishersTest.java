@@ -22,10 +22,9 @@ import io.cdap.cdap.proto.audit.AuditMessage;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  * Unit test for {@link AuditPublishers}.

@@ -19,7 +19,6 @@ package io.cdap.cdap.test;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;

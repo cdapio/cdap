@@ -21,7 +21,6 @@ import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

@@ -35,7 +35,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
-
 import java.io.File;
 import java.util.Set;
 import java.util.jar.Manifest;

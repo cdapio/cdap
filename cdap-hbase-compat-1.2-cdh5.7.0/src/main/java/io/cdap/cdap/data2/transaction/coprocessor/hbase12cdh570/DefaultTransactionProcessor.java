@@ -22,6 +22,10 @@ import io.cdap.cdap.data2.increment.hbase12cdh570.IncrementTxFilter;
 import io.cdap.cdap.data2.transaction.coprocessor.CConfigurationCache;
 import io.cdap.cdap.data2.transaction.coprocessor.CConfigurationCacheSupplier;
 import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -45,11 +49,6 @@ import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.hbase.coprocessor.CellSkipFilter;
 import org.apache.tephra.hbase.coprocessor.TransactionProcessor;
 import org.apache.tephra.util.TxUtils;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link org.apache.tephra.hbase.coprocessor.TransactionProcessor}

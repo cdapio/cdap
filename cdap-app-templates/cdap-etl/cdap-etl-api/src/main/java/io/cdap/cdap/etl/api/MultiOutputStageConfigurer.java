@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

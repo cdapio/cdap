@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.metadata;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;

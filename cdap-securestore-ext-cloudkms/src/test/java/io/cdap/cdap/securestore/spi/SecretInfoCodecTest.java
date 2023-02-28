@@ -18,12 +18,11 @@ package io.cdap.cdap.securestore.spi;
 
 import io.cdap.cdap.securestore.gcp.cloudkms.SecretInfo;
 import io.cdap.cdap.securestore.gcp.cloudkms.SecretInfoCodec;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for encoding and decoding {@link SecretInfo}.

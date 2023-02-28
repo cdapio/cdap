@@ -17,10 +17,9 @@
 package io.cdap.cdap.common.twill;
 
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
-import org.apache.twill.api.logging.LogEntry;
-
 import java.util.Map;
 import java.util.Set;
+import org.apache.twill.api.logging.LogEntry;
 
 /**
  * Interface that defines a set of methods that will be used for management of CDAP Services.

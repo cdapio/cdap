@@ -20,11 +20,10 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
 import io.cdap.cdap.data2.dataset2.SingleThreadDatasetCache;
-import org.apache.tephra.TransactionFailureException;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Map;
+import org.apache.tephra.TransactionFailureException;
+import org.junit.Test;
 
 public class SingleThreadDatasetCacheTest extends DynamicDatasetCacheTest {
 

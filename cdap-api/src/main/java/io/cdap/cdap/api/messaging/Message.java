@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.messaging;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;

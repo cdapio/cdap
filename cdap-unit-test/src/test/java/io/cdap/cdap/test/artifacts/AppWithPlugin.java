@@ -43,6 +43,9 @@ import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowContext;
+import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -54,10 +57,6 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.junit.Assert;
 import scala.Tuple2;
-
-import java.io.IOException;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 
 /**
  * App that uses a Plugin.

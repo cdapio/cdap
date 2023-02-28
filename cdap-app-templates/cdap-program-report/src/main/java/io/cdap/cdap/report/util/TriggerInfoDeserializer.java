@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.report.proto.SimpleTriggerInfo;
-
 import java.lang.reflect.Type;
 
 /**

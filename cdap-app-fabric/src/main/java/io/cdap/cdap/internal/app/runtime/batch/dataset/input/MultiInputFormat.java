@@ -18,6 +18,10 @@ package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.ConfigurationUtil;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -27,11 +31,6 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An {@link InputFormat} that delegates behavior of InputFormat to multiple other InputFormats.

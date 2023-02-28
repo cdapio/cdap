@@ -27,13 +27,12 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
+import java.net.InetSocketAddress;
+import javax.net.SocketFactory;
 import org.apache.commons.net.DefaultSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-
-import java.net.InetSocketAddress;
-import javax.net.SocketFactory;
 
 /**
  * Tests Netty Router running on HTTP.

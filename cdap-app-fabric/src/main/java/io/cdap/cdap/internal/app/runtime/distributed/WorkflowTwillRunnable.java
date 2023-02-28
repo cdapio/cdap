@@ -38,11 +38,10 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.master.spi.twill.Completable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.TwillRunnable;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillRunnable;
 
 /**
  * The {@link TwillRunnable} for running a workflow driver.

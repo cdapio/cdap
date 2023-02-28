@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.services;
 
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
-
 import javax.annotation.Nullable;
 
 /**

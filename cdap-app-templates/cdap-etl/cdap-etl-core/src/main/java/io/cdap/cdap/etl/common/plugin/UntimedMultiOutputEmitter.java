@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.common.plugin;
 
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.MultiOutputEmitter;
-
 import java.util.Map;
 
 /**

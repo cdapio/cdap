@@ -22,11 +22,10 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.plugin.PluginClass;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.SortedMap;
 import java.util.TreeMap;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  */

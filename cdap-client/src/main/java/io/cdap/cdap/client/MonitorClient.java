@@ -34,7 +34,6 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;

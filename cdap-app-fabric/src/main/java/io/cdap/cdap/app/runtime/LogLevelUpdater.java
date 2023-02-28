@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.app.runtime;
 
-import org.apache.twill.api.logging.LogEntry;
-
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.apache.twill.api.logging.LogEntry;
 
 /**
  * Provides methods to update or reset log levels of a program at runtime in distributed mode.

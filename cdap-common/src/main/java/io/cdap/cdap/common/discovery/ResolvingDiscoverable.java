@@ -15,12 +15,11 @@
  */
 package io.cdap.cdap.common.discovery;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 /**
  * Discoverable that resolves 0.0.0.0 to a routable interface.

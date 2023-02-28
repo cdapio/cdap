@@ -23,7 +23,6 @@ import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageLifecycle;
 import io.cdap.cdap.etl.api.validation.ValidationException;
-
 import java.util.Iterator;
 
 /**

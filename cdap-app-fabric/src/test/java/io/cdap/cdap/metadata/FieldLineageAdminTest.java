@@ -49,10 +49,6 @@ import io.cdap.cdap.proto.metadata.lineage.FieldOperationOutput;
 import io.cdap.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,6 +58,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test for {@link FieldLineageAdmin}.

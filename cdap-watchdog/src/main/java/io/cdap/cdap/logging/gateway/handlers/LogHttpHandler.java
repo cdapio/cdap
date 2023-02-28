@@ -38,7 +38,6 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
-
 import java.io.IOException;
 import java.util.List;
 import javax.ws.rs.DefaultValue;

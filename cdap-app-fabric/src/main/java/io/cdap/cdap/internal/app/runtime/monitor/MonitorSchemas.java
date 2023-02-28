@@ -16,15 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import javax.annotation.Nullable;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Loads Avro schemas for Monitor request and response.

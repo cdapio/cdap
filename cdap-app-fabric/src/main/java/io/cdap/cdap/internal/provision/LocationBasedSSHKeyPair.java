@@ -20,12 +20,11 @@ import com.google.common.io.ByteStreams;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
-import org.apache.twill.filesystem.Location;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
+import org.apache.twill.filesystem.Location;
 
 /**
  * A {@link SSHKeyPair} that loads public and private keys from a given {@link Location}.

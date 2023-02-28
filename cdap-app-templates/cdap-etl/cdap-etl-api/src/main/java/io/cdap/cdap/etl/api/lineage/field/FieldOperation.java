@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.api.lineage.field;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Objects;
 
 /**

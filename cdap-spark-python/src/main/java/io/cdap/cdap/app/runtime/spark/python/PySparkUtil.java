@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.runtime.spark.python;
 
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;

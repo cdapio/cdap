@@ -18,10 +18,9 @@ package io.cdap.cdap.cli;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
-import org.apache.commons.cli.Options;
-
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.cli.Options;
 
 /**
  * Represents the command line arguments for {@link CLIMain}.

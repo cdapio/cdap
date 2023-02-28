@@ -27,11 +27,6 @@ import io.cdap.cdap.messaging.store.MessageTableKey;
 import io.cdap.cdap.messaging.store.RawMessageTableEntry;
 import io.cdap.cdap.messaging.store.RollbackRequest;
 import io.cdap.cdap.messaging.store.ScanRequest;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBException;
-import org.iq80.leveldb.WriteBatch;
-import org.iq80.leveldb.WriteOptions;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,6 +35,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBException;
+import org.iq80.leveldb.WriteBatch;
+import org.iq80.leveldb.WriteOptions;
 
 /**
  * LevelDB implementation of {@link MessageTable}.

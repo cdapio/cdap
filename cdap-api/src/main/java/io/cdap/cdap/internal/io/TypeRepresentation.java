@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.io;
 
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
-
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;

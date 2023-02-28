@@ -23,7 +23,6 @@ import com.amazonaws.regions.Regions;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
-
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;

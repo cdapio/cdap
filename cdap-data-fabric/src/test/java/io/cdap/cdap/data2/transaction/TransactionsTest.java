@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.transaction;
 
+import static io.cdap.cdap.api.annotation.TransactionControl.EXPLICIT;
+import static io.cdap.cdap.api.annotation.TransactionControl.IMPLICIT;
+
 import io.cdap.cdap.api.annotation.TransactionPolicy;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static io.cdap.cdap.api.annotation.TransactionControl.EXPLICIT;
-import static io.cdap.cdap.api.annotation.TransactionControl.IMPLICIT;
 
 @SuppressWarnings("unused")
 public class TransactionsTest {

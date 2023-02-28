@@ -18,7 +18,6 @@ package io.cdap.cdap.gateway.handlers.log;
 
 import io.cdap.cdap.logging.read.Callback;
 import io.cdap.cdap.logging.read.LogEvent;
-
 import java.util.ArrayList;
 
 /**

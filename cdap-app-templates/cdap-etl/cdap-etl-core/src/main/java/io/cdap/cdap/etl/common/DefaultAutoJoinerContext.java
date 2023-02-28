@@ -20,7 +20,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinStage;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

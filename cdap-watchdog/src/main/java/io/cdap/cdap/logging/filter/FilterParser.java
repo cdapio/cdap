@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.filter;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.io.StringReader;

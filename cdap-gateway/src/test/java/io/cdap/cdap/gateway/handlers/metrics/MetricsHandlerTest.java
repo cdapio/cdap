@@ -33,12 +33,6 @@ import io.cdap.cdap.app.metrics.MapReduceMetrics;
 import io.cdap.cdap.app.metrics.ProgramUserMetrics;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.MetricQueryResult;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,6 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Search available contexts and metrics tests

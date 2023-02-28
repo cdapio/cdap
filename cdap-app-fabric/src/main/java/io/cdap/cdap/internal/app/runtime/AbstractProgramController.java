@@ -26,11 +26,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import org.apache.twill.api.RunId;
-import org.apache.twill.common.Cancellable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -42,6 +37,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Cancellable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract base implementation of {@link ProgramController} that governs state transitions as well as

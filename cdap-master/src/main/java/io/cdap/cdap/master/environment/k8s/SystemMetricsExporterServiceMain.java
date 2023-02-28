@@ -30,7 +30,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.jmx.JMXMetricsCollectorFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;

@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.lang;
 
 import com.google.common.base.Function;
-
 import javax.annotation.Nullable;
 
 /**

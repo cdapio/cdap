@@ -29,7 +29,6 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.api.workflow.WorkflowInfo;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

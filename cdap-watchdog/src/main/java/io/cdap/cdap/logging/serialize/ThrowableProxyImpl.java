@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
-
 import java.util.Arrays;
 
 /**

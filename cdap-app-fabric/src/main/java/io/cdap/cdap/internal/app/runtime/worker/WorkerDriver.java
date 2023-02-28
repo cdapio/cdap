@@ -30,10 +30,9 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.lang.Reflections;
+import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.Executor;
 
 /**
  * A {@link Service} for executing {@link Worker}s.

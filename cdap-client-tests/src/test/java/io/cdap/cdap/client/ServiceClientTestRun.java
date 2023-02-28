@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.client;
 
+import static org.junit.Assert.assertEquals;
+
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.app.program.ManifestFields;
@@ -36,6 +38,10 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+import java.util.jar.Manifest;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
@@ -45,13 +51,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.List;
-import java.util.jar.Manifest;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests for {@link ServiceClient}.

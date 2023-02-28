@@ -18,10 +18,9 @@ package io.cdap.cdap.master.environment.k8s;
 
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.util.Config;
-import okhttp3.OkHttpClient;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import okhttp3.OkHttpClient;
 
 /**
  * Creates Kubernetes ApiClients.

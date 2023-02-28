@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.dataset;
 
 import io.cdap.cdap.api.dataset.DatasetProperties;
-
 import java.util.Objects;
 
 /**

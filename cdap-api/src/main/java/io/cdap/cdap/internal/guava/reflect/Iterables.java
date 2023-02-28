@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.guava.reflect;
 
 import io.cdap.cdap.api.Predicate;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;

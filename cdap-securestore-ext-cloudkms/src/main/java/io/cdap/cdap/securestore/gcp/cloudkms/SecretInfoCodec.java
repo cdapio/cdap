@@ -18,7 +18,6 @@ package io.cdap.cdap.securestore.gcp.cloudkms;
 
 import io.cdap.cdap.securestore.spi.secret.Decoder;
 import io.cdap.cdap.securestore.spi.secret.Encoder;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;

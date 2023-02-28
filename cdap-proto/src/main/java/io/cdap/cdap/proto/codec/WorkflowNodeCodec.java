@@ -26,7 +26,6 @@ import io.cdap.cdap.api.workflow.WorkflowConditionNode;
 import io.cdap.cdap.api.workflow.WorkflowForkNode;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowNodeType;
-
 import java.lang.reflect.Type;
 
 /**

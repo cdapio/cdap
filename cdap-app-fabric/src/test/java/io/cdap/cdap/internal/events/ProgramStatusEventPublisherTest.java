@@ -23,13 +23,6 @@ import io.cdap.cdap.internal.events.dummy.DummyEventWriter;
 import io.cdap.cdap.internal.events.dummy.DummyEventWriterExtensionProvider;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.spi.events.EventWriter;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +32,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests for the {@link ProgramStatusEventPublisher}.

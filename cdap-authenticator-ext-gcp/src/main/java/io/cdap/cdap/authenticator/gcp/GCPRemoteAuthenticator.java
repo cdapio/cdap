@@ -21,7 +21,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
-
 import java.io.IOException;
 import java.sql.Date;
 import java.time.Clock;

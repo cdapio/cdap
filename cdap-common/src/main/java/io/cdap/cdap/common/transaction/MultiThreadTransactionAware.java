@@ -20,10 +20,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
+import java.util.Collection;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
-
-import java.util.Collection;
 
 /**
  * An abstract base class for implementing {@link TransactionAware} that is thread aware.

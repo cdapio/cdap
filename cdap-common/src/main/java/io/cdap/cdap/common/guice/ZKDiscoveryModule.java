@@ -30,6 +30,8 @@ import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -38,9 +40,6 @@ import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The Guice module for providing bindings for {@link DiscoveryService} and {@link DiscoveryServiceClient} that uses

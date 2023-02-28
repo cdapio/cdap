@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
 
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.Map;
 
 /**

@@ -17,9 +17,8 @@
 package io.cdap.cdap.etl.api.batch;
 
 import io.cdap.cdap.api.annotation.Beta;
-import org.apache.spark.api.java.JavaRDD;
-
 import java.io.Serializable;
+import org.apache.spark.api.java.JavaRDD;
 
 
 /**

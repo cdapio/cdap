@@ -25,10 +25,9 @@ import io.cdap.cdap.logging.appender.kafka.StringPartitioner;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.meta.KafkaCheckpointManager;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Reads logs in a distributed setup, using kafka for latest logs and files for older logs.

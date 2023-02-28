@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
-import org.apache.hadoop.hbase.client.Increment;
-
 import java.io.IOException;
+import org.apache.hadoop.hbase.client.Increment;
 
 /**
  * Builder for creating {@link Increment}. This builder should be used for cross HBase versions compatibility.

@@ -22,7 +22,6 @@ import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.cli.util.ArgumentParser;
 import io.cdap.cdap.client.MetricsClient;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;

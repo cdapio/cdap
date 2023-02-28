@@ -18,7 +18,6 @@ package io.cdap.cdap.metrics.process;
 
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.util.Arrays;
 
 /**

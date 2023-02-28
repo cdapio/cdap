@@ -17,13 +17,12 @@
 package io.cdap.cdap.common.discovery;
 
 import io.cdap.http.NettyHttpService;
-import org.apache.twill.discovery.Discoverable;
-
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * Enum representing URI scheme.

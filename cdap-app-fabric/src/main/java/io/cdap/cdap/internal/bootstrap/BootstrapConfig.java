@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.bootstrap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
-
 import java.util.Collections;
 import java.util.List;
 

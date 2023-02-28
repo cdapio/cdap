@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.pipeline.queue;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;

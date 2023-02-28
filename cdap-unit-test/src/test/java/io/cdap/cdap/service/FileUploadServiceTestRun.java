@@ -34,10 +34,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import org.apache.twill.filesystem.Location;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -47,6 +43,9 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.filesystem.Location;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

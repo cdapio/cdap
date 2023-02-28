@@ -31,11 +31,10 @@ import com.google.cloud.dataproc.v1.InstanceGroupAutoscalingPolicyConfig;
 import com.google.cloud.dataproc.v1.RegionName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Dataproc's Auto-Scaling policy Operations and configurations to be used when a pipeline is enabled with

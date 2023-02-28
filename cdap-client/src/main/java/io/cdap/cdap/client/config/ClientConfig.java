@@ -24,7 +24,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.common.http.HttpRequestConfig;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;

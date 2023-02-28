@@ -21,11 +21,10 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashMap;
 
 public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
 

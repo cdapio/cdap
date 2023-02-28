@@ -23,7 +23,6 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerContext;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import io.cdap.cdap.etl.common.TypeChecker;
-
 import java.util.Collection;
 import java.util.concurrent.Callable;
 

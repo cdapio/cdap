@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.dataset2.lib.table;
 
 import com.google.common.collect.Sets;
-
 import java.util.SortedSet;
 
 public final class CustomWithInner<T> {

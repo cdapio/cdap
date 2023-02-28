@@ -17,7 +17,6 @@ package io.cdap.cdap.common.zookeeper.coordination;
 
 import com.google.common.base.Objects;
 import com.google.common.primitives.Ints;
-
 import java.util.Comparator;
 
 /**

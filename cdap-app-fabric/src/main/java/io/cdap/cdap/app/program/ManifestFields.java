@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.program;
 
 import com.google.common.collect.ImmutableSet;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.jar.Attributes;

@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.common.io;
 
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.io.InputStream;
 import java.net.URI;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * A {@link LocationFactory} implementation that caches content of {@link InputStream} opened from

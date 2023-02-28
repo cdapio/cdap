@@ -25,12 +25,11 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.common.metadata.MetadataRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation for {@link MetadataReader} which used {@link RemoteMetadataClient} to read metadata.

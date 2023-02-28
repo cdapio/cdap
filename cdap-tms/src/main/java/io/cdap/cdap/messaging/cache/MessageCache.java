@@ -22,7 +22,6 @@ import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.messaging.store.MessageFilter;
-
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;

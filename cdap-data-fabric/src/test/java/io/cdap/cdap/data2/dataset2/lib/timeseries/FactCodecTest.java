@@ -23,11 +23,10 @@ import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

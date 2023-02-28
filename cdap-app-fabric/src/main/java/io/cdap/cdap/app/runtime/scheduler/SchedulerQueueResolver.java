@@ -23,7 +23,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import javax.annotation.Nullable;
 
 

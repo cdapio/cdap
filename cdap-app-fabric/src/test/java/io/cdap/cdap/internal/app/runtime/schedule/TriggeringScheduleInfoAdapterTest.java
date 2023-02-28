@@ -31,11 +31,10 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultPartitionTrigge
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultProgramStatusTriggerInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTimeTriggerInfo;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test serialize/deserialize TriggeringScheduleInfo

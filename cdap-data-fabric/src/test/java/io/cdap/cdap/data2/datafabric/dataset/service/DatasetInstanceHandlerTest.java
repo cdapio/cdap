@@ -38,15 +38,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
-import org.apache.http.HttpStatus;
-import org.apache.tephra.DefaultTransactionExecutor;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.inmemory.InMemoryTxSystemClient;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -55,6 +46,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.http.HttpStatus;
+import org.apache.tephra.DefaultTransactionExecutor;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Unit-test for {@link DatasetInstanceHandler}

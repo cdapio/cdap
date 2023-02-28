@@ -16,15 +16,14 @@
 
 package io.cdap.cdap.extension;
 
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests for {@link AbstractExtensionLoader}.

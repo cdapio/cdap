@@ -20,7 +20,6 @@ package io.cdap.cdap.etl.common.macro;
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;

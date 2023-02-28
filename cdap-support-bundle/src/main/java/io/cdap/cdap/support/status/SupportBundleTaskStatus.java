@@ -18,7 +18,6 @@ package io.cdap.cdap.support.status;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.annotations.SerializedName;
-
 import java.util.ArrayList;
 import java.util.List;
 

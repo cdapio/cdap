@@ -22,7 +22,6 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

@@ -24,13 +24,12 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.utils.ProjectInfo;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
 * Checks whether upgrade is complete, and marks the flag when it is done.

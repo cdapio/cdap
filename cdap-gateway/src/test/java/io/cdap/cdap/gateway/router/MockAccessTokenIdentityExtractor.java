@@ -26,7 +26,6 @@ import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.auth.UserIdentityPair;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-
 import java.util.LinkedHashSet;
 
 public class MockAccessTokenIdentityExtractor implements UserIdentityExtractor {

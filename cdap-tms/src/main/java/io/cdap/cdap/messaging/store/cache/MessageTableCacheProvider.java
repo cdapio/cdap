@@ -19,7 +19,6 @@ package io.cdap.cdap.messaging.store.cache;
 import io.cdap.cdap.messaging.cache.MessageCache;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.proto.id.TopicId;
-
 import javax.annotation.Nullable;
 
 /**

@@ -21,10 +21,9 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
+import javax.annotation.Nullable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-
-import javax.annotation.Nullable;
 
 /**
  * Used to read data written by {@link SingleConnectorSink}.

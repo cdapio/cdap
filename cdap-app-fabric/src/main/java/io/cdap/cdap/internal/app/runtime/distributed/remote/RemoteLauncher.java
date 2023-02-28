@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import org.apache.twill.internal.Constants;
-import org.apache.twill.launcher.TwillLauncher;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +33,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.apache.twill.internal.Constants;
+import org.apache.twill.launcher.TwillLauncher;
 
 /**
  * This class is copied from {@link TwillLauncher} to workaround TWILL-259. The only differences is in the

@@ -28,7 +28,6 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.common.cli.Arguments;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;

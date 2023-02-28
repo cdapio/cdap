@@ -18,7 +18,6 @@ package io.cdap.cdap.api.dataset.lib;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.dataset.DatasetProperties;
-
 import java.util.Map;
 import java.util.stream.Collectors;
 

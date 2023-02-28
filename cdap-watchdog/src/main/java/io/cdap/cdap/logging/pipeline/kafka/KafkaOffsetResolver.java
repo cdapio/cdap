@@ -19,6 +19,8 @@ package io.cdap.cdap.logging.pipeline.kafka;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import java.io.IOException;
+import java.util.Iterator;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
 import kafka.message.MessageAndOffset;
@@ -32,9 +34,6 @@ import org.apache.twill.kafka.client.BrokerInfo;
 import org.apache.twill.kafka.client.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * Resolve matching Kafka offset with given checkpoint.

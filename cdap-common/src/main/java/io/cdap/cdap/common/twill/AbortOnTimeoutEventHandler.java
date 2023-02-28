@@ -16,14 +16,13 @@
 package io.cdap.cdap.common.twill;
 
 import com.google.common.collect.ImmutableMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.EventHandlerContext;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A Twill {@link EventHandler} that abort the application if for some runnable it cannot provision container for

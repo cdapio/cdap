@@ -17,11 +17,10 @@
 package io.cdap.cdap.internal.app.runtime.batch.dataset.output;
 
 
+import java.io.IOException;
 import org.apache.hadoop.mapreduce.Job;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
 
 /**
  * Tests for {@link MultipleOutputs}.

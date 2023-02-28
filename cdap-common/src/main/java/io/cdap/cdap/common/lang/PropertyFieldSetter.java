@@ -19,7 +19,6 @@ import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Property;
 import io.cdap.cdap.internal.lang.FieldVisitor;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;

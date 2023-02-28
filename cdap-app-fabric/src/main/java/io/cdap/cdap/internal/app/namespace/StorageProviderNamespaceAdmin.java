@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.namespace;
 
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.IOException;
 import java.sql.SQLException;
 

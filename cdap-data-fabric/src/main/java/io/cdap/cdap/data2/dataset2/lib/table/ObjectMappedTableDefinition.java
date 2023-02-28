@@ -33,7 +33,6 @@ import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

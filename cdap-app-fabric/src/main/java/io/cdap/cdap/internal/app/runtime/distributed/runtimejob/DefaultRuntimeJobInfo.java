@@ -19,13 +19,12 @@ package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
-import org.apache.twill.api.LocalFile;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.twill.api.LocalFile;
 
 /**
  * Default implementation of {@link RuntimeJobInfo}.

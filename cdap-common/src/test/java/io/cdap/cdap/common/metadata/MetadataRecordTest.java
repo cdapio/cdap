@@ -30,13 +30,12 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.proto.id.WorkerId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link MetadataRecord}

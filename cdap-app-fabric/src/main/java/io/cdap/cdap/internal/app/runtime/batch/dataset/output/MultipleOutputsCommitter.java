@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset.output;
 
+import java.io.IOException;
+import java.util.Map;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * OutputCommitter that delegates to a collection of other OutputFormatCommitters.

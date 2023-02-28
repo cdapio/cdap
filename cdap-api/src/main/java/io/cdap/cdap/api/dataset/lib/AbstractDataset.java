@@ -19,16 +19,15 @@ package io.cdap.cdap.api.dataset.lib;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
 import io.cdap.cdap.api.metrics.MetricsCollector;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionAwares;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionAwares;
 
 /**
  * Handy abstract implementation of {@link Dataset} that acts on a list of underlying datasets and

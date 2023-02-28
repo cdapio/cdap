@@ -23,7 +23,6 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;

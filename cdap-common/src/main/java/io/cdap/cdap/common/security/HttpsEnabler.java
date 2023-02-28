@@ -27,7 +27,6 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-
 import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.KeyStore;

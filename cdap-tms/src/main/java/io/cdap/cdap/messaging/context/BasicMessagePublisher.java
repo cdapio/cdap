@@ -23,15 +23,14 @@ import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionAware;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 
 /**
  * Implementation of {@link MessagePublisher} that implements {@link TransactionAware} so that messages will be

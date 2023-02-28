@@ -18,7 +18,6 @@ package io.cdap.cdap.metadata;
 
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.Map;
 
 /**

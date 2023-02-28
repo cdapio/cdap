@@ -18,7 +18,6 @@
 package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.ServiceDiscoverer;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

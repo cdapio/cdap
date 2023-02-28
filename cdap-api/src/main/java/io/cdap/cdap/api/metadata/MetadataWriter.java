@@ -16,7 +16,6 @@
 package io.cdap.cdap.api.metadata;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Map;
 
 /**

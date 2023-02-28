@@ -103,6 +103,10 @@ import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.support.guice.SupportBundleServiceModule;
 import io.cdap.cdap.support.services.SupportBundleInternalService;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
@@ -110,11 +114,6 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.List;
 
 /**
  * Standalone Main.

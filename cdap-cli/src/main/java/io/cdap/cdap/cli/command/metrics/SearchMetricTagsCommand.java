@@ -23,7 +23,6 @@ import io.cdap.cdap.cli.util.ArgumentParser;
 import io.cdap.cdap.client.MetricsClient;
 import io.cdap.cdap.proto.MetricTagValue;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;

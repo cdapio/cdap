@@ -23,10 +23,9 @@ import io.cdap.cdap.test.MapReduceManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.app.MyKeyValueTableDefinition;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
 
 public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
 

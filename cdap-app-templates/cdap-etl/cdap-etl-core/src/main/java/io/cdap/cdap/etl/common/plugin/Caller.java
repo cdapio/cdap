@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common.plugin;
 
 import com.google.common.base.Throwables;
-
 import java.util.concurrent.Callable;
 
 /**

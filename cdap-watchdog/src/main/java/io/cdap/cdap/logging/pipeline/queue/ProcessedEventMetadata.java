@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.pipeline.queue;
 
 import io.cdap.cdap.logging.meta.Checkpoint;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 
