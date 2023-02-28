@@ -589,6 +589,38 @@
   </property>
 
   <property>
+    <name>app.run.records.ttl.days</name>
+    <value>0</value>
+    <description>
+      Amount of time (in days) to retain run records for old job runs.
+      This TTL is retroactive and applies to all runs regardless of what this
+      value was when the run was started.
+      Zero or negative values will cause run records to be retained indefinitely
+      and disable this feature.
+    </description>
+  </property>
+
+  <property>
+    <name>app.run.records.ttl.frequency.hours</name>
+    <value>12</value>
+    <description>
+      How frequently (in hours) to check for and delete old run records.
+      Will always wait at least 1 hour. This value is ignored if
+      app.run.records.table.ttl.days is set to zero.
+    </description>
+  </property>
+
+  <property>
+    <name>app.run.records.ttl.initial.delay.minutes</name>
+    <value>10</value>
+    <description>
+      How long (in minutes) to wait after initial start to initially scan for
+      old run records to delete. This value is ignored if
+      app.run.records.table.ttl.days is set to zero.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.max.start.seconds</name>
     <value>300</value>
     <description>
