@@ -40,6 +40,8 @@ import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,10 +93,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
-  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, Consumer<String> stopper,
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf, DiscoveryService discoveryService,
+                                       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
                                        MetricsCollectionService metricsCollectionService) {
     int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf);
+    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf, discoveryService, discoveryServiceClient);
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.taskCompletionConsumer = (succeeded, taskDetails) -> {

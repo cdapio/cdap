@@ -17,21 +17,26 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.inject.AbstractModule;
-import io.cdap.cdap.common.conf.CConfiguration;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * Module for Runnable tasks.
  */
 public class RunnableTaskModule extends AbstractModule {
 
-  private final CConfiguration cConf;
+  private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
-  public RunnableTaskModule(CConfiguration cConf) {
-    this.cConf = cConf;
+  public RunnableTaskModule(DiscoveryService discoveryService,
+                            DiscoveryServiceClient discoveryServiceClient) {
+    this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
   protected void configure() {
-    bind(CConfiguration.class).toInstance(cConf);
+    bind(DiscoveryService.class).toInstance(discoveryService);
+    bind(DiscoveryServiceClient.class).toInstance(discoveryServiceClient);
   }
 }

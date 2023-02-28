@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -34,9 +33,9 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.internal.remote.RunnableTaskModule;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
@@ -44,8 +43,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
-import io.cdap.cdap.master.environment.MasterEnvironments;
-import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -70,10 +67,16 @@ public class SystemAppTask implements RunnableTask {
   private static final Logger LOG = LoggerFactory.getLogger(SystemAppTask.class);
 
   private final CConfiguration cConf;
+  private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
-  SystemAppTask(CConfiguration cConf) {
+  SystemAppTask(CConfiguration cConf,
+                DiscoveryService discoveryService,
+                DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
+    this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -84,7 +87,7 @@ public class SystemAppTask implements RunnableTask {
     }
     LOG.debug("Received system app task for artifact {}", systemAppArtifactId);
 
-    Injector injector = createInjector(cConf);
+    Injector injector = createInjector(cConf, discoveryService, discoveryServiceClient);
 
     ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
     Impersonator impersonator = injector.getInstance(Impersonator.class);
@@ -148,7 +151,9 @@ public class SystemAppTask implements RunnableTask {
   }
 
   @VisibleForTesting
-  public static Injector createInjector(CConfiguration cConf) {
+  public static Injector createInjector(CConfiguration cConf,
+                                        DiscoveryService discoveryService,
+                                        DiscoveryServiceClient discoveryServiceClient) {
     return Guice.createInjector(
       new IOModule(),
       CoreSecurityRuntimeModule.getDistributedModule(cConf),
@@ -159,18 +164,7 @@ public class SystemAppTask implements RunnableTask {
       new SecureStoreClientModule(),
       new AuthenticationContextModules().getMasterModule(),
       new SystemAppModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-          if (masterEnv != null) {
-            bind(DiscoveryService.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-            bind(DiscoveryServiceClient.class)
-              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-          }
-        }
-      });
+      new RunnableTaskModule(discoveryService, discoveryServiceClient));
   }
 
   private SystemAppTaskContext buildTaskSystemAppContext(Injector injector, String systemAppNamespace,

@@ -84,7 +84,8 @@ public class TaskWorkerMetricsTest {
     };
 
     mockMetricsCollector.startAndWait();
-    taskWorkerService = new TaskWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService, discoveryService,
                                               mockMetricsCollector,
                                               new CommonNettyHttpServiceFactory(cConf, mockMetricsCollector));
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);

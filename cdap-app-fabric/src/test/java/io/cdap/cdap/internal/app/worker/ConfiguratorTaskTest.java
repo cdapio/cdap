@@ -18,21 +18,15 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.internal.app.runtime.distributed.MockMasterEnvironment;
-import io.cdap.cdap.master.environment.MasterEnvironments;
-import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Test;
 
 public class ConfiguratorTaskTest {
   @Test
-  public void testConfiguratorTaskInjector() throws Exception {
-    MasterEnvironment masterEnvironment = new MockMasterEnvironment();
-    masterEnvironment.initialize(null);
-    MasterEnvironment tmpMasterEnv = MasterEnvironments.setMasterEnvironment(masterEnvironment);
+  public void testConfiguratorTaskInjector()  {
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
 
-    Injector injector = ConfiguratorTask.createInjector(CConfiguration.create());
+    Injector injector = ConfiguratorTask.createInjector(CConfiguration.create(), discoveryService, discoveryService);
     injector.getInstance(ConfiguratorTask.ConfiguratorTaskRunner.class);
-
-    MasterEnvironments.setMasterEnvironment(tmpMasterEnv);
   }
 }

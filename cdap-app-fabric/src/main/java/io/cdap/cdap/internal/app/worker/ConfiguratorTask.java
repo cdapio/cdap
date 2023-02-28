@@ -35,6 +35,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.internal.remote.RunnableTaskModule;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -49,6 +50,8 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,20 +72,29 @@ public class ConfiguratorTask implements RunnableTask {
   private static final Logger LOG = LoggerFactory.getLogger(ConfiguratorTask.class);
 
   private final CConfiguration cConf;
+  private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
-  ConfiguratorTask(CConfiguration cConf) {
+  ConfiguratorTask(CConfiguration cConf,
+                   DiscoveryService discoveryService,
+                   DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
+    this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @VisibleForTesting
-  public static Injector createInjector(CConfiguration cConf) {
+  public static Injector createInjector(CConfiguration cConf,
+                                        DiscoveryService discoveryService,
+                                        DiscoveryServiceClient discoveryServiceClient) {
     return Guice.createInjector(
       new ConfigModule(cConf),
       RemoteAuthenticatorModules.getDefaultModule(),
       new LocalLocationModule(),
       new ConfiguratorTaskModule(),
-      new AuthenticationContextModules().getMasterWorkerModule()
+      new AuthenticationContextModules().getMasterWorkerModule(),
+      new RunnableTaskModule(discoveryService, discoveryServiceClient)
     );
   }
 
@@ -90,7 +102,7 @@ public class ConfiguratorTask implements RunnableTask {
   public void run(RunnableTaskContext context) throws Exception {
     AppDeploymentInfo deploymentInfo = GSON.fromJson(context.getParam(), AppDeploymentInfo.class);
 
-    Injector injector = createInjector(cConf);
+    Injector injector = createInjector(cConf, discoveryService, discoveryServiceClient);
     ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class).configure(deploymentInfo);
     AppSpecInfo appSpecInfo = result.getAppSpecInfo();
 

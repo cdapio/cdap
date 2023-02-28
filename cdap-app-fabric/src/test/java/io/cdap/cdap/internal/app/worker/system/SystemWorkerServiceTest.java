@@ -104,15 +104,16 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     );
 
     SConfiguration sConf = createSConf();
-
-    SystemWorkerService service = new SystemWorkerService(cConf, sConf, new InMemoryDiscoveryService(),
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    SystemWorkerService service = new SystemWorkerService(cConf, sConf, discoveryService,
                                                           metricsCollectionService, new CommonNettyHttpServiceFactory(
                                                             cConf, metricsCollectionService),
                                                           injector.getInstance(TokenManager.class),
                                                           new NoopTwillRunnerService(),
                                                           new NoopTwillRunnerService(),
                                                           getInjector().getInstance(ProvisioningService.class),
-                                                          Guice.createInjector(new RunnableTaskModule(cConf)),
+                                                          Guice.createInjector(
+                                                            new RunnableTaskModule(discoveryService, discoveryService)),
                                                           new AuthenticationTestContext(), new NoOpAccessController());
     service.startAndWait();
     this.systemWorkerService = service;

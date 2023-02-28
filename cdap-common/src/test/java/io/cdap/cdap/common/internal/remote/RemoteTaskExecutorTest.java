@@ -65,9 +65,10 @@ public class RemoteTaskExecutorTest {
     cConf = CConfiguration.create();
     discoveryService = new InMemoryDiscoveryService();
     remoteClientFactory = new RemoteClientFactory(discoveryService, new NoOpInternalAuthenticator());
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, className -> {
+        new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
         }, new NoOpMetricsCollectionService())
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
