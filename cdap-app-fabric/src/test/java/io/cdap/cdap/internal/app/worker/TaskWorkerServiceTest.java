@@ -88,8 +88,9 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
 
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
+      cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
@@ -112,8 +113,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 5);
 
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
+      cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
@@ -130,8 +132,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
 
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
+      cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
@@ -163,8 +166,9 @@ public class TaskWorkerServiceTest {
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 2);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
 
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, new InMemoryDiscoveryService(), metricsCollectionService,
+      cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
       new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service

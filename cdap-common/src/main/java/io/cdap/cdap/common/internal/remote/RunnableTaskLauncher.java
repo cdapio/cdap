@@ -21,6 +21,9 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
@@ -28,8 +31,13 @@ import io.cdap.cdap.common.conf.CConfiguration;
 public class RunnableTaskLauncher {
   private final Injector injector;
 
-  public RunnableTaskLauncher(CConfiguration cConf) {
-    injector = Guice.createInjector(new RunnableTaskModule(cConf));
+  public RunnableTaskLauncher(CConfiguration cConf,
+                              DiscoveryService discoveryService,
+                              DiscoveryServiceClient discoveryServiceClient) {
+    injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new RunnableTaskModule(discoveryService, discoveryServiceClient)
+    );
   }
 
   /**

@@ -16,18 +16,13 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
-import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
-import io.cdap.cdap.master.environment.MasterEnvironments;
-import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * ConfiguratorTaskModule specifies the binding for a {@link io.cdap.cdap.internal.app.worker.ConfiguratorTask}
@@ -36,17 +31,9 @@ public class ConfiguratorTaskModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-    bind(DiscoveryService.class)
-      .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
-    bind(DiscoveryServiceClient.class)
-      .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-
     bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
     bind(UGIProvider.class).to(CurrentUGIProvider.class);
-
     bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
-
     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
   }
 }

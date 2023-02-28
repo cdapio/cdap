@@ -35,6 +35,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,7 @@ public class TaskWorkerService extends AbstractIdleService {
   TaskWorkerService(CConfiguration cConf,
                     SConfiguration sConf,
                     DiscoveryService discoveryService,
+                    DiscoveryServiceClient discoveryServiceClient,
                     MetricsCollectionService metricsCollectionService,
                     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
@@ -73,7 +75,9 @@ public class TaskWorkerService extends AbstractIdleService {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
         }
       })
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, this::stopService, metricsCollectionService));
+      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
+                                                         discoveryServiceClient, this::stopService,
+                                                         metricsCollectionService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
