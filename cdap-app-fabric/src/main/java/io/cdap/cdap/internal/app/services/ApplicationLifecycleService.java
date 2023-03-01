@@ -795,7 +795,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
         appVersion = RunIds.generate().getId();
       }
-      return deployApp(namespace, appName, appVersion, configStr, null, programTerminator, artifactDetail,
+      return deployApp(namespace, appName, appVersion, configStr, null, null, programTerminator, artifactDetail,
                        ownerPrincipal, updateSchedules, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
@@ -872,8 +872,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator, artifactDetail,
-                     ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules,
+    return deployApp(namespace, appName, appVersion, configStr, changeSummary, null, programTerminator,
+                     artifactDetail, ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules,
                      false, Collections.emptyMap());
   }
 
@@ -881,13 +881,15 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
    * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
    * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
-   * {@link Store}. This method can create a new application as well as update an existing one.
+   * {@link Store}. This method can create a new application as well as update an existing one (when
+   * LifecycleManagement feature is disabled).
    *
    * @param namespace the namespace to deploy the app to
    * @param appName the name of the app. If null, the name will be set based on the application spec
    * @param summary the artifact summary of the app
    * @param configStr the configuration to send to the application when generating the application specification
    * @param changeSummary the change summary entered by the user - includes the description and parent-version
+   * @param sourceControlMeta the source control metadata of an application that is pulled from linked git repository
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
    *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
    * @param ownerPrincipal the kerberos principal of the application owner
@@ -906,6 +908,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            ArtifactSummary summary,
                                            @Nullable String configStr,
                                            @Nullable ChangeSummary changeSummary,
+                                           @Nullable SourceControlMeta sourceControlMeta,
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules, boolean isPreview,
@@ -922,9 +925,49 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (artifactDetail.isEmpty()) {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
-    return deployApp(namespace, appName, appVersion, configStr, changeSummary, programTerminator,
-                     artifactDetail.iterator().next(), ownerPrincipal, updateSchedules == null ?
+    return deployApp(namespace, appName, appVersion, configStr, changeSummary, sourceControlMeta, programTerminator,
+                     artifactDetail.get(0), ownerPrincipal, updateSchedules == null ?
                      appUpdateSchedules : updateSchedules, isPreview, userProps);
+  }
+
+  /**
+   * Deploy an application using the specified {@link AppRequest}. When an app is deployed, the Application
+   * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
+   * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
+   * {@link Store}. This method can create a new application as well as update an existing one (when 
+   * LifecycleManagement feature is disabled).
+   * @param appId The {@link ApplicationId} to deploy with
+   * @param appRequest The {@link AppRequest}. It could be from user request or source control management.
+   * @param sourceControlMeta the {@link SourceControlMeta}  of an application that is pulled from linked git repository
+   * @param programTerminator a program terminator that will stop programs that are removed when updating an app. For
+   *                          example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @return {@link ApplicationWithPrograms}
+   * @throws InvalidArtifactException if the artifact does not contain any application classes
+   * @throws IOException if there was an IO error reading artifact detail from the meta store
+   * @throws ArtifactNotFoundException if the specified artifact does not exist
+   * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
+   *                   the actual exception
+   */
+  public ApplicationWithPrograms deployApp(ApplicationId appId,
+                                           AppRequest<?> appRequest,
+                                           @Nullable SourceControlMeta sourceControlMeta,
+                                           ProgramTerminator programTerminator) throws Exception {
+    ArtifactSummary artifactSummary = appRequest.getArtifact();
+
+    KerberosPrincipalId ownerPrincipalId =
+      appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
+
+    // if we don't null check, it gets serialized to "null". The instanceof check is also needed otherwise it causes
+    // unnecessary json serialization and invalid json format error. 
+    Object config = appRequest.getConfig();
+    String configString = config == null ? null :
+      config instanceof String ? (String) config : GSON.toJson(config);
+
+    ChangeSummary changeSummary = appRequest.getChange();
+
+    return deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(), artifactSummary, configString,
+                     changeSummary, sourceControlMeta, programTerminator, ownerPrincipalId,
+                     appRequest.canUpdateSchedules(), false, Collections.emptyMap());
   }
 
   /**
@@ -1112,6 +1155,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             @Nullable String appVersion,
                                             @Nullable String configStr,
                                             @Nullable ChangeSummary changeSummary,
+                                            @Nullable SourceControlMeta sourceControlMeta,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
@@ -1161,6 +1205,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       .setUpdateSchedules(updateSchedules)
       .setRuntimeInfo(isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap()) : null)
       .setChangeDetail(change)
+      .setSourceControlMeta(sourceControlMeta)
       .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);

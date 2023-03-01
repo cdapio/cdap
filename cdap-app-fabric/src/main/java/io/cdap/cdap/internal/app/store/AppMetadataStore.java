@@ -458,6 +458,17 @@ public class AppMetadataStore {
     }
   }
 
+  /**
+   * Get the source control metadata of the latest version application.
+   * @param appRef The application reference to query.
+   * @return {@link SourceControlMeta}
+   * @throws IOException if failed to get the latest {@link ApplicationMeta}
+   */
+  @Nullable
+  public SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef) throws IOException {
+    return Optional.ofNullable(getLatest(appRef)).map(ApplicationMeta::getSourceControlMeta).orElse(null);
+  }
+
   private Collection<Field<?>> getSourceControlMetaFields(ApplicationId appId, SourceControlMeta sourceControlMeta) {
     List<Field<?>> fields = getApplicationPrimaryKeys(appId);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META,
@@ -579,15 +590,17 @@ public class AppMetadataStore {
       getApplicationSpecificationTable().upsert(fields);
     }
     // Add a new version of the app
-    writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(), appMeta.getChange());
+    writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(), appMeta.getChange(),
+                     appMeta.getSourceControlMeta());
     return getApplicationEditNumber(new ApplicationReference(id.getNamespaceId(), id.getApplication()));
   }
 
   @VisibleForTesting
   void writeApplication(String namespaceId, String appId, String versionId,
-                        ApplicationSpecification spec, @Nullable ChangeDetail change) throws IOException {
+                        ApplicationSpecification spec, @Nullable ChangeDetail change,
+                        @Nullable SourceControlMeta sourceControlMeta) throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId,
-                               GSON.toJson(new ApplicationMeta(appId, spec, null)), change);
+                               GSON.toJson(new ApplicationMeta(appId, spec, null)), change, sourceControlMeta);
     updateApplicationEdit(namespaceId, appId);
   }
 
@@ -2189,7 +2202,8 @@ public class AppMetadataStore {
   }
 
   private void writeApplicationSerialized(String namespaceId, String appId, String versionId,
-                                          String serialized, @Nullable ChangeDetail change)
+                                          String serialized, @Nullable ChangeDetail change,
+                                          @Nullable SourceControlMeta sourceControlMeta)
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
@@ -2200,6 +2214,11 @@ public class AppMetadataStore {
       fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD, change.getDescription()));
     }
     fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+
+    if (sourceControlMeta != null) {
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META,
+                                    GSON.toJson(sourceControlMeta)));
+    }
     getApplicationSpecificationTable().upsert(fields);
   }
 

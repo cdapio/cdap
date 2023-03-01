@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import org.apache.twill.filesystem.Location;
 
 import javax.annotation.Nullable;
@@ -55,6 +56,8 @@ public class AppDeploymentInfo {
   @Nullable
   private final ChangeDetail changeDetail;
   @Nullable
+  private final SourceControlMeta sourceControlMeta;
+  @Nullable
   private final ApplicationSpecification deployedApplicationSpec;
   private final boolean isUpgrade;
 
@@ -81,6 +84,7 @@ public class AppDeploymentInfo {
       .setUpdateSchedules(other.updateSchedules)
       .setRuntimeInfo(other.runtimeInfo)
       .setChangeDetail(other.changeDetail)
+      .setSourceControlMeta(other.sourceControlMeta)
       .setIsUpgrade(other.isUpgrade)
       .setDeployedApplicationSpec(other.deployedApplicationSpec);
   }
@@ -89,8 +93,8 @@ public class AppDeploymentInfo {
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable ChangeDetail changeDetail, boolean isUpgrade,
-                            @Nullable ApplicationSpecification deployedApplicationSpec) {
+                            @Nullable ChangeDetail changeDetail, @Nullable SourceControlMeta sourceControlMeta,
+                            boolean isUpgrade, @Nullable ApplicationSpecification deployedApplicationSpec) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -102,6 +106,7 @@ public class AppDeploymentInfo {
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
     this.changeDetail = changeDetail;
+    this.sourceControlMeta = sourceControlMeta;
     this.isUpgrade = isUpgrade;
     this.deployedApplicationSpec = deployedApplicationSpec;
   }
@@ -193,6 +198,11 @@ public class AppDeploymentInfo {
     return changeDetail;
   }
 
+  @Nullable
+  public SourceControlMeta getSourceControlMeta() {
+    return sourceControlMeta;
+  }
+
   /**
    * Returns true if the deploy event type is an upgrade.
    */
@@ -226,6 +236,8 @@ public class AppDeploymentInfo {
     private AppDeploymentRuntimeInfo runtimeInfo;
     @Nullable
     private ChangeDetail changeDetail;
+    @Nullable
+    private SourceControlMeta sourceControlMeta;
     @Nullable
     private ApplicationSpecification deployedApplicationSpec;
     private boolean isUpgrade;
@@ -296,6 +308,11 @@ public class AppDeploymentInfo {
       return this;
     }
 
+    public Builder setSourceControlMeta(@Nullable SourceControlMeta sourceControlMeta) {
+      this.sourceControlMeta = sourceControlMeta;
+      return this;
+    }
+
     public Builder setIsUpgrade(boolean isUpgrade) {
       this.isUpgrade = isUpgrade;
       return this;
@@ -321,7 +338,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
                                    appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeDetail, isUpgrade, deployedApplicationSpec);
+                                   changeDetail, sourceControlMeta, isUpgrade, deployedApplicationSpec);
     }
   }
 }

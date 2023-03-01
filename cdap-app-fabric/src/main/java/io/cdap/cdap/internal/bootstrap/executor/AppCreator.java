@@ -65,7 +65,7 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
 
     try {
       appLifecycleService.deployApp(appRef.getParent(), appRef.getApplication(), ApplicationId.DEFAULT_VERSION,
-                                    artifactSummary, configString, arguments.getChange(), x -> { },
+                                    artifactSummary, configString, arguments.getChange(), null, x -> { },
                                     ownerPrincipalId, arguments.canUpdateSchedules(), false,
                                     Collections.emptyMap());
     } catch (NotFoundException | UnauthorizedException | InvalidArtifactException e) {

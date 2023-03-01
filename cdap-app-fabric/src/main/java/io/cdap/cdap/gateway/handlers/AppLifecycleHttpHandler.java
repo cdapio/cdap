@@ -73,7 +73,6 @@ import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import io.cdap.cdap.proto.artifact.ChangeSummary;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
@@ -725,31 +724,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try (FileReader fileReader = new FileReader(uploadedFile)) {
-
           AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
-          ArtifactSummary artifactSummary = appRequest.getArtifact();
-
-          KerberosPrincipalId ownerPrincipalId =
-            appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
-
-          // if we don't null check, it gets serialized to "null"
-          Object config = appRequest.getConfig();
-          String configString = config == null ? null :
-            config instanceof String ? (String) config : GSON.toJson(config);
-          ChangeSummary changeSummary = appRequest.getChange();
-
+          
           try {
-            ApplicationWithPrograms app = applicationLifecycleService.deployApp(
-              appId.getParent(), appId.getApplication(), appId.getVersion(), artifactSummary, configString,
-              changeSummary, createProgramTerminator(), ownerPrincipalId, appRequest.canUpdateSchedules(),
-              false, Collections.emptyMap());
-
+            ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
+                                                                                null, createProgramTerminator());
             LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
                        "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
-                     app.getArtifactId(), configString, app.getOwnerPrincipal());
+                     app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal());
 
             responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
-
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();
@@ -766,7 +750,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
-          LOG.error("Error reading request body for creating app {}.", appId);
+          LOG.error("Error reading request body for creating app {}.", appId, e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
             "Error while reading json request body for app %s.", appId));
         } catch (Exception e) {

@@ -30,6 +30,7 @@ import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
@@ -39,7 +40,9 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
+import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import io.cdap.http.HttpResponder;
@@ -60,13 +63,11 @@ import javax.ws.rs.PathParam;
 public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHandler {
   private final SourceControlManagementService sourceControlService;
   private final FeatureFlagsProvider featureFlagsProvider;
-  private final CConfiguration cConf;
   private static final Gson GSON = new Gson();
 
   @Inject
   SourceControlManagementHttpHandler(CConfiguration cConf,
                                      SourceControlManagementService sourceControlService) {
-    this.cConf = cConf;
     this.sourceControlService = sourceControlService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
@@ -159,6 +160,29 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     } catch (NoChangesToPushException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (PushFailureException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Pull the requested application from linked repository and deploy in current namespace.
+   */
+  @POST
+  @Path("/apps/{app-id}/pull")
+  public void pullApp(FullHttpRequest request, HttpResponder responder,
+                      @PathParam("namespace-id") String namespaceId,
+                      @PathParam("app-id") final String appId) throws Exception {
+    checkSourceControlFeatureFlag();
+    ApplicationReference appRef = validateAppReference(namespaceId, appId);
+
+    try {
+      ApplicationRecord appRecord = sourceControlService.pullAndDeploy(appRef);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appRecord));
+    } catch (NoChangesToPullException e) {
+      responder.sendString(HttpResponseStatus.OK, e.getMessage());
+    } catch (AuthenticationConfigException e) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (PullFailureException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }

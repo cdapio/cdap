@@ -17,15 +17,21 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
@@ -36,9 +42,12 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
+import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
@@ -48,8 +57,11 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -65,6 +77,7 @@ public class SourceControlManagementService {
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
+  private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
   @Inject
@@ -168,5 +181,63 @@ public class SourceControlManagementService {
     store.setAppSourceControlMeta(appId, sourceControlMeta);
 
     return pushResponse;
+  }
+
+  /**
+   * Pull the application from linked repository and deploy it in current namespace.
+   * @param appRef application reference to deploy with
+   * @return {@link ApplicationRecord} of the deployed application.
+   * @throws Exception when {@link ApplicationLifecycleService} fails to deploy.
+   * @throws NoChangesToPullException if the fileHashes are the same
+   * @throws NotFoundException if the repository config is not found or the application in repository is not found
+   * @throws PullFailureException if unexpected errors happen when pulling the application.
+   * @throws AuthenticationConfigException if the repository configuration authentication fails
+   */
+  public ApplicationRecord pullAndDeploy(ApplicationReference appRef) throws Exception {
+    PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
+
+    AppRequest<?> appRequest = pullResponse.getAppRequest();
+    SourceControlMeta sourceControlMeta = new SourceControlMeta(pullResponse.getApplicationFileHash());
+    // Deploy with a generated uuid
+    String versionId = RunIds.generate().getId();
+    ApplicationWithPrograms app = appLifecycleService.deployApp(appRef.app(versionId), appRequest,
+                                                                sourceControlMeta, x -> { });
+
+    LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
+               "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
+             app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal()
+    );
+
+    return new ApplicationRecord(
+      ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
+      app.getApplicationId().getApplication(),
+      app.getApplicationId().getVersion(),
+      app.getSpecification().getDescription(),
+      Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
+      app.getChangeDetail(), app.getSourceControlMeta());
+  }
+
+  /**
+   * Pull the application from repository, look up the fileHash in store and compare it with the cone in repository.
+   * @param appRef {@link ApplicationReference} to fetch the application with
+   * @return {@link PullAppResponse}
+   * @throws NoChangesToPullException if the fileHashes are the same
+   * @throws NotFoundException if the repository config is not found or the application in repository is not found
+   * @throws PullFailureException if unexpected errors happen when pulling the application.
+   * @throws AuthenticationConfigException if the repository configuration authentication fails
+   */
+  private PullAppResponse<?> pullAndValidateApplication(ApplicationReference appRef)
+    throws NoChangesToPullException, NotFoundException, PullFailureException, AuthenticationConfigException {
+    RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
+    SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
+    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(appRef, repoConfig);
+
+    if (latestMeta != null &&
+      latestMeta.getFileHash() != null &&
+      latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
+      throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is " +
+                                                         "no new change for the pulled application: %s", appRef));
+    }
+    return pullResponse;
   }
 }

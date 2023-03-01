@@ -66,7 +66,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
       store.getAllAppVersionsAppIds(applicationId.getAppReference());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(), input.getSpecification(),
-                                                  input.getChangeDetail());
+                                                  input.getChangeDetail(), input.getSourceControlMeta());
     try {
       int editCount = store.addApplication(input.getApplicationId(), appMeta);
       // increment metric : event.deploy.upgrade.count
