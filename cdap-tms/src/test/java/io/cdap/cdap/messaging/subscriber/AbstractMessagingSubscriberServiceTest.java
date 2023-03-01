@@ -66,19 +66,18 @@ public class AbstractMessagingSubscriberServiceTest {
   private MetricsContext metricsContext;
 
   @Mock
-  private Message message1, message2;
+  private Message message0, message1, message2, message3, message4, message5, message6;
 
   @Mock
   private StructuredTableContext structuredTableContext;
 
   private String storedMessageId = "start";
-  private BlockingQueue<List<ImmutablePair<String, Integer>>> processedMessages = new ArrayBlockingQueue<>(2);
+  private BlockingQueue<List<ImmutablePair<String, Integer>>> processedMessages = new ArrayBlockingQueue<>(10);
 
   @Test
   public void testTransactionRetry()
     throws TopicNotFoundException, IOException, TransactionException, InterruptedException {
-
-    Iterator<Message> messages = Arrays.asList(message1, message2).iterator();
+    Iterator<Message> messages = Arrays.asList(message0, message1).iterator();
     Mockito.when(messagingContext.getMessageFetcher()).thenReturn(messageFetcher);
     Mockito.when(messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), "test", 100, "start"))
       .thenReturn(new AbstractCloseableIterator<Message>() {
@@ -102,13 +101,91 @@ public class AbstractMessagingSubscriberServiceTest {
 
     TestMessagingSubscriberService service = new TestMessagingSubscriberService(
       NamespaceId.DEFAULT.topic("test"), 100, 100, 1,
-      RetryStrategies.noRetry(), metricsContext);
+      RetryStrategies.noRetry(), metricsContext, 100);
     service.startAndWait();
     //First one
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
     //Retry
-    Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 2), ImmutablePair.of(null, 3)),
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
+                        processedMessages.poll(10, TimeUnit.SECONDS));
+    service.stopAndWait();
+  }
+
+  @Test
+  public void testTransactionBatching()
+    throws TopicNotFoundException, IOException, TransactionException, InterruptedException {
+
+    Iterator<Message> messages =
+      Arrays.asList(message0, message1, message2, message3, message4, message5, message6)
+      .iterator();
+    Mockito.when(messagingContext.getMessageFetcher()).thenReturn(messageFetcher);
+    Mockito.when(messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), "test", 100, "start"))
+      .thenReturn(new AbstractCloseableIterator<Message>() {
+        @Override
+        protected Message computeNext() {
+          return messages.hasNext() ? messages.next() : endOfData();
+        }
+
+        @Override
+        public void close() {
+
+        }
+      });
+    Mockito.doAnswer(c -> {
+      c.getArgumentAt(0, TxRunnable.class).run(structuredTableContext);
+      return null;
+    }).when(transactionRunner).run(Mockito.any());
+
+    TestMessagingSubscriberService service = new TestMessagingSubscriberService(
+      NamespaceId.DEFAULT.topic("test"), 100, 100, 1,
+      RetryStrategies.noRetry(), metricsContext, 3);
+    service.startAndWait();
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1), ImmutablePair.of(null, 2)),
+                        processedMessages.poll(10, TimeUnit.SECONDS));
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 3)),
+                        processedMessages.poll(10, TimeUnit.SECONDS));
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 4)),
+                        processedMessages.poll(10, TimeUnit.SECONDS));
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 5), ImmutablePair.of(null, 6)),
+                        processedMessages.poll(10, TimeUnit.SECONDS));
+    service.stopAndWait();
+  }
+
+  /**
+   * Test time bound transaction batching by forcing 3sec sleep inside transaction and setting txTimeoutSeconds to 2sec
+   */
+  @Test
+  public void testTimeBoundTransactionBatching()
+    throws TopicNotFoundException, IOException, TransactionException, InterruptedException {
+
+    Iterator<Message> messages =
+      Arrays.asList(message0, message1, message2, message3, message4)
+        .iterator();
+    Mockito.when(messagingContext.getMessageFetcher()).thenReturn(messageFetcher);
+    Mockito.when(messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), "test", 100, "start"))
+      .thenReturn(new AbstractCloseableIterator<Message>() {
+        @Override
+        protected Message computeNext() {
+          return messages.hasNext() ? messages.next() : endOfData();
+        }
+
+        @Override
+        public void close() {
+
+        }
+      });
+    Mockito.doAnswer(c -> {
+      c.getArgumentAt(0, TxRunnable.class).run(structuredTableContext);
+      Thread.sleep(3000);
+      return null;
+    }).when(transactionRunner).run(Mockito.any());
+
+    TestMessagingSubscriberService service = new TestMessagingSubscriberService(
+      NamespaceId.DEFAULT.topic("test"), 100, 2, 1,
+      RetryStrategies.noRetry(), metricsContext, 2);
+    service.startAndWait();
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
     service.stopAndWait();
   }
@@ -118,8 +195,9 @@ public class AbstractMessagingSubscriberServiceTest {
 
     protected TestMessagingSubscriberService(TopicId topicId, int fetchSize,
                                              int txTimeoutSeconds, long emptyFetchDelayMillis,
-                                             RetryStrategy retryStrategy, MetricsContext metricsContext) {
-      super(topicId, fetchSize, txTimeoutSeconds, emptyFetchDelayMillis, retryStrategy, metricsContext);
+                                             RetryStrategy retryStrategy, MetricsContext metricsContext,
+                                             int txSize) {
+      super(topicId, fetchSize, txTimeoutSeconds, emptyFetchDelayMillis, retryStrategy, metricsContext, txSize);
     }
 
     @Override
@@ -153,6 +231,14 @@ public class AbstractMessagingSubscriberServiceTest {
                                    Iterator<ImmutablePair<String, Integer>> messages) throws Exception {
       processedMessages.add(ImmutableList.copyOf(messages));
     }
+
+    protected boolean shouldRunInSeparateTx(ImmutablePair<String, Integer> message) {
+      if (message.getSecond() == 4) {
+        return true;
+      }
+      return false;
+    }
+
   }
 
 }

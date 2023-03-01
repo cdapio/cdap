@@ -227,6 +227,10 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
     return 0L;
   }
 
+  int getFetchSize() {
+    return fetchSize;
+  }
+
   /**
    * Returns the publish time encoded in the given message id.
    *

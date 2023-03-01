@@ -694,11 +694,31 @@
   </property>
 
   <property>
+    <name>app.program.status.event.tx.separation</name>
+    <value>false</value>
+    <description>
+      if true, ProgramNotificationSubscriberService will go shouldRunInSeparateTx to
+      see if certain messages need to run in a separate transaction.
+      This is usually not needed, unless scale is extremely high, which in turn may result
+      in transactions being deadlock with program.status.event.topic.num.partitions is greater than 1.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.status.event.fetch.size</name>
     <value>100</value>
     <description>
       Maximum number of events to fetch from the messaging system in each processing cycle for
       program status update events
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.status.event.tx.size</name>
+    <value>${app.program.status.event.fetch.size}</value>
+    <description>
+      Maximum number of events to process in one transaction when messages are fetched from the messaging system
+      in each processing cycle for program status update events
     </description>
   </property>
 
