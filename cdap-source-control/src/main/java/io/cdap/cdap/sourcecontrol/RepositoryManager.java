@@ -167,12 +167,12 @@ public class RepositoryManager implements AutoCloseable {
    *
    * @param commitMeta  Details for the commit including author, committer and commit message
    * @param fileChanged The relative path to repository root where the file is updated
-   * @return the hash of the written file. It returns null if the push succeeds but failed to get the fileHash from
-   * pushed {@link RevCommit}
+   * @return the hash of the written file.
    * @throws GitAPIException          when the underlying git commands fail
    * @throws NoChangesToPushException when there's no file changes for the commit
+   * @throws NoChangesToPushException when failed to get the fileHash before push, or the {@link PushResult} status is
+   * not OK
    */
-  @Nullable
   public String commitAndPush(CommitMeta commitMeta, Path fileChanged)
     throws NoChangesToPushException, GitAPIException, PushFailureException {
     validateInitialized();
@@ -187,6 +187,18 @@ public class RepositoryManager implements AutoCloseable {
 
     RevCommit commit = getCommitCommand(commitMeta).call();
 
+    String fileHash;
+    try {
+      fileHash = getFileHash(fileChanged, commit);
+    } catch (IOException e) {
+      throw new PushFailureException(String.format("Failed to get fileHash for %s before push", fileChanged), e);
+    }
+
+    if (fileHash == null) {
+      throw new PushFailureException(String.format("Failed to get fileHash for %s, because the path is not " +
+                                                     "found in Git tree", fileChanged));
+    }
+
     PushCommand pushCommand = createCommand(git::push, sourceControlConfig, credentialsProvider);
     Iterable<PushResult> pushResults = pushCommand.call();
 
@@ -198,12 +210,7 @@ public class RepositoryManager implements AutoCloseable {
       }
     }
 
-    try {
-      return getFileHash(fileChanged, commit);
-    } catch (IOException e) {
-      LOG.warn(String.format("Failed to get the fileHash for file: %s", fileChanged), e);
-      return null;
-    }
+    return fileHash;
   }
 
   private CommitCommand getCommitCommand(CommitMeta commitMeta) {

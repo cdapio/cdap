@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -320,6 +321,27 @@ public class RepositoryManagerTest {
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
       manager.commitAndPush(commitMeta, manager.getBasePath().relativize(filePath));
       verifyCommit(filePath, fileContent, commitMeta);
+    }
+  }
+
+  @Test(expected = PushFailureException.class)
+  public void testCommitAndPushFailureException() throws Exception {
+    String serverURL = gitServer.getServerURL();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink(serverURL + "ignored")
+      .setDefaultBranch("develop")
+      .setAuthType(AuthType.PAT)
+      .setTokenName(GITHUB_TOKEN_NAME)
+      .build();
+
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
+      manager.cloneRemote();
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      Path filePath = manager.getBasePath().resolve("file1");
+      String fileContent = "content";
+
+      Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
+      manager.commitAndPush(commitMeta, Paths.get("fileThatDoesNotExist.json"));
     }
   }
 
