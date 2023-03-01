@@ -36,10 +36,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.TestBase;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.junit.After;
-import org.junit.Assert;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -49,6 +45,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.junit.After;
+import org.junit.Assert;
 
 /**
  * TestBase for all test framework tests

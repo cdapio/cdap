@@ -26,7 +26,6 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;

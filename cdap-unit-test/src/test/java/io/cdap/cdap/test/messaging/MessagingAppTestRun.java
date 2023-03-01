@@ -32,11 +32,6 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +39,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests for applications interactions with TMS.

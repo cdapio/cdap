@@ -21,7 +21,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
 import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-
 import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;

@@ -46,10 +46,6 @@ import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScan;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScanResult;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScanner;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
-import org.apache.twill.common.Threads;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,6 +66,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link io.cdap.cdap.api.dataset.lib.cube.Cube}.

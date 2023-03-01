@@ -69,12 +69,6 @@ import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.common.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
@@ -93,6 +87,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Tests for {@link MetadataHttpHandler}

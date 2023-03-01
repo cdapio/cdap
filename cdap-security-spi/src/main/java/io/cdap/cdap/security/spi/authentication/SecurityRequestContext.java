@@ -17,7 +17,6 @@ package io.cdap.cdap.security.spi.authentication;
 
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
-
 import javax.annotation.Nullable;
 
 /**

@@ -17,14 +17,13 @@
 package io.cdap.cdap.logging.clean;
 
 import io.cdap.cdap.common.io.Locations;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * cleanup expired log files

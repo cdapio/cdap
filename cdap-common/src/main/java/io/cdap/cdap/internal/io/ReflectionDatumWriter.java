@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.io;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.common.io.Encoder;
-
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;

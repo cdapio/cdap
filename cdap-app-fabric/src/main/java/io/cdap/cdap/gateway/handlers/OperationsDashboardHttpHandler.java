@@ -44,10 +44,6 @@ import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.hadoop.security.authentication.util.KerberosName;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,6 +55,9 @@ import java.util.stream.Collectors;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import org.apache.hadoop.security.authentication.util.KerberosName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**

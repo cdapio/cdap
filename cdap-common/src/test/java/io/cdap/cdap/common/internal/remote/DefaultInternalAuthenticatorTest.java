@@ -20,11 +20,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for the {@link DefaultInternalAuthenticator}.

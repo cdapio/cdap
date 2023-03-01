@@ -17,12 +17,11 @@
 
 package io.cdap.cdap.etl.api.connector;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link SampleRequest} and related builder.

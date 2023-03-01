@@ -21,10 +21,9 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.RemoteAccessEnforcer;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-
-import java.io.IOException;
 
 /**
  * Test {@link RemoteAccessEnforcer} with cache enabled.

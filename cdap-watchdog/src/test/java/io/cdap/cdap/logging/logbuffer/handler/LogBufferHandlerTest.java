@@ -42,14 +42,13 @@ import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.NettyHttpService;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link LogBufferHandler}.

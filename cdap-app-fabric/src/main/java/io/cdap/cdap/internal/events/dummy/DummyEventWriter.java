@@ -16,10 +16,9 @@ import com.google.inject.Inject;
 import io.cdap.cdap.spi.events.Event;
 import io.cdap.cdap.spi.events.EventWriter;
 import io.cdap.cdap.spi.events.EventWriterContext;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
 
 /**
  * Dummy implementation of {@link EventWriter} mainly for test proposals.

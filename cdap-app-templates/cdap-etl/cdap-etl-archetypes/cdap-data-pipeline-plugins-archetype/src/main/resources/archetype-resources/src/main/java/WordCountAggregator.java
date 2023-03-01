@@ -25,7 +25,6 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
-
 import java.util.Iterator;
 import java.util.regex.Pattern;
 

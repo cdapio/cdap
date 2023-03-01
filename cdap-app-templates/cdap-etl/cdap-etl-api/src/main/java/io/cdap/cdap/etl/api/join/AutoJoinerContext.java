@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.etl.api.FailureCollector;
-
 import java.util.Map;
 
 /**

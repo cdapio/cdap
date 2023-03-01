@@ -17,11 +17,10 @@
 package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link Schema}

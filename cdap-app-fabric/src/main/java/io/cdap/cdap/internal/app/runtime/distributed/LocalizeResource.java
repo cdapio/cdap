@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import com.google.common.base.Objects;
-
 import java.io.File;
 import java.net.URI;
 

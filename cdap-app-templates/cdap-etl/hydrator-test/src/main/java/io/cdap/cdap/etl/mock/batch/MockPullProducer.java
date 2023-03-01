@@ -27,6 +27,10 @@ import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetDescription;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDatasetProducer;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.etl.api.sql.engine.dataset.SparkRecordCollectionImpl;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -34,11 +38,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.types.StructType;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Pull Dataset implementation for unit test

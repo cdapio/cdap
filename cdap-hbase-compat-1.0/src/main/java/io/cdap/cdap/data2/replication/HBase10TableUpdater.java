@@ -19,6 +19,10 @@ package io.cdap.cdap.data2.replication;
 import io.cdap.cdap.replication.ReplicationConstants;
 import io.cdap.cdap.replication.StatusUtils;
 import io.cdap.cdap.replication.TableUpdater;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -29,11 +33,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Common functionality required by Replication State Coprocessors to hold updates in memory and

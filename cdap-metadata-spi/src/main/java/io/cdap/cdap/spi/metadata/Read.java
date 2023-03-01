@@ -19,7 +19,6 @@ package io.cdap.cdap.spi.metadata;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
-
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;

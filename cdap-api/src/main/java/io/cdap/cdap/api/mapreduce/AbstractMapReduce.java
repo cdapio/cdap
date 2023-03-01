@@ -21,10 +21,9 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * This abstract class provides a default implementation of {@link MapReduce} methods for easy extension.

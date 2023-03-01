@@ -23,7 +23,6 @@ import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-
 import java.lang.reflect.Type;
 
 /**

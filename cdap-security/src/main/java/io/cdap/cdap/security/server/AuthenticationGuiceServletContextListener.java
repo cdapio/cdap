@@ -19,11 +19,10 @@ package io.cdap.cdap.security.server;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
-
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletContext;
+import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
 
 /**
  * RestEasy context listener used to bind handlers. Enables usage of JAX-RS annotations.

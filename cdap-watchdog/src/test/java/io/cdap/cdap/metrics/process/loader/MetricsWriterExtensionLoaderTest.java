@@ -19,10 +19,9 @@ package io.cdap.cdap.metrics.process.loader;
 import io.cdap.cdap.api.metrics.MetricsWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Set;
 
 /**
  * Tests for {@link MetricsWriterExtensionLoader}

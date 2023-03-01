@@ -19,7 +19,6 @@ import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.action.SettableArguments;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;

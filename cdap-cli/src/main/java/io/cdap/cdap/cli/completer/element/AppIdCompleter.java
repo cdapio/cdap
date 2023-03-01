@@ -23,7 +23,6 @@ import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

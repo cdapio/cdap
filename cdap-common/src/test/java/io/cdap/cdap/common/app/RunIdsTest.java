@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.common.app;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class RunIdsTest {
   @Test

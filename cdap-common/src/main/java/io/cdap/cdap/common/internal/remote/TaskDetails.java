@@ -20,7 +20,6 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskParam;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.Constants;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

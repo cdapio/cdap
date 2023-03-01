@@ -20,7 +20,6 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.DatumReader;
 import io.cdap.cdap.common.io.Decoder;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

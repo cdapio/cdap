@@ -25,10 +25,9 @@ import io.cdap.cdap.common.test.NoopAdmin;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.store.DummySecureStoreService;
-import org.apache.tephra.TransactionFailureException;
-
 import java.util.Map;
 import java.util.Properties;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * A no-op implementation of {@link AuthorizationContextFactory} for use in tests.

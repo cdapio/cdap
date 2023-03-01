@@ -21,11 +21,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
 import io.cdap.cdap.internal.app.runtime.AbstractResourceReporter;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.api.TwillContext;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.twill.api.TwillContext;
 
 /**
  * Reports resource metrics about the runnable program.

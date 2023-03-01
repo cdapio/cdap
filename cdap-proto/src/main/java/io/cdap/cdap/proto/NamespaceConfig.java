@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto;
 
 import com.google.gson.annotations.JsonAdapter;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

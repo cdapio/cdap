@@ -21,7 +21,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;

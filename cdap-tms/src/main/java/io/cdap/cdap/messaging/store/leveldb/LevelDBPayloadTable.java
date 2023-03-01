@@ -27,16 +27,15 @@ import io.cdap.cdap.messaging.store.ImmutablePayloadTableEntry;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.RawPayloadTableEntry;
 import io.cdap.cdap.proto.id.TopicId;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBException;
-import org.iq80.leveldb.WriteBatch;
-import org.iq80.leveldb.WriteOptions;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBException;
+import org.iq80.leveldb.WriteBatch;
+import org.iq80.leveldb.WriteOptions;
 
 /**
  * LevelDB implementation of {@link PayloadTable}.

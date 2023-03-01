@@ -17,7 +17,6 @@
 package io.cdap.cdap.security.spi.authenticator;
 
 import io.cdap.cdap.proto.security.Credential;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

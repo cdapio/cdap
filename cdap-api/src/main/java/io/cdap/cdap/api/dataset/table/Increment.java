@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.dataset.table;
 
 import io.cdap.cdap.api.common.Bytes;
-
 import java.util.Map;
 import java.util.TreeMap;
 

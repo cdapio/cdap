@@ -17,7 +17,6 @@
 package io.cdap.cdap.report.util;
 
 import com.google.common.primitives.Longs;
-
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;

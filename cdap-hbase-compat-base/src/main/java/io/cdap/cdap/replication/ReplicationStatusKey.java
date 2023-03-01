@@ -17,7 +17,6 @@
 package io.cdap.cdap.replication;
 
 import io.cdap.cdap.api.common.Bytes;
-
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.UUID;

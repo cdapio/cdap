@@ -31,7 +31,6 @@ import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;

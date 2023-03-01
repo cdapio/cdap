@@ -22,13 +22,12 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class UnauthorizedExceptionTest {
   private static final Principal TEST_PRINCIPAL = new Principal("test-principal", Principal.PrincipalType.USER);

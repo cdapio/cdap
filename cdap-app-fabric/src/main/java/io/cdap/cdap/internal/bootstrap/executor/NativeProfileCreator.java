@@ -24,7 +24,6 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
-
 import java.util.concurrent.TimeUnit;
 
 /**

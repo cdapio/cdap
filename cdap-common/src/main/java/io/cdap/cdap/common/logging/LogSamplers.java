@@ -21,8 +21,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AtomicDouble;
 import io.cdap.cdap.common.utils.TimeProvider;
-import org.slf4j.spi.LocationAwareLogger;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.spi.LocationAwareLogger;
 
 /**
  * Utility class to provide common implementations of {@link LogSampler}.

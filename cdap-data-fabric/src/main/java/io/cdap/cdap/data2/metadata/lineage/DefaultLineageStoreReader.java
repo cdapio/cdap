@@ -24,10 +24,9 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import org.apache.tephra.TransactionExecutor;
-
 import java.util.Set;
 import java.util.function.Predicate;
+import org.apache.tephra.TransactionExecutor;
 
 /**
  * Implementation of {@link LineageStoreReader} for reading lineage information from {@link LineageTable}.

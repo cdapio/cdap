@@ -35,7 +35,6 @@ import io.cdap.cdap.common.io.Decoder;
 import io.cdap.cdap.common.io.Encoder;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

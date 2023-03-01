@@ -23,14 +23,13 @@ import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.spi.events.EventWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of {@link EventWriterProvider} which provides Event writer extension classes

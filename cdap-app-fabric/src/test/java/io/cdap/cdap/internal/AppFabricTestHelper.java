@@ -88,14 +88,6 @@ import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.tephra.TransactionManager;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.junit.Assert;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -106,6 +98,13 @@ import java.util.function.BiConsumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.tephra.TransactionManager;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.junit.Assert;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.

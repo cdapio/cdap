@@ -17,6 +17,8 @@ package io.cdap.cdap.hbase.wd;
 
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.test.XSlowTests;
+import java.io.IOException;
+import java.util.concurrent.Executors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -39,9 +41,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.io.IOException;
-import java.util.concurrent.Executors;
 
 /**
  * Provides basic tests for row key distributor

@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.api.validation;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -22,7 +22,6 @@ import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.WorkflowClient;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
-
 import java.util.ArrayList;
 import java.util.List;
 

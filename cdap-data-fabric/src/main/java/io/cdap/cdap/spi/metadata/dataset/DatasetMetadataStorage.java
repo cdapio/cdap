@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.spi.metadata.dataset;
 
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
+import static io.cdap.cdap.spi.metadata.MetadataKind.PROPERTY;
+import static io.cdap.cdap.spi.metadata.MetadataKind.TAG;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -47,8 +52,6 @@ import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import io.cdap.cdap.spi.metadata.Sorting;
-import org.apache.tephra.TransactionSystemClient;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -58,11 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
-import static io.cdap.cdap.api.metadata.MetadataScope.USER;
-import static io.cdap.cdap.spi.metadata.MetadataKind.PROPERTY;
-import static io.cdap.cdap.spi.metadata.MetadataKind.TAG;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  * A dataset-based implementation of the Metadata SPI.

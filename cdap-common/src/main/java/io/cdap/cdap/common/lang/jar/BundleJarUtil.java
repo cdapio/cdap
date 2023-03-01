@@ -18,8 +18,6 @@ package io.cdap.cdap.common.lang.jar;
 
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ThrowingSupplier;
-import org.apache.twill.filesystem.Location;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -46,6 +44,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Utility functions that operate on bundle jars.

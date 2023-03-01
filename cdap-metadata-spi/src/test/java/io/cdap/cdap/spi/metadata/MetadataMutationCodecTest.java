@@ -25,11 +25,10 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class MetadataMutationCodecTest {
 

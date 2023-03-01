@@ -20,10 +20,9 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A default implementation of {@link SparkManager}.

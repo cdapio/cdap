@@ -24,7 +24,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Principal;
-
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;

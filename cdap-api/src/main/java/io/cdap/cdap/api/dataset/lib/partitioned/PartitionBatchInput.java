@@ -24,7 +24,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

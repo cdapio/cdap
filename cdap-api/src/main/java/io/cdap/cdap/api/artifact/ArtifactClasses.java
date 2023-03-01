@@ -18,7 +18,6 @@ package io.cdap.cdap.api.artifact;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.plugin.PluginClass;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;

@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.batch;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
-
 import java.util.HashMap;
 import java.util.Map;
 

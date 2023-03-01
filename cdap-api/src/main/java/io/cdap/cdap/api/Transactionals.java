@@ -15,12 +15,11 @@
  */
 package io.cdap.cdap.api;
 
-import org.apache.tephra.TransactionFailureException;
+import static java.util.Objects.requireNonNull;
 
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
-
-import static java.util.Objects.requireNonNull;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * Helper class for interacting with {@link Transactional}

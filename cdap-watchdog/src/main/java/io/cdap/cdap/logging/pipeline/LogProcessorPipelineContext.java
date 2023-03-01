@@ -31,7 +31,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.framework.Loggers;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.HashMap;

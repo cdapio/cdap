@@ -25,11 +25,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.resource.ResourceBalancerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import java.util.Set;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.ZKClient;
-
-import java.util.Set;
 
 /**
  * A service that creates {@link MessagingMetricsProcessorManagerService} dynamically at runtime

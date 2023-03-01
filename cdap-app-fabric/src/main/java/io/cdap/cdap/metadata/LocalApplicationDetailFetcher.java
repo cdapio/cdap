@@ -27,7 +27,6 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.IOException;
 import java.util.function.Consumer;
 

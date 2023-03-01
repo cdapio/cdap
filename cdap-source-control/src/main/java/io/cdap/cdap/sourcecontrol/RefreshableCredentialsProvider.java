@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.sourcecontrol;
 
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.URIish;
-
 import java.io.IOException;
 import java.util.List;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.URIish;
 
 /**
  * A {@link CredentialsProvider} that can refresh its credentials.

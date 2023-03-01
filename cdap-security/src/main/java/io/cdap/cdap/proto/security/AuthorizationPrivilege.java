@@ -19,7 +19,6 @@ package io.cdap.cdap.proto.security;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;

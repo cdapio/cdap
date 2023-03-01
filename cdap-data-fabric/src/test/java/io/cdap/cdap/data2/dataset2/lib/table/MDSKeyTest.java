@@ -19,11 +19,10 @@ package io.cdap.cdap.data2.dataset2.lib.table;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.common.Bytes;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.BufferUnderflowException;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class MDSKeyTest {
 

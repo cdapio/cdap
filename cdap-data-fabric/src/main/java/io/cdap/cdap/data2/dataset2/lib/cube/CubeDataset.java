@@ -30,7 +30,6 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;

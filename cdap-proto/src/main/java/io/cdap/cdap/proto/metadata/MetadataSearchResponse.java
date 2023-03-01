@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.metadata;
 
 import io.cdap.cdap.proto.EntityScope;
-
 import java.util.List;
 import java.util.Set;
 

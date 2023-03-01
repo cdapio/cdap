@@ -25,11 +25,6 @@ import io.cdap.cdap.common.twill.MasterServiceManager;
 import io.cdap.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
-import org.apache.twill.api.logging.LogEntry;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +34,10 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.twill.api.logging.LogEntry;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * App Fabric Service Management in Distributed Mode.

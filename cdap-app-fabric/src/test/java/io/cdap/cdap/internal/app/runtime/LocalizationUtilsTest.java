@@ -19,6 +19,14 @@ package io.cdap.cdap.internal.app.runtime;
 import com.google.common.base.Charsets;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.zip.GZIPOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.Assert;
@@ -30,15 +38,6 @@ import org.mockftpserver.fake.UserAccount;
 import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Tests for {@link LocalizationUtils}.

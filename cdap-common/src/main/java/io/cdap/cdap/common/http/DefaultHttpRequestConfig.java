@@ -18,10 +18,9 @@ package io.cdap.cdap.common.http;
 
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.common.http.HttpRequestConfig;
+import java.net.HttpURLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.HttpURLConnection;
 
 /**
  * Class to uniformly configure CDAP HTTP requests with a user-configured timeout

@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.common.logging;
 
-import org.apache.twill.common.Cancellable;
-import org.slf4j.MDC;
-
 import java.util.Collections;
 import java.util.Map;
+import org.apache.twill.common.Cancellable;
+import org.slf4j.MDC;
 
 /**
  * Allows to store and access the logging context.

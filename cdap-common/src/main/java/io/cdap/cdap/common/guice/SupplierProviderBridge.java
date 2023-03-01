@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.guice;
 
 import com.google.inject.Provider;
-
 import java.util.function.Supplier;
 
 /**

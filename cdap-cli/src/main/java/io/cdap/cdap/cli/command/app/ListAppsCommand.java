@@ -28,7 +28,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.List;

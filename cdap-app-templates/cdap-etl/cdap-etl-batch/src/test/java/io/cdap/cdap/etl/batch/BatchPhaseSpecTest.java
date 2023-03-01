@@ -28,12 +28,11 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests description of BatchPhaseSpec.

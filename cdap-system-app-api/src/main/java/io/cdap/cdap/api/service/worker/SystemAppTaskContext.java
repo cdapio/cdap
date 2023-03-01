@@ -25,7 +25,6 @@ import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
-
 import java.io.IOException;
 import java.util.Map;
 

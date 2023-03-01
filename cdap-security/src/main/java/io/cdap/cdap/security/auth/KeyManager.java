@@ -18,7 +18,6 @@ package io.cdap.cdap.security.auth;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.io.Codec;
-
 import java.security.InvalidKeyException;
 
 /**

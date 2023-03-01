@@ -57,6 +57,10 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Threads;
@@ -64,11 +68,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Service for managing {@link PreviewRunnerService}.

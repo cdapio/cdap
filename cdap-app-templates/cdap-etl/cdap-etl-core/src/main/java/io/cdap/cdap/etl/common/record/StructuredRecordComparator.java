@@ -20,7 +20,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.common.Schemas;
-
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.Collection;

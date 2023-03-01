@@ -23,7 +23,6 @@ import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;

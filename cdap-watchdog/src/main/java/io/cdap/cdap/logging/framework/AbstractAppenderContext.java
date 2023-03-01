@@ -20,9 +20,8 @@ import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.util.Collections;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * The base implementation of {@link AppenderContext} that provides integration with CDAP system.

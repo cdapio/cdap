@@ -18,7 +18,6 @@ package io.cdap.cdap.api.messaging;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

@@ -17,7 +17,6 @@
 package io.cdap.cdap.security.impersonation;
 
 import com.google.common.base.Strings;
-
 import java.util.Objects;
 
 /**

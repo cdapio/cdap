@@ -16,18 +16,17 @@
 package io.cdap.cdap.common.lang.jar;
 
 import com.google.common.io.ByteStreams;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 /**
  *

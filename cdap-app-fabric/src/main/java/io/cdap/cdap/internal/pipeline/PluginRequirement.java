@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.pipeline;
 
 import io.cdap.cdap.api.plugin.Requirements;
-
 import java.util.Objects;
 
 /**

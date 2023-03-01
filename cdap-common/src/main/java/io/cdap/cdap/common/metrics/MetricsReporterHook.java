@@ -33,11 +33,10 @@ import io.cdap.http.HttpResponder;
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Records gateway requests/response metrics.

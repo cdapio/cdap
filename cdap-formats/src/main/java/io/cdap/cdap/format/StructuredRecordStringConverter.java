@@ -26,7 +26,6 @@ import io.cdap.cdap.format.io.JsonEncoder;
 import io.cdap.cdap.format.io.JsonStructuredRecordDatumReader;
 import io.cdap.cdap.format.io.JsonStructuredRecordDatumWriter;
 import io.cdap.cdap.format.utils.FormatUtils;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;

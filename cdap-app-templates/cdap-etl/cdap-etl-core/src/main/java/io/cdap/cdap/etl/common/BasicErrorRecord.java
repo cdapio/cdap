@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.etl.api.ErrorRecord;
-
 import java.io.Serializable;
 import javax.annotation.Nullable;
 

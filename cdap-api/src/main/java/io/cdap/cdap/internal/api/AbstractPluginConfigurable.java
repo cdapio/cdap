@@ -20,7 +20,6 @@ import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
-
 import javax.annotation.Nullable;
 
 /**

@@ -17,12 +17,11 @@
 package io.cdap.cdap.etl.common.record;
 
 import io.cdap.cdap.api.data.schema.Schema;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test Schema comparison.

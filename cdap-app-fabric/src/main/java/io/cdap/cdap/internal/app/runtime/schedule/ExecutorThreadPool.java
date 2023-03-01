@@ -17,14 +17,13 @@
 package io.cdap.cdap.internal.app.runtime.schedule;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.quartz.SchedulerConfigException;
-import org.quartz.spi.ThreadPool;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.quartz.SchedulerConfigException;
+import org.quartz.spi.ThreadPool;
 
 /**
  * Executor based ThreadPool used in quartz scheduler.

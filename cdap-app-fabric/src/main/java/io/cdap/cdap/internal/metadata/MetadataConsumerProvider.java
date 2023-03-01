@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.metadata;
 
 import io.cdap.cdap.spi.metadata.MetadataConsumer;
-
 import java.util.Map;
 
 /**

@@ -24,14 +24,13 @@ import io.cdap.cdap.api.workflow.WorkflowConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.common.Constants;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Internal batch source used as a connector between pipeline phases.

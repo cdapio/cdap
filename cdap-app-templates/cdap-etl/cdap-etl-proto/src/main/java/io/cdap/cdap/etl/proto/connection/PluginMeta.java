@@ -18,7 +18,6 @@
 package io.cdap.cdap.etl.proto.connection;
 
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
-
 import java.util.Map;
 import java.util.Objects;
 

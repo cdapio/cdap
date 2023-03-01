@@ -18,9 +18,6 @@ package io.cdap.cdap.api.data.batch;
 
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.TableSplit;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -28,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for the {@link Splits} class in API.

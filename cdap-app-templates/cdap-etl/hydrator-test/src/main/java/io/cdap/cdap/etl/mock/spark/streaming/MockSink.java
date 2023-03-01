@@ -29,14 +29,13 @@ import io.cdap.cdap.etl.api.batch.SparkPluginContext;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.DataSetManager;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Mock Sink for Spark streaming test.

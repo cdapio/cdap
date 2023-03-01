@@ -16,7 +16,6 @@
 package io.cdap.cdap.common.io;
 
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.io.IOException;
 
 /**

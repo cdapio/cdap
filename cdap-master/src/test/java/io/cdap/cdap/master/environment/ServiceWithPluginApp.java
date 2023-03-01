@@ -23,7 +23,6 @@ import io.cdap.cdap.api.service.AbstractService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-
 import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.ws.rs.GET;

@@ -17,7 +17,6 @@ package io.cdap.cdap.internal.customaction;
 
 import io.cdap.cdap.api.customaction.CustomActionConfigurer;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

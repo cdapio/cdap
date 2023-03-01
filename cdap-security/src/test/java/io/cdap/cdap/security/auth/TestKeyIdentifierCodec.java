@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.auth;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -25,9 +27,6 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -35,8 +34,8 @@ import java.util.Random;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Test serialization and deserialization of KeyIdentifiers.

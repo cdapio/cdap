@@ -19,10 +19,9 @@ package io.cdap.cdap.internal.app.runtime.batch;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.app.metrics.MapReduceMetrics;
+import java.util.Map;
 import org.apache.hadoop.mapreduce.ReduceContext;
 import org.apache.hadoop.mapreduce.TaskCounter;
-
-import java.util.Map;
 
 /**
  * Gathers statistics from a running reduce task through its counters and writes the data to the metrics system.

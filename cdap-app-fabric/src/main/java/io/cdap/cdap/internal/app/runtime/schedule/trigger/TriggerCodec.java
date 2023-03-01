@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ProtoTriggerCodec;
-
 import java.util.Map;
 
 /**

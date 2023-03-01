@@ -31,12 +31,11 @@ import io.cdap.cdap.logging.filter.AndFilter;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.kafka.KafkaConsumer;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import org.apache.twill.kafka.client.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * Reads log events stored in Kafka.

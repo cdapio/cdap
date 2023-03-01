@@ -24,13 +24,12 @@ import com.google.common.collect.Maps;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.logback.TestLoggingContext;
 import io.cdap.cdap.logging.appender.LogMessage;
+import java.nio.ByteBuffer;
+import java.util.Map;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.ByteBuffer;
-import java.util.Map;
 
 /**
  * Test cases for LoggingEvent.

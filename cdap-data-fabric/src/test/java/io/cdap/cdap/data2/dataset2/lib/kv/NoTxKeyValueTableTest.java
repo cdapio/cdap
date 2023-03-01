@@ -23,11 +23,10 @@ import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

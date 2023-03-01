@@ -44,10 +44,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.app.ServiceLifecycleApp;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,6 +60,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Unit test for testing service handler lifecycle.

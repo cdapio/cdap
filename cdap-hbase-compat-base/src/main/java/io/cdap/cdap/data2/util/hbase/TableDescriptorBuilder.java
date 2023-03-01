@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.util.hbase;
 import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
 import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
 import io.cdap.cdap.spi.hbase.TableDescriptor;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

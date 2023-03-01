@@ -27,11 +27,10 @@ import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
   // - keep description if new metadata does not contain it

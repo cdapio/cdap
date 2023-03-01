@@ -20,7 +20,6 @@ import io.cdap.cdap.etl.api.Destroyable;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.Transformation;
-
 import java.util.Collection;
 import java.util.Map;
 

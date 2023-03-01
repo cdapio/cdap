@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import java.io.IOException;
+import java.util.Map;
 import org.apache.hadoop.hbase.client.IsolationLevel;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.visibility.Authorizations;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * HBase 1.0 specific implementation for {@link ScanBuilder}.

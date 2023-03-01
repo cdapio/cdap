@@ -38,13 +38,6 @@ import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import org.apache.twill.api.ElectionHandler;
-import org.apache.twill.common.Threads;
-import org.apache.twill.internal.zookeeper.LeaderElection;
-import org.apache.twill.zookeeper.ZKClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -53,6 +46,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 import javax.annotation.Nullable;
+import org.apache.twill.api.ElectionHandler;
+import org.apache.twill.common.Threads;
+import org.apache.twill.internal.zookeeper.LeaderElection;
+import org.apache.twill.zookeeper.ZKClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link MessagingService} that performs lead-election and only operates if it is currently a leader.

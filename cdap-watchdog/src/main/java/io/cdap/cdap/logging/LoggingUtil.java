@@ -19,7 +19,6 @@ package io.cdap.cdap.logging;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;

@@ -24,7 +24,6 @@ import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 
 /**

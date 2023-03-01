@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.deploy;
 
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-
 import javax.annotation.Nullable;
 
 /**

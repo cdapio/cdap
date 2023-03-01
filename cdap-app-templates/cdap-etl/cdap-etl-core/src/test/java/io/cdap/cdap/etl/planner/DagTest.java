@@ -19,13 +19,12 @@ package io.cdap.cdap.etl.planner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.etl.proto.Connection;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  */

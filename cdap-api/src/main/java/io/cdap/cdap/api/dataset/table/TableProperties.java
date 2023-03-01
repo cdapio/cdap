@@ -22,7 +22,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;

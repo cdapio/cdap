@@ -21,11 +21,10 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Test;
 
 /**
  * Testing the Validation of etl stage hookups.

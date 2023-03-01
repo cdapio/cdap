@@ -19,7 +19,6 @@ package io.cdap.cdap.format.io;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import io.cdap.cdap.common.io.Decoder;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;

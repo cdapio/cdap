@@ -19,7 +19,6 @@ package io.cdap.cdap.config;
 import com.google.inject.Inject;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-
 import java.util.List;
 
 /**

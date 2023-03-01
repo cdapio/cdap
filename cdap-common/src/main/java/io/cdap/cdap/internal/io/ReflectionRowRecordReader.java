@@ -24,7 +24,6 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Table;
-
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;

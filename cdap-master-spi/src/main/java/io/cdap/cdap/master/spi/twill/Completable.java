@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.master.spi.twill;
 
-import org.apache.twill.api.TwillRunnable;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.apache.twill.api.TwillRunnable;
 
 /**
  * Annotation to denote a {@link TwillRunnable} that completes.

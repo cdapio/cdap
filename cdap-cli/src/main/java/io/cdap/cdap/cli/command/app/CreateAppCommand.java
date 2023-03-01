@@ -34,7 +34,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;

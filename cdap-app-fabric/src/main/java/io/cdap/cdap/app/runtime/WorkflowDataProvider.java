@@ -18,7 +18,6 @@ package io.cdap.cdap.app.runtime;
 
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-
 import java.util.Set;
 
 /**

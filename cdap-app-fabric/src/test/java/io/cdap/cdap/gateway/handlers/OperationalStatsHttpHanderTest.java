@@ -17,16 +17,15 @@
 package io.cdap.cdap.gateway.handlers;
 
 import io.cdap.cdap.operations.OperationalStatsUtils;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests for {@link OperationalStatsHttpHandler}.

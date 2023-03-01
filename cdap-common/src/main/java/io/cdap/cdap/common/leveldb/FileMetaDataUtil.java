@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.common.leveldb;
 
+import javax.annotation.Nullable;
 import org.iq80.leveldb.impl.InternalKey;
 import org.iq80.leveldb.util.Slice;
-
-import javax.annotation.Nullable;
 
 /**
  * Utility class for trimming down storage of keys passed to {@link org.iq80.leveldb.impl.FileMetaData#FileMetaData}

@@ -19,7 +19,6 @@ package io.cdap.cdap.common.metadata;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;

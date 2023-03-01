@@ -16,9 +16,8 @@
 package io.cdap.cdap.common.conf;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.twill.common.Cancellable;
-
 import java.io.Closeable;
+import org.apache.twill.common.Cancellable;
 
 /**
  * Represents store for properties/configurations. It allows properties being store and shared.

@@ -20,7 +20,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;

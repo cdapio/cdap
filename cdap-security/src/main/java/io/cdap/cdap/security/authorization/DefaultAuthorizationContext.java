@@ -36,13 +36,12 @@ import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
-import org.apache.tephra.TransactionFailureException;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * An {@link AuthorizationContext} that delegates to the provided {@link DatasetContext}, {@link Admin} and

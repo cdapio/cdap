@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.artifact;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

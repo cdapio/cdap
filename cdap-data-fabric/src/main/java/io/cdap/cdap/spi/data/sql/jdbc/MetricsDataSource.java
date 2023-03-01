@@ -19,14 +19,13 @@ package io.cdap.cdap.spi.data.sql.jdbc;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
-import org.apache.commons.pool2.ObjectPool;
-
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.apache.commons.pool2.ObjectPool;
 
 /**
  * A metrics data source that will emit metrics about the number of connections.

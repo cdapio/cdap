@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.id.Id;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;

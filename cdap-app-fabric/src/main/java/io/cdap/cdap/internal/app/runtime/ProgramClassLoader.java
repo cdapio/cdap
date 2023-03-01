@@ -23,9 +23,6 @@ import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.internal.asm.Classes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +30,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains

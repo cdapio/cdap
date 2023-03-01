@@ -31,7 +31,6 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;

@@ -32,11 +32,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import org.iq80.leveldb.DB;
-
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.iq80.leveldb.DB;
 
 /**
  * Simple implementation of leveldb non-tx {@link NoTxKeyValueTable}.

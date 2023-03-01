@@ -23,7 +23,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
-
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.concurrent.TimeUnit;

@@ -21,7 +21,6 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-
 import javax.annotation.Nullable;
 
 /**

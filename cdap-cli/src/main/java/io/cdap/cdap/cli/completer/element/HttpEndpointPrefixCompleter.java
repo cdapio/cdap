@@ -26,7 +26,6 @@ import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.cli.completers.PrefixCompleter;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

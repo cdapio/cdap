@@ -31,9 +31,6 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowContext;
-import org.apache.tephra.TransactionFailureException;
-import org.junit.Assert;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -43,6 +40,8 @@ import java.net.URL;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.apache.tephra.TransactionFailureException;
+import org.junit.Assert;
 
 /**
  * App which copies data from one KVTable to another using a Workflow Custom Action.

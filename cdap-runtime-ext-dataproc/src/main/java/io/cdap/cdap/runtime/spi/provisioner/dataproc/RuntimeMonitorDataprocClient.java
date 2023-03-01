@@ -18,7 +18,6 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
-
 import java.util.Collections;
 
 /**

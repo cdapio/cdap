@@ -24,7 +24,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.api.plugin.Requirements;
-
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Set;

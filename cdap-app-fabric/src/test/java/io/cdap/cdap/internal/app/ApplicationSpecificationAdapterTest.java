@@ -24,13 +24,12 @@ import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link ApplicationSpecificationAdapter}.

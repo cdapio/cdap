@@ -20,7 +20,6 @@ import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.MultiOutputEmitter;
 import io.cdap.cdap.etl.api.StageMetrics;
-
 import java.util.Map;
 
 /**

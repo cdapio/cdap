@@ -22,7 +22,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.test.ArtifactManager;
-
 import java.util.Map;
 
 /**

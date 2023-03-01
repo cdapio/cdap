@@ -22,7 +22,6 @@ import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

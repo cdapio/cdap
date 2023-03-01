@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroObjectType;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;

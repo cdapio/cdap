@@ -24,9 +24,6 @@ import com.google.cloud.storage.StorageException;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
@@ -37,6 +34,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SplittableRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages the custom_time and Temporary Holds that need to be set/unset/updated on cached program artifacts in GCS.

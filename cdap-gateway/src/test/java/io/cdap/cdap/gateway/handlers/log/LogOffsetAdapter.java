@@ -21,7 +21,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
-
 import java.io.IOException;
 
 /**

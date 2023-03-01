@@ -18,7 +18,6 @@ package io.cdap.cdap.api.annotation;
 
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.RuntimeContext;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

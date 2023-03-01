@@ -34,7 +34,6 @@ import io.cdap.cdap.cli.util.table.TableRendererConfig;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
-
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Comparator;

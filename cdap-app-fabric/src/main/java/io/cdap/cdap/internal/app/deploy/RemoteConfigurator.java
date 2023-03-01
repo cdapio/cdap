@@ -38,7 +38,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.common.http.HttpRequestConfig;
-
 import java.nio.charset.StandardCharsets;
 
 /**

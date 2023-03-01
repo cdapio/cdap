@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.proto.v2;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.etl.proto.Connection;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;

@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.preview;
 
 import io.cdap.cdap.proto.BasicThrowable;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

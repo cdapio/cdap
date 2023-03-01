@@ -19,7 +19,6 @@ package io.cdap.cdap.metrics.process.loader;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsWriter;
 import io.cdap.cdap.api.metrics.MetricsWriterContext;
-
 import java.io.IOException;
 import java.util.Collection;
 

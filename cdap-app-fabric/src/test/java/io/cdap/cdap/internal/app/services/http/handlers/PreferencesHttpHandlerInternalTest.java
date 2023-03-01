@@ -31,12 +31,11 @@ import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.Collections;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Tests for {@link PreferencesHttpHandlerInternal}

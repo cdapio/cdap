@@ -18,13 +18,12 @@ package io.cdap.cdap.security.impersonation;
 
 import com.google.common.base.Throwables;
 import io.cdap.cdap.proto.NamespaceMeta;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility functions for impersonation.

@@ -18,7 +18,6 @@ package io.cdap.cdap.support.lib;
 
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
-
 import java.util.Set;
 
 /**

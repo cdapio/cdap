@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.app.runtime.batch.dataset.input.InputContexts;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.input.MultiInputTaggedSplit;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.input.TaggedInputSplit;
 import io.cdap.cdap.internal.lang.Reflections;
+import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -40,8 +41,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.map.WrappedMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Wraps user-defined implementation of {@link Mapper} class which allows perform extra configuration.

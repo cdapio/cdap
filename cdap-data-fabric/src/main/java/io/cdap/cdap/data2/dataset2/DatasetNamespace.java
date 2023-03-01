@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.dataset2;
 
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import javax.annotation.Nullable;
 
 /**

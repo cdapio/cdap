@@ -17,15 +17,14 @@
 package io.cdap.cdap.common.discovery;
 
 import com.google.common.util.concurrent.SettableFuture;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.ServiceDiscovered;
-
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
  * An abstract {@link EndpointStrategy} that helps implementation of any strategy.

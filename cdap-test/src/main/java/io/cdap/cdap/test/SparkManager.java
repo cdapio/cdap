@@ -17,7 +17,6 @@
 package io.cdap.cdap.test;
 
 import io.cdap.cdap.api.spark.Spark;
-
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 

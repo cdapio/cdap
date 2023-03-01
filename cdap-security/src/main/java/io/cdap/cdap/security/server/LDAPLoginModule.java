@@ -17,10 +17,6 @@
 package io.cdap.cdap.security.server;
 
 import com.google.common.base.Throwables;
-import org.eclipse.jetty.plus.jaas.spi.LdapLoginModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -34,6 +30,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.spi.LoginModule;
+import org.eclipse.jetty.plus.jaas.spi.LdapLoginModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A custom {@link LoginModule} that does LDAP authentication. It allows the disabling of SSL

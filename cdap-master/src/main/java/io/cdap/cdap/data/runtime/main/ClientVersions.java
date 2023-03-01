@@ -19,11 +19,10 @@ package io.cdap.cdap.data.runtime.main;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.data2.util.hbase.HBaseVersion;
 import io.cdap.cdap.gateway.handlers.util.VersionHelper;
-import org.apache.kafka.clients.KafkaClient;
-
 import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.kafka.clients.KafkaClient;
 
 /**
  * Provides client versions of infrastructure components.

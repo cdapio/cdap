@@ -23,7 +23,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
-
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;

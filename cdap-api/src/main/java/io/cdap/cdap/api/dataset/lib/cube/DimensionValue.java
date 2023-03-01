@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.dataset.lib.cube;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import javax.annotation.Nullable;
 
 /**

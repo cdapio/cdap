@@ -20,14 +20,13 @@ import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
 import io.cdap.cdap.master.spi.environment.spark.SparkSubmitContext;
 import io.cdap.cdap.master.spi.namespace.NamespaceDetail;
 import io.cdap.cdap.master.spi.namespace.NamespaceListener;
-import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * The interface is the integration point for CDAP master runtime provider.

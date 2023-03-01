@@ -22,18 +22,17 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 public class MetadataStoreDatasetTest {
   @ClassRule

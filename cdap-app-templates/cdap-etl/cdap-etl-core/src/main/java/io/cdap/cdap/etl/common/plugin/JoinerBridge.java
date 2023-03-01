@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

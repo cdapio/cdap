@@ -17,7 +17,6 @@
 package io.cdap.cdap.support.status;
 
 import io.cdap.cdap.proto.ProgramType;
-
 import javax.annotation.Nullable;
 
 /**

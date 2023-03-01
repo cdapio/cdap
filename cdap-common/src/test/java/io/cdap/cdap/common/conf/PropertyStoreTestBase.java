@@ -17,14 +17,13 @@ package io.cdap.cdap.common.conf;
 
 import com.google.common.base.Charsets;
 import io.cdap.cdap.common.io.Codec;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

@@ -20,11 +20,10 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Iterator;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *  Tests for the partitioning and its field types.

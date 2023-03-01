@@ -41,13 +41,12 @@ import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.messaging.MessagingService;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * Default implementation of a {@link WorkflowContext}.

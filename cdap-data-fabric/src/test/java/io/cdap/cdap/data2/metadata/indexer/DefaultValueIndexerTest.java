@@ -20,11 +20,10 @@ package io.cdap.cdap.data2.metadata.indexer;
 import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashSet;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link DefaultValueIndexer}.

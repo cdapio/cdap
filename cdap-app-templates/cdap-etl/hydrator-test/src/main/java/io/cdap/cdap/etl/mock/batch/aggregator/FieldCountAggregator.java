@@ -31,7 +31,6 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAggregatorContext;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

@@ -18,7 +18,6 @@ package io.cdap.cdap.proto.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

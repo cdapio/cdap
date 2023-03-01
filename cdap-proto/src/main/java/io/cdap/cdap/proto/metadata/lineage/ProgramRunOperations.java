@@ -18,7 +18,6 @@ package io.cdap.cdap.proto.metadata.lineage;
 
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.proto.id.ProgramRunId;
-
 import java.util.Objects;
 import java.util.Set;
 

@@ -17,12 +17,11 @@ package io.cdap.cdap.common.lang;
 
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.internal.lang.Reflections;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

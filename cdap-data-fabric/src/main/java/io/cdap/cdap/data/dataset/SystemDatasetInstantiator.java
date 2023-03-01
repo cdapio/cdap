@@ -32,7 +32,6 @@ import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;

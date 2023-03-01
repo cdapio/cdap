@@ -17,15 +17,14 @@
 package io.cdap.cdap.data2.util.hbase;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.io.output.NullOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.output.NullOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Detects the currently loaded HBase version.  It is assumed that only one HBase version is loaded at a time,

@@ -45,9 +45,6 @@ import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
@@ -57,6 +54,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 
 /**
  * A class implementing {@link ProgramWorkflowRunner}, providing a {@link Runnable} of

@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging;
 
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.util.Iterator;
 
 /**

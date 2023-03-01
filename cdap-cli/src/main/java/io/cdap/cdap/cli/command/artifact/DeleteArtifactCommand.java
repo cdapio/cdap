@@ -26,7 +26,6 @@ import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ArtifactClient;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 
 /**

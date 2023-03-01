@@ -29,7 +29,6 @@ import io.cdap.cdap.proto.BatchProgramStart;
 import io.cdap.cdap.proto.BatchProgramStatus;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
-
 import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.List;

@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.preview;
 
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
 import java.io.IOException;
 import java.util.Optional;
 

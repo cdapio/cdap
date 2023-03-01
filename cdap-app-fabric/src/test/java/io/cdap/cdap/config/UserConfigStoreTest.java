@@ -20,15 +20,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.StoreDefinition;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for {@link ConfigStore}, {@link ConsoleSettingsStore}, and {@link PreferencesService}.

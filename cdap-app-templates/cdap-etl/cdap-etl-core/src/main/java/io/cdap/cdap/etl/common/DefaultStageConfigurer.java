@@ -21,7 +21,6 @@ import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
 import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.validation.DefaultFailureCollector;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

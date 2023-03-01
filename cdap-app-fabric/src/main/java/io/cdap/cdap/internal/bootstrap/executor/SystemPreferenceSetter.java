@@ -24,7 +24,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.config.PreferencesService;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

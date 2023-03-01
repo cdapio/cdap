@@ -30,12 +30,11 @@ import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.rdd.RDD;
-
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.rdd.RDD;
 
 /**
  * Transform that filters out records whose configured field is a configured value.

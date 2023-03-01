@@ -146,6 +146,9 @@ import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.cdap.sourcecontrol.SourceControlModule;
 import io.cdap.http.HttpHandler;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.List;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -157,10 +160,6 @@ import org.quartz.impl.StdScheduler;
 import org.quartz.simpl.CascadingClassLoadHelper;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.JobStore;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.List;
 
 /**
  * AppFabric Service Runtime Module.

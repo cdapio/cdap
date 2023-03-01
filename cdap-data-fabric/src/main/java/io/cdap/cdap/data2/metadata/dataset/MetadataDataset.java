@@ -56,7 +56,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

@@ -26,7 +26,6 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.scheduler.ProgramScheduleService;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;

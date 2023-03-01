@@ -20,14 +20,13 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Paths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utilities for file localization.

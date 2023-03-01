@@ -21,7 +21,6 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProgramRunId;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.metadata.indexer;
 
 import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
 import io.cdap.cdap.data2.metadata.dataset.SortInfo;
-
 import java.util.Set;
 
 /**

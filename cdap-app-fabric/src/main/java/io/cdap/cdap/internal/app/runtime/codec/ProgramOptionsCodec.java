@@ -27,7 +27,6 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.lang.reflect.Type;
 
 /**

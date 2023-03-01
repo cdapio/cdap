@@ -23,7 +23,6 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.util.AbstractCommand;
 import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 
 /**

@@ -19,7 +19,6 @@ package io.cdap.cdap.spi.data.table.field;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;

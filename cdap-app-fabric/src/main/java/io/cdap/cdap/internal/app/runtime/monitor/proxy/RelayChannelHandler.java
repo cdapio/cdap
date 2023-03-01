@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
 import io.netty.channel.ChannelHandler;
-
 import java.net.SocketAddress;
 
 /**

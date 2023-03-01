@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.cli.completer.StringsCompleter;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.proto.NamespaceMeta;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

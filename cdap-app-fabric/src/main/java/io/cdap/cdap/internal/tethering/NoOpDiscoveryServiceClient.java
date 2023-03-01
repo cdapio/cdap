@@ -18,14 +18,13 @@ package io.cdap.cdap.internal.tethering;
 
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
-
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
  * A DiscoveryServiceClient implementation that will always return the same url.

@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common.submit;
 
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
-
 import java.util.ArrayList;
 import java.util.List;
 

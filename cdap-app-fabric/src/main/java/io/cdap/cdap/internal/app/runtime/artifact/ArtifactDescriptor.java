@@ -17,10 +17,9 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
-import org.apache.twill.filesystem.Location;
-
 import java.net.URI;
 import java.util.Objects;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Uniquely describes an artifact. Artifact descriptors are ordered by scope,

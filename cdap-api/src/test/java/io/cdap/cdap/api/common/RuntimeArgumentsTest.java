@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.api.common;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test RuntimeArguments class.

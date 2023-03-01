@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.common.logging;
 
+import java.io.PrintWriter;
+import javax.annotation.Nullable;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.PrintWriter;
-import javax.annotation.Nullable;
 
 /**
  * A {@link LogHandler} implementation that logs {@link LogEntry} to {@link Logger}.

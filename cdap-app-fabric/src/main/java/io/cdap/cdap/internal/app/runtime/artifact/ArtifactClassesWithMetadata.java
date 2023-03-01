@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-
 import java.util.List;
 import java.util.Objects;
 

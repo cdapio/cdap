@@ -33,15 +33,14 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
+import java.util.Collections;
+import java.util.Map;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Unit test for {@link DefaultRuntimeJob}.

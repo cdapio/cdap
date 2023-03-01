@@ -23,10 +23,9 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Collections;
 
 /**
  * Tests for StageSpec

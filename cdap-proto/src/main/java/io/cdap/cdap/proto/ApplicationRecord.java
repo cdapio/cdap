@@ -20,7 +20,6 @@ import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

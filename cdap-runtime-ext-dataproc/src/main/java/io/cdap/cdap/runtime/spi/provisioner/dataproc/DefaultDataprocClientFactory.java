@@ -20,7 +20,6 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.ClusterControllerSettings;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Optional;

@@ -15,13 +15,13 @@
  */
 package io.cdap.cdap.data.runtime.main;
 
+import static org.junit.Assert.assertFalse;
+
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
 
 /**
  * Test the guice module overrides for the {@link TransactionServiceTwillRunnable}.

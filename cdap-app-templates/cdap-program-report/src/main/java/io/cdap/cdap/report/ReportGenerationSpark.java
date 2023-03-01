@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.report;
 
+import static io.cdap.cdap.report.util.Constants.LocationName;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -49,15 +51,6 @@ import io.cdap.cdap.report.proto.summary.ReportSummary;
 import io.cdap.cdap.report.util.Constants;
 import io.cdap.cdap.report.util.ReportField;
 import io.cdap.cdap.report.util.ReportIds;
-import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.spark.sql.SQLContext;
-import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,8 +90,14 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-
-import static io.cdap.cdap.report.util.Constants.LocationName;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.spark.sql.SQLContext;
+import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Spark program for generating reports, querying for report statuses, and reading reports.

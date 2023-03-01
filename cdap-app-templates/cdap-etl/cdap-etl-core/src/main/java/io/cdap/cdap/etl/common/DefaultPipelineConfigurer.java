@@ -33,7 +33,6 @@ import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
 import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

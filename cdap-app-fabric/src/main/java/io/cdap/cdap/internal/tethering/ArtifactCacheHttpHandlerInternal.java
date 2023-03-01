@@ -45,8 +45,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.filesystem.Location;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -59,6 +57,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import org.apache.twill.filesystem.Location;
 
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {

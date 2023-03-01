@@ -19,9 +19,8 @@ package io.cdap.cdap.etl.api.streaming;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.etl.api.batch.BatchContext;
-import org.apache.tephra.TransactionFailureException;
-
 import javax.annotation.Nullable;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * Context passed to streaming source during prepare run phase.

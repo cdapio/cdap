@@ -50,10 +50,6 @@ import io.cdap.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import org.apache.twill.api.RunId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,6 +62,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service to compute field lineage based on operations stored in {@link DefaultFieldLineageReader}.

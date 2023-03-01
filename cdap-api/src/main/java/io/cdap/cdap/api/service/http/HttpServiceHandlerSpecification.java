@@ -19,7 +19,6 @@ package io.cdap.cdap.api.service.http;
 import io.cdap.cdap.api.AbstractProgramSpecification;
 import io.cdap.cdap.api.common.PropertyProvider;
 import io.cdap.cdap.api.dataset.Dataset;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

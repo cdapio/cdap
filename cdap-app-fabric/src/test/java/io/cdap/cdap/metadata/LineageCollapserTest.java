@@ -25,12 +25,11 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
+import java.util.Collections;
+import java.util.Set;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * Test {@link LineageCollapser}.

@@ -26,9 +26,6 @@ import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
 import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
 import io.cdap.cdap.logging.meta.CheckpointManager;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -36,6 +33,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Log buffer recovery service which recovers logs upon log saver restart and sends them to log buffer pipeline for

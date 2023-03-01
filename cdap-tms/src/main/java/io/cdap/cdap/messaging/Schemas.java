@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.messaging;
 
-import org.apache.avro.Schema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import javax.annotation.Nullable;
+import org.apache.avro.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class for getting various {@link Schema} used by the messaging system.

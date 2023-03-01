@@ -19,7 +19,6 @@ package io.cdap.cdap.common.metadata;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.Set;
 
 /**

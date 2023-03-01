@@ -20,14 +20,13 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
 import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class MultiThreadDatasetCacheTest extends DynamicDatasetCacheTest {
 

@@ -19,6 +19,9 @@ package io.cdap.cdap.data2.util.hbase;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HConstants;
@@ -26,10 +29,6 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
 
 /**
  * Utility class for dealing with HBase coprocessors.

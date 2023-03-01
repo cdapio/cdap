@@ -31,11 +31,10 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

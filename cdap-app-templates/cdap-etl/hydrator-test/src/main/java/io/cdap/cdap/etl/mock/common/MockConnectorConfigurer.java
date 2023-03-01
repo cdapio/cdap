@@ -23,7 +23,6 @@ import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.etl.api.connector.ConnectorConfigurer;
-
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;

@@ -31,13 +31,12 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * A provisioner that does not create or tear down clusters, but just uses an existing tethered CDAP instance.

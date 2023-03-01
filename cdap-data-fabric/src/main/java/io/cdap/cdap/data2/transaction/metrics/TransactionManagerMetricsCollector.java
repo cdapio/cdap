@@ -21,9 +21,8 @@ import com.google.inject.Provider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
-import org.apache.tephra.metrics.TxMetricsCollector;
-
 import java.util.function.Supplier;
+import org.apache.tephra.metrics.TxMetricsCollector;
 
 /**
  * Implementation for TxMetricsCollector that delegate the the underlying {@link MetricsContext}.

@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.api.streaming;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-
 import java.io.Serializable;
 
 /**

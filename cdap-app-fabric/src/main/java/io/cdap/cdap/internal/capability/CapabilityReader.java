@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.capability;
 
 import io.cdap.cdap.api.app.ApplicationSpecification;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;

@@ -24,11 +24,10 @@ import io.cdap.cdap.logging.appender.AbstractLogPublisher;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import kafka.producer.KeyedMessage;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import kafka.producer.KeyedMessage;
 
 /**
  * Log appender that publishes log messages to Kafka.

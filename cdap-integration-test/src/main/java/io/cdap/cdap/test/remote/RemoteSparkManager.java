@@ -32,15 +32,14 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of {@link SparkManager} that interacts with CDAP using REST API.

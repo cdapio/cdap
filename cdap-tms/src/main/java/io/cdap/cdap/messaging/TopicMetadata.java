@@ -18,7 +18,6 @@ package io.cdap.cdap.messaging;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

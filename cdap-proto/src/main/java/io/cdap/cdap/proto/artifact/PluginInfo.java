@@ -20,7 +20,6 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
-
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;

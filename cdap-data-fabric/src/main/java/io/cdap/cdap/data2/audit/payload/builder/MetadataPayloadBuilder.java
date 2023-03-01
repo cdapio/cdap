@@ -20,7 +20,6 @@ import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.metadata.MetadataRecord;
 import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
-
 import java.util.HashMap;
 import java.util.Map;
 

@@ -18,7 +18,6 @@ package io.cdap.cdap.common.internal.remote;
 
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

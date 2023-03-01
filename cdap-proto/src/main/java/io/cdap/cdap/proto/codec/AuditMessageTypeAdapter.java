@@ -28,7 +28,6 @@ import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.audit.payload.access.AccessPayload;
 import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.lang.reflect.Type;
 
 /**

@@ -22,7 +22,6 @@ import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowContext;
-
 import javax.annotation.Nullable;
 
 /**

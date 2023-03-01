@@ -15,18 +15,6 @@
  */
 
 package io.cdap.cdap.security.server;
-import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
-import org.eclipse.jetty.plus.jaas.callback.RequestParameterCallback;
-import org.eclipse.jetty.security.DefaultIdentityService;
-import org.eclipse.jetty.security.IdentityService;
-import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.server.AbstractHttpConnection;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.UserIdentity;
-import org.eclipse.jetty.util.Loader;
-import org.eclipse.jetty.util.component.AbstractLifeCycle;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -44,6 +32,18 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.plus.jaas.callback.RequestParameterCallback;
+import org.eclipse.jetty.security.DefaultIdentityService;
+import org.eclipse.jetty.security.IdentityService;
+import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.server.AbstractHttpConnection;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.UserIdentity;
+import org.eclipse.jetty.util.Loader;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 /* ---------------------------------------------------- */
 /** JAASLoginService

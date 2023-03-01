@@ -22,7 +22,6 @@ import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.dataset.Dataset;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;

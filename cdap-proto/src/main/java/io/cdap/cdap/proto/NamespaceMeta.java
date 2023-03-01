@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

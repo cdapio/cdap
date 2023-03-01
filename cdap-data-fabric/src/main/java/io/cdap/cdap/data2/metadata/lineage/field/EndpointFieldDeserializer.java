@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import io.cdap.cdap.api.lineage.field.EndPoint;
-
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;

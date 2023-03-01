@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.replication;
 
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.UUID;
 
 /**
  * Test cases for ReplicationStatusKey

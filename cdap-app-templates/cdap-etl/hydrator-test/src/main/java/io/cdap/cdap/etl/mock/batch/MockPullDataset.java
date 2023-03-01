@@ -27,11 +27,10 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPullRequest;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 
 /**
  * Pull Dataset implementation for unit test

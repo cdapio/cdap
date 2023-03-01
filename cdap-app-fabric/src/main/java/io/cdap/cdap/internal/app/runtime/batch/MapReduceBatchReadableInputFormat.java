@@ -18,11 +18,10 @@ package io.cdap.cdap.internal.app.runtime.batch;
 
 import io.cdap.cdap.api.data.batch.BatchReadable;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.AbstractBatchReadableInputFormat;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * An {@link InputFormat} for reading data from {@link BatchReadable} for MapReduce.

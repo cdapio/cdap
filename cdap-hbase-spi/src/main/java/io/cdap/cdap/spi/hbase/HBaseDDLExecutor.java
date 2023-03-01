@@ -18,7 +18,6 @@ package io.cdap.cdap.spi.hbase;
 
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;

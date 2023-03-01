@@ -21,8 +21,6 @@ import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageReader;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
-import org.apache.twill.api.RunId;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.twill.api.RunId;
 
 /**
  * Fake implementation of the {@link FieldLineageReader} for testing purpose.

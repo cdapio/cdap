@@ -36,13 +36,6 @@ import io.cdap.cdap.logging.pipeline.MockAppender;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -51,6 +44,12 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests for {@link ConcurrentLogBufferWriter}.

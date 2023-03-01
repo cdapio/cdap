@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.dataset2.customds;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
-
 import java.io.IOException;
 
 /**

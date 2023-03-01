@@ -32,7 +32,6 @@ import io.cdap.cdap.etl.common.plugin.Caller;
 import io.cdap.cdap.etl.common.plugin.NoStageLoggingCaller;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;

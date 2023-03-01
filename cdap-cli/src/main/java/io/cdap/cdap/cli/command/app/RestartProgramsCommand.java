@@ -25,7 +25,6 @@ import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramStart;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;

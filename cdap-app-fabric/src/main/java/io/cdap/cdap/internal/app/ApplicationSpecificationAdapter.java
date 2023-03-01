@@ -56,7 +56,6 @@ import io.cdap.cdap.proto.codec.WorkflowNodeCodec;
 import io.cdap.cdap.proto.codec.WorkflowSpecificationCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;

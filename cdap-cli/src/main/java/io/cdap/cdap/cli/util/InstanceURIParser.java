@@ -22,7 +22,6 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.net.URI;
 
 /**

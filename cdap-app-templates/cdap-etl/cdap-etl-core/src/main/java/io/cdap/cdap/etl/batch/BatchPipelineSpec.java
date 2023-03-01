@@ -22,7 +22,6 @@ import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

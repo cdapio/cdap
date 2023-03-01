@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.events.dummy;
 import com.google.inject.Inject;
 import io.cdap.cdap.internal.events.EventWriterProvider;
 import io.cdap.cdap.spi.events.EventWriter;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

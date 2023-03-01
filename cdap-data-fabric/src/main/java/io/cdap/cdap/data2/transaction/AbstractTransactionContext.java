@@ -18,15 +18,14 @@ package io.cdap.cdap.data2.transaction;
 
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.common.Bytes;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.annotation.Nullable;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
-
-import java.util.Set;
-import java.util.TreeSet;
-import javax.annotation.Nullable;
 
 /**
  * An abstract implementation of {@link TransactionContext} for governing general transaction lifecycle.

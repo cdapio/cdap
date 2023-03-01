@@ -18,7 +18,6 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.gson.Gson;
 import io.cdap.http.HttpResponder;
-
 import java.io.IOException;
 import java.util.function.Function;
 

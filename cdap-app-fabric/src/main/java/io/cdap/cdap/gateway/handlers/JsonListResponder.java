@@ -22,7 +22,6 @@ import com.google.gson.stream.JsonWriter;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.ByteBuffer;

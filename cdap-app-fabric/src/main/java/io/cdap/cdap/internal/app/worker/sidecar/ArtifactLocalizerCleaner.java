@@ -16,9 +16,6 @@ package io.cdap.cdap.internal.app.worker.sidecar;
 
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,6 +24,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Artifact cleaner that will deleted out-of-date cache entries that were localized by {@link ArtifactLocalizer}

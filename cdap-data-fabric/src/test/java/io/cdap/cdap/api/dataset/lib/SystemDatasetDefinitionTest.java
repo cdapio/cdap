@@ -36,15 +36,14 @@ import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class SystemDatasetDefinitionTest {
 

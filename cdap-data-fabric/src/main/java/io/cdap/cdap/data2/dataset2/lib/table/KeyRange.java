@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.dataset2.lib.table;
 
 import com.google.common.base.Objects;
 import io.cdap.cdap.api.common.Bytes;
-
 import java.util.Arrays;
 import javax.annotation.Nullable;
 

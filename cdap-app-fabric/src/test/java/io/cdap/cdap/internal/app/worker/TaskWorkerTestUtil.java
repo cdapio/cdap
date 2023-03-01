@@ -18,10 +18,9 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import java.util.concurrent.CompletableFuture;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Common TaskWorker test utility functions

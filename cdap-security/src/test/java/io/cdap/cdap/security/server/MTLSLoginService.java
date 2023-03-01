@@ -17,16 +17,15 @@ package io.cdap.cdap.security.server;
  */
 
 import com.google.common.collect.Maps;
+import java.io.FileInputStream;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Pattern;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.server.UserIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.FileInputStream;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Pattern;
 
 /**
  * The login service validates the user to be a known & trusted

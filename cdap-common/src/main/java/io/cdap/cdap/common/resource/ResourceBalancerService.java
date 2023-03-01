@@ -28,6 +28,11 @@ import io.cdap.cdap.common.zookeeper.coordination.ResourceCoordinator;
 import io.cdap.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import io.cdap.cdap.common.zookeeper.coordination.ResourceHandler;
 import io.cdap.cdap.common.zookeeper.coordination.ResourceRequirement;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Set;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -39,12 +44,6 @@ import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * A service that automatically balances resource assignments between its instances.

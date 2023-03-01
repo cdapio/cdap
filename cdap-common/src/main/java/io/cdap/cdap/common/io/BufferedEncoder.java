@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.io;
 
 import com.google.common.base.Function;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;

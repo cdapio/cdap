@@ -23,6 +23,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
+import java.lang.management.ManagementFactory;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
@@ -34,8 +35,6 @@ import org.apache.tephra.persist.LocalFileTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
 import org.apache.tephra.runtime.TransactionStateStorageProvider;
 import org.apache.tephra.snapshot.SnapshotCodecProvider;
-
-import java.lang.management.ManagementFactory;
 
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.

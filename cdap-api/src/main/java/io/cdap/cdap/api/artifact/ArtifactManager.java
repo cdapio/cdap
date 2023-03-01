@@ -18,7 +18,6 @@ package io.cdap.cdap.api.artifact;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.security.AccessException;
-
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;

@@ -67,6 +67,9 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.ResourceSpecification;
@@ -77,10 +80,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Unit tests for the {@link DistributedWorkflowProgramRunner}.

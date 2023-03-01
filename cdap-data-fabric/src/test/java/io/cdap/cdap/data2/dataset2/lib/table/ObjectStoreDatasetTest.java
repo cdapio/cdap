@@ -39,14 +39,6 @@ import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.TypeRepresentation;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionFailureException;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -56,6 +48,13 @@ import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * Test for {@link io.cdap.cdap.data2.dataset2.lib.table.ObjectStoreDataset}.

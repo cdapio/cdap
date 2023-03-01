@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.plugin;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

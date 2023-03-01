@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.data.sql;
 
 import io.cdap.cdap.spi.data.transaction.TransactionException;
-
 import java.sql.SQLException;
 
 /**

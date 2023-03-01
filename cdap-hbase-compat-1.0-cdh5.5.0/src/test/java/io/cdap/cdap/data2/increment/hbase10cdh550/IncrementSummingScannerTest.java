@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.increment.hbase10cdh550;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data.hbase.HBase10CDH550Test;
@@ -26,6 +31,8 @@ import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.net.InetAddress;
+import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -52,14 +59,6 @@ import org.apache.hadoop.hbase.wal.WALFactory;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.net.InetAddress;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link IncrementSummingScanner} implementation.

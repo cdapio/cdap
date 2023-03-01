@@ -36,7 +36,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.workflow.condition.DefaultConditionConfigurer;
 import io.cdap.cdap.internal.workflow.condition.DefaultConditionSpecification;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

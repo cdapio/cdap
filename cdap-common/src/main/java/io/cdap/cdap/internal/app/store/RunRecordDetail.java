@@ -26,7 +26,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;

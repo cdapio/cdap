@@ -22,14 +22,13 @@ import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.common.Constants;
-import org.apache.twill.filesystem.Location;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Read alerts written by an AlertPublisherSink. Alerts will be written to files within a set of directories within a

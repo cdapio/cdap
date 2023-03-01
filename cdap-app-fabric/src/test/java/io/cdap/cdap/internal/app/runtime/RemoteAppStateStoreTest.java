@@ -36,6 +36,10 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.http.NettyHttpService;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Optional;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.hamcrest.CoreMatchers;
@@ -47,11 +51,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Optional;
 
 /**
  * Tests for {@link RemoteAppStateStore}

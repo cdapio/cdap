@@ -48,7 +48,6 @@ import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.http.HttpHandler;
-
 import javax.annotation.Nullable;
 
 /**

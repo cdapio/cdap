@@ -24,7 +24,6 @@ import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;

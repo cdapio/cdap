@@ -17,7 +17,6 @@ package io.cdap.cdap.data2.metadata.dataset;
 
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-
 import java.util.Objects;
 
 /**

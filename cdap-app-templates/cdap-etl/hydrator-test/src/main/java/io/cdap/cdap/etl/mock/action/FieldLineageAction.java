@@ -41,7 +41,6 @@ import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
 import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;

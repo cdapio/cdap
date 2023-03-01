@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.datafabric.dataset.type;
 
 import com.google.common.base.Objects;
 import io.cdap.cdap.proto.DatasetModuleMeta;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

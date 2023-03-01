@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.data.schema;
 
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-
 import java.io.IOException;
 
 /**

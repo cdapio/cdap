@@ -20,7 +20,6 @@ import io.cdap.cdap.api.AbstractProgramSpecification;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.common.PropertyProvider;
 import io.cdap.cdap.api.plugin.Plugin;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

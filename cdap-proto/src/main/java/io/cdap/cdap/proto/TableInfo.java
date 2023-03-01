@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto;
 
 import com.google.gson.annotations.SerializedName;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;

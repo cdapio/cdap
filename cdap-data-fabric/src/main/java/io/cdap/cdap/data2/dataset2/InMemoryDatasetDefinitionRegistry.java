@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.dataset2;
 
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
-
 import java.util.HashMap;
 import java.util.Map;
 

@@ -17,9 +17,8 @@
 package io.cdap.cdap.replication;
 
 import io.cdap.cdap.common.conf.Constants;
-import org.apache.hadoop.conf.Configuration;
-
 import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Utility Functions for Replication Status Coprocessors

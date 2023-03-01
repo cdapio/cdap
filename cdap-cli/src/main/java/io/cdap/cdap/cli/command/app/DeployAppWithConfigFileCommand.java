@@ -27,7 +27,6 @@ import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.cli.util.FilePathResolver;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.common.cli.Arguments;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;

@@ -23,6 +23,13 @@ import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.lang.ClassRewriter;
 import io.cdap.cdap.internal.asm.FinallyAdapter;
 import io.cdap.cdap.internal.dataset.DatasetRuntimeContext;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Modifier;
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.apache.tephra.TransactionAware;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -33,14 +40,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Modifier;
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ClassRewriter} for rewriting the Dataset bytecode. It modifies the Dataset class as follow:

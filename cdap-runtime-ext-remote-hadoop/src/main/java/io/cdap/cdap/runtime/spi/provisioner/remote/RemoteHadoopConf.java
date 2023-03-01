@@ -19,7 +19,6 @@ package io.cdap.cdap.runtime.spi.provisioner.remote;
 
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.annotation.Nullable;

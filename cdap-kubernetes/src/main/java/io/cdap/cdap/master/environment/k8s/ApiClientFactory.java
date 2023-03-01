@@ -17,7 +17,6 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import io.kubernetes.client.openapi.ApiClient;
-
 import java.io.IOException;
 
 /**

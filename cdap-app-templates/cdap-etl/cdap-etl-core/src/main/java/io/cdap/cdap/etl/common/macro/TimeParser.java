@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.common.macro;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
 import java.util.concurrent.TimeUnit;
 
 /**

@@ -25,13 +25,12 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.proto.id.TopicId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of {@link MessageFetcher} that fetch messages directly

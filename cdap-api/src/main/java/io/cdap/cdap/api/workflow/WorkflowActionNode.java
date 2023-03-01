@@ -18,7 +18,6 @@ package io.cdap.cdap.api.workflow;
 
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
-
 import javax.annotation.Nullable;
 
 /**

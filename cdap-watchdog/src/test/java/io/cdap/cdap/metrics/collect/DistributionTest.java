@@ -17,12 +17,11 @@ package io.cdap.cdap.metrics.collect;
 
 import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.MetricValue;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class DistributionTest {
   private static final String METRIC_NAME = "test_distribution";

@@ -17,11 +17,10 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.TwillRunnable;
-
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillRunnable;
 
 /**
  * Container class for holding {@link TwillRunnable} and extra configurations associated with it.

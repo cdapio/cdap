@@ -26,7 +26,6 @@ import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.Map;
 

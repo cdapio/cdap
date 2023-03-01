@@ -48,6 +48,15 @@ import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 import io.cdap.common.cli.exception.CLIExceptionHandler;
 import io.cdap.common.cli.exception.InvalidCommandException;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.ConnectException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+import javax.net.ssl.SSLHandshakeException;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -58,16 +67,6 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
-import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Main class for the CDAP CLI.

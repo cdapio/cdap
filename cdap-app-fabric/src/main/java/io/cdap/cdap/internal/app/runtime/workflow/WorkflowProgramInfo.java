@@ -23,11 +23,10 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import org.apache.twill.api.RunId;
-
 import java.io.Serializable;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
 
 /**
  * A container which contains information for a program that runs inside a {@link Workflow}.

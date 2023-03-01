@@ -24,7 +24,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-
 import java.util.Map;
 
 /**

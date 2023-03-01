@@ -19,11 +19,10 @@ package io.cdap.cdap.logging.appender;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.logback.TestLoggingContext;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

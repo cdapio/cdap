@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.etl.api.StageMetrics;
-
 import java.util.Collections;
 import java.util.Map;
 

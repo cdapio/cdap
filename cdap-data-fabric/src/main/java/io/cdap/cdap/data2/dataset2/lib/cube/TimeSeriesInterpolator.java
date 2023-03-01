@@ -22,7 +22,6 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
-
 import java.util.Collection;
 import java.util.Iterator;
 import javax.annotation.Nullable;

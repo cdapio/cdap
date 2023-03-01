@@ -32,10 +32,9 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
-import org.apache.twill.zookeeper.ZKClientService;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * The main class responsible for Authentication  .

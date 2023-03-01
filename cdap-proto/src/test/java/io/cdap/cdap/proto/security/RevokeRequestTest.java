@@ -18,11 +18,10 @@ package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.Ids;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link RevokeRequest}.

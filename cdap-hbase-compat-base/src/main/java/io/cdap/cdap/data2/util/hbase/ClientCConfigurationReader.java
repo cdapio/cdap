@@ -17,9 +17,8 @@
 package io.cdap.cdap.data2.util.hbase;
 
 import io.cdap.cdap.common.conf.CConfiguration;
-import org.apache.hadoop.conf.Configuration;
-
 import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * This class implements the client-side reading of the {@link CConfiguration} from HBase.

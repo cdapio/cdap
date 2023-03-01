@@ -34,9 +34,6 @@ import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -50,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a package json in the hub.

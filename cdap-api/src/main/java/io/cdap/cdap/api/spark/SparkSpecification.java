@@ -21,7 +21,6 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.PropertyProvider;
 import io.cdap.cdap.api.plugin.Plugin;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

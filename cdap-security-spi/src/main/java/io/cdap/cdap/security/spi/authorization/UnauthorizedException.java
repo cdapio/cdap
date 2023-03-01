@@ -23,7 +23,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.ActionOrPermission;
 import io.cdap.cdap.proto.security.Principal;
-
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.LinkedHashSet;

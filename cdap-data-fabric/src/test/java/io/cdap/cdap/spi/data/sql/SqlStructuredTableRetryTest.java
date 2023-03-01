@@ -18,10 +18,9 @@ package io.cdap.cdap.spi.data.sql;
 
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import java.sql.SQLException;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-
-import java.sql.SQLException;
 
 /**
  * Test for SQL structured table with retries.

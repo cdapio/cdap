@@ -20,6 +20,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.Constants;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Map;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;
@@ -28,12 +33,6 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
-
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Verify the ordering of events in the RouterPipeline.

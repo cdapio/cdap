@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
-
 import java.util.Set;
 
 /**

@@ -18,7 +18,6 @@ package io.cdap.cdap.metrics.process;
 
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
-
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;

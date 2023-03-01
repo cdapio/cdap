@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.master.spi.twill;
 
+import java.util.concurrent.Future;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnable;
-
-import java.util.concurrent.Future;
 
 /**
  * Extends the {@link TwillController} to add extra functionalities for CDAP.

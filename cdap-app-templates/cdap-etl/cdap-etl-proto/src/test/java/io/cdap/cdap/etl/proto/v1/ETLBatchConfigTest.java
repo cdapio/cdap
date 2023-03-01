@@ -25,12 +25,11 @@ import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  */

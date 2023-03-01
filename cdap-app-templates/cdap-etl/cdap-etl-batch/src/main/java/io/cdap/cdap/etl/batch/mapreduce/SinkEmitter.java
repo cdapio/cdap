@@ -19,10 +19,9 @@ package io.cdap.cdap.etl.batch.mapreduce;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.InvalidEntry;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * Sink emitter which writes to sink

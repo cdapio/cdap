@@ -18,10 +18,9 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.UUID;
 
 /**
  * Tests for DataprocRuntimeJobManager.

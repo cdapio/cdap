@@ -18,7 +18,6 @@ package io.cdap.cdap.spark.app.plugin;
 
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
-
 import java.util.function.ToIntFunction;
 
 /**

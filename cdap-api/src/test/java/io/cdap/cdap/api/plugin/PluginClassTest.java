@@ -18,10 +18,9 @@ package io.cdap.cdap.api.plugin;
 
 
 import com.google.gson.Gson;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Collections;
 
 /**
  * Test for {@link PluginClass}

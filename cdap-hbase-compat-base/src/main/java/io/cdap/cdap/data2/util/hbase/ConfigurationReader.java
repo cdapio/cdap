@@ -19,6 +19,8 @@ package io.cdap.cdap.data2.util.hbase;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.io.IOException;
+import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -29,9 +31,6 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * Reads the current {@link CConfiguration} from a table in HBase.  This make the configuration available

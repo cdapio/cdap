@@ -39,7 +39,6 @@ import io.cdap.common.cli.Arguments;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.Map;

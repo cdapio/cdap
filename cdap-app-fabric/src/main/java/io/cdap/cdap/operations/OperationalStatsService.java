@@ -25,10 +25,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
-import org.apache.thrift.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.management.ManagementFactory;
 import java.util.Hashtable;
 import java.util.Map;
@@ -41,6 +37,9 @@ import javax.management.MBeanServer;
 import javax.management.MXBean;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A service that registers {@link OperationalStats} extensions as JMX Beans. The Beans are registered with the JMX

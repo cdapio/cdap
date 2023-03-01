@@ -15,10 +15,9 @@
  */
 package io.cdap.cdap.common.discovery;
 
+import java.util.function.Supplier;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
-
-import java.util.function.Supplier;
 
 /**
  * An {@link EndpointStrategy} that will always return the same endpoint once it's picked

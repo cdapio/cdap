@@ -21,7 +21,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.Encoder;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;

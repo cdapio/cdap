@@ -19,10 +19,9 @@ package io.cdap.cdap.api.schedule;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-import org.apache.twill.api.RunId;
-
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
 
 /**
  * The program status trigger information to be passed to the triggered program.

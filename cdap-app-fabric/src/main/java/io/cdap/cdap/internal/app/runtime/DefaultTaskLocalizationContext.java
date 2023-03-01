@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.TaskLocalizationContext;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Serializable;

@@ -20,11 +20,10 @@ import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.data2.dataset2.lib.table.PutValue;
 import io.cdap.cdap.data2.dataset2.lib.table.Update;
+import java.util.NavigableMap;
 import org.apache.tephra.Transaction;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.NavigableMap;
 
 /**
  *

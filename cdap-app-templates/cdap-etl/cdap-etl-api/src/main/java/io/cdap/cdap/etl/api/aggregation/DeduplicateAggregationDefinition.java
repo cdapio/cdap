@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.api.aggregation;
 
 import io.cdap.cdap.etl.api.relational.Expression;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

@@ -16,12 +16,16 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data.hbase.HBaseTestBase;
 import io.cdap.cdap.data.hbase.HBaseTestFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.test.SlowTests;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -29,11 +33,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests reading and writing {@link CConfiguration} instances to an HBase table.

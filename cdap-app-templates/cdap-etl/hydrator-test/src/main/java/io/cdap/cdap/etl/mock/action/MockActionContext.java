@@ -34,7 +34,6 @@ import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.mock.common.MockArguments;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;

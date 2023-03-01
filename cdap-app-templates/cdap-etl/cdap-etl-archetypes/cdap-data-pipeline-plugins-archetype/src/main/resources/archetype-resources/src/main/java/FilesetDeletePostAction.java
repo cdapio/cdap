@@ -25,9 +25,8 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchActionContext;
 import io.cdap.cdap.etl.api.batch.PostAction;
-import org.apache.twill.filesystem.Location;
-
 import java.util.regex.Pattern;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Post run action that deletes files in a FileSet that match a configurable regex.

@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.batch;
 
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
-
 import java.util.Objects;
 
 /**

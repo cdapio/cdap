@@ -15,7 +15,6 @@ package io.cdap.cdap.internal.events;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.events.EventWriterContext;
-
 import java.util.Collections;
 import java.util.Map;
 

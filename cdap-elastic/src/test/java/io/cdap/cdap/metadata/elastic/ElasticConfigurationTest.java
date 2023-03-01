@@ -23,6 +23,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.Checksums;
 import io.cdap.cdap.common.utils.ProjectInfo;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Random;
+import javax.annotation.Nullable;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
@@ -33,11 +37,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.Random;
-import javax.annotation.Nullable;
 
 /**
  * Tests that the Elasticsearch metadata storage creates indexes with the right settings.

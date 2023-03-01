@@ -23,9 +23,6 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.framework.InvalidPipelineException;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -36,6 +33,8 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Checks for log appender configurations. This class will be automatically picked up by the MasterStartupTool.

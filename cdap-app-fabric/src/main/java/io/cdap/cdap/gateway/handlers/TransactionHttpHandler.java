@@ -35,18 +35,6 @@ import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.tephra.InvalidTruncateTimeException;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.tephra.TxConstants;
-import org.apache.tephra.txprune.RegionPruneInfo;
-import org.apache.tephra.txprune.hbase.InvalidListPruningDebug;
-import org.apache.tephra.txprune.hbase.RegionsAtTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -62,6 +50,17 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.InvalidTruncateTimeException;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
+import org.apache.tephra.txprune.RegionPruneInfo;
+import org.apache.tephra.txprune.hbase.InvalidListPruningDebug;
+import org.apache.tephra.txprune.hbase.RegionsAtTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handler to for managing transaction states.

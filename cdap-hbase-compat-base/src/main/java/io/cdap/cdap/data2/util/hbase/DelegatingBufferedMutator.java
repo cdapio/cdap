@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import java.io.IOException;
+import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * A concrete class implementation that delegate all {@link BufferedMutator}

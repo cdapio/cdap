@@ -20,7 +20,6 @@ package io.cdap.cdap.metadata;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.spi.data.StructuredTableContext;
-
 import java.io.IOException;
 
 /**

@@ -21,9 +21,8 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
-import org.apache.tephra.Transaction;
-
 import java.util.Map;
+import org.apache.tephra.Transaction;
 
 public class TestDataset extends AbstractDataset implements Comparable<TestDataset> {
 

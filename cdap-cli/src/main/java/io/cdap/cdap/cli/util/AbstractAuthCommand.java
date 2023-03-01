@@ -31,7 +31,6 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
-
 import java.io.PrintStream;
 import java.util.Set;
 

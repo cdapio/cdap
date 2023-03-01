@@ -33,15 +33,14 @@ import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for {@link MetricsServiceMain}.

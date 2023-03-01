@@ -65,11 +65,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.http.HttpResponse;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -81,6 +76,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Tests for {@link WorkflowHttpHandler}

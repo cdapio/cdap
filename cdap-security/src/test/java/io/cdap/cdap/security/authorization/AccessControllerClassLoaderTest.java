@@ -24,6 +24,8 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -31,9 +33,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
-
-import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Tests for {@link AccessControllerClassLoader}.

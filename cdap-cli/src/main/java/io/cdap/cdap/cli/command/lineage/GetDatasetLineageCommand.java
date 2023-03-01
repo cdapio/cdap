@@ -28,7 +28,6 @@ import io.cdap.cdap.client.LineageClient;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;

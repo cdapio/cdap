@@ -17,9 +17,8 @@
 package io.cdap.cdap.data.startup;
 
 import io.cdap.cdap.common.conf.CConfiguration;
-import org.apache.hadoop.conf.Configuration;
-
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
 
 public class TransactionServiceCheckWithHConfTest extends TransactionServiceCheckTest {
 

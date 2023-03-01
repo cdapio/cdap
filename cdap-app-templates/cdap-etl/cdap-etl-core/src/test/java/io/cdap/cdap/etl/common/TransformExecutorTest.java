@@ -24,13 +24,12 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.internal.app.preview.NoopDataTracerFactory;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  */

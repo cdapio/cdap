@@ -31,7 +31,6 @@ import io.cdap.cdap.etl.api.MultiInputPipelineConfigurer;
 import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

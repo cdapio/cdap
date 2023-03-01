@@ -37,7 +37,6 @@ import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

@@ -65,10 +65,9 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
+import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
-
-import java.util.List;
 
 /**
  * Executes user code on behalf of a particular user inside a YARN container, for security.

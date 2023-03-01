@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.Set;
 import javax.annotation.Nullable;
 

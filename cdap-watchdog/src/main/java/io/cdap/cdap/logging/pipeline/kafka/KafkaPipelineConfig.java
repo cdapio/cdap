@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.pipeline.kafka;
 
 import com.google.common.collect.ImmutableSet;
-
 import java.util.Set;
 
 /**

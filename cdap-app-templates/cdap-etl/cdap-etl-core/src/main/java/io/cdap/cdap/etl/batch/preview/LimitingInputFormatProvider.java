@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.batch.preview;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
-
 import java.util.HashMap;
 import java.util.Map;
 

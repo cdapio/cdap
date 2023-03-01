@@ -21,10 +21,9 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
-import org.apache.twill.api.RunId;
-
 import java.util.Objects;
 import java.util.Set;
+import org.apache.twill.api.RunId;
 
 /**
  * A {@link Relation} collapsed based on {@link CollapseType}.

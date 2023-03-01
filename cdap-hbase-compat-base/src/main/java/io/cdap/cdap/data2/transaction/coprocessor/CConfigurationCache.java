@@ -20,16 +20,15 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
 import io.cdap.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.TableNotFoundException;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * {@link Thread} that refreshes {@link CConfiguration} periodically.

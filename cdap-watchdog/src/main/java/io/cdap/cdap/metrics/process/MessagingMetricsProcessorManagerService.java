@@ -30,15 +30,14 @@ import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metrics.process.loader.MetricsWriterProvider;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manage MessagingMetricsProcessorServices with different MetricsWriters

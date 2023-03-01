@@ -28,9 +28,6 @@ import io.cdap.cdap.proto.codec.AuditMessageTypeAdapter;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,6 +35,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

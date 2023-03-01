@@ -18,9 +18,6 @@ package io.cdap.cdap.etl.common.record;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for comparing StructuredRecords.

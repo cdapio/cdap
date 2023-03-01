@@ -41,13 +41,12 @@ import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import java.io.IOException;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
 
 /**
  * Tests for {@link DefaultOwnerStore}.

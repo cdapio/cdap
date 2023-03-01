@@ -20,10 +20,9 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.api.RunId;
-
 import java.io.Closeable;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
 
 /**
  * A straightforward implementation of the {@link ProgramRuntimeService.RuntimeInfo} interface that allows

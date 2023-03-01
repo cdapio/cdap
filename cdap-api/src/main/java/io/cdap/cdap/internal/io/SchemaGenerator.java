@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.io;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
-
 import java.lang.reflect.Type;
 
 /**

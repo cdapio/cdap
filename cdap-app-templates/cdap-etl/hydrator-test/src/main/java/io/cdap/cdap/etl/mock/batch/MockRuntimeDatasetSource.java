@@ -39,7 +39,6 @@ import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import io.cdap.cdap.test.DataSetManager;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

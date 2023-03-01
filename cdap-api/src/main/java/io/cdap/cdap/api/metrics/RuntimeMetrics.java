@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.metrics;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 

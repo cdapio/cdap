@@ -20,13 +20,12 @@ import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  *

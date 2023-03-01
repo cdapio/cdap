@@ -24,6 +24,10 @@ import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.zookeeper.ResourceListener;
 import io.cdap.cdap.security.zookeeper.SharedResourceCache;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
@@ -32,11 +36,6 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link KeyManager} implementation that distributes shared secret keys via ZooKeeper to all instances, so that all

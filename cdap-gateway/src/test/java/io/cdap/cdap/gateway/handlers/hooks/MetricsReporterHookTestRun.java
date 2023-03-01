@@ -26,6 +26,8 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.gateway.GatewayFastTestsSuite;
 import io.cdap.cdap.gateway.GatewayTestBase;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -34,9 +36,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test MetricReporterHook.

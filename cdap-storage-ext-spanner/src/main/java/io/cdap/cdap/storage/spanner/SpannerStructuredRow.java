@@ -23,7 +23,6 @@ import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;

@@ -18,16 +18,15 @@ package io.cdap.cdap.common.test;
 
 import com.google.common.base.Throwables;
 import io.cdap.cdap.common.app.RunIds;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.locks.Lock;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.ServiceDiscovered;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.locks.Lock;
 
 /**
  * A mock {@link TwillContext} for unit-test.

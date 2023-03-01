@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

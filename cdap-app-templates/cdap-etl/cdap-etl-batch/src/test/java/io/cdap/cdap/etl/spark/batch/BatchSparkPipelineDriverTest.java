@@ -16,23 +16,22 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import io.cdap.cdap.etl.api.join.JoinDefinition;
-import io.cdap.cdap.etl.api.join.JoinStage;
-import io.cdap.cdap.etl.spark.SparkCollection;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinStage;
+import io.cdap.cdap.etl.spark.SparkCollection;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class BatchSparkPipelineDriverTest {
 

@@ -30,6 +30,10 @@ import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.ReadRange;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.apache.tephra.TransactionManager;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -40,11 +44,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public class ErrorTagProviderLoggingTest {
   private static Injector injector;

@@ -27,14 +27,13 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import org.apache.twill.filesystem.Location;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * An abstract base for {@link ArtifactManager} implementation. It has logic to construct the artifact classloader.

@@ -19,7 +19,6 @@ package io.cdap.cdap.spi.data.common;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

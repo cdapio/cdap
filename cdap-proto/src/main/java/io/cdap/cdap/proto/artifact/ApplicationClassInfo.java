@@ -18,7 +18,6 @@ package io.cdap.cdap.proto.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.Objects;
 
 /**

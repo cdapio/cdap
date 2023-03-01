@@ -35,15 +35,14 @@ import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wrapper around the EMR client that adheres to our configuration settings.

@@ -23,7 +23,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.internal.remote.MethodArgument;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
-
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;

@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.common.lang;
 
-import org.apache.twill.api.ClassAcceptor;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import org.apache.twill.api.ClassAcceptor;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for {@link ClassPathResources}.

@@ -34,12 +34,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.ImmediateEventExecutor;
-import org.apache.twill.common.Threads;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import org.apache.twill.common.Threads;
 
 /**
  * A netty based traffic relay server that passes network traffic between two endpoints.

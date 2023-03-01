@@ -40,9 +40,6 @@ import io.cdap.cdap.security.authentication.client.Credential;
 import io.cdap.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import jline.TerminalFactory;
-import jline.console.ConsoleReader;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +49,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 import javax.annotation.Nullable;
+import jline.TerminalFactory;
+import jline.console.ConsoleReader;
 
 /**
  * Configuration for the CDAP CLI.

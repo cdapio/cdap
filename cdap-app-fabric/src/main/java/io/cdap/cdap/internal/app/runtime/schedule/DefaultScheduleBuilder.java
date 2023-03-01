@@ -32,7 +32,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerBuilder;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProtoConstraint;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

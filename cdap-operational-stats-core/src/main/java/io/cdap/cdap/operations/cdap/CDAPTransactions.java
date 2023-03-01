@@ -21,12 +21,11 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.operations.OperationalStats;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionSystemClient;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  * {@link OperationalStats} for reporting CDAP transaction statistics.

@@ -21,7 +21,6 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.etl.api.StageContext;
 import io.cdap.cdap.etl.api.action.SettableArguments;
-
 import java.util.Map;
 
 /**

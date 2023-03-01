@@ -18,13 +18,12 @@ package io.cdap.cdap.common.lang;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Field;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class FieldCollectorTest {
 

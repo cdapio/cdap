@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
 import io.cdap.cdap.api.data.batch.BatchWritable;
-
 import java.io.Closeable;
 
 /**

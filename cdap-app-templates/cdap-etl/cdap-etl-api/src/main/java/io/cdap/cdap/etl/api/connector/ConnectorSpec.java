@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.api.connector;
 
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;

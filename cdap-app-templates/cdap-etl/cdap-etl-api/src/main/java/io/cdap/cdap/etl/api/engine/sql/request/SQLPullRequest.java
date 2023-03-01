@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.api.engine.sql.request;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
-
 import java.io.Serializable;
 
 /**

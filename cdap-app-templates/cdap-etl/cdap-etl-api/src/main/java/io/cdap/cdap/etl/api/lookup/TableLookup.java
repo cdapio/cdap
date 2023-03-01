@@ -21,7 +21,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.etl.api.Lookup;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

@@ -25,12 +25,11 @@ import io.cdap.cdap.proto.Version;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.XSlowTests;
+import java.io.IOException;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * Test for {@link MetaClient}.

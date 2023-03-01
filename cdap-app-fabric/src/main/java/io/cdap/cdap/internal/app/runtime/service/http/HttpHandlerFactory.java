@@ -29,13 +29,12 @@ import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
 import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
-import org.apache.twill.common.Cancellable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.twill.common.Cancellable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for creating {@link io.cdap.http.HttpHandler} from user http service handler

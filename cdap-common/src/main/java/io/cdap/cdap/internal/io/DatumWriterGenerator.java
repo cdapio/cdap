@@ -35,13 +35,6 @@ import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.cdap.internal.asm.Methods;
 import io.cdap.cdap.internal.asm.Signatures;
 import io.cdap.cdap.internal.lang.Fields;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
-
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.nio.Buffer;
@@ -53,6 +46,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.concurrent.NotThreadSafe;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
 
 /**
  * Class for generating {@link DatumWriter} bytecodes using ASM. The class generated will have a skeleton looks like

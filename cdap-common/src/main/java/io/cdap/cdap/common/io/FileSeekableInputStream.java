@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.common.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements {@link SeekableInputStream} with a {@link FileInputStream}.

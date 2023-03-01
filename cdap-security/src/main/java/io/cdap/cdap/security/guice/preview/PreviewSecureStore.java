@@ -19,7 +19,6 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
-
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;

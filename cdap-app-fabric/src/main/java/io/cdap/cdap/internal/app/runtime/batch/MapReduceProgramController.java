@@ -22,10 +22,9 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.runtime.WorkflowDataProvider;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import org.apache.hadoop.mapreduce.Job;
-
 import java.io.IOException;
 import java.util.Set;
+import org.apache.hadoop.mapreduce.Job;
 
 /**
  * A ProgramController for MapReduce. It mainly is an adapter for reflecting the state changes in

@@ -19,7 +19,6 @@ package io.cdap.cdap.api.workflow;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.lineage.field.Operation;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

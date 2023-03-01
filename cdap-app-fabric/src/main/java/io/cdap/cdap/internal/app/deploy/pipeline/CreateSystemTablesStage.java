@@ -21,7 +21,6 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-
 import java.io.IOException;
 
 /**

@@ -22,11 +22,10 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.spi.events.EventWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * EventPublishManager is responsible for starting all the event publish manager threads

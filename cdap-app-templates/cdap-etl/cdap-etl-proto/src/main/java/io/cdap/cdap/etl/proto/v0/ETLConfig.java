@@ -20,7 +20,6 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.proto.UpgradeContext;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -20,7 +20,6 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;

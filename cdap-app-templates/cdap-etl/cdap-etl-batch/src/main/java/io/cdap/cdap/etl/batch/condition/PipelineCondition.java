@@ -38,7 +38,6 @@ import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

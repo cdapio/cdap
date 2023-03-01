@@ -20,12 +20,11 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Configuration;
 import io.cdap.cdap.internal.app.runtime.distributed.MockMasterEnvironment;
 import io.cdap.cdap.master.environment.MasterEnvironments;
+import java.io.File;
+import java.io.FileOutputStream;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.FileOutputStream;
 
 /**
  * Tests for the Artifact Localizer Twill runnable.

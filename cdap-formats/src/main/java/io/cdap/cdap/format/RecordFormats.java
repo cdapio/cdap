@@ -23,7 +23,6 @@ import io.cdap.cdap.api.data.format.Formats;
 import io.cdap.cdap.api.data.format.RecordFormat;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
-
 import java.util.Map;
 
 /**

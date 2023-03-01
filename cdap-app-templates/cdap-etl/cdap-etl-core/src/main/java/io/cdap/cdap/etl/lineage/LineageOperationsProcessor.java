@@ -30,7 +30,6 @@ import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.Connection;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

@@ -18,7 +18,6 @@ package io.cdap.cdap.cli.util;
 
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
-
 import java.io.File;
 import java.util.LinkedList;
 import java.util.regex.Pattern;

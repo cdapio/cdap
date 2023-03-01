@@ -25,7 +25,6 @@ import io.cdap.cdap.cli.exception.CommandInputError;
 import io.cdap.cdap.cli.util.ArgumentParser;
 import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.Map;
 

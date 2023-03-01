@@ -19,7 +19,6 @@ package io.cdap.cdap.test.template.plugin;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
-
 import java.util.concurrent.Callable;
 
 /**

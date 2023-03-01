@@ -26,12 +26,11 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import java.util.Set;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Set;
 
 /**
  * Tests storage and retrieval of Dataset accesses by Programs in {@link LineageTable}.

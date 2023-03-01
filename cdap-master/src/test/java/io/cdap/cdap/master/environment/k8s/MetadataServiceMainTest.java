@@ -32,14 +32,13 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
+import java.net.InetSocketAddress;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.net.InetSocketAddress;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for the {@link MetadataServiceMain}.

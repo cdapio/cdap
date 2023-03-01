@@ -19,7 +19,6 @@ package io.cdap.cdap.security.store.file;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;

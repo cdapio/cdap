@@ -20,13 +20,12 @@ import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * An {@link AuthenticationStrategy} to use with GitHub and Personal Access Tokens.

@@ -23,10 +23,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import org.apache.twill.discovery.Discoverable;
-
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * A Gson codec for {@link Discoverable}.

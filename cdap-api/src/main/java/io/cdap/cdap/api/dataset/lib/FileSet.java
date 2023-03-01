@@ -19,10 +19,9 @@ package io.cdap.cdap.api.dataset.lib;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.dataset.Dataset;
-import org.apache.twill.filesystem.Location;
-
 import java.util.List;
 import java.util.Map;
+import org.apache.twill.filesystem.Location;
 
 /**
  * This dataset represents a collection of files on the file system. The dataset has a base location, under which

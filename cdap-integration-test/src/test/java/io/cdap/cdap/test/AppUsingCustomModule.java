@@ -31,7 +31,6 @@ import io.cdap.cdap.api.service.BasicService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;

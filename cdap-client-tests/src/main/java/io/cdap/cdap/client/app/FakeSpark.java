@@ -19,12 +19,11 @@ package io.cdap.cdap.client.app;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A Fake spark program to test CLI integration with Spark

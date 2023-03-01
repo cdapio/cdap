@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.dataset2.lib.table;
 
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.table.Scanner;
-
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.SortedMap;

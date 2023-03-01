@@ -19,10 +19,9 @@ package io.cdap.cdap.security.impersonation;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.net.InetAddress;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.net.InetAddress;
 
 /**
  * Tests for {@link SecurityUtil}

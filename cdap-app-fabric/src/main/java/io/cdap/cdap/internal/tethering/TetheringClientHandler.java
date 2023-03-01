@@ -35,10 +35,6 @@ import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.elasticsearch.common.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +44,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import org.elasticsearch.common.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link io.cdap.http.HttpHandler} to manage tethering client v3 REST APIs

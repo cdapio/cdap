@@ -21,7 +21,6 @@ import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Table;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

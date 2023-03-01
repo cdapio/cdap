@@ -34,6 +34,8 @@ import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.store.FileSecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.http.NettyHttpService;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -41,9 +43,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 /**
  * Tests for {@link RemoteSecureStore}.

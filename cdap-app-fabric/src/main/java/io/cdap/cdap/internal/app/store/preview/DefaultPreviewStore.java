@@ -46,7 +46,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Principal;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;

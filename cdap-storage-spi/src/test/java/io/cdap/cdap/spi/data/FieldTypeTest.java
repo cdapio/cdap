@@ -17,11 +17,10 @@
 package io.cdap.cdap.spi.data;
 
 import io.cdap.cdap.spi.data.table.field.FieldType;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.EnumSet;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link FieldType}.

@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.sourcecontrol;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.HashLoginService;
@@ -33,14 +40,6 @@ import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * A local server with authentication that hosts a Git repository for tests.

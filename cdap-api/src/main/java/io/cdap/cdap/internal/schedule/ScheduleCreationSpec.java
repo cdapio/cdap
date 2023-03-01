@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.schedule;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
-
 import java.util.List;
 import java.util.Map;
 

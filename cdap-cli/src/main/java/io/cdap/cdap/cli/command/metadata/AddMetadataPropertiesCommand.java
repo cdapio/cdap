@@ -23,7 +23,6 @@ import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractCommand;
 import io.cdap.cdap.client.MetadataClient;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.Map;
 

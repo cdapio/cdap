@@ -20,12 +20,11 @@ import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
+import java.util.function.Supplier;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
-
-import java.util.function.Supplier;
 
 /**
  * A mock implementation of {@link MasterEnvironment} for unit testing program twill runnables.

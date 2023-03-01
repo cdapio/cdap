@@ -20,10 +20,9 @@ import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
-import org.apache.twill.api.RunId;
-
 import java.util.List;
 import java.util.Set;
+import org.apache.twill.api.RunId;
 
 /**
  * Interface for reading the {@link FieldLineageTable} store.

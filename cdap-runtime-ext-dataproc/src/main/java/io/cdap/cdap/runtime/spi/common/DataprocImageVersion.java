@@ -17,7 +17,6 @@
 package io.cdap.cdap.runtime.spi.common;
 
 import com.google.common.base.Strings;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;

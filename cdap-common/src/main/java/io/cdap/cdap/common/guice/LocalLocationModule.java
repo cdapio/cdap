@@ -21,10 +21,9 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.io.File;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
-
-import java.io.File;
 
 /**
  * A guice module to providing binding for {@link LocationFactory} that uses local file system as the storage.

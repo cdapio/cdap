@@ -23,7 +23,6 @@ import io.cdap.cdap.cli.LaunchOptions;
 import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
-
 import java.io.PrintStream;
 import javax.inject.Inject;
 

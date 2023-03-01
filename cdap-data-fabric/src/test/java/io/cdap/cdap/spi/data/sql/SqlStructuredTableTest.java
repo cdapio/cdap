@@ -31,11 +31,10 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableTest;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
+import java.io.IOException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-
-import java.io.IOException;
 
 /**
  * Test for SQL structured table.

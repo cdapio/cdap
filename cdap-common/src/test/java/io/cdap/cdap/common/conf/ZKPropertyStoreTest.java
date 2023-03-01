@@ -17,14 +17,13 @@ package io.cdap.cdap.common.conf;
 
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.zookeeper.store.ZKPropertyStore;
+import java.io.IOException;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
 
 /**
  *

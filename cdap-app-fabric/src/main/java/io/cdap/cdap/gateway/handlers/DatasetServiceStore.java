@@ -38,11 +38,10 @@ import io.cdap.cdap.proto.RestartServiceInstancesStatus;
 import io.cdap.cdap.proto.RestartServiceInstancesStatus.RestartStatus;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * DatasetService Store implements ServiceStore using Datasets without Transaction.

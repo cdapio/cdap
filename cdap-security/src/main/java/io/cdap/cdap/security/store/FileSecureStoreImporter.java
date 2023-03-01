@@ -20,9 +20,6 @@ import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.security.store.file.FileSecureStoreCodec;
 import io.cdap.cdap.security.store.file.KeyInfo;
 import io.cdap.cdap.security.store.file.SecureStoreDataCodecV1;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +37,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Enumeration;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service responsible for importing/upgrading the {@link java.security.KeyStore} files saved by the

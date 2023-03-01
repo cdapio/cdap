@@ -17,14 +17,13 @@
 package io.cdap.cdap.api.service.http;
 
 import com.google.gson.Gson;
-import org.apache.twill.filesystem.Location;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Map;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Interface with methods for sending HTTP responses.

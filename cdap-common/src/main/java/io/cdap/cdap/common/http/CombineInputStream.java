@@ -20,7 +20,6 @@ import com.google.common.io.Closeables;
 import io.cdap.cdap.common.io.FileSeekableInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;

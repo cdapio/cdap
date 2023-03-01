@@ -41,7 +41,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

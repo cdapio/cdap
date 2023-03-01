@@ -34,15 +34,14 @@ import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the {@link InternalAccessEnforcer}.

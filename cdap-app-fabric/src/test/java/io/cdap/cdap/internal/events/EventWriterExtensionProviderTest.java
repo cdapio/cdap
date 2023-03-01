@@ -20,10 +20,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.events.dummy.DummyEventWriter;
 import io.cdap.cdap.spi.events.EventWriter;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Set;
 
 /**
  * Tests for {@link EventWriterExtensionProvider}

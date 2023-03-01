@@ -19,13 +19,12 @@ package io.cdap.cdap.common.utils;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests {@link TimeBoundIterator}

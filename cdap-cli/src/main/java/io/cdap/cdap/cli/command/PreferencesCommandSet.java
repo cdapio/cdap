@@ -25,7 +25,6 @@ import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
-
 import java.util.List;
 
 /**

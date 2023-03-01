@@ -22,7 +22,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.http.HttpResponder;
-
 import java.util.List;
 
 /**

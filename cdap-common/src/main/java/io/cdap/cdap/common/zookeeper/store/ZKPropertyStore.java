@@ -25,6 +25,8 @@ import io.cdap.cdap.common.conf.AbstractPropertyStore;
 import io.cdap.cdap.common.conf.PropertyUpdater;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.zookeeper.ZKExtOperations;
+import java.io.IOException;
+import java.util.Set;
 import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.NodeData;
 import org.apache.twill.zookeeper.ZKClient;
@@ -35,9 +37,6 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Set;
 
 /**
  * This class uses ZK for storing properties/configures. It provides update methods for updating properties,

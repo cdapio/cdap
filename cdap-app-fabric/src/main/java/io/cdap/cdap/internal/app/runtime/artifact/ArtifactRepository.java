@@ -36,8 +36,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import org.apache.twill.filesystem.Location;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -45,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * This class manages artifact and artifact metadata. It is mainly responsible for inspecting artifacts to determine

@@ -22,10 +22,9 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
+import java.io.IOException;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-
-import java.io.IOException;
 
 /**
  * Connector sink that needs to preserve which stage each record came from and the record type.

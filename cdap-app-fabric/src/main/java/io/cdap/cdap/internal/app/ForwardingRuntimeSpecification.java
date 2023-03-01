@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.internal.app;
 
+import java.util.Collection;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillRunnableSpecification;
-
-import java.util.Collection;
 
 /**
  * ForwardingRuntimeSpecification implementation.

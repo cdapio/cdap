@@ -47,13 +47,12 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Workflow}.

@@ -17,18 +17,6 @@
 package io.cdap.cdap.common.ssh;
 
 import com.jcraft.jsch.KeyPair;
-import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
-import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
-import org.apache.sshd.server.Command;
-import org.apache.sshd.server.Environment;
-import org.apache.sshd.server.ExitCallback;
-import org.apache.sshd.server.SshServer;
-import org.apache.sshd.server.auth.pubkey.KeySetPublickeyAuthenticator;
-import org.apache.sshd.server.forward.AcceptAllForwardingFilter;
-import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.server.scp.ScpCommandFactory;
-import org.junit.rules.ExternalResource;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +28,17 @@ import java.security.PublicKey;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
+import org.apache.sshd.server.Command;
+import org.apache.sshd.server.Environment;
+import org.apache.sshd.server.ExitCallback;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.pubkey.KeySetPublickeyAuthenticator;
+import org.apache.sshd.server.forward.AcceptAllForwardingFilter;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.server.scp.ScpCommandFactory;
+import org.junit.rules.ExternalResource;
 
 /**
  * A SSH server for testing purpose.

@@ -32,14 +32,13 @@ import io.cdap.cdap.messaging.store.MessageFilter;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.TransactionMessageFilter;
 import io.cdap.cdap.proto.id.TopicId;
-import org.apache.tephra.Transaction;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
 
 /**
  * A {@link MessageTable} that uses {@link MessageCache} for caching recently published messages.

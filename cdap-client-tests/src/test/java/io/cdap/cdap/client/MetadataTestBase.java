@@ -30,9 +30,6 @@ import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
-import org.junit.Assert;
-import org.junit.Before;
-
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +37,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
+import org.junit.Assert;
+import org.junit.Before;
 
 /**
  * Base class for metadata tests.

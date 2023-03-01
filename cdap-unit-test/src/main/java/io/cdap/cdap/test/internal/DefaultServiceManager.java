@@ -27,10 +27,9 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.AbstractProgramManager;
 import io.cdap.cdap.test.MetricsManager;
 import io.cdap.cdap.test.ServiceManager;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A default implementation of {@link ServiceManager}.

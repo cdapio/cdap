@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.util.concurrent.TimeUnit;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -40,8 +41,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests {@link RemoteNamespaceQueryClient} queries by using it to fetch namespaces.

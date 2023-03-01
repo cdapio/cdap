@@ -19,13 +19,12 @@ package io.cdap.cdap.format;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import java.io.IOException;
+import java.util.Collection;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.ResolvingDecoder;
-
-import java.io.IOException;
-import java.util.Collection;
 
 /**
  * An Avro {@link DatumReader} that reads data into {@link StructuredRecord}.

@@ -21,7 +21,6 @@ import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.securestore.spi.secret.Decoder;
 import io.cdap.cdap.securestore.spi.secret.Encoder;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;

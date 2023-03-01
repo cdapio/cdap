@@ -19,7 +19,6 @@ package io.cdap.cdap.security.spi.authorization;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.security.Role;
-
 import java.net.HttpURLConnection;
 
 /**

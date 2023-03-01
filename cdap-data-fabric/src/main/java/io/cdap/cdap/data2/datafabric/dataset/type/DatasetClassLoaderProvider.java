@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.datafabric.dataset.type;
 
 import io.cdap.cdap.proto.DatasetModuleMeta;
-
 import java.io.Closeable;
 import java.io.IOException;
 

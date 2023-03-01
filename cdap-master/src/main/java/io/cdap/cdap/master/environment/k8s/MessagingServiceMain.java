@@ -34,11 +34,10 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import org.apache.twill.zookeeper.ZKClientService;
-
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * Main class for running {@link MessagingService} in Kubernetes.

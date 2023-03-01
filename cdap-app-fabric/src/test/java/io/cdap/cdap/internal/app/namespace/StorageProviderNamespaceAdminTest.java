@@ -31,6 +31,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.NamespaceStore;
 import io.cdap.cdap.store.StoreDefinition;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.filesystem.Location;
 import org.junit.AfterClass;
@@ -39,11 +43,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Arrays;
 
 /**
  * Tests for {@link StorageProviderNamespaceAdmin}

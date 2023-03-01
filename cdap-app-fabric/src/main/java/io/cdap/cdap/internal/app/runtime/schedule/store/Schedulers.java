@@ -30,8 +30,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.store.StoreDefinition;
-import org.quartz.CronExpression;
-
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -39,6 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.quartz.CronExpression;
 
 /**
  * Common utility methods for scheduling.

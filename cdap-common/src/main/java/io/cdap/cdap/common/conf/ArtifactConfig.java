@@ -28,7 +28,6 @@ import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.artifact.ArtifactRanges;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Objects;

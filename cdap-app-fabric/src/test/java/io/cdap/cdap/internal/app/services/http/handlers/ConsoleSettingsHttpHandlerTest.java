@@ -26,11 +26,10 @@ import io.cdap.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link ConsoleSettingsHttpHandler}

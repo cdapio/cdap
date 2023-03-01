@@ -18,7 +18,6 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.dataset.lib.cube.AggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
-
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;

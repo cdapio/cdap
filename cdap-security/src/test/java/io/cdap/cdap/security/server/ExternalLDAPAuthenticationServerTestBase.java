@@ -23,10 +23,9 @@ import com.unboundid.ldap.sdk.Entry;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Networks;
-import org.junit.Assert;
-
 import java.net.InetAddress;
 import java.net.URL;
+import org.junit.Assert;
 
 
 /**

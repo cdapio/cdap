@@ -29,7 +29,6 @@ import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
-
 import javax.annotation.Nullable;
 
 /**

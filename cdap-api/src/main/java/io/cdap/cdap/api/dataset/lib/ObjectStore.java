@@ -21,7 +21,6 @@ import io.cdap.cdap.api.data.batch.BatchReadable;
 import io.cdap.cdap.api.data.batch.BatchWritable;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.dataset.Dataset;
-
 import java.util.List;
 
 /**

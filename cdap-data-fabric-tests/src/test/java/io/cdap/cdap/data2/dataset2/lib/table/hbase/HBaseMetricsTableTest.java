@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
@@ -54,17 +56,14 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.test.SlowTests;
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * metrics table test for HBase.

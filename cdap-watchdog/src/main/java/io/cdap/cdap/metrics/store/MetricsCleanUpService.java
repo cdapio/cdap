@@ -21,11 +21,10 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import org.apache.twill.common.Threads;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.common.Threads;
 
 /**
  * The metrics clean up service that will clean up resolution metrics table periodically based on their retention time.

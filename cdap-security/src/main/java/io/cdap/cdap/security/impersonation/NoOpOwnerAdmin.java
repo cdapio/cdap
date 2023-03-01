@@ -19,7 +19,6 @@ package io.cdap.cdap.security.impersonation;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;

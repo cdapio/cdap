@@ -18,13 +18,12 @@ package io.cdap.cdap.data2.transaction;
 
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategy;
+import java.util.Collection;
+import java.util.function.Supplier;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
-
-import java.util.Collection;
-import java.util.function.Supplier;
 
 /**
  * Retries methods used during long transactions.

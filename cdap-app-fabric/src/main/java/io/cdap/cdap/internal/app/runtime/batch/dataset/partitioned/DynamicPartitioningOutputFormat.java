@@ -21,6 +21,7 @@ import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import io.cdap.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
+import java.io.IOException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.Job;
@@ -30,8 +31,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.security.TokenCache;
-
-import java.io.IOException;
 
 /**
  * This class extends the FileOutputFormat and allows writing dynamically to multiple partitions of a PartitionedFileSet

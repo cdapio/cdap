@@ -21,7 +21,6 @@ import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.io.IOException;
 import java.util.Iterator;
 import javax.annotation.Nullable;

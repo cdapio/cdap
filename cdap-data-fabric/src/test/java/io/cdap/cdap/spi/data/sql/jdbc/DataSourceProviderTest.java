@@ -22,12 +22,6 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.spi.data.sql.PostgreSqlStorageProvider;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.sql.Connection;
 import java.sql.Driver;
@@ -39,6 +33,11 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class DataSourceProviderTest {
   @ClassRule

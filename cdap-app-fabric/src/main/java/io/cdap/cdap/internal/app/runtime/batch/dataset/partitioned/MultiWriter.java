@@ -18,12 +18,11 @@ package io.cdap.cdap.internal.app.runtime.batch.dataset.partitioned;
 
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.hadoop.mapreduce.RecordWriter;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * A RecordWriter that can concurrently to multiple partitions of a PartitionedFileSet.

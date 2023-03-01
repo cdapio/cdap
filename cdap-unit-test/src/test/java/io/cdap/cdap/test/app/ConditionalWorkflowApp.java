@@ -24,7 +24,6 @@ import io.cdap.cdap.api.workflow.AbstractCondition;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

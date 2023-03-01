@@ -19,7 +19,6 @@ package io.cdap.cdap.common.metrics;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;

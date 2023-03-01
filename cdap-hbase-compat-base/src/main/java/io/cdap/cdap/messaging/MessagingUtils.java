@@ -19,7 +19,6 @@ package io.cdap.cdap.messaging;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.util.concurrent.TimeUnit;
 
 /**

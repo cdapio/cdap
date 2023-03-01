@@ -18,7 +18,6 @@ package io.cdap.cdap.support.job;
 
 
 import io.cdap.cdap.support.status.SupportBundleTaskStatus;
-
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 

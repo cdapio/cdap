@@ -24,7 +24,6 @@ import io.cdap.cdap.logging.gateway.handlers.RemoteLogsFetcher;
 import io.cdap.cdap.proto.SystemServiceMeta;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
 import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

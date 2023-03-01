@@ -18,15 +18,14 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.macro.MacroFunction;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.metadata.system;
 
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;

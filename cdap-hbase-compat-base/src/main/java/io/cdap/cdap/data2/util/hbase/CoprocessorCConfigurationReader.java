@@ -18,11 +18,10 @@ package io.cdap.cdap.data2.util.hbase;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.io.IOException;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Table;
-
-import java.io.IOException;
 
 /**
  * This class implements the reading of the {@link CConfiguration} from HBase, when inside a coprocessor.

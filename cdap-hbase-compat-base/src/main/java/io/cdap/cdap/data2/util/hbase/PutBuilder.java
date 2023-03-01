@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
-import org.apache.hadoop.hbase.client.Put;
-
 import java.nio.ByteBuffer;
+import org.apache.hadoop.hbase.client.Put;
 
 /**
  * Builder for creating {@link Put}. This builder should be used for cross HBase versions compatibility.

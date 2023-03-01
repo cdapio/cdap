@@ -69,15 +69,14 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.http.NettyHttpService;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A guava Service which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}s.

@@ -17,9 +17,6 @@
 package io.cdap.cdap.messaging.store.leveldb;
 
 import io.cdap.cdap.common.utils.DirUtils;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.impl.Iq80DBFactory;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +29,8 @@ import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
+import org.iq80.leveldb.Options;
+import org.iq80.leveldb.impl.Iq80DBFactory;
 
 /**
  * Manages partitions of a logical MessageTable.

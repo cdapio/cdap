@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.data2.increment.hbase10cdh550;
 
+import java.io.IOException;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.filter.FilterBase;
-
-import java.io.IOException;
 
 /**
  * Simple filter for increment columns that includes all cell values in a column with a "delta" prefix up to and

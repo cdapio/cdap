@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.profile;
 
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
-
 import java.util.Objects;
 
 /**

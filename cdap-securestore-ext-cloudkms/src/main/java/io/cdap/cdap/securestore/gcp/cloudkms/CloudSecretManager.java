@@ -22,13 +22,12 @@ import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link SecretManager} which manages sensitive data using Google Cloud KMS.

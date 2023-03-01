@@ -21,12 +21,11 @@ import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A dummy app to test Spark Metrics. This app just distribute a list so that there are some stages in Spark program.

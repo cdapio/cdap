@@ -24,7 +24,6 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-
 import java.util.Collections;
 import java.util.Set;
 

@@ -17,10 +17,9 @@
 package io.cdap.cdap.data2.util.hbase;
 
 import io.cdap.cdap.api.common.Bytes;
+import java.io.IOException;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Increment;
-
-import java.io.IOException;
 
 /**
  * Default implementation of {@link IncrementBuilder}. Specific HBase compat module can extends and override methods.

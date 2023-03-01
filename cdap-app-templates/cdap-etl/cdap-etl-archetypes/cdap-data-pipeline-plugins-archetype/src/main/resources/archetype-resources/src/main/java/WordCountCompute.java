@@ -25,12 +25,11 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * SparkCompute plugin that counts how many times each word appears in records input to the compute stage.

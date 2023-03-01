@@ -32,10 +32,9 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
+import java.util.Set;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
-
-import java.util.Set;
 
 /**
  * LogSaver Service; currently only used for PingHandler, so that service can be discovered during CDAP-startup.

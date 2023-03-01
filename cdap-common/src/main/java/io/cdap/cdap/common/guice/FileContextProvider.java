@@ -20,6 +20,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.PrivilegedAction;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.DelegateToFileSystem;
 import org.apache.hadoop.fs.FileContext;
@@ -28,10 +31,6 @@ import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.PrivilegedAction;
 
 /**
  * Guice {@link Provider} for {@link FileContext} created created with {@link UserGroupInformation} of

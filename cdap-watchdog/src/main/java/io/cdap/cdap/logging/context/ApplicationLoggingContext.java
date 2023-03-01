@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.context;
 
 import io.cdap.cdap.common.logging.NamespaceLoggingContext;
-
 import javax.annotation.Nullable;
 
 /**

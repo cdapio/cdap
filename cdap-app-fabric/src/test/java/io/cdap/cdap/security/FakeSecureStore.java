@@ -21,7 +21,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;

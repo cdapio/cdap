@@ -17,7 +17,6 @@
 package io.cdap.cdap.report.proto;
 
 import io.cdap.cdap.report.util.ReportField;
-
 import java.util.ArrayList;
 import java.util.Objects;
 import javax.annotation.Nullable;

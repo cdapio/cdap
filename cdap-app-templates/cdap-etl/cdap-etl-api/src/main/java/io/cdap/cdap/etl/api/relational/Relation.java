@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.api.relational;
 import io.cdap.cdap.etl.api.aggregation.DeduplicateAggregationDefinition;
 import io.cdap.cdap.etl.api.aggregation.GroupByAggregationDefinition;
 import io.cdap.cdap.etl.api.aggregation.WindowAggregationDefinition;
-
 import java.util.Map;
 
 /**

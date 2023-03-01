@@ -18,7 +18,6 @@ package io.cdap.cdap.proto;
 
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;

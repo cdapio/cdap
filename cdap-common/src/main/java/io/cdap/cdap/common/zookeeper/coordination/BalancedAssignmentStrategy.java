@@ -18,7 +18,6 @@ package io.cdap.cdap.common.zookeeper.coordination;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.collect.Multimap;
 import com.google.common.primitives.Ints;
-
 import java.util.Collection;
 import java.util.Set;
 

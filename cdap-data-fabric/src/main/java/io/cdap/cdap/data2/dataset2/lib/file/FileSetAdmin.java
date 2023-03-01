@@ -24,13 +24,12 @@ import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import java.io.IOException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Administration for file sets.

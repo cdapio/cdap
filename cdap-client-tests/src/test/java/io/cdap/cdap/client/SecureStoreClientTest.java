@@ -27,14 +27,13 @@ import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import io.cdap.cdap.test.SingletonExternalResource;
 import io.cdap.cdap.test.XSlowTests;
+import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Tests for {@link SecureStoreClient}

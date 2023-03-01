@@ -20,9 +20,8 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
-import org.apache.spark.api.java.JavaRDD;
-
 import java.io.Serializable;
+import org.apache.spark.api.java.JavaRDD;
 
 /**
  * Spark Compute stage.

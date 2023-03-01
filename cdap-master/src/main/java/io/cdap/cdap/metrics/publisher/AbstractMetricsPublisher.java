@@ -19,7 +19,6 @@ package io.cdap.cdap.metrics.publisher;
 import io.cdap.cdap.api.metrics.MetricValue;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsPublisher;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;

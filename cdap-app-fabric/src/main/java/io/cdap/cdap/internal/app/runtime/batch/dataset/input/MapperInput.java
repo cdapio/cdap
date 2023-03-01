@@ -17,10 +17,9 @@
 package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
-import org.apache.hadoop.mapreduce.Mapper;
-
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.hadoop.mapreduce.Mapper;
 
 /**
  * Encapsulates {@link InputFormatProvider} and a {@link Mapper} to use for that input.

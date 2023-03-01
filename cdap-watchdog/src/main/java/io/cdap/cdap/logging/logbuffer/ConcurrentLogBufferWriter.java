@@ -21,7 +21,6 @@ import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;

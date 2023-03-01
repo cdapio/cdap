@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.common.plugin;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
-
 import java.util.concurrent.Callable;
 
 /**

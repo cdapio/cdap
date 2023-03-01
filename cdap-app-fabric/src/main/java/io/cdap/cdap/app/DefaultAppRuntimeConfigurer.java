@@ -21,7 +21,6 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.app.services.AbstractServiceDiscoverer;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

@@ -39,13 +39,12 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.security.FakeSecureStore;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import java.util.Map;
 import org.apache.tephra.runtime.TransactionModules;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.util.Map;
 
 public class TetheringProvisionerTest {
 

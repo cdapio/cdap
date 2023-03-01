@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.workflow;
 
 import io.cdap.cdap.api.workflow.WorkflowForkNode;
 import io.cdap.cdap.api.workflow.WorkflowNode;
-
 import java.util.List;
 
 /**

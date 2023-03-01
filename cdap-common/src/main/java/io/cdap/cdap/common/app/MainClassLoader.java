@@ -29,7 +29,6 @@ import io.cdap.cdap.common.leveldb.LevelDBClassRewriter;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.Classes;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;

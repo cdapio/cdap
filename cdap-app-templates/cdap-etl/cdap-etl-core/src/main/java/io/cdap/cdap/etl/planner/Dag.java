@@ -24,7 +24,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.etl.proto.Connection;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;

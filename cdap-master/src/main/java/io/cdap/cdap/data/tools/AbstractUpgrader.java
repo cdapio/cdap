@@ -18,13 +18,12 @@ package io.cdap.cdap.data.tools;
 
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import java.io.IOException;
+import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Abstract class for Upgrade

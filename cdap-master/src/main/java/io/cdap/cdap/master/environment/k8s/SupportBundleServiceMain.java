@@ -36,11 +36,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.support.guice.SupportBundleServiceModule;
 import io.cdap.cdap.support.services.SupportBundleInternalService;
-import org.apache.twill.zookeeper.ZKClientService;
-
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * The main class to run supportbundle and other supporting services.

@@ -18,7 +18,6 @@ package io.cdap.cdap.messaging.store.leveldb;
 
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;

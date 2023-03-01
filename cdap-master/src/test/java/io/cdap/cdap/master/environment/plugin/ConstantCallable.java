@@ -20,7 +20,6 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.master.environment.ServiceWithPluginApp;
-
 import java.util.concurrent.Callable;
 
 /**

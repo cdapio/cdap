@@ -24,14 +24,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
-import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.utils.Dependencies;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,6 +36,13 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import javax.annotation.Nullable;
+import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.utils.Dependencies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages HBase coprocessors for Tables and Queues.

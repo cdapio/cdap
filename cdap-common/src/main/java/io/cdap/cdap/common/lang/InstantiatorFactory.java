@@ -24,8 +24,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import sun.misc.Unsafe;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -34,6 +32,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import sun.misc.Unsafe;
 
 /**
  * InstantiatorFactory.

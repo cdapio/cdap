@@ -16,13 +16,12 @@
 
 package io.cdap.cdap.common.conf;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for {@link CConfigurationUtil#asMap(CConfiguration)} method.

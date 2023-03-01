@@ -23,9 +23,8 @@ import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.conf.ConfigurationUtil;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceBatchWritableOutputFormat;
-import org.apache.hadoop.conf.Configuration;
-
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * A {@link OutputFormatProvider} that provides information for batch job to write to {@link Dataset}.

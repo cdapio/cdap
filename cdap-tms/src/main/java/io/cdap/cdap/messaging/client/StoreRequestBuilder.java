@@ -20,7 +20,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Iterator;

@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.lang;
 
 import com.google.common.collect.Lists;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;

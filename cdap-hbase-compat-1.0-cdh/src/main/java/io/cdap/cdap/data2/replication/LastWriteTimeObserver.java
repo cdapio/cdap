@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.replication;
 
 import io.cdap.cdap.replication.ReplicationConstants;
 import io.cdap.cdap.replication.StatusUtils;
+import java.io.IOException;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
@@ -29,8 +30,6 @@ import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.wal.WALKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * HBase coprocessor that tracks WAL writes for all tables to track replication status.

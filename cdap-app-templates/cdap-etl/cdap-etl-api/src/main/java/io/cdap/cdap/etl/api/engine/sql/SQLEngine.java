@@ -42,7 +42,6 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteRequest;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLWriteResult;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.Relation;
-
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;

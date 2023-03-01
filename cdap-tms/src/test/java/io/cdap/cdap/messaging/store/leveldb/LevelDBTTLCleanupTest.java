@@ -24,12 +24,11 @@ import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.TableFactory;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for TTL Cleanup logic in LevelDB.

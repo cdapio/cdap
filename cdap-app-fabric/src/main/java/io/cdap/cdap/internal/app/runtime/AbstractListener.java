@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime;
 
 import io.cdap.cdap.app.runtime.ProgramController;
-
 import javax.annotation.Nullable;
 
 /**

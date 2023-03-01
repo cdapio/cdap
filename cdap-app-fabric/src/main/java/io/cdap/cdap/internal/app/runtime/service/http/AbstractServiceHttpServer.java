@@ -33,17 +33,16 @@ import io.cdap.cdap.internal.app.services.ServiceHttpServer;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
-import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.common.Cancellable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.common.Cancellable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An abstract base class for running netty-http service that host user service handler.

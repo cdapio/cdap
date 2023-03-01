@@ -22,7 +22,6 @@ import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.table.Table;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 

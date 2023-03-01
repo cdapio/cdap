@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.common.logging;
 
-import org.slf4j.spi.LocationAwareLogger;
-
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.spi.LocationAwareLogger;
 
 /**
  * An abstract {@link LogSampler} implementation that sample based on number of log events.

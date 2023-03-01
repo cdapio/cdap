@@ -27,9 +27,6 @@ import io.cdap.cdap.proto.SystemServiceMeta;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
@@ -38,6 +35,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Monitor handler tests.

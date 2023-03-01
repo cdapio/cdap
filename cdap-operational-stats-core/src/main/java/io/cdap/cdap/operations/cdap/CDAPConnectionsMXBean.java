@@ -17,7 +17,6 @@
 package io.cdap.cdap.operations.cdap;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import javax.management.MXBean;
 
 /**

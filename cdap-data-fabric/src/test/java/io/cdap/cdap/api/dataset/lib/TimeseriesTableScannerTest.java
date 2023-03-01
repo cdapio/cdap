@@ -27,14 +27,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionFailureException;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -42,6 +34,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * Defines a class to test EntryScanner in TimeseriesTable

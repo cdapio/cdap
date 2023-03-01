@@ -30,7 +30,6 @@ import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
 import io.cdap.cdap.internal.workflow.condition.DefaultConditionSpecification;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

@@ -18,7 +18,6 @@ package io.cdap.cdap.proto.metadata.lineage;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.proto.id.DatasetId;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;

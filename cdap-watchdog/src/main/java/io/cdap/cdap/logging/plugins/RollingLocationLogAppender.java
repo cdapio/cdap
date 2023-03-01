@@ -28,16 +28,15 @@ import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.commons.io.output.NullOutputStream;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Closeable;
 import java.io.FilterOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
+import org.apache.commons.io.output.NullOutputStream;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Rolling Appender for {@link Location}

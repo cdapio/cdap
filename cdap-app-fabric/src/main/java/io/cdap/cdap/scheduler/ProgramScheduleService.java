@@ -44,7 +44,6 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;

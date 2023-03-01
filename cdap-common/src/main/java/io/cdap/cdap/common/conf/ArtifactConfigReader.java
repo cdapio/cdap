@@ -37,7 +37,6 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;

@@ -21,6 +21,9 @@ import com.google.cloud.dataproc.v1.AutoscalingPolicy;
 import com.google.cloud.dataproc.v1.AutoscalingPolicyName;
 import com.google.cloud.dataproc.v1.AutoscalingPolicyServiceClient;
 import com.google.cloud.dataproc.v1.RegionName;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,10 +32,6 @@ import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AutoscalingPolicyServiceClient.class})

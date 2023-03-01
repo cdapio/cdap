@@ -42,15 +42,14 @@ import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.api.dataset.table.TableSplit;
 import io.cdap.cdap.format.RecordPutTransformer;
 import io.cdap.cdap.internal.io.ReflectionRowRecordReader;
-import org.apache.tephra.TransactionAware;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import org.apache.tephra.TransactionAware;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements some of the methods in a generic way (not necessarily in most efficient way).

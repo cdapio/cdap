@@ -25,7 +25,6 @@ import io.cdap.cdap.common.internal.remote.DefaultRemoteAuthenticatorProvider;
 import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticatorExtensionLoader;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
-
 import javax.annotation.Nullable;
 
 /**

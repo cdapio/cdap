@@ -20,12 +20,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link InvertedValueIndexer}.

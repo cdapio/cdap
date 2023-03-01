@@ -18,7 +18,6 @@
 package io.cdap.cdap.etl.api.connector;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

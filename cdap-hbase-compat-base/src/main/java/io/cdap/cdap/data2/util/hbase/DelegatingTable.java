@@ -19,6 +19,9 @@ package io.cdap.cdap.data2.util.hbase;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -37,10 +40,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A concrete class implementation that delegate all {@link Table} operations to another {@link Table}.

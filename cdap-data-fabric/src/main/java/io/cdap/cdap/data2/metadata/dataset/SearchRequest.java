@@ -20,7 +20,6 @@ package io.cdap.cdap.data2.metadata.dataset;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;

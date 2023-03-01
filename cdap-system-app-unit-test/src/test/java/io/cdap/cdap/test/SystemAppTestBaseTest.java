@@ -32,9 +32,6 @@ import io.cdap.cdap.test.app.SystemTestApp;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -42,6 +39,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for system app.

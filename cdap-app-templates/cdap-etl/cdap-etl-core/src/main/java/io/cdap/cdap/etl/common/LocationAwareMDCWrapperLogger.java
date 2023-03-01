@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.etl.common;
 
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.spi.LocationAwareLogger;
-
-import javax.annotation.Nullable;
 
 /**
  * {@link LocationAwareLogger} which wraps the emitting of log messages with MDC put and remove operations.

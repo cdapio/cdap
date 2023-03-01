@@ -24,7 +24,6 @@ import io.cdap.cdap.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.io.IOException;
 import java.util.Iterator;
 

@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.api.join.error;
 
 import io.cdap.cdap.etl.api.join.JoinKey;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

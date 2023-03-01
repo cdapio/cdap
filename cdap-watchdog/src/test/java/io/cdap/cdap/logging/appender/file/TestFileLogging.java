@@ -28,6 +28,7 @@ import io.cdap.cdap.logging.framework.local.LocalLogAppender;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.ReadRange;
+import java.util.List;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -37,8 +38,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * Test logging to Avro file.

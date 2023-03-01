@@ -32,6 +32,14 @@ import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.server.BasicAuthenticationHandler;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.cli.CLI;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -44,15 +52,6 @@ import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Tests authorization CLI commands. These tests are in their own class because they need authorization enabled.

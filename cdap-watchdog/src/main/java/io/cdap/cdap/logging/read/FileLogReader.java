@@ -30,14 +30,13 @@ import io.cdap.cdap.logging.filter.AndFilter;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.meta.FileMetaDataReader;
 import io.cdap.cdap.logging.write.LogLocation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Reads log events from a file.

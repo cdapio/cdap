@@ -30,7 +30,6 @@ import io.cdap.cdap.etl.api.Lookup;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

@@ -26,7 +26,6 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

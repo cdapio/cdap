@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.dataset.DatasetSpecification;
-
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;

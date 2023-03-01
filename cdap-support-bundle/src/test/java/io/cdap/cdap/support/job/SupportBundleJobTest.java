@@ -44,14 +44,6 @@ import io.cdap.cdap.support.task.factory.SupportBundlePipelineInfoTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleSystemLogTaskFactory;
 import io.cdap.cdap.support.task.factory.SupportBundleTaskFactory;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.api.RunId;
-import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -63,6 +55,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.api.RunId;
+import org.iq80.leveldb.shaded.guava.util.concurrent.MoreExecutors;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  *

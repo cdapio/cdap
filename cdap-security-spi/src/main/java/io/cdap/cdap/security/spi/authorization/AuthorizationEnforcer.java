@@ -20,7 +20,6 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
-
 import java.util.Collections;
 import java.util.Set;
 

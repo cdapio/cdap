@@ -24,13 +24,12 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Tests for access token generator http endpoint

@@ -17,19 +17,18 @@
 package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
 import io.cdap.cdap.internal.asm.Methods;
-import org.apache.twill.filesystem.Location;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import org.apache.twill.filesystem.Location;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
 
 /**
  * Helper class to generate main classes using ASM. Those classes need to be generated

@@ -21,7 +21,6 @@ import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import io.cdap.cdap.proto.Notification;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

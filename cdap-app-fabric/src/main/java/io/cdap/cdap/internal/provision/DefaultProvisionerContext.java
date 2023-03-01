@@ -31,9 +31,6 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.filesystem.LocationFactory;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +39,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Context for a {@link Provisioner} extension

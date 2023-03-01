@@ -22,7 +22,6 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.lang.Instantiator;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;

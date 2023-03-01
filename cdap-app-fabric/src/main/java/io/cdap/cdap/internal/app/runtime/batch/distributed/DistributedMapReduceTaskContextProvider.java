@@ -34,14 +34,13 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
-
 import java.net.Authenticator;
 import java.net.ProxySelector;
 import java.util.Deque;
 import java.util.LinkedList;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * A {@link MapReduceTaskContextProvider} used in distributed mode. It creates a separate injector

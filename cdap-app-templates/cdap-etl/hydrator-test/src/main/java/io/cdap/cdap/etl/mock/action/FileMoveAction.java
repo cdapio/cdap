@@ -28,12 +28,11 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
-import org.apache.twill.filesystem.Location;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Action that moves files that match some regex.

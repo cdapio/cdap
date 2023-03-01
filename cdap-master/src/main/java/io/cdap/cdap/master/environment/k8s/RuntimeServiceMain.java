@@ -38,11 +38,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.StoreDefinition;
-import org.apache.twill.zookeeper.ZKClientService;
-
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * The main class to run the runtime service for program runtime monitoring.

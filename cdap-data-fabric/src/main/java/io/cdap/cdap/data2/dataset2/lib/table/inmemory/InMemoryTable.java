@@ -33,13 +33,12 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.lib.table.BufferingTable;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.Update;
-import org.apache.tephra.Transaction;
-
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
 
 /**
  * In-memory implementation of Table.

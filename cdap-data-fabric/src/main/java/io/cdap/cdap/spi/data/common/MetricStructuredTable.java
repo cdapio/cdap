@@ -26,7 +26,6 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Range;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;

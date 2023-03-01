@@ -18,13 +18,12 @@ package io.cdap.cdap.internal.app.runtime.batch.dataset.partitioned;
 
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.apache.hadoop.mapreduce.RecordWriter;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * A RecordWriter that can only write to a single partition of a PartitionedFileSet at any given time, but over time

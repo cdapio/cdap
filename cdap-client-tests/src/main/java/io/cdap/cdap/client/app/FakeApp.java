@@ -21,7 +21,6 @@ import com.google.common.collect.Lists;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
-
 import java.util.List;
 import javax.annotation.Nullable;
 

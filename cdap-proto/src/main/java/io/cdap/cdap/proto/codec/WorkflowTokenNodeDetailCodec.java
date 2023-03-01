@@ -20,7 +20,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 

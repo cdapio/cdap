@@ -18,7 +18,6 @@ package io.cdap.cdap.api.dataset.table;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.Bytes;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

@@ -40,7 +40,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.Map;
 import javax.annotation.Nullable;
 

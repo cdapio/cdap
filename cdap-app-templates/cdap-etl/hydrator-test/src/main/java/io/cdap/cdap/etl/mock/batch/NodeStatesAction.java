@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchActionContext;
 import io.cdap.cdap.etl.api.batch.PostAction;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.util.HashMap;
 import java.util.Map;
 

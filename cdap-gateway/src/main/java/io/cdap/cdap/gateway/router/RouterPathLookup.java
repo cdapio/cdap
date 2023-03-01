@@ -23,7 +23,6 @@ import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
-
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 

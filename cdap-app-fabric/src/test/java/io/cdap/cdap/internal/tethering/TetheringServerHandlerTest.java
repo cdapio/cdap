@@ -91,17 +91,6 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.tephra.TransactionManager;
-import org.apache.tephra.runtime.TransactionModules;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -112,6 +101,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.runtime.TransactionModules;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class TetheringServerHandlerTest {
   private static final Gson GSON = new GsonBuilder().create();

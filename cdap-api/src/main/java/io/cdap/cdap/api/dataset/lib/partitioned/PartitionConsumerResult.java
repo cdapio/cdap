@@ -18,7 +18,6 @@ package io.cdap.cdap.api.dataset.lib.partitioned;
 
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
-
 import java.util.List;
 
 /**

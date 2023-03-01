@@ -19,9 +19,8 @@ package io.cdap.cdap.common.namespace;
 import com.google.inject.ImplementedBy;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.filesystem.Location;
-
 import java.io.IOException;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Interface for retrieving namespace {@link Location} based on namespace metadata.

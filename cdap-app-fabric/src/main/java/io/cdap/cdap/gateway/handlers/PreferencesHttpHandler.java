@@ -41,7 +41,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

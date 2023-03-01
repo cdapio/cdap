@@ -26,13 +26,12 @@ import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ScheduledExecutorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The service to maintain a SSH tunnel with remote port forwarding for the remote runtime to access CDAP services

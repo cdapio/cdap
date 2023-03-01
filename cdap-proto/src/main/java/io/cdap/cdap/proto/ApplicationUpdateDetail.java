@@ -18,7 +18,6 @@ package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.proto.id.ApplicationId;
-
 import javax.annotation.Nullable;
 
 /**

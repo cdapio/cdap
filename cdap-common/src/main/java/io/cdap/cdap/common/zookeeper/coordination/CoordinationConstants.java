@@ -19,9 +19,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Codec;
-import org.apache.twill.discovery.Discoverable;
-
 import java.io.IOException;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * Contains constants used by Resource Coordination service.

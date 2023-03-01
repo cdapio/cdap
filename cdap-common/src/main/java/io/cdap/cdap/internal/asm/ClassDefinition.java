@@ -17,9 +17,8 @@
 package io.cdap.cdap.internal.asm;
 
 import com.google.common.collect.ImmutableList;
-import org.objectweb.asm.Type;
-
 import java.util.List;
+import org.objectweb.asm.Type;
 
 /**
  * Class for carrying information of the generated class.

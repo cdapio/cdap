@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.RuntimeContext;
-
 import java.io.Serializable;
 import java.util.Map;
 

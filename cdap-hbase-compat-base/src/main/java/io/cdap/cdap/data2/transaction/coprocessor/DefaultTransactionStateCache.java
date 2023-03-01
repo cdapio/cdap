@@ -22,13 +22,12 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
 import io.cdap.cdap.data2.util.hbase.ConfigurationReader;
 import io.cdap.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
+import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.snapshot.SnapshotCodecV3;
-
-import java.io.IOException;
 
 /**
  * Extends the {@link TransactionStateCache} implementation for

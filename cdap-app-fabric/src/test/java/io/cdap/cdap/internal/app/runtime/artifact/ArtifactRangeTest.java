@@ -22,10 +22,9 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  */

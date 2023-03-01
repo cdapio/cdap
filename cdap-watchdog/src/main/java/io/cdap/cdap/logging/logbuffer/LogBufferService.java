@@ -50,9 +50,6 @@ import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.DiscoveryService;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +57,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.DiscoveryService;
 
 /**
  * Log Buffer Service responsible for:

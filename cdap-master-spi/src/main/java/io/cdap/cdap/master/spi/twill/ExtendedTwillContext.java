@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.master.spi.twill;
 
-import org.apache.twill.api.TwillContext;
-
 import javax.annotation.Nullable;
+import org.apache.twill.api.TwillContext;
 
 /**
  * Extends the {@link TwillContext} to add extra functionalities for CDAP.

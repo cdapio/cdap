@@ -34,7 +34,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
-
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;

@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.workflow;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.io.Serializable;
 
 /**

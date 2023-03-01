@@ -28,7 +28,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;

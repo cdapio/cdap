@@ -21,7 +21,6 @@ import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;

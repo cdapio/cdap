@@ -23,10 +23,9 @@ import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
 import io.cdap.cdap.etl.common.Constants;
-import org.slf4j.Marker;
-
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Marker;
 
 /**
  * Inserts the stage name as the start of the log message, then delegates to other appenders.

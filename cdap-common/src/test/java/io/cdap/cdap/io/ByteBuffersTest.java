@@ -19,12 +19,11 @@ package io.cdap.cdap.io;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import io.cdap.cdap.common.io.ByteBuffers;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit-test for {@link ByteBuffers} methods.

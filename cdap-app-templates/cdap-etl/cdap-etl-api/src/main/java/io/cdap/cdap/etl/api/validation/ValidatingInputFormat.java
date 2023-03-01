@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.validation;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.io.IOException;
 import javax.annotation.Nullable;
 

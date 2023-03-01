@@ -34,8 +34,6 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.worker.WorkerContext;
-import org.apache.tephra.TransactionFailureException;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -43,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * AppWithServices with a DummyService for unit testing.

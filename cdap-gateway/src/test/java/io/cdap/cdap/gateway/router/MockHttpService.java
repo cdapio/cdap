@@ -20,14 +20,13 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A generic http service for testing router.

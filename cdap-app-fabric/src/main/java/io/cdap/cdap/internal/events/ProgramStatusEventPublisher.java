@@ -41,9 +41,6 @@ import io.cdap.cdap.spi.events.ExecutionMetrics;
 import io.cdap.cdap.spi.events.ProgramStatusEvent;
 import io.cdap.cdap.spi.events.ProgramStatusEventDetails;
 import io.cdap.cdap.spi.events.StartMetadata;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,6 +51,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link EventPublisher} implementation for program status

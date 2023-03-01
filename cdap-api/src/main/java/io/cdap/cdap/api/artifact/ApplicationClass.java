@@ -19,7 +19,6 @@ package io.cdap.cdap.api.artifact;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.Requirements;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

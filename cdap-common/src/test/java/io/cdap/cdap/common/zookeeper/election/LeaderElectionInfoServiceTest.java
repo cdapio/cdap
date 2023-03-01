@@ -19,6 +19,13 @@ package io.cdap.cdap.common.zookeeper.election;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.common.utils.Tasks;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.DefaultZKClientService;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -32,14 +39,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  *

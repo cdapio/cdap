@@ -18,7 +18,6 @@ package io.cdap.cdap.api.data.format;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;

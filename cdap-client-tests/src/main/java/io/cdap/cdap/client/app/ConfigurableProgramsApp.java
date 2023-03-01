@@ -24,11 +24,10 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.worker.AbstractWorker;
-import org.apache.tephra.TransactionFailureException;
-
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * Test Application that will register different programs based on the config.

@@ -19,7 +19,6 @@ package io.cdap.cdap.app.mapreduce;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.MRJobInfo;
-
 import java.io.IOException;
 
 /**

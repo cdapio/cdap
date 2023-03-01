@@ -19,7 +19,6 @@
 package io.cdap.cdap.internal.guava.reflect;
 
 import io.cdap.cdap.api.Predicate;
-
 import java.io.Serializable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;

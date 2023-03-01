@@ -50,7 +50,6 @@ import io.cdap.cdap.messaging.distributed.MessagingServiceManager;
 import io.cdap.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import io.cdap.cdap.metrics.runtime.MetricsServiceManager;
 import io.cdap.http.HttpHandler;
-
 import java.util.Map;
 
 /**

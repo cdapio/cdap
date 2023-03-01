@@ -23,10 +23,9 @@ import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.tephra.TransactionSystemClient;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  * Handles ping requests for Transaction service.

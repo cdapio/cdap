@@ -24,15 +24,6 @@ import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.common.http.HttpResponse;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.tephra.hbase.txprune.InvalidListPruningDebugTool;
-import org.apache.tephra.txprune.RegionPruneInfo;
-import org.apache.tephra.txprune.hbase.RegionsAtTime;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -43,6 +34,14 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.hbase.txprune.InvalidListPruningDebugTool;
+import org.apache.tephra.txprune.RegionPruneInfo;
+import org.apache.tephra.txprune.hbase.RegionsAtTime;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for Transaction handlers.

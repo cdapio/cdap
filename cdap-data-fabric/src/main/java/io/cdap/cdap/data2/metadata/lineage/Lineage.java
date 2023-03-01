@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.metadata.lineage;
 
 import com.google.common.collect.ImmutableSet;
-
 import java.util.Objects;
 import java.util.Set;
 

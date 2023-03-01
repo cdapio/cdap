@@ -30,7 +30,6 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

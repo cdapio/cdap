@@ -26,7 +26,6 @@ import io.cdap.cdap.messaging.MessagingServiceUtils;
 import io.cdap.cdap.messaging.cache.MessageCache;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.proto.id.TopicId;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;

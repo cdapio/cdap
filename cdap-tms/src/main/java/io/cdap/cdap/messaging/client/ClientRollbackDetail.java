@@ -19,13 +19,12 @@ package io.cdap.cdap.messaging.client;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.Schemas;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 /**
  * Client side implementation of {@link RollbackDetail}. It retains the original encoded bytes as it is most likely

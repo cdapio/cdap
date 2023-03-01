@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.provision;
 
 import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;

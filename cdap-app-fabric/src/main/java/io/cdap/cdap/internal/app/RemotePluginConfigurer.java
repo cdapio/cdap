@@ -32,12 +32,11 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.filesystem.Location;
-
 import java.io.File;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Remote plugin configurer when the program is run in ISOLATED mode

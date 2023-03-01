@@ -31,11 +31,10 @@ import ch.qos.logback.core.joran.spi.RuleStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.appender.ForwardingAppender;
-import org.xml.sax.Attributes;
-
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.Map;
+import org.xml.sax.Attributes;
 
 /**
  * A {@link JoranConfigurator} for parsing logback xml configuration for log processing pipeline.

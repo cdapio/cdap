@@ -26,7 +26,6 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import io.cdap.cdap.api.spark.SparkSpecification;
-
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;

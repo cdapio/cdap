@@ -20,11 +20,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
-import org.apache.twill.api.logging.LogEntry;
-import org.slf4j.Marker;
-
 import java.util.Collections;
 import java.util.Map;
+import org.apache.twill.api.logging.LogEntry;
+import org.slf4j.Marker;
 
 /**
  * Adapter from {@link org.apache.twill.api.logging.LogEntry} to {@link ch.qos.logback.classic.spi.ILoggingEvent}.

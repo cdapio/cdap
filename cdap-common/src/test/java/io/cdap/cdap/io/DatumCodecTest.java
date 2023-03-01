@@ -33,9 +33,6 @@ import io.cdap.cdap.internal.io.ReflectionDatumReader;
 import io.cdap.cdap.internal.io.ReflectionDatumWriter;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

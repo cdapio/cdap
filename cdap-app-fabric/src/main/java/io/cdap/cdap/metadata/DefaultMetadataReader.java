@@ -24,7 +24,6 @@ import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.MetadataCompatibility;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
-
 import java.io.IOException;
 import java.util.Map;
 

@@ -20,12 +20,11 @@ import com.google.common.io.Closeables;
 import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import java.io.InputStream;
+import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.InputStream;
-import javax.annotation.Nullable;
 
 /**
  * A {@link BodyProducer} for streaming content from a {@link Location}.

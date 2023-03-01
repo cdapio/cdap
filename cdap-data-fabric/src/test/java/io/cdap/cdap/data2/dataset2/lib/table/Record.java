@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.dataset2.lib.table;
 
 import com.google.common.base.Objects;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;

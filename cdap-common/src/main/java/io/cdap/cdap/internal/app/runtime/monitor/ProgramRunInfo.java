@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import io.cdap.cdap.proto.ProgramRunStatus;
-
 import java.util.Objects;
 import javax.annotation.Nullable;
 

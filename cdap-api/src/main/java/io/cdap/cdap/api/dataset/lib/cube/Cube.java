@@ -19,7 +19,6 @@ package io.cdap.cdap.api.dataset.lib.cube;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.batch.BatchWritable;
 import io.cdap.cdap.api.dataset.Dataset;
-
 import java.util.Collection;
 import java.util.List;
 

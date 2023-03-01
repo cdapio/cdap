@@ -29,13 +29,12 @@ import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.InvalidTokenException;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InternalAccessEnforcer extends AbstractAccessEnforcer {
   private static final Logger LOG = LoggerFactory.getLogger(InternalAccessEnforcer.class);

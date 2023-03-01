@@ -26,7 +26,6 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.security.StandardPermission;
-
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 

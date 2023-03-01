@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import org.apache.twill.api.TwillController;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.twill.api.TwillController;
 
 /**
  * Interface for creating instance of {@link TwillControllerFactory}.

@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactSummary;
-
 import java.util.Objects;
 
 /**

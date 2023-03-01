@@ -26,7 +26,6 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.ErrorRecord;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;

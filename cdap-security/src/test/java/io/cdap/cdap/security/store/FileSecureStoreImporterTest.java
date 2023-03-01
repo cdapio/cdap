@@ -18,13 +18,12 @@ package io.cdap.cdap.security.store;
 
 import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import io.cdap.cdap.security.store.file.FileSecureStoreCodec;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link FileSecureStoreImporter}.

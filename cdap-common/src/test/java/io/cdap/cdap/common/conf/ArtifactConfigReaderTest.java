@@ -27,14 +27,13 @@ import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
 
 /**
  */

@@ -23,11 +23,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Syncable;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
@@ -39,6 +34,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manage locations for {@link RollingLocationLogAppender}

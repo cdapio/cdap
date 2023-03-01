@@ -24,7 +24,6 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.spi.metadata.ScopedName;
-
 import java.lang.reflect.Type;
 
 /**

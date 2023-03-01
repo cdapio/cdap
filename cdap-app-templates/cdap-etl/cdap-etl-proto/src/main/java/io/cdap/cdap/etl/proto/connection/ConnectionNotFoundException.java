@@ -18,7 +18,6 @@
 package io.cdap.cdap.etl.proto.connection;
 
 import io.cdap.cdap.etl.proto.CodedException;
-
 import java.net.HttpURLConnection;
 
 /**

@@ -27,7 +27,6 @@ import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import io.cdap.cdap.spi.metadata.Sorting;
-
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;

@@ -45,14 +45,13 @@ import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import org.apache.twill.zookeeper.ZKClientService;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * The main class to run metrics services, which includes both metrics processor and metrics query.

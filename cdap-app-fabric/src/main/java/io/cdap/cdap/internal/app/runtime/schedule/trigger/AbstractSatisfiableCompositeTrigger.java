@@ -24,7 +24,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

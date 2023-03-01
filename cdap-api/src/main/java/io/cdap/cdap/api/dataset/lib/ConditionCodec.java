@@ -24,7 +24,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.api.dataset.lib.partitioned.ComparableCodec;
-
 import java.lang.reflect.Type;
 
 /**

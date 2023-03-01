@@ -19,9 +19,6 @@ package io.cdap.cdap.common.lang;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -33,6 +30,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ClassLoader} that load classes from list of other {@link ClassLoader}s. Note that

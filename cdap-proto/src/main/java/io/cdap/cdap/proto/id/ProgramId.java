@@ -19,12 +19,11 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
-import org.apache.twill.api.RunId;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
+import org.apache.twill.api.RunId;
 
 /**
  * Uniquely identifies a program.

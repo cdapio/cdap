@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.engine.sql.request;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.relational.Relation;
-
 import java.io.Serializable;
 import java.util.Map;
 

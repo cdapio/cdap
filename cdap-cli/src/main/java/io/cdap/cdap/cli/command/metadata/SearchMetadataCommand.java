@@ -28,7 +28,6 @@ import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.Set;
 

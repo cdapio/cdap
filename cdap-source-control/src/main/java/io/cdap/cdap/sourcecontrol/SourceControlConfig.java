@@ -20,7 +20,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;

@@ -21,7 +21,6 @@ import io.cdap.cdap.proto.audit.AuditMessage;
 import io.cdap.cdap.proto.audit.AuditPayload;
 import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;

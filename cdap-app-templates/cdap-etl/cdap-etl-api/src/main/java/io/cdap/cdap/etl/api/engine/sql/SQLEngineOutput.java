@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.api.engine.sql;
 
 import io.cdap.cdap.api.data.batch.Output;
-
 import java.util.Map;
 
 /**

@@ -18,17 +18,16 @@ package io.cdap.cdap.security.server;
 
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.Constants;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import javax.security.auth.login.Configuration;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import javax.security.auth.login.Configuration;
 
 /**
  * Handler for basic authentication of users.

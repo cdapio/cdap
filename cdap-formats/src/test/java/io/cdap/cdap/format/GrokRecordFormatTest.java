@@ -21,11 +21,10 @@ import io.cdap.cdap.api.data.format.Formats;
 import io.cdap.cdap.api.data.format.RecordFormat;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *

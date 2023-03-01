@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.preview;
 
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.util.concurrent.Future;
 
 /**

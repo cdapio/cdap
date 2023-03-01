@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import java.io.IOException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.Filter;
-
-import java.io.IOException;
 
 /**
  * Builder for creating {@link Get}. This builder should be used for cross HBase versions compatibility.

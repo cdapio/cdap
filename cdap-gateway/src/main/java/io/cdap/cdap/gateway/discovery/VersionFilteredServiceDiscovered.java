@@ -18,14 +18,13 @@ package io.cdap.cdap.gateway.discovery;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import io.cdap.cdap.api.common.Bytes;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.ServiceDiscovered;
-
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
  * Return {@link Discoverable}s that match the version provided if one is provided.

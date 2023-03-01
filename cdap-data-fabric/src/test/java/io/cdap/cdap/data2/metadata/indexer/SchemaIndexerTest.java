@@ -20,11 +20,10 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
 import io.cdap.cdap.proto.id.DatasetId;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test {@link SchemaIndexer}.

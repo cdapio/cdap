@@ -25,11 +25,10 @@ import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import org.apache.twill.api.RunId;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.apache.twill.api.RunId;
 
 /**
  * Implementation of {@link FieldLineageReader} for reading the field lineage information

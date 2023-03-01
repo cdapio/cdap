@@ -22,14 +22,13 @@ import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ApplicationClassCodecTest {
 

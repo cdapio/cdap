@@ -27,16 +27,15 @@ import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import io.cdap.cdap.api.dataset.table.Scan;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Test for {@link ObjectMappedTableDataset}.

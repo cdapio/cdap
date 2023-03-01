@@ -25,15 +25,14 @@ import io.cdap.cdap.api.dataset.lib.PartitionFilter;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link PartitionedFileSetArguments}.

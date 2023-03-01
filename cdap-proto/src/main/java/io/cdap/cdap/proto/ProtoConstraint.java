@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

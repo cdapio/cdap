@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.metadata;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.metadata.MetadataConsumerContext;
-
 import java.util.Collections;
 import java.util.Map;
 

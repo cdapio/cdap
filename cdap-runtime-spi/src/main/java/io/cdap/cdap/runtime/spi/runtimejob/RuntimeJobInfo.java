@@ -17,11 +17,10 @@
 package io.cdap.cdap.runtime.spi.runtimejob;
 
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
-import org.apache.twill.api.LocalFile;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import org.apache.twill.api.LocalFile;
 
 /**
  * Runtime job information. The instance of this interface will be provided to

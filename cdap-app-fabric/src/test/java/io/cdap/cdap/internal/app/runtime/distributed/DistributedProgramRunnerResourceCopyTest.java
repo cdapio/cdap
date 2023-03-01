@@ -19,18 +19,17 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import java.io.File;
+import java.nio.file.Files;
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DistributedProgramRunnerResourceCopyTest {
 

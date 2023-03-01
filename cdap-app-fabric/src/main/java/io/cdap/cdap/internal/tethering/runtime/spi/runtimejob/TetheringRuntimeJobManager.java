@@ -44,11 +44,6 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import org.apache.twill.api.LocalFile;
-import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,6 +54,10 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
+import org.apache.twill.api.LocalFile;
+import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tethering runtime job manager. This class sends runtime job details to the control channel, which will be passed

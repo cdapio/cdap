@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.dataset2.lib.cube;
 
 import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
-
 import java.util.List;
 
 /**

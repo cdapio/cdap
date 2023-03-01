@@ -18,7 +18,6 @@ package io.cdap.cdap.app.store;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.proto.id.ApplicationId;
-
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;

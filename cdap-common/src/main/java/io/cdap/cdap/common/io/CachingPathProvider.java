@@ -16,11 +16,10 @@
 
 package io.cdap.cdap.common.io;
 
-import org.apache.twill.filesystem.Location;
-
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Function;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Provides local {@link Path} for caching {@link Location}.

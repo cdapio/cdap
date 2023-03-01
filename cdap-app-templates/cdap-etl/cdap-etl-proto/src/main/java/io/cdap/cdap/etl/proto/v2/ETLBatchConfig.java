@@ -23,7 +23,6 @@ import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.proto.Connection;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

@@ -34,14 +34,13 @@ import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import java.io.IOException;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * test for LevelDB tables.

@@ -21,7 +21,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.regex.Pattern;

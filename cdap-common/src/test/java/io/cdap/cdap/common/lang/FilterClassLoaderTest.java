@@ -17,14 +17,13 @@
 package io.cdap.cdap.common.lang;
 
 import io.cdap.cdap.api.app.Application;
+import java.io.IOException;
+import javax.ws.rs.PUT;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.VersionInfo;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
-
-import java.io.IOException;
-import javax.ws.rs.PUT;
 
 /**
  */

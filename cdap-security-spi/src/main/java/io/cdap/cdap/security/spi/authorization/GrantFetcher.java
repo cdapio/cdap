@@ -19,7 +19,6 @@ package io.cdap.cdap.security.spi.authorization;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Principal;
-
 import java.util.Set;
 
 /**

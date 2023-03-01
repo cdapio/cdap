@@ -27,6 +27,8 @@ import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import java.io.IOException;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,9 +38,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-
-import java.io.IOException;
-import java.util.Map;
 
 public class MessagingProgramStatePublisherTest {
   private static final Gson GSON = new Gson();

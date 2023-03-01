@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.metadata.dataset;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
-
 import javax.annotation.Nullable;
 
 /**

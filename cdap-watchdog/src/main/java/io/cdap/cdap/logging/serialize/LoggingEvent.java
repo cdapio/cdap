@@ -21,14 +21,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import io.cdap.cdap.logging.LoggingUtil;
-import org.apache.avro.generic.GenericArray;
-import org.apache.avro.generic.GenericRecord;
-import org.slf4j.Marker;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.avro.generic.GenericArray;
+import org.apache.avro.generic.GenericRecord;
+import org.slf4j.Marker;
 
 /**
 * Class used to serialize/de-serialize ILoggingEvent.

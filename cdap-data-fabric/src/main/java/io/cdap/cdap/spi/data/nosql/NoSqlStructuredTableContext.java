@@ -28,7 +28,6 @@ import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.common.MetricStructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
-
 import java.util.HashMap;
 import java.util.Map;
 

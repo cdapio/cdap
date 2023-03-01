@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.spi.metadata;
 
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -23,9 +26,6 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
-import static io.cdap.cdap.api.metadata.MetadataScope.USER;
 
 public class MetadataCodecTest {
 

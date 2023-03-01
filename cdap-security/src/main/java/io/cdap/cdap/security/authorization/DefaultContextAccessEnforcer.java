@@ -24,7 +24,6 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
-
 import java.util.Set;
 import javax.inject.Inject;
 

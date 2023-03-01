@@ -18,7 +18,6 @@ package io.cdap.cdap.securestore.spi;
 
 import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
-
 import java.io.IOException;
 import java.util.Collection;
 

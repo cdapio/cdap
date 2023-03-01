@@ -19,7 +19,6 @@ package io.cdap.cdap.security.server;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.Constants;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

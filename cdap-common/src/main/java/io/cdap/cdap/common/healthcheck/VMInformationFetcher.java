@@ -26,7 +26,6 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 

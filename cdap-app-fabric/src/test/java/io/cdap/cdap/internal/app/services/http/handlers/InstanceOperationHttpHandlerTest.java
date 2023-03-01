@@ -22,14 +22,13 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.common.http.HttpResponse;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.File;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit test for the {@link InstanceOperationHttpHandlerTest}.

@@ -33,7 +33,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ServiceClient;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.common.cli.Arguments;
-
 import java.io.PrintStream;
 import java.util.List;
 

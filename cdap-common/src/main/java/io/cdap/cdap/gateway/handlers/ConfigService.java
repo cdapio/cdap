@@ -20,12 +20,11 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.ConfigEntry;
-import org.apache.hadoop.conf.Configuration;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Exposes {@link CConfiguration} and {@link Configuration}.

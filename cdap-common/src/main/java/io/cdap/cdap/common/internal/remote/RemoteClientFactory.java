@@ -19,9 +19,8 @@ package io.cdap.cdap.common.internal.remote;
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequestConfig;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-
 import javax.inject.Inject;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A factory to create {@link RemoteClient}.

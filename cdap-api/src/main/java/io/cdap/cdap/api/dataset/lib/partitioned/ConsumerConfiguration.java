@@ -18,7 +18,6 @@ package io.cdap.cdap.api.dataset.lib.partitioned;
 
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
-
 import java.util.concurrent.TimeUnit;
 
 /**

@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroFunction;
 import io.cdap.cdap.api.macro.Macros;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

@@ -21,7 +21,6 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
-
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.SortedMap;

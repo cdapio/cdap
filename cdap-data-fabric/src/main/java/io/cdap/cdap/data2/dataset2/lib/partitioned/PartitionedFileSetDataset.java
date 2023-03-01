@@ -68,13 +68,6 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.data.RuntimeProgramContext;
 import io.cdap.cdap.data.RuntimeProgramContextAware;
 import io.cdap.cdap.data2.dataset2.lib.file.FileSetDataset;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionConflictException;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,6 +83,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionConflictException;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of partitioned datasets using a Table to store the meta data.

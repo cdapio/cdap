@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.mock.common;
 
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.MultiOutputEmitter;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

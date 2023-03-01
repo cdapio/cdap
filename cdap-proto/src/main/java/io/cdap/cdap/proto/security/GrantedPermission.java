@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.Objects;
 /**
  * Represents a permission granted to a {@link Principal user}, {@link Principal group} or a {@link Principal role}.

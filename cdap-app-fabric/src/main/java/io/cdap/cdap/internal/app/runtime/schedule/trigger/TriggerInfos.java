@@ -28,10 +28,9 @@ import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowTokenCodec;
 import io.cdap.cdap.spi.events.StartMetadata;
 import io.cdap.cdap.spi.events.StartType;
-import org.apache.twill.api.RunId;
-
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
 
 /**
  * Helper functions for {@link TriggerInfo}

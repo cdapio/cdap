@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.security.store;
 
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -34,9 +37,6 @@ import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.security.store.file.FileSecureStoreCodec;
 import io.cdap.cdap.security.store.file.KeyInfo;
 import io.cdap.cdap.security.store.file.SecureStoreDataCodecV2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -61,9 +61,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-
-import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * File based implementation of secure store. Uses Java PKCS12 based keystore.

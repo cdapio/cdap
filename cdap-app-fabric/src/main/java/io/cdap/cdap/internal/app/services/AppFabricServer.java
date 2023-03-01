@@ -46,11 +46,6 @@ import io.cdap.cdap.spi.data.transaction.TxCallable;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.DiscoveryService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -59,6 +54,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * AppFabric Server.

@@ -26,7 +26,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;

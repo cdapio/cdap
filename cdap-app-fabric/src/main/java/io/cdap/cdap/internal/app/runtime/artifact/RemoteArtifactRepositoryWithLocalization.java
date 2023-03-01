@@ -22,9 +22,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.proto.id.ArtifactId;
-import org.apache.twill.filesystem.Location;
-
 import java.io.IOException;
+import org.apache.twill.filesystem.Location;
 
 /**
  * {@link RemoteArtifactRepositoryWithLocalization} is an extension of {@link RemoteArtifactRepository}

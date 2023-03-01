@@ -18,7 +18,6 @@ package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.proto.id.EntityId;
-
 import java.util.Objects;
 
 /**

@@ -33,7 +33,6 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

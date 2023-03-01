@@ -21,8 +21,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.zookeeper.coordination.DiscoverableCodec;
-import org.apache.twill.discovery.Discoverable;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
@@ -36,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * Utility class to provide methods for common network related operations.

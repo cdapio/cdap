@@ -20,7 +20,6 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.data.schema.Schema;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

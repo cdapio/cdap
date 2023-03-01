@@ -20,7 +20,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.job.SupportBundleJob;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;

@@ -25,6 +25,12 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import io.cdap.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FileContext;
@@ -43,13 +49,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An OutputCommitter which creates partitions in a configured PartitionedFileSet dataset for all of the partitions

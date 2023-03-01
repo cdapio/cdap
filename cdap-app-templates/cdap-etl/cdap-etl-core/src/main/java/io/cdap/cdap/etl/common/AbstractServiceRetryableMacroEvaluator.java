@@ -23,7 +23,6 @@ import com.google.common.io.CharStreams;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.retry.RetryableException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

@@ -20,11 +20,10 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.master.spi.namespace.NamespaceDetail;
 import io.cdap.cdap.master.spi.namespace.NamespaceListener;
-import org.apache.twill.api.TwillRunnerService;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import org.apache.twill.api.TwillRunnerService;
 
 /**
  * A service for initializing the {@link TwillRunnerService} with a list of namespaces.

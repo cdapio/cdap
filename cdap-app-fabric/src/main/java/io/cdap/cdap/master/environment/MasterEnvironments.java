@@ -26,9 +26,8 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import org.apache.hadoop.conf.Configuration;
-
 import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Utility class for {@link MasterEnvironment} operations.

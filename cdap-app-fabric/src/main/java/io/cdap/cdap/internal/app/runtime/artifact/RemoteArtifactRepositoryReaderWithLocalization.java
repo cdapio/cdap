@@ -22,10 +22,9 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
 import io.cdap.cdap.proto.id.ArtifactId;
+import java.io.IOException;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-
-import java.io.IOException;
 
 /**
  * {@link RemoteArtifactRepositoryReaderWithLocalization} is an extension of {@link RemoteArtifactRepositoryReader}

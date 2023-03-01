@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.auth;
 
+import static org.mockito.Mockito.when;
+
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -26,8 +28,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import static org.mockito.Mockito.when;
 
 /**
  * Tests related to the {@link ProxyUserIdentityExtractor}.

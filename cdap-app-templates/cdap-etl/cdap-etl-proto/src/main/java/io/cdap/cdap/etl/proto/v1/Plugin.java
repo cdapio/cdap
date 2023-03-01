@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.proto.v1;
 
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

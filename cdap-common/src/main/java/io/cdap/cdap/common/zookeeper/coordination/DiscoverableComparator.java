@@ -17,10 +17,9 @@ package io.cdap.cdap.common.zookeeper.coordination;
 
 import com.google.common.primitives.Ints;
 import io.cdap.cdap.api.common.Bytes;
-import org.apache.twill.discovery.Discoverable;
-
 import java.net.InetSocketAddress;
 import java.util.Comparator;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * A {@link Comparator} for {@link Discoverable}.

@@ -25,7 +25,6 @@ import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
-
 import java.io.PrintStream;
 
 /**

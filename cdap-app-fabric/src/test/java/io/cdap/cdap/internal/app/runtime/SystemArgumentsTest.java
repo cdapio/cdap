@@ -28,14 +28,13 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.twill.api.Configs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Unit tests for {@link SystemArguments}.

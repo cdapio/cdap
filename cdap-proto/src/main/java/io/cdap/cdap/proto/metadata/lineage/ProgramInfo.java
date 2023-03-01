@@ -17,7 +17,6 @@
 package io.cdap.cdap.proto.metadata.lineage;
 
 import io.cdap.cdap.proto.id.ProgramId;
-
 import java.util.Objects;
 
 /**

@@ -24,7 +24,6 @@ import io.cdap.cdap.api.data.batch.SplitReader;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
-
 import java.lang.reflect.Type;
 import java.util.List;
 

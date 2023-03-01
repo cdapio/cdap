@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
-
 import java.io.PrintStream;
 
 /**

@@ -16,8 +16,13 @@
 
 package io.cdap.cdap.logging.kafka;
 
+import static kafka.api.OffsetRequest.CurrentVersion;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Map;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
@@ -34,12 +39,6 @@ import org.apache.twill.kafka.client.BrokerInfo;
 import org.apache.twill.kafka.client.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Map;
-
-import static kafka.api.OffsetRequest.CurrentVersion;
 
 /**
  * Kafka consumer that listens on a topic/partition and retrieves messages. This class is thread-safe.

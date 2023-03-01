@@ -19,10 +19,9 @@ package io.cdap.cdap.data2.dataset2.lib.partitioned;
 import com.google.common.base.Function;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
+import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
-
-import javax.annotation.Nullable;
 
 /**
  * Tests for partition keys.

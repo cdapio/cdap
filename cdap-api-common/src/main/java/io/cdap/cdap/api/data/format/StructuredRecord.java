@@ -21,7 +21,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.Schema.LogicalType;
 import io.cdap.cdap.api.data.schema.SchemaCache;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;

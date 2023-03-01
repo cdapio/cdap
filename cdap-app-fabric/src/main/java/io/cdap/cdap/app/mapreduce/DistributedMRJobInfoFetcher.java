@@ -19,10 +19,9 @@ package io.cdap.cdap.app.mapreduce;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.MRJobInfo;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Retrieves information about a run of a MapReduce job, using {@link MRJobClient} and

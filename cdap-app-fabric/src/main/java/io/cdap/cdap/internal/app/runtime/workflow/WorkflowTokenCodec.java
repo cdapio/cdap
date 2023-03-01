@@ -22,7 +22,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-
 import java.lang.reflect.Type;
 
 /**

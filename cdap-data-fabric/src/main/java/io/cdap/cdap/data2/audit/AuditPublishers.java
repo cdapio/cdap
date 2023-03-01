@@ -24,13 +24,12 @@ import io.cdap.cdap.proto.audit.AuditPayload;
 import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.audit.payload.access.AccessPayload;
 import io.cdap.cdap.proto.id.EntityId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class to publish audit.
