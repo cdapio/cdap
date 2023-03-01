@@ -56,6 +56,7 @@ public class AppDeploymentInfo {
   private final ChangeDetail changeDetail;
   @Nullable
   private final ApplicationSpecification deployedApplicationSpec;
+  private final boolean isUpgrade;
 
   /**
    * Creates a new {@link Builder}.
@@ -80,6 +81,7 @@ public class AppDeploymentInfo {
       .setUpdateSchedules(other.updateSchedules)
       .setRuntimeInfo(other.runtimeInfo)
       .setChangeDetail(other.changeDetail)
+      .setIsUpgrade(other.isUpgrade)
       .setDeployedApplicationSpec(other.deployedApplicationSpec);
   }
 
@@ -87,7 +89,7 @@ public class AppDeploymentInfo {
                             ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                             @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                             boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable ChangeDetail changeDetail,
+                            @Nullable ChangeDetail changeDetail, boolean isUpgrade,
                             @Nullable ApplicationSpecification deployedApplicationSpec) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
@@ -100,6 +102,7 @@ public class AppDeploymentInfo {
     this.applicationClass = applicationClass;
     this.runtimeInfo = runtimeInfo;
     this.changeDetail = changeDetail;
+    this.isUpgrade = isUpgrade;
     this.deployedApplicationSpec = deployedApplicationSpec;
   }
 
@@ -191,6 +194,13 @@ public class AppDeploymentInfo {
   }
 
   /**
+   * Returns true if the deploy event type is an upgrade.
+   */
+  public boolean isUpgrade() {
+    return isUpgrade;
+  }
+
+  /**
    * Returns the previously deployed Application Specification. Will be null for the 1st deployment
    */
   @Nullable
@@ -218,6 +228,7 @@ public class AppDeploymentInfo {
     private ChangeDetail changeDetail;
     @Nullable
     private ApplicationSpecification deployedApplicationSpec;
+    private boolean isUpgrade;
 
     private Builder() {
       // Only for the builder() method to use
@@ -285,6 +296,11 @@ public class AppDeploymentInfo {
       return this;
     }
 
+    public Builder setIsUpgrade(boolean isUpgrade) {
+      this.isUpgrade = isUpgrade;
+      return this;
+    }
+
     public Builder setDeployedApplicationSpec(@Nullable ApplicationSpecification deployedApplicationSpec) {
       this.deployedApplicationSpec = deployedApplicationSpec;
       return this;
@@ -305,7 +321,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
                                    appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeDetail, deployedApplicationSpec);
+                                   changeDetail, isUpgrade, deployedApplicationSpec);
     }
   }
 }

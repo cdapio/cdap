@@ -16,14 +16,17 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.pipeline.AbstractStage;
@@ -34,6 +37,7 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  *
@@ -43,24 +47,41 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   private final Store store;
   private final UsageRegistry usageRegistry;
   private final OwnerAdmin ownerAdmin;
+  private final MetricsCollectionService metricsCollectionService;
 
-  public ApplicationRegistrationStage(Store store, UsageRegistry usageRegistry, OwnerAdmin ownerAdmin) {
+  public ApplicationRegistrationStage(Store store, UsageRegistry usageRegistry, OwnerAdmin ownerAdmin,
+                                      MetricsCollectionService metricsCollectionService) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.store = store;
     this.usageRegistry = usageRegistry;
     this.ownerAdmin = ownerAdmin;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
     ApplicationSpecification applicationSpecification = input.getSpecification();
+    ApplicationId applicationId = input.getApplicationId();
     Collection<ApplicationId> allAppVersionsAppIds =
-      store.getAllAppVersionsAppIds(input.getApplicationId().getAppReference());
+      store.getAllAppVersionsAppIds(applicationId.getAppReference());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(), input.getSpecification(),
                                                   input.getChangeDetail());
     try {
-      store.addApplication(input.getApplicationId(), appMeta);
+      int editCount = store.addApplication(input.getApplicationId(), appMeta);
+      // increment metric : event.deploy.upgrade.count
+      if (input.isUpgrade()) {
+        emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
+                    Constants.Metrics.AppMetadataStore.DEPLOY_UPGRADE_COUNT);
+      } else if (editCount == 0) {
+          // increment metric : event.deploy.new.count
+          emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
+                      Constants.Metrics.AppMetadataStore.DEPLOY_NEW_COUNT);
+      } else {
+          // When the app already exists, it is an edit - increment metric : event.deploy.edit.count
+          emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
+                      Constants.Metrics.AppMetadataStore.DEPLOY_EDIT_COUNT);
+      }
     } catch (Exception e) {
       // if we failed to store the app spec cleanup the owner if it was added in this call
       if (ownerAdded) {
@@ -71,6 +92,12 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     }
     registerDatasets(input);
     emit(input);
+  }
+
+  private void emitMetrics(String namespace, String appName, String metricName) {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                                               Constants.Metrics.Tag.APP, appName);
+    metricsCollectionService.getContext(tags).increment(metricName, 1);
   }
 
   // adds owner information for the application if this is the first version of the application

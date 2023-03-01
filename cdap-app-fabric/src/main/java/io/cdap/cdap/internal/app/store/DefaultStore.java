@@ -525,9 +525,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
-      TransactionRunners.run(transactionRunner, context -> {
-        getAppMetadataStore(context).createApplicationVersion(id, meta);
+  public int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).createApplicationVersion(id, meta);
       }, ConflictException.class);
   }
 

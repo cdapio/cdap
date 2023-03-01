@@ -549,14 +549,13 @@ public class AppMetadataStore {
    *
    * @param id the application id
    * @param appMeta the application metadata to be written
+   * @return the number of edits to the application. A new application will return 0.
    * @throws IOException if failed to write app
    * @throws ConflictException if parent-version provided in the request doesn't match the latest version, do not allow
    * app to be created
    */
-  public void createApplicationVersion(ApplicationId id,
-                                       ApplicationMeta appMeta) throws IOException, ConflictException {
+  public int createApplicationVersion(ApplicationId id, ApplicationMeta appMeta) throws IOException, ConflictException {
     String parentVersion = Optional.ofNullable(appMeta.getChange()).map(ChangeDetail::getParentVersion).orElse(null);
-
     // Fetch the latest version
     ApplicationMeta latest = getLatest(id.getAppReference());
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
@@ -581,6 +580,7 @@ public class AppMetadataStore {
     }
     // Add a new version of the app
     writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(), appMeta.getChange());
+    return getApplicationEditNumber(new ApplicationReference(id.getNamespaceId(), id.getApplication()));
   }
 
   @VisibleForTesting

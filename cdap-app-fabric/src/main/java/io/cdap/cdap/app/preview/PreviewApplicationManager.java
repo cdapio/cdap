@@ -22,6 +22,7 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
@@ -97,7 +98,8 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
                                                    authenticationContext, artifactRepository, impersonator));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new ProgramGenerationStage());
-    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
+    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin,
+                                                      new NoOpMetricsCollectionService()));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }

@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.store.Store;
@@ -75,6 +76,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final StructuredTableAdmin structuredTableAdmin;
   private final CapabilityReader capabilityReader;
   private final ConfiguratorFactory configuratorFactory;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   LocalApplicationManager(CConfiguration cConf, PipelineFactory pipelineFactory,
@@ -89,7 +91,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           AccessEnforcer accessEnforcer,
                           StructuredTableAdmin structuredTableAdmin,
                           CapabilityReader capabilityReader,
-                          ConfiguratorFactory configuratorFactory) {
+                          ConfiguratorFactory configuratorFactory, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -108,6 +110,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.structuredTableAdmin = structuredTableAdmin;
     this.capabilityReader = capabilityReader;
     this.configuratorFactory = configuratorFactory;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -124,7 +127,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
                                                     metricsSystemClient, metadataServiceClient, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
-    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
+    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin, metricsCollectionService));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
     pipeline.addLast(new MetadataWriterStage(metadataServiceClient));
     pipeline.setFinally(new DeploymentCleanupStage());
