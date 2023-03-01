@@ -19,18 +19,17 @@ package io.cdap.cdap.sourcecontrol;
 import com.google.common.hash.Hashing;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.UUID;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.UUID;
 
 
 /**
@@ -45,29 +44,29 @@ public abstract class SourceControlTestBase {
   protected static final String TOKEN_NAME = "github-pat";
   protected static final String PATH_PREFIX = "pathPrefix";
   protected static final String TEST_APP_NAME = "app1";
-  protected static final String TEST_APP_SPEC = "{\n" +
-    "  \"artifact\": {\n" +
-    "     \"name\": \"cdap-notifiable-workflow\",\n" +
-    "     \"version\": \"1.0.0\",\n" +
-    "     \"scope\": \"system\"\n" +
-    "  },\n" +
-    "  \"config\": {\n" +
-    "     \"plugin\": {\n" +
-    "        \"name\": \"WordCount\",\n" +
-    "        \"type\": \"sparkprogram\",\n" +
-    "        \"artifact\": {\n" +
-    "           \"name\": \"word-count-program\",\n" +
-    "           \"scope\": \"user\",\n" +
-    "           \"version\": \"1.0.0\"\n" +
-    "        }\n" +
-    "     }\n" +
-    "  },\n" +
-    "  \"preview\" : {\n" +
-    "    \"programName\" : \"WordCount\",\n" +
-    "    \"programType\" : \"spark\"\n" +
-    "    },\n" +
-    "  \"principal\" : \"test2\"\n" +
-    "}";
+  protected static final String TEST_APP_SPEC = "{\n"
+      + "  \"artifact\": {\n"
+      + "     \"name\": \"cdap-notifiable-workflow\",\n"
+      + "     \"version\": \"1.0.0\",\n"
+      + "     \"scope\": \"system\"\n"
+      + "  },\n"
+      + "  \"config\": {\n"
+      + "     \"plugin\": {\n"
+      + "        \"name\": \"WordCount\",\n"
+      + "        \"type\": \"sparkprogram\",\n"
+      + "        \"artifact\": {\n"
+      + "           \"name\": \"word-count-program\",\n"
+      + "           \"scope\": \"user\",\n"
+      + "           \"version\": \"1.0.0\"\n"
+      + "        }\n"
+      + "     }\n"
+      + "  },\n"
+      + "  \"preview\" : {\n"
+      + "    \"programName\" : \"WordCount\",\n"
+      + "    \"programType\" : \"spark\"\n"
+      + "    },\n"
+      + "  \"principal\" : \"test2\"\n"
+      + "}";
 
   @ClassRule
   public static TemporaryFolder baseTempFolder = new TemporaryFolder();
@@ -85,7 +84,7 @@ public abstract class SourceControlTestBase {
    */
   public Git getClonedGit(Path dir, LocalGitServer gitServer) throws GitAPIException {
     return Git.cloneRepository()
-      .setURI(gitServer.getServerURL() + "ignored")
+      .setURI(gitServer.getServerUrl() + "ignored")
       .setDirectory(dir.toFile())
       .setBranch(DEFAULT_BRANCH_NAME)
       .setTimeout(GIT_COMMAND_TIMEOUT)

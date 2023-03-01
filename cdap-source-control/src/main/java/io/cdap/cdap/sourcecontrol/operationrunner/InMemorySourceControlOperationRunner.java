@@ -26,17 +26,11 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
@@ -47,6 +41,9 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * In-Memory implementation for {@link SourceControlOperationRunner}.
@@ -101,17 +98,16 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
            repoManagerFactory.create(pulAppOperationRequest.getApp().getNamespaceId(),
                                      pulAppOperationRequest.getRepositoryConfig())) {
       appRelativePath = repositoryManager.getFileRelativePath(configFileName);
-      String commitID = repositoryManager.cloneRemote();
-      Path filePathToRead;
-      filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
+      String commitId = repositoryManager.cloneRemote();
+      Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
       if (!Files.exists(filePathToRead)) {
         throw new NotFoundException(String.format("App with name %s not found at path %s in git repository",
                                                   applicationName,
                                                   appRelativePath));
       }
-      String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       LOG.info("Getting file hash for application {}", applicationName);
-      String fileHash = repositoryManager.getFileHash(appRelativePath, commitID);
+      String fileHash = repositoryManager.getFileHash(appRelativePath, commitId);
+      String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
       return new PullAppResponse<>(applicationName, fileHash, appRequest);
     } catch (GitAPIException e) {
@@ -217,9 +213,10 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   }
 
   @Override
-  public RepositoryAppsResponse list(NamespaceId namespace, RepositoryConfig repoConfig) throws
+  public RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository) throws
     AuthenticationConfigException, NotFoundException {
-    try (RepositoryManager repositoryManager = repoManagerFactory.create(namespace, repoConfig)) {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(nameSpaceRepository.getNamespaceId(),
+                                                                         nameSpaceRepository.getRepositoryConfig())) {
       String currentCommit = repositoryManager.cloneRemote();
       Path basePath = repositoryManager.getBasePath();
 
@@ -234,31 +231,33 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
       // TODO CDAP-20420 Implement bulk fetch file hash in RepositoryManager
       for (File configFile : configFiles) {
         String applicationName = FileUtils.getNameWithoutExtension(configFile.getName());
+        Path appConfigRelativePath = repositoryManager.getFileRelativePath(configFile.getName());
         try {
-          String fileHash = repositoryManager.getFileHash(basePath.relativize(configFile.toPath()), currentCommit);
+          String fileHash = repositoryManager.getFileHash(appConfigRelativePath, currentCommit);
           responses.add(new RepositoryApp(applicationName, fileHash));
         } catch (NotFoundException e) {
           // ignore file if not found in git tree
-          LOG.warn("Skipping config for application {}: {}", applicationName, e.getMessage());
+          LOG.warn("Skipping config file {}: {}", appConfigRelativePath, e.getMessage());
         }
       }
       return new RepositoryAppsResponse(responses);
     } catch (IOException | GitAPIException e) {
       throw new SourceControlException(String.format("Failed to list application configs in directory %s: %s",
-                                                     repoConfig.getPathPrefix(), e.getMessage()), e);
+                                                     nameSpaceRepository.getRepositoryConfig().getPathPrefix(),
+                                                     e.getMessage()), e);
     }
   }
 
 
   /**
-   * @return A {@link java.io.FileFilter} that will filter application config files with following rules
-   * 1. Filter non-symbolic link files
-   * 2. Filter files with extension json
+   * A helper function to get a {@link java.io.FileFilter} for application config files with following rules
+   *    1. Filter non-symbolic link files
+   *    2. Filter files with extension json
    */
   private FileFilter getConfigFileFilter() {
     return file -> {
-      return Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS) && // only allow regular files
-        FileUtils.getExtension(file.getName()).equalsIgnoreCase("json"); // filter json extension
+      return Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS) // only allow regular files
+          && FileUtils.getExtension(file.getName()).equalsIgnoreCase("json"); // filter json extension
     };
   }
 }

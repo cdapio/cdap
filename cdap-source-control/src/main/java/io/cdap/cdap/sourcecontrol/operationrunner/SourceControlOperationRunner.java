@@ -17,16 +17,16 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 
 /**
- * An interface encapsulating all operations needed for source control management
+ * An interface encapsulating all operations needed for source control management.
  */
 public interface SourceControlOperationRunner {
   /**
+   * Push an application config to remote git repository.
+   *
    * @param pushAppOperationRequest {@link PushAppOperationRequest} of the application to be pushed
    * @return file-paths and file-hashes for the updated configs.
    * @throws NoChangesToPushException      if there is no effective changes on the config file to commit
@@ -52,12 +52,15 @@ public interface SourceControlOperationRunner {
     AuthenticationConfigException;
 
   /**
+   * Lists application configs found in repository.
+   *
+   * @param nameSpaceRepository {@link NamespaceRepository} for the repository to be listed
    * @return Name and git-file-hashes for the detected config files.
    * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
    *                                       call remote Git.
    * @throws NotFoundException when the given path-prefix is missing in the repository.
    * @throws SourceControlException when the list operation fails for any other reason.
    */
-  RepositoryAppsResponse list(NamespaceId namespace, RepositoryConfig repoConfig) throws AuthenticationConfigException,
+  RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository) throws AuthenticationConfigException,
     NotFoundException;
 }
