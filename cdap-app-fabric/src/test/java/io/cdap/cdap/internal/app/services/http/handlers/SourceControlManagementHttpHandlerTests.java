@@ -296,6 +296,19 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   }
 
   @Test
+  public void testPushAppInvalidRequest() throws Exception {
+    Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp", "version1");
+    // Push empty commit message
+    String commitMessage = "";
+    HttpResponse response = pushApplication(NamespaceId.DEFAULT.appReference(appId1.getId()), commitMessage);
+
+    // Assert the response
+    assertResponseCode(400, response);
+    Assert.assertEquals(response.getResponseBodyAsString(),
+        "Please specify commit message in the request body.");
+  }
+
+  @Test
   public void testPushAppNotFound() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp", "version1");
 
@@ -321,7 +334,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     HttpResponse response = pushApplication(NamespaceId.DEFAULT.appReference(appId1.getId()), commitMessage);
 
     // Assert the error that app has no changes to push
-    assertResponseCode(400, response);
+    assertResponseCode(200, response);
     Assert.assertTrue(response.getResponseBodyAsString().contains("No changes for apps to push"));
   }
 
